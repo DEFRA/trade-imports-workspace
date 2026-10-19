@@ -10,12 +10,6 @@ import {
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
-// The args items of DESIGN 4.6's contract test: every workflow script — the
-// shared ones in .claude/workflows/ and a skill's own under
-// .claude/skills/<skill>/workflow/ — accepts args as a string, stops naming
-// any missing required key, logs its resolved configuration first, and
-// carries no fallback defaults. Later increments add the rails, briefs,
-// skill-contract and span-walker items alongside these (inc-014, inc-019).
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
   '..',
@@ -87,10 +81,6 @@ const findingCategoriesOf = (source, wordsInArray) => ({
   codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES')
 })
 
-// The name of the variable a script assigns its resolved config to — the
-// declarator whose init is a call to `parseArgs(...)` — wherever the script
-// happens to name it (`CFG`, `config`, ...), so the no-default check below
-// ties to the contract rather than to one hardcoded identifier.
 const parseArgsResultIdentifier = (source) => {
   const program = parse(source, WORKFLOW_PARSE_OPTIONS)
   const declarators = program.body
@@ -108,8 +98,6 @@ const parseArgsResultIdentifier = (source) => {
   return declarator?.id.name ?? null
 }
 
-// Every key the loop requires, in the order it names them, used to prove "no
-// args at all" names each of them — not merely that it throws.
 const REQUIRED_KEYS_BY_SCRIPT = {
   'increment-build-loop.js': [
     'workarea',
@@ -192,14 +180,8 @@ const WORKSPACE_ANSWER = {
   summary: 'resolved'
 }
 
-// The run id the loop builds from WORKSPACE_ANSWER.startedAt, which every
-// stack lease holder starts with.
 const RUN_ID = 'ibl-20261001T090000Z'
 
-// The run takes the workspace stack's lease once before its first increment
-// and gives it back once after its last, each with an agent of its own. Those
-// agents are answered here, so a test's answers list stays the stages it is
-// about. A test about the run's lease passes its own answers for them.
 const LEASE_ACQUIRED = {
   acquired: true,
   refused: false,
@@ -211,11 +193,6 @@ const ACQUIRE_LABEL = 'run lease:acquire'
 const RELEASE_LABEL = 'run lease:release'
 const isRunLease = (label) => /^run lease:/.test(label ?? '')
 
-// After every landing the loop reads the row's theme, and once a theme has no
-// row left to build it checks the spec under the prefixes the theme touched.
-// Those agents are answered here too — by default a row in no theme — so a
-// test's answers list stays the stages it is about. A test about the theme
-// check passes its own answers for them, keyed by label.
 const NO_THEME = {
   exitCode: 0,
   stdout: '{"theme":null,"rows":0,"todo":0,"built":[],"otherRepos":[]}'
@@ -226,12 +203,6 @@ const themeAnswer = (themeAnswers, label) => {
   return / theme$/.test(label) ? NO_THEME : null
 }
 
-// Every plan is read by a lint reader and checked by a plan reviewer before
-// the implementor starts, and a light agent records any detail finding the
-// second review leaves open. All three are answered here — by default a clean
-// lint, an approval and a written record — so a test's answers list stays the
-// stages it is about. A test about the plan checks passes its own answers for
-// them, keyed by label.
 const PLAN_LINT_CLEAN = { exitCode: 1, stdout: '' }
 const PLAN_APPROVED = { approved: true, findings: [], summary: 'approved' }
 const PLAN_REVIEW_RECORDED = { written: true, summary: 'written' }
@@ -291,7 +262,6 @@ const runLoop = (
     answers: answeringRunLease(answers, lease, themes, plans)
   })
 
-// What `tim build start --json` prints, as the start agent copies it.
 const startAnswer = (result) => ({
   exitCode: result.failedStep ? 1 : 0,
   stdout: JSON.stringify({
@@ -1225,8 +1195,6 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
           .filter((label) => !isRunLease(label))
 
-      // Review to fix: one confirmed finding, fixed, with a fixer that reports
-      // no Spec sync line of its own, then a clean style re-review of its hunks.
       const FIX_STAGE_ANSWERS = [
         NO_FINDINGS,
         { findings: [FINDING] },
@@ -3411,9 +3379,6 @@ describe('increment-build-loop', () => {
       })
 
       describe('deriving its own next increment', () => {
-        // One increment's worth of answers, from the ticket through to the gate
-        // check, every stage green: what it takes for the loop to count one as
-        // landed and go round again.
         const LANDED = [
           BASELINE_ANSWER,
           PLAN_ANSWER,
@@ -3579,12 +3544,34 @@ describe('increment-build-loop', () => {
           expect(run.result.stopped.detail).toContain('17 increment(s) landed')
         })
 
+        test('budgets four more agents for each CI fix attempt beyond three', async () => {
+          const run = await runLoop(scriptPath, {
+            args: {
+              ...BASE_ARGS,
+              increments: null,
+              stopAfter: 'all',
+              ciFixAttempts: 6
+            },
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              ...Array.from({ length: 30 }, (_, index) => index).flatMap(
+                (index) => [derived(`inc-9${index}`), ...LANDED]
+              )
+            ]
+          })
+
+          expect(run.result.increments.length).toBe(14)
+          expect(run.result.stopped.detail).toContain(
+            'at up to 68 agents per increment on claude'
+          )
+        })
+
         describe('checking a theme’s spec once its last row lands', () => {
           const THEME = 'origin-pages'
           const SPEC_CHECK_LABEL = `spec check:${THEME}`
           const IMPLEMENT_ANSWER_INDEX = 2
 
-          // What the theme reader's jq summary prints.
           const themeStatus = (summary) => ({
             exitCode: 0,
             stdout: JSON.stringify({
@@ -3596,8 +3583,6 @@ describe('increment-build-loop', () => {
               ...summary
             })
           })
-          // inc-901, built by this run, and inc-800, built by an earlier one
-          // in the frontend, which reaches both of its sets' prefixes.
           const BUILT = themeStatus({ rows: 2, otherRepos: ['frontend'] })
           const ONE_LEFT = themeStatus({
             rows: 2,
@@ -4933,6 +4918,14 @@ describe('increment-build-loop', () => {
           expect(run.result.stopped.reason).toBe('count-reached')
         })
 
+        test('looks for the open pull request only in the repos the theme’s fixes changed', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme pr')
+
+          expect(prompt).toContain(
+            'REPOS: tests `~/ws/repos/trade-imports-ins-tests`. GitHub repos: tests='
+          )
+        })
+
         test('returns a finding the theme’s verifier refuted, and lists it for the theme’s reviewer', async () => {
           const run = await runTheme({
             'inc-900 theme review:tests': {
@@ -5349,9 +5342,6 @@ describe('increment-build-loop', () => {
       path: `repos/${folder}`,
       github: `DEFRA/${folder}`
     })
-    // The INS performance-testing envelope: a k6 repo, two stubs, three Node
-    // frontends and two Java services, and no key called frontend, backend
-    // or tests.
     const PERF_REPOS = {
       perftests: repo('trade-imports-performance-tests'),
       stub: repo('trade-imports-stub'),
@@ -5378,9 +5368,6 @@ describe('increment-build-loop', () => {
       summary: '19',
       envelopeRepos: envelopeOf(PERF_REPOS)
     }
-    // Six of the eight, the way inc-014 touches them, written provider first:
-    // the Java services, then the three frontends, then the perf-test repo
-    // that exercises them all.
     const ROW_REPOS = [
       'gateway',
       'referencedata',
@@ -5400,8 +5387,6 @@ describe('increment-build-loop', () => {
       'plantsfrontend:src/server/common/helpers/metrics.js',
       'perftests:src/report/dependencies.js'
     ]
-    // The PR stage raises them as it goes and a fixer appends to the end, so
-    // they come back in no useful order: perf tests first here.
     const PRS_AS_RAISED = [
       'perftests',
       'plantsfrontend',
@@ -5961,10 +5946,6 @@ describe('increment-build-loop', () => {
         requireApproval: entry.requireApproval ?? false
       }))
     const WORK_BRANCH = 'feat/EUDPA-920-gate-layers'
-    // What the workspace repo already carried when the increment started,
-    // as tim build start reports it: somebody's edits outside workareas/ by
-    // name, and the run's own backlog among 412 files under workareas/ by
-    // count, every one listed in a file.
     const CARRIED = [
       '.claude/settings.local.json',
       'docs/repos/trade-imports-performance-tests.md'
@@ -5976,7 +5957,6 @@ describe('increment-build-loop', () => {
       underWorkareas: 412,
       listedIn: CARRIED_LIST
     }
-    // The row names the workspace first; it still merges last.
     const ROW_REPOS = ['workspace', 'perftests']
     const WORKSPACE_PR = {
       repo: 'workspace',

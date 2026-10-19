@@ -298,7 +298,8 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
   `Workflow` tool's cap of 1000 agents. An increment is up to 56 agents on Claude and 64 on
-  Codex, so a run fits roughly 17 or 15 of them. Under the branch lifecycle the run also keeps
+  Codex with `ciFixAttempts: 3`, and 4 more for each attempt beyond three, so a run fits
+  roughly 17 or 15 of them. Under the branch lifecycle the run also keeps
   room for one theme's engineering review (twice the number of repos, plus 9) and counts each
   one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
@@ -320,7 +321,7 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`theme-review-red`** (branch lifecycle only), when a theme's engineering review could
   not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches
   and the branch is left as the theme's last row left it (see
-  [The writers review used to miss](#the-writers-review-used-to-miss)).
+  [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too)).
 
 **A failure stops the whole run.** The loop never moves on to another increment after one
 goes wrong: `tim backlog next` selects on status, `dependsOn` and `externalDependsOn` alone
@@ -461,9 +462,9 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
 | Land | 2–4 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
-| CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The writers review used to miss](#the-writers-review-used-to-miss) |
+| CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too) |
 | Theme spec check | 1–2 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched. See [The Behaviour Spec](#the-behaviour-spec) |
-| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The writers review used to miss](#the-writers-review-used-to-miss) |
+| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
@@ -548,9 +549,9 @@ update or delete that text. It also gets the implementor's notes and judges each
 departure from the plan with no sound reason, or something left alone that the change makes untrue, is a finding. The Codex group and consistency runs get the same lenses, and
 [`codex/review.md`](codex/review.md) carries them too.
 
-### The writers review used to miss
+### The CI fixer and a whole theme are reviewed too
 
-**The CI fixer.** It works after every reviewer, so its lines used to land unread. It now gets the house rules and is
+**The CI fixer.** It works after every reviewer, so nobody else reads its lines. It gets the house rules and is
 told to read the standards `tim backlog standards` lists for each file it edits, and the plan's own list. It reports
 each commit it pushes. A style reviewer (code tier) reads those commits for code quality and treats a change that only
 silences a check, such as an empty catch or a sleep in a test, as a finding. Any finding goes to one style fix, which
@@ -562,7 +563,8 @@ the loop reviews the whole theme. One think-tier reviewer per repo reads `git di
 (one rule in two places, a second mechanism, the wrong layer, a recipe left behind, two names for one concept) and
 tests (copied set-up, titles that claim too much, tests that cannot fail). Its findings go through the same verifier,
 with the same defaults by kind, then the judge. The fix-now items go to a fixer, a style re-review of its hunks and one
-second fix, a ladder over the phases the last row ran, a commit and push onto the branch, and a CI watch. It is a
+second fix, a ladder over the phases the last row ran, a commit and push onto the branch, and a CI watch on the open
+pull requests of the repos the fixes changed. It is a
 safety net: each row is still reviewed in full as it is built.
 
 - Each refuted finding is returned in `refutedFindings` and listed in a review check.
@@ -882,7 +884,7 @@ Four things to know about codex mode:
   loop preserves the attempt and stops rather than proceeding. A crashed reviewer must never
   read as approval.
 
-Per increment, codex mode is at most `39 + 3g` agents against Claude's `31 + 3g`.
+Per increment, codex mode is at most `40 + 3g` agents against Claude's `32 + 3g`.
 
 ### The branch lifecycle
 
@@ -975,6 +977,39 @@ trail — read it with:
 jq -r '.increments[] | select((.openQuestions|length)>0) | .id + ": " + (.openQuestions|join(" | "))' \
   workareas/<workarea>/backlog.json
 ```
+
+### Why the script works as it does
+
+The script carries no comments. The reasons behind its less obvious choices are here.
+
+- **Jira status names and the board id are configuration.** Every board words its statuses differently: check them
+  with `tim jira transition <key> --list`. A raised ticket stays in the board's backlog until it is moved, so the
+  board id is required.
+- **Repo keys are plain lower-case words**, because a changed file is written `<repoKey>:<path>` and routed back to
+  its repo by that prefix.
+- **An agent resolves the workspace root**, because a workflow script cannot see `$HOME`. The names the workspace
+  had before its rename still resolve, so an old clone keeps working.
+- **The run id comes from an agent's answer**, not the script's clock, so a resumed run replays the same id and its
+  prompts still match.
+- **Every backlog write and ticket move goes through tim**, which validates the backlog and writes it whole, and
+  which `Bash(tim:*)` allows wherever the run's agents work.
+- **Every prompt that runs commands says Bash is loaded**, because a light-tier agent twice reported a result
+  without calling a tool.
+- **Work branches are cut `--no-track` and every push names a fully qualified refspec.** The tests and backend repos
+  set `push.default=tracking`, so a branch tracking `origin/main` once pushed an increment straight onto `main`.
+- **Review groups by (repo, language), never by file.** Per-file review spent 87 agents on a 31-file increment,
+  29 of which found nothing. Codex reviews by group too: one Codex run over a whole change found 1 finding where
+  the grouped Claude review of the same change found 21.
+- **The agent budget is checked before an increment starts**, because a run that runs out of agents part-way
+  loses that attempt.
+- **The run stops if `tim backlog next` names the same id twice.** A failed attempt changes neither status nor
+  `dependsOn`, so a path that forgot to stop would rebuild that increment for ever.
+- **A PR the CI fixer opens in another repo joins the increment's PRs**, so the watcher waits on it and the merge
+  stage merges it.
+- **The merge stage reports a fixed `stopReason`, and one the script does not recognise reads as `main-red`.**
+  Calling a healthy pause a failure costs somebody an afternoon; calling a red base branch a pause hides it.
+  `pr-left-open` is its own outcome, because a partly merged increment needs different action from a red base
+  branch.
 
 ### Run telemetry
 

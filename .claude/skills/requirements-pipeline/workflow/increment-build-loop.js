@@ -25,118 +25,6 @@ export const meta = {
   ],
 }
 
-// ---------------------------------------------------------------------------
-// Configuration comes only from args (an object, or a JSON string). There are
-// no defaults: a missing key stops the run before any agent starts. Every
-// increment runs the one pipeline: ticket → branch → build → PR → CI → merge →
-// ticket done.
-//   workarea        path under workareas/, holding backlog.json
-//   increments      null to DRAIN the backlog: the run derives its own next
-//                   increment with `tim backlog next` after each one lands, so
-//                   one invocation builds as many as it can. Or a list of ids,
-//                   built serially in the order given — an explicit override
-//                   for a run that must build exactly those
-//   stopAfter       how many increments may LAND before the run stops: a
-//                   positive integer, or 'all'. It counts landings, not
-//                   attempts, so a stopped attempt never uses one up
-//   branch          under lifecycle 'full', the BASE branch: every increment
-//                   cuts its own branch off this one and merges back into it.
-//                   Under lifecycle 'branch', the WORKING branch itself: it
-//                   already exists in every backlog repo, every increment is
-//                   committed and pushed straight onto it, and main or master
-//                   is refused
-//   lifecycle       'full': ticket → branch → build → PR → CI → merge → ticket
-//                   done. 'branch': assert the branch → build → push → find
-//                   the open PR → CI → mark done. No Jira call of any kind, no
-//                   branch created, no PR created or edited, nothing merged.
-//                   A row may ask for a ref to be merged into a repo (its
-//                   `merge` field) and name the gate phases it owes (its
-//                   `gatePhases` field) and whether CI is awaited (`awaitCi`);
-//                   only this lifecycle reads those three. The Jira keys,
-//                   requireApproval and approvalWaitMinutes must be null here,
-//                   because nothing reads them
-//   scope           conventional-commit scope
-//   executor        'claude' (every stage a subagent) or 'codex' (implement,
-//                   review and fix delegated to Codex CLI via the briefs in codex/)
-//   jiraProject     Jira project key raised tickets land in
-//   epic            parent epic every raised ticket hangs off
-//   jiraInDevStatus  the board's working status, set when the build starts
-//   jiraDoneStatus        the board's finished status, set after the merge
-//   jiraBoard       the numeric board id raised tickets are moved onto. Board
-//                   membership is NOT a field on the issue and NOT implied by
-//                   status: a freshly raised ticket lands in the board's backlog
-//                   and stays there, invisible to the team, however many times
-//                   it is transitioned. Moving it is a separate agile call, and
-//                   this is the id it needs
-//   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
-//                   run stops
-//   ciWatchMinutes  how long one CI watch may block before it counts as RED
-//   requireApproval whether EVERY PR of an increment needs an APPROVING REVIEW
-//                   ON GITHUB before the merge stage may merge ANY of them.
-//                   Green CI is not consent: it proves the code
-//                   runs, not that anyone agreed to it. The gate is collected
-//                   for the whole increment up front, not per PR as each one is
-//                   reached — a per-PR gate merged an approved frontend and then
-//                   stopped on its unapproved sibling in the tests repo, leaving
-//                   half an increment on the base branch and CDP red. With this
-//                   on, a run stops with every PR open rather than merging
-//                   unapproved work, and resumes once someone approves.
-//                   GitHub forbids approving your own PR, so the approver is
-//                   always somebody other than whoever the run raised it as.
-//                   Set false only for a programme that genuinely wants
-//                   unattended merges. A repo can also need approval on its
-//                   own, through `requireApproval: true` on its entry in
-//                   `repos`: then its PR must be approved before ANY PR of the
-//                   increment merges, while the other repos merge on green
-//   approvalWaitMinutes  how long the merge stage may wait for those approvals
-//                   before it stops and leaves every PR open.
-//   planOnly        true: plan each increment into <workarea>/plans/<id>.md and
-//                   stop — no ticket, branch, baseline or build. false: the
-//                   whole lifecycle. It needs an explicit `increments` list:
-//                   planning a backlog you are not building has no end, because
-//                   a plan does not change what `tim backlog next` returns
-//   repos           the backlog envelope's `repos` map, whatever its keys,
-//                   copied in full: each key a lower-case word an increment's
-//                   "repos" list can name, with its workspace-relative path and
-//                   its GitHub owner/name slug. frontend, backend and tests is
-//                   one such map; perftests, stub, insfrontend and gateway is
-//                   another. The preflight stops the run when it differs from
-//                   the envelope's. Under lifecycle 'full', the key
-//                   `workspace` at path "." is the workspace repo itself:
-//                   { "path": ".", "github": "DEFRA/trade-imports-workspace" }.
-//                   Its commits leave out what it
-//                   carried in and the run's own workareas/ state, and once it
-//                   merges the run puts it back on the base branch
-//   models         required; {} takes the recommended default on every tier —
-//                   it does NOT inherit the session model. Three tiers, each
-//                   optional: think (default opus) = plan, plan review, judge,
-//                   the consistency reviewer, and a theme's engineering
-//                   reviewers and judge; code (default sonnet) = implement,
-//                   the per-group style and code reviewers, the finding
-//                   verifiers, fix, the style re-review of the fix, the
-//                   ladder, CI fix, the style review of a CI fix and its
-//                   style fix, and a theme's fixer and ladder; light (default
-//                   haiku) = every other stage — the ones that only run a
-//                   command and report what it said (start, plan lint reader,
-//                   branch, branch guard, merge start, baseline, land,
-//                   preserve, PR, CI watch, merge, done, and the Codex shell
-//                   and relay). A
-//                   tier left out takes its default; set it to "inherit" to
-//                   use the session model instead. `heavy` is a DEPRECATED
-//                   alias that sets both think and code, unless the
-//                   programme also gives one of those its own value
-//
-
-// Status names are BOARD CONFIGURATION, not constants — every board words them
-// differently and a workflow change renames them. They live here so a programme
-// never has to edit a stage. Confirm them against the board itself with
-// `tim jira transition <ANY-KEY> --list`, which names the status each
-// transition leads to.
-//
-// `jiraBoard` is the same kind of configuration. 13780 is the EUDPA board; a
-// programme on another board must say so, and the run throws at startup if the
-// id is missing rather than quietly leaving every ticket in the backlog.
-// ---------------------------------------------------------------------------
 // >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
   if (typeof rawArgs !== 'string') return rawArgs
@@ -212,36 +100,19 @@ const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
 const STOP_AFTER = CFG.stopAfter
 
-// One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
-// longer wait is that many consecutive watches, and running out of them is RED.
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 
-// Approval polls are cheap, so the window is a count of two-minute checks.
-// Running out is NOT a failure — it means nobody has looked yet, and the PR is
-// left open for them to.
 const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
-// The Workflow tool caps one run at 1000 agents over its whole lifetime. That
-// is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 56 agents on Claude and 64 on Codex,
-// its start stage, the plan lint reader after each plan, the replan of a plan whose checks the workspace denies or
-// that writes code text, the plan review, the revised plan it can send back, the second plan review and the agent
-// that records its open detail findings in the plan, the style
-// re-review of the fixer's hunks and the second fix it can send back, the style review of each of three CI fixes and
-// the style fix it can send back, the workspace commit reader, the one that
-// puts the workspace repo back on the base branch, the theme reader and its theme's spec check included, so a drain
-// of an open-ended backlog would hit the cap mid-increment and lose the attempt. Under the branch lifecycle the run
-// also keeps room for one theme's engineering review, THEME_REVIEW_AGENTS, and counts each one it runs. The run stops
-// before starting an increment that would not fit — roughly 17 increments on Claude, 15 on Codex — and
-// resuming is launching the workflow again with the same args, because
-// backlog.json already carries the status, ticket, branch and PRs. The run's
-// own agents are the workspace and preflight checks, and the one that takes
-// the workspace stack's lease at the start and the one that gives it back at
-// the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 56, codex: 64 }
+const BUDGETED_CI_FIX_ATTEMPTS = 3
+const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 56, codex: 64 }
+const AGENTS_PER_CI_FIX_ATTEMPT = 4
 const STARTUP_AGENTS = 4
-const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
+const agentsPerIncrement = () =>
+  AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES[EXECUTOR] +
+  Math.max(0, CI_FIX_ATTEMPTS - BUDGETED_CI_FIX_ATTEMPTS) * AGENTS_PER_CI_FIX_ATTEMPT
+const agentsThrough = (increments) => STARTUP_AGENTS + increments * agentsPerIncrement()
 
 if (!WORKAREA_REL) {
   throw new Error(
@@ -265,9 +136,6 @@ if (!LIFECYCLES.includes(LIFECYCLE)) {
 }
 const IS_BRANCH = LIFECYCLE === 'branch'
 
-// Under the branch lifecycle nothing raises a ticket, moves a board or merges a
-// PR, so these keys would govern nothing. They must still be passed, as null,
-// so the args say plainly that the run has no Jira and no approval gate.
 const UNUSED_ON_BRANCH_KEYS = [
   'jiraProject',
   'epic',
@@ -342,19 +210,6 @@ if (PLAN_ONLY && EXPLICIT_IDS === null) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Repos. An increment is a full-stack slice and lists the repos it touches in
-// "repos"; this table says where each one lives on disk and on GitHub. The
-// keys are whatever the backlog envelope names, under either lifecycle: the
-// preflight checks the two agree before any increment starts.
-// ---------------------------------------------------------------------------
-// Keys must be plain lower-case words, because a changed file is written
-// `<repoKey>:<path>` and routed back to its repo by that prefix. `workspace`
-// names the workspace repo itself, always at path ".". Under the full
-// lifecycle it is a repo like any other, so an increment can change the
-// factory that builds it. Under the branch lifecycle it stays reserved: a row
-// there writes in the workspace by naming no repo, and the orchestrator
-// commits it.
 const REPOS = CFG.repos
 const WORKSPACE_KEY = 'workspace'
 const WORKSPACE_PATH = '.'
@@ -398,25 +253,13 @@ for (const key of REPO_KEYS) {
   }
 }
 
-// The workspace repo can be one of the programme's repos, and any repo can
-// need a person's approval before it merges, whatever the run-level gate says.
 const WORKSPACE_CONFIGURED = REPO_KEYS.includes(WORKSPACE_KEY)
 const APPROVAL_REPO_KEYS = REPO_KEYS.filter((key) => REPOS[key].requireApproval === true)
 
-// The frontend, backend and tests keys every programme once had to use. A
-// programme that still names exactly those three keeps the rules written for
-// them: `repo: both` on an old row, the tests repo added to every UI change,
-// and backend → tests → frontend as the merge order. Any other set of keys
-// takes its merge order from the row's own `repos` list.
 const LEGACY_REPO_KEYS = ['frontend', 'backend', 'tests']
 const IS_LEGACY_KEYS =
   REPO_KEYS.length === LEGACY_REPO_KEYS.length && LEGACY_REPO_KEYS.every((key) => REPO_KEYS.includes(key))
 
-// frontend-change covers only these two repos, whatever key a programme gives
-// them, and only the sets each one ships. Its recipes, copy files and behaviour
-// spec mean nothing elsewhere. Two sets share the animals repo and a set's spec
-// namespace is not its folder name, so the set is read from where the change
-// lives, never from the repo.
 const FRONTEND_CHANGE_SETS = {
   'repos/trade-imports-animals-frontend': [
     { set: 'sets/live-animals', prefix: 'live-animals' },
@@ -427,30 +270,6 @@ const FRONTEND_CHANGE_SETS = {
 const FRONTEND_CHANGE_PATHS = Object.keys(FRONTEND_CHANGE_SETS)
 const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
 
-// ---------------------------------------------------------------------------
-// Models. Three tiers, each with a BUILT-IN default matched to the kind of
-// work the stage does:
-//   think (opus)   — plan, plan review, judge, the consistency reviewer, and
-//                    a theme's engineering reviewers and judge: the calls
-//                    that decide something, not just carry it out.
-//   code (sonnet)  — implement, the per-group style and code reviewers, the
-//                    finding verifiers, fix, the style re-review of the
-//                    fix, the ladder, CI fix, the style review of a CI fix
-//                    and its style fix, and a theme's fixer and ladder: the
-//                    calls that write, judge or repair code.
-//   light (haiku)  — every stage that only runs a command and reports what it
-//                    said: workspace resolve, preflight, derive next, start,
-//                    plan lint reader, plan review recorder, branch,
-//                    branch guard, merge start,
-//                    baseline, land, preserve, PR, CI watch, merge, done, and
-//                    the Codex shell and relay (they too only run a command
-//                    and report).
-// `{}` means "use the recommended default on every tier" — it no longer means
-// "inherit the session model". A tier left out of config.models takes its
-// default; set it to "inherit" to use the session model for that tier
-// instead. `heavy` is a DEPRECATED alias: given, it sets both think and code,
-// unless the programme also gives one of those its own value, which wins.
-// ---------------------------------------------------------------------------
 const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
 const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
@@ -473,9 +292,6 @@ for (const key of MODEL_KEYS) {
   throw new Error(`${WORKFLOW_NAME}: config.models.${key} must be one of ${KNOWN_MODEL_ALIASES.join(', ')}, or "inherit" for the session model — got ${JSON.stringify(value)}`)
 }
 
-// heavy sets think and code TOGETHER, but only where the programme did not
-// also give that tier its own value — an explicit tier always wins over the
-// deprecated alias.
 const givenModel = (tier) => RAW_MODELS[tier] ?? (tier !== 'light' ? RAW_MODELS.heavy : undefined) ?? MODEL_DEFAULTS[tier]
 
 const RESOLVED_MODELS = Object.fromEntries(
@@ -494,21 +310,9 @@ const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
 
-// A light-tier lease taker twice reported a result without calling any tool,
-// saying Bash was not loaded. It always is, so every prompt that runs commands
-// says so, guard rails or not.
 const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
   command you have not run, and never report Bash or any tool as missing without first calling it.`
 
-// ---------------------------------------------------------------------------
-// Workspace root. A workflow script has no filesystem and no environment, so it
-// cannot see $HOME — an agent resolves the root and everything else hangs off
-// what it returns. Nothing here may be a literal home directory: the run has to
-// work on whichever machine picks the programme up.
-// ---------------------------------------------------------------------------
-// The first is canonical (CLAUDE.md rule 1). The other two are the names this
-// workspace had before it was renamed, kept so a machine still carrying the old
-// clone or symlink resolves rather than throwing.
 const WORKSPACE_CANDIDATES = [
   '~/git/defra/trade-imports-workspace',
   '~/git/defra/trade-imports-animals-workspace',
@@ -563,8 +367,6 @@ if (!workspace.canonical) {
   log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
 }
 
-// The run's id comes from an agent's answer rather than the script's own
-// clock, so a resumed run replays the same id and its prompts still match.
 const RUN_ID = `ibl-${workspace.startedAt}`
 log(`${WORKFLOW_NAME}: run ${RUN_ID}`)
 
@@ -574,24 +376,17 @@ const BACKLOG = `${WORKAREA}/backlog.json`
 const BACKLOG_TILDE = `${WORKAREA_TILDE}/backlog.json`
 const PLANS = `${WORKAREA}/plans`
 
-// Every backlog write goes through tim, which validates it and writes it whole.
-// A hand-edited backlog.json is how a run corrupted its own state.
 const setRow = (id, flags) => `tim backlog set ${WORKAREA_REL} ${id} ${flags} --workspace ${TILDE} --json`
 const SET_ROW_RULE = `WRITING TO THE BACKLOG: never Edit ${BACKLOG} by hand. Every write is one \`tim backlog set\` call, shown
 where it is needed. It exits non-zero and says why if the write is refused — report that, do not work around it.`
 const SKILLS = ABS + '/.claude/skills'
 const BRIEFS = ABS + '/.claude/skills/requirements-pipeline/workflow/codex'
 const BRIEFS_TILDE = TILDE + '/.claude/skills/requirements-pipeline/workflow/codex'
-// Ticket moves go through tim too: tim is a bare command matched by
-// `Bash(tim:*)`, so the done stage does not depend on the path-prefix allow
-// rules for tools/. Why the old tools/jira call was denied inside the loop's
-// agents is not yet known.
 const jiraTransition = (key, statusOrList) => `tim jira transition ${key} ${statusOrList} --workspace ${TILDE} --json`
 
 const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))
 const GH_REPO = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].github]))
 
-// The workspace repo sits at "." — the root itself, not a folder under it.
 const isWorkspaceRepo = (key) => REPO_PATH[key] === WORKSPACE_PATH
 const repoTilde = (key) => (isWorkspaceRepo(key) ? TILDE : `${TILDE}/${REPO_PATH[key]}`)
 const repoAbs = (key) => (isWorkspaceRepo(key) ? ABS : `${ABS}/${REPO_PATH[key]}`)
@@ -623,26 +418,11 @@ row has no \`repos\` at all, every configured repo: ${REPO_KEYS.join(', ')}.`
 
 const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 
-// ---------------------------------------------------------------------------
-// The workspace repo as one of an increment's repos. It is never clean: it
-// carries the run's own backlog, plans and logs under workareas/, and often
-// somebody's work in progress, across every branch switch. `tim build start`
-// records what it carried before the increment touched it, and nothing it
-// carried, nor anything under workareas/ the row does not name, is the
-// increment's. Its result names the carried files outside workareas/ (up to a
-// limit) and counts the rest: hundreds of other programmes' files under
-// workareas/ once ran its one JSON line past what an agent can copy back. The
-// file it names lists every carried file. Set for each increment from the
-// start stage's result: null when the increment does not build in the
-// workspace repo.
-// ---------------------------------------------------------------------------
 let workspaceInIncrement = null
 const buildsWorkspace = () => workspaceInIncrement !== null
 
 const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
 
-// An older tim gave preexistingDirty as every carried path, under workareas/
-// too, and no summary: then the list is whole and there is no file.
 const workspaceCarriedFrom = (started) => {
   const named = started.preexistingDirty ?? []
   const summary = started.preexistingDirtySummary
@@ -654,7 +434,6 @@ const workspaceCarriedFrom = (started) => {
   }
 }
 
-// Every carried file outside workareas/ is named in the result.
 const carriedNamedInFull = () => workspaceInIncrement.carried.length >= workspaceInIncrement.outsideWorkareas
 
 const carriedListFile = () => `${TILDE}/${workspaceInIncrement.listedIn}`
@@ -698,10 +477,6 @@ ${carriedList(workspaceInIncrement.carried)}${carriedRest()}
   increment uses the copy on this branch.`
     : ''
 
-// A CI fixer may reach into a repo the increment did not start with, the
-// workspace included, and the workspace always carries files that are not the
-// increment's. When the increment builds in it, the full rule is in the guard
-// rails; otherwise the fixer gets this one.
 const ciFixerWorkspaceRule = () =>
   buildsWorkspace()
     ? ''
@@ -714,11 +489,6 @@ and logs under \`workareas/\`, and often somebody's work in progress. If your fi
   \`git -C ${TILDE} commit -m "<message>" -- <paths>\`. Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec.
 - Never edit this loop's own script, \`${LOOP_SCRIPT}\`.`
 
-// Commit and rollback act on every configured repo with changes, not only the
-// ones the row or the plan named: an implementor that fixed a stale spec in the
-// tests repo must not leave it staged for the next increment to trip over. The
-// workspace repo always has changes of its own, so it counts only when the
-// increment builds in it, and then only for what is the increment's.
 const changedReposRule = () => {
   const keys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY || buildsWorkspace())
   const workspaceLine = buildsWorkspace()
@@ -730,18 +500,13 @@ const changedReposRule = () => {
 with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.${workspaceLine}`
 }
 
-// Every row's spec sync — frontend-change's Step 5, or the same duty without
-// the skill — writes the workspace's own behaviour spec under openspec/ and
-// leaves it uncommitted. The workspace is not a configured repo and is never
-// branched, so without this no stage commits those edits, they pile up across
-// a run, and a rolled-back increment leaves a spec for behaviour that is gone.
 const SPEC_RULE = `THE BEHAVIOUR SPEC: an increment may also change \`${TILDE}/openspec/\`, the workspace repo's own spec and
 coverage, which every row's spec sync writes and leaves uncommitted. The workspace is not a configured repo and is never
 branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and never on anything else in the
 workspace — not the backlog, not the plans, not the logs. See what it holds with
 \`git -C ${TILDE} status --short -- openspec/\`.`
 
-// >>> house-rules: the block between the house-rules markers of .claude/rules/code-quality.md, checked by tim/src/backlog/workflow-contract.test.js
+// >>> house-rules
 const HOUSE_RULES = `**Comments**
 
 - Write code that needs no comment. If a name or an extracted function can say it, rename or extract instead.
@@ -809,19 +574,8 @@ const HOUSE_RULES_TO_REPAIR = houseRulesFor(
   'every repair you make: every line of code, comment, name, test title and log line you write'
 )
 
-// ---------------------------------------------------------------------------
-// The Behaviour Spec is kept current by every row, whatever its repos — not only
-// a row frontend-change builds. The plan names the edits (its section 8), the
-// implementor makes them (through frontend-change's Step 5 where the row is
-// routed there, by the same duty without it otherwise), the consistency
-// reviewer checks them, the ladder validates them again, and land commits them
-// by SPEC_RULE, with the same rollback. A row that changes nothing the spec
-// records says so, with its reason, and reviewers check the reason.
-// ---------------------------------------------------------------------------
 const SPEC_PREFIXES = ['live-animals', 'germinal-products', 'plants', 'ins', 'admin']
 
-// What spec-catchup and spec-cover call each prefix's set: what a person types
-// after "catch-up and cover".
 const SPEC_SET_NAMES = {
   'live-animals': 'animals',
   'germinal-products': 'germinal',
@@ -830,9 +584,6 @@ const SPEC_SET_NAMES = {
   admin: 'admin'
 }
 
-// The prefixes a repo's change can reach. A repo with no journey of its own —
-// reference data, the gateway, the stubs, the schemas, the test suites — is
-// spec'd under whichever prefix's behaviour it alters, which the plan names.
 const SPEC_PREFIXES_BY_REPO_PATH = {
   'repos/trade-imports-animals-frontend': ['live-animals', 'germinal-products'],
   'repos/trade-imports-animals-backend': ['live-animals', 'germinal-products'],
@@ -846,9 +597,6 @@ const SPEC_PREFIXES_BY_REPO_PATH = {
 
 const SPEC_VALIDATE = `${TILDE}/tools/frontend-change/openspec-validate.sh`
 
-// Validate and lint judge a whole capability, so a failure already in one a
-// row writes would otherwise be nobody's: every stage calls it pre-existing and
-// the ladder stops on it.
 const SPEC_WHOLE_CAPABILITY = `Validation and lint judge the WHOLE capability, not only your lines, so a failure in a
    capability this row writes is this row's to fix even where it predates the row: an over-long requirement, a scenario
    missing, a lint finding. Fix it in place by ${ABS}/openspec/config.yaml's rules, keeping the behaviour it states:
@@ -867,8 +615,6 @@ const SPEC_PREFIX_TABLE = `WHICH PREFIX, by repo and set:
 - Any other repo — reference data, the gateway, a stub, the schemas — → the prefix whose observable behaviour the change
   alters, or none. A tests-repo change adds or moves coverage links; it changes no spec text on its own.`
 
-// What openspec/config.yaml says the spec records, so "is this wording or
-// layout change spec'd?" has one answer in every prompt.
 const SPEC_RECORDS = `WHAT THE SPEC RECORDS (${ABS}/openspec/config.yaml owns this): observable behaviour only — what a user, an
 operator or another system sees. That is each page's exact title (its H1, from the \`title\` key in its copy files,
 not its legend), the question it asks and the controls it offers, any wording a requirement or scenario quotes (a hint,
@@ -925,8 +671,6 @@ const specSyncPlanSection = () => `   8. Spec sync — every row has one, whatev
 ${SPEC_RECORDS}
 ${SPEC_PREFIX_TABLE}`
 
-// Agents write the line as a bullet, a numbered item, a quote or in bold as
-// often as bare, so the markers around the label are allowed and dropped.
 const SPEC_SYNC_PATTERN = /^[ \t>*_`+-]*(?:\d+[.)][ \t]+)?[*_`]*Spec sync[*_`]*:[*_`]*(.*)$/gim
 const specSyncLinesIn = (text) =>
   [...String(text ?? '').matchAll(SPEC_SYNC_PATTERN)].map(([, rest]) => `Spec sync: ${rest.trim()}`.trimEnd())
@@ -977,8 +721,6 @@ const ladderCompletionStep = (implementorNotes, fixerNotes) => `2b. PROBES AND D
    reported" in failures[], naming the label. A fixer with no line is normal when the implementor reported one.
    Run nothing more here: the consistency reviewer has judged what the lines claim.`
 
-// A prefix named in a Spec sync line, as the start of a capability path. The
-// character class keeps `sets/high-risk-plants/` from reading as `plants/`.
 const specPrefixesIn = (text) => {
   const lines = specSyncLinesIn(text).join('\n')
   return SPEC_PREFIXES.filter((prefix) => new RegExp(`(^|[^a-z-])${prefix}/`).test(lines))
@@ -1009,15 +751,9 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC.
    reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.
    ${SPEC_WHOLE_CAPABILITY}`
 
-// An increment that builds in the workspace repo carries its spec changes in
-// that repo's own commit, on the increment's branch, like any other file.
 const SPEC_IN_WORKSPACE = `THE BEHAVIOUR SPEC: \`${TILDE}/openspec/\` is part of the workspace repo, one of this increment's
 repos, so a change under it is this increment's like any other file there, under THE WORKSPACE REPO rule.`
 
-// A programme that builds the workspace as a repo merges its changes by pull
-// request. A spec change from an increment that does not name it has no branch
-// to go on, and committing it where the workspace stands would put it on the
-// base branch with no review.
 const specLandStep = () => {
   if (buildsWorkspace()) return `4a. ${SPEC_IN_WORKSPACE} It goes in the workspace repo's commit, staged by explicit path.`
   if (WORKSPACE_CONFIGURED) {
@@ -1044,37 +780,15 @@ const specBaselineLine = () =>
     : `   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.`
 
-// The repo's own rungs — format, lint, typecheck, unit, `mvn verify`, FIT and
-// E2E — belong to `tim build gate`, which reads them from gates.json and runs
-// E2E against the workspace stack under the run's lease. Agents that picked
-// those scripts by hand picked a remote CDP one, ran unit tests against a stack
-// left up and called a real failure "pre-existing". A stage that owes every
-// phase makes one `--phase all` call, which runs the phases side by side; a
-// stage that owes only some makes one call per phase.
 const GATE_PHASES = ['unit', 'fit', 'e2e']
 const WHOLE_GATE = 'all'
 const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 
-// ---------------------------------------------------------------------------
-// The workspace stack is leased to the run, not to a stage. The run takes the
-// lease once, before its first increment, and gives it back once, after its
-// last, whatever stopped it — so the stack stays up across every increment
-// and nothing in between starts, stops or rebuilds it but the gate, which
-// reuses the run's lease. ins-performance-testing inc-001 is why the lease
-// exists at all: a plan check started the stack, its stage returned with it
-// still up, and the next stage found it in nobody's hands. A stage that finds
-// the stack in somebody else's hands returns `stackHeld`; the script, not the
-// agent, decides what happens next.
-// ---------------------------------------------------------------------------
 const RUN_HOLDER = RUN_ID
 
-// A whole gate across several repos outlasts the Bash tool's 600s ceiling, so
-// every gate also writes its result to a file that `tim build gate-wait` reads
-// once the call that started it has been moved to the background.
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
   `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)}`
-// A one-repo-at-a-time gate over five repos runs well past an hour and a half.
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `A LONG GATE. A gate across several repos often runs longer than one Bash call allows. When the tool reports
   that a gate command exceeded its timeout and was MOVED TO THE BACKGROUND, the gate is still running and nothing is
@@ -1136,7 +850,6 @@ lease is still this run's and \`result.up\` is true, the check failed for a reas
 
 const BUILDER_PHASES = ['unit', 'fit']
 
-// The branch lifecycle narrows the builder's phases to the row's gatePhases.
 const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
   `${
     phases.length === 0
@@ -1155,14 +868,9 @@ never start or stop the workspace stack, and never pick a script by hand for a r
 The plan's sections 5 and 6 checks are yours to run as the plan writes them.
 ${RUN_STACK_RULE}`
 
-// Codex has a normal shell and reads absolute paths; its sandbox cannot start
-// a browser, so it runs only the gate's unit phase, under the run's lease
-// like every other gate call.
 const codexGateUnit = (id, stage) =>
   `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"`
 
-// A branch-lifecycle row whose gatePhases leave out unit runs no gate phase
-// in its builders, Codex's included. The briefs read `none` as exactly that.
 const CODEX_NO_GATE = 'none'
 const codexGateBinding = (id, stage, phases) => (phases.includes('unit') ? codexGateUnit(id, stage) : CODEX_NO_GATE)
 
@@ -1186,13 +894,6 @@ const describeGateRung = ({ repo, name, phase, ok, log: rungLog, reason }) =>
 const baselineRungList = (baseline) =>
   (baseline?.rungs ?? []).map(describeGateRung).join('\n') || '   (the baseline reported no rungs)'
 
-// ---------------------------------------------------------------------------
-// Review groups. One style reviewer and one code reviewer per (repo, language)
-// group of changed files, never per file: per-file review spent 87 agents and
-// 81% of fresh tokens on a 31-file increment, 29 of them returning nothing.
-// A group over REVIEW_GROUP_CAP files splits into near-equal parts, so no one
-// reviewer is handed more than it can read in full.
-// ---------------------------------------------------------------------------
 const REVIEW_GROUP_CAP = 12
 const DOCS_LANGUAGE = 'docs'
 const LANGUAGE_BY_EXTENSION = {
@@ -1214,9 +915,6 @@ const LANGUAGE_BY_EXTENSION = {
 
 const repoKeyOfPath = (repoPath) => REPO_KEYS.find((key) => REPO_PATH[key] === repoPath)
 
-// A docs row under the branch lifecycle writes in the workspace repo itself,
-// and every row's spec sync writes `openspec/` there, reported as
-// `workspace:<path>`, so review and verification can be routed there too.
 const FILE_REPO_KEYS = [...new Set([...REPO_KEYS, WORKSPACE_KEY])]
 
 const repoOfFile = (file) => {
@@ -1249,8 +947,6 @@ const groupByReviewKey = (items, fileOf) => {
 const partName = (repo, language, index, partCount) =>
   partCount > 1 ? `${repo}-${language}-${index + 1}` : `${repo}-${language}`
 
-// Each group carries its distinct files and the items (files or findings)
-// that fall on them; a split divides by file, never across one file's items.
 const reviewGroupsOf = (items, fileOf) =>
   [...groupByReviewKey(items, fileOf).entries()].flatMap(([key, groupItems]) => {
     const [repo, language] = key.split('/')
@@ -1270,9 +966,6 @@ const findingFile = (finding) => finding.file || WHOLE_CHANGE
 const groupFilesForReview = (fileList) => reviewGroupsOf(fileList, (file) => file)
 const groupFindingsForVerification = (findings) => reviewGroupsOf(findings, findingFile)
 
-// The workspace repo as an increment's own repo is staged like any other. Its
-// edits otherwise — a branch-lifecycle docs row's, and a spec write in an
-// increment that does not build there — are left unstaged until land.
 const isWorkspaceGroup = (group) => group.repo === WORKSPACE_KEY && !buildsWorkspace()
 
 const groupRepoPath = (group) => {
@@ -1281,40 +974,11 @@ const groupRepoPath = (group) => {
 }
 const groupFileList = (group) => group.files.map((file) => `- ${file}`).join('\n')
 
-// Unstaged workspace edits are read against HEAD rather than from the index.
-// A new file shows nowhere in a diff: it is read in full.
 const groupDiffCommand = (group) =>
   isWorkspaceGroup(group)
     ? `\`git -C ${TILDE} diff HEAD -- <path>\` (a new, untracked file shows in no diff: Read it in full)`
     : `\`git -C ${groupRepoPath(group)} diff --staged -- <path>\``
 
-// Canonical merge order for a cross-repo increment. Lower merges first.
-//
-// backend before frontend: the backend is the provider and the frontend the
-// consumer, so the base branch is never left holding a frontend that calls an
-// endpoint which is not there yet.
-//
-// tests before frontend: CDP runs the tests repo's suite against the deployed
-// frontend, so a frontend that merges ahead of its own test fixes is exercised
-// by stale specs and CDP goes red. That has happened.
-//
-// `prs` is built by append — the PR stage raises in `repos` order and a CI
-// fixer pushes whatever it had to open on the end — so the array's own order is
-// an accident of when a PR appeared, not a merge plan. Sort it here rather than
-// asking the merge agent to reorder: order is a decision the script owns.
-//
-// Those three reasons are about the frontend, backend and tests keys. A
-// programme with any other keys — a perf-test repo, two stubs, five services
-// — has no fixed rank to look up, so the row's own `repos` list is the merge
-// order: the backlog writes it provider before consumer, the start stage
-// copies it as written, and the planner says under risks where it is wrong.
-// A PR in a repo the row did not name (a CI fixer's) merges last.
-//
-// The workspace repo merges after everything else, wherever the row puts it,
-// even after a CI fixer's PR. It is never deployed, so nothing on the base
-// branch consumes it; it is the factory the next increment runs on, so it
-// changes only once everything it was built alongside has merged, and a stop
-// part-way leaves the base branch's factory as it was.
 const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
 const UNRANKED = Number.MAX_SAFE_INTEGER
 const WORKSPACE_RANK = Number.POSITIVE_INFINITY
@@ -1348,7 +1012,6 @@ EVERY PR of the increment must be GREEN — AND, where the approval gate is on, 
 MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
 auto-reverts it.`
 
-// Where the planner is told the order its repos[] comes back in.
 const PLAN_MERGE_ORDER = IS_LEGACY_KEYS
   ? 'in merge order: backend, then tests, then frontend'
   : `in merge order: the order the increment's \`repos\` list gives them, which is the order the merge stage merges in.
@@ -1356,13 +1019,8 @@ That order must put a provider before its consumer — a service before a fronte
 service that calls it, and a tests or performance-tests repo after every service it exercises. Where the row's
 order does not, keep the row's order in repos and say so under risks, naming the order it should have${WORKSPACE_CONFIGURED ? `. Whatever the order, the workspace repo merges last, after every other` : ''}`
 
-// A `blocked` line means the stage hit something no fixer can fix. It stops the
-// run without spending fix attempts on it.
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
-// Any refusal — another run, another session, or a stack up with no lease —
-// is a human's ruling, and stops the run. A lease this run holds is never a
-// refusal: the gate and every stage reuse it.
 const describeStackHolder = (holder) =>
   holder ? `"${holder}"` : 'nobody: no lease names it, so somebody released this run\'s lease or started the stack by hand'
 
@@ -1399,8 +1057,6 @@ const RUN_LEASE_RELEASE_SCHEMA = {
   additionalProperties: false
 }
 
-// Started from local source, so every increment's E2E runs against this
-// machine's checkouts. The gate rebuilds what an increment changed.
 const acquireRunLease = () =>
   agent(
     `You are the LEASE TAKER for build run ${RUN_ID}. You take the workspace stack's lease for the whole run, before
@@ -1444,9 +1100,6 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
 - A repo may be MID-MERGE by design (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA). Never
   commit, continue, abort or reset that merge unless your own task below tells you to.`
 
-// ins-performance-testing inc-001 also left the perftests repo's own stand-in
-// container running: its `docker compose run` checks started the services in
-// their `depends_on` and nothing took them down.
 const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
   \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
   project down. Leave nothing running that you started.`
@@ -1457,9 +1110,6 @@ const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim doc
   \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
 ${OTHER_COMPOSE_GUARD}`
 
-// The lease stages' own rule. Given the general one, which forbids the very
-// command their task names, a Haiku lease taker twice returned without running
-// anything and blamed a Bash tool it had (journey-foundation, 9 Oct 2026).
 const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
   \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
   you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
@@ -1469,18 +1119,11 @@ ${OTHER_COMPOSE_GUARD}`
 const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against the
 stack the run already holds, as THE WORKSPACE STACK below says.`
 
-// Codex runs under the run's lease too, so it can reach the stack the run
-// holds; its sandbox still cannot launch a browser.
 const CODEX_SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against
 the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. Never acquire or release that lease, and
 never start, stop or rebuild the stack. Skip a check that launches a browser, or one that cannot reach the stack: the
 gate's E2E phase proves it, after review. Its absence is not a finding.`
 
-// The programs .claude/settings.json denies as the first word of a Bash
-// command. ins-performance-testing inc-023 and inc-011 each stopped at
-// ladder-red with nothing broken: their plans proved things with curl,
-// `bash <script>` and `VAR=value` prefixes, which the ladder could not run.
-// Ruled 6 Oct 2026: the planner writes allowed forms; the deny list stays.
 const DENIED_PROGRAMS = [
   'bash',
   'sh',
@@ -1510,8 +1153,6 @@ const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
 
 const firstWordOf = (command) => command.trim().replace(/^`+/, '').trim().split(/\s+/)[0] ?? ''
 
-// `test:fit` serves a frontend on its default port, which the leased stack
-// already holds, so it can never start during a run. `test:fit:ci` is clear.
 const FIT_ON_STACK_PORT = /\brun test:fit(?!:)/
 
 const isDeniedCommand = (command) => {
@@ -1565,30 +1206,10 @@ ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 
 const BASE_GUARDRAILS = baseGuardrails(STACK_GUARD)
 
-// Every stage of an increment that builds in the workspace repo is told how
-// that repo differs from the others.
 const guardrails = () => `${BASE_GUARDRAILS}${workspaceRepoRule()}`
 
 const leaseGuardrails = (verb) => `${baseGuardrails(leaseStackGuard(verb))}${workspaceRepoRule()}`
 
-// How every stage pushes, and why it looks paranoid.
-//
-// A stage once put a commit straight onto the tests repo's `main`. No PR, no CI,
-// no approval — and the merge stage was innocent: it had merged nothing at all.
-// Two things combined:
-//
-//   1. `git checkout -b <work> origin/main` sets the new branch's upstream to
-//      `origin/main`, because git's default `branch.autoSetupMerge` tracks a
-//      remote-tracking start point. The branch is now *named* for the increment
-//      and *pointed at* main.
-//   2. the tests and backend repos are configured
-//      `push.default=tracking`, so a push that has to resolve its own
-//      destination resolves it to that upstream — `main`.
-//
-// So the fix is at both ends: cut with `--no-track` so no work branch ever
-// carries the base branch as upstream, and push with an explicit fully-qualified
-// refspec so no push ever has a destination left to resolve. Either alone would
-// have stopped it; a stage that pushes is worth two locks.
 const HEAD_BRANCH_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\``
 
 const BRANCH_PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
@@ -1614,9 +1235,6 @@ ${HEAD_BRANCH_CHECK}
 If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
 Do not commit "just this once" and sort the branch out afterwards.`
 
-// Preserving a failed attempt. A stash is machine-local: on another machine the
-// ref means nothing and the work is gone. The increment already owns a branch,
-// so the work is committed and PUSHED there and travels.
 const preserveWork = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${guardrails()}
@@ -1644,11 +1262,6 @@ NEVER \`reset --hard\`, NEVER \`clean -fd\`.
 Report the branch name and the wip SHA.
 Return the structured output only.`
 
-// Under the branch lifecycle the branch is shared and carries open PRs, so a
-// failed attempt must never reach it: a wip commit there would show failing
-// work to every reviewer, and a commit made mid-merge would conclude a merge
-// nobody finished resolving. The attempt goes to patch files under logs/ and
-// the merge is aborted, which leaves the tree clean for the next run.
 const preserveWorkOnBranch = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK WITHOUT COMMITTING ANY OF IT.
 ${guardrails()}
@@ -1692,9 +1305,6 @@ Do NOT commit, do NOT push, do NOT open or edit a pull request.
 Report the patch files, the stash refs and which merges you aborted.
 Return the structured output only.`
 
-// Every stop after the implementor has touched the tree goes through here, so
-// the tree is left clean and the attempt recoverable. A stop that only records
-// its outcome leaves staged work the next run's baseline refuses.
 const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail }) => {
   log(`${id}: ${outcome.toUpperCase()} — preserving the attempt. ${detail}`)
   const kept = await agent(
@@ -1711,13 +1321,7 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
   }
 }
 
-// The Codex fix stage of hrp-origin-codex inc-001 cut `spike/hrp-origin-codex-inc-001`
-// in the backend "because no separate increment branch existed" and staged its
-// fixes there; land then refused the repo. Run after every Codex stage and
-// before land, this puts such a repo back when that is safe and stops when not.
 const branchGuard = (id, stageName, phaseName, branch, branchedRepos) => {
-  // The workspace repo is never clean, so a dirty tree says nothing about it:
-  // it is checked only when the increment builds in it.
   const otherRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
   const reposToCheck = branchedRepos
     ? `the increment's repos — ${branchedRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')} — and any other
@@ -1789,18 +1393,11 @@ const STACK_DOWN_PROPERTY = {
   description: "ONLY when the lease is still this run's but tim's result.up is false: the stack went down under the run. Leave it out otherwise"
 }
 
-// The stages that may use the workspace stack under the run's lease, and so
-// may find it in somebody else's hands, or gone: implement, fix, the
-// consistency reviewer, baseline and ladder.
 const withStackHeld = (schema) => ({
   ...schema,
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY, stackDown: STACK_DOWN_PROPERTY }
 })
 
-// Docker Desktop can quit under a run: a Homebrew cask upgrade quits it, then
-// fails at sudo and never reopens it. tim brings Docker back when it finds the
-// daemon gone, so the run takes its own lease again, which starts the stack
-// under it, and runs the stage once more.
 const recoverDownStack = async (id, stage, runStage) => {
   const first = await runStage()
   if (!first?.stackDown) return first
@@ -1824,10 +1421,6 @@ const LEASE_OWNER_SCHEMA = {
   }
 }
 
-// A stage's stackHeld is its own reading of tim, and a stage has filled it in
-// with `holder: null, detail: "not held"` while the lease was still this run's
-// — turning a red baseline into a stack-held stop. The script asks the lease
-// file itself before it believes one.
 const confirmStackHeld = async (id, stage, held) => {
   if (!held) return null
   const owner = await agent(
@@ -1859,11 +1452,6 @@ const CI_FIX_COMMITS_PROPERTY = {
   }
 }
 
-// The CI fixer's schema is the increment schema plus a channel for a PR it had
-// to open in a repo the increment did not start with — a frontend change whose
-// fix lands in the tests repo, typically. Without somewhere to report that, a
-// fixer that raises a second PR leaves it invisible to every later stage, and
-// the increment merges half of itself.
 const CI_FIX_SCHEMA = {
   type: 'object',
   required: ['ok', 'summary'],
@@ -2473,10 +2061,7 @@ const LAND_SCHEMA = {
 
 const withoutWorkspacePrefix = (file) => file.replace(new RegExp(`^${WORKSPACE_KEY}:`), '').replace(/^\.\//, '')
 
-// What the workspace branch commits, read from git rather than from what the
-// land agent says it staged: every file committed on it since the base branch,
-// so an earlier attempt's wip commit is checked too.
-const WORKSPACE_COMMIT_SCHEMA = {
+const COMMAND_OUTPUT_SCHEMA = {
   type: 'object',
   required: ['exitCode', 'stdout'],
   properties: {
@@ -2494,7 +2079,7 @@ ${BASE_GUARDRAILS}
 \`git -C ${TILDE} log --name-only --format= origin/${BASE_BRANCH}..HEAD\`
 Report its exit code, and in \`stdout\` everything it printed, word for word, every line. Never summarise, sort, filter or
 correct it, and run nothing else. The loop reads the list itself.`,
-    light({ label: `${id} workspace commit`, phase: 'Land', schema: WORKSPACE_COMMIT_SCHEMA })
+    light({ label: `${id} workspace commit`, phase: 'Land', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
 const committedPathsOf = (stdout) =>
@@ -2507,16 +2092,6 @@ const committedPathsOf = (stdout) =>
     )
   ]
 
-// A path committed on the workspace branch that the increment does not own:
-// one the workspace carried in, or the run's own state under workareas/ that no
-// stage reported changing. The start result names only some carried files, so
-// this is in two parts. `leaked` is what the named ones and the workareas/ rule
-// settle on their own. `toLookUp` is every other committed path that may still
-// be carried: one under workareas/ that a stage reported (the result counts
-// those, never names them), and, when the result could not name every carried
-// file outside workareas/, every committed path outside it not yet leaked.
-// Each one in `toLookUp` is looked up in the file that lists every carried
-// file, and leaks if it is there.
 const isRunState = (path) => path.startsWith('workareas/')
 
 const workspaceLeaks = (committed, changedFiles) => {
@@ -2535,10 +2110,6 @@ const shellQuoted = (text) => `'${String(text).replaceAll("'", `'\\''`)}'`
 const carriedLookupCommand = (paths) =>
   `grep -Fx ${paths.map((path) => `-e ${shellQuoted(path)}`).join(' ')} ${carriedListFile()}`
 
-const CARRIED_LOOKUP_SCHEMA = WORKSPACE_COMMIT_SCHEMA
-
-// grep exits 0 when it found some, 1 when it found none, and 2 when it could
-// not read the file.
 const GREP_FOUND_NONE = 1
 
 const lookUpCarried = (id, paths) =>
@@ -2549,11 +2120,9 @@ ${BASE_GUARDRAILS}
 \`${carriedLookupCommand(paths)}\`
 Report its exit code, and in \`stdout\` everything it printed, word for word, every line. An exit code of 1 with nothing
 printed is an ordinary answer: report it as it is. Never summarise, sort, filter or correct it, and run nothing else.`,
-    light({ label: `${id} carried lookup`, phase: 'Land', schema: CARRIED_LOOKUP_SCHEMA })
+    light({ label: `${id} carried lookup`, phase: 'Land', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-// Which of `paths` the workspace carried, from the file that lists them all.
-// null when that cannot be told: no file, or a lookup that failed.
 const carriedAmong = async (id, paths) => {
   if (paths.length === 0) return []
   if (!workspaceInIncrement.listedIn) return null
@@ -2722,12 +2291,6 @@ const planStandardsLine = (plan) =>
     ? `\nTHE STANDARDS THE PLAN LISTS. Read each one in full before you write: ${plan.standards.map((path) => `\`${path}\``).join(', ')}.`
     : ''
 
-// ---------------------------------------------------------------------------
-// Codex delegation. A workflow script has no shell of its own, so a codex stage
-// is two agents: a shell that runs `codex exec` and reports ONLY whether it ran,
-// and a relay that re-emits what Codex wrote. Splitting them keeps "the run died"
-// distinguishable from "Codex reviewed the change and found nothing".
-// ---------------------------------------------------------------------------
 const CODEX = {
   implement: {
     brief: 'implement.md',
@@ -2747,8 +2310,6 @@ const CODEX = {
   }
 }
 
-// A stage that fans out (review, one Codex run per group) names each run with
-// its own slug, so every run has its own prompt, result and log.
 const codexPaths = (id, slug) => ({
   promptFile: `${WORKAREA}/logs/${id}-${slug}.prompt.md`,
   promptFileTilde: `${WORKAREA_TILDE}/logs/${id}-${slug}.prompt.md`,
@@ -2757,8 +2318,6 @@ const codexPaths = (id, slug) => ({
   runLog: `${WORKAREA_TILDE}/logs/${id}-${slug}.log`
 })
 
-// Every configured repo, `<key>=<absolute path>`, whatever the keys are. The
-// briefs name no repo of their own.
 const CODEX_REPOS = REPO_KEYS.map((key) => `${key}=${repoAbs(key)}`).join(', ')
 
 const bindingLines = (bindings) =>
@@ -2857,9 +2416,6 @@ Return the structured output only.`,
   )
 }
 
-// Returns null when the stage could not produce a result — a dead shell agent, a
-// codex run that never wrote one, or a dead relay. Callers must treat null as a
-// failure to review/implement/fix, never as an empty-but-valid result.
 const codexStage = async (id, stage, options) => {
   const slug = options.slug ?? stage
   const run = await codexRun(id, stage, options)
@@ -2875,11 +2431,6 @@ const codexStage = async (id, stage, options) => {
 const codexNoResult = (id, slug) =>
   `the codex ${slug} stage produced no result — the run or its relay failed. See ${WORKAREA}/logs/${id}-${slug}.log`
 
-// ---------------------------------------------------------------------------
-// Plan — the row says what, why and acceptance; the planner records the
-// decisions, homes and owners against the live tree, immediately before it is
-// built, and a plan reviewer checks them before any code exists.
-// ---------------------------------------------------------------------------
 const standardsKeys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
   .map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``)
   .join(', ')
@@ -2913,7 +2464,6 @@ Leave the
 in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.`
   : ''
 
-// Only a programme that builds a repo frontend-change covers is sent to it.
 const FRONTEND_CHANGE_PLAN_LINE = FRONTEND_CHANGE_KEYS.length
   ? `
    - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
@@ -2950,9 +2500,6 @@ GATE PHASES: the row's \`gatePhases\`, when present, is the subset of unit, fit 
 leaves out e2e, the end-to-end proof belongs to another row: say so in section 4 rather than planning one.
 `
 
-// A programme that builds the workspace as a repo commits every workspace
-// change through it, openspec/ included, so a plan that writes there without
-// the workspace among its repos has nowhere to land it.
 const branchedWorkspaceLine = (branchedRepos) =>
   WORKSPACE_CONFIGURED && !branchedRepos.includes(WORKSPACE_KEY)
     ? ` The workspace repo is not among them: a plan
@@ -3163,7 +2710,7 @@ ${BASE_GUARDRAILS}
 Report its exit code, and in \`stdout\` everything it printed, word for word, every line. An exit code of 1 with nothing
 printed is an ordinary answer: report it as it is. Never summarise, sort, filter or correct it, and run nothing else.
 The loop reads the lines itself.`,
-    light({ label, phase: 'Plan', schema: WORKSPACE_COMMIT_SCHEMA })
+    light({ label, phase: 'Plan', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
 const codeTextOf = async (id, label) => {
@@ -3207,7 +2754,7 @@ const refusedUnlessClean = async (id, plan, lintLabel) => {
   return { ...plan, ok: false, summary: planProblemList(problems, true) }
 }
 
-const planWithAllowedChecks = async (id, branchedRepos = null) => {
+const planPassingLint = async (id, branchedRepos = null) => {
   const plan = await planIncrement(id, branchedRepos, { label: `${id} plan` })
   if (!plan?.ok) return plan
   const problems = await planProblemsOf(id, plan, `${id} plan lint`)
@@ -3367,7 +2914,7 @@ const withMustAddress = async (id, plan, findings) => {
 }
 
 const reviewedPlan = async (id, branchedRepos = null) => {
-  const plan = await planWithAllowedChecks(id, branchedRepos)
+  const plan = await planPassingLint(id, branchedRepos)
   if (!plan?.ok) return plan
   const review = await reviewPlan(id, { label: `${id} plan review` })
   if (!review) return noPlanReview(plan)
@@ -3421,10 +2968,6 @@ const PREFLIGHT_SCHEMA = {
   additionalProperties: false
 }
 
-// A stacked theme branch lives in repos its rows never build, so the stack in
-// CI runs that repo's branch image. A branch image is published only from a
-// pull request: without one, CI falls back to :latest and the theme's E2E goes
-// red on code its base branches already changed.
 const BRANCH_PR_STEP = IS_BRANCH
   ? `
 3. \`tim workspace status --workspace ${TILDE} --json\`. For every entry of \`result\` whose \`branch\` is
@@ -3451,9 +2994,6 @@ if (!preflight || !preflight.ok) {
   )
 }
 
-// The gate reads the envelope's repos and every stage reads the args', so the
-// two must name the same repos at the same paths. Checked here, by the script,
-// before any increment — planOnly included — rather than trusted to an agent.
 const envelopeRepoProblems = (envelopeRepos) => {
   const envelopeKeys = envelopeRepos.map((entry) => entry.key)
   const shared = envelopeRepos.filter((entry) => REPO_KEYS.includes(entry.key))
@@ -3495,10 +3035,6 @@ if (ENVELOPE_REPOS === null) {
   }
 }
 
-// Deriving the next increment is a shell command, and a workflow script has no
-// shell — hence an agent for one `tim backlog next` call. It reads the id out
-// of the JSON envelope rather than the text rendering, so "NONE" never has to
-// be told apart from an increment that happens to be called that.
 const NEXT_SCHEMA = {
   type: 'object',
   required: ['ok', 'summary'],
@@ -3526,14 +3062,6 @@ ${RUN_WITH_BASH}`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
 
-// ---------------------------------------------------------------------------
-// Start — under the full lifecycle, one `tim build start` call derives the
-// increment, gives it its ticket (reused, or raised and recorded at once, put
-// in the working status and moved onto the board) and puts its repos on its
-// branch. It replaced three agents whose retellings misreported failures — a
-// config mismatch came back as "a Jira synchronisation issue" — so the agent
-// here copies tim's JSON line and the script reads it.
-// ---------------------------------------------------------------------------
 const START_SCHEMA = {
   type: 'object',
   required: ['exitCode', 'stdout'],
@@ -3581,8 +3109,6 @@ const lastJsonLine = (text) =>
     .reverse()
     .find((line) => line.trim().startsWith('{'))
 
-// What `tim build start` reported, or a derive failure saying why there is
-// nothing to read. A command that failed before any step ran has no result.
 const startReport = (answer) => {
   if (!answer) return { failedStep: 'derive', reason: 'the start agent died' }
   const line = lastJsonLine(answer.stdout)
@@ -3604,14 +3130,6 @@ const startReport = (answer) => {
   return envelope.result
 }
 
-// ---------------------------------------------------------------------------
-// The branch lifecycle. Every stage below runs only under lifecycle 'branch':
-// the run builds straight onto an existing branch that already carries an open
-// PR in each repo, so nothing raises a ticket, cuts a branch, raises or edits a
-// PR, or merges one. The branch stage replaces the ticket and branch stages:
-// it asserts every repo is ready and reads the row's lifecycle fields, because
-// the script has no filesystem of its own.
-// ---------------------------------------------------------------------------
 const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTilde(key)}\``).join(', ')
 const protectedBranchNames = PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')
 const MERGE_HEAD_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\``
@@ -3700,9 +3218,6 @@ Return the structured output only.`,
 
 const duplicatesIn = (list) => list.filter((item, index) => list.indexOf(item) !== index)
 
-// What the branch stage copied from the row, checked here rather than trusted:
-// a merge into a repo the row does not name would be built without its repo's
-// gate, and an unknown gate phase would fail inside tim instead of here.
 const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
   const mergeRepos = merge.map((entry) => entry.repo)
   return [
@@ -3765,9 +3280,6 @@ Return the structured output only.`,
     light({ label: `${id} merge start`, phase: 'Implement', schema: MERGE_START_SCHEMA })
   )
 
-// Every stage from implement to land is told the same thing about a merge in
-// progress, so none of them reads a staged merge as ordinary work, aborts it
-// or commits it half-resolved.
 const mergeNoteOf = (started) =>
   started.length === 0
     ? ''
@@ -3808,9 +3320,6 @@ This row changes no backlog repo: the whole change is in the workspace repo, lef
 
 const NO_GATE_STEP = "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
 
-// The baseline stops at its first red phase: nothing is built on a red
-// baseline, so a later phase proves nothing. A whole-gate call runs every
-// phase side by side, so there it is one call and its rungs.
 const baselineGateStep = (phases, logs) => {
   if (phases.length === 0) return `3. THE GATE, for the phases this row owes.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
@@ -3824,8 +3333,6 @@ ${gateCommandList(phases, logs)}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
 }
 
-// The ladder runs everything even after a red, so it has the whole picture
-// before it repairs anything.
 const ladderGateStep = (phases, logs) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
@@ -4040,12 +3547,6 @@ Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
 
-// ---------------------------------------------------------------------------
-// Back to the base branch. Once an increment that built in the workspace repo
-// has merged, the workspace goes back onto the base branch, fast-forwarded, so
-// the next increment runs on the merged tim, gates.json and stack scripts. Its
-// uncommitted programme files travel with it, as they did onto the branch.
-// ---------------------------------------------------------------------------
 const WORKSPACE_RETURN_SCHEMA = {
   type: 'object',
   required: ['ok', 'summary'],
@@ -4087,26 +3588,6 @@ Return the structured output only.`,
   return { ok: false, detail }
 }
 
-// ---------------------------------------------------------------------------
-// The theme's spec check. Once a row lands and no row of its theme is left
-// `todo`, the run checks the Behaviour Spec under every prefix the theme
-// touched. spec-catchup and spec-cover cannot run headless inside the
-// loop as written: they start the workspace stack the run already holds under
-// lease, run a FIT suite behind a `PORT=` prefix the deny list refuses, fan
-// out to Task subagents, stop to ask a person to start Docker, commit
-// `openspec/` wherever the workspace stands, and cut branches in service repos
-// with no pull request behind them. So the loop runs the two deterministic
-// checks those skills start from — `tim spec lint` and
-// `tim spec gaps --none` — and a red one stops the run, naming the
-// "catch-up and cover" a person runs next. Every row of the theme is built by
-// then, so nothing re-runs the check: the stop is the record.
-// ---------------------------------------------------------------------------
-const THEME_SCHEMA = WORKSPACE_COMMIT_SCHEMA
-
-// The row's theme, or a split backlog's own, summed up by jq so the line stays
-// short enough to copy back whatever the backlog's size: how many of its rows
-// are left `todo`, which of them this run built, and the repos of the rest —
-// a row with no repos counted as reaching every configured repo.
 const themeFilter = (id, builtIds) =>
   `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
 
@@ -4118,14 +3599,13 @@ ${BASE_GUARDRAILS}
 \`jq -c '${themeFilter(id, builtIds)}' ${BACKLOG_TILDE}\`
 Report its exit code, and in \`stdout\` everything it printed, word for word: one short JSON line. Never summarise or
 correct it, and run nothing else. The loop reads the JSON itself.`,
-    light({ label: `${id} theme`, phase: 'Done', schema: THEME_SCHEMA })
+    light({ label: `${id} theme`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
 const isThemeSummary = (parsed) =>
   parsed.theme === null ||
   (typeof parsed.todo === 'number' && Array.isArray(parsed.built) && Array.isArray(parsed.otherRepos))
 
-// null when the reader's line is not the shape the filter prints.
 const themeStatusOf = (answer) => {
   const line = lastJsonLine(answer?.stdout)
   try {
@@ -4136,8 +3616,6 @@ const themeStatusOf = (answer) => {
   }
 }
 
-// One retry: a reader that dies or garbles its line once is not a reason to
-// stop the run, but the check must not be lost silently either.
 const readThemeStatus = async (id, builtIds) =>
   themeStatusOf(await readTheme(id, builtIds)) ?? themeStatusOf(await readTheme(id, builtIds))
 
@@ -4229,10 +3707,6 @@ const describeSpecPrefix = (entry) =>
 
 const catchUpAdvice = (prefixes) => prefixes.map((prefix) => `"catch-up and cover ${SPEC_SET_NAMES[prefix]}"`).join(', ')
 
-// What each landed row of this run planned and wrote under the spec, by id.
-// A prefix a row wrote under must exist when its theme is checked; one it only
-// planned is checked if it exists. A theme row this run did not build is known
-// only by its repos, so every prefix those repos could reach is checked too.
 const landedSpecPrefixes = new Map()
 
 const PREFIX_SOURCES = ['planned', 'written', 'repo reach']
@@ -4246,7 +3720,6 @@ const prefixesBySource = (status) => {
   }
 }
 
-// Each prefix the theme touched, with where the run learned of it.
 const themePrefixSources = (status) => {
   const bySource = prefixesBySource(status)
   const prefixes = inPrefixOrder(PREFIX_SOURCES.flatMap((source) => bySource[source]))
@@ -4480,8 +3953,14 @@ const gateAndLandThemeFixes = async (id, theme, ruledFixes, phases, fix) => {
   return { commit: land.commit }
 }
 
-const watchThemeFixes = async (id) => {
-  const found = await agent(findPrsPrompt(id, REPO_KEYS), light({ label: `${id} theme pr`, phase: THEME_REVIEW_PHASE, schema: BRANCH_PR_SCHEMA }))
+const reposChangedBy = (fix) => {
+  const changed = new Set((fix.changedFiles ?? []).map(repoOfFile))
+  const keys = REPO_KEYS.filter((key) => changed.has(key))
+  return keys.length > 0 ? keys : REPO_KEYS
+}
+
+const watchThemeFixes = async (id, repoKeys) => {
+  const found = await agent(findPrsPrompt(id, repoKeys), light({ label: `${id} theme pr`, phase: THEME_REVIEW_PHASE, schema: BRANCH_PR_SCHEMA }))
   if (!found?.ok || (found.prs ?? []).length === 0) {
     const reason = (found?.missing ?? []).length > 0 ? 'no-open-pr' : 'pr-failed'
     return themeReviewStop(id, { reason, why: 'it found no open pull request to watch', evidence: found?.summary ?? 'the theme pr agent died', preserve: false })
@@ -4555,7 +4034,7 @@ const engineeringReviewOfTheme = async (id, theme, phases) => {
   if (fixed.stop) return { ...fixed, checks }
   const landed = await gateAndLandThemeFixes(id, theme, ruledFixes, phases, fixed.fix)
   if (landed.stop) return { ...landed, checks }
-  const watched = await watchThemeFixes(id)
+  const watched = await watchThemeFixes(id, reposChangedBy(fixed.fix))
   const fixedCheck = {
     id,
     check: `Theme ${theme}'s engineering review fixed ${judgement.fixNow.length} finding(s) in ${landed.commit ?? 'a commit the land stage did not name'}. Read that commit with the rest of the theme.`
@@ -4576,7 +4055,6 @@ log(
 )
 
 const results = []
-// One entry per theme spec check the run made, clean or red.
 const specChecks = []
 const reviewChecks = []
 const refutedFindings = []
@@ -4585,13 +4063,8 @@ let lastId = null
 let stopped = null
 let themeReviewsRun = 0
 const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
-// The branch the workspace repo is left on when an increment that builds in
-// it stops before it lands: the run's programme files travel with it, so a
-// person puts it back on the base branch once the increment is settled.
 let workspaceLeftOn = null
 
-// The run takes the workspace stack once, here, and keeps it up across every
-// increment. A plan-only run builds nothing and never needs it.
 const runLease = PLAN_ONLY ? null : await acquireRunLease()
 
 if (!PLAN_ONLY && !runLease?.acquired) {
@@ -4609,12 +4082,8 @@ if (!PLAN_ONLY && !runLease?.acquired) {
   log(`${WORKFLOW_NAME}: ${stopped.reason.toUpperCase()} before any increment — ${stopped.detail}`)
 }
 
-// Gives back what the acquire may have left: a refusal took nothing, but a
-// start that failed or timed out may have left a lease under this run's name.
 const runMayHoldLease = !PLAN_ONLY && !runLease?.refused
 
-// Every way out of the loop, a thrown error included, passes the release
-// below. The loop body keeps its old indentation inside the try.
 try {
 while (stopped === null) {
   if (STOP_AFTER !== 'all' && built >= STOP_AFTER) {
@@ -4622,12 +4091,10 @@ while (stopped === null) {
     break
   }
 
-  // Checked before the increment starts, never part-way through one: a run that
-  // runs out of agents mid-increment loses the attempt it was making.
   if (agentsThrough(built + 1) + themeReviewAgents() > AGENT_CAP) {
     stopped = {
       reason: 'agent-budget',
-      detail: `${built} increment(s) landed. Another would take this run past the Workflow tool's ${AGENT_CAP}-agent cap at up to ${AGENTS_PER_INCREMENT[EXECUTOR]} agents per increment on ${EXECUTOR}${IS_BRANCH ? `, keeping ${THEME_REVIEW_AGENTS} for a theme's engineering review` : ''}. Launch the workflow again with the same args to carry on`
+      detail: `${built} increment(s) landed. Another would take this run past the Workflow tool's ${AGENT_CAP}-agent cap at up to ${agentsPerIncrement()} agents per increment on ${EXECUTOR}${IS_BRANCH ? `, keeping ${THEME_REVIEW_AGENTS} for a theme's engineering review` : ''}. Launch the workflow again with the same args to carry on`
     }
     break
   }
@@ -4673,10 +4140,6 @@ while (stopped === null) {
     log(`${WORKAREA_REL}: next is ${id}`)
   }
 
-  // The backstop. Every failure path below stops the run, so nothing should
-  // hand back the same id twice — but a path that forgets would otherwise
-  // rebuild one increment for ever, because `tim backlog next` selects on
-  // status and dependsOn alone and a failed attempt changes neither.
   if (id === lastId) {
     stopped = {
       reason: 'not-landed',
@@ -4706,21 +4169,12 @@ while (stopped === null) {
     continue
   }
 
-  // -----------------------------------------------------------------------
-  // Ticket and branch — under the full lifecycle, already done by the start
-  // stage above and read from its result here; under the branch lifecycle,
-  // the branch stage's assertions. Either way they settle where the lifecycle
-  // resumes, so a retry never re-does work the last attempt landed.
-  // -----------------------------------------------------------------------
   let ticket = null
   let workBranch = BASE_BRANCH
   let repos = null
   let resumeAt = 'build'
-  // The repos whose PRs need a person's approval before the merge stage
-  // merges any PR of the increment: every repo under the run-level gate.
   let approvalRepos = []
   workspaceInIncrement = null
-  // Only the branch lifecycle reads these three row fields.
   let rowMerges = []
   let rowGatePhases = GATE_PHASES
   let rowAwaitsCi = true
@@ -4753,9 +4207,6 @@ while (stopped === null) {
       break ticketAndBranch
     }
 
-    // The start stage's result, read by the script. A ticket off the board
-    // is one the team cannot see, so movedToBoard is checked here rather
-    // than trusted to the step's own success.
     if (started.failedStep === 'ticket') {
       log(`${id}: TICKET STEP FAILED — ${started.reason}`)
       results.push({ id, outcome: 'ticket-failed', detail: started.reason })
@@ -4805,7 +4256,7 @@ while (stopped === null) {
         `${id}: the workspace repo carried ${outsideWorkareas + underWorkareas} uncommitted file(s) onto ${workBranch}, ${underWorkareas} of them under workareas/${listedIn ? `, listed in ${listedIn}` : ''}; none of them is this increment's`
       )
     }
-  } // ticketAndBranch
+  }
 
   let plan = null
   let rawFindings = []
@@ -4831,9 +4282,6 @@ while (stopped === null) {
       break build
     }
 
-  // -----------------------------------------------------------------------
-  // Baseline — never build on a red tree.
-  // -----------------------------------------------------------------------
   phase('Baseline')
 
   const baseline = await recoverDownStack(id, 'baseline', () => agent(
@@ -4865,8 +4313,6 @@ Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
   ))
 
-  // A stack somebody else holds is not a red tree: nothing about this
-  // increment's code has been tested, and a human rules on the holder.
   const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
   if (baselineHeld) {
     const detail = stackHeldDetail(id, 'baseline', baselineHeld)
@@ -4876,9 +4322,6 @@ Return the structured output only.`,
     break
   }
 
-  // A red tree before this increment touched anything makes nothing downstream
-  // trustworthy, so the run stops rather than trying the next increment against
-  // the same tree.
   if (!baseline || !baseline.ok || !baseline.green) {
     log(`${id}: BASELINE RED — stopping the run. ${baseline ? baseline.summary : 'agent failed'}`)
     results.push({ id, outcome: 'baseline-red', detail: baseline?.summary ?? 'agent failed' })
@@ -4891,10 +4334,6 @@ is this increment's to fix, even when the failing test's own file is unchanged. 
 ${gateLogs(id, 'baseline')}/, named \`gate-<repo>-<rung>.log\`:
 ${baselineRungList(baseline)}`
 
-  // -----------------------------------------------------------------------
-  // Plan — just in time, against the tree the implementor is about to edit,
-  // then reviewed before any code exists.
-  // -----------------------------------------------------------------------
   phase('Plan')
 
   plan = await reviewedPlan(id, repos)
@@ -4918,14 +4357,8 @@ ${baselineRungList(baseline)}`
   }
   log(`${id}: planned — ${plan.repos.join(', ')}; ${plan.behaviourChanges.length} behaviour changes`)
 
-  // -----------------------------------------------------------------------
-  // Implement — build the change the plan decides, and nothing else.
-  // -----------------------------------------------------------------------
   phase('Implement')
 
-  // Branch lifecycle only: the loop, not the planner or the implementor, owns
-  // the git mechanics of a merge row. It starts each merge here and leaves it
-  // in progress for the implementor to resolve.
   let mergesAlreadyIn = []
   if (IS_BRANCH && rowMerges.length > 0) {
     const started = await startMerges(id, rowMerges)
@@ -5016,8 +4449,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
 
   const attempt = { id, ticket, workBranch }
 
-  // Every stage after implement has touched the tree, so a held stack stops
-  // the run through the preserve step, like any other stop.
   const stopForHeldStack = async (stage, phaseName, held) => {
     const detail = stackHeldDetail(id, stage, held)
     log(`${id}: STACK HELD at ${stage} — ${detail}`)
@@ -5039,9 +4470,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     break
   }
 
-  // The attempt is preserved as a pushed wip commit, so the work is not lost —
-  // but a dead implementor has had its go, and the run stops rather than
-  // deriving an increment that would be built on top of it.
   if (!impl || !impl.ok) {
     results.push(
       await preserveAttempt({
@@ -5057,8 +4485,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     break
   }
 
-  // Returns the preserved result when a repo is off the run's branch and could
-  // not be moved back, or null when every repo is on it.
   const offBranch = async (stageName, phaseName) => {
     const guard = await branchGuard(id, stageName, phaseName, workBranch, IS_BRANCH ? null : repos)
     if (guard?.ok) return null
@@ -5084,10 +4510,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
   const files = (impl.changedFiles ?? []).filter((f) => !f.endsWith('.log'))
   log(`${id}: implemented, ${files.length} files changed — reviewing`)
 
-  // -----------------------------------------------------------------------
-  // Review — style and correctness, one pair of reviewers per (repo,
-  // language) group of changed files, in parallel, plus consistency.
-  // -----------------------------------------------------------------------
   phase('Review')
 
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
@@ -5178,11 +4600,6 @@ Return the structured output only.`,
       think({ label: `${id} consistency`, phase: 'Review', schema: withStackHeld(FINDINGS_SCHEMA) })
     ))
 
-  // Codex reviews at the same granularity as Claude: one run per group applying
-  // that group's personas (style + code, code alone for docs), plus one
-  // consistency run across the whole change. hrp-origin-codex inc-001 had one
-  // run over the whole change return 1 finding where the grouped Claude review
-  // of the same increment returned 21 raw, 3 confirmed.
   const STYLE_PERSONA = `${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md`
   const CODE_PERSONA = `${SKILLS}/review/references/FILE_REVIEWER.md`
   const CONSISTENCY_PERSONA = `${SKILLS}/review/references/CONSISTENCY_REVIEWER.md`
@@ -5237,7 +4654,6 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
     ? await codexReviewResults()
     : { results: await parallel([...styleReviews, ...codeReviews, consistencyReview]), failed: [] }
 
-  // A Codex review that did not run must never read as a clean one.
   if (reviewed.failed.length > 0) {
     results.push(
       await preserveAttempt({
@@ -5275,15 +4691,8 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
   rawFindings = reviewed.results.filter(Boolean).flatMap((r) => r.findings ?? [])
   log(`${id}: ${rawFindings.length} raw findings — verifying adversarially`)
 
-  // -----------------------------------------------------------------------
-  // Verify findings — a functional finding is refuted unless the evidence is
-  // clear; a code-quality finding stands unless quoted code proves it wrong.
-  // -----------------------------------------------------------------------
   if (rawFindings.length > 0) {
     phase('Verify findings')
-    // Grouped the way review was, by (repo, language): every finding still
-    // gets verified independently, but the increment, the conventions and each
-    // diff are read once per group instead of once per file or per finding.
     const numbered = rawFindings.map((finding, index) => ({ ...finding, n: index + 1 }))
     const verified = await verifyFindingGroups(id, groupFindingsForVerification(numbered), {
       phaseName: 'Verify findings',
@@ -5304,9 +4713,6 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
     for (const record of refuted) log(`${id}: REFUTED ${describeRefuted(record)}`)
   }
 
-  // -----------------------------------------------------------------------
-  // Judge — replaces the skills' interactive WALKER. Makes the calls itself.
-  // -----------------------------------------------------------------------
   if (confirmed.length > 0) {
     phase('Judge')
     judgement =
@@ -5316,10 +4722,6 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
       )) ?? judgement
   }
 
-  // -----------------------------------------------------------------------
-  // Fix — apply only what the judge ruled fix-now, re-review the fixer's own
-  // hunks for code quality, and send what that finds back to a second fix once.
-  // -----------------------------------------------------------------------
   let fixResult = null
 
   const codexFix = async ({ stage, ruledFixes, treeDuty }) => {
@@ -5438,10 +4840,6 @@ IMPLEMENTOR — ${impl.summary}
   notes: ${impl.notes || '(none)'}
 FIXER — ${fixerReport()}`
 
-  // -----------------------------------------------------------------------
-  // Ladder — the gate, run the same way the baseline ran it, then the plan's
-  // increment-specific checks. A red rung that was green at baseline is ours.
-  // -----------------------------------------------------------------------
   phase('Ladder')
 
   const ladder = await recoverDownStack(id, 'ladder', () => agent(
@@ -5517,9 +4915,6 @@ Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
   ))
 
-  // -----------------------------------------------------------------------
-  // Land — commit on green, non-destructive rollback on red.
-  // -----------------------------------------------------------------------
   phase('Land')
 
   const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
@@ -5554,8 +4949,6 @@ Return the structured output only.`,
   const workspaceFiles = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter((file) =>
     file.startsWith(`${WORKSPACE_KEY}:`)
   )
-  // The land stage commits openspec/ itself, by SPEC_RULE, so it is not left
-  // for the orchestrator.
   workspaceEdits = IS_BRANCH
     ? workspaceFiles.filter((file) => !withoutWorkspacePrefix(file).startsWith('openspec/'))
     : []
@@ -5594,10 +4987,6 @@ Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
 
-  // What the workspace branch commits is read back from git and checked here,
-  // by the script, before anything is pushed: a carried file or the run's own
-  // state in an increment commit would ride into the base branch with the
-  // merge. A list that cannot be read is not taken on trust either.
   if (land?.landed && buildsWorkspace()) {
     const read = await readWorkspaceCommit(id)
     const readable = read && read.exitCode === 0
@@ -5633,9 +5022,6 @@ Return the structured output only.`,
     break
   }
 
-  // Committed, and the commit recorded, but the branch moved underneath it.
-  // The tree is clean, so there is nothing to preserve: a human reconciles
-  // the branch, and a resume pushes the recorded commit.
   if (IS_BRANCH && !land.pushed) {
     log(`${id}: PUSH FAILED — ${land.summary}`)
     results.push({ id, branch: workBranch, outcome: 'push-failed', commit: land.commit, detail: land.summary, findings: findingCounts() })
@@ -5647,26 +5033,16 @@ Return the structured output only.`,
     planned: plan.specPrefixes ?? [],
     written: inPrefixOrder([...specPrefixesIn(impl.notes), ...specPrefixesIn(fixResult?.notes)])
   }
-  } // build
+  }
 
   const findings = findingCounts()
   const judgementCalls = judgement.decisions.map((d) => `${d.call}: ${d.what}`)
 
   const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
 
-  // -----------------------------------------------------------------------
-  // Pull request — push the branch and raise one PR per repo. Idempotent:
-  // an existing open PR for this head is reused, never duplicated.
-  // -----------------------------------------------------------------------
   let prs = []
 
   finish: {
-    // -----------------------------------------------------------------------
-    // Branch lifecycle: the commits are already pushed by land. Find the open
-    // PR in each repo the row touched, wait for CI unless the row says not to,
-    // and mark the row done. No PR is raised, edited or merged, and no ticket
-    // exists to close.
-    // -----------------------------------------------------------------------
     if (IS_BRANCH) {
       let ci = null
       let ciAttempt = 0
@@ -5829,10 +5205,6 @@ Return the structured output only.`,
     prs = [...pr.prs]
     log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
 
-    // ---------------------------------------------------------------------
-    // CI — block on the checks, fix red a bounded number of times, and stop
-    // rather than merge anything that is not green.
-    // ---------------------------------------------------------------------
     phase('CI')
 
     const watch = () =>
@@ -5949,11 +5321,6 @@ Return the structured output only.`,
         workspaceRule: ciFixerWorkspaceRule()
       })
 
-      // Fold in anything the fixer had to open elsewhere, deduped by url, so
-      // the next watch() blocks on it and the merge stage merges it. `prs` is
-      // a plain variable and the script has no filesystem access, so a PR the
-      // fixer wrote only to the backlog would otherwise stay invisible for
-      // the rest of the run.
       for (const p of [...(fix?.newPrs ?? []), ...(styleFix?.newPrs ?? [])]) {
         if (p?.url && !prs.some((existing) => existing.url === p.url)) {
           prs.push(p)
@@ -5965,9 +5332,6 @@ Return the structured output only.`,
     }
 
     if (!ci || !ci.green) {
-      // Exhausted. The PR stays open and the ticket stays in the working
-      // status — a red PR is never merged and never closed, because a human
-      // has to see it.
       const detail = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'ci watcher agent died'
       log(`${id}: CI STILL RED after ${ciAttempt} fix attempt(s) — stopping. PRs left open: ${prs.map((p) => p.url).join(' ')}`)
       results.push({
@@ -5983,20 +5347,11 @@ Return the structured output only.`,
       break
     }
 
-    // ---------------------------------------------------------------------
-    // Merge — approvals collected for the WHOLE increment first, then merge
-    // in canonical order, watching the base branch after each one.
-    // ---------------------------------------------------------------------
     phase('Merge')
 
-    // Merge order is the script's decision, not the order PRs happened to be
-    // appended in. See MERGE_RANK.
     const mergeOrder = sortForMerge(prs, repos)
     log(`${id}: merge order ${mergeOrder.map((p) => p.repo).join(' → ')}`)
 
-    // The approval gate covers every PR under the run-level requireApproval,
-    // and otherwise the PRs of the repos that need approval of their own. Either
-    // way it holds back every PR of the increment until each one is approved.
     const gatedPrs = mergeOrder.filter((pr) => REQUIRE_APPROVAL || approvalRepos.includes(pr.repo))
     const approvalGate = gatedPrs.length > 0
     const everyPrGated = gatedPrs.length === mergeOrder.length
@@ -6105,21 +5460,8 @@ Return the structured output only.`,
 
     if (!merge || !merge.green) {
       const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
-      // Waiting on a reviewer is not a broken increment, and must never be
-      // reported as one: `main-red` reads as "something is wrong with the
-      // build", and the fix for that is nothing like "go and ask a colleague".
-      //
-      // The stage says which condition fired in `stopReason`, a fixed enum
-      // value, rather than us reading it back out of its prose. Anything we
-      // do not recognise — including a stage that never set it — falls to
-      // `main-red`, because the two mistakes are not symmetrical: calling a
-      // healthy pause a failure wastes somebody's afternoon, while calling a
-      // red base branch a healthy pause hides it.
       const stopReason = merge?.stopReason
       const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
-      // `pr-left-open` is its own outcome rather than `main-red`. The base
-      // branch is fine; what is wrong is that the increment is only partly
-      // merged, and the two need completely different things from a human.
       const leftOpen = stopReason === 'pr-left-open'
       const outcome = atGate || leftOpen ? stopReason : 'main-red'
       log(
@@ -6146,10 +5488,6 @@ Return the structured output only.`,
     log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
   }
 
-  // -----------------------------------------------------------------------
-  // Done — the ticket moves only once the merge is real and the base branch
-  // has proved it. This is also what marks the increment done in the backlog.
-  // -----------------------------------------------------------------------
   phase('Done')
 
   const done = await agent(
@@ -6169,8 +5507,6 @@ Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
 
-  // The merge is real whether or not the ticket moved, so the workspace goes
-  // back to the base branch either way.
   const workspaceBack = buildsWorkspace() ? await returnWorkspaceToBase(id, workBranch) : { ok: true }
 
   if (!done || !done.ok) {
@@ -6203,16 +5539,12 @@ Return the structured output only.`,
 
   log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
 
-  // Landed, but the next increment would run on the factory this one
-  // replaced, so the run stops rather than build on it.
   if (!workspaceBack.ok) {
     stopped = { reason: 'workspace-not-on-base', detail: workspaceBack.detail }
     break
   }
-  } // finish
+  }
 
-  // A HALT-FOR-REVIEW gate is a DESIGNED human checkpoint, not a review finding.
-  // The judge absorbs routine triage; it does not absorb these.
   const gate = await agent(
     `Report whether increment ${id} carries a halt gate. Run exactly one command and read it:
 \`jq -r '.increments[] | select(.id=="${id}") | .gate' ${BACKLOG_TILDE}\`
@@ -6223,8 +5555,6 @@ ${RUN_WITH_BASH}`,
     light({ label: `${id} gate check`, phase: 'Done', schema: incrementSchema })
   )
 
-  // Runs whether or not the row carries a halt gate: a theme whose last row
-  // halts is still built, and its spec is checked before a person looks.
   landedSpecPrefixes.set(id, specPrefixesOfRow)
   const themeCheck = await themeSpecCheck(id)
   if (themeCheck) specChecks.push(themeCheck.record)
@@ -6240,9 +5570,6 @@ ${RUN_WITH_BASH}`,
     ? { ...themeReview.stop, detail: [themeReview.stop.detail, themeCheck?.stop?.detail].filter(Boolean).join('. Also: ') }
     : themeCheck?.stop
 
-  // A branch run is unattended and merges nothing: the whole theme branch waits
-  // for a person anyway, so a gate becomes a check for them at the end rather
-  // than a stop mid-theme.
   const gated = Boolean(gate && !gate.ok)
   if (gated && IS_BRANCH) {
     log(`${id}: review check for the finished branch — ${gate.summary}`)

@@ -226,7 +226,8 @@ with commits of its own is left as it is. A failure names its step and its exact
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 56 agents on Claude and 64 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 56 agents on Claude and 64 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
+   beyond three, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
    cap of 1000 agents per run is what `agent-budget` below stops at, around 17
    increments on Claude and 15 on Codex. Under the branch lifecycle the run also
@@ -542,7 +543,7 @@ fix, re-review and ladder, and the fixes land on the branch as one commit per re
 net behind each row's own review, never a replacement. Report each of its `reviewChecks` entries (the commit it
 landed, its refuted findings, any repo it could not review) with the theme's other review checks. The full lifecycle
 has no theme branch, so it runs no theme review. See
-[`../workflow/README.md`](../workflow/README.md#the-writers-review-used-to-miss).
+[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-and-a-whole-theme-are-reviewed-too).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -1047,7 +1048,7 @@ to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Basel
 findings, judge, the style re-review of the fix, ladder, land, the CI fixer and its style review, and a theme's
 engineering review stay on Claude either way. Both executors build
 from the same reviewed plan file, so the same backlog builds under either with no edit.
-Codex mode is at most `39 + 3g` agents against `31 + 3g`, where `g` is the number of
+Codex mode is at most `40 + 3g` agents against `32 + 3g`, where `g` is the number of
 (repo, language) groups the changed files fall into — typically 2–6, however many
 files there are, because review and verification fan out per group, not per file.
 Both executors review at the same granularity: Codex runs one review per group plus

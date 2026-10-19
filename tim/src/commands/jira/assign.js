@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
-import { makeJiraAction, parseIssueKey } from './shared.js'
+import { parseIssueKey } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 const CURRENT_USER = 'me'
 
@@ -127,7 +128,7 @@ export const register = (jira, { timVersion }) => {
       ].join('\n')
     )
     .action(
-      makeJiraAction({
+      makeRunAction({
         parseOptions: parseAssignOptions,
         run: ({ args }, opts) =>
           runAssign({

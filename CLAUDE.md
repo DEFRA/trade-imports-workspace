@@ -135,6 +135,7 @@ tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
 tim auth                  # equivalent of tools/auth.sh
 tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
+tim github create-pr|checks|run-log   # open a PR (idempotent), watch its checks (--watch exits 0/1/2), read a failed job's log
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real

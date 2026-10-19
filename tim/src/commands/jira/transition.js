@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
-import { issueKeySchema, makeJiraAction } from './shared.js'
+import { issueKeySchema } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 const argsSchema = z.object({
   key: issueKeySchema,
@@ -180,7 +181,7 @@ export const register = (jira, { timVersion }) => {
       ].join('\n')
     )
     .action(
-      makeJiraAction({
+      makeRunAction({
         run: ({ args }, opts) =>
           runTransition({
             key: args[0],

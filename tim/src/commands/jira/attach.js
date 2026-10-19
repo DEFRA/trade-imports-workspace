@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
 import { OK, PARTIAL_FAILURE } from '../../constants/exitCodes.js'
-import { makeJiraAction } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 const optionsSchema = z.object({
   confirm: z.boolean().optional().default(false),
@@ -120,7 +120,7 @@ export const register = (jira, { timVersion }) => {
         '  tim jira attach EUDPA-200 screenshot.png --confirm --replace --json'
     )
     .action(
-      makeJiraAction({
+      makeRunAction({
         parseOptions: parseAttachOptions,
         run: ({ args }, opts) =>
           runAttach({

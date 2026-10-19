@@ -705,6 +705,46 @@ The increment build loop's done stage closes each ticket with
 `tim build start` moves a ticket to the working status through the same
 client call (`moveToStatus` in `src/clients/jira-client.js`).
 
+### `tim github create-pr|checks|run-log` — open a PR and follow its pipeline
+
+Open a pull request, watch its checks, and read why a job failed. Every repo
+is a DEFRA repo, named without the `DEFRA/` prefix.
+
+```bash
+tim github create-pr trade-imports-animals-frontend --head chore/NO_JIRA-tidy-logs --title "Tidy the logs" --body-file pr.md [--base main] [--draft] [--json]
+tim github checks trade-imports-animals-frontend 51 [--watch] [--interval 30] [--timeout 540] [--json]
+tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [--lines 100] [--json]
+```
+
+- **`create-pr`** opens the PR, or returns the PR already open from that
+  branch and opens nothing new, so running it twice is safe. It prints the PR
+  link. `--json` puts `{repo, number, url, head, base, draft, created}` in
+  `result`; `created` is `false` when the PR was already open. A body file it
+  cannot read fails with `USAGE` before any request is sent.
+- **`checks`** takes a PR number, a branch or a sha. It lists every check run
+  and commit status on that head commit, with an outcome each (`passed`,
+  `failed` or `pending`), the counts, and the SonarCloud gate when SonarCloud
+  reports as a check. When a commit has been checked more than once, only the
+  newest check of each name counts. `--json` puts
+  `{repo, ref, sha, outcome, counts, sonarGate, checks, timedOut}` in
+  `result`.
+- **`checks --watch`** checks again every `--interval` seconds until nothing
+  is pending or `--timeout` seconds pass. It exits 0 when every check passed,
+  1 when any failed, and 2 when checks are still pending at the timeout. The
+  default timeout of 540 seconds fits inside a 10-minute shell call; call it
+  again to keep watching. Without `--watch`, it exits 0 whatever the outcome.
+- A commit with no checks yet counts as pending, because a PR just opened has
+  none until its workflows start. A pass is reported only when two checks in
+  a row see the same checks, because some checks (SonarCloud, a workflow
+  triggered by another) start only after the first ones finish.
+- **`run-log`** takes a workflow run id, or the id `checks` shows for a
+  GitHub Actions check (a job). For each job, or only the failed ones with
+  `--failed-only`, it prints the failed steps and the last `--lines` lines of
+  the log, without timestamps. The tail ends at the last `##[error]` line, so
+  the clean-up after a failure does not push the cause out of view. A check
+  from outside GitHub Actions, such as SonarCloud, has no log here and fails
+  with `NOT_FOUND`: open its details link instead.
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo

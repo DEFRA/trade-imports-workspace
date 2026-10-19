@@ -6,7 +6,7 @@ import { TimError } from '../../errors.js'
 import { OK, PARTIAL_FAILURE } from '../../constants/exitCodes.js'
 import { loadManifest } from './manifest.js'
 import { buildPlan } from './plan.js'
-import { makeJiraAction } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 export const CREATED_FILE = 'ticket.created.json'
 
@@ -187,7 +187,7 @@ export const register = (jira, { timVersion }) => {
         '  tim jira create --from ticket.json --confirm 3f2e...c9 --json'
     )
     .action(
-      makeJiraAction({
+      makeRunAction({
         parseOptions: parseCreateOptions,
         run: (_context, opts) =>
           runCreate({ fromPath: opts.from, confirmPlanId: opts.confirm }),

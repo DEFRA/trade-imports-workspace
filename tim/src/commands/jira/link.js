@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
-import { issueKeySchema, makeJiraAction, parseIssueKey } from './shared.js'
+import { issueKeySchema, parseIssueKey } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 const optionsSchema = z.object({
   confirm: z.boolean().optional().default(false),
@@ -195,7 +196,7 @@ export const register = (jira, { timVersion }) => {
       ].join('\n')
     )
     .action(
-      makeJiraAction({
+      makeRunAction({
         parseOptions: parseLinkOptions,
         run: ({ args }, opts) =>
           runLink({

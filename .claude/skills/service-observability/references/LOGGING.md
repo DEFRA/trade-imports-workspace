@@ -32,9 +32,10 @@ Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
 
 The reference implementation is `ExternalCallMetrics.logCall` in
-`trade-imports-reference-data`. Until EUDPA-632 merges, it and the test
-helper named below are only on that repo's
-`feat/EUDPA-632-observability` branch, not `main`.
+`trade-imports-reference-data`. **Do not copy how it sets the fields
+yet**: it uses MDC, and CDP drops the fields it writes (see below).
+Copy the message and the field values; how to write the fields is
+settled by EUDPA-712.
 
 ### What was learned on reference-data
 
@@ -52,9 +53,12 @@ helper named below are only on that repo's
   `error.*` only when nested (`{"event":{"category":"external-call"}}`),
   with `event.duration` a number (long). `trace.id` survives flat.
   The fix is for the line to write a nested `event` object with a
-  numeric duration; the MDC route cannot. Tracked on EUDPA-712. Until then, find the lines by
-  their message text: `service.name:"<service>" AND message:"External
-  call"`.
+  numeric duration; the MDC route cannot. Tracked on EUDPA-712. Until
+  then, find the lines by their message text: `service.name:"<service>"
+  AND message:"External call"`.
+- **The tests below passed while the fields were being dropped.** They
+  read the MDC on the captured log event, not the JSON the encoder
+  writes, so they cannot see the shape CDP receives.
 - **Clean the MDC up.** Use `MDC.putCloseable` in a try-with-resources
   block so the fields do not leak onto later lines from the same
   thread.

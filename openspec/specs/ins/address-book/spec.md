@@ -151,29 +151,47 @@ The system MUST discard anything entered on the add or edit form when the user c
 - **WHEN** they cancel
 - **THEN** they return to the address book, the change is discarded, and the address is still offered for viewing under its original name
 
-### Requirement: Deleting an address asks for confirmation, naming the address, before it is removed
+### Requirement: Deleting an address asks for confirmation, summarising the address, before it is removed
 **ID**: REQ-INS-ADDR-011
-The system MUST ask the user to confirm before deleting an address, naming the address in the question and headed 'Delete this address?', and MUST leave the address untouched if the user cancels instead of confirming.
+The system MUST ask the user to confirm before deleting an address, on a page headed 'Delete this address?' that summarises the address in one 'Address' row, or 'Not applicable' when it has no details to show. The page confirms and warns that the action cannot be undone, offers a red 'Yes, delete' button and a 'No, cancel' link, and MUST leave the address untouched if the user cancels. After a delete the address book says '<Name> address deleted', or 'Address deleted' when the name is blank.
 
-#### Scenario: Delete confirmation names the address and can be backed out of
+#### Scenario: The delete confirmation summarises the address and asks for confirmation
 **ID**: SCN-INS-ADDR-011-A
 - **GIVEN** the user opens the delete confirmation for an address
 - **WHEN** the page is shown
-- **THEN** it asks the user to confirm deleting that named address, with a way back to its details
-- **AND** the page is headed 'Delete this address?'
+- **THEN** the page is headed 'Delete this address?', shows one 'Address' row holding the name, each address line and the country on separate lines, with no email or phone
+- **AND** it says 'Confirm that you want to delete this address.' and 'This action cannot be undone.', with a way back to its details
 
-#### Scenario: Cancelling the delete confirmation leaves the address untouched
+#### Scenario: Following No, cancel leaves the address untouched
 **ID**: SCN-INS-ADDR-011-B
 - **GIVEN** the user is on an address's delete confirmation
-- **WHEN** they cancel instead of confirming
-- **THEN** they return to that address's own details, and it is still listed in the address book
+- **WHEN** they follow 'No, cancel' instead of confirming
+- **THEN** they return to that address's own details, it is still listed in the address book, and no confirmation banner shows
 
 #### Scenario: Confirming deletion removes the address and confirms it
 **ID**: SCN-INS-ADDR-011-C
 - **GIVEN** the user is on an address's delete confirmation
-- **WHEN** they confirm the deletion
-- **THEN** they return to the address book, a confirmation names the address as deleted
+- **WHEN** they select 'Yes, delete'
+- **THEN** they return to the address book, which says '<Name> address deleted' with the name in sentence case, such as 'Green valley farm address deleted' for 'Green Valley Farm'
 - **AND** it is no longer offered for viewing
+
+#### Scenario: A repeated line is shown once
+**ID**: SCN-INS-ADDR-011-D
+- **GIVEN** an address whose county repeats its town or city in a different case
+- **WHEN** the user opens its delete confirmation
+- **THEN** the Address row shows that line once
+
+#### Scenario: An address with nothing to show is summarised as Not applicable
+**ID**: SCN-INS-ADDR-011-E
+- **GIVEN** an address with no name, no address lines and no country
+- **WHEN** the user opens its delete confirmation
+- **THEN** the Address row shows 'Not applicable'
+
+#### Scenario: Deleting an address with a blank name says Address deleted
+**ID**: SCN-INS-ADDR-011-F
+- **GIVEN** the user is on the delete confirmation for an address whose name is blank
+- **WHEN** they select 'Yes, delete'
+- **THEN** they return to the address book, which says 'Address deleted'
 
 ### Requirement: The address book list shows each address's key details, with a way to view, and a way to add one
 **ID**: REQ-INS-ADDR-012
@@ -349,3 +367,32 @@ The system MUST take the user to the address book list, and MUST NOT show a 'Pag
 - **GIVEN** a signed-in user
 - **WHEN** they open the view page for an address that has been deleted
 - **THEN** the address book list is shown and no 'Page not found' page
+
+### Requirement: Deleting an address that is not live in the organisation's book returns to the address book and changes nothing
+**ID**: REQ-INS-ADDR-023
+The system MUST take the user to the address book list, with no 'Page not found' page, when they open the delete page for an id that is not a live address in their organisation's book. A delete posted for such an id MUST change nothing, MUST show no confirmation banner and MUST land on the list.
+
+#### Scenario: An unknown address id's delete page returns to the address book
+**ID**: SCN-INS-ADDR-023-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the delete page for an id that no address has
+- **THEN** the address book list is shown and no 'Page not found' page
+
+#### Scenario: A malformed address id's delete page returns to the address book
+**ID**: SCN-INS-ADDR-023-B
+- **GIVEN** a signed-in user
+- **WHEN** they open the delete page for an id that is not a valid address id
+- **THEN** the address book list is shown and no 'Page not found' page
+
+#### Scenario: A deleted address's delete page returns to the address book
+**ID**: SCN-INS-ADDR-023-C
+- **GIVEN** a signed-in user
+- **WHEN** they open the delete page for an address that has been deleted
+- **THEN** the address book list is shown and no 'Page not found' page
+
+#### Scenario: A stale delete changes nothing and shows no banner
+**ID**: SCN-INS-ADDR-023-D
+- **GIVEN** the user has an address's delete confirmation open
+- **AND** the address has since been deleted
+- **WHEN** they select 'Yes, delete'
+- **THEN** they land on the address book with no confirmation banner and no 'Page not found' page

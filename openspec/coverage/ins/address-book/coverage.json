@@ -547,50 +547,58 @@
     },
     {
       "id": "REQ-INS-ADDR-011",
-      "name": "Deleting an address asks for confirmation, naming the address, before it is removed",
-      "coverage": "full",
+      "name": "Deleting an address asks for confirmation, summarising the address, before it is removed",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-011-A",
-          "name": "Delete confirmation names the address and can be backed out of",
+          "name": "The delete confirmation summarises the address and asks for confirmation",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
-              "test": "asks for confirmation and names the address being deleted",
+              "test": "summarises the address being deleted and asks for confirmation",
               "strength": "full",
-              "notes": "confirmation text names the address; Back href to its details; asserts the H1"
+              "notes": ""
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
-              "test": "GET renders delete confirmation page",
-              "strength": "partial",
-              "notes": "the heading wording"
+              "test": "GET renders the Design Release 2.1 confirmation",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
+              "test": "the delete page summarises the address, and No, cancel returns to its details with nothing deleted",
+              "strength": "full",
+              "notes": ""
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-011-B",
-          "name": "Cancelling the delete confirmation leaves the address untouched",
+          "name": "Following No, cancel leaves the address untouched",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
-              "test": "Cancel returns to the address details with nothing deleted",
+              "test": "No, cancel returns to the address details with nothing deleted",
               "strength": "full",
-              "notes": "returns to details; list still offers View"
+              "notes": ""
             },
             {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
-              "test": "Cancel returns to address details without deleting",
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
+              "test": "the delete page summarises the address, and No, cancel returns to its details with nothing deleted",
               "strength": "full",
               "notes": ""
             }
@@ -614,8 +622,8 @@
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
               "test": "deleting through the UI tombstones the record rather than removing it",
-              "strength": "partial",
-              "notes": "confirms delete and list removal; does not assert the success banner text"
+              "strength": "full",
+              "notes": ""
             },
             {
               "type": "unit",
@@ -624,6 +632,59 @@
               "test": "Confirm soft-deletes address and redirects to list",
               "strength": "partial",
               "notes": "redirect after delete; banner text not asserted here"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "capitalises the first letter and lower-cases the rest",
+              "strength": "partial",
+              "notes": "the banner wording helper alone"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-011-D",
+          "name": "A repeated line is shown once",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "leaves out a line repeating an earlier one ignoring case",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-011-E",
+          "name": "An address with nothing to show is summarised as Not applicable",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "GET shows Not applicable when the address has no name, lines or country",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-011-F",
+          "name": "Deleting an address with a blank name says Address deleted",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "words a blank name without a name",
+              "strength": "partial",
+              "notes": "the banner wording helper alone; no redirect or rendered banner asserted"
             }
           ]
         }
@@ -1214,9 +1275,30 @@
           "name": "An unknown address id returns to the address book",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book when the address is not found", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "an unknown address id returns to the address book", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "an unknown address id returns to the address book", "strength": "full", "notes": "" }
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "GET redirects to the address book when the address is not found",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
+              "test": "an unknown address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "an unknown address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
           ]
         },
         {
@@ -1224,10 +1306,38 @@
           "name": "A malformed address id returns to the address book",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for a malformed address id without reaching the address book", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/address-id-params.test.js", "test": "deadLinkRouteOptions redirects a failed id to the fallback path", "strength": "partial", "notes": "the redirect helper alone" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "a malformed address id returns to the address book", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "a malformed address id returns to the address book", "strength": "full", "notes": "" }
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "GET redirects to the address book for a malformed address id without reaching the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-id-params.test.js",
+              "test": "deadLinkRouteOptions redirects a failed id to the fallback path",
+              "strength": "partial",
+              "notes": "the redirect helper alone"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
+              "test": "a malformed address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "a malformed address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
           ]
         },
         {
@@ -1235,9 +1345,30 @@
           "name": "Another organisation's address returns to the address book",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "another organisation's address returns to the address book", "strength": "full", "notes": "the address is created under another organisation through the address book API" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "another organisation's address returns to the address book", "strength": "full", "notes": "against the stub" },
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for another organisation's address", "strength": "partial", "notes": "the address book's 404 is mocked" }
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "another organisation's address returns to the address book",
+              "strength": "full",
+              "notes": "the address is created under another organisation through the address book API"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
+              "test": "another organisation's address returns to the address book",
+              "strength": "full",
+              "notes": "against the stub"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "GET redirects to the address book for another organisation's address",
+              "strength": "partial",
+              "notes": "the address book's 404 is mocked"
+            }
           ]
         },
         {
@@ -1245,9 +1376,161 @@
           "name": "A deleted address returns to the address book",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for soft-deleted tombstones", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "a deleted address returns to the address book", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "a deleted address returns to the address book", "strength": "full", "notes": "" }
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "GET redirects to the address book for soft-deleted tombstones",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
+              "test": "a deleted address returns to the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "a deleted address returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-023",
+      "name": "Deleting an address that is not live in the organisation's book returns to the address book and changes nothing",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-023-A",
+          "name": "An unknown address id's delete page returns to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "GET redirects to the address book when the address is not found",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
+              "test": "an unknown address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
+              "test": "an unknown address id's delete page returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-023-B",
+          "name": "A malformed address id's delete page returns to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "GET redirects to the address book for a malformed address id",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
+              "test": "a malformed address id returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-023-C",
+          "name": "A deleted address's delete page returns to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "GET redirects to the address book for soft-deleted tombstones",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
+              "test": "a deleted address's delete page returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-023-D",
+          "name": "A stale delete changes nothing and shows no banner",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "POST redirects to the address book without deleting a soft-deleted tombstone",
+              "strength": "partial",
+              "notes": "mocked address book; no banner assertion"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "POST redirects to the address book without deleting an unknown id",
+              "strength": "partial",
+              "notes": "mocked address book; no banner assertion"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "POST treats a 404 from the delete itself as already deleted",
+              "strength": "partial",
+              "notes": "mocked address book; no banner assertion"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
+              "test": "a stale delete changes nothing and shows no banner",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts",
+              "test": "a stale delete changes nothing and shows no banner",
+              "strength": "full",
+              "notes": ""
+            }
           ]
         }
       ]

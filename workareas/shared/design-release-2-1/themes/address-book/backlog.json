@@ -115,78 +115,6 @@
   ],
   "increments": [
     {
-      "id": "inc-059",
-      "title": "The address book record carries the address's type and what it can be used for",
-      "detail": "Design Release 2.1 asks what type of address is being added and what it can be used for, and Sam's 9 October ruling keeps both answers because a question the service asks must persist and DR1 asked for address pickers filtered by role (c-176). Today the address-book record is untyped and its API carries no type or use, so nothing can keep those answers, and the address book list's type tabs and the DR1 role-filtered pickers have nothing to filter on. Afterwards an API caller can create, read and update an address with its type and uses, in a field shape the address-book service designs in its own conventions, and addresses saved before the change still read back.",
-      "acceptanceCriteria": [
-        "Creating an address through the address book API with its address type and one or more uses (place of origin, consignor, place of destination, consignee, importer, branch address) stores them, and reading the address back by id returns the same type and the same uses (prototype:dr2-1-source p16-079; trace:prototype-dr2-1 p16-081; prototype:dr2-1-specs p6-137; ruling:sam-2026-10-09 p1-115, p1-116)",
-        "Updating an address through the API with a different set of uses replaces its uses with the new set, and the read-back shows the new set (repo:addressbook p2-071; prototype:dr2-1-source p16-079)",
-        "A create or update carrying a use outside those six is refused with a 400 validation problem whose errors name the uses, and nothing is saved (repo:addressbook p1-039, p1-045; ruling:sam-2026-10-07 p1-010)",
-        "An address created without a type or uses, and every address saved before this change, is still accepted and reads back with no type and no uses (repo:addressbook p1-001, p1-003)",
-        "The address book's locked API contract describes the type and uses on the create and update requests and on the read response, with the six allowed uses (repo:addressbook p2-097, p2-098; document:dr1-parity-backlog p7-064, p7-065)"
-      ],
-      "dependsOn": [],
-      "theme": "address-book",
-      "status": "done",
-      "kind": "feat",
-      "repos": [
-        "addressbook",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "p16-079"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "p16-081"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "p6-137"
-        },
-        {
-          "source": "repo:addressbook",
-          "ref": "p1-001, p1-003, p1-039, p1-045, p1-054, p1-096, p2-071, p2-097, p2-098"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "p9-098, p9-099"
-        },
-        {
-          "source": "document:dr1-parity-backlog",
-          "ref": "p7-064, p7-065"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "p1-069, p1-070, p1-115, p1-116"
-        }
-      ],
-      "requirements": [
-        "req-1256"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Unchanged by the 9 October afternoon and templates rulings; the re-distil only renumbered claim references. Pass 1 slice on its own: the typed record is the foundation the add form's uses question, the list's type tabs (address-book-list area) and DR1's role-filtered pickers rest on, so it lands first and gates. Observable through the API in every environment the tests repo's address book API client reaches (local stack and CDP). The field names and shape are the address-book service's (c-176; ruling 9 October claims 66, 70, 116), so no criterion names the prototype's 'primary type' or 'address book type'. Type and uses stay optional on the API so a journey's handshake add and every existing record keep saving; the add form makes a use required outside a journey. Updates fully replace the editable fields, so the edit page must post the stored type and uses back; that is the edit row's criterion. Decision kept: refuse an unknown use with a 400 (validation clause of ruling:sam-2026-10-07).",
-        "Ticket 1 (EUDPA-707), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
-      ],
-      "gate": "Check the type and uses field names, the six use values and how a record without them reads back in the locked contract, before the add form, the address book list's type tabs and the DR1 address pickers build on it.",
-      "commit": "19cf03b daa3d83",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-address-book/pull/13",
-          "repo": "trade-imports-address-book",
-          "number": 13
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/32",
-          "repo": "trade-imports-ins-tests",
-          "number": 32
-        }
-      ]
-    },
-    {
       "id": "inc-060",
       "title": "Address validation messages match Design Release 2.1, on the form and in the API",
       "detail": "Four required-field messages change wording to match Design Release 2.1 and their field labels. The address book API's messages change with them, because the API's message reaches the user when the service rejects a save. Afterwards the add and edit forms, and the API's validation problem, give the new wording.",
@@ -536,7 +464,6 @@
         "With Welsh selected, the edit page shows a Welsh string for every new or changed English string, and no edit page shows an English string where the Welsh copy is in use; each new Welsh string is marked as an unreviewed machine draft that must not ship to users without Welsh Language Standards sign-off. (repo:insfrontend p3-113 to p3-120)"
       ],
       "dependsOn": [
-        "inc-059",
         "inc-062"
       ],
       "theme": "address-book",
@@ -594,7 +521,8 @@
       "notes": [
         "Unchanged by the 9 October afternoon and templates rulings. Depends on the typed record (an update fully replaces the editable fields, so the edit must post the stored type and uses back) and on the add-details form row (the section headings and country order it shares). The return parameter's name is the service's and its allow-list stays (ruling 9 October claim 92), so the criteria say where Back and Cancel go, not how the return is carried. A valid edit still returns to the list's default view (exists). req-1277 is built without the prototype's blank-name fallback: a valid edit always has a name. The edit page's Cache-Control is left as it is (out of scope). Pass 1 slices combined: every criterion is on the one edit page and its save.",
         "Re-cut 2026-10-15 for the edit ticket: the criterion that an edit keeps the address's type and uses, and req-1275, moved to inc-070 in the types-and-uses ticket, because no address has a type or uses to keep until then; the earlier note's need to post the stored type and uses back moves with it. It now carries the Welsh for the edit page that inc-084 used to hold.",
-        "Ticket 3 (edit), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
+        "Ticket 3 (edit), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "Re-cut 2026-10-19: no longer depends on inc-059, which moved to ticket 6. The dependency was stale: the edit-keeps-type-and-uses criterion it served moved to inc-070 on 2026-10-15."
       ],
       "gate": "Ticket 3 (edit) is complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team before building ticket 4 (list)."
     },
@@ -1128,6 +1056,66 @@
       "gate": "Ticket 5 (journey add page) is complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team before building ticket 6 (types and uses)."
     },
     {
+      "id": "inc-059",
+      "title": "The address book record carries the address's type and what it can be used for",
+      "detail": "Design Release 2.1 asks what type of address is being added and what it can be used for, and Sam's 9 October ruling keeps both answers because a question the service asks must persist and DR1 asked for address pickers filtered by role (c-176). Today the address-book record is untyped and its API carries no type or use, so nothing can keep those answers, and the address book list's type tabs and the DR1 role-filtered pickers have nothing to filter on. Afterwards an API caller can create, read and update an address with its type and uses, in a field shape the address-book service designs in its own conventions. Both become required in the API in inc-070, the first row whose add form sends them; this row adds them and refuses values outside the allowed ones.",
+      "acceptanceCriteria": [
+        "Creating an address through the address book API with its address type and one or more uses (place of origin, consignor, place of destination, consignee, importer, branch address) stores them, and reading the address back by id returns the same type and the same uses (prototype:dr2-1-source p16-079; trace:prototype-dr2-1 p16-081; prototype:dr2-1-specs p6-137; ruling:sam-2026-10-09 p1-115, p1-116)",
+        "Updating an address through the API with a different set of uses replaces its uses with the new set, and the read-back shows the new set (repo:addressbook p2-071; prototype:dr2-1-source p16-079)",
+        "A create or update carrying a use outside those six is refused with a 400 validation problem whose errors name the uses, and nothing is saved (repo:addressbook p1-039, p1-045; ruling:sam-2026-10-07 p1-010)",
+        "A create or update carrying an address type other than origin or consignor; destination, consignee or importer; or branch is refused with a 400 validation problem whose errors name the address type, and nothing is saved (repo:addressbook p1-039, p1-045; ruling:sam-2026-10-07 p1-010)",
+        "The address book's locked API contract describes the type and uses on the create and update requests and on the read response, with the three allowed types and the six allowed uses (repo:addressbook p2-097, p2-098; document:dr1-parity-backlog p7-064, p7-065)"
+      ],
+      "dependsOn": [],
+      "theme": "address-book",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "addressbook",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "p16-079"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p16-081"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "p6-137"
+        },
+        {
+          "source": "repo:addressbook",
+          "ref": "p1-001, p1-003, p1-039, p1-045, p1-054, p1-096, p2-071, p2-097, p2-098"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p9-098, p9-099"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "p7-064, p7-065"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "p1-069, p1-070, p1-115, p1-116"
+        }
+      ],
+      "requirements": [
+        "req-1256"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged by the 9 October afternoon and templates rulings; the re-distil only renumbered claim references. Pass 1 slice on its own: the typed record is the foundation the add form's uses question, the list's type tabs (address-book-list area) and DR1's role-filtered pickers rest on, so it lands first and gates. Observable through the API in every environment the tests repo's address book API client reaches (local stack and CDP). The field names and shape are the address-book service's (c-176; ruling 9 October claims 66, 70, 116), so no criterion names the prototype's 'primary type' or 'address book type'. Type and uses stay optional on the API so a journey's handshake add and every existing record keep saving; the add form makes a use required outside a journey. Updates fully replace the editable fields, so the edit page must post the stored type and uses back; that is the edit row's criterion. Decision kept: refuse an unknown use with a 400 (validation clause of ruling:sam-2026-10-07).",
+        "Ticket 1 (EUDPA-707), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "Moved 2026-10-19 from ticket 1 (EUDPA-707) to ticket 6 (EUDPA-711, types and uses): nothing in tickets 2 to 5 uses the type or uses, and building them optional in EUDPA-707 and required in EUDPA-711 would change one API twice across releases. The criterion that an address created without a type or uses, and every address saved before this change, is still accepted is dropped: all CDP non-prod address data expires 7 days after creation (EUDPA-644, since 2026-10-04) and prod has none, so no address needs to stay untyped. Type and uses become required (400 when missing) in inc-070, the first row whose add form sends them, so each row in between still passes its checks; the ticket merges as one, so the released API changes once. This supersedes the first note's 'stay optional on the API'. The earlier build (commits 19cf03b daa3d83, PRs address-book #13 and #14, ins-tests #32 and #35) was removed from EUDPA-707; this row is rebuilt on EUDPA-711's branch."
+      ],
+      "gate": "Check the type and uses field names, the three type values and the six use values in the locked contract, before the address book list's type tabs, the type step and the uses question build on them."
+    },
+    {
       "id": "inc-067",
       "title": "Address book list split into three category tabs with a Type column",
       "detail": "The list is split by what each address is used for: three tabs, 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch', drawn as the Ministry of Justice sub navigation component, each a link that loads the list on that tab, with its own panel heading. An address shows on every tab whose category holds one of its types, so the address book API learns to return one category's addresses. The tables gain a Type column with the address's type labels. The INS frontend adds the MoJ frontend package at the animals frontend's major version. The tests repo's shared address book fixtures carry a type so they land on the right tab and the journeys still find them, and the k6 performance suite's address book scenarios search and count per tab. The Transporter tab waits with transporter management.",
@@ -1404,7 +1392,9 @@
         "After saving an Origin or Consignor address the address book list shows the Origin or Consignor addresses, with the new address listed first (prototype:dr2-1-source p16-083, p16-086; trace:prototype-dr2-1 p16-079, p16-081, p16-082; prototype:dr2-1-specs p6-137, p6-139; ruling:sam-2026-10-09 p1-075, p1-091)",
         "The added address is also found by the address book search on a use, such as 'Consignor' (prototype:dr2-1-source p16-082)",
         "The edit page shows no type or uses, and an address saved with several uses still has its type and all of them after an edit through the edit page (prototype:dr2-1-source p15-061; trace:prototype-dr2-1 p16-111; c-181)",
-        "Run against the local stack, the k6 performance suite's address-book session add and its background-volume adds choose 'Origin or Consignor', tick 'Place of origin', post the INS front door's own address field names and pass their 'address added' and 'background address added' checks on the save's return to the list showing Origin or Consignor addresses; its edit scenario and background-volume gate pass unchanged (repo:perftests p2-027, p2-028, p2-030, p2-032, p2-035, p2-036, p2-047; c-225)"
+        "Run against the local stack, the k6 performance suite's address-book session add and its background-volume adds choose 'Origin or Consignor', tick 'Place of origin', post the INS front door's own address field names and pass their 'address added' and 'background address added' checks on the save's return to the list showing Origin or Consignor addresses; its edit scenario and background-volume gate pass unchanged (repo:perftests p2-027, p2-028, p2-030, p2-032, p2-035, p2-036, p2-047; c-225)",
+        "The address book API refuses a create or update without an address type, or without at least one use, with a 400 validation problem naming the missing field, and saves nothing; the locked API contract marks both required (decision 2026-10-19)",
+        "Every service and tool that creates an address sends its type and at least one use, so each still saves: the INS front door's address book add and its journey-mode add (the journey's role), its stub mode, its Lighthouse seed script (scripts/lighthouse/seed-address.js), the tests repo's shared address book fixtures, its plants journey flow (flows/plants/journey.ts) and its address book API client (adapters/http/address-book-api-client.ts), and the k6 performance suite (decision 2026-10-19)"
       ],
       "dependsOn": [
         "inc-059",
@@ -1419,6 +1409,7 @@
       "status": "todo",
       "kind": "feat",
       "repos": [
+        "addressbook",
         "insfrontend",
         "tests",
         "perftests"
@@ -1477,7 +1468,8 @@
       "notes": [
         "Unchanged by the 9 October afternoon and templates rulings, except that the list's category tabs it lands on are three while the Transporter tab waits (ruling 9 October pm), which does not touch an Origin or Consignor save. Depends on the typed record, the type step and the add-details form rows. Cross-area: the landing view needs the address book list's type tabs, and the search on a use needs the list's search over uses (address-book-list area), so this row depends on the list rows that build them (inc-067, inc-069 in the existing backlog). The list's tab parameter, its values and the uses field name are the INS service's to name (ruling 9 October claims 66, 91), so no criterion names a query string. The INS frontend's address book client and its stub-mode stub must carry the type and uses. req-1260 is built without the prototype's nameless fallback: a save always has a name. In journey mode the add ticks the role's use and returns to the journey with no address book banner; that is req-1284's row, and a journey-mode save must keep working here. Pass 1 slices combined: the uses question, its validation, the save and the return all exercise one save and one review. The k6 suite (req-1870) is changed here, on this row's branch name, as c-225 settles: this is the row whose save first needs a type and a use and returns to the list filtered by type.",
         "Re-cut 2026-10-15 for the types-and-uses ticket: the new address listed first, the reworded banner, the address format and search on name, address and country moved to inc-202 in the list ticket (req-1260 and req-1261 moved with them; req-1259 and req-1262 stay here and are finished here). The edit-keeps-type-and-uses criterion and req-1275 moved here from inc-073, because no address has a type or uses to keep until this row saves them. The address book's update replaces the whole record and clears a type and uses it is not sent, so the edit save must carry the stored type and uses back.",
-        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
+        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "Re-cut 2026-10-19: type and uses become required in the address book API here, not in inc-059, because this is the first row whose add form sends them (the type step is inc-061, the uses question this row). Every creator is changed in the same row so none breaks. Adds addressbook to the repos."
       ],
       "gate": null
     },
@@ -1802,16 +1794,15 @@
   "tickets": [
     {
       "n": 1,
-      "title": "Record type, validation messages and the first add pages",
+      "title": "Validation messages and the address form",
       "ticket": "EUDPA-707",
       "branch": "feat/EUDPA-707-design-release-2-1-address-book",
       "increments": [
-        "inc-059",
         "inc-060",
         "inc-062"
       ],
       "dependsOnTickets": [],
-      "notes": "EUDPA-707 was cut down on 2026-10-15 to ticket 1's rows; on 2026-10-16 inc-061 (the type step) moved to ticket 6."
+      "notes": "EUDPA-707 was cut down on 2026-10-15 to ticket 1's rows; on 2026-10-16 inc-061 (the type step) moved to ticket 6. On 2026-10-19 inc-059 (the typed record) moved to ticket 6."
     },
     {
       "n": 2,
@@ -1875,6 +1866,7 @@
       "ticket": "EUDPA-711",
       "branch": "feat/EUDPA-711-design-release-2-1-address-book-types-and-uses",
       "increments": [
+        "inc-059",
         "inc-067",
         "inc-068",
         "inc-061",
@@ -1885,7 +1877,8 @@
       "dependsOnTickets": [
         4,
         5
-      ]
+      ],
+      "notes": "inc-059 (the typed record) moved here from ticket 1 on 2026-10-19; type and uses become required in inc-070."
     }
   ]
 }

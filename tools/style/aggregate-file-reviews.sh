@@ -123,14 +123,14 @@ emit_items() {
     else
         # Fallback: render directly from per-file todos (one-shot, no
         # disposition/status — the caller hasn't written items.json yet).
-        echo "| # | File | Line | Rule | Severity | Issue | Fix | Disposition | Status | Notes |"
-        echo "|---|------|------|------|----------|-------|-----|-------------|--------|-------|"
+        echo "| # | File | Line | Rule | Category | Severity | Issue | Fix | Disposition | Status | Notes |"
+        echo "|---|------|------|------|----------|----------|-------|-----|-------------|--------|-------|"
         echo "$combined" | jq -r '
             def esc: . | tostring | gsub("\\|"; "\\|");
             [ .[] as $f | $f.todos[] | . + {file: $f.file} ]
             | to_entries
             | .[]
-            | "| \(.key + 1) | \(.value.file | esc) | \(.value.line | esc) | \(.value.rule | esc) | \(.value.severity) | \(.value.issue | esc) | \(.value.fix | esc) |  |  |  |"
+            | "| \(.key + 1) | \(.value.file | esc) | \(.value.line | esc) | \(.value.rule | esc) | \(.value.category // "" | esc) | \(.value.severity) | \(.value.issue | esc) | \(.value.fix | esc) |  |  |  |"
         '
     fi
 }

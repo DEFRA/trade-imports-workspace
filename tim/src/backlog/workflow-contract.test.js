@@ -72,6 +72,21 @@ const houseRulesInLoop = (loop) => {
   return literal.replaceAll('\\`', '`').replaceAll('\\${', '${')
 }
 
+const wordsInJsArray = (source, name) => {
+  const [, items] = source.match(new RegExp(`const ${name} = \\[([^\\]]*)\\]`))
+  return [...items.matchAll(/'([^']+)'/g)].map(([, word]) => word)
+}
+
+const wordsInShellArray = (source, name) => {
+  const [, items] = source.match(new RegExp(`^${name}=\\(([^)]*)\\)`, 'm'))
+  return items.trim().split(/\s+/)
+}
+
+const findingCategoriesOf = (source, wordsInArray) => ({
+  functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
+  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES')
+})
+
 // The name of the variable a script assigns its resolved config to — the
 // declarator whose init is a call to `parseArgs(...)` — wherever the script
 // happens to name it (`CFG`, `config`, ...), so the no-default check below
@@ -366,6 +381,21 @@ describe('every workflow script', () => {
     )
 
     expect(houseRulesInLoop(loop)).toBe(houseRulesInRulesFile(rules))
+  })
+
+  test('the review and code-style tools accept exactly the finding categories the build loop verifies by', () => {
+    const loop = readFileSync(
+      join(buildLoopDir, 'increment-build-loop.js'),
+      'utf8'
+    )
+    const tools = readFileSync(
+      join(workspaceRoot, 'tools', 'review', 'finding-categories.sh'),
+      'utf8'
+    )
+
+    expect(findingCategoriesOf(tools, wordsInShellArray)).toEqual(
+      findingCategoriesOf(loop, wordsInJsArray)
+    )
   })
 
   test('has no FALLBACK', () => {

@@ -24,10 +24,10 @@ done
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
-echo "| # | File | Line | Rule | Severity | Issue | Fix | Disposition | Status | Notes |"
-echo "|---|------|------|------|----------|-------|-----|-------------|--------|-------|"
+echo "| # | File | Line | Rule | Category | Severity | Issue | Fix | Disposition | Status | Notes |"
+echo "|---|------|------|------|----------|----------|-------|-----|-------------|--------|-------|"
 jq -r '
     def esc: . | tostring | gsub("\\|"; "\\|");
     .items[] |
-    "| \(.id) | \(.file | esc) | \(.line // "" | esc) | \(.rule // "" | esc) | \(.severity // "") | \(.issue // "" | esc) | \(.fix // "" | esc) | \(.disposition // "") | \(.status // "") | \(.notes // "" | esc) |"
+    "| \(.id) | \(.file | esc) | \(.line // "" | esc) | \(.rule // "" | esc) | \(.category // "" | esc) | \(.severity // "") | \(.issue // "" | esc) | \(.fix // "" | esc) | \(.disposition // "") | \(.status // "") | \(.notes // "" | esc) |"
 ' "$target"

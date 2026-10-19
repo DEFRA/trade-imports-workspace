@@ -94,6 +94,7 @@ for f in "${to_process[@]}"; do
         todo=$(jq -c ".todos[$i]" "$f")
         line=$(echo "$todo" | jq -r '.line')
         rule=$(echo "$todo" | jq -r '.rule')
+        category=$(echo "$todo" | jq -r '.category // empty')
         severity=$(echo "$todo" | jq -r '.severity')
         issue=$(echo "$todo" | jq -r '.issue')
         fix=$(echo "$todo" | jq -r '.fix')
@@ -108,6 +109,7 @@ for f in "${to_process[@]}"; do
         args=( "$TICKET" --repo "$REPO" --file "$file_path" --line "$line" \
                --rule "$rule" --severity "$severity" \
                --issue "$issue" --fix "$fix" )
+        [[ -n "$category" ]] && args+=( --category "$category" )
         [[ -n "$bp" ]] && args+=( --best-practice "$bp" )
 
         new_id=$("$ADD_ITEM" "${args[@]}")

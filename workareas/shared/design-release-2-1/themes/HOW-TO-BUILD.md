@@ -122,6 +122,25 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/overview-and-review, branch lifecycle on
   feat/EUDPA-696-design-release-2-1-overview-and-review"
 
+## Design snagging: no ticket yet
+
+- **Ticket:** none yet.
+- **Branch:** `feat/NO_JIRA-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
+- **Rows:** 16, all ready (inc-202 to inc-217).
+- **What it is:** the designers' review of the test environment against the prototype at 56371e2, 19 October
+  ([`../snagging/assessment.md`](../snagging/assessment.md), rendered proof in
+  [`../snagging/screens.html`](../snagging/screens.html)). It lands next, on its own in wave 2.
+- **What it changes elsewhere:**
+  - It ports finished work from the origin page, commodities and import reason, arrival and transit, and overview and
+    review branches to `main`. Each source row has a note saying what to drop when its theme merges `main`.
+  - It takes in documents inc-032, identification inc-046, inc-047 and inc-050, consignment parties inc-085 and inc-086,
+    and waiting-on-design inc-190. It also carves two criteria out of transporters inc-037.
+  - The rows that waited on those rows now wait on this theme.
+- **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with
+  `../snagging/screens/prototype/`. The prototype walk is `../prototype-specs/e2e/snagging.fit.spec.js`.
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging, branch lifecycle on
+  feat/NO_JIRA-design-release-2-1-design-snagging"
+
 The stacked themes also carry their branch in repos they don't change, such as the INS frontend, stub, reference-data
 and performance tests, each with a carry-only draft pull request. CI publishes a branch image only from a pull request,
 and the loop refuses a repo on its branch with none. Close a carry-only pull request once the themes it carries have

@@ -1,0 +1,1350 @@
+{
+  "programme": "design-release-2-1-design-snagging",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "theme": "design-snagging",
+  "branch": "feat/NO_JIRA-design-release-2-1-design-snagging",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 2,
+    "landsAfter": [
+      "journey-foundation",
+      "reference-lists"
+    ]
+  },
+  "touches": [
+    "frontend:src/server/common/components/accessible-autocomplete",
+    "frontend:src/client/stylesheets/components/_date-picker.scss",
+    "frontend:src/client/stylesheets/components/_summary-list-missing.scss",
+    "frontend:src/client/stylesheets/components/_index.scss",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+    "plantsfrontend:src/server/common/components/accessible-autocomplete",
+    "plantsfrontend:src/client/stylesheets/components/_date-picker.scss",
+    "tests:page-objects/animals/origin-of-import-page.ts",
+    "tests:page-objects/plants/commodity-details-page.ts",
+    "tests:page-objects/plants/confirmation-page.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-202",
+      "title": "Type-ahead search boxes look and behave the same on every page in both frontends, with page-set placeholder text",
+      "detail": "The designers found the type-ahead search boxes do not match the prototype (S02, S21). Two things are shared by every type-ahead in both frontends: the component's look, and whether a page can set placeholder text. Animals draws a magnifier inside the box; plants still shows the library's dropdown arrow, so one component has two looks (screens/main/P-search--empty.png against screens/main/S02--empty.png). Neither frontend on main lets a page set a placeholder. The origin-page and arrival-and-transit branches each added a placeholder option, in two slightly different ways. This row brings one placeholder option to main for both frontends, gives plants the animals magnifier, and makes a confirmed pick tell the rest of the page that the choice changed, which the region code prefix (inc-204) needs. Page copy is not changed here: each page row sets its own placeholder text. openspec: no journey-page requirement changes; the page rows that set placeholders add their own scenarios.",
+      "acceptanceCriteria": [
+        "In both frontends, every type-ahead search box shows the same search icon inside the right of the box and no dropdown arrow, with JavaScript on: on animals Country of origin, Port of entry, transit countries and the four Main import reason fields, and on plants Country of origin, Proposed place of landing and Commodity details. (review:designers-2026-10-19 S02; screens/main/P-search--empty.png, screens/main/S02--empty.png)",
+        "A page that gives a type-ahead placeholder text shows that text in the empty search box, in the component's grey placeholder colour; a page that gives none shows an empty box, as today. (review:designers-2026-10-19 S02, S21; prototype:dr2-1-source app/views/design-release-2.1/origin-of-the-import.html:49-101 at 56371e2)",
+        "With JavaScript turned off, each type-ahead is still a labelled native select whose first option is the page's own select text, never the search placeholder. (review:designers-2026-10-19 S02; screens/main/S02--empty--nojs.png)",
+        "Confirming a suggestion by clicking it, pressing Enter on it, or leaving the box on an exact match selects that option in the underlying select and tells the rest of the page that the choice changed. (review:designers-2026-10-19 S04; prototype:dr2-1-source app/assets/javascripts/country-search.js:106-114 at 56371e2)",
+        "Every page with a type-ahead in both frontends has no serious or critical accessibility violations with JavaScript on. (repo:frontend; repo:plantsfrontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S02: Search bar visual styling does not follow prototype"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S21: Port of entry - search box slightly visually different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S04: origin prefix box is missing (needs the pick to be announced to the page)"
+        },
+        {
+          "source": "theme:origin-page",
+          "ref": "feat/EUDPA-695-design-release-2-1-origin-page: animals f69647ac, plants 831e13a (accessible-autocomplete.js and macro.njk hunks)"
+        },
+        {
+          "source": "theme:arrival-and-transit",
+          "ref": "feat/EUDPA-694-design-release-2-1-arrival-and-transit: animals bb6fb2e0, plants b2f3bdc (accessible-autocomplete.js and macro.njk hunks)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss (no magnifier override; b6ac0e3 added the arrow)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "src/client/javascripts/components/accessible-autocomplete.js:28-31, 56-69; accessible-autocomplete.scss:15-47"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: take only the shared-component hunks of origin-page inc-009 (animals f69647ac, plants 831e13a) and arrival-and-transit inc-026 (animals bb6fb2e0, plants b2f3bdc): the placeholder data option in accessible-autocomplete.js and the macro. The two differ: origin-page sets the placeholder only when one is given, and arrival-and-transit always sets it, to '' when absent. Keep origin-page's version, which leaves the library default alone, and its unit test. Both source themes drop these hunks when they merge.",
+        "Plants magnifier: port animals' override (hide the dropdown arrow, pad the input, paint the search icon on the wrapper) into the plants accessible-autocomplete stylesheet, and update the plants origin fit spec asserts that read the dropdown arrow and any plants visual baseline.",
+        "Change event: dispatch a bubbling change on the select after onConfirm, including the blur-confirm path, in both frontends' copies of accessible-autocomplete.js so they stay identical. trade-imports-plants-prototype picks this up through sync:upstream.",
+        "Joined blue Search button: stays in waiting-on-design inc-188 (design question 1). Bold matches stay out unless Sam reopens req-019 and req-299 (see discussion.md).",
+        "Rendered proof: after landing, re-shoot screens/main/S02--*, S21--* and P-search--* and compare with screens/prototype/S02--default.png and S21--default.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-203",
+      "title": "Origin page wording, country labels and field styling match Design Release 2.1, in animals and plants",
+      "detail": "The test environment's origin page still shows the hint under Country of origin, the old region of origin code hint and the 58-character sentence in the internal reference hint (S01, S03, S05), because the fixes are on the unmerged origin-page branch. This row brings origin-page inc-009, inc-010 and inc-175 to main as built, so the designers see them now. It also adds two look-and-feel matches the screenshots show and nothing planned: the revealed 'Enter the region of origin code' label is small and bold, and the internal reference box fills the column, as in the prototype. openspec: live-animals/journey-pages/origin-of-import and plants/journey-pages/origin take the scenarios already written on the origin-page branch, plus 'the revealed region code label is bold' and 'the internal reference box is full width' if the spec states field widths.",
+      "acceptanceCriteria": [
+        "On the animals and plants origin pages, 'Country of origin' has no hint, the empty search box reads 'Search for a country' (Welsh 'Chwiliwch am wlad', machine draft), and with JavaScript off the select's first option is 'Select a country'. (review:designers-2026-10-19 S01, S02; prototype:dr2-1-source app/views/design-release-2.1/origin-of-the-import.html:49-103 at 56371e2)",
+        "In the animals country list, a subdivision reads '<subdivision> (<country>)', so typing 'Fra' lists France and the French territories, each followed by '(France)'. (review:designers-2026-10-19 S02; screens/prototype/S02--suggestions-open.png)",
+        "The hint on 'Does the consignment have a region of origin code?' reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.', with a Welsh machine draft; the revealed box keeps the hint 'Enter up to 5 characters.' (review:designers-2026-10-19 S03; prototype:dr2-1-source origin-of-the-import.html:133-135, partials/region-of-origin-code-input.html:5-7)",
+        "The revealed label 'Enter the region of origin code' is small and bold, as in the prototype. (review:designers-2026-10-19 S03; screens/prototype/S03--region-code-revealed.png)",
+        "The internal reference hint reads 'Enter any internal reference you want to use to identify this consignment, or leave blank.', with a Welsh machine draft, and a reference over 58 characters still shows 'Internal reference must be 58 characters or less'. (review:designers-2026-10-19 S05; prototype:dr2-1-source origin-of-the-import.html:155-169)",
+        "The internal reference box is the full width of the content column, as in the prototype. (review:designers-2026-10-19 S05; screens/prototype/S05--default.png)",
+        "Every acceptance criterion of origin-page inc-009, inc-010 and inc-175 holds on main as it does on the origin-page branch. (theme:origin-page inc-009, inc-010, inc-175)",
+        "The origin pages in both frontends have no serious or critical accessibility violations, with the region code revealed. (repo:frontend; repo:plantsfrontend)"
+      ],
+      "dependsOn": [
+        "inc-202"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S01: Hint text should be removed"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S02: Search bar visual styling does not follow prototype"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S03: hint test for origin code is wrong"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S05: Content for 'Your internal refernce' question is incorrect"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/origin-of-the-import.html:49-169; app/views/partials/region-of-origin-code-input.html"
+        },
+        {
+          "source": "theme:origin-page",
+          "ref": "feat/EUDPA-695-design-release-2-1-origin-page: inc-009 animals f69647ac, plants 831e13a + cd55531, tests c988fd4; inc-010 animals b03938b9, tests f2c4e00a; inc-175 animals 7b24d265, tests 7613607 (PRs animals #403, plants #96, tests #25)"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Does the plants country of origin list carry subdivisions that would need the '<subdivision> (<country>)' label (inc-175 is animals only)? Default: no plants change unless the plants list shows a subdivision without its parent country; the builder checks the plants fixture and says which it found."
+      ],
+      "notes": [
+        "Port from branch: cherry-pick origin-page inc-009 (page hunks of f69647ac and 831e13a, with cd55531; the component hunks come with inc-202), inc-010 (b03938b9, f2c4e00a) and inc-175 (7b24d265, 7613607) onto main, in that order. The origin-page theme drops these at its merge.",
+        "inc-009, inc-010 and inc-175's requirement ids stay with the origin-page split-off pointer; this row lists none so no requirement is held twice.",
+        "Not snagged but drawn: the bold revealed label (small label class, no custom CSS) and the full-width internal reference box (remove the three-quarters width class). Regenerate the origin visual baseline in trade-imports-ins-tests.",
+        "Rendered proof: re-shoot screens/main/S01--empty.png, S03--region-code-revealed.png, S05--empty.png and S04--empty--nojs.png and compare with the prototype shots."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-204",
+      "title": "Region code prefix follows the picked country in the browser, with an empty prefix slot before a country is chosen",
+      "detail": "The designers asked for the grey country-code prefix in front of the region code box (S04). The prototype shows an empty prefix slot as soon as Yes is chosen, and fills it with the country's code the moment a country is picked, with no save. Today the prefix appears only after the page is submitted with a country. This snag is design's answer to design question 2, so waiting-on-design inc-190 moves in here. With JavaScript the page matches the prototype. Without JavaScript the saved country's prefix shows once the page is re-shown, as DR1 shipped. openspec: add req-040 and req-041 to live-animals/journey-pages/origin-of-import as scenarios, with the no-JavaScript case stated.",
+      "acceptanceCriteria": [
+        "With JavaScript, before any country is chosen, the revealed region code box shows an empty grey prefix in front of it. (review:designers-2026-10-19 S04; prototype:dr2-1-source partials/region-of-origin-code-input.html:14-30 at 56371e2; screens/prototype/S04--no-country-yet.png)",
+        "With JavaScript, picking France makes the prefix 'FR', then picking Netherlands makes it 'NL', with no form submission. (review:designers-2026-10-19 S04; prototype:dr2-1-source app/assets/javascripts/country-search.js:106-114; screens/prototype/S04--france-prefix.png)",
+        "With JavaScript, picking a subdivision shows its parent country's code, the same code the server stores. (review:designers-2026-10-19 S04; theme:origin-page inc-175)",
+        "With JavaScript, clearing the country, or picking one with no code, empties the prefix. (prototype:dr2-1-source app/assets/javascripts/country-search.js:257)",
+        "Without JavaScript, the prefix shows the saved or submitted country's code once the page is re-shown, and a code typed with its prefix, such as 'FR-75', is accepted. (document:dr1-parity-backlog document-dr1-parity-backlog-p4-002; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-056)",
+        "The prefix is hidden from screen readers, and the label and the hint 'Enter up to 5 characters.' still describe the box. (review:designers-2026-10-19 S04)"
+      ],
+      "dependsOn": [
+        "inc-202",
+        "inc-203"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S04: origin prefix box is missing"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/partials/region-of-origin-code-input.html:14-30; app/assets/javascripts/country-search.js:106-114, 257"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "waiting-on-design inc-190 (moved in)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-056, p1-057 (design question 2)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-047, p2-048, p2-052"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-032"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p2-048, p2-049, p2-050, p2-054-m1"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p4-002, p4-005 to p4-007, p4-009, p4-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-056, p1-057"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p5-024, p5-025, p5-026"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-032, p4-034"
+        }
+      ],
+      "requirements": [
+        "req-040",
+        "req-041"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Moves in waiting-on-design inc-190, unblocked: S04 is design's answer to design question 2. Made the call, flagged to Sam in discussion.md.",
+        "Built as a small progressive-enhancement module registered in the existing client bundle (no new webpack entry). It listens for the change event inc-202 adds, and reads a country-to-prefix map the server builds with the same prefix rule as validation, so subdivisions map to their parent.",
+        "Without JavaScript there is no empty slot before a save: the GOV.UK input macro renders no empty prefix, and a filler character would be a hack. Record this in themes/origin-page/prototype-differences.md.",
+        "Plants has no region code question. The change event dispatch is already in both frontends through inc-202. germinal-products inc-176's copy of the origin page takes this behaviour when it is built.",
+        "Tests: origin fit spec (empty slot before a pick; France then Netherlands with no navigation; the existing no-JS prefix-after-save test stays) and the same checks in trade-imports-ins-tests tests/animals/e2e/pages/origin.spec.ts. Regenerate the revealed-state visual baseline. Re-shoot screens/main/S04--region-code-revealed.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-205",
+      "title": "'What are you importing?' and Commodity details: ITAHC inset, search hint, short-search message, Species column and spacing",
+      "detail": "On 'What are you importing?' the designers found the inset and search hint differ (S06, S07). On Commodity details the Selected commodities table lacks a Species column (S13) and the gap above each commodity heading is too tight (S14). The inset, hint and Species column are built on the unmerged commodities-and-reason branch (inc-011), so this row brings inc-011 to main. Dropping 'Enter at least 3 characters.' from the hint, as the prototype does, would leave a 1 or 2 character search showing nothing at all, so a short line explains it only after such a search. The commodity headings get the prototype's 40px above them, using GOV.UK spacing, and the dividing rule sits only between commodities. Both pages live in the one commodities feature folder and share its copy files, so they land together. Results as you type (S08) stay out: see discussion.md. openspec: live-animals/journey-pages/commodity-selection takes inc-011's inset and hint wording and a new scenario for the short-search message; commodity-details takes the Species column.",
+      "acceptanceCriteria": [
+        "The inset under the 'What are you importing?' heading reads 'You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.', with a Welsh machine draft. (review:designers-2026-10-19 S06; prototype:dr2-1-source app/views/design-release-2.1/what-are-you-importing.html:42-45 at 56371e2)",
+        "The search hint reads 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).', with a Welsh machine draft, and no longer says 'Enter at least 3 characters.' (review:designers-2026-10-19 S07; screens/prototype/S07--default.png)",
+        "Searching for 1 or 2 characters, such as 'ox', shows 'Enter at least 3 characters to search' (Welsh 'Rhowch o leiaf 3 nod i chwilio', machine draft) and no results; searching for 3 or more characters with no match still shows 'No results found'. (review:designers-2026-10-19 S07)",
+        "The Selected commodities table on Commodity details has the columns 'Commodity code', 'Common name' and 'Species', and each row's Species cell lists every Latin name chosen under that commodity, one per line. (review:designers-2026-10-19 S13; prototype:dr2-1-source consignment-details.html:58-90; screens/prototype/S13--cattle.png)",
+        "On a desktop-width screen there is 40px between the 'Add another commodity' link and the first commodity heading, 40px above and below the rule before each later commodity heading, and no rule above the Save buttons. (review:designers-2026-10-19 S14; prototype:dr2-1-source app/assets/sass/application.scss:1236-1250; screens/prototype/S14--two-commodities.png)",
+        "Every acceptance criterion of commodities-and-reason inc-011 holds on main as it does on that branch. (theme:commodities-and-reason inc-011)",
+        "Both pages have no serious or critical accessibility violations, in their empty, results and two-commodity states. (repo:frontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S06: Inset content is different under H1"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S07: Search box hint text is different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S13: 'Species' is missing from table"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S14: Spacing above Commodity title (e.g. Cow (0102)) is too tight"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 what-are-you-importing.html:42-87; consignment-details.html:58-107; application.scss:1219-1250"
+        },
+        {
+          "source": "theme:commodities-and-reason",
+          "ref": "feat/EUDPA-693-design-release-2-1-commodities-and-reason: inc-011 animals cadd4794, tests c8cdcd3"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/commodities/search/search.controller.js:45; search.njk:61-63; search/matching.js:4; consignment-details/consignment-details.njk:23-33; _species-quantities.njk:41"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: cherry-pick commodities-and-reason inc-011 (animals cadd4794, tests c8cdcd3) onto main. It is the first commit on that branch after the merged foundation, so it applies on its own. It also brings inc-011's 'Select a commodity' error, soft Save and return, error order and section captions. The commodities-and-reason theme drops it at its merge. inc-011's requirement ids stay with that theme's pointer.",
+        "Spacing: the 40px desktop step is GOV.UK spacing scale 7 (25px on mobile, 40px on desktop), not 8. Emit the rule only between commodity groups. No layout-tolerance test; prove it by re-shooting screens/main/S14--answered.png and a two-commodity shot, desktop and mobile.",
+        "Plants: its commodity details search is a type-ahead (inc-202), not a server search, so there is no silent minimum query length and no plants change here.",
+        "The germinal 'What are you importing?' row in the unsplit backlog keeps the same inset for germinal; it copies this page later.",
+        "Content designer note: 'ITAHC' is not spelled out on this page; default is the wording as drawn (discussion.md).",
+        "Rendered proof: re-shoot screens/main/S06--empty.png, S07--empty.png, S13--answered.png and S14--answered.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-206",
+      "title": "Every date picker in both frontends has the blue calendar button and a calendar that opens in the page",
+      "detail": "The designers found the exit date and date of issue pickers do not follow the pattern (S11, S28). The service already has a house date picker style: a GOV.UK blue toggle with a white calendar icon, and a calendar that opens in the flow of the page, pushing the next question down. Only animals arrival details turns it on. Elsewhere the MoJ default shows a near-black toggle, and the calendar covers the next question and the buttons (screens/main/S11--calendar-open.png, S28--calendar-open.png, P-date-input--calendar-open.png). This row makes the house style the default for every date picker in both frontends, so no page can miss it, and lets a page choose its date label's weight. No copy changes. openspec: no requirement change; a page-level scenario is optional.",
+      "acceptanceCriteria": [
+        "On animals arrival date, exit date (Main import reason, Temporary admission horses) and date of issue (Upload documents), and on plants arrival date, the 'Choose date' button is GOV.UK blue with a white calendar icon, and shows the GOV.UK yellow focus state when focused. (review:designers-2026-10-19 S11, S28; prototype:dr2-1-source app/assets/sass/application.scss:33-68 at 56371e2; screens/prototype/S11--exit-date.png)",
+        "Opening the calendar on any of those pages pushes the following question down rather than covering it: the bottom of the calendar sits above the next question's label. (review:designers-2026-10-19 S11; prototype:dr2-1-source application.scss:6-31; screens/prototype/S11--calendar-open.png)",
+        "With JavaScript off, each date field is a plain labelled text box with its hint, as today. (screens/main/S11--temporary-admission-revealed--nojs.png, S28--empty--nojs.png)",
+        "Each page keeps its existing date label and hint text; no copy changes. (review:designers-2026-10-19 S11, S28)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S11: Date picker does not follow pattern"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S28: Date picker does not follow pattern"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/assets/sass/application.scss:6-68, 1686-1688; app/views/partials/temporary-admission-horses-select.html:4-23"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "src/server/app/shared/kit.js:311-327 (dateField); src/client/stylesheets/components/_date-picker.scss:19-63; transport/port-of-entry/port-of-entry.controller.js:79-81"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/app/shared/kit.js; features/arrival-details/controller.js:141-147; src/client/stylesheets/components/_date-picker.scss"
+        },
+        {
+          "source": "theme:arrival-and-transit",
+          "ref": "inc-026 animals bb6fb2e0, plants b2f3bdc (kit.js dateField labelClasses hunk)"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "In both frontends' kit.dateField, always give the form group the house date-picker class, with any page classes after it, and drop the now-redundant opt-in on animals arrival details. Update the header comments of _date-picker.scss.",
+        "Port from branch: take the labelClasses option that arrival-and-transit inc-026 added to kit.dateField (animals bb6fb2e0, plants b2f3bdc kit.js and kit.test.js hunks) so inc-207 can make the exit date label regular weight. arrival-and-transit drops that hunk at its merge. Expect a kit.js conflict at that theme's merge with commodities-and-reason's own runBackLink addition, whichever lands second.",
+        "Tests: kit.test.js in both frontends; a computed-colour assertion on the 'Choose date' toggle in the import-reason, documents and plants arrival-details fit specs (copy arrival-transit.fit.spec.js:423-442), and an order assertion that the open calendar's bottom is above the next label (no tolerance).",
+        "MoJ advises against its picker for dates read off a document; the text box stays typeable, and design question 12 (germinal dates) would apply to date of issue too if answered 'no calendar'.",
+        "Rendered proof: re-shoot screens/main/S11--calendar-open.png, S28--calendar-open.png, S19--calendar-open.png and P-date-input--calendar-open.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-207",
+      "title": "Main import reason: heading, child fields and exit date look as Design Release 2.1 draws them",
+      "detail": "The designers found four differences on Main import reason. The heading should be 'Main import reason' (S09). The search boxes under the child radios look different: bold labels, full width, no 'Select one' (S10). The exit date label is bold where the prototype's is regular (S11). The exit date sits touching Port of exit (S12). The heading, browser title, review card and copy are built on the commodities-and-reason branch (inc-020), and the overview task name on overview-and-review (inc-098). This row brings both to main. The four child fields stay type-ahead boxes under Sam's ruling (claim 4: EUDPA-635's component stays where it is), but their look and copy follow the prototype as far as the component can. openspec: live-animals/journey-pages/import-reason takes 'The page is headed and titled Main import reason' (already on the workspace branch) and scenarios for the child fields' 'Select one' placeholder; live-animals/journey-pages/overview takes the 'Main import reason' task name.",
+      "acceptanceCriteria": [
+        "The page's heading reads 'Main import reason' and its browser title 'Main import reason - Import notification service - GOV.UK'; the overview task and the review card heading use the same name, with Welsh 'Prif reswm mewnforio' (machine draft); 'Main reason for import' no longer appears in the live-animals service. (review:designers-2026-10-19 S09; prototype:dr2-1-source app/views/design-release-2.1/reason-for-import.html:3, 42 at 56371e2)",
+        "Under Transhipment, Transit and Temporary admission horses, the Destination country and Port of exit labels are regular weight, not bold. (review:designers-2026-10-19 S10; prototype:dr2-1-source partials/transit-options-select.html:4-22; screens/prototype/S10--transit-revealed.png)",
+        "Each of those four boxes reads 'Select one' when empty (Welsh 'Dewiswch un'), and with JavaScript off its select's first option reads 'Select one'. (review:designers-2026-10-19 S10; theme:commodities-and-reason inc-020)",
+        "Each of those four boxes, with or without JavaScript, is two-thirds of the content column wide, as in the prototype. (review:designers-2026-10-19 S10; screens/prototype/S10--transit-revealed.png)",
+        "Under Temporary admission horses the 'Exit date' label is regular weight, as in the prototype. (review:designers-2026-10-19 S11; prototype:dr2-1-source application.scss:1668-1676; screens/prototype/S11--exit-date.png)",
+        "On a desktop-width screen there is a 30px gap between the exit date box and the 'Port of exit' label, with JavaScript on and off and in the error state. (review:designers-2026-10-19 S12; prototype:dr2-1-source application.scss:1660-1664; screens/prototype/S12--exit-date-filled.png)",
+        "Every acceptance criterion of commodities-and-reason inc-020 holds on main as it does on that branch. (theme:commodities-and-reason inc-020)",
+        "The page has no serious or critical accessibility violations with each child radio revealed. (repo:frontend)"
+      ],
+      "dependsOn": [
+        "inc-202",
+        "inc-206"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S09: H1 is different (should be 'Main import reason')"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S10: Styling of search boxes under all child radios are different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S11: Date picker does not follow pattern (label weight)"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S12: Spacing between date picker and next field is too tight"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 reason-for-import.html:3-66; partials/transit-options-select.html; partials/temporary-admission-horses-select.html; application.scss:1660-1688"
+        },
+        {
+          "source": "theme:commodities-and-reason",
+          "ref": "feat/EUDPA-693-design-release-2-1-commodities-and-reason: inc-020 animals 77762214, tests ad920c1"
+        },
+        {
+          "source": "theme:overview-and-review",
+          "ref": "feat/EUDPA-696-design-release-2-1-overview-and-review: inc-098 animals 56a0aeb8 (hub copy hunks only), tests 36c7865 (hub-task name references only)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "claim 4 (EUDPA-635's component stays; copy follows the prototype as far as it can show it)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/import-reason/template.njk:33-77; features/import-reason/controller.js:82-87"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: cherry-pick commodities-and-reason inc-020 (animals 77762214, tests ad920c1). From overview-and-review inc-098 take only the hub task rename (hub/copy en and cy, hub copy test, and the tests repo's hub-task name references); its assistive-technology hub regions stay with overview-and-review. Both themes drop what was ported at their merge. After landing, check that nothing in trade-imports-ins-tests/tests/animals still names the task 'Main reason for import'.",
+        "Child fields: remove the small bold label class from the four autocomplete labels, set the placeholder to the existing 'Select one' copy (no new Welsh), and wrap each in a two-thirds width GOV.UK override. Exit date: pass labelClasses '' (inc-206) and a GOV.UK margin-bottom spacing override (scale 6) on its form group, which beats the nested last-of-type reset.",
+        "Record in themes/commodities-and-reason/prototype-differences.md: 'Prototype shows plain selects under the child radios; we keep EUDPA-635's type-ahead under claim 4; look and copy match.' Close the deferred.md transhipment destination country autocomplete follow-on: EUDPA-635 did it.",
+        "Plants has no import reason page.",
+        "Rendered proof: re-shoot screens/main/S09--empty.png, S10--transit-revealed.png, S10--temporary-admission-revealed.png, S11--calendar-open.png and S12--temporary-admission-revealed.png, with and without JavaScript."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-208",
+      "title": "Arrival details wording, hints and transport options match Design Release 2.1, in animals and plants",
+      "detail": "The designers found five differences on Arrival details: the arrival date hint shows today's date (S19), the port of entry hint says 'Choose' (S20), the port search box differs (S21), the means of transport options are Airplane, Railway, Road Vehicle and Vessel (S22), and the transport identification hint has different words and is black, not hint grey (S23). The port hint, placeholder, medium labels, transport options and identification wording are built on the unmerged arrival-and-transit branch (inc-026), so this row brings it to main for animals and plants. Two changes nothing planned are added: a fixed '27/3/2026' date example, and hint grey on the identification lead-in and list. openspec: live-animals/journey-pages/arrival-details takes inc-026's scenarios plus 'the arrival date hint reads exactly … 27/3/2026' and 'the identification lead-in and list are shown as hint text'; plants/journey-pages/arrival-details takes inc-026's plants scenarios.",
+      "acceptanceCriteria": [
+        "The arrival date hint reads 'The expected date of arrival at the port of entry. For example, 27/3/2026' on every day, with Welsh 'Y dyddiad cyrraedd disgwyliedig yn y porthladd mynediad. Er enghraifft, 27/3/2026' (machine draft). (review:designers-2026-10-19 S19; prototype:dr2-1-source app/views/partials/arrival-date-picker.html:12-14 at 56371e2)",
+        "The port of entry hint reads 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.', the empty search box reads 'Select a port', and the field labels on the page are medium, with Welsh machine drafts. (review:designers-2026-10-19 S20, S21; prototype:dr2-1-source arrival-details.html:52-86)",
+        "The means of transport options are 'Select one', 'Air', 'Rail', 'Road' and 'Sea', and the review page reads the chosen one back with the same label; the stored values do not change. (review:designers-2026-10-19 S22; prototype:dr2-1-source arrival-details.html:113-122; screens/prototype/S22--options-listed.png)",
+        "The transport identification hint opens 'Enter one of the following:' (Welsh 'Rhowch un o’r canlynol:'), and its lead-in and bullet list are in the same grey hint text as the page's other hints. (review:designers-2026-10-19 S23; prototype:dr2-1-source arrival-details.html:124-136; screens/prototype/S23--default.png)",
+        "On plants arrival details, Proposed place of landing takes inc-026's plants hint and placeholder, and its arrival date hint still reads 'For example, 27/3/2026'. (review:designers-2026-10-19 S20; theme:arrival-and-transit inc-026)",
+        "Every acceptance criterion of arrival-and-transit inc-026 holds on main as it does on that branch. (theme:arrival-and-transit inc-026)",
+        "Arrival details in both frontends has no serious or critical accessibility violations. (repo:frontend; repo:plantsfrontend)"
+      ],
+      "dependsOn": [
+        "inc-202",
+        "inc-206"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S19: Hint text for date of arrival field is wrong. Is it dynamic as its todays date? Use a set date"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S20: Port of entry - Hint text slightly different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S21: Port of entry - search box slightly visually different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S22: Means of transport dropdown, change to Air, Rail, Road and Sea"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S23: Transport identification, hint text is different"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/arrival-details.html:49-136; app/views/partials/arrival-date-picker.html:12-14"
+        },
+        {
+          "source": "theme:arrival-and-transit",
+          "ref": "feat/EUDPA-694-design-release-2-1-arrival-and-transit: inc-026 animals bb6fb2e0, plants b2f3bdc, tests 7f87ba3 (PRs animals #402, plants #95, tests #24)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "transport/port-of-entry/port-of-entry.controller.js:74; arrival-window.js:16-33; port-of-entry.njk:40-47"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: cherry-pick arrival-and-transit inc-026 (animals bb6fb2e0, plants b2f3bdc, tests 7f87ba3) without the shared-component hunks (inc-202) and the kit.js labelClasses hunk (inc-206). It relabels the transport options in transport and check-answers copy in both languages, so the review read-back matches. arrival-and-transit drops it at its merge. inc-027's labels already reached main through reference-lists 88929d14. When overview-and-review merges, its inc-102 read-back must keep these labels.",
+        "Fixed date example: the hint becomes a plain string and exampleText leaves arrival-window.js. The fit spec types its own date from the window or the existing relative-date helper. No trade-imports-ins-tests spec asserts this hint.",
+        "Hint grey: add the GOV.UK hint class to the lead-in paragraph and the list inside the hint, keeping their spacing overrides. Assert the class in a view or fit test, probed by removing it.",
+        "Plants: refresh the reference text in src/server/app/sets/high-risk-plants/spec/journey-spec.json for the place of landing hint.",
+        "Joined blue Search button: still waiting-on-design inc-188. Bold matches: Sam's call.",
+        "Rendered proof: re-shoot screens/main/S19--empty.png, S20--empty.png, S21--suggestions-open.png, S22--empty.png and S23--empty.png, and plants P-date-input--empty.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-209",
+      "title": "Which countries will the consignment travel through?: medium label, search placeholder, no empty-list line, Remove at the right",
+      "detail": "The designers found the transit countries search box looks different (S24). The prototype has a medium 'Enter a country' label, 'Search for a country' in the empty box, no 'You have not added any countries yet.' line and Remove at the right of each row. Main has a small bold label, no placeholder, the empty-list line and Remove in the middle of the table. Without JavaScript, main's select also opens on 'Search for a country', which is wrong for a dropdown. The empty-line removal is built on the arrival-and-transit branch (inc-029). Adding on pick (S25) stays out: 'Add country' stays as the confirm step until design answers question 4 (discussion.md). openspec: live-animals/journey-pages/transited-countries takes the empty-state, placeholder and select-option scenarios.",
+      "acceptanceCriteria": [
+        "The country field's label 'Enter a country' is medium. (review:designers-2026-10-19 S24; prototype:dr2-1-source app/views/design-release-2.1/transit-countries.html:97 at 56371e2; screens/prototype/S24--default.png)",
+        "With JavaScript, the empty search box reads 'Search for a country' (Welsh 'Chwiliwch am wlad', machine draft); with JavaScript off, the select's first option reads 'Select a country' (Welsh 'Dewiswch wlad', machine draft). (review:designers-2026-10-19 S24; screens/main/S24--one-country-added--nojs.png)",
+        "With no countries added, the page shows no 'You have not added any countries yet.' line. (review:designers-2026-10-19 S24; theme:arrival-and-transit inc-029)",
+        "In the added-countries table, each Remove button sits at the right-hand end of its row. (review:designers-2026-10-19 S24; screens/prototype/S25--two-countries-added.png)",
+        "Picking a country and pressing 'Add country' still adds it, with and without JavaScript, and the addition is still announced to screen readers. (ruling:sam-2026-10-09-pm claim 14)",
+        "The page has no serious or critical accessibility violations, empty and with countries added. (repo:frontend)"
+      ],
+      "dependsOn": [
+        "inc-202"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S24: Search box is visually different"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/transit-countries.html:97-102"
+        },
+        {
+          "source": "theme:arrival-and-transit",
+          "ref": "feat/EUDPA-694-design-release-2-1-arrival-and-transit: inc-029 animals 49e22db9, tests 29c74b5 (empty-state hunks only)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "transport/transit-countries/transit-countries.njk:28-57; _added-countries-table.njk; transport/copy/copy.en.js:63"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: from arrival-and-transit inc-029 (animals 49e22db9, tests 29c74b5) take only the empty-state hunks: the empty line in transit-countries.njk, its copy key, and the tests that assert it. inc-029's title, Back link and redirect, and inc-174's country list, stay on the branch. arrival-and-transit drops the empty-state hunks at its merge.",
+        "Copy split: the select's own empty option becomes 'Select a country', and 'Search for a country' moves to a separate search placeholder key, matching the origin page's split. Remove cell and its head cell take the GOV.UK table's numeric format, so they align right with no custom CSS.",
+        "Tests: transport copy test, transit-countries controller test (empty-option expectation), arrival-transit fit spec (placeholder attribute and select first option), and the ins-tests transit page object and visual baseline.",
+        "Plants has no transit countries page.",
+        "Rendered proof: re-shoot screens/main/S24--empty.png, S24--one-country-added--nojs.png and S25--one-country-added.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-210",
+      "title": "Every server search box is a full-width box with an icon search button, in both frontends",
+      "detail": "The designers found the address picker and transporter search boxes look different (S26, S33), and the commodity search too (S08). The prototype draws one search control everywhere: a box with a square blue search icon button joined to it, under a medium 'Search' label. Main has a smaller box with a separate grey 'Search' text button under it. A real icon submit button works without JavaScript and is allowed by the 9 October afternoon ruling (claims 24-25). This row gives every server search in both frontends that look: the five animals party pickers, the plants consignor, place of destination and consignment contact pickers, the animals transporter list and the animals commodity search. Search still runs on the server when the button or Enter is pressed. Filtering or listing as you type stays out: party pickers in waiting-on-design inc-193, transporters in inc-037, commodity search in inc-014. This row carries inc-086's search criteria (criteria 3 and 4). openspec: live-animals/addresses, plants/addresses, plants/journey-pages consignor-select, place-of-destination and consignment-contact-select, live-animals/journey-pages/transporter and commodity-selection: the search runs from a 'Search' icon button.",
+      "acceptanceCriteria": [
+        "On the five animals party pickers and the plants consignor, place of destination and consignment contact pickers, the search label 'Search' is medium, and the hint 'Name, address or country' stays. (review:designers-2026-10-19 S33; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-071; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-038)",
+        "On those pickers, the animals transporter list and the animals commodity search, the search runs from a square icon button joined to the right of the box, whose accessible name is 'Search' (Welsh as today); there is no separate 'Search' text button. (review:designers-2026-10-19 S08, S26, S33; prototype:dr2-1-source app/views/design-release-2.1/consignment-address-select.html, transporter.html:87-95, what-are-you-importing.html:87 at 56371e2)",
+        "With JavaScript off, pressing the icon button or Enter in the box narrows the list on the server, as today, on every one of those pages. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-035; screens/prototype/S26--default--nojs.png shows the prototype does not)",
+        "The icon button is GOV.UK blue, as the prototype draws it and as the date picker's calendar button is, with the GOV.UK focus state. (review:designers-2026-10-19 S26, S33; screens/prototype/S33--default.png)",
+        "On the pickers the box is half the content column wide, as drawn; on the commodity search it is full width. (review:designers-2026-10-19 S08, S33; screens/prototype/S33--default.png, S08--default.png)",
+        "Every changed page has no serious or critical accessibility violations, empty, searched and with no matches. (repo:frontend; repo:plantsfrontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S08: Search does not behave as expected (look only; behaviour is discussed)"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S26: Search box is visually different"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S33: Search bar visual styling does not follow prototype"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 consignment-address-select.html; transporter.html:64-102; what-are-you-importing.html:87"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "consignment-parties inc-086 criteria 3 and 4 (moved in through inc-212)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-035, p3-038; claims 24-25 (icon-only submit named Search)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "addresses/party-picker/_address-picker.njk:84-97; transport/transporters/transporters.njk:51-65; commodities/search/search.njk:30-46"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "consignor-select, place-of-destination and consignment-contact-select template.njk (search submit)"
+        }
+      ],
+      "requirements": [
+        "req-590",
+        "req-591"
+      ],
+      "openQuestions": [
+        "Button colour: MoJ Search's default is GOV.UK green; the prototype draws blue (#1d70b8), matching the house date picker toggle. Default: blue, with one override rule beside the date picker's; the designers are asked in discussion.md and can switch it to green."
+      ],
+      "notes": [
+        "Build from MoJ Frontend 11.1.0's Search component styling, already a dependency of both frontends, not a hand-built control. Each page is one POST form and the mojSearch macro emits its own form, so put MoJ's input-wrapper and icon-button classes on govukInput and govukButton (the button as the input's after-input slot, MoJ's aria-hidden, unfocusable svg plus visually hidden 'Search' text), and import MoJ's search stylesheet in each frontend's application stylesheet. Keep the search button the first submit in its form so Enter searches. Do not copy the prototype's type=button or its clear 'x'.",
+        "Existing copy covers the label, hint and button name, so no new Welsh.",
+        "The transporter list is part of blocked transporter management (point 5, claim 35). Its search look is carved out here as look and feel only; filtering as you type, the visible heading move and the eight DR2.1 transporters stay in inc-037. Flagged to Sam in discussion.md.",
+        "Commodity search: look only. Results as you type are discussion.md S08 (design question 3, MDM).",
+        "Plants dashboard search is not in this row; no snag names it.",
+        "Tests: fit specs and ins-tests page objects find the button by role and name 'Search', which does not change; refresh visual baselines. Rendered proof: re-shoot screens/main/S08--empty.png, S26--list.png, S33--list.png and P-address-selection--list.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-211",
+      "title": "Transporter details: 'Add a transporter' sits beside the search, above the table",
+      "detail": "The designers found 'Add a transporter' in the wrong place (S27). The prototype puts it on the search row, aligned right, above the transporter table. Main puts it below the table, just above Save and continue. Transporter management is blocked by Sam's 9 October afternoon ruling, section 5, but moving an existing button on a page the service is keeping does not touch who manages transporters, what the add pages do or what the list holds, so this criterion is carved out of blocked inc-037 (its criterion 6). openspec: live-animals/journey-pages/transporter: if a scenario says where the add button is, it now sits above the table.",
+      "acceptanceCriteria": [
+        "On the transporter list the secondary 'Add a transporter' button sits on the search row, aligned to the right, above the transporter table, and no longer below it; on a phone it sits below the search. (review:designers-2026-10-19 S27; prototype:dr2-1-source app/views/design-release-2.1/transporter.html:73-104 at 56371e2; screens/prototype/S27--default.png)",
+        "'Add a transporter' still opens 'Choose a transporter type'. (prototype:dr2-1-source prototype-dr2-1-source-p7-020; prototype:dr2-1-specs prototype-dr2-1-specs-p2-104)",
+        "Tabbing through the page reaches the search box, the search button, 'Add a transporter', then the transporter radios, in that order. (review:designers-2026-10-19 S27)",
+        "The transporter list has no serious or critical accessibility violations. (repo:frontend)"
+      ],
+      "dependsOn": [
+        "inc-210"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S27: Add a transporter CTA is in wrong location"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/transporter.html:73-106"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "transporters inc-037 criterion 6 (carved out)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "section 5 (transporter management blocked), read narrowly"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "transport/transporters/transporters.njk:60-65, 118-143"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Built with a GOV.UK grid row (two halves, the second right-aligned with the GOV.UK text-align override), placed after the search control and before the fieldset; no custom flex CSS. Copy exists in English and Welsh.",
+        "The visible 'Select a transporter' heading move (inc-037 criterion 1) and everything else in inc-037 stay blocked.",
+        "Rebase note: type-question-and-templates commit 11b00c19 edits only the saveActions call in transporters.njk, so it should not conflict.",
+        "Tests: page-objects/animals/transporter-page.ts finds the button by role and name, so it is order-independent; add one assertion that 'Add a transporter' comes before the table in the DOM. Re-shoot screens/main/S27--list.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-212",
+      "title": "Party picker layout: add button, results heading and count, fieldset, one address line per line, full width, and blank save, in animals and plants",
+      "detail": "The designers found the address pickers' search and address styling differ from the prototype (S33, S36). consignment-parties inc-086 already plans the picker layout in animals and plants. It moves in here, with its search criteria carried by inc-210. The screenshots show one more gap no row planned: the animals pickers sit in the two-thirds column, so names and addresses wrap heavily, while the prototype and the plants pickers use the full width (screens/main/S36--list.png against screens/prototype/S36--consignee.png and screens/main/P-address-selection--list.png). The 'View' link that replaces each row's 'View details' expander stays in consignment-parties inc-090, because it needs the address book to send the trader back to the picker (address-book inc-066) and this theme depends only on main. Prototype 56371e2 (commit c3ca339) removed the place of origin's separate country search, so the place of origin picker is treated like the other four and inc-089 is dropped. openspec: live-animals/addresses and plants/addresses take inc-086's picker scenarios plus 'each animals party picker uses the full page width'.",
+      "acceptanceCriteria": [
+        "On each of the five animals pickers on the compose stack, 'Add a new address' is a secondary button beside the picker's heading, and no 'Add a new address' link sits under the intro; in stub mode the pickers offer no add control. (prototype:dr2-1-source prototype-dr2-1-source-p8-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-054; prototype:dr2-1-specs prototype-dr2-1-specs-p3-029; repo:tests repo-tests-p5-022, repo-tests-p5-024)",
+        "The high-risk plants consignor and place of destination pickers still offer no 'Add a new address' control. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-015; repo:plantsfrontend repo-plantsfrontend-p6-036)",
+        "Under the search, each of those pickers shows the heading 'Select an address' above the results count. (review:designers-2026-10-19 S33; prototype:dr2-1-source prototype-dr2-1-source-p8-059; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-056; repo:plantsfrontend repo-plantsfrontend-p6-008)",
+        "The results count reads 'Showing <visible> out of <total> results' in English, with its Welsh counterpart, and changes when a search narrows the list, on the animals pickers and the plants consignor and place of destination pickers. (review:designers-2026-10-19 S33; prototype:dr2-1-source prototype-dr2-1-source-p8-059; prototype:dr2-1-specs prototype-dr2-1-specs-p3-036; repo:plantsfrontend repo-plantsfrontend-p6-008, repo-plantsfrontend-p6-049)",
+        "On those pickers the address table sits inside one fieldset whose legend 'Select an address' is read by a screen reader but not shown. (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-057; repo:plantsfrontend repo-plantsfrontend-p6-010)",
+        "On those pickers the Address column shows each address line on its own line, with no commas joining them. (review:designers-2026-10-19 S36; prototype:dr2-1-source prototype-dr2-1-source-p8-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-066; repo:plantsfrontend repo-plantsfrontend-p6-011)",
+        "Each animals party picker uses the full page width, as the prototype and the plants pickers do. (review:designers-2026-10-19 S36; prototype:dr2-1-source app/views/design-release-2.1/consignment-address-select.html:27 at 56371e2; screens/main/P-address-selection--list.png)",
+        "The place of origin picker searches by name, address or country like the other four pickers, with no separate 'Enter a country' search. (review:designers-2026-10-19 S33; prototype:dr2-1-source commit c3ca339; screens/prototype/S33--default.png)",
+        "On an animals picker, pressing 'Save and continue' with no address chosen shows no error and returns to the roles and addresses page, the party still empty, or still holding the address it held before. (prototype:dr2-1-source prototype-dr2-1-source-p8-072, prototype-dr2-1-source-p8-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-078, trace-prototype-dr2-1-p6-103; prototype:dr2-1-specs prototype-dr2-1-specs-p3-055)",
+        "On the plants consignor or place of destination picker, pressing 'Save and continue' with no address chosen shows no error and moves on to the page that picker's save leads to, the party still empty or still holding its earlier address. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-039; repo:plantsfrontend repo-plantsfrontend-p6-032, repo-plantsfrontend-p6-034, repo-plantsfrontend-p6-075, repo-plantsfrontend-p6-086)",
+        "On both frontends, choosing an address that is not, or no longer, in the organisation's book is still refused with its party error. (repo:frontend repo-frontend-p9-181; repo:plantsfrontend repo-plantsfrontend-p6-019, repo-plantsfrontend-p6-088)",
+        "The high-risk plants consignment contact page takes the same picker layout: the results count under the 'Select an address' heading instead of in the table caption, the radios in a fieldset with a hidden legend, and each address read back on separate lines, with the country no longer in a column of its own; it keeps its five-a-page pagination and 'Selected address' inset. (ruling:sam-2026-10-09-pm p3-038; repo:plantsfrontend p7-052, p7-056, p7-057, p7-059, p7-062, p7-070, p7-089)",
+        "Every new or changed string has a Welsh machine-draft counterpart, marked as not to ship without Welsh Language Standards sign-off, and every changed picker has no serious or critical accessibility violations. (repo:frontend repo-frontend-p9-089, repo-frontend-p9-188; repo:plantsfrontend repo-plantsfrontend-p6-049, repo-plantsfrontend-p6-078, repo-plantsfrontend-p6-087, p7-090, p7-091)"
+      ],
+      "dependsOn": [
+        "inc-210"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S33: Search bar visual styling does not follow prototype"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S36: Styling of addresses is wrong (accordion is not in prototype)"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "consignment-parties inc-086 (moved in, criteria 3-4 to inc-210); inc-089 (dropped)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 consignment-address-select.html:27, 119-166; commit c3ca339 (place of origin country search removed); prototype-dr2-1-source-p8-053, p8-059, p8-060, p8-072, p8-073"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p6-054, p6-056, p6-057, p6-066, p6-078, p6-103"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p3-029, p3-036, p3-055"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-015, p3-038, p3-039"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "addresses/party-picker/_address-picker.njk:29-127; shared/layout.njk:78; dashboard/controller.js:76 (surfaceClass('display'))"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p6-001 to p6-011, p6-019, p6-032, p6-034, p6-036, p6-049, p6-075, p6-078, p6-086 to p6-088; consignment-contact-select p7-052 to p7-091"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p5-013, p5-022, p5-024"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p8-053, p8-059, p8-060, p8-072, p8-073"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p6-054, p6-056, p6-057, p6-066, p6-071, p6-078, p6-103, p12-126, p13-102"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p7-016 to p7-021, p7-053, p7-054, p7-058"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-035, p1-066, p3-015, p3-038, p3-039"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-126"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p9-051 to p9-061, p9-079, p9-080, p9-080-m1, p9-089, p9-089-m1, p9-181, p9-185, p9-186, p9-188"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p6-001 to p6-004, p6-008 to p6-011, p6-019, p6-032, p6-034, p6-036, p6-045, p6-046, p6-049, p6-058, p6-075, p6-076, p6-078, p6-086, p6-087, p6-088"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p9-011, p9-018, p9-022, p9-024, p9-027, p9-028, p9-050, p15-122"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p14-037 to p14-054, p14-060, p14-082, p15-008, p15-010, p15-017, p15-018, p15-023"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p3-038"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "consignment-contact-select feature (p7-052, p7-056, p7-057, p7-059, p7-062, p7-070, p7-089, p7-090, p7-091)"
+        }
+      ],
+      "requirements": [
+        "req-588",
+        "req-596",
+        "req-597",
+        "req-598",
+        "req-600",
+        "req-603",
+        "req-1964"
+      ],
+      "openQuestions": [
+        "c-292 (question, with a default the builder follows and says so): does the plants contact picker, which lists the whole address book, also drop its five-a-page pagination and 'Selected address' inset? Default: no; it keeps both and takes only the layout change (req-1964, req-1965)."
+      ],
+      "notes": [
+        "Moves in consignment-parties inc-086 whole; its search label and icon button criteria (req-590, req-591) are carried by inc-210. inc-086's notes stand: c-093 (add leads to today's INS handshake), c-105 and c-094 (search works without JavaScript; k6's search field and action stay), c-095 (count leaves the caption), c-098 (record-not-in-book refusal stays), c-099 (Save and continue alone).",
+        "Full width: pass the display surface (the existing surfaceClass('display') mechanism, as the dashboard does) from the animals party picker controller. No custom CSS.",
+        "inc-089 is dropped against prototype 56371e2 / c3ca339; claim 16 is superseded by the prototype. inc-197 merges into inc-193. Flagged to Sam in discussion.md.",
+        "The 'View' link (S36's accordion) stays in consignment-parties inc-090, which now depends on this row and on address-book inc-066. Until then the 'View details' expander stays.",
+        "Tests repo: animals e2e tests and the plants parties and destination specs that expect the blank-save error and the comma-joined address change with this row. Prototype demo: snagging.fit.spec.js already photographs S33 and S36; an optional walk that follows 'View' and comes back belongs with inc-090.",
+        "Rendered proof: re-shoot screens/main/S33--list.png, S33--results.png, S36--list.png, S36--list--mobile.png and P-address-selection--list.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-213",
+      "title": "Consignment addresses: one headed section per party showing the full address, with named add links, in animals; 'Consignor' in animals and plants",
+      "detail": "The designers say the Consignment addresses page should not be a table (S32). The prototype gives each party its own section: a heading, its hint, then either a named 'Add a …' link or the chosen full address in an inset with a 'Change' link under it. Main uses a summary list that shows only the party's name, with 'Not added yet' and a bare 'Add'. consignment-parties inc-085 already plans the page's words, named add links and full addresses, but kept the summary list on conflict c-087. c-087 cited a DR1 judgement that DR1 explicitly declined to make (it 'declines to argue about' the component), so under Sam's precedence ruling of 7 October the prototype default applies. inc-085 moves in here and takes the headed sections. The 'Same as …' shortcuts stay in inc-088. openspec: live-animals/journey-pages/consignment-addresses: scenarios that say 'Not added yet' or describe summary rows become headed sections with named add links and full addresses; plants consignor-select and check-your-answers take 'Consignor'.",
+      "acceptanceCriteria": [
+        "Under the heading 'Consignment addresses' the page shows the paragraph 'Add all the addresses that are involved in the consignment.' (prototype:dr2-1-source prototype-dr2-1-source-p8-004; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-004; prototype:dr2-1-specs prototype-dr2-1-specs-p3-004)",
+        "The warning reads 'Providing a false address is an act of fraud' with no closing full stop, and its Welsh text has no closing full stop either. (prototype:dr2-1-source prototype-dr2-1-source-p8-005; prototype:dr2-1-specs prototype-dr2-1-specs-p3-005; repo:frontend repo-frontend-p9-030)",
+        "Each party is its own section with a medium heading (Place of origin, Consignor, Consignee, Importer, Place of destination, CPH number) and its hint under it, in place of a summary list. (review:designers-2026-10-19 S32; prototype:dr2-1-source app/views/design-release-2.1/roles-and-addresses.html:57-120 at 56371e2; screens/prototype/S32--empty.png)",
+        "An empty section offers the link 'Add a place of origin', 'Add a consignor', 'Add a consignee', 'Add an importer', 'Add a place of destination' or 'Add a CPH number', each opening that party's picker or the CPH number page; 'Not added yet' no longer appears. (review:designers-2026-10-19 S32; prototype:dr2-1-source prototype-dr2-1-source-p8-019 to p8-028; prototype:dr2-1-specs prototype-dr2-1-specs-p3-017)",
+        "A chosen party shows, inside an inset, its name in bold, then each address line on its own line, the last ending with a comma and the country name, such as 'Hull, HU9 5PX, United Kingdom', then a 'Change' link and the existing 'Edit details' link under it, each announcing the party's name to screen readers. (review:designers-2026-10-19 S32; prototype:dr2-1-source prototype-dr2-1-source-p8-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-033; screens/prototype/S32--complete.png)",
+        "The consignor is called 'Consignor', and the consignor picker's heading and page title say 'Consignor', in English and Welsh; 'Consignor or exporter' no longer appears on either page, and the consignor picker's address is unchanged. (prototype:dr2-1-source prototype-dr2-1-source-p8-020, prototype-dr2-1-source-p8-137; prototype:dr2-1-specs prototype-dr2-1-specs-p3-008, prototype-dr2-1-specs-p3-027; repo:frontend repo-frontend-p9-034, repo-frontend-p9-090)",
+        "In the high-risk plants frontend, the consignor picker's heading and page title say 'Consignor', and check your answers labels the consignor 'Consignor', in English and Welsh. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-037; repo:plantsfrontend repo-plantsfrontend-p6-056, repo-plantsfrontend-p6-059, repo-plantsfrontend-p6-081)",
+        "With either frontend in Welsh, every string this change adds or alters shows a Welsh counterpart, still marked as an unreviewed machine draft. (repo:frontend repo-frontend-p9-029, repo-frontend-p9-089, repo-frontend-p9-090; repo:plantsfrontend repo-plantsfrontend-p6-048-m1)",
+        "The page works the same with JavaScript off, and has no serious or critical accessibility violations, empty and complete, at desktop and phone width. (repo:frontend repo-frontend-p9-176; screens/prototype/S32--complete--mobile.png)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S32: Page styling is different to prototype. The TEST is a table, but this is not correct"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "consignment-parties inc-085 (moved in; its 'summary list stays (c-087)' note set aside)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/roles-and-addresses.html:39-120; prototype-dr2-1-source-p8-004, p8-005, p8-019 to p8-032, p8-137"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p3-004, p3-005, p3-008, p3-017, p3-027, p3-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "precedence: a DR1 judgement overrides the prototype only for the same difference"
+        },
+        {
+          "source": "document:dr1-parity-union",
+          "ref": "sources/dr1-parity-union/backlog.json:17483, 18095 (DR1 declines to judge the component)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-037 (plants Consignor rename)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/addresses/template.njk:9-13; features/addresses/controller.js; copy/copy.en.js"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p8-004, p8-005, p8-019 to p8-028, p8-032, p8-137"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p6-004, p6-005, p6-014 to p6-019, p6-033, p6-051, p6-052, p12-119, p12-123, p12-130, p13-094 to p13-101"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p3-004, p3-005, p3-007 to p3-017, p3-027, p3-046"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p6-025, p6-026, p6-027, p6-027-m1, p6-030, p6-031, p6-031-m1, p6-032, p6-034, p6-034-m1, p6-035, p6-036, p6-038"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-037"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p9-007, p9-011, p9-017, p9-022, p9-029, p9-030, p9-034, p9-089, p9-090, p9-173, p9-176"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p6-048-m1, p6-056, p6-059, p6-061, p6-081, p6-082"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-084, p5-006"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p14-007, p14-016, p14-023, p14-024, p14-030, p14-062, p15-001, p15-002, p15-003"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p8-062, p8-064, p8-066, p9-001, p9-005"
+        }
+      ],
+      "requirements": [
+        "req-557",
+        "req-558",
+        "req-564",
+        "req-565",
+        "req-566",
+        "req-567",
+        "req-568",
+        "req-569",
+        "req-570",
+        "req-571",
+        "req-619"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Moves in consignment-parties inc-085 whole. Its note 'The summary list stays (c-087)' is replaced by 'c-087 set aside: DR1 did not judge the component'. Update c-087's outcome in distil/conflicts.json with the same note. Flagged to Sam in discussion.md.",
+        "Built from GOV.UK parts only: a medium heading per party, the GOV.UK hint style, the inset text macro, links and the existing warning text, with each section labelled by its heading. Not the prototype's custom classes.",
+        "c-103: the consignor's id, route and address-book role stay; the animals overview task hint 'Consignor or Exporter, ...' stays. c-089: the add link names the party, so it needs no hidden suffix. 'Change' and 'Edit details' keep a hidden suffix naming the party.",
+        "Tests to change: addresses controller test, hub-picker fit spec (summary-list row locators become section and heading locators), addresses axe helper, cph-number fit and controller tests, flow test; trade-imports-ins-tests animals specs that match 'Not added yet' or summary-list selectors (hub-groups-and-cya-rows, cph-scope, change-from-cya, address-book/addresses-picker, addresses-copied, addresses-add-handshake, all-operators, amend-resubmit, cancel-amend-ui), and the plants consignor page object and review spec.",
+        "Merge note: type-question-and-templates (11b00c19) edits this template.njk's saveActions and the controller's backLink; whichever lands second rebases those lines.",
+        "Later rows on this page in consignment-parties (inc-088 'Same as' shortcuts, inc-092 CPH as 12/345/6789, inc-056 permanent addresses) build on the sections. germinal-products inc-181 takes the section layout when it copies the page.",
+        "Prototype demo: snagging.fit.spec.js already walks roles-and-addresses empty then complete (S32). Rendered proof: re-shoot screens/main/S32--empty.png and S32--parties-added.png, desktop and mobile."
+      ],
+      "gate": "Look at the headed sections against screens/prototype/S32--complete.png before consignment-parties builds the 'Same as' shortcuts (inc-088) into them; Sam may overturn the c-087 call."
+    },
+    {
+      "id": "inc-214",
+      "title": "Identification details: Species column, one section per commodity with a bordered card per species, form above the saved animals, no completion message",
+      "detail": "The designers found four things on Identification details. The Selected commodities table lacks a Species column (S15). The page looks very different, with no grey boxes (S16). Saved animals appear above the fields rather than below (S17). A 'You have entered details for all …' message appears that the prototype does not have (S18). identification-and-permanent-address inc-046, inc-047 and inc-050 already plan the grouping, the panel's save and layout, and the identifier labels and hints, and move in here. What no row planned is the look: each species in a bordered box with a grey header bar holding its name and 'Change number of animals', the page at full width, and regular-weight identifier labels. The prototype builds that from custom CSS and div grids that lose table meaning and break at phone width, so the look is copied with GOV.UK summary card styling and real tables. openspec: live-animals/journey-pages/identification-details: 'one card per commodity' becomes 'one section per commodity, one card per species'; the summary columns gain Species; 'MUST replace the entry form with a completion message once that count is reached' (spec.md:93) and its scenario become 'shows only the saved-animals table'; the saved table sits after the panel button; coverage links updated.",
+      "acceptanceCriteria": [
+        "The 'Selected commodities' summary has one row per selected commodity with the columns 'Commodity code', 'Common name', 'Species' and 'Number of animals'; each row's Species cell lists every Latin name chosen under that commodity and its number of animals is their total, except under 01061900, where each species has its own row. (review:designers-2026-10-19 S15; prototype:dr2-1-source app/views/design-release-2.1/animal-identification-details.html:61-85, app/routes.js:860-927 at 56371e2)",
+        "A cattle line reads 'Cattle' in the summary's 'Common name' cell, and its identification section is headed 'Cattle (0102)'. (prototype:dr2-1-source prototype-dr2-1-source-p5-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-052; trace:e2e trace-e2e-p6-014)",
+        "Identification is shown as one section per commodity headed '<commodity name> (<commodity code>)', and inside it one bordered card per selected species with identifier fields, in selection order, with a grey header bar holding the species name, such as 'Bos taurus', and a 'Change number of animals' link that names the species to screen readers. (review:designers-2026-10-19 S16; prototype:dr2-1-source animal-identification-details.html:94-105, application.scss:2254-2271; screens/prototype/S16--one-animal-saved.png)",
+        "The page uses the full width of the screen, and the inset text keeps a two-thirds reading width. (review:designers-2026-10-19 S16; prototype:dr2-1-source animal-identification-details.html:29-30)",
+        "At 390px wide the summary and saved-animals tables stay readable, with no headers printed on top of each other. (review:designers-2026-10-19 S16; screens/prototype/S16--one-animal-saved--mobile.png shows the prototype's do)",
+        "A species with identifier fields but no number of animals gets no card and no 'Enter details for <species>' form. (prototype:dr2-1-source prototype-dr2-1-source-p5-041; repo:frontend repo-frontend-p6-063)",
+        "A live species with 3 animals takes exactly 3 entries, its form headed 'Enter details for <species> 1 of 3' for the first. (prototype:dr2-1-source prototype-dr2-1-source-p5-043)",
+        "Lowering a species' number of animals below its saved records on Commodity details still shows the refusal, and its error summary link goes to that species' card in its new place. (trace:e2e trace-e2e-p6-061; conflicts:c-043)",
+        "Pressing a species card's 'Save and add another' or 'Save and finish' validates and saves only that species' current animal, then reloads the page with that species' form empty for its next animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-051; prototype:dr2-1-specs prototype-dr2-1-specs-p4-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-063)",
+        "With an over-long value typed into a second species' form, pressing the first species' card button saves the first species' animal and shows no error for the second species, whose typed value is not saved. (prototype:dr2-1-source prototype-dr2-1-source-p5-051-m1, prototype-dr2-1-source-p5-067; repo:frontend repo-frontend-p6-073)",
+        "'Save and continue' and 'Save and return to overview' save the typed identifiers of a species with one animal; values typed into the form of a species with more than one animal are not saved. (prototype:dr2-1-source prototype-dr2-1-source-p5-054, prototype-dr2-1-source-p5-055; repo:frontend repo-frontend-p6-072)",
+        "While a species still has animals to enter, its saved-animals table sits below the entry form and the card button. (review:designers-2026-10-19 S17; prototype:dr2-1-source prototype-dr2-1-source-p5-063; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-061)",
+        "Once every animal of a species is entered, its card shows only the saved-animals table: no entry form, no card button, and no 'You have entered details for all …' message, in English or Welsh; the over-count refusal for a lowered count stays. (review:designers-2026-10-19 S18; prototype:dr2-1-source prototype-dr2-1-source-p5-048; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-061, trace-prototype-dr2-1-p13-055)",
+        "The card's 'Save and add another' / 'Save and finish' button is a primary (green) button. (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-055-m1)",
+        "The microchip field is labelled 'Microchip'; the Microchip, Passport, Tattoo and Ear tag fields show no hint text; and the identifier labels are regular weight, not bold. (review:designers-2026-10-19 S16; prototype:dr2-1-source prototype-dr2-1-source-p5-014, p5-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-054-m1)",
+        "An identifier over 58 characters shows, in the error summary and on the field, 'Microchip must be 58 characters or less', 'Passport must be 58 characters or less', 'Tattoo must be 58 characters or less', 'Ear tag must be 58 characters or less' or 'Horse name must be 58 characters or less'; one of 58 characters typed with spaces around it saves without them. (prototype:dr2-1-source prototype-dr2-1-source-p5-027, p5-028; conflicts:c-040)",
+        "The Welsh copy mirrors every change as a machine draft ('Rhywogaeth' for Species, the microchip label, the removed hints, the five length errors, the removed completion message), not shown to users until Welsh Language Standards sign-off. (repo:frontend repo-frontend-p6-130, repo-frontend-p6-133 to p6-135)",
+        "The page works the same with JavaScript off and has no serious or critical accessibility violations, with headings in order (commodity, species, entry counter). (repo:frontend)"
+      ],
+      "dependsOn": [
+        "inc-205"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S15: 'Species' is missing from table"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S16: Visually very different from prototype, e.g. grey boxes are not showing on test"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S17: When details for an animal are added, the details should appear below the fields not above"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S18: The text 'You have entered details for x species animals. Remove a record if you need to update it' was not in the prototype"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "identification-and-permanent-address inc-046, inc-047, inc-050 (moved in)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/animal-identification-details.html:29-165; app/routes.js:860-927; application.scss:2254-2271; prototype-dr2-1-source-p5-014 to p5-067"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p4-022"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-048 to p5-061, p12-058 to p12-063, p13-051 to p13-055"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-010 to p6-061"
+        },
+        {
+          "source": "theme:commodities-and-reason",
+          "ref": "inc-011 animals cadd4794: consignment-details/view-model/selected-rows.js grouping and the 'Species'/'Rhywogaeth' copy to reuse (ported by inc-205)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "commodities/animal-identification/_identification-card.njk:9-81; _selected-commodities-summary.njk; summary/selected-commodities.js:16-24; card/view-model.js:35-43; copy/copy.en.js:106-107"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/animal-identification-details.html:56-98; app/routes.js:1781-1794, 1888-1905, 1964-1993 (prototype-dr2-1-source-p5-035, p5-037, p5-040, p5-041, p5-043)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-048, p5-052, p12-058, p13-051"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "_selected-commodities-summary.njk, summary/selected-commodities.js, _identification-card.njk, card/view-model.js (repo-frontend-p6-058, p6-063, p6-095, p6-096)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-010, p6-014, p6-015, p6-061"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js (prototype-dr2-1-source-p5-048, p5-051, p5-051-m1, p5-054, p5-055, p5-063, p5-067)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-055-m1, p5-061, p12-061, p12-063, p13-055"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "records/append.js, _identification-card.njk, card/view-model.js (repo-frontend-p6-065, p6-070, p6-072, p6-073, p6-084)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-050, p6-053"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/data/commodity-identifiers.js:4-8; app/views/design-release-2.1/animal-identification-details.html:140-149; app/routes.js:2118-2120, 2143-2145 (prototype-dr2-1-source-p5-014, p5-024, p5-027, p5-028)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-052, p5-054-m1"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "copy/copy.en.js, copy/copy.cy.js, identifier/fields.js (repo-frontend-p6-012 to p6-015, p6-021 to p6-026, p6-130 to p6-135)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-021, p6-022, p6-024, p6-025, p6-026"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p11-036"
+        }
+      ],
+      "requirements": [
+        "req-203",
+        "req-204",
+        "req-207",
+        "req-208",
+        "req-213",
+        "req-215",
+        "req-222",
+        "req-223",
+        "req-224",
+        "req-225",
+        "req-226",
+        "req-229",
+        "req-230",
+        "req-236",
+        "req-240",
+        "req-243",
+        "req-267"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Moves in identification-and-permanent-address inc-046, inc-047 and inc-050 whole. inc-046's AC2 is corrected to the prototype at 56371e2: under 01061900 each species gets its own row (routes.js:865-884), not a shared Species cell.",
+        "inc-046's dependency on inc-045 (the page as a linear journey step) is dropped: no criterion here needs it, and this theme depends only on main. inc-045 stays in its theme and builds on this page.",
+        "Look: hand-written GOV.UK summary card markup (title wrapper, title as h3, actions list, content) framing each species' form, as the Documents page already does on main (documents/template.njk:73-77). Record in the theme's prototype-differences.md: 'Prototype draws the species panel with custom CSS and div grids; we use summary card styling and govukTable, which keep table meaning and reflow at 390px.' Use surfaceClass('display') for full width. Reuse inc-205's ported grouping in selected-rows.js through a shared helper in the commodities feature folder rather than copying it.",
+        "Tests: summary/selected-commodities test (0102 grouped and summed; 01061900 one row per species), identification fit spec (fourth column, card locators by commodity h2 and species h3, form-before-table order, complete state: N rows, no heading, no button, no message), and trade-imports-ins-tests animal-identifiers-cap.spec.ts:44 and flows/animals/journey.ts.",
+        "Rendered proof: re-shoot screens/main/S15--*, S16--* (desktop, mobile, no JS), S17--* and an all-animals-entered shot for S18, which the first capture never reached."
+      ],
+      "gate": "Look at the commodity section and species card structure against screens/prototype/S16--one-animal-saved.png: the germinal copy (inc-052) and the pig, sheep and goat rows lay themselves out inside it."
+    },
+    {
+      "id": "inc-215",
+      "title": "Upload documents: guidance, hints, table and limit error match Design Release 2.1, with a full-width card and the table inside it",
+      "detail": "The designers found three things on Upload documents. The date of issue picker does not follow the pattern (S28): its look comes with inc-206, and its hint changes here. 'You have not added any documents yet.' is not in the prototype (S29). After 'Save and add another' the table is formatted differently (S31): main holds the File upload card at two-thirds width, so the headings wrap and the table spills past the card's right edge. documents inc-032 already plans the page's wording, the date hint and the empty state, and moves in here. Nothing planned the width, so the card goes full width, as the prototype draws it, while the fields and drop zone stay two-thirds wide inside it and the guidance keeps its reading width. 'Save and add another' stays grey (S30: the designers agree). openspec: live-animals/journey-pages/upload-documents takes inc-032's wording scenarios and 'with no documents added, no table and no empty-state text shows'.",
+      "acceptanceCriteria": [
+        "In the additional-documents table, the row 'Animals that do not need a health certificate' reads 'Exporter's declaration that they are fit to travel', with no leading 'An'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:65-66; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 row 1)",
+        "The row 'Rodents imported for research purposes' reads 'RM39 licence and supplementary health certificate', with no leading 'An'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:73-74)",
+        "The 'Document reference' field has no hint: 'For example, GBHC1234567890.' no longer shows. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:104-117)",
+        "The 'Date of issue' hint reads 'For example, 27/3/2026' (Welsh 'Er enghraifft, 27/3/2026', machine draft). (review:designers-2026-10-19 S28; prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:139-155; screens/prototype/S28--default.png)",
+        "The Attachment size bullet reads 'files that are smaller than 10MB', and the file-type bullet reads 'PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', with no leading 'a'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:171-172; prototype:dr2-1-specs e2e/documents.fit.spec.js:50-52)",
+        "The added-documents table's column headings are 'Document reference', 'Document type', 'Date of issue', 'Status' and a visually hidden 'Action', and each row's actions sit at the right-hand end of the row. (review:designers-2026-10-19 S31; prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:195-213; prototype:dr2-1-specs e2e/documents.fit.spec.js:90-97)",
+        "With no documents added, and again after the last document is removed, the File upload card shows no table and no 'You have not added any documents yet.' text, in English or Welsh. (review:designers-2026-10-19 S29; prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:195; prototype:dr2-1-specs e2e/documents.fit.spec.js:107-109)",
+        "The File upload card is the full width of the page; inside it the four fields, the drop zone and 'Save and add another' are two-thirds wide; the heading and guidance above it keep a two-thirds reading width; and the added-documents table fits inside the card's border, even with a long document reference. (review:designers-2026-10-19 S31; prototype:dr2-1-source upload-documents.html:27-28; screens/prototype/S31--two-documents-added.png)",
+        "Each document row keeps its 'View file' link as well as 'Remove'. (review:designers-2026-10-19 S31)",
+        "Trying to save a sixteenth document shows 'You can upload a maximum of 15 files' in the error summary, linked to the Attachment field, and the same message inline on the Attachment field. (prototype:dr2-1-source app/routes.js:10949-10957; conflict c-075)",
+        "The page has no serious or critical accessibility violations, empty and with documents added, and works the same with JavaScript off. (repo:frontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S28: Date picker does not follow pattern (hint)"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S29: \"You have not added any documents yet.\" is not in the prototype"
+        },
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S31: When you upload a file, click add another the table is formatted differently"
+        },
+        {
+          "source": "backlog:design-release-2-1",
+          "ref": "documents inc-032 (moved in)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/upload-documents.html:27-243; app/routes.js:10949-10957"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/documents.fit.spec.js:50-52, 90-97, 107-109"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 40-48; documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 46-62"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p2-051, p2-052"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/documents/view-model/render.js:38-70; template.njk:73-159; view-model/rows.js:27-35; copy/copy.en.js:46, 96"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "tests/animals/e2e/features/documents-limits.spec.ts; documents-reject.spec.ts; promoted-documents.spec.ts"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/upload-documents.html:65-213; app/routes.js:10949-10957"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/documents/copy/copy.en.js; template.njk; upload-config.js; form/errors.js"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p22-015, p22-021, p22-027, p22-028, p22-033, p22-041, p22-072, p22-073, p24-014, p24-016"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p12-014, p12-023, p12-029, p12-060, p12-066"
+        }
+      ],
+      "requirements": [
+        "req-488",
+        "req-489",
+        "req-494",
+        "req-505",
+        "req-508",
+        "req-510",
+        "req-527",
+        "req-528",
+        "req-530"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Moves in documents inc-032 whole. Its dependency on inc-031 was only to land the documents rows in one order on one branch; no criterion needs it, so it is dropped. inc-031 and the rest of the documents theme build after this row.",
+        "Layout: pass the display surface (surfaceClass('display')) from documents render.js; wrap the error summary, caption, heading, guidance and details in a two-thirds GOV.UK grid column; wrap the four fields and 'Save and add another' in a nested two-thirds column inside the card; leave the table, refresh link and timeout message outside it. Right-align with the GOV.UK table's numeric format on the Action header and cell. No custom CSS.",
+        "Toggle and in-page calendar for date of issue come from inc-206. The size bullet's number stays at the current limit; the 50MB row (inc-036, blocked) changes it.",
+        "Tests: documents upload fit spec lines 134, 482 and 637 expect the empty text: they change to expect no table and no text; add a structure assertion (card in the full-width column, guidance and reference input in two-thirds, table not in two-thirds). trade-imports-ins-tests promoted-documents.spec.ts:34, :45 and documents-reject.spec.ts:21 change to assert the row is absent. The review card's own empty key (check-answers documentsEmpty) is out of scope.",
+        "Plants has no documents page. germinal-products inc-179 copies this page later and inherits it.",
+        "Rendered proof: re-shoot screens/main/S28--empty.png, S29--empty.png and S31--one-uploaded-then-add-another.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-216",
+      "title": "Review page: an unanswered row in an unfinished card is left blank, with no red bar",
+      "detail": "The designers found that the review page adds a red bar in every blank value cell of an unfinished card, which the prototype does not have (S34). Both show the card-level marking from Sam's ruling 7a: a red left border and a red 'Complete …' line. The per-row bar is extra styling from the DR1 parity work, not a GOV.UK pattern and not backed by any ruling. It goes. The visually hidden 'Missing' stays, so screen reader users still hear which answer is missing. Plants never had the bar. openspec: live-animals/journey-pages/check-your-answers spec.md:178 and the scenarios after it: 'drawing it in the missing style with \"Missing\" announced in its place' becomes 'leaving it visibly blank, with \"Missing\" announced in its place for a screen reader'; coverage links kept.",
+      "acceptanceCriteria": [
+        "In an unfinished review card, an unanswered row shows its question and a visibly blank answer, with no red bar or other mark in the answer cell. (review:designers-2026-10-19 S34; prototype:dr2-1-source app/routes.js:4557-4600, app/views/partials/design-release-2.1/review-summary-row.html:17-19 at 56371e2; screens/prototype/S34--missing-answers.png)",
+        "A screen reader still hears 'Missing' for each unanswered row. (review:designers-2026-10-19 S34; repo:frontend check-answers/view-model/rows/value-text.js:42-47)",
+        "An unfinished card still has its red left border and its red 'Complete <card>' line, and the error summary still lists each unfinished card. (ruling:sam-2026-10-09-pm 7a; screens/main/S34--missing-answers.png)",
+        "The review page has no serious or critical accessibility violations with unfinished cards, before and after a refused Continue. (repo:frontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S34: Test has added extra red lines showing where information is missing. This is not in prototype"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/routes.js:4557-4600; app/views/partials/design-release-2.1/review-summary-row.html:17-19; app/assets/sass/application.scss:5153-5155"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "check-answers/view-model/rows/value-text.js:42-47; view-model/incomplete-cards.js:87-120; src/client/stylesheets/components/_summary-list-missing.scss:8; components/_index.scss:8"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Remove the missing-value stylesheet and its import, and make the missing cell emit only the visually hidden 'Missing'. Update its doc comment and any 'missing style' wording beside copy.missing. No copy change, so no Welsh.",
+        "Tests: check-answers.test.js expected HTML; check-answers fit spec's missing-marker helper and markers locator find the hidden 'Missing' and assert the answer cell has no visible text. trade-imports-ins-tests has no selector on the bar, so no tests-repo change.",
+        "overview-and-review (EUDPA-696) still carries the bar in the same files (value-text.js:54, _summary-list-missing.scss:8 on that branch) and must drop it when it rebases on main.",
+        "Plants writes 'Not provided' in blank rows where the prototype leaves them blank. That is a separate gap for the plants review alignment work, not this snag.",
+        "Rendered proof: re-shoot screens/main/S34--missing-answers.png and S34--refused-submit.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-217",
+      "title": "Declaration and Notification submitted: wording, links, checkbox and bold date match Design Release 2.1, in animals and plants",
+      "detail": "The designers found the submit screen's content differs (S38). On Notification submitted, main says 'You can view or amend this notification from your dashboard and resubmit it.' and 'upload the health certificate and any other required documents', and its help links open in the same tab. On the declaration page main shows a Draft reference strip, a full-size checkbox and the date in plain text. The wording, links, small checkbox and missing strip are built on the unmerged overview-and-review branch (inc-114, inc-115). This row brings them to main. The prototype's new-tab links have no '(opens in a new tab)' text, which GOV.UK link guidance asks for, so ours keep it, visually hidden. The date becomes bold, as drawn, in both frontends. Plants' declaration also takes the small checkbox in a fieldset with a hidden legend, so a lone checkbox is not left without a group label and the two frontends match. openspec: live-animals/journey-pages/confirmation and declaration take inc-114 and inc-115's scenarios plus 'the declaration date is shown in bold'; plants/journey-pages/declaration takes the small checkbox, the hidden legend and the bold date.",
+      "acceptanceCriteria": [
+        "Notification submitted reads 'You can view or change this notification from your dashboard.' under 'How to view or amend', and, when documents are owed, the bullet 'upload the ITAHC and any other required documents', with Welsh machine drafts. (review:designers-2026-10-19 S38; prototype:dr2-1-source app/views/design-release-2.1/notification-submitted.html:22-82, app/routes.js:6623-6641 at 56371e2)",
+        "The 'contact HMRC' and 'call charges' links open in a new tab and tell screen reader users so with '(opens in a new tab)'. (review:designers-2026-10-19 S38; prototype:dr2-1-source notification-submitted.html:77, 80)",
+        "On the animals and plants declaration pages, the confirmation is a small checkbox inside a fieldset whose legend is read by screen readers but not shown. (review:designers-2026-10-19 S38; screens/prototype/S38--declaration.png)",
+        "The animals declaration page shows no Draft reference strip. (review:designers-2026-10-19 S38; screens/prototype/S38--declaration.png, screens/main/S38--declaration.png)",
+        "On the animals and plants declaration pages, the date after 'Date of declaration:' is bold. (review:designers-2026-10-19 S38; prototype:dr2-1-source app/views/design-release-2.1/declaration.html:87)",
+        "Every acceptance criterion of overview-and-review inc-114 holds on main, and so does every wording and link criterion of inc-115. (theme:overview-and-review inc-114, inc-115)",
+        "Both pages in both frontends have no serious or critical accessibility violations and work the same with JavaScript off. (repo:frontend; repo:plantsfrontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S38: Content is different"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "56371e2 app/views/design-release-2.1/notification-submitted.html:22-82; declaration.html:87; app/routes.js:6623-6641"
+        },
+        {
+          "source": "theme:overview-and-review",
+          "ref": "feat/EUDPA-696-design-release-2-1-overview-and-review: inc-114 animals dc9c1e4f, tests 4ef38d0; inc-115 animals 9fef3175 (copy, template and outstanding-wording hunks), tests d4d2ccc (wording assertions) (PRs animals #404, tests #26)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/confirmation/template.njk, copy/copy.en.js; features/declaration/template.njk"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/declaration/template.njk:21-33"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Port from branch: cherry-pick overview-and-review inc-114 (animals dc9c1e4f, tests 4ef38d0). From inc-115 take only the copy, template, outstanding-wording and their test hunks of 9fef3175 and d4d2ccc. Its guard (a not-yet-submitted notification goes to the declaration), and plants 63b62cc, rest on df59fbde's submission records and stay on the branch. overview-and-review drops what was ported at its merge.",
+        "Bold date: wrap the submission date in strong in both declaration templates. No copy change. Check text matches in the declaration fit specs and ins-tests page-objects/animals/declaration-page.ts still hold.",
+        "The identifier bullet ('complete the animal identifier information in the notification') stays with animals-dashboard inc-147.",
+        "The 'Before the consignment is imported' section shows on main and not in the prototype only because main's walk uploaded no documents: a test-data difference, not a behaviour one.",
+        "Rendered proof: re-shoot screens/main/S38--submitted.png and S38--declaration.png, and add a plants declaration shot."
+      ],
+      "gate": null
+    }
+  ]
+}

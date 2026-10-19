@@ -55,7 +55,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/view/view.controller.test.js",
-              "test": "GET returns 404 for soft-deleted tombstones",
+              "test": "GET redirects to the address book for soft-deleted tombstones",
               "strength": "partial",
               "notes": "frontend hides tombstones from view; API tombstone retention is the E2E assertion"
             }
@@ -561,7 +561,15 @@
               "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
               "test": "asks for confirmation and names the address being deleted",
               "strength": "full",
-              "notes": "confirmation text names the address; Back href to its details"
+              "notes": "confirmation text names the address; Back href to its details; asserts the H1"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "GET renders delete confirmation page",
+              "strength": "partial",
+              "notes": "the heading wording"
             }
           ]
         },
@@ -743,29 +751,45 @@
     },
     {
       "id": "REQ-INS-ADDR-015",
-      "name": "Viewing an address lists the full Standard Address Block against its labels, and offers to edit or delete it",
+      "name": "Viewing an address lists its Standard Address Block against its labels, leaving out blank optional fields, and offers to edit or delete it",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-015-A",
-          "name": "The view page lists every field against its label, blank fields included",
+          "name": "The view page leaves out a blank address line 2 and county",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
-              "test": "lists every Standard Address Block field against its label",
+              "test": "leaves out a blank address line 2 and county",
               "strength": "full",
-              "notes": "definitions include empty strings for blank address line 2 and county"
+              "notes": "the seeded address has both blank; terms and definitions omit them"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/view/view.controller.test.js",
-              "test": "renders each Standard Address Block field on its own row, labelled as on the edit form",
+              "test": "leaves out address line 2 and county when the address has neither",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "renders each Standard Address Block field on its own row, labelled as on the edit form, county and line 2 marked optional",
               "strength": "partial",
-              "notes": "buildRows labels every field; fixture has optionals filled, so blank-field display is the FIT"
+              "notes": "buildRows labels every field; the labels are pinned here"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "shows address line 2 and County (optional) only when the address has them",
+              "strength": "full",
+              "notes": "the address with neither shows seven rows"
             }
           ]
         },
@@ -802,6 +826,37 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
               "test": "Back returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-015-D",
+          "name": "An address with line 2 and county shows them, marked optional",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/view.fit.spec.js",
+              "test": "shows address line 2 and County (optional) when the address has them",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view/view.controller.test.js",
+              "test": "renders each Standard Address Block field on its own row, labelled as on the edit form, county and line 2 marked optional",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts",
+              "test": "shows address line 2 and County (optional) only when the address has them",
               "strength": "full",
               "notes": ""
             }
@@ -1145,6 +1200,54 @@
               "strength": "partial",
               "notes": "the heading and the Back link to the address book"
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-022",
+      "name": "Opening an address that is not live in the organisation's book returns to the address book",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-022-A",
+          "name": "An unknown address id returns to the address book",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book when the address is not found", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "an unknown address id returns to the address book", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "an unknown address id returns to the address book", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-022-B",
+          "name": "A malformed address id returns to the address book",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for a malformed address id without reaching the address book", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/address-id-params.test.js", "test": "deadLinkRouteOptions redirects a failed id to the fallback path", "strength": "partial", "notes": "the redirect helper alone" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "a malformed address id returns to the address book", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "a malformed address id returns to the address book", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-022-C",
+          "name": "Another organisation's address returns to the address book",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "another organisation's address returns to the address book", "strength": "full", "notes": "the address is created under another organisation through the address book API" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "another organisation's address returns to the address book", "strength": "full", "notes": "against the stub" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for another organisation's address", "strength": "partial", "notes": "the address book's 404 is mocked" }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-022-D",
+          "name": "A deleted address returns to the address book",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/view/view.controller.test.js", "test": "GET redirects to the address book for soft-deleted tombstones", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/view.fit.spec.js", "test": "a deleted address returns to the address book", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/address-book/address-book-view.spec.ts", "test": "a deleted address returns to the address book", "strength": "full", "notes": "" }
           ]
         }
       ]

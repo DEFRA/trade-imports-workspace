@@ -238,7 +238,7 @@ missing key. The first log line is the resolved configuration.
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
 | `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word, and an optional `requireApproval: true` for a repo whose PR a person must approve. Under the full lifecycle the key `workspace` at path `.` is the workspace repo itself; under the branch lifecycle `workspace` is refused. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path, slug or `requireApproval` differs from the envelope's |
-| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (start, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, and a theme's engineering reviewers and judge. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, and a theme's fixer and ladder. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
@@ -288,16 +288,19 @@ run outlives the session that started it. Resuming is launching it again with th
 args: `backlog.json` carries the status, ticket, branch and PRs, and the start stage
 resumes an increment part-way through its lifecycle.
 
-The run returns `{increments, specChecks, stopped}`, where `specChecks` holds one entry per
-theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)) and `stopped` is
-`{reason, detail}`. It stops:
+The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`, where `specChecks` holds one
+entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)), `reviewChecks` the checks left
+for whoever reviews a finished theme, `refutedFindings` every finding verification refuted (see
+[Findings by kind](#findings-by-kind)), and `stopped` is `{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 41 agents on Claude and 47 on
-  Codex, so a run fits roughly 24 or 21 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 55 agents on Claude and 63 on
+  Codex, so a run fits roughly 18 or 15 of them. Under the branch lifecycle the run also keeps
+  room for one theme's engineering review (twice the number of repos, plus 9) and counts each
+  one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
   gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
 - at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
@@ -313,7 +316,11 @@ theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)) and `sto
 - at **`workspace-not-on-base`**, after an increment that built in the workspace repo has
   landed, when the workspace will not go back onto the base branch;
 - at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
-  `main-red` and the rest, each named in `../references/BUILD.md`.
+  `main-red` and the rest, each named in `../references/BUILD.md`;
+- at **`theme-review-red`** (branch lifecycle only), when a theme's engineering review could
+  not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches
+  and the branch is left as the theme's last row left it (see
+  [The writers review used to miss](#the-writers-review-used-to-miss)).
 
 **A failure stops the whole run.** The loop never moves on to another increment after one
 goes wrong: `tim backlog next` selects on status, `dependsOn` and `externalDependsOn` alone
@@ -445,24 +452,129 @@ refuses to commit a spec change rather than put it on the base branch with no re
 |---|---|---|
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
 | Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. Every gate call also writes its result to `--result`, so a gate the Bash tool moves to the background after 600s is waited on with `tim build gate-wait` in slices, never called red (the ladder and the builders' own checks do the same). A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
-| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope, and the spec sync (section 8). Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
-| Implement | 1 | Executes the plan, across every repo the slice needs, and keeps the Behaviour Spec current (see [The Behaviour Spec](#the-behaviour-spec)). Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
-| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change, which also judges the spec write and any `Spec sync: none` reason. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
-| Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
-| Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
-| Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
+| Plan | 2–4 | Reads the row, the live tree, the mechanism each new piece goes through, the repo's docs and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, homes and owners, never code text. A light reader greps the plan for code text after each plan. See [The plan contract](#the-plan-contract) and [Plan checks](#plan-checks) |
+| Plan review | 1–4 | A think-tier reviewer checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling code, before any code exists. It can send the plan back once; the revised plan is linted and reviewed again, and a second send-back stops the increment at `plan-refused` |
+| Implement | 1 | Builds the change the plan decides, across every repo the slice needs, and keeps the Behaviour Spec current (see [The Behaviour Spec](#the-behaviour-spec)). Owns names and code shape. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
+| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change, which also judges the spec write and any `Spec sync: none` reason. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts. See [What the reviewers look for](#what-the-reviewers-look-for) |
+| Verify findings | 1 per group with findings | Grouped the same way. Each finding is tested by the default its category sets: a functional finding must survive an agent trying to refute it, and a code-quality finding stands unless the agent quotes code that shows it is factually wrong. See [Findings by kind](#findings-by-kind) |
+| Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human**. Every code-quality finding is fix-now, in each twin |
+| Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Land | 2–4 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
+| CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The writers review used to miss](#the-writers-review-used-to-miss) |
 | Theme spec check | 1–2 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched. See [The Behaviour Spec](#the-behaviour-spec) |
+| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The writers review used to miss](#the-writers-review-used-to-miss) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
-unit, `mvn verify`, FIT after a free-port check, and the tests repo's local-stack E2E. Every
+unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), FIT after a free-port check,
+and the tests repo's local-stack E2E. A red duplication rung is repaired by moving the copied set-up into the shared
+test helper and deleting the copies. Every
 gate command passes the run's holder with `--holder`, so its E2E phase reuses the stack the
 run already holds, rebuilding only what changed, and refuses a stack anybody else holds. No
 agent picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
+
+### The house rules
+
+**Every stage that plans, writes or judges code is given the house rules inline.** That is the planner, the
+plan reviewer, the implementor, the style, code and consistency reviewers, the adversarial verifier, the judge, the fixer, the
+ladder (which repairs code), both CI fixers, the style review of a CI fix and its style fix, and every stage of a
+theme's engineering review, under Claude and under Codex. The loop holds the block between the
+`house-rules` markers of [`.claude/rules/code-quality.md`](../../../rules/code-quality.md) as `HOUSE_RULES`, and
+every prompt also points at that file and says to read it in full. A test in
+`tim/src/backlog/workflow-contract.test.js` fails when the loop's copy and the file differ, so edit the file and
+copy the block across in the same change. The Codex briefs `implement.md`, `review.md` and `fix.md` read the same
+file in full.
+
+The rules say a breach is a defect to fix in the same change, so the verifier is told a breach is never taste and
+never out of scope, and the judge that one is never rejected as taste.
+
+### Findings by kind
+
+Every reviewer gives each finding one category from a fixed list, and the category decides how the finding is
+verified and judged.
+
+| Kind | Categories | Verifier's default | Judge |
+|---|---|---|---|
+| Functional | `correctness`, `security`, `error-handling`, `coverage-gap` | Refuted, unless the evidence is clear | Fix-now, defer or reject, with the bias toward a small increment |
+| Code quality | `naming`, `comments`, `structure`, `duplication`, `logging`, `test-readability`, `history` | Real. Refuted only by quoting code that shows the finding is factually wrong; a refutation with no quote is ignored | Fix-now. The fix is delete, rename or extract, never reword |
+
+"Taste", "pre-existing", "out of the increment's scope", "a comparable file does it" and "feature folders are
+independent" never refute or reject a code-quality finding, and a tool call that failed is not evidence.
+
+**Twins.** A code-quality fix reaches every twin of the file: the animals, plants and INS frontends, and the animals
+and plants backends. A twin in one of the increment's repos is fixed in the same fix. A twin anywhere else becomes an
+open question on the row, naming its file and the change.
+
+**Nothing refuted is lost.** Each refuted finding is logged with its reason and returned in the run's
+`refutedFindings` (`{ id, file, line, category, severity, what, reason, quote }`). When a theme's last row lands, the
+findings refuted across the rows this run built go into `reviewChecks` as one check, for whoever reviews the theme.
+
+**The fix is reviewed too.** Before its first edit the fixer runs `git write-tree` in each repo it edits and reports
+the hashes as `treesBeforeFix`. A style re-reviewer then reads `git diff-index --cached -p <tree>`, which is the
+fixer's hunks alone, for code-quality defects. Any it finds go back to a second fix once, then the ladder runs. The
+re-review stays on Claude under either executor; the second fix runs on the run's executor.
+
+Where the plan lists no standards for a file, the implementor runs `tim backlog standards` for it and reads every
+file it names in full.
+
+**Probes and docs.** Beside its `Spec sync:` line, the implementor reports a `Probes:` line (how many coverage links
+it wrote "full" and saw fail then pass, or `none — <reason>`) and a `Docs updated:` line (the docs, recipes, JSDoc,
+comments and test names it corrected, or `none — searched <terms> in <dirs>`). `frontend-change` writes both in its
+completion output. The consistency reviewer judges what they claim. The ladder fails a row where neither the
+implementor nor the fixer reported one of them; a fixer reports its own only when its fix changed what they cover.
+
+### What the reviewers look for
+
+**The code reviewer** checks correctness, security, error handling, performance and tests, and also:
+
+| Lens | What is a finding |
+|---|---|
+| Naming, predict then compare | Read the name, predict what it returns and what it changes, read the body. Any mismatch |
+| Operability | A branch that changes an outcome with no log, or a log support cannot search by. "Support cannot tell what happened during an incident" is a full failure scenario |
+| Duplication | A second copy of a rule or of test set-up, or a second mechanism beside one that exists |
+| Test truth | A title that claims more than its assertions check, or a test that still passes with its production line removed |
+
+**What the change makes false is in scope.** Every reviewer is told that a comment, doc comment or recipe line in a
+changed file that the change makes false is a finding, whether or not the diff touches its line. Its fix is to delete it.
+
+**The consistency reviewer reads beyond the diff.** It runs `tim backlog standards` for the changed files and reads
+every `repoDocs` file it lists, which holds the repo's architecture docs and its `add-a-*` recipes. A rule the change
+alters that a doc, recipe, JSDoc or test name outside the diff still states the old way is a finding. Its fix is to
+update or delete that text. It also gets the implementor's notes and judges each claim in them against the code: a
+departure from the plan with no sound reason, or something left alone that the change makes untrue, is a finding. The Codex group and consistency runs get the same lenses, and
+[`codex/review.md`](codex/review.md) carries them too.
+
+### The writers review used to miss
+
+**The CI fixer.** It works after every reviewer, so its lines used to land unread. It now gets the house rules and is
+told to read the standards `tim backlog standards` lists for each file it edits, and the plan's own list. It reports
+each commit it pushes. A style reviewer (code tier) reads those commits for code quality and treats a change that only
+silences a check, such as an empty catch or a sleep in a test, as a finding. Any finding goes to one style fix, which
+commits and pushes, before the watcher looks again. A CI fix that pushed no commit is not reviewed. This runs under
+both lifecycles and both executors.
+
+**A theme's engineering review.** Under the branch lifecycle, once a theme's last row lands and its spec check has run,
+the loop reviews the whole theme. One think-tier reviewer per repo reads `git diff origin/main...HEAD` for patterns
+(one rule in two places, a second mechanism, the wrong layer, a recipe left behind, two names for one concept) and
+tests (copied set-up, titles that claim too much, tests that cannot fail). Its findings go through the same verifier,
+with the same defaults by kind, then the judge. The fix-now items go to a fixer, a style re-review of its hunks and one
+second fix, a ladder over the phases the last row ran, a commit and push onto the branch, and a CI watch. It is a
+safety net: each row is still reviewed in full as it is built.
+
+- Each refuted finding is returned in `refutedFindings` and listed in a review check.
+- The commit it lands is named in a review check, for whoever reviews the theme.
+- A repo whose reviewer returned nothing is listed in a review check for a review by hand.
+- A dead fixer or a red ladder saves the fixes as patches and stops the run at `theme-review-red`. A red CI watch
+  stops it at `ci-red`, with nothing moved.
+- It never touches `openspec/`.
+
+Under the full lifecycle each row merges to `main` on its own, so there is no theme branch to diff and nowhere to land
+a fix: the theme's engineering review does not run there. The run keeps room for one of these reviews in its agent
+budget and counts each one it runs.
 
 ### The Behaviour Spec
 
@@ -513,6 +625,57 @@ commits in service repos on a branch named after the workspace's, with no pull r
 branch and PR. So the loop runs the two deterministic checks those skills start from, and a red one hands the skills
 to a person. Every row of the theme is built by then, so nothing re-runs the check: the stop is the record.
 
+### The plan contract
+
+**A plan records decisions, homes and owners. It never writes code text.** No names for new things, no comment
+or doc comment text, no test titles or bodies, no log wording, no code bodies. The implementor writes those and
+may rename anything the plan seems to name. The planner turns every id in the row (`c-NNN`, `inc-NNN`, ruling
+ids, ticket keys) into the behaviour it names, and keeps ids out of the sections the code is written from.
+
+| Section | What it holds |
+|---|---|
+| 0. Decisions | Every choice the row left open, how it was settled, and the alternative rejected |
+| 1. Moves | Files moved or deleted |
+| 2. Edits | What must change in each file and why, as behaviour, homes and owners. An exemplar for its structure |
+| 3. New files | What each owns, why it is not part of an existing file, and the file whose structure to follow |
+| 4. Tests | The behaviour each test proves, and the production line whose removal turns it red. Never a title or a body. A removal is proved by an exact positive assertion |
+| 5, 6. Checks | One runnable check per acceptance criterion, then the checks beyond the gate. See [Plan checks](#plan-checks) |
+| 7. Out of scope | What the implementor leaves alone |
+| 8. Spec sync | See [The Behaviour Spec](#the-behaviour-spec) |
+| 9. Homes | The existing mechanism each new constant, entry, argument, field or helper goes through, as file:line, quoting that code's stated design where the plan departs from it |
+| 10. Rule owners | The one function that owns each display or business rule, in each twin |
+| 11. Test support | The shared helper each new test's set-up extends |
+| 12. Docs this makes untrue | The behaviour grep over docs, recipes, JSDoc and invariant test names, and what must change for each hit (a stale comment is deleted; never a comment's new wording), or "None (grep: …)" |
+| 13. Operability | A log for every branch that changes an outcome, and what it must let support find. Never its wording |
+| 14. Departures from written rules | The rule quoted, its path and the reason |
+| 15. Reachability | Only what is reachable once the row lands, or the row that reaches it |
+| 16. Standards | Every rules, bestPractice and repoDocs path `tim backlog standards` lists for the changed files |
+
+The planner returns sections 12, 14 and 16 as `docsMadeUntrue`, `departures` and `standards`. The loop hands
+`standards` to the implementor and the other two to the consistency reviewer.
+
+**The plan is linted for code text.** After each plan a light agent runs one `grep` over the plan file and copies
+what it printed. The loop flags a line that adds, keeps, copies or rewords a comment or doc comment, dictates its
+text, prescribes Arrange/Act/Assert comments or a test title, or quotes a log message. A line that deletes or
+forbids is never flagged. A flagged plan goes back to the planner once, through the same replan as a denied check,
+with each line named; a replan that still writes code text, or a plan the reader cannot read, stops at
+`plan-refused`.
+
+**The plan is reviewed before any code exists.** The plan reviewer (think tier) reads each changed repo's `docs/`
+and `src/server/app/docs/`, the recipes, the layer rules, the standards and the code each home and owner names. It
+checks every section above, and that no decision breaks a house rule, a guide or a repo doc. It sends the plan back
+once with findings that say what must become true; the revised plan is linted and reviewed again. A second
+send-back, or a reviewer that returns nothing, stops the increment at `plan-refused`, before the implementor
+starts. Its approval narrows nothing later: every reviewer after it judges the code in full.
+
+**The implementor follows decisions, not wording.** It follows the plan's decisions, homes and rule owners, owns
+names and code shape, copies an exemplar's structure but never its comments or names, and may extend a shared test
+helper. It never writes a local copy of a shared helper's body.
+
+**The plan is not a defence.** The consistency reviewer, under either executor, treats a plan decision as a finding
+when the code it produced cannot be explained from the code alone, or when it departs from a written repo rule.
+A departure the plan does not list, and a doc the change still leaves untrue, are findings too.
+
 ### Plan checks
 
 The ladder runs the plan's sections 5 and 6 checks under the workspace's
@@ -537,7 +700,6 @@ The planner returns every check command in `checks[]`. The script sends a plan
 that names a denied form back to the planner once, with the commands named, and
 refuses a second one as `plan-refused`. The ladder and the consistency reviewer
 report a denied check rather than rewriting it.
-| Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 
 ### The start stage
 
@@ -664,8 +826,10 @@ subagent.
 
 `executor: 'codex'` delegates the three token-heavy stages — **implement**, **review** and
 **fix** — to Codex CLI, using the briefs in [`codex/`](codex/) and the output schemas in
-[`codex/schemas/`](codex/schemas/). Baseline, plan, verify-findings, judge, ladder and land
-stay on Claude in both modes. Both executors build from the same plan file.
+[`codex/schemas/`](codex/schemas/). Baseline, plan, plan review, verify-findings, judge, the
+style re-review of the fix, ladder, land, the CI fixer and the style review of its commits, and a theme's engineering
+review stay on Claude in both modes. The fix stage reports through its own
+schema, `fix.json`, which adds `treesBeforeFix`. Both executors build from the same plan file.
 
 A workflow script has no shell of its own, so each codex stage is **two** agents: a shell
 that writes the resolved prompt to `<workarea>/logs/<id>-<stage>.prompt.md`, runs one
@@ -699,7 +863,7 @@ Four things to know about codex mode:
   loop preserves the attempt and stops rather than proceeding. A crashed reviewer must never
   read as approval.
 
-Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`.
+Per increment, codex mode is at most `39 + 3g` agents against Claude's `31 + 3g`.
 
 ### The branch lifecycle
 

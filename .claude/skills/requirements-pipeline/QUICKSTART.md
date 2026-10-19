@@ -16,9 +16,10 @@ Read `workareas/shared/<programme>/report.md`. It starts with a summary, then an
 
 ## 2. Build
 
-Every run goes ticket → branch → build → PR → CI → merge → ticket done — the
-loop merges each increment itself once it is green, reviewed, adversarially
-verified and judged, then works out the next one and does it again:
+Every run goes ticket → branch → plan → build → PR → CI → merge → ticket done.
+A reviewer checks each plan before any code is written. The loop merges each
+increment itself once it is green, reviewed, verified and judged, and every
+fix after that is reviewed too. Then it works out the next one and does it again:
 
 > Build every increment from shared/hrp-origin-and-commodity, epic EUDPA-12345.
 

@@ -12,7 +12,7 @@ Branch `chore/NO_JIRA-code-quality-factory`, in the workspace and 12 repos. PRs 
 | B | Install the guard-bash draft (`guard-bash-draft/`, then `npm run test:installed`) | Do it. Until then the docs say piped test runs are blocked and they are not |
 | C | Review and merge the PRs | Merge the workspace PR first: it holds the rules every other repo points to |
 | D | Turn on required review for ins-backend `main` (PR #21 was self-merged) | Do it |
-| E | Raise the security ticket from `workareas/ticket-creation/notification-listing-scope/draft.md` | Do it |
+| E | Raise the security ticket from the draft in your local `workareas/ticket-creation/` (kept out of this public repo) | Do it |
 
 ## Decisions, with a default
 

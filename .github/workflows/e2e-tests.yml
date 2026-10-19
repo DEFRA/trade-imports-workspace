@@ -79,6 +79,7 @@ jobs:
       - name: Resolve branch tag
         id: branch-tag
         env:
+          GH_TOKEN: ${{ github.token }}
           RAW_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
         run: |
           raw="$RAW_BRANCH"
@@ -89,7 +90,11 @@ jobs:
           tag="${tag:0:128}"
           echo "sanitised=$tag" >> "$GITHUB_OUTPUT"
 
-          if docker manifest inspect "defradigital/trade-imports-ins-tests:${tag}" >/dev/null 2>&1; then
+          ref_enc=$(printf 'heads/%s' "$raw" | jq -sRr @uri)
+          if ! gh api "repos/DEFRA/trade-imports-ins-tests/git/ref/${ref_enc}" >/dev/null 2>&1; then
+            echo "tests-tag=latest" >> "$GITHUB_OUTPUT"
+            echo "Tests image: latest (no branch ${raw} in trade-imports-ins-tests)"
+          elif docker manifest inspect "defradigital/trade-imports-ins-tests:${tag}" >/dev/null 2>&1; then
             echo "tests-tag=$tag" >> "$GITHUB_OUTPUT"
             echo "Tests image: branch ($tag)"
           else

@@ -705,10 +705,10 @@ The increment build loop's done stage closes each ticket with
 `tim build start` moves a ticket to the working status through the same
 client call (`moveToStatus` in `src/clients/jira-client.js`).
 
-### `tim github create-pr|checks|run-log|rerun` — open a PR and follow its pipeline
+### `tim github create-pr|checks|run-log|rerun|merge` — open a PR, follow its pipeline and merge it
 
-Open a pull request, watch its checks, read why a job failed, and run a job
-again. Every repo
+Open a pull request, watch its checks, read why a job failed, run a job
+again, and merge the PR once it is green. Every repo
 is a DEFRA repo, named without the `DEFRA/` prefix.
 
 ```bash
@@ -716,6 +716,7 @@ tim github create-pr trade-imports-animals-frontend --head chore/NO_JIRA-tidy-lo
 tim github checks trade-imports-animals-frontend 51 [--watch] [--interval 30] [--timeout 540] [--json]
 tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [--lines 100] [--json]
 tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--json]
+tim github merge trade-imports-animals-frontend 51 [--method squash|merge|rebase] [--delete-branch] [--json]
 ```
 
 - **`create-pr`** opens the PR, or returns the PR already open from that
@@ -754,6 +755,20 @@ tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--
   with `checks --watch`. `--json` puts `{repo, runId, jobId, scope}` in
   `result`, where `scope` is `job`, `failed-jobs` or `run`. A check from
   outside GitHub Actions fails with `NOT_FOUND`.
+- **`merge`** merges a PR only when it is open, not a draft, free of
+  conflicts, not blocked by branch protection, up to date with its base, and
+  every check on its head commit has passed (the same checks `checks` lists;
+  a head with no checks yet counts as not passed). Otherwise it merges
+  nothing and prints every reason. It never bypasses branch protection: a
+  missing review is a refusal, and so is GitHub turning the merge down. The
+  merge is pinned to the head commit it checked, so a push in between makes
+  GitHub refuse it. Without `--method` it squashes when the repo allows it,
+  then falls back to a merge commit, then a rebase. `--delete-branch` deletes
+  the PR branch only after the merge. Running it on a merged PR returns the
+  merge commit with status `already-merged` and merges nothing. It exits 0
+  for `merged` or `already-merged` and 1 for `refused`. `--json` puts
+  `{repo, number, url, branch, status, method, sha, branchDeleted, reasons}`
+  in `result`.
 
 ### `tim sonar issues` — why a SonarCloud gate failed
 

@@ -63,7 +63,11 @@ const sonarGateOf = (checks) => {
   return sonar ? { outcome: sonar.outcome, url: sonar.url } : null
 }
 
-const summarise = (listing) => {
+/**
+ * @param {{checks: Array<{name: string, outcome: string}>}} listing - What `listChecks` returns
+ * @returns {object} The listing with an overall outcome (`passed`, `failed` or `pending`; no checks counts as pending), counts and sonarGate
+ */
+export const summariseChecks = (listing) => {
   const counts = countOutcomes(listing.checks)
   return {
     ...listing,
@@ -84,7 +88,7 @@ const confirmsPass = (previous, current) =>
 
 const watchChecks = async (client, { repo, ref, intervalMs, deadline }) => {
   const poll = async (previous) => {
-    const current = summarise(await client.listChecks(repo, ref))
+    const current = summariseChecks(await client.listChecks(repo, ref))
     if (current.outcome === 'failed' || confirmsPass(previous, current)) {
       return { ...current, timedOut: false }
     }
@@ -112,7 +116,10 @@ export const runChecks = async (input) => {
     parseChecksArgs(input)
   const client = createGithubClient({ token: await resolveGithubToken() })
   if (!watch) {
-    return { ...summarise(await client.listChecks(repo, ref)), timedOut: false }
+    return {
+      ...summariseChecks(await client.listChecks(repo, ref)),
+      timedOut: false
+    }
   }
   return watchChecks(client, {
     repo,

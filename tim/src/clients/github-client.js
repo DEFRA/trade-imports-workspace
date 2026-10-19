@@ -82,7 +82,33 @@ const newestRunPerName = (checkRuns) => [
     .values()
 ]
 
-const isNotFound = (error) => (error?.status ?? error?.response?.status) === 404
+const statusOf = (error) => error?.status ?? error?.response?.status
+
+const isNotFound = (error) => statusOf(error) === 404
+
+const MERGE_METHOD_SETTINGS = [
+  ['squash', 'allow_squash_merge'],
+  ['merge', 'allow_merge_commit'],
+  ['rebase', 'allow_rebase_merge']
+]
+
+const MERGE_REFUSED_STATUSES = new Set([405, 409, 422])
+const BRANCH_GONE_STATUSES = new Set([404, 422])
+
+const mergeStateOf = (repo, data) => ({
+  repo,
+  number: data.number,
+  url: data.html_url,
+  state: data.state,
+  merged: Boolean(data.merged),
+  mergeCommitSha: data.merge_commit_sha ?? null,
+  mergeable: data.mergeable ?? null,
+  mergeableState: data.mergeable_state ?? null,
+  draft: Boolean(data.draft),
+  headRef: data.head.ref,
+  headSha: data.head.sha,
+  baseRef: data.base.ref
+})
 
 const logWithoutRequestErrors = {
   debug: () => {},
@@ -157,7 +183,8 @@ const parseRepoFullName = (htmlUrl) => {
  * @param {string} [opts.org]
  * @returns {object} client with whoami / findPrsForTicket / getPr / getPrDiff
  *   / listWorkflowRuns / openPr / listChecks / getRunLog / rerun / getRunStatus
- *   methods
+ *   / getPrMergeState / commitsBehindBase / allowedMergeMethods / mergePr
+ *   / deleteBranch methods
  * @throws {TimError} AUTH when no token is provided
  */
 export const createGithubClient = ({
@@ -465,6 +492,71 @@ export const createGithubClient = ({
         const scope = rerunScopeOf(target, failedOnly)
         await RERUN_REQUESTS[scope](repo, target)
         return { repo, runId: target.runId, jobId: target.jobId, scope }
+      }),
+
+    getPrMergeState: (repo, number) =>
+      wrap(`getPrMergeState(${repo}, ${number})`, async () => {
+        const { data } = await octokit.pulls.get({
+          owner: org,
+          repo,
+          pull_number: number
+        })
+        return mergeStateOf(repo, data)
+      }),
+
+    commitsBehindBase: (repo, base, headSha) =>
+      wrap(`commitsBehindBase(${repo}, ${base})`, async () => {
+        const { data } = await octokit.repos.compareCommitsWithBasehead({
+          owner: org,
+          repo,
+          basehead: `${base}...${headSha}`,
+          per_page: 1
+        })
+        return data.behind_by
+      }),
+
+    allowedMergeMethods: (repo) =>
+      wrap(`allowedMergeMethods(${repo})`, async () => {
+        const { data } = await octokit.repos.get({ owner: org, repo })
+        return MERGE_METHOD_SETTINGS.filter(([, setting]) => data[setting]).map(
+          ([method]) => method
+        )
+      }),
+
+    mergePr: (repo, number, { method, sha }) =>
+      wrap(`mergePr(${repo}, ${number})`, async () => {
+        try {
+          const { data } = await octokit.pulls.merge({
+            owner: org,
+            repo,
+            pull_number: number,
+            merge_method: method,
+            sha
+          })
+          return { merged: true, sha: data.sha, reason: null }
+        } catch (error) {
+          if (!MERGE_REFUSED_STATUSES.has(statusOf(error))) throw error
+          return {
+            merged: false,
+            sha: null,
+            reason: `GitHub refused the merge: ${error.response?.data?.message ?? error.message}`
+          }
+        }
+      }),
+
+    deleteBranch: (repo, branch) =>
+      wrap(`deleteBranch(${repo}, ${branch})`, async () => {
+        try {
+          await octokit.git.deleteRef({
+            owner: org,
+            repo,
+            ref: `heads/${branch}`
+          })
+          return true
+        } catch (error) {
+          if (!BRANCH_GONE_STATUSES.has(statusOf(error))) throw error
+          return false
+        }
       }),
 
     getRunStatus: (repo, runId) =>

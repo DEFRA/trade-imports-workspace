@@ -5,6 +5,7 @@ import { register as registerCreatePr } from './create-pr.js'
 import { register as registerChecks } from './checks.js'
 import { register as registerRunLog } from './run-log.js'
 import { register as registerRerun } from './rerun.js'
+import { register as registerMerge } from './merge.js'
 
 const buildGithubClient = async () =>
   createGithubClient({ token: await resolveGithubToken() })
@@ -36,7 +37,7 @@ export const register = (program, { timVersion }) => {
   const gh = program
     .command('github')
     .description(
-      'Open GitHub PRs, read PRs, diffs, checks and run logs, and run jobs again'
+      'Open and merge GitHub PRs, read PRs, diffs, checks and run logs, and run jobs again'
     )
 
   gh.command('prs <ticketId>')
@@ -76,4 +77,5 @@ export const register = (program, { timVersion }) => {
   registerChecks(gh, { timVersion })
   registerRunLog(gh, { timVersion })
   registerRerun(gh, { timVersion })
+  registerMerge(gh, { timVersion })
 }

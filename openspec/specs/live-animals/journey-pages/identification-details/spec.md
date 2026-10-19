@@ -84,7 +84,7 @@ The system MUST show only the identifier fields that a given commodity supports,
 
 #### Scenario: A commodity with no identifier of its own earns no panel
 **ID**: SCN-IDENT-006-B
-- **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, fish)
+- **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, ostriches)
 - **WHEN** the user views the identification details page
 - **THEN** that line has no identification card at all — no typed fields and no free-text fields
 
@@ -238,8 +238,8 @@ The system MUST return the user to Overview when they follow the back link from 
 **ID**: REQ-IDENT-019
 The system MUST pass the user on, without showing the identification details page, when no commodity on the notification carries an identifier of its own.
 
-#### Scenario: A consignment of fish alone carries on past the page
+#### Scenario: A consignment of ostriches alone carries on past the page
 **ID**: SCN-IDENT-019-A
-- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, fish)
+- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, ostriches)
 - **WHEN** the identification details page is requested directly
 - **THEN** Overview is shown instead, and the page itself is never rendered

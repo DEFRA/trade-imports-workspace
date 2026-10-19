@@ -29,29 +29,29 @@ The system MUST list no species for a search of fewer than three characters, so 
 
 ### Requirement: A search can match a commodity's code or a species' common or scientific name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST match a search against a commodity's code and against a species' common name as well as its scientific name, and MUST offer each species as its common name with the scientific name after it.
+The system MUST search the commodity reference data (MDM's live-animal species) against a commodity's code and against a species' common name as well as its scientific name, and MUST offer each species by its scientific name alone, as the reference data spells it.
 
 #### Scenario: Searching by common name finds the same species as searching by code
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
-- **THEN** the same species is offered as when searching by that commodity's code, shown as its common name followed by its scientific name
+- **THEN** the same species is offered as when searching by that commodity's code, shown by its scientific name alone
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004
-The system MUST group the species a search matches under a heading naming their commodity and its code, MUST render a separate group for each commodity a search matches, and MUST say so plainly when a search matches nothing.
+The system MUST group the species a search matches under a heading of their commodity code, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
 
 #### Scenario: A search groups its matching species under their commodity heading
 **ID**: SCN-COMMODITY-SELECT-004-A
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search by a commodity's code
-- **THEN** the matching species are listed together under a heading naming that commodity and its code
+- **WHEN** they search for a term matching species under one commodity code
+- **THEN** the matching species are listed together under a heading of that commodity code
 
 #### Scenario: A search matching more than one commodity renders a group for each
 **ID**: SCN-COMMODITY-SELECT-004-B
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a term that matches species under two different commodities
-- **THEN** two separate groups are shown, each headed by its own commodity's name and code
+- **WHEN** they search for a term that matches species under two different commodity codes
+- **THEN** two separate groups are shown, each headed by its own commodity code
 
 #### Scenario: A search matching nothing says so
 **ID**: SCN-COMMODITY-SELECT-004-C
@@ -136,3 +136,13 @@ The system MUST require every notification to carry at least one commodity line,
 - **GIVEN** a notification carrying no commodity line
 - **WHEN** the user tries to submit it
 - **THEN** the submission is refused, and the missing commodity line is reported
+
+### Requirement: One search lists no more than ten species
+**ID**: REQ-COMMODITY-SELECT-011
+The system MUST list no more than ten species for one search, so a broad term does not fill the page; a species beyond the first ten is reached by a narrower search.
+
+#### Scenario: A search matching more than ten species lists ten
+**ID**: SCN-COMMODITY-SELECT-011-A
+- **GIVEN** the user is on the commodity selection page
+- **WHEN** they search for a commodity code holding more than ten species
+- **THEN** ten species are listed

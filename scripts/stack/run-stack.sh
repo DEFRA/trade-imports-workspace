@@ -61,15 +61,26 @@ sanitise_branch() {
   printf '%s' "$t"
 }
 
+# Returns 0 only when GitHub answers that the repo has no such branch. A
+# network or auth failure returns 1, leaving the choice to the tag probe.
+github_branch_absent() {
+  local repo="$1" raw_branch="$2" status=0
+  GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code --heads \
+    "https://github.com/DEFRA/${repo}.git" "refs/heads/${raw_branch}" >/dev/null 2>&1 || status=$?
+  [ "$status" -eq 2 ]
+}
+
 # Probe Dockerhub for a branch tag and print a stable fingerprint of its
 # manifest on stdout, returning 0 if the tag exists. Returns 1 (empty stdout)
-# when the tag is absent. The fingerprint is a content hash of the full
-# `docker manifest inspect` output (cksum — POSIX, present on macOS and Linux
-# CI, no jq needed): any re-push to the same branch changes the manifest and so
-# flips the fingerprint. This lets the post-healthy re-check tell a brand-new
-# branch tag apart from a re-pushed one. bash-3.2 safe.
+# when the tag is absent, or when the repo no longer has the branch: a merged
+# branch is deleted but its Dockerhub tag stays. The fingerprint is a content
+# hash of the full `docker manifest inspect` output (cksum — POSIX, present on
+# macOS and Linux CI, no jq needed): any re-push to the same branch changes the
+# manifest and so flips the fingerprint. This lets the post-healthy re-check
+# tell a brand-new branch tag apart from a re-pushed one. bash-3.2 safe.
 probe() {
-  local image="$1" tag="$2" manifest
+  local image="$1" tag="$2" raw_branch="$3" manifest
+  github_branch_absent "$image" "$raw_branch" && return 1
   manifest="$(docker manifest inspect "defradigital/${image}:${tag}" 2>/dev/null)" || return 1
   printf '%s' "$manifest" | cksum | awk '{ print $1 "-" $2 }'
 }
@@ -168,7 +179,7 @@ if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
     [ "$in_active" -eq 0 ] && continue
     # Record the branch resolution (file exists) and its manifest fingerprint
     # (file contents) so the re-check can spot a flip or a re-push.
-    ( fp="$(probe "$image" "$sanitised")" && printf '%s' "$fp" > "$probe_tmpdir/$label" ) &
+    ( fp="$(probe "$image" "$sanitised" "$branch")" && printf '%s' "$fp" > "$probe_tmpdir/$label" ) &
     probe_pids+=("$!")
   done
   [ ${#probe_pids[@]} -gt 0 ] && wait ${probe_pids[@]+"${probe_pids[@]}"} 2>/dev/null || true
@@ -265,7 +276,7 @@ if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
       [ "$s" = "$image" ] && { in_active=1; break; }
     done
     [ "$in_active" -eq 0 ] && continue
-    ( fp="$(probe "$image" "$sanitised")" && printf '%s' "$fp" > "$recheck_tmpdir/$label" ) &
+    ( fp="$(probe "$image" "$sanitised" "$branch")" && printf '%s' "$fp" > "$recheck_tmpdir/$label" ) &
     recheck_pids+=("$!")
   done
   [ ${#recheck_pids[@]} -gt 0 ] && wait ${recheck_pids[@]+"${recheck_pids[@]}"} 2>/dev/null || true

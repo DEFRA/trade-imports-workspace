@@ -167,13 +167,13 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 
 **Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain.
 
-**No bodies at INFO.** Never log a request or response body at `info`, `warn` or `error`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs.
+**No bodies at INFO.** Never log a request or response body at `info`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs. If a body is the only way to tell two failures apart, log a bounded excerpt at `warn` on the failure path only.
 
 **Pick the level by who must act.** `warn` for a handled fallback or retry. `error` for a failure someone must look at. `info` for an expected refusal, such as a validation error or a not-found.
 
 ### Bad and good
 
-**A silent retry.** `backendFetch` (animals frontend, `19a76c54`) retries a backend connection that never opened, and says nothing. When the stack is slow, support cannot tell that every page is paying for a retry.
+**A silent retry.** `backendFetch` in the animals frontend retries a backend connection that never opened, and says nothing. When the stack is slow, support cannot tell that every page is paying for a retry.
 
 ```js
 // Bad
@@ -194,7 +194,7 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 }
 ```
 
-**A failure with no cause.** The Java external-call metrics (`ExternalCallMetrics.java`, `dc4c74e`) log "failure in 5 ms" and drop the error. Support sees that a call failed, but not whether it was a timeout, a refusal or a 500. The same mistake in pino:
+**A failure with no cause.** The Java external-call metrics (`ExternalCallMetrics.java`) log "failure in 5 ms" and drop the error. Support sees that a call failed, but not whether it was a timeout, a refusal or a 500. The same mistake in pino:
 
 ```js
 // Bad
@@ -204,7 +204,7 @@ logger.warn({ integration, durationMs }, 'External call failed')
 logger.warn({ err, integration, status: err.status, durationMs }, 'External call failed')
 ```
 
-**A warning without the thing it warns about.** A Java port-type fallback (`PortType`, `0da6de8`) warns inside the enum, where the port code is not in scope, so the line cannot say which port. Log where the code is in scope, or pass the code in. In pino:
+**A warning without the thing it warns about.** A Java port-type fallback (`PortType`) warns inside the enum, where the port code is not in scope, so the line cannot say which port. Log where the code is in scope, or pass the code in. In pino:
 
 ```js
 // Bad

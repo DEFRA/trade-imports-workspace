@@ -229,6 +229,25 @@ The workspace's `.claude/settings.json` carries a deny list and two
   delete trees with `git rm -r -f -q`, and set the execute bit as in
   [`agent-skills.md`](agent-skills.md) → "Bash call hygiene".
 
+Why `guard-bash.sh` checks what it does:
+
+- `chmod` and uncommitted executables are denied because a denied
+  `node` script was once re-run by copying it into an allowlisted path
+  and making it executable. Committing first makes that step visible.
+  The checks also look inside `$( … )` and backticks, which the deny
+  list does not see.
+- Secret paths are denied for readers such as `jq`, `grep` and `awk`,
+  which the `Read()` deny does not cover at the Bash layer.
+- A `cd` before `git push` in one command makes the Sonar pre-push gate
+  check the directory the session was in before the `cd`, so it can
+  skip the check or block the push over another repo's failure.
+- Only an unquoted `&&` is denied, so `awk 'NR>=10 && NR<=20'` still
+  runs. `;` and `|` are left alone because loops and ordinary pipes need
+  them; the one pipe denied is a test run into a trimmer.
+- The redirects (`~/` paths, `&&`, `npx playwright test`, piped test
+  runs) deny rather than ask, because an unattended agent cannot answer
+  a prompt but can retry with the form the reason names.
+
 An agent must never work round a denial in another form. When one stops
 it, it should tell you what it wanted; you decide whether to run the
 command yourself with `! <command>`, change the allowlist, or choose

@@ -17,7 +17,7 @@ helper in `docs/agent-skills.md`.
 - Every applicable Fix item is either applied (status `Done`, tagged with the commit SHA) or explicitly dispositioned (`Auto-Resolved` / `Won't Fix`) — no item left silently untouched.
 - Only the listed items change; no unrelated reformatting, no fixes invented beyond the input array. A rename reaches every caller, test and twin of the renamed symbol, and those files go in the same commit.
 - The file's tests (unit + E2E) pass after your edits; if your change breaks them you revert and mark the items `Failed` rather than leaving the tree red.
-- Exactly one commit for the item group, referencing the item IDs.
+- Exactly one commit per repo for the file's items, referencing the item IDs. The file's own repo always gets one; a twin repo a rename reached gets its own.
 - What you write meets `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`. Read it in full before you edit.
 - Every item's canonical JSON status reflects what actually happened.
 
@@ -195,12 +195,15 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 **If E2E tests fail:**
 
 - Read `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md`.
-- Prove whether your change caused it: revert your file with
-  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`,
+- Prove whether your change caused it. Save your edits first with
+  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} diff --output=/tmp/{repo}-style.patch -- {file} {every other file you edited}`,
+  then revert them with
+  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file} {every other file you edited}`,
   run the failing spec again to a new log file, and read it.
   - Green without your change: your change caused it. Leave it
     reverted and mark all `applicable_items` Failed.
-  - Still red without your change: re-apply your edits, commit
+  - Still red without your change: re-apply your edits with
+    `git -C ~/git/defra/trade-imports-workspace/repos/{repo} apply /tmp/{repo}-style.patch`, commit
     (Step 5), mark the items (Step 6), and add a `Failing:` line to
     your return naming the spec, the test and the cause. The parent
     fixes it before the next group. Never call it flaky or unrelated
@@ -210,7 +213,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 
 ## Step 5: Commit
 
-One commit per file. Use the Item IDs in the message. Each git op
+One commit for the file's items in each repo. Use the Item IDs in the message. Each git op
 is a separate Bash call — no `cd && git`. When a rename reached
 callers, tests or a twin in the same repo, `git add` each of those
 files too; a twin repo gets its own commit on the same branch name.

@@ -130,6 +130,7 @@ Shared fixtures live in `test/fixtures/`.
 | Repo | Helper | What it gives you |
 |---|---|---|
 | animals | `fit/live-animals-journey.js` | `signIn`, `startNotification`, one `answer…` function per section, `completeAnswerSections`, `openReviewFromHub`, `chooseAutocompleteByLabel`, `chooseCountryOfOrigin`, `choosePortOfEntry`, `journeyUrl`, `journeyIdFromPage` |
+| plants | `fit/high-risk-plants-journey.js` | `startNotification`, `chooseCommodityType`, `addCommodityLine`, `saveOrigin`, `chooseCountryOfOrigin`, `startPotatoNotification`, `completePotatoNotification`, `openDeclaration`, `saveAndContinue`, `chooseAutocompleteOption`, `expectNoSeriousOrCriticalViolations` |
 | plants | `fit/set-base.js` | `BASE`, `setUrl`, `setPath`, `journeyIdFromPage` |
 | plants | `fit/seed-fields.js` | `seedFields(step)` |
 | both | `fit/sign-in.js` | `signIn(page, { organisationId })` |

@@ -144,12 +144,15 @@ reports to `target/surefire-reports/`.
 
 **If E2E tests fail:**
 - Read `error-context.md` artifacts as above — do not try to diagnose from console tail
-- Prove whether your change caused it: stash nothing, revert only your
-  file with `git checkout -- {file}`, run the failing spec again to a
-  new file, and read it.
+- Prove whether your change caused it. Save your change first with
+  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} diff --output=/tmp/{repo}-item-{N}.patch -- {file} {every other file you edited}`,
+  then revert only those files with
+  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file} {every other file you edited}`.
+  Stash nothing. Run the failing spec again to a new file, and read it.
   - Green without your change: your change caused it. Return
     `FAILED: #N — E2E tests broke after change, reverted. Failure: [summary]`.
-  - Still red without your change: re-apply your change, commit it
+  - Still red without your change: re-apply your change with
+    `git -C ~/git/defra/trade-imports-workspace/repos/{repo} apply /tmp/{repo}-item-{N}.patch`, commit it
     (Step 5), and return `RED` (below) so the batch implementor fixes
     the failure before the next item. Never call it flaky, unrelated
     or pre-existing and carry on.

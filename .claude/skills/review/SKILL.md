@@ -323,9 +323,9 @@ format or name in a different place. Signs of one root:
 - a naming item and a comment item on the same symbol
 - the same concept named differently in several files or repos
 
-Example: four items on PR #396 each asked for a guard against the same
-refusal. Applied one by one, they became three guards that failed
-three different ways (`5cafe2dd`, `9af27387`, `eee3cfc2`).
+Example: four items each asked for a guard against the same refusal.
+Applied one by one, they became three guards that failed three
+different ways.
 
 For each group of two or more, add one "decide the owner" item:
 

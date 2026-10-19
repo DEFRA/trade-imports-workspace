@@ -187,7 +187,9 @@ applicable, don't read transitively forever:
 | Config (`pom.xml`, `package.json`) | Usage sites of any newly added dependency |
 
 If the file is a leaf with no obvious related context, that's fine —
-move on. Use `Grep` to find callers/usages when it's not obvious.
+move on. Find callers and usages with one unpiped Bash `grep -rn` over
+the review clone; never the Grep or Glob tools, which are not
+allowlisted.
 
 ### 5. Apply review criteria
 
@@ -327,7 +329,6 @@ never reasons to drop one:
 - it was there before this PR
 - it is out of the ticket's scope
 - a comparable file does it the same way
-
 - the plan said to write it that way
 - an earlier review or decision kept it
 

@@ -239,7 +239,8 @@ tests pass):
 - **Tests reuse the shared helpers.** Set-up two tests need goes in
   `src/server/app/engine/test-support.js` for unit tests, or the repo's
   `fit/` helpers for feature specs (`fit/live-animals-journey.js` in
-  animals, `fit/set-base.js` and `fit/seed-fields.js` in plants). Extending
+  animals, `fit/high-risk-plants-journey.js`, `fit/set-base.js` and
+  `fit/seed-fields.js` in plants). Extending
   one is in scope. Never write a local copy of a helper's body.
   "Self-contained" means each spec builds its own state, through these
   helpers. Each test title states what its assertions prove.

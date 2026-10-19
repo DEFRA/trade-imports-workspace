@@ -85,8 +85,8 @@ Run this for every repo, including a single-repo review.
 3. Every hit that still states the old way is a finding. Record the
    file, the line, the old statement, and what is now true.
 
-Example: commit `be35bf0c` changed how page anchors are worked out and
-left `change-link.js:17-21` describing the old way. The file was not
+Example: a change to how page anchors are worked out left
+`change-link.js` describing the old way. The file was not
 in the diff, so no per-file reviewer could see it.
 
 The Must for a stale comment is that the comment is gone, or the name

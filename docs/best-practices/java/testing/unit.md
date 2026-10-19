@@ -298,6 +298,10 @@ Do not copy an acceptance criterion into the title when the body tests a stand-i
 
 Before you call a test done, undo the production change it covers (or invert the condition it guards), run the test and see it fail. Restore the change and see it pass. A test that stays green against the old code proves nothing about the new code: fix the assertion, or delete the test and the code it was meant to cover.
 
+### No tests that pin diagnostic log lines
+
+Do not write a test that pins a diagnostic, spike or temporary log line, its level or its fields. Coverage work tests the outcome the branch changes, not the line that reports it. A log line is pinned only when support depends on it: an outcome-changing branch that must log its ids.
+
 ### Layout: no Given / When / Then comments
 
 Do not write `// Given`, `// When`, `// Then` or `// And` comments. Separate set-up, action and assertions with a blank line. When set-up is long enough to need a label, extract it into a named helper (`givenNotificationWithOutstandingCertificate()`) so the name does the labelling.

@@ -43,9 +43,17 @@ Read the increment: `jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog
 invariants: `jq 'del(.increments)' <backlog>`. The row's `acceptanceCriteria` are the contract. Then read
 `<plan>`: the planner's decisions, the files it expected to change, the tests it asked for and its
 section 7, "Out of scope", which is the scope fence. Judge the change against the acceptance criteria
-first and the plan second. A better solution than the plan imagined is not a finding; a behaviour change
-the plan did not declare is. Never raise a finding whose substance is that the increment was
-underspecified.
+first and the plan second. A behaviour change the plan did not declare is a finding. So is a plan
+decision whose code cannot be explained from the code alone, or that departs from a written repo rule:
+the plan is never a defence for a name, comment, structure or test the house rules or the repo's docs
+would reject. Its section 14 lists the departures it chose and section 12 the docs the change makes
+untrue; a departure it does not list, or a doc the change still leaves untrue, is a finding. Never raise
+a finding whose substance is that the increment was underspecified.
+
+Read `<workspace>/.claude/rules/code-quality.md` in full. Its house rules bind every line of code, comment,
+name, test title and log line in the change, and they win over any guide, exemplar, recipe, plan or
+neighbouring file that says otherwise. A breach is a finding: "taste", "pre-existing", "out of scope" and "a
+nearby file does it" are never reasons to drop one. The prompt that pointed you here repeats them.
 
 Read each persona bound to `<personas>` in full and apply it. They are drawn from:
 
@@ -54,6 +62,12 @@ Read each persona bound to `<personas>` in full and apply it. They are drawn fro
 - `<skills>/review/references/CONSISTENCY_REVIEWER.md` — the cross-file lens
 
 A file persona is written per file: apply it to each file in `<reviewFiles>` in turn.
+
+The consistency run also reads the repo's own docs and recipes. Run
+`tim backlog standards --files <repoKey>:<path> --workspace <workspace> --json` once, with `--files` repeated for
+every changed file, and read in full every `repoDocs` file it lists. A rule the
+change alters that a doc, recipe, JSDoc or test name **outside the diff** still states the old way is a finding.
+Grep the changed repos for the behaviour's own words, not only its identifiers. Its fix is to update it or delete it.
 
 **Then look at the change (Step 2) before you load any tech-specific rules**, and load only the ones the
 change actually needs:
@@ -112,27 +126,48 @@ Standing concerns, in priority order:
    one caller's test pass changes every other caller too.
 3. **Test quality.** Tests asserting implementation rather than behaviour (`verify(collaborator)` /
    `toHaveBeenCalledWith` is the tell); mocks at the module boundary rather than the network boundary;
-   a test whose name claims something its assertions do not pin (coverage padding — should be deleted,
-   not kept); missing negative/edge cases the acceptance criteria imply; one test per enum constant
-   (house rule: one round-trip plus one unknown-value negative, never a test per constant).
-4. **Duplicated responsibility** — two classes both doing the same job, where the second silently
-   overwrites the first.
-5. **Fragility a future edit will trip over** — e.g. a hand-rolled field-by-field copy that will silently
+   a test whose title claims more than its assertions check; a test that cannot fail, because it still
+   passes with the production line it covers removed (strengthen the assertion or delete the test);
+   missing negative/edge cases the acceptance criteria imply; one test per enum constant
+   (`<workspace>/docs/best-practices/java/testing/unit.md`: one round-trip plus one unknown-value negative, never a
+   test per constant).
+4. **Duplication** — a second copy of a rule or of test set-up; a second mechanism beside one the repo
+   already has; two classes both doing the same job, where the second silently overwrites the first. Name
+   both places.
+5. **Names that hide what the code does.** For each function, method, variable and test the change adds or
+   alters, read its name, predict what it returns and what it changes, then read its body. Any mismatch is
+   a `naming` finding.
+6. **Operability.** A branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state
+   switch) with no log, or with a log support cannot search by: no ids, no cause, only an error's message.
+   "Support cannot tell what happened during an incident" is a full failure scenario for a `logging`
+   finding.
+7. **What the change makes false.** A comment, doc comment or recipe line anywhere in a changed file that
+   the change makes false is a `comments` finding, whether or not the diff touches its line. Its fix is to
+   delete it.
+8. **Fragility a future edit will trip over** — e.g. a hand-rolled field-by-field copy that will silently
    drop any field added later.
-6. Correctness, null-safety, error handling, security. Java: compact-constructor null guards on public
+9. Correctness, null-safety, error handling, security. Java: compact-constructor null guards on public
    records at API boundaries.
 
-## Step 4 — refute yourself before reporting
+## Step 4 — check each finding by its kind before reporting
 
-For every finding, actively try to kill it before you write it down. Check it against the real file (not
-just the diff), against the increment's `acceptanceCriteria`, and against what the repo actually does
-elsewhere — find a comparable file and compare. "Unconventional" is only a finding if the convention
-demonstrably exists in this repo. A wrong finding that survives costs more than a real one that is
-missed, because it drives a pointless edit to working code.
+Give every finding one `category`. The prompt that pointed you here lists them and says which defect goes in
+which. The first four are functional: `correctness`, `security`, `error-handling`, `coverage-gap`. The other
+seven are code quality: `naming`, `comments`, `structure`, `duplication`, `logging`, `test-readability`,
+`history`. The kind decides how you check the finding.
 
-Set `confidence` honestly after that attempt: `certain` (you could not refute it and can cite the
-evidence), `probable`, `speculative` (report it, but say so). Drop anything that is taste dressed as a
-defect.
+- **Functional.** Actively try to kill it before you write it down. Check it against the real file (not just
+  the diff), against the increment's `acceptanceCriteria`, and against what the repo actually does elsewhere:
+  find a comparable file and compare. "Unconventional" is only a finding if the convention demonstrably exists
+  in this repo. A wrong functional finding that survives costs more than a real one that is missed, because it
+  drives a pointless edit to working code. Drop anything that is taste dressed as a defect.
+- **Code quality.** Report it unless the code shows it is factually wrong: the copies differ, the name does
+  predict what the code returns and what it changes, the comment is accurate and describes only the lines
+  below it, the branch does log once with the ids support searches by. "Taste", "pre-existing", "out of
+  scope", "a comparable file does it" and "feature folders are independent" are never reasons to drop one.
+
+Set `confidence` honestly after that check: `certain` (you can cite the evidence), `probable`, `speculative`
+(report it, but say so). A house-rule breach is never taste.
 
 ## Step 5 — report
 

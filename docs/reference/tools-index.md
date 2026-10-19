@@ -5,10 +5,13 @@ Shared shell scripts called by skills via
 `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY`.
 
 **The Jira write surface has a library-first `tim` equivalent.** `tim jira
-create|attach|link|epics` (see `tim/README.md`) is dry run by default for
-every one of the four — it prints the plan (fields, attachments, warnings
-for placeholder text) and a `planId`, and only writes to Jira with a
-matching `--confirm <planId>`. The `ticket-creator` skill and the
+create|attach|link|assign` (see `tim/README.md`) is dry run by default.
+`create` prints the plan (fields, attachments, warnings for placeholder
+text) and a `planId`, and only writes with a matching `--confirm <planId>`;
+`attach`, `link` and `assign` write with `--confirm`. `link` takes
+`relates <key>`, `--blocks <key>` or `--blocked-by <key>` and reads back the
+direction Jira stored. `assign` takes an account id or `me` and reads the
+assignee back. `tim jira epics` is read-only. The `ticket-creator` skill and the
 `prototype` skill's hand-off both create through it rather than
 `tools/jira/create-ticket.sh` below, which stays as the plain-bash
 alternative and the one the build loop still calls directly.
@@ -60,15 +63,15 @@ alternative and the one the build loop still calls directly.
 | `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |
 | `tools/review/diff-since-review.sh` | EUDPA-X [--json] | Diff since last review |
 | `tools/review/file-review-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.review.json` placeholder |
-| `tools/review/file-review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file JSON |
+| `tools/review/file-review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file JSON. C is a category from `tools/review/finding-categories.sh`; any other is refused |
 | `tools/review/file-review-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set verdict (marks file as reviewed) |
 | `tools/review/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Populate `items.{repo}.json` + emit File Analysis Summary / Items markdown.<br>e.g. `tools/review/aggregate-file-reviews.sh EUDPA-1 --repo backend --write-items`<br>Boundary: without `--write-items` it only emits markdown to stdout; `--write-items` (re)writes `items.{repo}.json` and renumbers IDs — FRESH population only, prior dispositions/status not preserved. |
 | `tools/review/review-items.sh` | EUDPA-X [--repo R] [--filter ...] [--status ...] [--json] | List items from `## Items` table |
-| `tools/review/review-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition (auto-sets Status).<br>e.g. `tools/review/review-mark.sh EUDPA-1 --repo backend --item 3 --disposition Fix`<br>Boundary: sets Disposition and lets it drive Status (vs `review-set-status.sh`, which sets Status alone). |
+| `tools/review/review-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition (auto-sets Status).<br>e.g. `tools/review/review-mark.sh EUDPA-1 --repo backend --item 3 --disposition Fix`<br>`Merged` needs `--note "merged into #N"`, naming the owner item.<br>Boundary: sets Disposition and lets it drive Status (vs `review-set-status.sh`, which sets Status alone). |
 | `tools/review/review-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only.<br>e.g. `tools/review/review-set-status.sh EUDPA-1 --repo backend --item 3 --status Done`<br>Boundary: sets Status directly and leaves Disposition untouched (vs `review-mark.sh`, which sets Disposition and derives Status). |
-| `tools/review/review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." | Append new item; prints new ID |
+| `tools/review/review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." | Append new item; prints new ID. C is a category from `finding-categories.sh` |
 | `tools/review/review-counts.sh` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
-| `tools/review/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view |
+| `tools/review/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq`; a fix's "Must:" and "One way:" parts get a column each |
 | `tools/review/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh: pull + diff + lists A/B/C/D.<br>e.g. `tools/review/refresh/scope.sh EUDPA-1 --write-snapshot`<br>Boundary: read-only — classifies files into the refresh work-lists (vs `reconcile.sh`, which mutates `items.{repo}.json`). |
 | `tools/review/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tools/review/refresh/reconcile.sh EUDPA-1 --repo backend`<br>Boundary: runs after `scope.sh` and appends new findings into `items.{repo}.json` (vs `scope.sh`, which only lists them). |
 | `tools/review/refresh/pull-repos.sh` | EUDPA-X [--repo R] [--json] | Refresh helper |
@@ -80,14 +83,14 @@ alternative and the one the build loop still calls directly.
 | `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
 | `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
 | `tools/style/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
-| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view |
+| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq` (the table `aggregate-file-reviews.sh` also writes) |
 | `tools/style/style-items.sh` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
 | `tools/style/style-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
 | `tools/style/style-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
-| `tools/style/style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--best-practice PATH] | Append new item |
+| `tools/style/style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality category |
 | `tools/style/style-counts.sh` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
 | `tools/style/file-style-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.style.json` placeholder |
-| `tools/style/file-style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json` |
+| `tools/style/file-style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality category from `tools/review/finding-categories.sh`; any other is refused |
 | `tools/style/file-style-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
 | `tools/style/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh, filtered to `.js` |
 | `tools/style/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
@@ -130,7 +133,7 @@ alternative and the one the build loop still calls directly.
 | **ticket** | | |
 | `tools/ticket/prepare-plan.sh` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
 | `tools/ticket/prepare-implement.sh` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
-| `tools/ticket/setup-branch.sh` | EUDPA-X --repo R --slug S [--base B] | Fetch → checkout base → pull → checkout -b `feature/EUDPA-X-<slug>` in one dispatch |
+| `tools/ticket/setup-branch.sh` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` in one dispatch. `--type` defaults to `feat`; any other value is refused |
 | **ticket-creator** | | |
 | `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `jira/create-ticket.sh`, which actually creates the ticket in Jira). |
 | `tools/ticket-creator/extract-capabilities.sh` | \<markdown-file\> [--format list\|tsv] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |

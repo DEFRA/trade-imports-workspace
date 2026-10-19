@@ -55,6 +55,38 @@ Read, in this order:
 - `blockedBy`, on an adopted requirement only, when it cannot be built until somebody outside the programme acts: a
   platform change, access, another team's ticket. Say who must do what. It is built in a blocked increment.
 
+## Write the end state
+
+The statement travels into the backlog, then the plan, the tests, the Behaviour Spec and the code. Whatever it says,
+a builder writes down. So it says only what is true once the requirement is built.
+
+- **`statement` is the end state.** It says what a user sees or what the system does after the change. It never
+  narrates the change: no "remove", "no longer", "instead of", "now shows" or "used to".
+- **Old text appears only in `deltaNote`.** What today's service shows, and how it differs, goes there with the claim
+  that shows it. Never quote removed copy in the statement.
+
+  | Bad `statement` | Good `statement`, then `deltaNote` |
+  |---|---|
+  | The internal reference field no longer shows "It can be up to 58 characters." | The internal reference field shows the label and hint the design gives. `deltaNote`: Today the field also shows "It can be up to 58 characters." (repo-012). |
+
+- **No ids or session words in the statement.** Claim, requirement, conflict, row and ruling ids (`repo-012`,
+  `req-014`, `c-201`, `inc-004`, `ruling:sam-2026-10-02`) belong in `claims`, `deltaNote`, `outcome` and `why`.
+  So do release names and the session's own words ("Design Release 2.1", "the real service", "as ruled"). The
+  statement names the page, the field and the behaviour. "Keep the c-201 behaviour" became a code comment; "the real
+  service" became a test title.
+- **A change to how a value is formatted is one requirement, naming every page that shows the value.** Find those
+  pages in the today claims: a field's own page, check your answers, the dashboard, the view of a submitted
+  notification. Never write one requirement per page. Three requirements for one port label built three formatters.
+- **A design prototype decides look and feel, never architecture.** It is the authority on page content, wording,
+  layout, components and question order. It never decides how sets, journeys or services are split, URL paths, the
+  data model, or where code lives. A difference that is only a prototype's URL or structure is `out-of-scope`, with
+  `why` saying so; the target's own architecture stands. Copying pages across sets is the target's design, never a
+  reason to merge them.
+- **Earlier work is a source, never something to absorb.** A new programme never backports into, migrates or merges
+  in another programme's records, backlog or fixes, and never patches tools that work in flight still uses. A
+  requirement whose only point is to copy or translate that work is `out-of-scope`. A genuinely new capability that
+  happens to live on another branch is kept, reworded as a requirement of this programme.
+
 ## Conflicts
 
 - **Every disagreement becomes a conflict.** Each position names its `source`, what it `says` and the `claim` it
@@ -131,6 +163,12 @@ When requirements and conflicts already exist, this is a re-distil: new sources 
 - **Re-read every existing wording against what changed.** A requirement or conflict can go stale without its
   own claims changing: another requirement widens the scope, or a ruling narrows it. Update the `statement`,
   `about`, `question`, `default` and `outcome` of each one the change touches, and keep its id.
+- **A reversal is swept across everything you own, not only what it names.** When a ruling reverses an earlier
+  decision, read every requirement and conflict in your file for the old model's words and rewrite each one that
+  still states it. A record of the reversal itself, such as an `overruled` list or an `outcome`, is correct: leave it.
+  Name each remaining match and why it stays in your answer's decisions.
+- **An existing statement that narrates a change or carries an id is rewritten** to the end state, as
+  [Write the end state](#write-the-end-state) says. Its id stays.
 
 A run after `tim distil reset --stage reconcile` is a first reconcile: nothing exists, and every id is new.
 

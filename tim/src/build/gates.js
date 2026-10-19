@@ -15,14 +15,13 @@ export const PHASES = ['unit', 'fit', 'e2e']
 
 export const MVN_VERIFY = 'mvn verify'
 
+export const TIM_DUPLICATION = 'tim build duplication'
+
 const E2E_SCRIPT = /^test:docker-compose(:[a-z0-9-]+)*$/
 const NPM_SCRIPT = /^[a-z0-9][a-z0-9:_-]*$/i
 const RUNG_NAME = /^[a-z0-9][a-z0-9-]*$/
 const MAX_PORT = 65535
 
-// Words in a script name that mean it reaches past the laptop: a CDP
-// environment, BrowserStack, a ZAP scan, a publish. The gate proves a change
-// against local code only, so a rung never names one.
 const REMOTE_SEGMENTS = new Set([
   'cdp',
   'remote',
@@ -90,9 +89,13 @@ const repoGatesSchema = z
 const rungProblems = (rung, remoteScripts) => {
   const { name, phase, run, ports, forRepos, exclusive } = rung
   const isMaven = run === MVN_VERIFY
+  const isDuplication = run === TIM_DUPLICATION
   return [
-    !isMaven && !NPM_SCRIPT.test(run)
-      ? `"${run}" is not an npm script name or "${MVN_VERIFY}".`
+    !isMaven && !isDuplication && !NPM_SCRIPT.test(run)
+      ? `"${run}" is not an npm script name, "${MVN_VERIFY}" or "${TIM_DUPLICATION}".`
+      : null,
+    isDuplication && phase !== 'unit'
+      ? `"${TIM_DUPLICATION}" runs in the unit phase.`
       : null,
     looksRemote(run) || remoteScripts.includes(run)
       ? `"${run}" runs against a remote or CDP environment. The gate only runs local checks.`
@@ -178,8 +181,6 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-// A rung with a cwd runs in that folder of its repo: the workspace repo has
-// no package.json of its own, and tim's scripts live in tim/.
 const planned = (repo, rung) => ({
   repo: repo.folder,
   path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,

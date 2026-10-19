@@ -16,8 +16,9 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 
 - Every test that passed before you started still passes — behaviour is unchanged.
 - Each refactoring was applied as a small, individually-tested step; no big-bang rewrites.
-- The code smells you found are resolved: functions do one thing, names reveal intent, duplication is gone, nesting is shallow.
-- The result is consistent with surrounding sibling code, not just abstractly "clean".
+- The code smells you found are resolved: functions do one thing, names predict what the code returns and changes, duplication is gone, nesting is shallow.
+- Every touched file meets the house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`, and has had the delete-first comment pass.
+- The result is consistent with surrounding sibling code, except where that code breaks a house rule.
 - No new features, no behavioural change, no scope creep.
 
 ## Required output
@@ -35,6 +36,7 @@ Code quality improvements:
 - Functions: [X] methods extracted
 - Naming: [X] renamed
 - Structure: [X] duplications removed
+- Comments: [X] deleted, [X] replaced by a rename or extraction
 
 Tests: All passing (X tests)
 ```
@@ -53,7 +55,7 @@ automatically.
 ## Principles
 
 1. **Tests must stay green** — never change behaviour.
-2. **Consistency over perfection** — match sibling code style.
+2. **House rules first** — read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` before you start. A sibling file that breaks a house rule is not a pattern to match.
 3. **Small, incremental changes** — one refactoring at a time, test after each.
 4. **Research modern approaches** — search for 2026 best practices.
 5. **Functional inspiration** — prefer immutability, pure functions.
@@ -61,7 +63,8 @@ automatically.
 
 **Study surrounding code first.** Match naming conventions, error
 handling style, function length, abstraction level, import style, and
-test structure. Only deviate if the existing pattern has clear problems.
+test structure. Deviate where the existing pattern breaks a house rule
+or has other clear problems.
 
 ## Boundaries
 
@@ -80,18 +83,28 @@ Refactor only. Do NOT:
 1. **Verify the starting point is green.** Run the repo's test suite to a
    tmp file and read it once. All tests must pass before you refactor.
    (Commands: cheat-sheet → "Running tests".)
-2. **Identify code smells.** Scan the changed code against the smell
-   checklists in the cheat-sheet (function / naming / structure smells).
-3. **Plan the order.** Safety first (null safety, error handling) →
-   readability (naming, extract methods) → structure (DRY, single
-   responsibility) → performance (only if there is a measured need).
-4. **Refactor in small steps.** Loop: make ONE small change → run tests
+2. **Comment pass, delete first.** Before any other change, walk every
+   comment in the changed code: the hunks, about 10 lines either side,
+   and the JSDoc or Javadoc of every changed function. Delete comments
+   that describe other code, count things, narrate history or carry
+   ids. Where a comment explains a name, note the name for step 5 and
+   delete the comment there. Never reword a comment. (Cheat-sheet →
+   "Comment smells".)
+3. **Identify code smells.** Scan the changed code against the smell
+   checklists in the cheat-sheet (function / naming / comment /
+   structure / logging / test smells).
+4. **Plan the order.** Safety first (null safety, error handling,
+   logging) → readability (naming, extract methods) → structure (DRY,
+   single responsibility) → performance (only if there is a measured
+   need).
+5. **Refactor in small steps.** Loop: make ONE small change → run tests
    (must pass) → keep it if it's an improvement, revert if tests fail →
    commit at milestones → repeat. Apply the techniques and naming tables
-   in the cheat-sheet.
-5. **Stop** when tests still pass, code smells are resolved, naming is
-   clear, functions are small, DRY is applied, and the code is
-   consistent with the codebase.
+   in the cheat-sheet. A rename covers the concept's whole vocabulary:
+   grep for the concept word, not only the identifier.
+6. **Stop** when tests still pass, code smells are resolved, naming is
+   clear, functions are small, DRY is applied, every touched file meets
+   the house rules, and the code is consistent with the codebase.
 
 Full smell checklists, refactoring techniques (with before/after
 examples), naming tables, the code-quality checklist, and the test-run

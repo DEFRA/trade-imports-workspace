@@ -1,8 +1,10 @@
 # Doc Comment Accuracy
 
-Doc comments are a contract between the author and the next reader. When they exist, they must accurately describe what the code currently does. A comment that no longer matches its function is actively misleading — worse than no comment at all.
+A doc comment is a contract between the author and the caller of a public API. Anywhere else it is a second description of the code that nobody keeps up to date. A comment that no longer matches its function is actively misleading — worse than no comment at all.
 
-This guide covers the universal accuracy rules. For format and tag syntax, see the language-specific addenda:
+The house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` apply to every comment, doc comments included.
+
+This guide covers the universal rules. For format and tag syntax, see the language-specific addenda:
 
 - JavaScript / TypeScript → [`jsdoc.md`](jsdoc.md)
 - Java → [`javadoc.md`](javadoc.md)
@@ -11,9 +13,13 @@ This guide covers the universal accuracy rules. For format and tag syntax, see t
 
 ## The rule
 
-**Absence is not a violation. Present-but-wrong is.**
+**Presence is the violation, unless the comment states the contract of an exported public API.**
 
-If a function has no doc comment, that is fine. If it has a doc comment, every claim that comment makes must be true of the current code.
+- No doc comment: fine.
+- A doc comment on an internal helper, a private method, a controller handler or a test: a finding. Fix: delete it.
+- A doc comment on an exported public API: every claim it makes must be true of the current code, and it must state only the contract. Contract means what a caller needs to call it correctly: parameter constraints, return shape, errors thrown.
+
+Rationale, history and design notes are never contract. They go in the repo's `docs/` or the behaviour spec.
 
 ---
 
@@ -57,23 +63,60 @@ The summary sentence describes behaviour that has changed — a different respon
 // bad — "Sends a welcome email" but now sends any notification type
 ```
 
+### Claims about other code
+
+The comment describes something other than the code it sits on: its callers, other modules, the backend, a library, the UI or a test. It also covers counts such as "the one row" or "the only caller". These go stale when the other code changes, and the person changing that code never sees them.
+
+```js
+// bad — describes another page's test, and counts ("the one Change link")
+/** The three statuses that leave nothing for the trader to do. The review
+ * page's unfinished-card test applies this same predicate, so "no unfinished
+ * card" and "ready for Check your answers" cannot drift apart. */
+export const rowReady = (status) => ...
+
+// bad — a release name, a count, and a claim about which other files carry links;
+// a later change gave more rows a Change link and this went stale
+/**
+ * The one Change link a card carries, level with its title (design release 1).
+ * Rows carry none: ...
+ * ... as cards/movement/transit-countries.js does.
+ */
+export const cardAction = (journeyId, slug, visuallyHiddenText) => ...
+
+// good — no comment; the names say what each returns
+export const rowReady = (status) => ...
+export const cardAction = (journeyId, slug, visuallyHiddenText) => ...
+```
+
+**Default fix: delete.** If the claim is a real constraint on this function, state it as this function's contract ("Throws if `code` is blank") or enforce it in code.
+
 ---
 
 ## Severity
 
 | Severity | When |
 |----------|------|
-| **FAIL** | Wrong param name; `@returns` type is flatly wrong; documented `@throws` for an exception that was removed |
-| **WARN** | Description is vague or partially outdated but not actively wrong; `@returns` present on a void function; `@throws` for the wrong exception subtype |
-| **PASS** | Doc comment is accurate, or no doc comment exists |
+| **FAIL** | Wrong param name; `@returns` type is flatly wrong; documented `@throws` for an exception that was removed; any claim about other code; rationale, history, ticket or ruling ids in a doc comment; a doc comment on code that is not an exported public API (a house-rules breach) |
+| **WARN** | Description vague or partly outdated but not wrong; `@returns` on a void function; `@throws` for the wrong exception subtype |
+| **PASS** | No doc comment, or an accurate contract-only comment on an exported public API |
+
+Every FAIL and WARN is fixed in the same change. None is "taste".
 
 ---
 
-## When to fix vs delete
+## When a comment is wrong: delete first
 
-**Fix** the comment if it documents a genuine contract consumers need — parameter constraints, return shape, thrown exceptions.
+When a doc comment is stale or makes a claim about other code, delete it. Do not reword it.
 
-**Delete** the comment if fixing it would produce nothing beyond what the function signature already says. A comment that just restates the name adds no value.
+Write a new one only if all of these hold:
+
+1. The function or class is an exported public API.
+2. A caller needs a contract that the signature and names cannot show.
+3. A rename cannot carry it.
+
+Then write only that contract, in as few lines as it takes.
+
+If the comment explains a name, the name is the defect. Rename, then delete the comment in the same change.
 
 ```
 // delete this — it says nothing the signature doesn't already say
@@ -89,4 +132,4 @@ const getUser = (id) => ...
 
 ## Proposed fix format
 
-When flagging a doc comment violation in a todo list, always include a proposed corrected block (or `[delete comment]`) in the **Proposed Fix** column. The fixer should not have to re-derive the correct comment from scratch.
+When flagging a doc comment violation in a todo list, put `[delete comment]` in the **Proposed Fix** column by default. Give a corrected block only when the three conditions above hold, so the fixer does not have to re-derive it.

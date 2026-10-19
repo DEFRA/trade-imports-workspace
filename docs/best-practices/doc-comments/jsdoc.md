@@ -1,20 +1,23 @@
 # JSDoc / TSDoc Format
 
-Covers `.js` and `.ts` files. Read [`BEST_PRACTICES.md`](BEST_PRACTICES.md) first for the universal accuracy rules — this addendum covers format and tag conventions.
+Covers `.js` and `.ts` files. Read [`BEST_PRACTICES.md`](BEST_PRACTICES.md) first for the universal rules — this addendum covers when to write a block and its format.
 
 ---
 
 ## When to write a doc comment
 
-Default to **no comment**. Write JSDoc/TSDoc only when:
-
-- The function is exported and its parameter constraints or return shape are non-obvious from the signature alone
-- There is a genuine "why" that naming cannot express
+Default to **no comment**. Write JSDoc/TSDoc only to state the contract of an exported public API: a module that other modules, packages or repos call as a contract, such as a shared engine helper, a plugin or a client. Contract means what a caller needs to call it correctly and that the signature and names cannot show: parameter constraints, return shape, errors thrown.
 
 Do not write doc comments for:
-- Internal helpers whose signature is self-explanatory
-- Simple arrow functions
-- Anything that would just restate the function name
+
+- internal helpers, even when exported for a test
+- a feature's controller, handler or view model
+- simple arrow functions
+- anything that would restate the function name
+- rationale, history or design notes — these go in the repo's `docs/`
+- callers, other modules, the backend, a library, the UI or a test (see "Claims about other code" in `BEST_PRACTICES.md`)
+
+If a parameter needs a description to be understood, rename it first.
 
 ---
 
@@ -24,15 +27,15 @@ Use `/** ... */`. Do not use `//` line comments for doc blocks.
 
 ```js
 /**
- * Calculates the total cost including VAT.
- *
  * @param {number} subtotal - Pre-tax amount in pence
  * @param {number} vatRate - VAT rate as a decimal (e.g. 0.2 for 20%)
  * @returns {number} Total amount in pence including VAT
  * @throws {RangeError} If subtotal is negative
  */
-const totalWithVat = (subtotal, vatRate) => { ... }
+export const totalWithVat = (subtotal, vatRate) => { ... }
 ```
+
+Leave out the summary sentence when the name already says it.
 
 ---
 
@@ -100,15 +103,16 @@ If the description adds nothing beyond what the name already says, omit the `@pa
 
 ## Accuracy checklist
 
-When reviewing a `/** */` block, verify each claim against the current code:
+When reviewing a `/** */` block, first check it belongs at all: if the function is not an exported public API, the fix is to delete the block. Otherwise verify each claim against the current code:
 
 | Check | What to look for |
 |-------|-----------------|
+| Belongs | The function is an exported public API and the block states only its contract |
 | Param names | Every `@param name` matches an actual parameter in the signature |
 | No phantom params | No `@param` for parameters that no longer exist |
-| No missing params | No parameter exists without a `@param` (for exported functions with non-obvious params) |
+| Constraints covered | Every parameter with a constraint the signature cannot show has a `@param` |
 | Return type | `@returns {type}` matches what `return` statements actually produce |
 | Void check | No `@returns` on functions that return nothing |
 | Throws type | `@throws {ErrorType}` matches the constructor in `throw new ErrorType(...)` |
 | Throws presence | No `@throws` for errors the function no longer throws |
-| Summary | First sentence describes current behaviour, not a previous version |
+| Summary | If present, describes current behaviour only, with no rationale, history or claims about other code |

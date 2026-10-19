@@ -19,15 +19,6 @@ const mapStatus = (status, action) => {
   return null
 }
 
-/**
- * Map a 400 response body to a `TimError`, carrying Jira's own field
- * reasons rather than a bare status code — the whole point of validating a
- * manifest is to give the person something they can act on.
- *
- * @param {string} action
- * @param {{errorMessages?: string[], errors?: Record<string, string>}} payload
- * @returns {TimError} USAGE
- */
 const mapBadRequest = (action, payload) => {
   const fieldReasons = Object.entries(payload?.errors ?? {}).map(
     ([field, reason]) => `${field}: ${reason}`
@@ -39,15 +30,6 @@ const mapBadRequest = (action, payload) => {
   return new TimError('USAGE', `${action}: ${detail}`)
 }
 
-/**
- * Read a response body as JSON, tolerating an empty body (Jira returns
- * 201/204 with nothing on some writes).
- *
- * @param {Response} response
- * @param {string} action
- * @returns {Promise<any>}
- * @throws {TimError} PARSE when the body is non-empty and not valid JSON
- */
 const parseBody = async (response, action) => {
   const text = await response.text()
   if (!text) return {}
@@ -72,9 +54,6 @@ export const describeTransitions = (transitions) =>
     ? 'none'
     : transitions.map(({ name, to }) => `${name} -> ${to}`).join(', ')
 
-// Status names are compared as exact strings: a board's statuses say nothing
-// about the order its workflow runs in. A transition's own name is a
-// fallback only, because it can differ from the status it leads to.
 const findTransitionTo = (transitions, status, { matchTransitionName }) =>
   transitions.find(({ to }) => to === status) ??
   (matchTransitionName
@@ -90,15 +69,54 @@ const noTransitionError = ({ key, current, status, transitions }) => {
   return error
 }
 
+const readLinkFromIssueSide = (link) => {
+  const base = { id: link.id ?? null, type: link.type?.name ?? null }
+  if (link.outwardIssue) {
+    return {
+      ...base,
+      direction: 'outward',
+      relation: link.type?.outward ?? null,
+      otherKey: link.outwardIssue.key
+    }
+  }
+  return {
+    ...base,
+    direction: 'inward',
+    relation: link.type?.inward ?? null,
+    otherKey: link.inwardIssue?.key ?? null
+  }
+}
+
+const resolutionsOffered = (transition) => {
+  const resolutionField = transition.fields?.resolution
+  if (!resolutionField) return null
+  return (resolutionField.allowedValues ?? []).map(({ name }) => name)
+}
+
+const refuseResolutionNotOffered = ({ key, move, resolution }) => {
+  if (move.resolutions === null) {
+    throw new TimError(
+      'USAGE',
+      `The "${move.name}" transition on ${key} does not let you set a resolution. Run it again without --resolution.`
+    )
+  }
+  if (!move.resolutions.includes(resolution)) {
+    throw new TimError(
+      'USAGE',
+      `The "${move.name}" transition on ${key} offers no resolution "${resolution}". It offers: ${move.resolutions.join(', ') || 'none'}.`
+    )
+  }
+}
+
 /**
- * Create a Jira REST client. Reads JIRA_USER + JIRA_TOKEN + JIRA_BASE_URL
- * from env by default — matches the contract used by ../tools/jira/auth.sh.
+ * Create a Jira REST client. Reads JIRA_USER, JIRA_TOKEN and JIRA_BASE_URL
+ * from the environment by default.
  *
  * @param {object} [opts]
  * @param {string} [opts.user]
  * @param {string} [opts.token]
  * @param {string} [opts.baseUrl]
- * @returns {object} client with whoami / getTicket / getComments
+ * @returns {object} The Jira client
  * @throws {TimError} AUTH when credentials are missing
  */
 export const createJiraClient = ({
@@ -142,12 +160,12 @@ export const createJiraClient = ({
     }
   }
 
-  const postJson = async (path, body, action) => {
+  const sendJson = async (method, path, body, action) => {
     const url = `${normalisedBase}${path}`
     let response
     try {
       response = await fetch(url, {
-        method: 'POST',
+        method,
         headers: {
           Authorization: authHeader(user, token),
           'Content-Type': 'application/json',
@@ -166,8 +184,19 @@ export const createJiraClient = ({
     return parseBody(response, action)
   }
 
-  // Jira's agile API answers a full success with 204 and a partial rejection
-  // with 200 and an error body, so only 204 counts as done.
+  const postJson = (path, body, action) => sendJson('POST', path, body, action)
+
+  const postIssueLink = ({ type, inwardKey, outwardKey, action }) =>
+    postJson(
+      '/rest/api/2/issueLink',
+      {
+        type: { name: type },
+        inwardIssue: { key: inwardKey },
+        outwardIssue: { key: outwardKey }
+      },
+      action
+    )
+
   const postForNoContent = async (path, body, action) => {
     const url = `${normalisedBase}${path}`
     let response
@@ -240,22 +269,29 @@ export const createJiraClient = ({
     }
   }
 
-  const listTransitions = async (key) => {
+  const listTransitions = async (key, { withResolutions = false } = {}) => {
+    const path = `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`
     const data = await get(
-      `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
+      withResolutions ? `${path}?expand=transitions.fields` : path,
       `listTransitions(${key})`
     )
     return (data.transitions ?? []).map((transition) => ({
       id: transition.id,
       name: transition.name,
-      to: transition.to?.name ?? null
+      to: transition.to?.name ?? null,
+      ...(withResolutions
+        ? { resolutions: resolutionsOffered(transition) }
+        : {})
     }))
   }
 
-  const transitionIssue = async (key, transitionId) => {
+  const transitionIssue = async (key, transitionId, { resolution } = {}) => {
     await postJson(
       `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
-      { transition: { id: transitionId } },
+      {
+        transition: { id: transitionId },
+        ...(resolution ? { fields: { resolution: { name: resolution } } } : {})
+      },
       `transitionIssue(${key})`
     )
   }
@@ -263,24 +299,28 @@ export const createJiraClient = ({
   const moveToStatus = async (
     key,
     status,
-    { from, matchTransitionName = false } = {}
+    { from, matchTransitionName = false, resolution } = {}
   ) => {
     const current = from === undefined ? (await getTicket(key)).status : from
     if (current === status) {
       return { key, from: current, to: current, moved: false, transition: null }
     }
-    const transitions = await listTransitions(key)
+    const transitions = await listTransitions(key, {
+      withResolutions: Boolean(resolution)
+    })
     const move = findTransitionTo(transitions, status, { matchTransitionName })
     if (!move) {
       throw noTransitionError({ key, current, status, transitions })
     }
-    await transitionIssue(key, move.id)
+    if (resolution) refuseResolutionNotOffered({ key, move, resolution })
+    await transitionIssue(key, move.id, { resolution })
     return {
       key,
       from: current,
       to: move.to,
       moved: true,
-      transition: move.name
+      transition: move.name,
+      ...(resolution ? { resolution } : {})
     }
   }
 
@@ -289,8 +329,55 @@ export const createJiraClient = ({
       const data = await get('/rest/api/2/myself', 'whoami')
       return {
         user: data.name ?? data.accountId,
+        accountId: data.accountId ?? null,
         displayName: data.displayName
       }
+    },
+
+    /**
+     * Who an issue is assigned to now.
+     *
+     * @param {string} key
+     * @returns {Promise<{accountId: string, displayName: string|null}|null>} null when unassigned
+     */
+    getAssignee: async (key) => {
+      const data = await get(
+        `/rest/api/2/issue/${encodeURIComponent(key)}?fields=assignee`,
+        `getAssignee(${key})`
+      )
+      const assignee = data.fields?.assignee
+      if (!assignee) return null
+      return {
+        accountId: assignee.accountId,
+        displayName: assignee.displayName ?? null
+      }
+    },
+
+    /**
+     * @param {string} key
+     * @param {string} accountId - An Atlassian account id, not a username or email
+     * @returns {Promise<void>}
+     * @throws {TimError} USAGE carrying Jira's reason when it refuses the account
+     */
+    assignIssue: async (key, accountId) => {
+      await sendJson(
+        'PUT',
+        `/rest/api/2/issue/${encodeURIComponent(key)}/assignee`,
+        { accountId },
+        `assignIssue(${key})`
+      )
+    },
+
+    /**
+     * @param {string} key
+     * @returns {Promise<string|null>} The resolution's name, or null when the issue has none
+     */
+    getResolution: async (key) => {
+      const data = await get(
+        `/rest/api/2/issue/${encodeURIComponent(key)}?fields=resolution`,
+        `getResolution(${key})`
+      )
+      return data.fields?.resolution?.name ?? null
     },
 
     getTicket,
@@ -395,52 +482,49 @@ export const createJiraClient = ({
     },
 
     /**
-     * Link two issues. Only `'Relates'` is supported in v1 — Jira's other
-     * link types (Blocks, Duplicates, ...) need direction-aware wording
-     * this CLI doesn't model yet.
-     *
-     * @param {string} type - Must be `'Relates'`
-     * @param {string} inwardKey
-     * @param {string} outwardKey
-     * @returns {Promise<{type: string, inwardKey: string, outwardKey: string}>}
-     * @throws {TimError} USAGE when `type` is not `'Relates'`
+     * @param {string} key
+     * @param {string} target
+     * @returns {Promise<void>}
      */
-    linkIssues: async (type, inwardKey, outwardKey) => {
-      if (type !== 'Relates') {
-        throw new TimError(
-          'USAGE',
-          `linkIssues: only "Relates" is supported in v1, got "${type}".`
-        )
-      }
-      await postJson(
-        '/rest/api/2/issueLink',
-        {
-          type: { name: 'Relates' },
-          inwardIssue: { key: inwardKey },
-          outwardIssue: { key: outwardKey }
-        },
-        `linkIssues(${inwardKey}, ${outwardKey})`
-      )
-      return { type: 'Relates', inwardKey, outwardKey }
+    relateIssues: async (key, target) => {
+      await postIssueLink({
+        type: 'Relates',
+        inwardKey: key,
+        outwardKey: target,
+        action: `relateIssues(${key}, ${target})`
+      })
     },
 
     /**
-     * An issue's current issue links, to verify a link landed after
-     * creating it.
+     * Record that `blocker` blocks `blocked`.
+     *
+     * @param {{blocker: string, blocked: string}} link
+     * @returns {Promise<void>}
+     */
+    recordBlocker: async ({ blocker, blocked }) => {
+      await postIssueLink({
+        type: 'Blocks',
+        inwardKey: blocker,
+        outwardKey: blocked,
+        action: `recordBlocker(${blocker} blocks ${blocked})`
+      })
+    },
+
+    /**
+     * An issue's current links, each read from this issue's side: `relation`
+     * is the wording that sits between this issue and `otherKey`, such as
+     * "blocks" or "is blocked by". `direction` is `outward` when this issue
+     * holds the link type's outward wording ("blocks"), `inward` otherwise.
      *
      * @param {string} key
-     * @returns {Promise<Array<{type: string|null, inwardKey: string|null, outwardKey: string|null}>>}
+     * @returns {Promise<Array<{id: string|null, type: string|null, direction: 'outward'|'inward', relation: string|null, otherKey: string|null}>>}
      */
     getIssueLinks: async (key) => {
       const data = await get(
         `/rest/api/2/issue/${encodeURIComponent(key)}?fields=issuelinks`,
         `getIssueLinks(${key})`
       )
-      return (data.fields?.issuelinks ?? []).map((link) => ({
-        type: link.type?.name ?? null,
-        inwardKey: link.inwardIssue?.key ?? null,
-        outwardKey: link.outwardIssue?.key ?? null
-      }))
+      return (data.fields?.issuelinks ?? []).map(readLinkFromIssueSide)
     },
 
     /**
@@ -448,7 +532,9 @@ export const createJiraClient = ({
      * A transition's name can differ from that status's name.
      *
      * @param {string} key
-     * @returns {Promise<Array<{id: string, name: string, to: string|null}>>}
+     * @param {object} [options]
+     * @param {boolean} [options.withResolutions=false] - Also return each transition's `resolutions`: the names its screen accepts, or null when it has no resolution field
+     * @returns {Promise<Array<{id: string, name: string, to: string|null, resolutions?: string[]|null}>>}
      */
     listTransitions,
 
@@ -457,6 +543,8 @@ export const createJiraClient = ({
      *
      * @param {string} key
      * @param {string} transitionId - From `listTransitions`
+     * @param {object} [options]
+     * @param {string} [options.resolution] - A resolution name the transition's screen accepts
      * @returns {Promise<void>}
      */
     transitionIssue,
@@ -471,8 +559,9 @@ export const createJiraClient = ({
      * @param {object} [options]
      * @param {string} [options.from] - The issue's status, when the caller already read it
      * @param {boolean} [options.matchTransitionName=false] - Also accept a transition with this name when no transition leads to a status with it
-     * @returns {Promise<{key: string, from: string|null, to: string|null, moved: boolean, transition: string|null}>}
-     * @throws {TimError} USAGE carrying `transitions` when the issue offers no way into that status
+     * @param {string} [options.resolution] - Set this resolution as part of the move
+     * @returns {Promise<{key: string, from: string|null, to: string|null, moved: boolean, transition: string|null, resolution?: string}>}
+     * @throws {TimError} USAGE carrying `transitions` when the issue offers no way into that status; USAGE when the transition's screen does not accept the resolution
      */
     moveToStatus,
 
@@ -527,7 +616,7 @@ export const createJiraClient = ({
       const base = `/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary&maxResults=100`
       const children = []
       let pageToken = null
-      for (let page = 0; page < CHILD_PAGE_LIMIT; page += 1) {
+      for (let page = 0; page < MAX_CHILD_PAGES; page += 1) {
         const data = await get(
           pageToken
             ? `${base}&nextPageToken=${encodeURIComponent(pageToken)}`
@@ -548,6 +637,4 @@ export const createJiraClient = ({
   }
 }
 
-// 100 issues a page: an epic with more than 5,000 open children is not one
-// this search is for.
-const CHILD_PAGE_LIMIT = 50
+const MAX_CHILD_PAGES = 50

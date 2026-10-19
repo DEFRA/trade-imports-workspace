@@ -12,7 +12,7 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 ## How the spec stays in sync
 
-The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
+The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. Before it marks a coverage link `strength: "full"` it runs a red probe, as `spec-cover` does: invert the production line the scenario depends on, see the test fail, restore the line, see it pass. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
 **That is the whole of the automated, per-increment coverage.** `frontend-change` targets frontend repos, and only the sets it lists (`live-animals`, `high-risk-plants`, and `germinal-products` once the Design Release 2.1 programme creates that set in `trade-imports-animals-frontend`; it writes to the `live-animals/`, `plants/` and `germinal-products/` namespaces). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you in the moment. The periodic sweep that catches the rest is `spec-catchup` (drift: the code says something the spec doesn't) and `spec-cover` (gaps: the spec says something no test proves) — see CLAUDE.md's skill table, or "Periodic sweep" below.
 
@@ -151,7 +151,7 @@ Not used here — see [How the spec stays in sync](#how-the-spec-stays-in-sync).
 
 ## Reading a coverage row
 
-`coverage: "full"` only means at least one linked test was judged `strength: "full"` after reading the body. Then weigh **which** suites those links come from:
+`coverage: "full"` only means at least one linked test was judged `strength: "full"` after reading the body. Links written by `frontend-change` or `spec-cover` were also probed red. Older links may not have been, so a `full` link to a test you have never seen fail is worth probing before you rely on it. Then weigh **which** suites those links come from:
 
 | Evidence | Confidence that *this scenario* is verified |
 |---|---|

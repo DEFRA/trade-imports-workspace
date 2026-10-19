@@ -20,9 +20,10 @@ repos/trade-imports-ins-tests/
 │       │   ├── pages/
 │       │   └── visual/
 │       └── security/
-├── page-objects/<domain>/, shared/      ← Page Object Model classes
-├── flows/<domain>/, shared/             ← multi-step flows composing page objects
+├── page-objects/<domain>/, shared/      ← Page Object Model classes: locators and single-page actions
+├── flows/<domain>/, shared/             ← journey flows: to* methods that reach a page, and seeding
 ├── domain/<domain>/, shared/            ← test data and domain types
+├── resources/reference-data/            ← captured copies of real reference-data responses
 └── fixtures/
     └── ui.ts                            ← test.extend() with animalsPages, plantsPages, animalsJourney, …
 ```
@@ -40,9 +41,15 @@ Tags used in this project. Tags select the suite; the path selects the domain (`
 | `@compose` | Requires the full workspace stack |
 | `@visual` | Visual regression snapshots |
 
-The examples in the rest of this guide use a simplified `pages` / `journeys`
-fixture pair to show the patterns. The suite's real fixtures are named per
-domain, as in `fixtures/ui.ts`.
+Fixtures are named per domain, as in `fixtures/ui.ts`: `animalsPages`,
+`plantsPages` and so on for page objects, `animalsJourney` and
+`plantsJourney` for journey flows, and `animalsSeededJourney` for seeding.
+`pages` holds the shared page objects. Specs import `test` and `expect` from
+`@fixtures`.
+
+The rules for what a spec does (reaching pages, when to seed, test data,
+assertions, running and diagnosing) are in
+[`playwright/BEST_PRACTICES.md`](../playwright/BEST_PRACTICES.md).
 
 ---
 
@@ -56,7 +63,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,      // fail if test.only committed
   retries: process.env.CI ? 2 : 0,   // retry flaky tests in CI
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : undefined,  // the suite reads PLAYWRIGHT_WORKERS instead
   reporter: [
     ['list'],
     ['allure-playwright']            // Allure HTML report
@@ -96,49 +103,32 @@ export default defineConfig({
 
 ## 3. Writing tests
 
+A page spec reaches its page through a journey flow `to*` method, then tests that page:
+
 ```typescript
-import { test, expect } from '../fixtures/index.js'
+import { test, expect } from '@fixtures'
 
-test.describe('Origin journey', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+test.describe('Origin of the import page', () => {
+  test.beforeEach(async ({ animalsJourney }) => {
+    await animalsJourney.toOriginOfImport()
   })
 
-  test('should display origin page heading @compose', async ({ pages }) => {
-    await pages.origin.goto()
-    await expect(pages.origin.heading).toBeVisible()
-    await expect(pages.origin.heading).toHaveText('Where are the goods coming from?')
-  })
-
-  test('should show error when no country selected @compose', async ({ pages }) => {
-    await pages.origin.goto()
-    await pages.origin.submit()
-
-    await expect(pages.origin.errorSummary).toBeVisible()
-    await expect(page).toHaveURL('/origin')
+  test('renders the page controls', async ({ animalsPages }) => {
+    await expect(animalsPages.originOfImport.heading).toBeVisible()
+    await expect(animalsPages.originOfImport.countryOfOrigin).toBeVisible()
+    await expect(animalsPages.originOfImport.saveAndContinue).toBeVisible()
   })
 })
 ```
 
+A journey spec clicks through the pages it is about, then asserts what the user's answers became:
+
 ```typescript
-// Single test with steps
-test('complete notification journey @compose', async ({ journeys }) => {
-  await test.step('Sign in', async () => {
-    await journeys.signIn()
-  })
+test('shows the origin answers on the notification view after the opening run', async ({ animalsJourney, animalsPages }) => {
+  await animalsJourney.toReview()
 
-  await test.step('Fill origin', async () => {
-    await journeys.fillOrigin({ countryCode: 'DE' })
-  })
-
-  await test.step('Fill commodities', async () => {
-    await journeys.fillCommodities({ code: '0101' })
-  })
-
-  await test.step('Check answers and submit', async () => {
-    await journeys.submitNotification()
-  })
+  const importDetails = animalsPages.notificationView.summaryCard('Import details')
+  await expect(animalsPages.notificationView.summaryValue(importDetails, 'Region of origin code')).toHaveText('FR-75')
 })
 ```
 
@@ -322,79 +312,63 @@ export class OriginPage {
 }
 ```
 
-**Journeys class** — composes page objects for multi-step flows:
+**Journey flows** compose page objects into the steps that reach a page. Each domain has one, in `flows/<domain>/journey.ts`:
 
 ```typescript
-// page-objects/journeys.ts
-import { type Page } from '@playwright/test'
-import { SignInPage } from './pages/sign-in-page.js'
-import { OriginPage } from './pages/origin-page.js'
+// flows/plants/journey.ts
+export class PlantsJourney {
+  constructor(
+    private readonly plantsPages: PlantsPages,
+    private readonly context: JourneyContext,
+  ) {}
 
-export class Journeys {
-  readonly signInPage: SignInPage
-  readonly originPage: OriginPage
-
-  constructor(page: Page) {
-    this.signInPage = new SignInPage(page)
-    this.originPage = new OriginPage(page)
+  async toDashboard(): Promise<void> {
+    await this.plantsPages.dashboard.open()
+    await this.plantsPages.dashboard.heading.waitFor()
   }
 
-  async signIn(credentials?: { username: string; password: string }) {
-    await this.signInPage.goto()
-    await this.signInPage.signIn(credentials)
-  }
-
-  async completeOriginStep(options: { countryCode: string }) {
-    await this.originPage.goto()
-    await this.originPage.fill({ countryCode: options.countryCode, requiresRegionCode: 'no' })
+  async toArrivalStatus(country: string): Promise<void> {
+    await this.plantsPages.origin.selectCountry(country)
+    await this.plantsPages.origin.btnSaveAndContinue.click()
+    await this.plantsPages.arrivalStatus.heading.waitFor()
   }
 }
 ```
+
+- A `to*` method reaches one page and ends by waiting for its heading.
+- Specs reach pages through `to*` methods, not by repeating the clicks.
+- A sequence of steps two specs share becomes a `to*` method, and the copies in the specs are deleted in the same change.
+- Flows hold no assertions.
+- Seeding lives in its own flow (`flows/animals/seeded-journey.ts`), which posts each page's form through the frontend.
 
 ---
 
 ## 7. Fixtures
 
+`fixtures/ui.ts` builds every page object and flow per test. A new flow gets a fixture there:
+
 ```typescript
-// fixtures/index.ts
-import { test as base, type Page } from '@playwright/test'
-import { OriginPage } from '../page-objects/pages/origin-page.js'
-import { CommodityPage } from '../page-objects/pages/commodity-page.js'
-import { Journeys } from '../page-objects/journeys.js'
-
-type Pages = {
-  origin: OriginPage
-  commodity: CommodityPage
-}
-
-type TestFixtures = {
-  pages: Pages
-  journeys: Journeys
-}
-
-export const test = base.extend<TestFixtures>({
-  pages: async ({ page }, use) => {
-    await use({
-      origin: new OriginPage(page),
-      commodity: new CommodityPage(page)
-    })
+// fixtures/ui.ts
+export const test = base.extend<PageFixtures, AuthWorkerFixtures>({
+  plantsPages: async ({ page }, use) => {
+    await use(createPlantsPages(page))
   },
-  journeys: async ({ page }, use) => {
-    await use(new Journeys(page))
-  }
+  journeyContext: async ({}, use) => {
+    await use({})
+  },
+  plantsJourney: async ({ plantsPages, journeyContext }, use) => {
+    await use(new PlantsJourney(plantsPages, journeyContext))
+  },
 })
-
-export { expect } from '@playwright/test'
 ```
 
 Import in tests:
 
 ```typescript
-import { test, expect } from '../fixtures/index.js'
+import { test, expect } from '@fixtures'
 
-test('example', async ({ pages, journeys }) => {
-  await pages.origin.goto()
-  await journeys.completeOriginStep({ countryCode: 'DE' })
+test.beforeEach(async ({ plantsJourney }) => {
+  await plantsJourney.toDashboard()
 })
 ```
 
@@ -591,16 +565,28 @@ Environment variables:
 | `TEST_USERNAME` | OIDC username for auth |
 | `TEST_PASSWORD` | OIDC password for auth |
 | `ALLURE_RESULTS_DIR` | Output dir for Allure results |
+| `PLAYWRIGHT_WORKERS` | How many browsers run at once: a whole number or a percentage |
 
-For `@compose` tagged tests, the full workspace stack must be running first:
+For `@compose` tagged tests, the full workspace stack must be running first. Start it with `tim docker dev` (or `scripts/stack/run-stack.sh -d`) so it runs your local changes, then:
 ```bash
-cd /path/to/workspace
-./scripts/stack/run-stack.sh
-cd repos/trade-imports-ins-tests
-npm run test:docker-compose             # every domain
-npm run test:docker-compose:animals     # one domain
-npm run test:docker-compose -- tests/plants/  # any domain, by path (trailing slash: paths are regexes)
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose             # every domain
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose:animals     # one domain
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose -- tests/plants/  # any domain, by path (trailing slash: paths are regexes)
 ```
+
+`test:docker-compose` is the one local runner. Redirect its output to a file and read the file once.
+
+### Reading a failure
+
+Playwright saves each failed test's evidence in its own folder under `test-results/` in the tests repo:
+
+| File | What it holds |
+|------|---------------|
+| `error-context.md` | The failed assertion and the page's accessibility tree when it failed |
+| `test-failed-1.png` | A screenshot of the page when it failed |
+| `trace.zip` | The trace of a retried test; open it with `npx playwright show-trace` or the `playwright-trace` skill |
+
+Read `error-context.md` first. The console's last lines drop the assertion detail and element state.
 
 ---
 
@@ -625,14 +611,15 @@ await page.getByText('Done').click()
 await page.getByText('Done').click()
 ```
 
-**3. Not using Page Object Model for repeated interactions**
+**3. Walking to a page step by step in the spec**
 ```typescript
-// Wrong — duplicated locators across tests
-await page.getByRole('combobox', { name: 'Country' }).selectOption('DE')
-await page.getByRole('button', { name: 'Continue' }).click()
+// Wrong — the same clicks copied into every spec that needs the page
+await plantsPages.origin.selectCountry('Germany')
+await plantsPages.origin.btnSaveAndContinue.click()
+await plantsPages.arrivalStatus.heading.waitFor()
 
-// Correct — encapsulated in page object
-await pages.origin.fill({ countryCode: 'DE', requiresRegionCode: 'no' })
+// Correct — one to* method on the journey flow
+await plantsJourney.toArrivalStatus('Germany')
 ```
 
 **4. Committing `test.only()`**
@@ -694,11 +681,34 @@ page.locator('#countryCode')
 page.getByRole('combobox', { name: 'Country of origin' })
 ```
 
-**10. Not cleaning up state between tests**
+**10. Tests that share state**
+
+Each test creates the notification it needs, so tests can run in any order and in parallel. A test that creates records outside a notification, such as address-book entries, removes them when it finishes.
+
+**11. Seeding a journey test**
 ```typescript
-// If tests create data, ensure teardown or use test-isolated data
-test.afterEach(async ({ request }) => {
-  // Delete test data via API if needed
-  await request.delete('/api/test/notifications')
+// Wrong — the test is about the opening run, but the run is seeded
+test('walks a notification through every opening-run task', async ({ animalsSeededJourney }) => {
+  await animalsSeededJourney.createDraftNotification('readyToSubmit')
+  // ...
+})
+
+// Correct — the opening run is clicked through, because the clicks are what it tests
+test('walks a notification through every opening-run task', async ({ animalsJourney }) => {
+  await animalsJourney.walkOpeningRunCattleByAir(document)
+  // ...
 })
 ```
+
+See [When to seed](../playwright/BEST_PRACTICES.md#when-to-seed).
+
+**12. Invented test data**
+```typescript
+// Wrong — a country the reference-data service never returns
+await plantsJourney.toArrivalStatus('Narnia')
+
+// Correct — a country from the captured reference-data list
+await plantsJourney.toArrivalStatus(countryByCode('DE').display)
+```
+
+See [Test data is copied, never invented](../playwright/BEST_PRACTICES.md#test-data-is-copied-never-invented).

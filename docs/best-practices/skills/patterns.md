@@ -60,10 +60,21 @@ the workflow actually reads on the hot path.
 The hard rules, all enforced via the project allowlist:
 
 - One command per Bash call. No `&&` / `;` / `|` chains.
-- No `cd <dir> && cmd` — use `-C` (git), `--prefix` (npm), `-f`
-  (mvn), or direct paths to binaries
-  (`<dir>/node_modules/.bin/...`).
-- No `find ... -exec`. Use Glob + Read for find-then-read.
+- No `cd <dir> && cmd` — use `-C` (git), `--prefix` (npm) or `-f`
+  (mvn).
+- Never pipe a test run. Redirect it to a file and Read the file:
+  `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > <workarea>/test.log 2>&1`,
+  not `... test | tail -40`. A piped run reports the trimmer's exit
+  code, so a red run reads as green. `guard-bash.sh` denies it.
+- Format and lint through the repo's named npm script
+  (`npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> run format`).
+  Never a `node_modules/.bin/` binary and never `npx`: prettier run
+  by path from outside the repo formats differently from the repo's
+  own script, and the pre-commit hook rejects the result.
+- No `find ... -exec`. Run a plain `find ~/git/... -name X`, then Read.
+- No Grep or Glob tools in a spawned agent. Search with one unpiped
+  Bash `grep -rn`; find files with one unpiped `find`.
+- No `VAR=x cmd` prefixes; they do not match the allowlist.
 - No env vars (`$VAR`) in LLM-typed Bash — Claude Code prompts on
   expansion. Use literal
   `~/git/defra/trade-imports-workspace/...` paths.
@@ -79,19 +90,37 @@ This is workspace-wide; the full rule table lives in
 [`docs/agent-skills.md`](../../agent-skills.md) → "Bash call
 hygiene". Skill prose must comply; AUDIT mode flags violations.
 
-## 5. Hygiene pointer inside worker personas
+## 5. What every agent prompt carries
 
-**Question:** Does the skill fan out workers via `general-purpose`
-Task subagents that follow `references/<NAME>.md`? If yes, every
-worker reference file needs a one-line pointer to the canonical
-source ([`docs/agent-skills.md`](../../agent-skills.md) → "Bash
-call hygiene") — subagents only read their reference file, not the
-parent `SKILL.md`. Point, don't inline: the full rule table lives
-once, canonically, so copies can't drift.
+**Question:** Does the skill, workflow or script spawn agents
+(`general-purpose` Task subagents following `references/<NAME>.md`,
+Workflow `agent()` calls, Codex briefs, ad-hoc spawns)? If yes, each
+prompt carries three things. Spawned agents read only their prompt and
+the files it names: not the parent `SKILL.md`, and not the user's auto
+memory.
 
-**Pattern-fit trap:** if the skill has no fan-out (parent session
-follows the reference inline), even the pointer is optional. Add it
-by default; skip only for very small single-file references.
+1. **The GUARD RAILS block, first.** The rail list is in
+   [`docs/agent-skills.md`](../../agent-skills.md) → "Spawning agents".
+   A worker reference file opens with a one-line pointer to it and to
+   "Bash call hygiene". Point, don't inline, so copies cannot drift.
+2. **The house rules, for every agent that writes or reviews code,
+   tests or templates.** The prompt says: "Before you start, read
+   `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+   in full." This holds for skill personas, Workflow scripts and
+   one-off scripts alike. Rule files under `.claude/rules/` load only
+   when an agent happens to read a matching path, and Codex loads
+   none, so a prompt that does not name the file leaves the agent
+   without the rules.
+3. **An explicit `model`**, chosen by the table in "Spawning agents".
+
+Bad, from an ad-hoc fix workflow: a brief that says "match animals' doc
+comment" and names no rules file; the agent copied the ticket key into
+the code. Good: GUARD RAILS first, then the line telling the agent to
+read `code-quality.md` in full, then the task.
+
+**Pattern-fit trap:** if the skill has no fan-out (the parent session
+follows the reference inline), the pointer is optional; the parent
+already has the rules. Any spawn at all needs all three.
 
 ## 6. Idempotent + atomic helpers
 
@@ -166,6 +195,37 @@ templates, per-step instructions, decision rationale that informs
 edge cases, cross-skill handoff prose, concrete file/line
 citations.
 
+**A lean skill has a narrow scope, not short prose.** When a skill is
+"too fat", split what it does (one element or one increment, then
+stop), never the detail of how it does it. Never trim instructions to
+hit a line count.
+
+## Judging a skill, workflow or tool design
+
+- **Judge options on how well they run, every time they run:** output
+  quality, correctness, report quality, Claude and Codex parity, and
+  whether the run stays inside the guard rails. Tooling is built once
+  and run many times.
+- **Never weigh build cost.** No "fewest changes", "smallest diff",
+  "reuse", "cheapest" or "least work" angle for a designer, and no such
+  dimension for a judge. "Take the best of what we have" means reuse
+  proven ideas, not minimise the diff. Cutting a fixed cost paid on
+  every run is a fair criterion; implementation effort is not.
+- **Do not shrink the output to fit a channel.** A platform limit, such
+  as the Artifact size ceiling, is a fact about one channel: pick a
+  channel that carries the best output.
+- **No gold-plating.** Scope is what was asked. A mechanism earns its
+  place only against a failure that has happened, or one the requested
+  behaviour cannot work without. Bad: a tooling programme that gave
+  every critic's imagined risk its own mechanism and grew to a 468 KB
+  design. Good: a few CLI commands and prompt files that meet the ask.
+- **Rails before features in a new sub-project.** Phase 0 of a new CLI,
+  package or repo folder is its agent rails: `CLAUDE.md` (tests first,
+  behavioural tests, library-first integrations, plain English for user
+  text, the best-practices it inherits), `.claude/settings.json` with
+  its hooks, and `.claude/skills/` where repeated tasks are already
+  clear. Feature code starts in phase 1. `tim/` is the model.
+
 ## Cross-cutting conventions
 
 - **Path conventions** — literal
@@ -175,7 +235,7 @@ citations.
 - **Worker fan-out** — `subagent_type: general-purpose` with a
   `Follow the instructions in ~/git/.../references/<NAME>.md.`
   prompt. Not custom subagent types (they trigger the no-write
-  guardrail).
+  guardrail). Every spawn prompt carries the three items in §5.
 - **Rendered markdown from JSON** — when state is JSON, the
   markdown view (e.g. `## Items` table) is generated by a
   `render-X.sh` helper. Hand-edits to the markdown are overwritten.

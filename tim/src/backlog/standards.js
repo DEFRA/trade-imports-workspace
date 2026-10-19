@@ -17,6 +17,7 @@ import {
   loadCodeStyleRouting,
   topicsForPath,
   bestPracticeForTopics,
+  repoRelativeBestPracticeForTopics,
   CODE_STYLE_ROUTING_PATH
 } from './standards/code-style-routing.js'
 import {
@@ -26,16 +27,7 @@ import {
 } from './standards/review-routing.js'
 import { listRepoFiles } from './standards/repo-files.js'
 import { fileBlobSha } from './standards/blob-sha.js'
-
-/**
- * inc-012's live standards resolver: for a set of planned files and repos,
- * lists the matching `.claude/rules`, the code-style and review skills'
- * routing, the CLAUDE.md chain with its `@` imports, and the memory
- * index — everything req-040/041/042/043/122 ask a build or review task to
- * read, resolved from the current working tree at call time (no bake
- * step, no bash router). `standards.js` composes; each concern is its own
- * sibling module under `standards/`.
- */
+import { repoDocsFor, tildePath } from './standards/repo-docs.js'
 
 const problemMessage = (problem) => {
   if (problem.kind === PROBLEM_KIND.TOPIC_DIR) {
@@ -94,15 +86,6 @@ const routingPathProblems = (workspaceRoot, source, paths) =>
       resolved: path
     }))
 
-/**
- * Every rule that matches one workspace-relative file, across every
- * `.claude/rules` folder on its ancestor chain — the union across folders
- * (req-040 §2.12: `copy.md` and `node.md` both match `copy.en.js`).
- *
- * @param {string} workspaceRoot
- * @param {string} path - Workspace-relative, `/`-separated
- * @returns {{rules: object[], problems: object[]}}
- */
 const rulesForFile = (workspaceRoot, path) => {
   const matches = rulesFoldersFor({ workspaceRoot, path })
     .flatMap(({ scopeRootRelative }) =>
@@ -123,17 +106,6 @@ const rulesForFile = (workspaceRoot, path) => {
   }
 }
 
-/**
- * The blob shas for a set of paths, each workspace-relative or absolute
- * (detected per path — a rule/best-practice/CLAUDE.md path is always
- * workspace-relative, an import or the memory index may be either).
- * Shared by `resolveFileEntry` and `resolveRepoEntry` so both categorise
- * imports the same way (an import outside the workspace still gets a sha).
- *
- * @param {string} workspaceRoot
- * @param {string[]} paths
- * @returns {Record<string, string>}
- */
 const shasForPaths = (workspaceRoot, paths) =>
   Object.fromEntries(
     paths
@@ -143,6 +115,16 @@ const shasForPaths = (workspaceRoot, paths) =>
       ])
       .filter(([, sha]) => sha)
   )
+
+const repoDocsWithShas = ({ homeDir, ...repoDocsArgs }) => {
+  const absPaths = repoDocsFor(repoDocsArgs)
+  return {
+    repoDocs: absPaths.map((abs) => tildePath(abs, homeDir)),
+    repoDocShas: Object.fromEntries(
+      absPaths.map((abs) => [tildePath(abs, homeDir), fileBlobSha(abs)])
+    )
+  }
+}
 
 const chainAndMemoryFor = ({
   workspaceRoot,
@@ -173,6 +155,7 @@ const resolveFileEntry = ({
   workspaceRoot,
   repoKey,
   relPathInRepo,
+  repoAbs,
   repoRootRelative,
   codeStyleRouting,
   claudeConfigDir,
@@ -190,6 +173,12 @@ const resolveFileEntry = ({
     CODE_STYLE_ROUTING_PATH,
     bestPractice
   )
+  const { repoDocs, repoDocShas } = repoDocsWithShas({
+    repoAbs,
+    relPathInRepo,
+    topicRepoDocs: repoRelativeBestPracticeForTopics(codeStyleRouting, topics),
+    homeDir
+  })
 
   const dir = dirname(path)
   const {
@@ -217,6 +206,7 @@ const resolveFileEntry = ({
       rules.flatMap((rule) => rule.pointsTo)
     ),
     ...shasForPaths(workspaceRoot, bestPractice),
+    ...repoDocShas,
     ...shasForPaths(workspaceRoot, claudeMd),
     ...shasForPaths(workspaceRoot, imports),
     ...(memoryExists ? shasForPaths(workspaceRoot, [memPath]) : {})
@@ -230,6 +220,7 @@ const resolveFileEntry = ({
       rules,
       topics,
       bestPractice,
+      repoDocs,
       claudeMd,
       imports,
       memory,
@@ -267,6 +258,7 @@ const resolveRepoEntry = ({
     REVIEW_ROUTING_PATH,
     bestPractice
   )
+  const { repoDocs, repoDocShas } = repoDocsWithShas({ repoAbs, homeDir })
 
   const {
     claudeMd,
@@ -285,6 +277,7 @@ const resolveRepoEntry = ({
 
   const shas = {
     ...shasForPaths(workspaceRoot, bestPractice),
+    ...repoDocShas,
     ...shasForPaths(workspaceRoot, claudeMd),
     ...shasForPaths(workspaceRoot, imports),
     ...(memoryExists ? shasForPaths(workspaceRoot, [memPath]) : {})
@@ -296,6 +289,7 @@ const resolveRepoEntry = ({
       path: repoRootRelative || '.',
       technologies,
       bestPractice,
+      repoDocs,
       claudeMd,
       imports,
       memory,
@@ -365,6 +359,7 @@ export const resolveStandards = ({
       workspaceRoot,
       repoKey,
       relPathInRepo: path,
+      repoAbs: repos[repoKey].abs,
       repoRootRelative: repos[repoKey].rel,
       codeStyleRouting,
       claudeConfigDir,

@@ -1,8 +1,61 @@
 # Workspace docker stack — agent index
 
 The wrapper-managed stack (this folder + `scripts/stack/`) is the **only**
-compose stack in the workspace and its repos — the
-`make docker-compose-*` targets delegate to these wrappers.
+compose stack in the workspace and its repos. `tim docker` sits on top of
+the wrappers and is the surface to use.
+
+## Rules for agents
+
+- **Run the stack through `tim`.** `tim docker dev` (built from local
+  source), `tim docker up` (published images), `tim docker down`,
+  `tim docker restart`, `tim workspace status`. `tim` passes any other flag
+  (`-b`, `-e`, `--profile`) to the wrapper. Below `tim`, use the
+  `scripts/stack/` wrappers listed next.
+- **Never hand-assemble `docker compose -f … -f …`.** The file list, the
+  profiles and the init-script staging live in `scripts/stack/lib/`. A
+  hand-built chain silently drops some of them.
+- **Never `docker start` one container to revive it.** Its dependencies may
+  be dead too, and its health wait then never passes. Check the whole stack
+  with `tim workspace status`, then recover it with `tim docker dev` or
+  `tim docker up`, which start services in dependency order.
+- **A broken stack blocks all work.** If bring-up exits non-zero, or any
+  container is unhealthy or exited, fix it before doing anything that uses
+  the stack. That holds for a container you think the change does not need,
+  such as `mssql` killed for memory (exit 137) while everything else is
+  green. Find the cause with `docker logs <container>`,
+  `docker inspect --format '{{.State.OOMKilled}}' <container>` and
+  `docker info` (MemTotal against what the stack needs). A Docker memory
+  ceiling is a real blocker: report it rather than work round it.
+- **Verify local changes on a dev-mode stack, and prove the mode first.** A
+  stack from published images ignores everything under `repos/`, so tests
+  against it pass for the wrong reason. `docker ps` cannot tell the two
+  apart: both list the same names, all healthy. Before verifying, inspect a
+  service you changed:
+
+  ```bash
+  docker inspect trade-imports-trade-imports-plants-frontend-1 --format '{{.Config.Image}} | {{range .Mounts}}{{.Source}} -> {{.Destination}}; {{end}}'
+  ```
+
+  Dev mode shows a locally built image (`trade-imports-trade-imports-plants-frontend`,
+  no `defradigital/` prefix) and a bind mount from `repos/<repo>/src`.
+  `defradigital/…:latest` with no mounts means published images: run
+  `tim docker dev`. A plan whose verification needs only published images
+  (a change to the stack itself, not to service code) says so.
+- **Keep `host.docker.internal` routing.** Containers reach each other
+  through `host.docker.internal` on purpose (see
+  [Hostname rules](#hostname-rules--no-etchosts-edits-required)). It is what
+  lets `-e` run one service natively, and CI runs the same way. Never change
+  it or propose changing it. Docker Desktop's port forwarder now and then
+  stalls a connection, seen as
+  `ConnectTimeoutError … 192.168.65.254:8091, timeout 10000ms`. When the
+  evidence names the call, fix it in the calling service's client: a short
+  connect timeout and one retry, on connect errors only, with a log line for
+  the retry. Never weaken a test assertion to hide it.
+- **A shell export does not reach a container.** Compose passes a variable
+  only when a service names it under `environment:` or interpolates it
+  (`${NAME:-default}`). To change a setting for an experiment, add it to the
+  service's `environment:` block, then check it arrived with
+  `docker exec <container> printenv NAME` before trusting the result.
 
 ## Stand up / tear down
 
@@ -187,7 +240,7 @@ runs.
 ## Running E2E tests against this stack
 
 ```bash
-./scripts/stack/run-stack.sh
+tim docker dev                          # local changes under repos/; tim docker up for published images only
 cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:plants      # one domain: animals, animals-admin, ins or plants
@@ -274,9 +327,8 @@ directory, for the same reason).
 - Java backend, stub, reference-data, address-book, ins-backend and plants-backend: hot-reload via Spring Boot DevTools.
   Each `dev-run` image runs `docker/dev-run.sh`, an mtime-poll loop that
   recompiles `src/ → target/classes` on save, then touches a trigger file so
-  DevTools restarts the Spring context in ~1-2s. (We poll mtimes rather than
-  use inotify because inotify events don't cross the macOS Docker bind mount,
-  but mtimes do.) Just save — no `bounce-backend.sh` for routine `.java` edits.
+  DevTools restarts the Spring context in ~1-2s. Just save — no
+  `bounce-backend.sh` for routine `.java` edits.
   - `bounce-backend.sh` recreates the container but does **not** rebuild, so a
     `pom.xml`/dependency change still needs `run-stack.sh -d` (the
     `dependency:go-offline` layer is baked at image-build time). Edits outside
@@ -287,6 +339,39 @@ directory, for the same reason).
   loop, so source edits are only picked up on a container restart. Wiring it to
   the same `docker/dev-run.sh` pattern is a follow-up (out of scope for the
   three services above).
+
+### Template caching in `--dev`
+
+The Node frontends cache Nunjucks templates in two layers: nunjucks' own
+cache, which covers every `extends`, `include` and `import`, and
+`@hapi/vision`'s cache of the top-level view named in `h.view()`. Both follow
+`NUNJUCKS_NO_CACHE`. `frontend.compose.yml` defaults it to `false`, so
+published images cache, which saves about a third of E2E time.
+`dev.compose.yml` sets `NUNJUCKS_NO_CACHE=true` and `NUNJUCKS_WATCH=false`.
+The two files disagree on purpose.
+
+- **Dev mode turns the cache off rather than watching it.** The nunjucks
+  watcher clears only nunjucks' cache. vision reads the top-level view itself,
+  so with cache on and watch on, partials refresh while `h.view()` templates
+  go stale, and a stale page looks like a broken edit. With the cache off a
+  watcher has nothing to clear, so it stays off as well.
+- **Never set `NODE_ENV=production` to get the cache.** It also turns on
+  secure cookies, Redis TLS and the secure context, which break a stack on
+  `http://localhost`.
+- **Keep `noCache` as it is.** `nunjucks.noCache` with
+  `default: isDevelopment` is CDP template code. Do not turn it into a
+  positive flag. Local `npm run dev` needs no env var: the default already
+  turns the cache off.
+- **A nodemon restart fakes a passing cache experiment.** The animals and
+  plants frontends run nodemon with `--ext js,json,njk`, so a template save
+  restarts the app and rebuilds both caches. An experiment that reads only
+  the rendered page then passes for the wrong reason. Compare the app
+  process's age with its parents' (`ps`) before believing a live-reload
+  result. admin and ins-frontend use `--ext js,json`: they never restart on a
+  template save, so they are the clean test bed, and they get no live
+  template reload.
+- **This is not a bind-mount problem.** A save on the host does reach a file
+  watcher inside the container on macOS. Do not reopen it as one.
 
 ## Hostname rules — no `/etc/hosts` edits required
 

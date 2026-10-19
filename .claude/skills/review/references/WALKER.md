@@ -10,6 +10,24 @@ order, then loop into per-item slow-track for anything marked Discuss.
 
 Items schema: `assets/items-table.md`.
 
+## Defaults by kind
+
+An item's `category` sets its kind (`assets/file-review-schema.md` →
+"Category values"), and the kind sets the default. The build loop's
+verifier and judge apply the same defaults.
+
+- **Functional** (`correctness`, `security`, `error-handling`,
+  `coverage-gap`): kept only with evidence, a failure scenario, the
+  acceptance criterion it breaks, or the line it fails on. With none,
+  it is Won't Fix with the note `no evidence`.
+- **Code quality** (`naming`, `comments`, `structure`, `duplication`,
+  `logging`, `test-readability`, `history`): fixed unless the code
+  proves it wrong. Won't Fix only with a note that quotes the code,
+  with its file:line, showing the finding is factually wrong. These
+  never justify Won't Fix: taste, "pre-existing", "out of scope", "a
+  nearby file does it", "feature folders are independent", the plan,
+  or an earlier decision.
+
 ---
 
 **Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
@@ -44,11 +62,11 @@ the bottom:
 ```markdown
 **Walking review EUDPA-XXXXX** — N pending items
 
-| # | Severity | File:Line | Category | Issue | Fix | Cite |
-|---|---|---|---|---|---|---|
-| 1 | 🔴 Critical | `backend/Service.java:42` | security | Logger emits raw error object | Use structured `logger.error({err}, '...')` | node/pino-logging.md |
-| 2 | 🟡 Major | `backend/Mapper.java:15` | correctness | Null check missing on `notification.consignor` | Add `Objects.requireNonNull` | — |
-| 3 | 🔵 Minor | `frontend/helper.js:8` | style | Variable name `x` too short | Rename to `notification` | — |
+| # | Severity | File:Line | Category | Issue | Must | One way | Cite |
+|---|---|---|---|---|---|---|---|
+| 1 | 🔴 Critical | `frontend/notification-client.js:42` | logging | Save failure logs `err.message` only | The failure log carries the error and the reference | `logger.error({ err, referenceNumber }, '...')` | node/pino-logging.md |
+| 2 | 🟡 Major | `backend/Mapper.java:15` | correctness | Null check missing on `notification.consignor` | A missing consignor fails at the boundary | `Objects.requireNonNull` in the record | — |
+| 3 | 🟡 Major | `frontend/check-answers/controller.js:148` | naming | `holdsSilently` needs its comment to be read | The name says what the flag does in every state | Rename to `hidesAnswerErrors`; delete the comment | — |
 ...
 
 **Triage:** type one character per item, in order.
@@ -65,6 +83,10 @@ Severity badges:
 - 🔴 **Critical**
 - 🟡 **Major**
 - 🔵 **Minor**
+
+Must and One way columns: split the item's `fix` text on its `Must:`
+and `One way:` labels. A `fix` with no labels goes in Must, with `—`
+under One way. `F` agrees the Must; the One way stays a suggestion.
 
 Cite column: show the `best_practice` field if present; `—` otherwise.
 
@@ -90,6 +112,17 @@ Map each character to the item at the same index. Apply:
 | `W` | Mark Won't Fix | `review-mark.sh ... --disposition "Won't Fix"` |
 | `D` | Defer to Step 4 slow-track (don't mutate yet) | — |
 | `S` | Skip — leave pending | — |
+
+Two keystrokes go to the Step 4 slow-track instead of being applied,
+because the defaults above need evidence the Step 2 list does not show:
+
+- `W` on a code-quality item. In Step 4, Won't Fix needs the quoted
+  code that shows the finding is factually wrong. Without it, mark Fix.
+- `F` on a functional item whose issue names no failure scenario,
+  acceptance criterion or failing line. In Step 4, find the evidence
+  and mark Fix, or mark Won't Fix with the note `no evidence`.
+
+Count them under Discuss in the batch summary.
 
 Each `review-mark.sh` invocation is a separate Bash call (no
 chaining). Run them as the user expects feedback — you can fan them
@@ -129,7 +162,10 @@ For each item marked `D`, in input order:
 
 4. **Conclude with a disposition** — call the matching helper:
    - "fix it" → `review-mark.sh ... --disposition "Fix" --note "{agreed approach}"`
-   - "leave it" → `review-mark.sh ... --disposition "Won't Fix" --note "{reason}"`
+   - "leave it" → `review-mark.sh ... --disposition "Won't Fix" --note "{reason}"`.
+     For a code-quality item the reason is the quoted code, with its
+     file:line, that shows the finding is factually wrong; any other
+     reason leaves it Fix (see "Defaults by kind").
    - "defer to PR thread / standup / wider conversation":
      ```bash
      ~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
@@ -183,5 +219,5 @@ mode is the hot path. Don't:
 - Read the source file before Step 4. The Step 2 list is JSON-only.
 - Print code snippets before Step 4.
 - Check whether the violation is "still present" — if the user spots
-  a stale item, they hit `W` or `S`.
+  a stale item, they hit `D`, and Step 4 marks it Auto-Resolved.
 - Verbose-log between items. The Step 3 summary line is enough.

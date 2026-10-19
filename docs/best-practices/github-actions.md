@@ -1,6 +1,6 @@
 # GitHub Actions — Best Practices
 
-Applies to every repo in the trade-imports workspace. Focused on the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse) and the checkout-depth knobs that interact with it. Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here — see the matching follow-up ticket.
+Applies to every repo in the trade-imports workspace. Covers the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse), the checkout-depth knobs that interact with it, how a pipeline calls a repo's tests (§7), and how to read a red or missing E2E or Lighthouse check (§8). Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here.
 
 ---
 
@@ -115,6 +115,42 @@ We use `peaceiris/actions-gh-pages@v4` in two places (`e2e-tests.yml`, `lighthou
 `peaceiris/actions-gh-pages` is Marketplace-listed, actively maintained, and has been the de-facto community standard for years, but it is single-maintainer. The exit ramp is built into the cleanup workflow's `truncate-history` job, which uses plain `git` commands (no `peaceiris` call). If the action is ever abandoned, we can swap the publish step for a hand-rolled `git push` using the same primitives the cleanup job already exercises.
 
 Do not introduce additional third-party publish actions. Keep `peaceiris/actions-gh-pages@v4` everywhere it's used so the upgrade story stays one decision.
+
+---
+
+## 7. A pipeline calls a named npm script
+
+A workflow runs a repo's tests through one named script, such as `npm run test:ci`, and appends only the arguments that change per run, such as `--shard=$i/3`. The script owns the config file, grep filters, retries and reporters, so the contract lives in the `package.json` of the repo that owns the tests.
+
+```yaml
+# bad — the workflow knows the tests repo's config file and flags
+- run: npx playwright test --config=playwright.ci.config.ts --grep @smoke --reporter=blob
+
+# good
+- run: npm run test:ci -- --shard=${{ matrix.shard }}/3
+```
+
+Inside `package.json`, build related scripts from one private base script plus the difference, rather than copying the full command: `_e2e` is `playwright test`, and other scripts call `npm run _e2e -- <difference>`.
+
+---
+
+## 8. Reading a red or missing E2E or Lighthouse check
+
+A red check on a PR is a failure to fix (see `CLAUDE.md` rule 6). These are the CI causes that look like a code defect but are not. Rule each one in or out first, with evidence.
+
+**No run at all for a push.** Check `gh pr view <n> --json mergeable,mergeStateStatus`. `CONFLICTING` or `DIRTY` means GitHub cannot build the merge ref, so every `pull_request` workflow is skipped without a word. An empty commit does nothing. Merge `origin/main` into the branch and resolve the conflicts. On a long-lived branch, expect to merge main once per stage.
+
+**A `workflow_run` E2E labelled `main`.** `workspace-e2e-tests.yml` in the tests repo and `lighthouse.yml` in the frontends start `on: workflow_run`. GitHub stamps such a run with the default branch and its head SHA, not the branch under test. The branch tested is `github.event.workflow_run.head_branch`, and the SHA is the triggering run's. Two runs with the same SHA can test different branches. There is no automatic E2E on a push to `main`.
+
+**A `workflow_run` workflow runs `main`'s copy of itself.** It runs the workflow file from `main` against the branch's code. A branch that deletes a file `main`'s workflow calls fails that job, and editing the branch's copy of the workflow cannot help. Keep the file on the branch until the change reaches `main`.
+
+**Under 15 seconds, no `test-results/`.** The tests image is broken, not the suite. A tests-repo branch image publishes even when that branch's own checks fail, so a frontend PR with the same branch name pulls an image that cannot parse. Read the tests repo's `Check Pull Request` run for that branch.
+
+**New specs against an old service.** The stack falls back to `:latest` for every service with no branch-tagged image. When the tests repo and a service repo merge a paired change, the tests merge lands minutes before the service's `:latest` publishes. An E2E that starts in that gap fails like a real defect. Prove it with controls: compare the merge times and the image publish time with the run's start (`gh run list -R DEFRA/<repo> --branch main --limit 10`), and find PRs whose E2E started outside the gap. Failures only in UI or visual specs while every `@mongodb` and `@compose` spec passes point the same way. On a local stack, check the image age with `docker inspect <container> --format '{{.Created}}'`.
+
+**Lighthouse red with "Seed step origin was rejected (400)".** The branch is behind `main`, and `main` changed the seed script or the page it drives. Check `gh api repos/DEFRA/<repo>/compare/main...<branch> --jq .behind_by`. If it is behind, merge `main` in (never rebase a live PR branch) and wait for the re-run before reading the seed script.
+
+**A re-run went green but the PR still shows red.** `gh run rerun --failed` does not refresh the check run a reporting workflow posted to another repo's PR. Dispatch a fresh run instead, for example `tools/github-actions/trigger-workflow.sh trade-imports-ins-tests workspace-e2e-tests.yml <branch>`. Confirm any outcome with `gh run view <id> --json conclusion`, not the PR rollup.
 
 ---
 

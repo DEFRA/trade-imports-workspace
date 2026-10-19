@@ -21,6 +21,9 @@ record it only where the quote supports it.
   statement says what in the quote implies it.
 - Where the ruling answers a question from an earlier report, say which question and conflict in `note`, such as
   `answers question 3 of the report of 29 September 2026 (c-004)`.
+- **A question is not a decision.** Where the quote asks or floats an idea ("maybe the run should start on X?"),
+  record a `gap` claim naming the open point, never a decision. The same holds for meeting notes: only what the notes
+  record as decided is a decision. One person's suggestion is an open point until the owner rules on it.
 - Where the ruling clearly leaves something open that it touches, record a `gap` claim with an empty quote,
   naming what it leaves open.
 - `ref` is the file and the line or list item, such as `ruling-sam-2026-09-29.md claim 2`.

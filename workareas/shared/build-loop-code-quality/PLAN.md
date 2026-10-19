@@ -4,6 +4,34 @@ Branch: `chore/NO_JIRA-code-quality-factory` (workspace + 12 repos, each from `o
 
 Peer work parked to make the workspace switch: `git stash list` entry "parked 2026-10-18 by code-quality session…" (docs/repos notes, stub doc, delivery-maturity implementation.md). Restore on `feat/NO_JIRA-design-release-2-1` with `git stash apply`. Staged peer edits to `docs/repos/trade-imports-{ins-frontend,performance-tests,reference-data}.md`, `tmp/getCountries-GBNAG.json` and `workareas/shared/ins-performance-testing/*` were carried across untouched and are never committed here.
 
+## Pull requests
+
+All 12 PRs are open, ready for review and green. None is merged or approved. Merge the workspace PR first: the others point to the rules it adds.
+
+Open for Sam (detail in Needs Sam 29–33):
+
+- Review and merge the 12 PRs, workspace #127 first, as a squash merge (Needs Sam 31, 32).
+- Add the workspace PR link to the other 11 PR bodies, and correct one line of the ins-frontend #58 body (Needs Sam 30).
+- Decide how the performance smoke judges response times (Needs Sam 29).
+
+| Repo | PR | Status | Fix commits | Notes |
+|---|---|---|---|---|
+| trade-imports-workspace | [#127](https://github.com/DEFRA/trade-imports-workspace/pull/127) | green | `87cb7e51` | SUMMARY.md action E reworded so it names no private path. tim commits `f0685656` (`github rerun`), `45b813f8` (`run-log` for non-Actions checks) and `ba06dd8d` (`sonar issues`) came from the other PRs' fixes. No SonarCloud check |
+| trade-imports-animals-frontend | [#416](https://github.com/DEFRA/trade-imports-animals-frontend/pull/416) | green | none | First run: SonarCloud scanner got a 403 before analysing, and the perf smoke stopped early on one slow plants save (2.35s of 3 samples). Both passed on re-run; the branch does not touch plants |
+| trade-imports-plants-frontend | [#108](https://github.com/DEFRA/trade-imports-plants-frontend/pull/108) | green | `d055fcc` | Sonar gate failed: 2 unhandled metric-recorder promises left by `482b27f`. Fixed to match the animals twin (catch and log `{ err }`); probe red then green |
+| trade-imports-ins-frontend | [#58](https://github.com/DEFRA/trade-imports-ins-frontend/pull/58) | green | `f506098` | Sonar gate failed: the same unhandled promise in `recordExternalCallInBackground`, left by `dbe3d52`. Fixed the same way |
+| trade-imports-animals-admin | [#77](https://github.com/DEFRA/trade-imports-animals-admin/pull/77) | green | none | Green first run |
+| trade-imports-ins-tests | [#39](https://github.com/DEFRA/trade-imports-ins-tests/pull/39) | green | none | Green first run. No SonarCloud check |
+| trade-imports-animals-backend | [#112](https://github.com/DEFRA/trade-imports-animals-backend/pull/112) | green | none | Green first run |
+| trade-imports-plants-backend | [#11](https://github.com/DEFRA/trade-imports-plants-backend/pull/11) | green | none | Green first run |
+| trade-imports-ins-backend | [#25](https://github.com/DEFRA/trade-imports-ins-backend/pull/25) | green | none | Green first run. IT logs show an `EmfMetricsPublisher` "Namespace must include…" error because the IT profile sets no metrics namespace. Noise, not a failure |
+| trade-imports-address-book | [#15](https://github.com/DEFRA/trade-imports-address-book/pull/15) | green | none in repo | SonarCloud scanner auth fault at "Load active rules" on first run; a re-run with the new `tim github rerun` passed |
+| trade-imports-dynamics-gateway | [#30](https://github.com/DEFRA/trade-imports-dynamics-gateway/pull/30) | green | none | Green first run |
+| trade-imports-reference-data | [#32](https://github.com/DEFRA/trade-imports-reference-data/pull/32) | green | none | Green first run |
+| trade-imports-stub | [#24](https://github.com/DEFRA/trade-imports-stub/pull/24) | green | none | Green first run. No SonarCloud check |
+
+SONAR_TOKEN is not set on this machine, so the pre-push hook skipped itself on every push; CI's SonarCloud gate stood in.
+
 ## Workflows
 
 | # | Workflow | Covers (report-v2 §6 / memory audit) | Status |
@@ -97,6 +125,14 @@ Repo admin and open questions
 
 27. ins-backend `main` needs required review (self-merged PR #21).
 28. animals-frontend `services/transporters/records.js`: two commercial transporter records carry status APPROVED as a placeholder; the open question that comment held needs a home.
+
+Pull requests
+
+29. The performance smoke (run by every PR's E2E) stops on a p95 breach judged on 2 or 3 samples, so one slow request on a busy CI runner fails it. Options: a minimum sample count or a warm-up; stop early only on failed requests or checks and judge timings at the end; run the generator-trust check before the run can stop. Lives in trade-imports-performance-tests `src/config/thresholds.js` (`smokeThresholds`, `withAbort`).
+30. PR bodies: the 11 repo PRs name the workspace by repo only; add https://github.com/DEFRA/trade-imports-workspace/pull/127. ins-frontend #58 says it "removes a catch in the metrics helper that could never run"; it now catches and logs a failed flush. tim cannot edit a PR body yet.
+31. Squash-merge workspace #127 so the earlier wording in commit `5ffe47f8` stays off `main`; the branch keeps it until deleted after merge.
+32. Merge order: workspace #127 first, then the 11 repo PRs.
+33. Set `SONAR_TOKEN` locally if you want the pre-push gate to run rather than skip.
 
 ## Open follow-ups (no decision needed)
 

@@ -41,6 +41,19 @@ animals-backend). Leave that alert alone. `[UNPROVEN]` The alerts must
 be in that evaluation group; it evaluates every 5 minutes. No labels are
 needed: promotion adds them.
 
+What the form does, seen building reference-data's alerts on
+2026-10-19:
+
+- It opens in a simplified mode: the condition is one row under the
+  query, "WHEN QUERY `Last` IS ABOVE …". The Advanced options toggle
+  shows the same thing as Reduce and Threshold expressions.
+- The pending period must be None or at least the group's evaluation
+  interval. `1m` was refused with "Pending period must be greater than
+  or equal to the evaluation interval". Use None: each rule already
+  looks at a whole window.
+- Each alert is its own rule with one condition. Build the first, then
+  make the others with More → Duplicate.
+
 Starting alerts. The thresholds are a first guess for the team to
 agree, not tested values.
 
@@ -73,6 +86,15 @@ Normal, or Keep Last State.
 
 Only alert on a dependency the service really uses. A configured
 database counts (`METRICS.md` → "A database").
+
+**The alerts cannot see an outage nobody calls through.** If the
+service and its callers are serving from caches, no call reaches the
+dependency, so no alert fires. On reference-data, a frontend instance
+that has loaded its countries and ports never asks again, so an MDM
+outage only shows once a frontend restarts or a request misses
+reference-data's 60-minute cache. Users are not affected until then
+either, but say so on the ticket so nobody reads a quiet alert as
+proof the dependency is up.
 
 ## Route to Slack
 
@@ -121,9 +143,42 @@ An alert that has never fired is not known to work. For each alert, in
 dev and then in test, watch it fire, reach the Slack channel, and
 resolve.
 
-- **Dev.** Lower the threshold in the playground until the alert fires,
-  watch it arrive in `trade-imports-team-alerts-non-prod`, then put the
-  threshold back.
+**Make the calls yourself.** The alerts only see dependency calls that
+happened, and few happen on their own:
+
+- The service calls a dependency only on a cache miss: after a deploy,
+  or once per cache lifetime (60 minutes for reference-data's MDM
+  cache).
+- Its callers may cache too. The animals frontend loads countries and
+  ports of entry from reference-data once per instance and never
+  refreshes them, so reference-data gets requests only after a frontend
+  instance starts.
+- E2E tests are not a source of traffic. The GitHub Actions runs use the
+  local Docker stack, whose metrics go to the local AWS stand-in, not
+  CloudWatch. The CDP Portal runs call the real services, but through
+  the caches above, so they make a handful of calls at most.
+
+So before each test, redeploy the service in dev, then call its
+endpoints directly (for reference-data, `GET /countries` and
+`GET /ports-of-entry`). Allow about 10 minutes for the metrics to reach
+CloudWatch and the group to evaluate.
+
+- **Dev, every rule: lower the threshold.** Change the condition so
+  ordinary traffic breaks it, wait for Firing, check the summary shows
+  the dependency and operation (not blanks), then put the threshold
+  back and watch it return to Normal. With no failures the failure
+  metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
+  failing", and `IS ABOVE 0` for "slow". Once Slack routing is in
+  place, also check the alert arrives in
+  `trade-imports-team-alerts-non-prod`.
+- **Dev, the failure rules: a real failure.** Set the dependency's URL
+  in the Portal (for reference-data's MDM, `MDM_SERVICE_URL`) to an
+  address that does not exist, such as `https://mdm.invalid`, redeploy,
+  and call the endpoints about five times over two to three minutes.
+  "Unavailable" and "calls failing" should fire for that dependency
+  only. Restore the URL and redeploy. This breaks the service in dev
+  for everyone while it runs, so agree a time with the team. "Slow"
+  has no practical real test; the lowered threshold is enough.
 - **Test.** `[UNPROVEN]` The alert is read-only there, so the failure
   has to be real. One way: deploy briefly with a wrong URL or key for
   the dependency, then call the service. This breaks the service for

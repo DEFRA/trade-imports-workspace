@@ -19,6 +19,14 @@ nobody calls shows nothing, so drive some requests first. Where a cache
 sits in front of a dependency, calls to it only happen on a cache miss:
 after a deploy, or once per cache lifetime.
 
+Expect the dashboard to be mostly empty in dev. Callers may cache as
+well: the animals frontend loads reference-data's countries and ports
+once per instance and never refreshes them. E2E tests add little: the
+GitHub Actions runs use the local Docker stack, whose metrics never
+reach CloudWatch, and the CDP Portal runs go through the same caches. To
+see data, redeploy the service and call its endpoints directly
+(`ALERTS.md` → "Prove they fire").
+
 ## Where and what to call it
 
 | Thing | Value |

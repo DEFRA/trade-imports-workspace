@@ -52,7 +52,7 @@ helper named below are only on that repo's
   `error.*` only when nested (`{"event":{"category":"external-call"}}`),
   with `event.duration` a number (long). `trace.id` survives flat.
   The fix is for the line to write a nested `event` object with a
-  numeric duration; the MDC route cannot. Until then, find the lines by
+  numeric duration; the MDC route cannot. Tracked on EUDPA-712. Until then, find the lines by
   their message text: `service.name:"<service>" AND message:"External
   call"`.
 - **Clean the MDC up.** Use `MDC.putCloseable` in a try-with-resources

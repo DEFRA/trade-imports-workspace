@@ -12,24 +12,24 @@ Peer work parked to make the workspace switch: `git stash list` entry "parked 20
 | 2 | Build loop and tim | §6.1 verifier/judge split; §6.2 plan contract + plan review; §6.7 loop reviewers; §6.8 CI fixer, fixer re-review, theme-end lens; §6.4 probe + duplication rung; standards `repoDocs` | done, committed (run `wf_e81dd711-de9`) |
 | 3 | Service repos | §6.4 lint per repo; §6.6 recipes, repo notes, exemplars; §6.9 one-off clean-up (items on `main`); ins-tests AGENTS.md | done, committed in 11 repos (run `wf_7b18260a-f15`) |
 | 4 | Memory | back up, delete promoted/duplicate/stale, move personal to `~/.claude/CLAUDE.md` | done (run `wf_4f1d4317-580`): 189 → 26 files, backup in `memory-backup-2026-10-19` beside the memory directory |
-| 5 | Verify | tim tests, every repo's tests, E2E on the stack, a planOnly dry run of the new loop, independent review of all diffs against the house rules | mostly done — see below |
+| 5 | Verify | tim tests, every repo's tests, E2E on the stack, a planOnly dry run of the new loop, independent review of all diffs against the house rules | done |
 
 ### Workflow 5 status
 
-- E2E on the branch stack: 350 passed.
-- tim after the review: 200 files, 3151 tests passed; lint and format check clean (`logs/complete-tim-*-final.txt`).
-- Independent review, 12 units. Committed:
-  - workspace: `a583b838` loop, `ef16ad6b` tim, `408248cd` review tools, `791610d6` rules, docs and skills, `a327be58` plan lint fix
-  - plants-frontend `e06cb98`, `b4927d2`; ins-frontend `ccb9f33`; animals-admin `1676d0b`; ins-tests `52eb1fb`; dynamics-gateway `09c2de1`; address-book `00cb306`; reference-data `825aea8`; stub `c898d30`
-- **Still open:** the animals-frontend, animals-backend and plants/ins-backend review units had not reported when the workspace was committed. Their edits sit uncommitted in those three repos (plus plants-backend). Re-run or finish those units, then commit.
-- **Still open:** planOnly dry run 3. The plan lint false positive from dry run 2 (`wf_58e22d9c-cc7`, the apostrophe in `` `driveHandler`'s result ``) is fixed in `a327be58`, with that line as a test that fails on the old pattern. Dry run 3 should also confirm the planner stays inside the row's footprint.
+- E2E on the committed branch, every repo clean: 350 passed, 0 failed, 0 flaky, 7 skipped by design (`logs/final-e2e-committed.txt`).
+- tim: 200 files, 3151 tests passed; lint and format check clean (`logs/complete-tim-*-final.txt`).
+- Independent review, 12 units, all committed (run `wf_0d732128-c9f`; the three units that returned early were finished in `wf_83af946d-f15`). animals-frontend's lint baseline is down from about 175 entries to 3, all real set-specific code in the platform layer (Needs Sam 14).
+- planOnly dry runs on one real freeform row, "log refusals and redirects in three plants pages" (`dry-run/`):
+  - run 1 (`wf_61cb5a95-2a5`): refused. The plan grew into a 14-page sweep and the plan review stopped it twice on line-level detail. Led to the calibration in `5bfda858`.
+  - run 2 (`wf_58e22d9c-cc7`): stayed inside the row and returned ten follow-ups, but the plan lint refused it on a false positive. Fixed in `a327be58`.
+  - run 3 (`wf_578245ef-600`): planned. The plan review raised five findings, the planner resolved all five, scope stayed inside the row, nine wider clean-ups came back as follow-ups (`dry-run/run3-planned.md`).
 
 ## Completeness against report-v2 §6 and the memory audit
 
 | Item | State | Where | Why not, or what is left |
 |---|---|---|---|
 | §6.1 Verify and judge by finding kind | delivered | loop `FUNCTIONAL_CATEGORIES`/`CODE_QUALITY_CATEGORIES`, quote rule, `refutedFindings`; `FILE_REVIEWER.md`, code-style personas, `tools/review/finding-categories.sh` | — |
-| §6.2 Decisions-and-owners plan, plan review, implementor may improve shape | delivered | loop plan sections 9–16, plan lint, plan review stage, `PLAN_CONTRACT_FOR_IMPLEMENTOR` | dry run 3 outstanding |
+| §6.2 Decisions-and-owners plan, plan review, implementor may improve shape | delivered | loop plan sections 9–16, plan lint, plan review stage, `PLAN_CONTRACT_FOR_IMPLEMENTOR` | proven by planOnly dry run 3; not yet run through implement, review and land |
 | §6.3 Rules where every session loads them | delivered, one part changed | `.claude/rules/code-quality.md`; `node.md`, `java.md`, `playwright.md`; feature-folders rule in both frontends' `architecture.md`; `docs/agent-skills.md` and `skills/patterns.md` make every code-writing prompt read the rules | No `workflow/lib/house-rules.js`: the loop embeds the block between `house-rules` markers and a contract test keeps it equal to the rules file; ad-hoc workflows are told to read the file |
 | §6.4 Lint per repo, duplication rung, probe | delivered | `eslint-rules/code-quality.js` in 5 Node repos; Checkstyle `code-quality.xml` in 7 Java repos; `tim build duplication`; `tim build probe`; SPEC_SYNC "The red probe"; openspec config | Id patterns differ: Java catches `cv-NNN`, the Node plugin does not; neither catches `AC3` (Needs Sam) |
 | §6.5 Guides | delivered | `code-style.md` §6/§15, doc-comments, `javadoc.md`, Java testing guides, `spring-data-mongodb.md`, `pino-logging.md` §4a, `spring-boot.md` §15, `frontend.md`, DISTIL `reconcile.md`/`consolidate.md`, `openspec/config.yaml` | — |
@@ -39,7 +39,7 @@ Peer work parked to make the workspace switch: `git stash list` entry "parked 20
 | §6.9 One-off clean-up | partly | On `main`: dead `allowMissing` opt-ins, refusal and stale-save logs, address lookup body log, `ExternalCallMetrics` cause, `PortType` warning moved to `PortOfEntry` | Items that exist only on design-release branches (`section-status.js`, `change-link.js`, `holdsSilently`, `REMOVED_*`, `backend-fetch.js` retry, `OutstandingItem`) are left to the layer reviews, as decided. `formatDisplayMoment` pair not checked against plants |
 | Memory conflicts 1–11 | delivered | `code-style.md` §10/§15, `frontend.md`, Playwright "When to seed" and "Test data is copied", `BUILD.md` `requireApproval: false` and step 3d park, "ours to fix" in BATCH_IMPLEMENTOR and code-style, `patterns.md` Grep/Glob/`.bin`/pipes, `CLAUDE.md` branches and worktrees | The pipe rule is in the docs but the hook that enforces it is not installed (Needs Sam) |
 | Memory PROMOTE (92) | delivered | guides, skills, `CLAUDE.md`, `docker/stack/AGENTS.md`, `github-actions.md`, `architecture-overview.md`, ADR 0002, `tim jira assign`, ins-tests README | `docs/repos/trade-imports-animals-frontend.md` was not touched (another session's file); the pinned npm floor is in the repo README instead |
-| Memory growth recommendations | partly | `CLAUDE.md` "Rules go in the repo, not memory"; personal items in `~/.claude/CLAUDE.md` | `autoMemoryEnabled: false` needs a hand edit; the memory-write deny hook was not built |
+| Memory growth recommendations | partly | `CLAUDE.md` "Rules go in the repo, not memory"; memory cut from 189 to 26 files | `autoMemoryEnabled: false` needs a hand edit; the 15 personal memories are still in memory, not moved to `~/.claude/CLAUDE.md` (do that before turning auto memory off, or they stop loading); the memory-write deny hook was not built |
 
 ## Needs Sam
 
@@ -52,7 +52,7 @@ Protected files
 Logging
 
 4. Java 4xx warns now carry a stack trace for every 400, 404 and 409 (all Java repos). Keep, or ids at WARN and the throwable at DEBUG? The address-book validation 400 now logs only the rejected field names, with no throwable, because its message holds personal data.
-5. ins-backend logs the address search term at INFO and the refusal body (up to 500 chars) at WARN; `FederatedTokenConfig` logs token claims at INFO, with tests pinning them. Recheck once the ins-backend review unit commits.
+5. ins-backend logs the address search term at INFO and the refusal body (up to 500 chars) at WARN; `FederatedTokenConfig` logs token claims at INFO, with tests pinning them. The ins-backend review also changed its TLS start-up logging.
 6. Twin logging shape: animals `catchAll` logs the cause plus `dataset`, plants logs the error and now `journeyId`. Pick one, and add `journeyId` to animals 5xx logs.
 
 Functional
@@ -70,7 +70,7 @@ Names and twins
 Lint and ids
 
 13. Widen the id patterns in step: the Node plugin misses `cv-NNN` (Java has it) and neither catches acceptance-criteria ids such as `AC3`. Changing the Node plugin means all 5 repos at once, then cleaning what it flags (three plants `cv-` ids in `services/address-book/`, ins-frontend `dashboard.fit.spec.js` titles).
-14. animals-frontend: 175 baselined tracking-reference comments across 65 files in `eslint-suppressions.json`, mostly "Design release 1 …" rationale; the platform layer still names the GBN-AG set in 8 baselined places. The animals-frontend review unit was burning these down when the workspace was committed; check what is left.
+14. animals-frontend `eslint-suppressions.json` is down to 3 entries, all the platform layer naming the GBN-AG set (`GBNAG_SPS_EX` in services/countries and _capture, the stub reference prefix). Clearing them means the set's configuration supplying both — a behaviour change with its own tests. Raise it? The comments that held open questions on inc-091, inc-137, inc-150 and inc-153 were deleted; check those are tracked in their backlogs.
 15. The stub's `service-level-source` values (`Interim (c-011 default): §9.5 …`) are served by `/latency-profiles` and repeated in defra-id-stub and performance-tests. Remove the id in all three together?
 16. `MACHINE-DRAFT Welsh` one-line headers in plants Welsh copy files: keep as a convention, or move to `copy-status.md`?
 

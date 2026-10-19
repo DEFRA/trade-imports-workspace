@@ -199,16 +199,32 @@
         },
         {
           "id": "SCN-INS-ADDR-005-B",
-          "name": "The country field offers United Kingdom, then every country the reference data service serves",
+          "name": "The country field lists every country alphabetically, United Kingdom in its place",
           "coverage": "full",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
-              "test": "the Country select offers United Kingdom, then every country reference data serves",
+              "test": "the add form's Country select lists every country reference data serves alphabetically, United Kingdom in its place",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
+              "test": "the edit form's Country select lists the same countries in the same order",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-countries.test.js",
+              "test": "Should list countries alphabetically with United Kingdom in its place, once",
+              "strength": "partial",
+              "notes": "the ordering function"
             },
             {
               "type": "unit",
@@ -236,7 +252,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "empty Name or organisation name links to and focuses the preserved field",
+              "test": "empty Name or organisation links to and focuses the preserved field",
               "strength": "full",
               "notes": ""
             },
@@ -321,7 +337,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "Name or organisation name over 255 characters links to and focuses the preserved value",
+              "test": "Name or organisation over 255 characters links to and focuses the preserved value",
               "strength": "full",
               "notes": ""
             },
@@ -479,6 +495,14 @@
           "coverage": "full",
           "tests": [
             {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "Cancel and return to address book is a link below Save and continue that returns to the address book and saves nothing",
+              "strength": "full",
+              "notes": ""
+            },
+            {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
@@ -491,8 +515,8 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "Cancel returns to list without creating an address",
-              "strength": "full",
-              "notes": ""
+              "strength": "partial",
+              "notes": "the non-journey cancel post, kept for a direct POST; the link itself is proved by the e2e and fit links"
             }
           ]
         },
@@ -802,6 +826,339 @@
               "test": "refuses an unrecognised journey type",
               "strength": "full",
               "notes": "GET /address-book/add with journey-type=not-a-journey shows Page not found"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-018",
+      "name": "A missing name, postcode, country or phone number is named in the words the form uses for it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-018-A",
+          "name": "Leaving name, postcode, country and phone blank on add names each in the form's words",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "saving the add form with name, postcode, country and phone left blank shows each message at the top and against its field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Name or organisation links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Postcode or Zip code links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Country links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Phone number links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with invalid data re-renders form with errors",
+              "strength": "partial",
+              "notes": "summary links for all four; the field messages are not asserted individually"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-B",
+          "name": "Clearing name, postcode, country and phone on edit shows the same messages, and nothing is saved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "saving the edit form with name, postcode, country and phone cleared shows the same messages, and nothing is saved",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "POST with invalid data re-renders form with errors",
+              "strength": "partial",
+              "notes": "summary links for all four"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/edit.fit.spec.js",
+              "test": "a rejected save keeps the edits rather than the stored address",
+              "strength": "partial",
+              "notes": "name only"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-C",
+          "name": "A country that is not offered is refused as if none were chosen",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with a country the reference data does not list shows the select-a-country error",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fields.test.js",
+              "test": "refuses a country the reference data does not list as if blank",
+              "strength": "partial",
+              "notes": "the rule, not the rendered page"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-D",
+          "name": "The address book refuses a missing name, postcode, country or phone with the same messages",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "the address book API refuses a blank name, postcode, country and phone with the same messages, keyed by field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400WithTheFieldMessages_whenNamePostcodeCountryAndPhoneAreBlank",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
+              "test": "invalidFieldProducesAViolationOnThatFieldWithTheDeclaredMessage",
+              "strength": "partial",
+              "notes": "the message per blank field (the blank name, postcode, countryCode and phone cases)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-021",
+      "name": "The address form groups its fields under 'Address' and 'Contact details'",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-021-A",
+          "name": "The add and edit forms group their fields under Address and Contact details",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "the add-details step groups its fields under Address and Contact details, with Name or organisation first and County between Town or city and Postcode, while the edit page keeps Name or organisation name",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "the edit page groups its fields under Address and Contact details and keeps Name or organisation name",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET renders the add address details form",
+              "strength": "partial",
+              "notes": "the two section headings"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "GET renders prefilled edit form",
+              "strength": "partial",
+              "notes": "the two section headings"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "groups fields under Address and Contact details",
+              "strength": "partial",
+              "notes": "the two section headings on add"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/edit.fit.spec.js",
+              "test": "prefills every field from the stored address",
+              "strength": "partial",
+              "notes": "the two section headings on edit"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-021-B",
+          "name": "The add form names the name field 'Name or organisation' and keeps County",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "the add-details step groups its fields under Address and Contact details, with Name or organisation first and County between Town or city and Postcode, while the edit page keeps Name or organisation name",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "the edit page groups its fields under Address and Contact details and keeps Name or organisation name",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET renders the add address details form",
+              "strength": "partial",
+              "notes": "the name label and County"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should word the add-details form as Design Release 2.1 does",
+              "strength": "partial",
+              "notes": "the add and edit name labels"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-021-C",
+          "name": "The add form opens the Country select on Select one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "the Country select opens on its blank first option, Select one, with nothing pre-selected",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET opens the Country select on its blank first option, Select one, with nothing selected",
+              "strength": "partial",
+              "notes": "the rendered markup"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "renders every field, hints and populated country options",
+              "strength": "partial",
+              "notes": "Select one first, nothing selected on open"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-021-D",
+          "name": "Add a new address opens the add form, with a Back link to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "Add a new address on the address book opens the add-details form, whose Back link returns to the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "clicking Add a new address navigates to the add form",
+              "strength": "partial",
+              "notes": "the hop to the form"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "has a Back link to the address book",
+              "strength": "partial",
+              "notes": "the Back link's target"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET renders the add address details form",
+              "strength": "partial",
+              "notes": "the heading and the Back link to the address book"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-021-E",
+          "name": "The add form sizes its fields to the answers they take",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET lays out the fields at Design Release 2.1 widths",
+              "strength": "full",
+              "notes": ""
             }
           ]
         }

@@ -11,6 +11,9 @@
 #                     across the repo's files; previously-set disposition
 #                     / status / notes are NOT preserved — only call
 #                     --write-items during initial FRESH population.
+#                     It also stamps reconciled_at on every reviewed
+#                     file, so refresh reconcile only picks up work
+#                     reviewed after it.
 #
 # Sections:
 #   --section file-summary  → File Analysis Summary table (verdicts + counts per file)
@@ -84,9 +87,6 @@ if [[ "$WRITE_ITEMS" == "1" ]]; then
             )
         }' > "$items_file.tmp" && mv "$items_file.tmp" "$items_file"
 
-    # Stamp reconciled_at on every reviewed .review.json — refresh
-    # reconcile uses (reviewed_at > reconciled_at) to detect work
-    # done since this FRESH-time accounting.
     now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     for f in "${files[@]}"; do
         reviewed_at=$(jq -r '.reviewed_at // ""' "$f")

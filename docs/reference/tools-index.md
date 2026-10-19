@@ -83,7 +83,7 @@ alternative and the one the build loop still calls directly.
 | `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
 | `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
 | `tools/style/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
-| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view |
+| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq` (the table `aggregate-file-reviews.sh` also writes) |
 | `tools/style/style-items.sh` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
 | `tools/style/style-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
 | `tools/style/style-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |

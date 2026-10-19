@@ -74,7 +74,6 @@ fi
 
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
 
-# Initialise if missing so callers don't have to know.
 if [[ ! -f "$target" ]]; then
     mkdir -p "$(dirname "$target")"
     jq -n --arg ticket "$TICKET" --arg repo "$REPO" \

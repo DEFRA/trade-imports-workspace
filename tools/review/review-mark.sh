@@ -68,7 +68,6 @@ esac
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
-# Verify item exists.
 exists=$(jq --argjson id "$ITEM" '[.items[] | select(.id == $id)] | length' "$target")
 [[ "$exists" -eq 0 ]] && { echo "Item #$ITEM not found in $target" >&2; exit 1; }
 

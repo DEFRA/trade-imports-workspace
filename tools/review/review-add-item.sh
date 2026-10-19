@@ -65,7 +65,6 @@ refuse_category_outside "$CATEGORY" "${FUNCTIONAL_CATEGORIES[@]}" "${CODE_QUALIT
 
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 
-# Initialise if missing so callers don't have to know.
 if [[ ! -f "$target" ]]; then
     jq -n --arg ticket "$TICKET" --arg repo "$REPO" \
         '{ticket: $ticket, repo: $repo, items: []}' > "$target"

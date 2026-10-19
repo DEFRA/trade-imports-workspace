@@ -7,6 +7,8 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 TICKET=""
 REPO=""
 
@@ -24,10 +26,4 @@ done
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
-echo "| # | File | Line | Rule | Category | Severity | Issue | Fix | Disposition | Status | Notes |"
-echo "|---|------|------|------|----------|----------|-------|-----|-------------|--------|-------|"
-jq -r '
-    def esc: . | tostring | gsub("\\|"; "\\|");
-    .items[] |
-    "| \(.id) | \(.file | esc) | \(.line // "" | esc) | \(.rule // "" | esc) | \(.category // "" | esc) | \(.severity // "") | \(.issue // "" | esc) | \(.fix // "" | esc) | \(.disposition // "") | \(.status // "") | \(.notes // "" | esc) |"
-' "$target"
+jq -r -f "$SCRIPT_DIR/items-table.jq" "$target"

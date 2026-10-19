@@ -755,6 +755,24 @@ tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--
   `result`, where `scope` is `job`, `failed-jobs` or `run`. A check from
   outside GitHub Actions fails with `NOT_FOUND`.
 
+### `tim sonar issues` — why a SonarCloud gate failed
+
+List the open SonarCloud issues on a pull request, a branch or the main
+branch. The project is the repo name, with or without the `DEFRA_` prefix.
+
+```bash
+tim sonar issues trade-imports-plants-frontend --pull-request 108 [--json]
+tim sonar issues trade-imports-plants-frontend --branch main [--json]
+```
+
+- On a pull request, these are the new issues its quality gate counts. Each
+  entry shows the severity, type, rule, file and line, the message and a link.
+- `--json` puts `{project, pullRequest, branch, total, issues}` in `result`.
+- A public project needs no token. `SONAR_TOKEN` is sent when set, so a
+  private project works too.
+- Giving both `--pull-request` and `--branch`, or a PR that is not a number,
+  fails with `USAGE` before any request is sent.
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo

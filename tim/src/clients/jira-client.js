@@ -19,15 +19,6 @@ const mapStatus = (status, action) => {
   return null
 }
 
-/**
- * Map a 400 response body to a `TimError`, carrying Jira's own field
- * reasons rather than a bare status code — the whole point of validating a
- * manifest is to give the person something they can act on.
- *
- * @param {string} action
- * @param {{errorMessages?: string[], errors?: Record<string, string>}} payload
- * @returns {TimError} USAGE
- */
 const mapBadRequest = (action, payload) => {
   const fieldReasons = Object.entries(payload?.errors ?? {}).map(
     ([field, reason]) => `${field}: ${reason}`
@@ -39,15 +30,6 @@ const mapBadRequest = (action, payload) => {
   return new TimError('USAGE', `${action}: ${detail}`)
 }
 
-/**
- * Read a response body as JSON, tolerating an empty body (Jira returns
- * 201/204 with nothing on some writes).
- *
- * @param {Response} response
- * @param {string} action
- * @returns {Promise<any>}
- * @throws {TimError} PARSE when the body is non-empty and not valid JSON
- */
 const parseBody = async (response, action) => {
   const text = await response.text()
   if (!text) return {}
@@ -72,9 +54,6 @@ export const describeTransitions = (transitions) =>
     ? 'none'
     : transitions.map(({ name, to }) => `${name} -> ${to}`).join(', ')
 
-// Status names are compared as exact strings: a board's statuses say nothing
-// about the order its workflow runs in. A transition's own name is a
-// fallback only, because it can differ from the status it leads to.
 const findTransitionTo = (transitions, status, { matchTransitionName }) =>
   transitions.find(({ to }) => to === status) ??
   (matchTransitionName
@@ -130,8 +109,8 @@ const refuseResolutionNotOffered = ({ key, move, resolution }) => {
 }
 
 /**
- * Create a Jira REST client. Reads JIRA_USER + JIRA_TOKEN + JIRA_BASE_URL
- * from env by default — matches the contract used by ../tools/jira/auth.sh.
+ * Create a Jira REST client. Reads JIRA_USER, JIRA_TOKEN and JIRA_BASE_URL
+ * from the environment by default.
  *
  * @param {object} [opts]
  * @param {string} [opts.user]
@@ -218,8 +197,6 @@ export const createJiraClient = ({
       action
     )
 
-  // Jira's agile API answers a full success with 204 and a partial rejection
-  // with 200 and an error body, so only 204 counts as done.
   const postForNoContent = async (path, body, action) => {
     const url = `${normalisedBase}${path}`
     let response
@@ -639,7 +616,7 @@ export const createJiraClient = ({
       const base = `/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary&maxResults=100`
       const children = []
       let pageToken = null
-      for (let page = 0; page < CHILD_PAGE_LIMIT; page += 1) {
+      for (let page = 0; page < MAX_CHILD_PAGES; page += 1) {
         const data = await get(
           pageToken
             ? `${base}&nextPageToken=${encodeURIComponent(pageToken)}`
@@ -660,6 +637,4 @@ export const createJiraClient = ({
   }
 }
 
-// 100 issues a page: an epic with more than 5,000 open children is not one
-// this search is for.
-const CHILD_PAGE_LIMIT = 50
+const MAX_CHILD_PAGES = 50

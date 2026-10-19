@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
   commitAll,
-  createRepoOnMain,
+  createRepoOnBranchFromMain,
   writeFiles
 } from '../test-support/branched-repo.js'
 import {
@@ -19,9 +19,9 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true })
 })
 
-const repoOnMain = async (files) => {
+const branchedRepoWith = async (files) => {
   root = mkdtempSync(join(tmpdir(), 'tim-duplication-'))
-  await createRepoOnMain(root, files)
+  await createRepoOnBranchFromMain(root, files)
 }
 
 const clonePairs = ({ clones }) =>
@@ -41,7 +41,7 @@ const copiedPair = (folder = 'src') => [
 
 describe('findNewTestClones', () => {
   test('reports a set-up block a new test file copies from an existing one, with both file:line places', async () => {
-    await repoOnMain({ 'src/a.test.js': testFileWithSetUp('first', 'a') })
+    await branchedRepoWith({ 'src/a.test.js': testFileWithSetUp('first', 'a') })
     writeFiles(root, { 'src/b.test.js': testFileWithSetUp('second', 'b') })
     await commitAll(root, 'copy the set-up')
 
@@ -51,7 +51,9 @@ describe('findNewTestClones', () => {
   })
 
   test('names files from the folder it runs in when that folder is inside the checkout', async () => {
-    await repoOnMain({ 'tim/src/a.test.js': testFileWithSetUp('first', 'a') })
+    await branchedRepoWith({
+      'tim/src/a.test.js': testFileWithSetUp('first', 'a')
+    })
     writeFiles(root, {
       'tim/src/b.test.js': testFileWithSetUp('second', 'b')
     })
@@ -63,7 +65,7 @@ describe('findNewTestClones', () => {
   })
 
   test('reports a copy that is not yet committed', async () => {
-    await repoOnMain({ 'src/a.test.js': testFileWithSetUp('first', 'a') })
+    await branchedRepoWith({ 'src/a.test.js': testFileWithSetUp('first', 'a') })
     writeFiles(root, { 'src/b.test.js': testFileWithSetUp('second', 'b') })
 
     const outcome = await findNewTestClones({ repoPath: root })
@@ -75,7 +77,7 @@ describe('findNewTestClones', () => {
   })
 
   test('does not count a clone the base already has, when a branch edits one of its files', async () => {
-    await repoOnMain({
+    await branchedRepoWith({
       'src/a.test.js': testFileWithSetUp('first', 'a'),
       'src/old.test.js': testFileWithSetUp('second', 'old')
     })
@@ -93,7 +95,7 @@ describe('findNewTestClones', () => {
   })
 
   test('ignores duplication in files that are not tests', async () => {
-    await repoOnMain({ 'src/a.js': testFileWithSetUp('first', 'a') })
+    await branchedRepoWith({ 'src/a.js': testFileWithSetUp('first', 'a') })
     writeFiles(root, { 'src/b.js': testFileWithSetUp('second', 'b') })
     await commitAll(root, 'copy production code')
 
@@ -105,7 +107,7 @@ describe('findNewTestClones', () => {
   })
 
   test('refuses a base the repo does not have', async () => {
-    await repoOnMain({ 'README.md': '# repo\n' })
+    await branchedRepoWith({ 'README.md': '# repo\n' })
 
     await expect(
       findNewTestClones({ repoPath: root, base: 'origin/trunk' })

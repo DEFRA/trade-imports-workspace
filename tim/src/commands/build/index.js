@@ -26,8 +26,6 @@ const workareaSchema = z
   .trim()
   .min(1, 'Name a workarea, such as shared/my-programme.')
 
-// The shape `git check-ref-format --branch` accepts, checked without running
-// git so a bad name is refused before anything touches a repo.
 const BRANCH_NAME =
   /^(?!-)(?!.*\.\.)(?!.*\/\/)(?!.*@\{)(?!.*\.lock(\/|$))[A-Za-z0-9._/-]+(?<![./])$/
 
@@ -60,12 +58,9 @@ const gateOptionsSchema = z.object({
   serial: z.boolean()
 })
 
-// Every gate writes its result, so a waiter never reads one an earlier gate
-// left in the same folder: a caller that forgets --result still gets one.
 const defaultResultPath = (logsDir, phase) =>
   join(logsDir, `gate-result-${phase}.json`)
 
-// Under the Bash tool's 600-second ceiling, so one wait always returns by itself.
 const DEFAULT_WAIT_SECONDS = 540
 const MAX_WAIT_SECONDS = 590
 
@@ -210,8 +205,6 @@ const gateEnvelope = (outcome, timVersion) => ({
   metadata: { ranAt: new Date().toISOString() }
 })
 
-// A checkout that failed after others succeeded still reports every repo, so
-// the result stays on the envelope alongside the errors.
 const branchEnvelope = (outcome, ok, timVersion) => ({
   ...jsonEnvelope({ ok: true, result: outcome, timVersion }),
   ok,

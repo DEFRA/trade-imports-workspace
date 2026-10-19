@@ -102,7 +102,7 @@ const seedWorkspace = () => {
 }
 
 describe('#resolveStandards', () => {
-  test('U-1 every listed path in a file entry is in shas, 40-hex', () => {
+  test('every listed path in a file entry is in shas, 40-hex', () => {
     seedWorkspace()
     write('src/a.js', 'const a = 1\n')
     const memoryPath = join(
@@ -138,7 +138,7 @@ describe('#resolveStandards', () => {
     }
   })
 
-  test('U-2 standards is the sorted, deduplicated union, including both routing files', () => {
+  test('standards is the sorted, deduplicated union, including both routing files', () => {
     seedWorkspace()
     write('src/a.js', 'const a = 1\n')
     write('marker.txt', 'x')
@@ -163,7 +163,7 @@ describe('#resolveStandards', () => {
     )
   })
 
-  test('U-3 a file that does not exist yet is resolved, and carries no sha of its own', () => {
+  test('a file that does not exist yet is resolved, and carries no sha of its own', () => {
     seedWorkspace()
 
     const result = resolveStandards({
@@ -179,7 +179,7 @@ describe('#resolveStandards', () => {
     expect(entry.topics).toEqual(['node'])
   })
 
-  test('U-4 a missing memory index is not listed, and notes names its path', () => {
+  test('a missing memory index is not listed, and notes names its path', () => {
     seedWorkspace()
     write('src/a.js', 'x')
 
@@ -195,7 +195,7 @@ describe('#resolveStandards', () => {
     expect(result.notes[0]).toMatch(/No memory index at/)
   })
 
-  test('U-5 a dead rule pointer on a matched rule throws LINT, naming the rule and the path', () => {
+  test('a dead rule pointer on a matched rule throws LINT, naming the rule and the path', () => {
     seedWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
     write('src/a.js', 'x')
@@ -214,7 +214,7 @@ describe('#resolveStandards', () => {
     expect(attempt).toThrow(/docs\/best-practices\/node\/style\.md/)
   })
 
-  test('U-6 a dead routing bestPractice path throws LINT', () => {
+  test('a dead routing bestPractice path throws LINT', () => {
     seedWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
     write(
@@ -354,7 +354,7 @@ describe('#resolveStandards', () => {
     expect(result.files.map((f) => f.topics)).toEqual([['node'], ['node']])
   })
 
-  test('U-9 workspace repo-level detection skips repos/, workareas/ and .claude/worktrees/', () => {
+  test('workspace repo-level detection skips repos/, workareas/ and .claude/worktrees/', () => {
     seedWorkspace()
     write(
       'repos/api/pom.xml',
@@ -399,7 +399,7 @@ describe('#resolveStandards', () => {
 })
 
 describe('#lintStandards', () => {
-  test('U-7 reports a dead pointer in a rule that matches no requested file', () => {
+  test('reports a dead pointer in a rule that matches no requested file', () => {
     seedWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
 
@@ -408,7 +408,7 @@ describe('#lintStandards', () => {
     )
   })
 
-  test('U-8 reports a Topic dir that is a file, not a folder', () => {
+  test('reports a Topic dir that is a file, not a folder', () => {
     seedWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node'), {
       recursive: true,
@@ -422,10 +422,10 @@ describe('#lintStandards', () => {
   })
 })
 
-describe('group G — tim agrees with the routing data the bash goldens were captured against', () => {
+describe('tim agrees with the routing data the bash goldens were captured against', () => {
   const routing = loadCodeStyleRouting(realWorkspaceRoot)
 
-  test('G-1 topics for every fixture path match the topic order the goldens pin', () => {
+  test('topics for every fixture path match the topic order the goldens pin', () => {
     const goldenPath = join(
       here,
       '__fixtures__',
@@ -443,7 +443,7 @@ describe('group G — tim agrees with the routing data the bash goldens were cap
     }
   })
 
-  test('G-2 bestPracticeForTopics matches the live bake bundle source order for each topic', () => {
+  test('bestPracticeForTopics matches the live bake bundle source order for each topic', () => {
     const goldenPath = join(
       here,
       '__fixtures__',
@@ -461,7 +461,7 @@ describe('group G — tim agrees with the routing data the bash goldens were cap
     }
   })
 
-  test('G-3 unknownTopicHint names exactly the topics keys, and matches the golden ruby stderr', () => {
+  test('unknownTopicHint names exactly the topics keys, and matches the golden ruby stderr', () => {
     const goldenPath = join(
       here,
       '__fixtures__',
@@ -478,7 +478,7 @@ describe('group G — tim agrees with the routing data the bash goldens were cap
     expect(ruby.stderr).toContain(routing.unknownTopicHint)
   })
 
-  describe('G-4/G-5 detectTechnologies matches the live detect-tech.sh goldens', () => {
+  describe('detectTechnologies matches the live detect-tech.sh goldens', () => {
     let reviewRouting
     let fixturesRoot
 
@@ -522,8 +522,8 @@ describe('group G — tim agrees with the routing data the bash goldens were cap
   })
 })
 
-describe('group L — the live workspace', () => {
-  test('L-1 lintStandards on the real workspace reports no problems', () => {
+describe('the live workspace', () => {
+  test('lintStandards on the real workspace reports no problems', () => {
     const result = lintStandards({
       workspaceRoot: realWorkspaceRoot,
       homeDir: join(workspace, '.home')
@@ -532,7 +532,7 @@ describe('group L — the live workspace', () => {
     expect(result.problems).toEqual([])
   })
 
-  test('L-2 resolveStandards for tim/src/commands/backlog/index.js', () => {
+  test('resolveStandards for tim/src/commands/backlog/index.js', () => {
     const result = resolveStandards({
       workspaceRoot: realWorkspaceRoot,
       repos: { workspace: { abs: realWorkspaceRoot, rel: '' } },
@@ -558,7 +558,7 @@ describe('group L — the live workspace', () => {
     expect(entry.topics).toEqual(['node'])
   })
 
-  test('L-3 the live routing names validation.md as the hapi topic repo doc', () => {
+  test('the live routing names validation.md as the hapi topic repo doc', () => {
     const routing = loadCodeStyleRouting(realWorkspaceRoot)
 
     expect(

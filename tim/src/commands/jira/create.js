@@ -21,8 +21,7 @@ const optionsSchema = z
   })
 
 /**
- * Validate `create`'s options before any side-effect runs
- * (`.claude/rules/cli-patterns.md`).
+ * Validate `create`'s options before any side-effect runs.
  *
  * @param {object} opts
  * @returns {{from: string, confirm: string|undefined, dryRun: boolean}}
@@ -36,13 +35,6 @@ export const parseCreateOptions = (opts) => {
   return result.data
 }
 
-/**
- * Refuse to create a duplicate when a receipt from an earlier `--confirm`
- * already sits next to the manifest.
- *
- * @param {string} createdPath
- * @throws {TimError} USAGE when a receipt already exists at `createdPath`
- */
 const refuseIfAlreadyCreated = (createdPath) => {
   if (!existsSync(createdPath)) return
   const existing = JSON.parse(readFileSync(createdPath, 'utf8'))

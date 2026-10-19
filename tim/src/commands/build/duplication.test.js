@@ -3,7 +3,7 @@ import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   commitAll,
-  createRepoOnMain,
+  createRepoOnBranchFromMain,
   writeFiles
 } from '../../test-support/branched-repo.js'
 import { testFileWithSetUp } from '../../test-support/copied-set-up.js'
@@ -23,7 +23,7 @@ afterEach(() => {
 const workspaceWithRepo = async () => {
   root = createCliWorkspace('tim-build-duplication-cli-')
   const repoPath = join(root, 'repos', 'frontend')
-  await createRepoOnMain(repoPath, {
+  await createRepoOnBranchFromMain(repoPath, {
     'src/a.test.js': testFileWithSetUp('first', 'a')
   })
   return repoPath

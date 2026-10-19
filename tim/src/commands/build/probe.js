@@ -35,12 +35,13 @@ const probeOptionsSchema = z
       .number({ message: '--timeout-seconds must be a number.' })
       .positive('--timeout-seconds must be more than 0.')
   })
-  .refine(
-    ({ line, search }) => (line === undefined) !== (search === undefined),
-    {
-      message: 'Give either --line or --search, not both.'
-    }
-  )
+  .refine(({ line, search }) => line !== undefined || search !== undefined, {
+    message:
+      'Give the line to blank out with --line, or the text to replace with --search.'
+  })
+  .refine(({ line, search }) => line === undefined || search === undefined, {
+    message: 'Give either --line or --search, not both.'
+  })
   .refine(
     ({ search, replace }) => (search === undefined) === (replace === undefined),
     {
@@ -49,7 +50,15 @@ const probeOptionsSchema = z
   )
   .refine(
     ({ testFile, testCommand }) =>
-      (testFile === undefined) !== (testCommand.length === 0),
+      testFile !== undefined || testCommand.length > 0,
+    {
+      message:
+        'Give the test to run with --test-file, or as a command after --.'
+    }
+  )
+  .refine(
+    ({ testFile, testCommand }) =>
+      testFile === undefined || testCommand.length === 0,
     { message: 'Give either --test-file or a test command after --, not both.' }
   )
 
@@ -68,11 +77,11 @@ const describeInversion = ({ file, inversion }) =>
  * @returns {string}
  */
 export const renderProbeText = (outcome) => {
-  const { redOnBase, greenAfterRestore, restored, file, logs } = outcome
+  const { redWhenInverted, greenAfterRestore, restored, file, logs } = outcome
   if (!restored) {
     return `The probe could not put ${file} back exactly as git has it. Check it with git diff before you do anything else.`
   }
-  const verdict = redOnBase
+  const verdict = redWhenInverted
     ? `The test failed with ${describeInversion(outcome)}, so it witnesses that change.`
     : `The test still passed with ${describeInversion(outcome)}, so it does not witness that change.`
   const after = greenAfterRestore
@@ -138,7 +147,7 @@ export const registerProbe = (build, timVersion) =>
       String(DEFAULT_TEST_TIMEOUT_SECONDS)
     )
     .description(
-      'Check that a test fails without the line it covers. The probe blanks out the line (or replaces the search text), runs the test, puts the file back byte for byte, checks git shows no change to it, and runs the test again. redOnBase true means the test witnesses the line. redOnBase false means it does not: the line is dead, or the test checks something else. The probe refuses a file with uncommitted changes, so commit first. Put every option, --json included, before the --. Exits 1 only when the file could not be put back.'
+      'Check that a test fails without the line it covers. The probe blanks out the line (or replaces the search text), runs the test, puts the file back byte for byte, checks git shows no change to it, and runs the test again. redWhenInverted true means the test witnesses the line. redWhenInverted false means it does not: the line is dead, or the test checks something else. The probe refuses a file with uncommitted changes, so commit first. Put every option, --json included, before the --. Exits 1 only when the file could not be put back.'
     )
     .addHelpText(
       'after',

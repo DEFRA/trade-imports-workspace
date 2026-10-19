@@ -151,7 +151,7 @@ const isRestored = async (repoPath, file, path, original) =>
  * Prove whether a test witnesses one production line: apply the inversion,
  * run the test, put the file back byte for byte, check git sees no change,
  * and run the test again. A test that still passes with the line inverted
- * (`redOnBase` false) does not witness that line.
+ * (`redWhenInverted` false) does not witness that line.
  *
  * @param {object} args
  * @param {string} args.repoPath - A git checkout
@@ -160,7 +160,7 @@ const isRestored = async (repoPath, file, path, original) =>
  * @param {string[]} args.testCommand - The command and its arguments, run in repoPath
  * @param {string} args.logsDir
  * @param {number} [args.timeoutMs] - For each test run; a run that times out counts as failed
- * @returns {Promise<{file: string, inversion: object, redOnBase: boolean, greenAfterRestore: boolean, restored: boolean, logs: {inverted: string, restored: string|null}}>}
+ * @returns {Promise<{file: string, inversion: object, redWhenInverted: boolean, greenAfterRestore: boolean, restored: boolean, logs: {inverted: string, restored: string|null}}>}
  * @throws {TimError} DIRTY_TREE when the file has uncommitted changes; USAGE or NOT_FOUND when the file or inversion is wrong
  */
 export const runProbe = async ({
@@ -188,10 +188,13 @@ export const runProbe = async ({
   const logs = logPathsFor(logsDir, relativeFile)
   const testRun = { testCommand, repoPath, timeoutMs }
 
-  let redOnBase
+  let redWhenInverted
   try {
     writeFileSync(path, inverted)
-    redOnBase = !(await testPasses({ ...testRun, logPath: logs.inverted }))
+    redWhenInverted = !(await testPasses({
+      ...testRun,
+      logPath: logs.inverted
+    }))
   } finally {
     writeFileSync(path, original)
   }
@@ -202,7 +205,7 @@ export const runProbe = async ({
   return {
     file: relativeFile,
     inversion,
-    redOnBase,
+    redWhenInverted,
     greenAfterRestore,
     restored,
     logs: { inverted: logs.inverted, restored: restored ? logs.restored : null }

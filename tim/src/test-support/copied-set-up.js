@@ -1,9 +1,5 @@
 export const SET_UP_FIRST_LINE = 3
 
-/**
- * A Vitest file whose 13-line journey set-up starts at SET_UP_FIRST_LINE.
- * Two files made with different parameter names hold the same set-up block.
- */
 export const testFileWithSetUp = (parameter, title) =>
   [
     "import { test, expect } from 'vitest'",

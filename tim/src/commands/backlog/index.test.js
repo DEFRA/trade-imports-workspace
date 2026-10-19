@@ -309,9 +309,6 @@ describe('tim backlog ingest', () => {
   })
 
   test('an atom missing a required field: exit 1, and stderr names the file and the field', async () => {
-    // Exit 1, not 2: a malformed authored item is a PARSE-coded refusal, and
-    // the exit mapping is USAGE/NOT_FOUND -> 2, everything else -> 1. Exit 2
-    // is reserved for a bad command line, such as an unknown programme key.
     const programmeDir = join(
       workspace,
       'workareas',
@@ -464,7 +461,7 @@ describe('tim backlog ingest', () => {
 
 const trackedFixtureDir = join(fixtureAtomsDir, '..', '..')
 
-describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
+describe('tim backlog ingest --atoms / --increments', () => {
   const registerTrackedFixture = () =>
     writeRegistry({
       programmes: {
@@ -546,7 +543,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(stderr).toContain('--increments')
   })
 
-  test('req-010 ac-1: an authored increment carrying filesToTouch: exit 1, stderr matching filesToTouch and plan owns files', async () => {
+  test('an authored increment carrying filesToTouch: exit 1, stderr matching filesToTouch and plan owns files', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     writeIncrement(programmeDir, 'core-and-registry', {
@@ -563,7 +560,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(stderr).toMatch(/plan owns files/)
   })
 
-  test('req-010 ac-2: an authored increment carrying executor: exit 1, stderr matching executor and build/run.json', async () => {
+  test('an authored increment carrying executor: exit 1, stderr matching executor and build/run.json', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     writeIncrement(programmeDir, 'core-and-registry', { executor: 'codex' })
@@ -578,10 +575,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(stderr).toMatch(/build\/run\.json/)
   })
 
-  // req-011 ac-1's witness (D27) is the existing "re-ingests after an atom
-  // is inserted ahead" case above, unchanged — no new case needed here.
-
-  test('req-012 ac-1: two authored increments naming each other in dependsOn: exit 2, stderr naming both keys, no increments key written', async () => {
+  test('two authored increments naming each other in dependsOn: exit 2, stderr naming both keys, no increments key written', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     writeIncrement(programmeDir, 'a', {
@@ -607,7 +601,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(written.increments).toBeUndefined()
   })
 
-  test('req-013 ac-1: three atoms adopted, one increment claiming two: exit 0, membership covered === adopted, a solo row written', async () => {
+  test('three atoms adopted, one increment claiming two: exit 0, membership covered === adopted, a solo row written', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     adoptEveryAtom(programmeDir)
@@ -637,7 +631,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(solo.outcome).toBeUndefined()
   })
 
-  test('req-014 ac-1: a started increment left out by a re-combine: exit 2, stderr naming the key, the row still in backlog.json', async () => {
+  test('a started increment left out by a re-combine: exit 2, stderr naming the key, the row still in backlog.json', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     writeIncrement(programmeDir, 'core-and-registry')
@@ -685,7 +679,7 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(written.increments).toHaveLength(0)
   })
 
-  test('a backlog.json hand-edited to add executor to an atom row: exit 1, stderr naming executor and build/run.json, the file unchanged (D8, D26)', async () => {
+  test('a backlog.json hand-edited to add executor to an atom row: exit 1, stderr naming executor and build/run.json, the file unchanged', async () => {
     const programmeDir = seedProgramme()
     await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
     const backlogPath = join(programmeDir, 'backlog.json')
@@ -794,11 +788,6 @@ describe('tim backlog standards', () => {
   const writeJson = (relPath, value) =>
     writeStandardsFile(relPath, JSON.stringify(value))
 
-  /**
-   * Rules, docs and both routing files — the minimum every `tim backlog
-   * standards` test builds on. `node` and `java` topics/technologies so a
-   * two-repo, two-language run (S-8) needs no bespoke routing of its own.
-   */
   const seedStandardsWorkspace = () => {
     writeFileSync(join(workspace, 'CLAUDE.md'), '# Root\n')
     writeJson('.claude/skills/code-style/assets/routing.json', {
@@ -852,7 +841,7 @@ describe('tim backlog standards', () => {
     )
   }
 
-  test('S-1 req-040 ac-1: a new rule is picked up with no code change', async () => {
+  test('a new rule is picked up with no code change', async () => {
     seedStandardsWorkspace()
     writeStandardsFile('db/q.sql')
 
@@ -892,7 +881,7 @@ describe('tim backlog standards', () => {
     ])
   })
 
-  test('S-2 req-041 ac-1: --lint exits 1 and names the rule and the missing file', async () => {
+  test('--lint exits 1 and names the rule and the missing file', async () => {
     seedStandardsWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
 
@@ -906,7 +895,7 @@ describe('tim backlog standards', () => {
     expect(stderr).toContain('docs/best-practices/node/style.md')
   })
 
-  test('S-3 --lint --json: ok:false, code LINT, naming both', async () => {
+  test('--lint --json: ok:false, code LINT, naming both', async () => {
     seedStandardsWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
 
@@ -925,7 +914,7 @@ describe('tim backlog standards', () => {
     )
   })
 
-  test('S-4 resolving a matching file with a dead pointer exits 1 without --lint', async () => {
+  test('resolving a matching file with a dead pointer exits 1 without --lint', async () => {
     seedStandardsWorkspace()
     rmSync(join(workspace, 'docs', 'best-practices', 'node', 'style.md'))
     writeStandardsFile('a.js')
@@ -940,7 +929,7 @@ describe('tim backlog standards', () => {
     expect(stderr).toContain('docs/best-practices/node/style.md')
   })
 
-  test('S-5 a clean workspace lints clean', async () => {
+  test('a clean workspace lints clean', async () => {
     seedStandardsWorkspace()
 
     const run = await runTim(
@@ -952,7 +941,7 @@ describe('tim backlog standards', () => {
     expect(resultOf(run).lint.problems).toEqual([])
   })
 
-  test('S-6 req-042 ac-1: the chain, its imports and the memory index are listed', async () => {
+  test('the chain, its imports and the memory index are listed', async () => {
     seedStandardsWorkspace()
     writeFileSync(
       join(workspace, 'CLAUDE.md'),
@@ -1002,7 +991,7 @@ describe('tim backlog standards', () => {
     )
   })
 
-  test('S-7 req-043 ac-1: a new topic in the code-style routing is picked up with no code change', async () => {
+  test('a new topic in the code-style routing is picked up with no code change', async () => {
     seedStandardsWorkspace()
     writeStandardsFile('db/q.sql')
 
@@ -1042,7 +1031,7 @@ describe('tim backlog standards', () => {
     )
   })
 
-  test('S-8 req-043 ac-2: two repos through --programme, every path hashed', async () => {
+  test('two repos through --programme, every path hashed', async () => {
     seedStandardsWorkspace()
     writeRegistry({
       programmes: {
@@ -1141,7 +1130,7 @@ describe('tim backlog standards', () => {
     ])
   })
 
-  test('S-9 req-122 ac-2: succeeds with PATH empty, proving no subprocess routing step', async () => {
+  test('succeeds with PATH empty, proving no subprocess routing step', async () => {
     seedStandardsWorkspace()
     writeStandardsFile('a.js')
     const claudeConfigDir = join(workspace, '.claude-config-9')
@@ -1179,7 +1168,7 @@ describe('tim backlog standards', () => {
     }
   })
 
-  test('S-10 no --files, --repo-level or --lint exits 2, naming the flags', async () => {
+  test('no --files, --repo-level or --lint exits 2, naming the flags', async () => {
     seedStandardsWorkspace()
 
     const { stderr, exitCode } = await runTim(
@@ -1193,7 +1182,7 @@ describe('tim backlog standards', () => {
     )
   })
 
-  test('S-11 a malformed --files spec exits 2, naming it', async () => {
+  test('a malformed --files spec exits 2, naming it', async () => {
     seedStandardsWorkspace()
 
     const noColon = await runTim(
@@ -1228,7 +1217,7 @@ describe('tim backlog standards', () => {
     )
   })
 
-  test('S-12 an unknown repo key exits 2; a backlog naming no repos exits 2 NOT_FOUND', async () => {
+  test('an unknown repo key exits 2; a backlog naming no repos exits 2 NOT_FOUND', async () => {
     seedStandardsWorkspace()
 
     const unknown = await runTim(
@@ -1266,7 +1255,7 @@ describe('tim backlog standards', () => {
   })
 })
 
-describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-015, req-016, req-023)', () => {
+describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state', () => {
   const programmeKey = 'write-safety'
   let programmeDir
 
@@ -1351,14 +1340,11 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     await runTim(['backlog', 'ingest', programmeKey, '--increments'], workspace)
   }
 
-  test('E1 req-015 e2e, concurrent: two racing ingest --expect-sha S0 --json processes give exits [0, 3], the loser LOST_UPDATE, and the winner sha differs from S0', async () => {
+  test('concurrent: two racing ingest --expect-sha S0 --json processes give exits [0, 3], the loser LOST_UPDATE, and the winner sha differs from S0', async () => {
     seedProgramme()
     await runTim(['backlog', 'ingest', programmeKey], workspace)
     const backlogPath = join(programmeDir, 'backlog.json')
     const baselineSha = sha256File(backlogPath)
-    // A racer that reads the same baseline sha must produce different bytes
-    // from it, or both racers would see current === baseline and both
-    // succeed.
     addAtom('gamma--first.json')
 
     const [racerOne, racerTwo] = await Promise.all([
@@ -1404,7 +1390,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(sha256File(backlogPath)).toBe(winnerResult.sha256)
   })
 
-  test('E2 req-015 e2e, sequential: a second write against the same, now-stale --expect-sha exits 3, and the bytes are unchanged from the first write', async () => {
+  test('sequential: a second write against the same, now-stale --expect-sha exits 3, and the bytes are unchanged from the first write', async () => {
     seedProgramme()
     await runTim(['backlog', 'ingest', programmeKey], workspace)
     const backlogPath = join(programmeDir, 'backlog.json')
@@ -1442,7 +1428,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(readFileSync(backlogPath, 'utf8')).toBe(afterFirst)
   })
 
-  test('E3 req-016 e2e: state note, replayed, gives one journal line, one ops entry and an equal result', async () => {
+  test('state note, replayed, gives one journal line, one ops entry and an equal result', async () => {
     await seedWithIncrement()
     const notePath = join(workspace, 'note.txt')
     writeFileSync(notePath, 'Started the increment.')
@@ -1494,7 +1480,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     ).toHaveLength(1)
   })
 
-  test('E4 req-016 e2e: replaying state set op A after op B leaves phase as implement, and the output equals As first result', async () => {
+  test('replaying state set op A after op B leaves phase as implement, and the output equals As first result', async () => {
     await seedWithIncrement()
 
     const opASet = await runTim(
@@ -1555,7 +1541,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(state.increments['inc-001'].phase).toBe('implement')
   })
 
-  test('E5 req-016 e2e: an ingest --op-id replay after adding an atom leaves the bytes unchanged and prints an equal result', async () => {
+  test('an ingest --op-id replay after adding an atom leaves the bytes unchanged and prints an equal result', async () => {
     seedProgramme()
     const backlogPath = join(programmeDir, 'backlog.json')
 
@@ -1576,7 +1562,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(readFileSync(backlogPath, 'utf8')).toBe(afterFirst)
   })
 
-  test('E6 req-023 e2e: a bad heads sha over an existing state exits 1 with PARSE, naming the path, and the state and build/ folder are otherwise untouched', async () => {
+  test('a bad heads sha over an existing state exits 1 with PARSE, naming the path, and the state and build/ folder are otherwise untouched', async () => {
     await seedWithIncrement()
     await runTim(
       [
@@ -1617,7 +1603,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(readdirSync(join(programmeDir, 'build'))).toEqual(['state.json'])
   })
 
-  test('E7 req-023 e2e: the same bad value with no state file exits 1 and creates no build/ folder', async () => {
+  test('the same bad value with no state file exits 1 and creates no build/ folder', async () => {
     await seedWithIncrement()
 
     const { exitCode } = await runTim(
@@ -1639,7 +1625,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build'))).toBe(false)
   })
 
-  test('E8 req-023 e2e: a hand-edited unknown key in state makes state set phase exit 1, and the file is unchanged', async () => {
+  test('a hand-edited unknown key in state makes state set phase exit 1, and the file is unchanged', async () => {
     await seedWithIncrement()
     const buildDir = join(programmeDir, 'build')
     mkdirSync(buildDir, { recursive: true })
@@ -1668,7 +1654,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(readFileSync(statePath, 'utf8')).toBe(before)
   })
 
-  test('E9 D7: distil/atoms as a file gives one JSON line, ok:false, code UNKNOWN, exit 1', async () => {
+  test('distil/atoms as a file gives one JSON line, ok:false, code UNKNOWN, exit 1', async () => {
     const badProgrammeDir = join(
       workspace,
       'workareas',
@@ -1699,7 +1685,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(exitCode).toBe(1)
   })
 
-  test('E10 LOCKED e2e: a lock planted with this process and host makes state set --json exit 4 with code LOCKED, and no state.json is written', async () => {
+  test('a lock planted with this process and host makes state set --json exit 4 with code LOCKED, and no state.json is written', async () => {
     await seedWithIncrement()
     const buildDir = join(programmeDir, 'build')
     mkdirSync(buildDir, { recursive: true })
@@ -1734,7 +1720,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(buildDir, 'state.json'))).toBe(false)
   })
 
-  test('E11a usage refusal: an unknown field exits 2, naming the allowed fields, with nothing written', async () => {
+  test('an unknown field exits 2, naming the allowed fields, with nothing written', async () => {
     await seedWithIncrement()
 
     const { exitCode, stderr } = await runTim(
@@ -1756,7 +1742,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
   })
 
-  test('E11b usage refusal: a bad --value exits 2 with nothing written', async () => {
+  test('a bad --value exits 2 with nothing written', async () => {
     await seedWithIncrement()
 
     const { exitCode } = await runTim(
@@ -1777,7 +1763,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
   })
 
-  test('E11c usage refusal: a bad --op-id exits 2 with nothing written', async () => {
+  test('a bad --op-id exits 2 with nothing written', async () => {
     await seedWithIncrement()
 
     const { exitCode } = await runTim(
@@ -1800,7 +1786,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
   })
 
-  test('E11d usage refusal: a bad --expect-sha exits 2 with nothing written', async () => {
+  test('a bad --expect-sha exits 2 with nothing written', async () => {
     await seedWithIncrement()
 
     const { exitCode } = await runTim(
@@ -1823,7 +1809,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
   })
 
-  test('E11e usage refusal: ingest --dry-run --op-id exits 2', async () => {
+  test('ingest --dry-run --op-id exits 2', async () => {
     await seedWithIncrement()
 
     const { exitCode, stderr } = await runTim(
@@ -1835,7 +1821,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(stderr).toContain('dry run')
   })
 
-  test('E11f usage refusal: a malformed <id> positional on state set exits 2 with nothing written', async () => {
+  test('a malformed <id> positional on state set exits 2 with nothing written', async () => {
     await seedWithIncrement()
 
     const { exitCode } = await runTim(
@@ -1856,7 +1842,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
   })
 
-  test("E11g usage refusal: state note's --file naming a missing path exits 2 with NOT_FOUND, naming the path, with nothing written", async () => {
+  test("state note's --file naming a missing path exits 2 with NOT_FOUND, naming the path, with nothing written", async () => {
     await seedWithIncrement()
 
     const { exitCode, stdout } = await runTim(

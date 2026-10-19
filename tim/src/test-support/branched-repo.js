@@ -26,11 +26,7 @@ export const commitAll = async (dir, message) => {
   await git(dir, 'commit', '--quiet', '-m', message)
 }
 
-/**
- * A git repo in `dir` whose main holds `files`, with origin/main pointing at
- * that commit and BRANCH checked out from it.
- */
-export const createRepoOnMain = async (dir, files) => {
+export const createRepoOnBranchFromMain = async (dir, files) => {
   await execa('git', ['init', '--quiet', '-b', 'main', dir])
   writeFiles(dir, files)
   await commitAll(dir, 'main')

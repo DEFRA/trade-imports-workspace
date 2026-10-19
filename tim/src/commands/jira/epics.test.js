@@ -84,10 +84,6 @@ describe('tim jira epics --json (spawn)', () => {
       }
     )
 
-    // AUTH isn't in envelope.js's USAGE/NOT_FOUND/LOST_UPDATE/LOCKED map, so
-    // it falls through to the generic "a run that failed" exit code (1) —
-    // unlike the read-only jira commands, which map AUTH to exit 2 via
-    // their own `_client-action.js` helper.
     expect(exitCode).toBe(1)
     const payload = JSON.parse(stdout.trim())
     expect(payload).toMatchObject({

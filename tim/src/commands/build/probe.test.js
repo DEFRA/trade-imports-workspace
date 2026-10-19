@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { createRepoOnMain } from '../../test-support/branched-repo.js'
+import { createRepoOnBranchFromMain } from '../../test-support/branched-repo.js'
 import {
   createCliWorkspace,
   envelopeOf,
@@ -17,7 +17,7 @@ afterEach(() => {
 
 const workspaceWithRepo = async () => {
   root = createCliWorkspace('tim-build-probe-cli-')
-  await createRepoOnMain(join(root, 'repos', 'prices'), {
+  await createRepoOnBranchFromMain(join(root, 'repos', 'prices'), {
     'package.json': '{ "type": "module" }\n',
     'src/prices.js': 'export const basePrice = 10\nexport const spare = 1\n',
     'prices.check.js':
@@ -42,7 +42,7 @@ const probeArgs = (inversion) => [
 ]
 
 describe('tim build probe', () => {
-  test('reports redOnBase for a line the test witnesses, and exits 0', async () => {
+  test('reports redWhenInverted for a line the test witnesses, and exits 0', async () => {
     await workspaceWithRepo()
 
     const run = await runTim(probeArgs(['--line', '1']))
@@ -51,19 +51,19 @@ describe('tim build probe', () => {
       exitCode: 0,
       result: expect.objectContaining({
         file: 'src/prices.js',
-        redOnBase: true,
+        redWhenInverted: true,
         greenAfterRestore: true,
         restored: true
       })
     })
   })
 
-  test('reports a line the test does not witness as green on base', async () => {
+  test('reports a line the test does not witness as green when inverted', async () => {
     await workspaceWithRepo()
 
     const run = await runTim(probeArgs(['--line', '2']))
 
-    expect(envelopeOf(run).result.redOnBase).toBe(false)
+    expect(envelopeOf(run).result.redWhenInverted).toBe(false)
   })
 
   test('refuses both --line and --search', async () => {
@@ -104,7 +104,48 @@ describe('tim build probe', () => {
 
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,
+      stderr: 'Give the test to run with --test-file, or as a command after --.'
+    })
+  })
+
+  test('refuses both --test-file and a test command', async () => {
+    await workspaceWithRepo()
+
+    const run = await runTim([
+      'build',
+      'probe',
+      'prices',
+      'src/prices.js',
+      '--line',
+      '1',
+      '--test-file',
+      'prices.test.js',
+      '--',
+      'true'
+    ])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
+      exitCode: 2,
       stderr: 'Give either --test-file or a test command after --, not both.'
+    })
+  })
+
+  test('refuses a run with neither --line nor --search', async () => {
+    await workspaceWithRepo()
+
+    const run = await runTim([
+      'build',
+      'probe',
+      'prices',
+      'src/prices.js',
+      '--',
+      'true'
+    ])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
+      exitCode: 2,
+      stderr:
+        'Give the line to blank out with --line, or the text to replace with --search.'
     })
   })
 })
@@ -119,7 +160,7 @@ describe('renderProbeText', () => {
   }
 
   test('says a red probe witnesses the line', () => {
-    expect(renderProbeText({ ...outcome, redOnBase: true })).toBe(
+    expect(renderProbeText({ ...outcome, redWhenInverted: true })).toBe(
       [
         'The test failed with line 4 of src/prices.js blanked out, so it witnesses that change.',
         'It passed again once the file was back.',
@@ -133,7 +174,7 @@ describe('renderProbeText', () => {
       renderProbeText({
         ...outcome,
         inversion: { search: 'a', replace: 'b' },
-        redOnBase: false,
+        redWhenInverted: false,
         greenAfterRestore: false
       }).split('\n')
     ).toEqual([
@@ -145,7 +186,7 @@ describe('renderProbeText', () => {
 
   test('says when the file could not be put back', () => {
     expect(
-      renderProbeText({ ...outcome, redOnBase: true, restored: false })
+      renderProbeText({ ...outcome, redWhenInverted: true, restored: false })
     ).toBe(
       'The probe could not put src/prices.js back exactly as git has it. Check it with git diff before you do anything else.'
     )

@@ -2,7 +2,7 @@ import { describe, test, expect, afterEach } from 'vitest'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createRepoOnMain } from '../test-support/branched-repo.js'
+import { createRepoOnBranchFromMain } from '../test-support/branched-repo.js'
 import { gitLines, hasUncommittedChanges } from './git-files.js'
 
 let root
@@ -13,7 +13,7 @@ afterEach(() => {
 
 const repoWithCommittedFile = async () => {
   root = mkdtempSync(join(tmpdir(), 'tim-git-files-'))
-  await createRepoOnMain(root, { 'a.txt': 'a\n' })
+  await createRepoOnBranchFromMain(root, { 'a.txt': 'a\n' })
 }
 
 describe('gitLines', () => {

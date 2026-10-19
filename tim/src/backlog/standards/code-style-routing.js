@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { z } from 'zod'
 import { TimError } from '../../errors.js'
 
-/** Workspace-relative path to the code-style skill's routing data. */
 export const CODE_STYLE_ROUTING_PATH =
   '.claude/skills/code-style/assets/routing.json'
 
@@ -31,9 +30,7 @@ const REFUSED_PATTERN_CHARS = /[[\]{}\\]/
 /**
  * Compile one `file-topics.sh`-style shell-case pattern to an anchored
  * RegExp: every regex metacharacter is escaped, `*` becomes `.*` and `?`
- * becomes `.`. Refuses `[`, `]`, `{`, `}` and `\\` — bash and this compiler
- * would treat them differently, so refusing them keeps the two readers
- * from diverging silently.
+ * becomes `.`.
  *
  * @param {string} pattern
  * @returns {RegExp}
@@ -93,15 +90,14 @@ export const loadCodeStyleRouting = (workspaceRoot) => {
       }
     }
     for (const pattern of entry.patterns) {
-      shellPatternToRegExp(pattern) // throws PARSE on a refused character
+      shellPatternToRegExp(pattern)
     }
   }
   return routing
 }
 
 /**
- * Every topic a path matches, in the routing file's `topics` key order —
- * the emission order `file-topics.sh` also uses (jq `keys_unsorted`).
+ * Every topic a path matches, in the routing file's `topics` key order.
  *
  * @param {object} routing - From {@link loadCodeStyleRouting}
  * @param {string} path - Workspace-relative, `/`-separated

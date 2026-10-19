@@ -232,11 +232,34 @@ repo's own docs, as `~/` paths, and only files that exist:
    recipes, for the set that holds the file, or for every set when the file is
    in none or the entry is for the whole repo
 
+A file's rules come from the `.claude/rules` folders on its own folder's
+ancestor chain only, never a whole-workspace scan, so stale copies under
+`workareas/` or `.claude/worktrees/` never apply. A symlinked `.claude` (such
+as `docs/.claude`) is skipped, so the root rules are not counted twice.
+`--lint` walks every `.claude/rules` folder, skipping `node_modules`, `.git`,
+`workareas`, `.claude/worktrees` and dot-folders other than `.claude`.
+
+A rule points at the docs it needs in the list items of its body:
+
+1. A list item is a line starting `- ` plus its indented continuation lines.
+   Paragraph text and fenced code are never read for pointers.
+2. The backticked token after `Topic dir:` is the rule's base folder, and must
+   end with `/`.
+3. Every other backticked token that ends in `.md`, after one level of brace
+   expansion (`a/{b,c}.md`), is a pointer.
+4. A pointer or Topic dir starting `~/git/defra/trade-imports-workspace/` is
+   workspace-relative. Any other pointer resolves against the Topic dir, or the
+   rule's own scope root when it has none.
+5. The resolved paths, without repeats and in the order they appear, are the
+   rule's `pointsTo`.
+
 A repo key can be the full key (`workspace`, a folder under `repos/`, or a
 programme's backlog key with `--programme`) or a short form that names one
 repo: `plants-frontend`, `plantsFrontend` and `trade-imports-plants-frontend`
 all name `repos/trade-imports-plants-frontend`. An unknown or ambiguous key
-exits 2 and names the keys you can use.
+exits 2 and names the keys you can use. A `--files` path need not exist yet,
+so a plan can name a file it will create, but it must be relative and stay
+inside the repo.
 
 ### `tim distil` — the DISTIL files in one workarea
 
@@ -444,6 +467,8 @@ wiki-markup description, and record the key on the row before anything else,
 so a retry never raises a second. A status other than `--in-dev-status` is
 moved there by an exact-name transition; one already at `--done-status` is
 left alone with a warning. Then the ticket is moved onto `--board`, every time.
+Jira's agile API answers a partial rejection with 200 and an error body, so
+only a 204 counts as moved.
 **Branch**: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row,
 checked out in each of the increment's repos (a row naming none takes every repo, in `--repos` order when given) (fast-forwarded to what is
 pushed), tracked from origin, or cut with `--no-track` from a freshly fetched
@@ -476,7 +501,11 @@ starting or refreshing the stack begins straight away, during layer one,
 and is finished before layer two starts. Each FIT rung serves on its own port, clear
 of the stack's, so FIT runs while the stack is up. `--serial` runs one rung at a time instead —
 every unit rung, then every FIT rung, then E2E — to compare against.
-Whichever way it runs, `rungs` comes back in plan order.
+Whichever way it runs, `rungs` comes back in plan order. One repo's rungs
+never overlap, because its FIT rung builds the frontend into the folder its
+unit rungs read. A red or flaky E2E rung leaves each stack container's log
+beside its own, as `gate-stack-after-<repo>-<rung>-<container>.log`, written
+before the stack goes.
 
 If the stack was down, the gate starts it, leases it and always releases it
 afterwards. If this holder already leases it, the gate does not start it
@@ -543,8 +572,8 @@ command after `--`, with every option before the `--`. `--test-file` runs a
 `test:fit:ci`, and a Java class through `mvn verify` with `-Dtest` and
 `-Dit.test`.
 
-The result is `{file, inversion, redOnBase, greenAfterRestore, restored,
-logs}`. `redOnBase` true means the test failed without the line, so it
+The result is `{file, inversion, redWhenInverted, greenAfterRestore, restored,
+logs}`. `redWhenInverted` true means the test failed without the line, so it
 witnesses it. False means it does not: the line is dead, or the test checks
 something else. Use it as review evidence, not as a gate. `greenAfterRestore`
 false means the test was failing before the probe. A run that takes longer

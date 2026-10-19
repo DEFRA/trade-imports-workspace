@@ -16,7 +16,7 @@ import { GATES_PATH } from './gates.js'
 import { serviceFingerprints } from '../exec/stack-fingerprints.js'
 import {
   commitAll,
-  createRepoOnMain,
+  createRepoOnBranchFromMain,
   writeFiles
 } from '../test-support/branched-repo.js'
 import {
@@ -42,10 +42,6 @@ const writeExecutable = (path, body) => {
 const stackStatePath = () => join(root, 'stack-state')
 const stackCallsPath = () => join(root, 'stack-calls')
 
-// A workspace with its own gates.json, a backlog building `repos`, and stack
-// scripts and a `docker` that share one state file: run-stack.sh marks the
-// stack up, stop-stack.sh marks it down, and `docker ps` lists a container
-// while it is up. Every stack script call is recorded.
 const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
@@ -490,9 +486,6 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
-  // Builds repos/frontend as a dev service: a dev overlay that names it, a
-  // git checkout of it, and a dev-service.sh that records each call and
-  // fails when `dev-service-fails` exists.
   const withDevService = async () => {
     mkdirSync(join(root, 'docker', 'stack'), { recursive: true })
     writeFileSync(
@@ -749,12 +742,9 @@ describe('runGate — e2e rungs', () => {
   })
 })
 
-// Every rung runs in repos/<folder>, so ../../ is the workspace root.
 const atRoot = (file) => `../../${file}`
 
-// A script that marks its own start, then waits up to five seconds for
-// another script's mark: it passes only when the two run at the same time.
-const meetsWith = (mine, theirs) =>
+const passesOnlyWhileRunningBeside = (mine, theirs) =>
   `touch ${atRoot(mine)}; tries=0; while [ ! -f ${atRoot(theirs)} ]; do tries=$((tries+1)); [ $tries -gt 100 ] && exit 1; sleep 0.05; done`
 
 const appendTo = (file, line) => `echo ${line} >> ${atRoot(file)}`
@@ -783,8 +773,11 @@ describe('runGate — running repos at the same time', () => {
     async () => {
       const env = workspaceWith(
         twoRepos({
-          alpha: { 'format:check': 'true', test: meetsWith('alpha', 'beta') },
-          beta: { test: meetsWith('beta', 'alpha') }
+          alpha: {
+            'format:check': 'true',
+            test: passesOnlyWhileRunningBeside('alpha', 'beta')
+          },
+          beta: { test: passesOnlyWhileRunningBeside('beta', 'alpha') }
         })
       )
 
@@ -911,7 +904,9 @@ describe('runGate — running repos at the same time', () => {
       const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
       writeFileSync(
         join(root, 'repos', 'frontend', 'package.json'),
-        JSON.stringify({ scripts: { test: meetsWith('unit', 'stack-state') } })
+        JSON.stringify({
+          scripts: { test: passesOnlyWhileRunningBeside('unit', 'stack-state') }
+        })
       )
 
       const outcome = await gate(env)
@@ -1149,7 +1144,7 @@ describe('runGate — the duplication rung', () => {
       repos: { frontend: {} }
     })
     const repoPath = join(root, 'repos', 'frontend')
-    await createRepoOnMain(repoPath, {
+    await createRepoOnBranchFromMain(repoPath, {
       'src/a.test.js': testFileWithSetUp('first', 'a')
     })
     return { env, repoPath }

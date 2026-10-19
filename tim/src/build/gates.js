@@ -22,9 +22,6 @@ const NPM_SCRIPT = /^[a-z0-9][a-z0-9:_-]*$/i
 const RUNG_NAME = /^[a-z0-9][a-z0-9-]*$/
 const MAX_PORT = 65535
 
-// Words in a script name that mean it reaches past the laptop: a CDP
-// environment, BrowserStack, a ZAP scan, a publish. The gate proves a change
-// against local code only, so a rung never names one.
 const REMOTE_SEGMENTS = new Set([
   'cdp',
   'remote',
@@ -184,8 +181,6 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-// A rung with a cwd runs in that folder of its repo: the workspace repo has
-// no package.json of its own, and tim's scripts live in tim/.
 const planned = (repo, rung) => ({
   repo: repo.folder,
   path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,

@@ -102,7 +102,7 @@ For each proposal, in the parent:
 4. Restore the inversion. Run again — **must go green**.
    For a unit or fit test, `tim build probe <repo> <file> --line N
    --test-file <test> --json` does steps 3 and 4 in one call and checks
-   the file is restored: `redOnBase` and `greenAfterRestore` must both
+   the file is restored: `redWhenInverted` and `greenAfterRestore` must both
    be true. It refuses a file with uncommitted changes, so commit first.
    See `tim/README.md`.
 5. Update `openspec/coverage/<capability>/coverage.json` — add or

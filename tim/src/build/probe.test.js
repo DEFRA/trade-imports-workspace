@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
-  createRepoOnMain,
+  createRepoOnBranchFromMain,
   git as gitIn
 } from '../test-support/branched-repo.js'
 import { runProbe, invertedText, testCommandFor } from './probe.js'
@@ -34,7 +34,7 @@ const git = (...args) => gitIn(root, ...args)
 const committedRepo = async () => {
   root = mkdtempSync(join(tmpdir(), 'tim-probe-'))
   logsDir = mkdtempSync(join(tmpdir(), 'tim-probe-logs-'))
-  await createRepoOnMain(root, {
+  await createRepoOnBranchFromMain(root, {
     'package.json': '{ "type": "module" }\n',
     'src/prices.js': PRICES,
     'prices.check.js': PRICE_CHECK
@@ -54,8 +54,8 @@ const probe = (options) =>
 
 const gitStatus = async () => (await git('status', '--porcelain')).stdout
 
-const verdictOf = ({ redOnBase, greenAfterRestore, restored }) => ({
-  redOnBase,
+const verdictOf = ({ redWhenInverted, greenAfterRestore, restored }) => ({
+  redWhenInverted,
   greenAfterRestore,
   restored
 })
@@ -67,7 +67,7 @@ describe('runProbe', () => {
     const outcome = await probe({ inversion: { line: 2 } })
 
     expect(verdictOf(outcome)).toEqual({
-      redOnBase: true,
+      redWhenInverted: true,
       greenAfterRestore: true,
       restored: true
     })
@@ -79,7 +79,7 @@ describe('runProbe', () => {
     const outcome = await probe({ inversion: { line: 3 } })
 
     expect(verdictOf(outcome)).toEqual({
-      redOnBase: false,
+      redWhenInverted: false,
       greenAfterRestore: true,
       restored: true
     })
@@ -92,7 +92,7 @@ describe('runProbe', () => {
       inversion: { search: 'basePrice = 10', replace: 'basePrice = 11' }
     })
 
-    expect(outcome.redOnBase).toBe(true)
+    expect(outcome.redWhenInverted).toBe(true)
   })
 
   test('leaves the file byte for byte as git has it, with nothing for git status to show', async () => {
@@ -131,7 +131,7 @@ describe('runProbe', () => {
       timeoutMs: 300
     })
 
-    expect(outcome.redOnBase).toBe(true)
+    expect(outcome.redWhenInverted).toBe(true)
   })
 
   test('puts the file back when the test command cannot start', async () => {

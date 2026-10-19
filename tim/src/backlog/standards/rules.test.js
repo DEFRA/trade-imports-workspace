@@ -34,7 +34,7 @@ const writeRule = (relRulePath, content) => {
 }
 
 describe('#matchRule', () => {
-  test('R-1 matches a nested and a root file, not a wrong extension', () => {
+  test('matches a nested and a root file, not a wrong extension', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/node.md',
       '---\npaths:\n  - "**/*.js"\n---\n\nBody.\n'
@@ -50,7 +50,7 @@ describe('#matchRule', () => {
     expect(matchRule(rule, 'a.ts').matches).toBe(false)
   })
 
-  test('R-2 dot:true matches a dot-folder file', () => {
+  test('dot:true matches a dot-folder file', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/node.md',
       '---\npaths:\n  - "**/*.js"\n---\n\nBody.\n'
@@ -64,7 +64,7 @@ describe('#matchRule', () => {
     expect(matchRule(rule, '.claude/workflows/x.js').matches).toBe(true)
   })
 
-  test('R-4 a nested rule matches with its own scope-relative glob', () => {
+  test('a nested rule matches with its own scope-relative glob', () => {
     const ruleAbsPath = writeRule(
       'tim/.claude/rules/cli.md',
       '---\npaths:\n  - "src/commands/**"\n---\n\nBody.\n'
@@ -81,7 +81,7 @@ describe('#matchRule', () => {
     expect(result.matchedBy).toBe('src/commands/**')
   })
 
-  test('R-5 the same nested rule does not apply to a root path of the same shape', () => {
+  test('the same nested rule does not apply to a root path of the same shape', () => {
     const ruleAbsPath = writeRule(
       'tim/.claude/rules/cli.md',
       '---\npaths:\n  - "src/commands/**"\n---\n\nBody.\n'
@@ -95,7 +95,7 @@ describe('#matchRule', () => {
     expect(matchRule(rule, 'src/commands/x.js').matches).toBe(false)
   })
 
-  test('R-6a a CRLF-fronted rule file has its front matter parsed, not ignored', () => {
+  test('a CRLF-fronted rule file has its front matter parsed, not ignored', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/crlf.md',
       '---\r\npaths:\r\n  - "**/*.js"\r\n---\r\n\r\nBody.\r\n'
@@ -110,7 +110,7 @@ describe('#matchRule', () => {
     expect(matchRule(rule, 'a.ts').matches).toBe(false)
   })
 
-  test('R-6 a rule with no front matter matches every file, matchedBy null', () => {
+  test('a rule with no front matter matches every file, matchedBy null', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/always.md',
       '# Always\n\nNo front matter here.\n'
@@ -128,7 +128,7 @@ describe('#matchRule', () => {
 })
 
 describe('#loadRule', () => {
-  test('R-7 malformed YAML front matter throws PARSE naming the rule path', () => {
+  test('malformed YAML front matter throws PARSE naming the rule path', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/bad.md',
       '---\npaths: [unterminated\n---\n\nBody.\n'
@@ -142,7 +142,7 @@ describe('#loadRule', () => {
     ).toThrow(/\.claude\/rules\/bad\.md/)
   })
 
-  test('R-8 paths: 42 throws PARSE naming the rule path', () => {
+  test('paths: 42 throws PARSE naming the rule path', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/bad.md',
       '---\npaths: 42\n---\n\nBody.\n'
@@ -156,7 +156,7 @@ describe('#loadRule', () => {
     ).toThrow(/\.claude\/rules\/bad\.md/)
   })
 
-  test('R-10 a Topic dir not ending in / throws PARSE naming the rule path and the topic dir', () => {
+  test('a Topic dir not ending in / throws PARSE naming the rule path and the topic dir', () => {
     const ruleAbsPath = writeRule(
       '.claude/rules/bad.md',
       '- Topic dir: `~/git/defra/trade-imports-workspace/docs/best-practices/node`\n'
@@ -175,7 +175,7 @@ describe('#loadRule', () => {
 })
 
 describe('#rulesFoldersFor', () => {
-  test('R-9 ignores a .claude/rules folder in a sibling or non-ancestor folder', () => {
+  test('ignores a .claude/rules folder in a sibling or non-ancestor folder', () => {
     mkdirSync(join(workspace, '.claude', 'rules'), { recursive: true })
     writeFileSync(join(workspace, '.claude', 'rules', 'root.md'), '# Root\n')
     writeRule('workareas/clones/x/.claude/rules/decoy.md', '# Decoy\n')
@@ -207,7 +207,7 @@ describe('#rulesFoldersFor', () => {
 })
 
 describe('#findAllRulesFolders', () => {
-  test('W-1 finds the root and a nested rules folder', () => {
+  test('finds the root and a nested rules folder', () => {
     mkdirSync(join(workspace, '.claude', 'rules'), { recursive: true })
     writeFileSync(join(workspace, '.claude', 'rules', 'root.md'), '# Root\n')
     mkdirSync(join(workspace, 'pkg', '.claude', 'rules'), { recursive: true })
@@ -218,7 +218,7 @@ describe('#findAllRulesFolders', () => {
     expect(folders).toEqual(['', 'pkg'])
   })
 
-  test('W-2 skips node_modules, workareas and .claude/worktrees', () => {
+  test('skips node_modules, workareas and .claude/worktrees', () => {
     mkdirSync(join(workspace, '.claude', 'rules'), { recursive: true })
     writeFileSync(join(workspace, '.claude', 'rules', 'root.md'), '# Root\n')
     mkdirSync(join(workspace, 'node_modules', 'x', '.claude', 'rules'), {
@@ -237,7 +237,7 @@ describe('#findAllRulesFolders', () => {
     expect(folders).toEqual([''])
   })
 
-  test('W-4 skips a .claude/worktrees folder nested under a non-root scope too', () => {
+  test('skips a .claude/worktrees folder nested under a non-root scope too', () => {
     mkdirSync(join(workspace, '.claude', 'rules'), { recursive: true })
     writeFileSync(join(workspace, '.claude', 'rules', 'root.md'), '# Root\n')
     mkdirSync(join(workspace, 'pkg', '.claude', 'rules'), { recursive: true })
@@ -252,7 +252,7 @@ describe('#findAllRulesFolders', () => {
     expect(folders).toEqual(['', 'pkg'])
   })
 
-  test('W-3 a nested repos/<name>/.claude/rules folder is included (deliberate — the walk skips no repo by name)', () => {
+  test('a nested repos/<name>/.claude/rules folder is included', () => {
     mkdirSync(join(workspace, 'repos', 'some-repo', '.claude', 'rules'), {
       recursive: true
     })
@@ -268,7 +268,7 @@ describe('#findAllRulesFolders', () => {
 })
 
 describe('#expandBraces', () => {
-  test('P-2 expands one brace group into two tokens', () => {
+  test('expands one brace group into two tokens', () => {
     expect(expandBraces('testing/{unit.md,integration.md}')).toEqual([
       'testing/unit.md',
       'testing/integration.md'
@@ -281,7 +281,7 @@ describe('#expandBraces', () => {
 })
 
 describe('#extractPointers', () => {
-  test('P-1 Topic dir plus Key files resolve against the Topic dir', () => {
+  test('Topic dir plus Key files resolve against the Topic dir', () => {
     const body = [
       '- Topic dir: `~/git/defra/trade-imports-workspace/docs/best-practices/sql/`',
       '- Key files: `style.md`, `{a.md,b.md}`'
@@ -299,7 +299,7 @@ describe('#extractPointers', () => {
     ])
   })
 
-  test('P-3 a full-workspace pointer becomes workspace-relative', () => {
+  test('a full-workspace pointer becomes workspace-relative', () => {
     const body =
       '- See `~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md`.'
 
@@ -308,7 +308,7 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual(['docs/best-practices/node/code-style.md'])
   })
 
-  test('P-4 a backticked .md token in a paragraph is ignored', () => {
+  test('a backticked .md token in a paragraph is ignored', () => {
     const body =
       'A spec is still JS/TS, so `node.md` applies additively — not a list item.\n'
 
@@ -317,7 +317,7 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual([])
   })
 
-  test('P-5 non-.md tokens are ignored', () => {
+  test('non-.md tokens are ignored', () => {
     const body =
       '- Run `npm run test:docker-compose` and pass `--json` when scripting.'
 
@@ -326,7 +326,7 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual([])
   })
 
-  test('P-6 a continuation line of a list item is read', () => {
+  test('a continuation line of a list item is read', () => {
     const body = [
       '- Key file: `language.md` — plain English, active voice,',
       '  capitalisation, and one more line naming `accessibility.md`.'
@@ -337,7 +337,7 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual(['language.md', 'accessibility.md'])
   })
 
-  test('P-7 a relative pointer with no Topic dir resolves against the scope root', () => {
+  test('a relative pointer with no Topic dir resolves against the scope root', () => {
     const body = '- See `docs/x.md` for the pattern.'
 
     const { pointsTo } = extractPointers(body, { scopeRootRelative: 'tim' })
@@ -345,7 +345,7 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual(['tim/docs/x.md'])
   })
 
-  test('P-8 duplicate pointers are dropped, in order', () => {
+  test('duplicate pointers are dropped, in order', () => {
     const body = [
       '- First `a.md` mention.',
       '- Second `a.md` mention, then `b.md`.'
@@ -357,8 +357,8 @@ describe('#extractPointers', () => {
   })
 })
 
-describe('the D7 wording fix, against the live rule files', () => {
-  test('P-9 node.md gives code-quality.md, five Topic-dir files, pino-logging.md, then jsdoc.md, then BEST_PRACTICES.md', () => {
+describe('the pointers of the live rule files', () => {
+  test('node.md gives code-quality.md, five Topic-dir files, pino-logging.md, then jsdoc.md, then BEST_PRACTICES.md', () => {
     const rule = loadRule({
       workspaceRoot: realWorkspaceRoot,
       ruleAbsPath: join(realWorkspaceRoot, '.claude', 'rules', 'node.md'),
@@ -378,7 +378,7 @@ describe('the D7 wording fix, against the live rule files', () => {
     ])
   })
 
-  test('P-9 java.md gives code-quality.md, its Topic-dir files, then javadoc.md, then BEST_PRACTICES.md', () => {
+  test('java.md gives code-quality.md, its Topic-dir files, then javadoc.md, then BEST_PRACTICES.md', () => {
     const rule = loadRule({
       workspaceRoot: realWorkspaceRoot,
       ruleAbsPath: join(realWorkspaceRoot, '.claude', 'rules', 'java.md'),
@@ -400,7 +400,7 @@ describe('the D7 wording fix, against the live rule files', () => {
   })
 })
 
-describe('R-3, union across rule files in the same folder', () => {
+describe('the union across rule files in the same folder', () => {
   test('src/copy/copy.en.js matches both node.md and copy.md', () => {
     const rules = loadRulesIn({
       workspaceRoot: realWorkspaceRoot,

@@ -4,25 +4,6 @@ import { load as yamlLoad } from 'js-yaml'
 import picomatch from 'picomatch'
 import { TimError } from '../../errors.js'
 
-/**
- * The pointer grammar (`.claude/rules/*.md`'s body, after the YAML
- * front matter):
- *
- * 1. Pointers live only in list items of the rule body. A list item is a
- *    line starting `- `, plus its indented continuation lines. Paragraph
- *    text is prose — a backticked `.md` token there is not a pointer.
- * 2. In a list item, the backticked token after `Topic dir:` is the rule's
- *    base folder. It must end with `/`.
- * 3. Every other backticked token in a list item whose value, after brace
- *    expansion, ends in `.md` is a pointer.
- * 4. A pointer starting `~/git/defra/trade-imports-workspace/` is
- *    workspace-relative, with that prefix stripped. The same applies to
- *    the Topic dir. Any other pointer resolves against the Topic dir. With
- *    no Topic dir, it resolves against the rule's scope root.
- * 5. The resolved paths, deduplicated in order of appearance, are
- *    `pointsTo`.
- */
-
 const WORKSPACE_PREFIX = '~/git/defra/trade-imports-workspace/'
 const FRONT_MATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 const LIST_ITEM_START_RE = /^-\s+(.*)$/
@@ -36,16 +17,6 @@ const WORKTREES_DIR_NAME = 'worktrees'
 
 const SKIP_DIR_NAMES = new Set(['node_modules', '.git', 'workareas'])
 
-/**
- * A real, non-symlinked directory. `docs/.claude` is a symlink to the
- * workspace's own `.claude` (`ls -la docs/.claude`); `existsSync` +
- * `statSync` both follow it, which would double-count the root rules
- * under `docs/`. `lstatSync` does not follow the final path component, so
- * a symlink here reports `isDirectory() === false`.
- *
- * @param {string} absPath
- * @returns {boolean}
- */
 const isRealDirectory = (absPath) => {
   try {
     return lstatSync(absPath).isDirectory()
@@ -76,15 +47,6 @@ const stripTrailingSlash = (dir) => dir.replace(/\/$/, '')
 const joinRelative = (base, rel) =>
   base ? `${stripTrailingSlash(base)}/${rel}` : rel
 
-/**
- * Resolve one raw pointer/Topic-dir token to a workspace-relative path.
- *
- * @param {string} token
- * @param {object} args
- * @param {string|null} args.topicDirRelative
- * @param {string} args.scopeRootRelative
- * @returns {string}
- */
 const resolveToken = (token, { topicDirRelative, scopeRootRelative }) => {
   if (token.startsWith(WORKSPACE_PREFIX)) {
     return token.slice(WORKSPACE_PREFIX.length)
@@ -95,26 +57,11 @@ const resolveToken = (token, { topicDirRelative, scopeRootRelative }) => {
   return joinRelative(scopeRootRelative, token)
 }
 
-/**
- * Resolve a raw `Topic dir:` token to a workspace-relative path — the same
- * workspace-prefix-or-scope-root rule `resolveToken` applies to pointers.
- *
- * @param {string} topicDirRaw
- * @param {string} scopeRootRelative
- * @returns {string}
- */
 const resolveTopicDir = (topicDirRaw, scopeRootRelative) =>
   topicDirRaw.startsWith(WORKSPACE_PREFIX)
     ? topicDirRaw.slice(WORKSPACE_PREFIX.length)
     : joinRelative(scopeRootRelative, topicDirRaw)
 
-/**
- * Group a rule body's lines into list items, with fenced code blocks and
- * paragraph text excluded — the pointer grammar's rule 1.
- *
- * @param {string} body
- * @returns {string[]} one entry per list item, continuation lines joined in
- */
 const listItemsOf = (body) => {
   const items = []
   let current = null
@@ -144,7 +91,7 @@ const listItemsOf = (body) => {
 }
 
 /**
- * The D7 grammar, applied to one rule's body.
+ * The docs one rule's body points at, and its Topic dir.
  *
  * @param {string} body - The rule's markdown, front matter already removed
  * @param {object} args
@@ -197,10 +144,7 @@ export const extractPointers = (body, { scopeRootRelative, relRulePath }) => {
 
 /**
  * Every ancestor folder of `path`, from the workspace root down to the
- * file's own folder, that has a `.claude/rules` folder. Deliberately does
- * NOT scan the whole workspace — stale copies under `workareas/clones/`,
- * `workareas/reviews/` and `.claude/worktrees/` would apply the wrong
- * rules to unrelated files.
+ * file's own folder, that has a real (not symlinked) `.claude/rules` folder.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -249,16 +193,6 @@ const listMarkdownFilesRecursively = (dirAbs) => {
   return results.sort()
 }
 
-/**
- * The rule body's front matter (`paths`), parsed to globs, plus the body
- * with the front matter stripped.
- *
- * @param {string} raw - The rule file's full text
- * @param {string} relRulePath - For error messages only
- * @returns {{body: string, globs: string[]|null}}
- * @throws {TimError} PARSE when the front matter does not parse, or `paths`
- *   is not a string or a list of strings
- */
 const parseFrontMatterGlobs = (raw, relRulePath) => {
   const frontMatterMatch = raw.match(FRONT_MATTER_RE)
   if (!frontMatterMatch) return { body: raw, globs: null }
@@ -290,8 +224,8 @@ const parseFrontMatterGlobs = (raw, relRulePath) => {
 }
 
 /**
- * Read and parse one rule file: front matter (`paths`) plus the D7 pointer
- * grammar over its body.
+ * Read and parse one rule file: its front matter `paths` and the docs its
+ * body points at.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -352,8 +286,7 @@ export const matchRule = (rule, path) => {
 /**
  * Every `.claude/rules` folder in the workspace, found by a folder walk
  * that skips `node_modules`, `.git`, `workareas`, `.claude/worktrees` and
- * every dot-folder other than `.claude`. Used by `--lint`, which checks
- * every rule whether or not it matches a requested file.
+ * every dot-folder other than `.claude`.
  *
  * @param {string} workspaceRoot
  * @returns {string[]} scope-root-relative folders, each with its own

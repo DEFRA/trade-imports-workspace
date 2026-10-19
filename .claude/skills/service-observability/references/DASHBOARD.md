@@ -80,8 +80,9 @@ One panel reads logs, not metrics:
 
 `[UNPROVEN]` Grafana queries OpenSearch with Lucene, not DQL. Build the query in
 OpenSearch Dashboards with DQL switched off, then copy it across. This
-panel depends on the open question in `LOGGING.md` about whether
-`event.duration` arrives as a number.
+panel finds nothing unless the service writes the `event.*` fields as a
+nested object with a numeric `event.duration` (`LOGGING.md` → "How to
+write the fields"). CDP drops the flat MDC form.
 
 The dimension values for the service come from its code. For
 reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is

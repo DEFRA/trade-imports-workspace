@@ -2,7 +2,6 @@
 # Render the `## Items` markdown table for one repo from items.{repo}.json.
 # Usage: render-items.sh EUDPA-XXXXX --repo REPO
 #
-#
 # Stdout is the table only (header + separator + rows). A fix's "Must:"
 # and "One way:" parts get a column each; a fix with no labels is all
 # Must. Pipes inside cell values are escaped as `\|`.

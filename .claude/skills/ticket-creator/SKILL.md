@@ -382,7 +382,16 @@ stdin.
 
 To assign the ticket to someone else, or to link it as blocking or
 blocked by another, follow "Workflow facts" in
-`ticket-conventions.md`. `tim jira link` creates only Relates links.
+`ticket-conventions.md`. Both are dry runs until `--confirm`:
+
+```bash
+tim jira assign EUDPA-XXXXX <accountId|me>
+tim jira link EUDPA-XXXXX --blocks EUDPA-YYYYY
+tim jira link EUDPA-XXXXX --blocked-by EUDPA-YYYYY
+```
+
+Each reads the result back after writing; the link reports the
+direction Jira stored.
 
 ```
 Ticket created: EUDPA-XXXXX

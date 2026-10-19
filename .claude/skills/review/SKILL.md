@@ -328,7 +328,7 @@ For each group of two or more, add one "decide the owner" item:
 Then close each member with a pointer to it:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Auto-Resolved" --note "merged into #{owner item id}"
+~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
 ```
 
 Run each call as its own Bash call. A finding with no partner stays as
@@ -590,7 +590,7 @@ SHA for the refresh summary.
 
 Use this when reconciling agent results in R6:
 
-- `Won't Fix` / `Auto-Resolved` → carry forward; do NOT re-report.
+- `Won't Fix` / `Auto-Resolved` / `Merged` → carry forward; do NOT re-report.
 - `Fix` + `Done` → verify the agent confirms the violation is gone.
 - `Fix` + `Not Done` (and `Discuss`) → still open.
 - Blank disposition → pending (walker will pick up; should appear in List B).

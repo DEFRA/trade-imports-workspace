@@ -59,11 +59,13 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 ### Branch Setup
 
 One allowlisted dispatch — fetch / checkout base / pull / checkout -b. The
-helper always produces `feature/EUDPA-XXXXX-<slug>` and preserves the
-EUDPA-* prefix (don't strip it on split branches).
+helper produces `<type>/EUDPA-XXXXX-<slug>`, where `--type` is `feat`
+(the default), `fix` or `chore`, and keeps the EUDPA-* prefix as given
+(don't strip it on split branches). Use the same branch name in every
+repo the ticket touches.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX --repo <repo-name> --slug <description>
+~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
 ```
 
 Optional `--base <branch>` if branching from anything other than `main`.

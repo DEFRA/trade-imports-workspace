@@ -281,7 +281,7 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 - **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
 
-### Requirement: The address form groups its fields under 'Address' and 'Contact details', as Design Release 2.1 does
+### Requirement: The address form groups its fields under 'Address' and 'Contact details'
 **ID**: REQ-INS-ADDR-021
 The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. It MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name') and keep 'County (optional)' on the add form between 'Town or city' and 'Postcode or Zip code'. It MUST open the add form's Country select on its blank first option, reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
 

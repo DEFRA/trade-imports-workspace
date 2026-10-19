@@ -27,7 +27,7 @@ helpers under `tools/review/`. Never hand-edit.
       "file": "src/path/to/file.ext",
       "line": "42",                    // string — allows "12-15" ranges or "—"
       "severity": "Critical",          // Critical | Major | Minor
-      "category": "security",
+      "category": "security",          // see file-review-schema.md → "Category values"
       "issue": "...",
       "fix": "Must: ... One way: ...", // see "The fix field" below
       "best_practice": "node/pino-logging.md",  // optional citation
@@ -54,8 +54,8 @@ delete the two inline copies.`
 
 A `fix` with no labels, from an older review, is read as the Must.
 
-A `category: owner` item merges findings that share one root (review
-`SKILL.md` Step 5a). Its members are `Merged` with the note
+An owner item, whose issue starts `One rule,`, merges findings that
+share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the note
 `merged into #N`, naming the owner item. `review-mark.sh` refuses
 `Merged` without that note.
 
@@ -65,7 +65,7 @@ A `category: owner` item merges findings that share one root (review
 |---|---|---|
 | `null` | Pending — walker has not yet seen, user has not hand-marked. | Default for new rows. |
 | `Fix` | Apply the fix. | Walker on `F`; user hand-mark via `review-mark.sh`. |
-| `Won't Fix` | Decided not to fix. | Walker on `W`; user hand-mark; fixer's `WON'T FIX` outcome. |
+| `Won't Fix` | Decided not to fix. A functional item with no evidence (note `no evidence`), or a code-quality item whose note quotes the code, with its file:line, that shows the finding is factually wrong. | Walker (`references/WALKER.md` → "Defaults by kind"); user hand-mark; fixer's `WON'T FIX` outcome. |
 | `Discuss` | Defer to a wider conversation. | Walker on `D`. |
 | `Auto-Resolved` | Violation no longer present. | Walker auto-check; refresh reconciler; fixer's `SKIPPED` outcome. |
 | `Merged` | Folded into an `owner` item; the owner's fix covers it. Notes hold `merged into #N`. | `review-mark.sh --disposition Merged --note "merged into #N"` (`SKILL.md` Step 5a). |

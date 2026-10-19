@@ -24,8 +24,11 @@ Every reviewer also reads `.claude/rules/code-quality.md` in full. Its
 house rules on comments, ids, history and names apply to every file
 whatever its topic, and comments and vague names anywhere in a touched
 file are in scope, not just on changed lines. Findings under those
-rules are real by default: "taste", "pre-existing", "out of scope" and
-"a comparable file does it" never drop one.
+rules are real by default: "taste", "pre-existing", "out of scope",
+"a comparable file does it", the plan and an earlier decision never
+drop one. Every finding carries a code-quality category from the list
+the `review` skill and the build loop's verifier share; see
+`assets/file-style-schema.md` → "Category values".
 
 Per-repo state lives in
 `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`

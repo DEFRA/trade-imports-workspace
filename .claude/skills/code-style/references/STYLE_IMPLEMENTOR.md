@@ -34,7 +34,7 @@ result, verbatim:
   #117 → Done (commit abc123)
   #121 → Done (commit abc123)
   #92  → Auto-Resolved (already fixed)
-  #58  → Won't Fix (deliberate codebase choice — type augmentation)
+  #58  → Won't Fix (src/plugins/auth.js:12 already uses `const getUser = () =>`)
 ```
 
 Or when tests are red before you edit:
@@ -261,8 +261,10 @@ For each item in `skipped_items`:
 ```
 
 If during Step 1 you decided an item is a **per-item judgement won't-fix**
-(e.g. the suggested fix would harm correctness or contradicts a
-deliberate codebase choice):
+because the code shows the finding is factually wrong, or the suggested
+fix would harm correctness, quote that code with its file:line in the
+note. Taste, "pre-existing", "out of scope", "a nearby file does it",
+the plan or an earlier decision is never a reason: fix it.
 
 ```bash
 ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \

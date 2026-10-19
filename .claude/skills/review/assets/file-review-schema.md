@@ -29,7 +29,7 @@ file in a ticket review. Replaces the legacy `.review.md` template.
       "id": 1,                         // sequential within this file
       "line": 42,
       "severity": "Critical",          // Critical | Major | Minor
-      "category": "security",          // freeform short tag
+      "category": "logging",           // one of the categories below
       "issue": "Logger emits err.message only, with no reference number",
       "fix": "Must: the failure log carries the error and the notification reference. One way: logger.error({ err, referenceNumber }, 'Failed to save notification')",
       "best_practice": "node/pino-logging.md"  // optional, relative path
@@ -43,6 +43,31 @@ Severity counts derive from `todos` — not stored.
 `fix` holds a required **Must** (what must become true) and an
 optional **One way** (a suggestion). See `items-table.md` → "The fix
 field".
+
+## Category values
+
+`category` is one word from a fixed list, and its kind sets how triage
+treats the finding. The build loop's verifier uses the same list, and
+`tools/review/finding-categories.sh` holds it: `file-review-add-item.sh`
+and `review-add-item.sh` refuse any other word.
+
+| Kind | Category | Use for |
+|---|---|---|
+| Functional | `correctness` | Behaviour, a broken acceptance criterion, a performance or scope defect, a broken contract between repos, a behaviour-spec scenario that misstates the AC, an absorbed behaviour change, a missing bundle entry |
+| Functional | `security` | A security defect |
+| Functional | `error-handling` | How an error is caught, surfaced or recovered from |
+| Functional | `coverage-gap` | A behaviour no test proves, or a coverage link that does not witness its scenario |
+| Code quality | `naming` | A name that does not predict what the code returns and changes; a metaphor; a positional boolean; one concept with several names |
+| Code quality | `comments` | A comment or doc comment that is stale, describes other code or decodes a name; a doc, recipe or JSDoc the change makes untrue |
+| Code quality | `structure` | Formatting, idiom, convention, the wrong layer, a second mechanism beside an existing one |
+| Code quality | `duplication` | One rule, format or guard written in two places; test set-up copied between tests |
+| Code quality | `logging` | An outcome-changing branch with no log, a log without the ids support searches by, a lost cause, a body at INFO |
+| Code quality | `test-readability` | A test title that claims more than its assertions prove; a test that cannot fail |
+| Code quality | `history` | A ticket key, backlog or ruling id, release name, or before-and-after narration in code |
+
+A functional finding is kept only with evidence: a failure scenario, a
+broken acceptance criterion, or a quoted line. A code-quality finding
+is fixed unless the code shows it is factually wrong.
 
 ## Lifecycle
 
@@ -79,8 +104,8 @@ the aggregator.
 ## Severity values
 
 `Critical` (bug, security, broken AC) > `Major` (quality, missing
-test for new behaviour, and every naming, structure, logging and
-test-truth finding) > `Minor` (a best-practice breach with no effect on
+test for new behaviour, and every `naming`, `structure`,
+`duplication`, `logging` and `test-readability` finding) > `Minor` (a best-practice breach with no effect on
 how a reader understands the code).
 
 ## Mode values

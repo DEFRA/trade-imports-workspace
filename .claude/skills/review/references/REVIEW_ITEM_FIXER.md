@@ -208,3 +208,9 @@ Failing: [spec file and test title] — [one-line cause from error-context.md]
 WON'T FIX: #N — [reason this change would be harmful or incorrect]
 Items table NOT updated. The batch implementor will mark Won't Fix.
 ```
+
+For a code-quality item (`naming`, `comments`, `structure`,
+`duplication`, `logging`, `test-readability`, `history`), the reason
+must quote the code, with its file:line, that shows the finding is
+factually wrong. Taste, "pre-existing", "out of scope", "a nearby file
+does it", the plan or an earlier decision is not a reason: fix it.

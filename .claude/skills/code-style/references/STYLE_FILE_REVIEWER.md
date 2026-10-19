@@ -28,7 +28,7 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 
 ## Success criteria
 
-- Every genuine style violation on changed lines is recorded as a finding with the correct rule identifier (for JavaScript, the rule number), severity, and a concrete suggested fix.
+- Every genuine style violation on changed lines is recorded as a finding with the correct rule identifier (for JavaScript, the rule number), a code-quality category, severity, and a concrete suggested fix.
 - Every comment and every vague or misleading name anywhere in the file is checked against the house rules, not only on changed lines.
 - No PASS / N-A noise: only real FAIL / WARN violations become findings.
 - In REFRESH, each prior item is reconciled (`Auto-Resolved` if fixed, left as-is if still present) and no duplicate is re-added.
@@ -146,7 +146,10 @@ comment and every name is in scope, changed or not:
   a metaphor, a positional boolean flag, or a name that does not
   predict what the code returns and changes
 
-"It was there before this PR" never drops one of these.
+"It was there before this PR" never drops one of these. Nor do taste,
+"out of scope", "a nearby file does it", the plan, or an earlier
+decision. Drop a finding only when the code shows it is factually
+wrong.
 
 ### 3b. REFRESH mode — check old violations and new changes
 
@@ -199,8 +202,15 @@ The per-file `.style.json` placeholder was initialised by
 `prepare-style.sh`. For every violation you decide to flag:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
+~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
 ```
+
+`--category` is one of the code-quality categories the review skill
+and the build loop's verifier share; the script refuses any other. See
+`assets/file-style-schema.md` → "Category values" for which to use.
+A style rule about formatting, idiom or convention is `structure`. A
+defect in behaviour is not a style finding: leave it to the `review`
+skill.
 
 Add `--best-practice node/code-style.md` (or another path under
 `docs/best-practices/`) when the finding maps to a specific rule file.

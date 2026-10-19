@@ -18,7 +18,7 @@ You will **not** write markdown. You will call three commands:
 ~/git/defra/trade-imports-workspace/tools/review/file-review-add-item.sh EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --line <line> --severity <Critical|Major|Minor> \
-    --category <short-tag> \
+    --category <category> \
     --issue "<one-line description>" \
     --fix "Must: <what must become true>. One way: <a suggested change>" \
     [--best-practice <relative/path.md>]
@@ -123,9 +123,9 @@ In REFRESH / MERGE_RESOLVED only, additionally:
      present in the code): **do NOT report it.** The orchestrator
      drains stale items separately.
    - For each prior `Fix + Done` item where the violation is BACK
-     (regression): **DO report it**, with `--category regression`
-     and a `--note`-equivalent phrasing in the `--issue` field
-     mentioning the prior item ID. The reconciler emits a spot-check
+     (regression): **DO report it**, with the prior item's `--category`
+     and an `--issue` that starts `Regression of #N:`, naming the
+     prior item. The reconciler emits a spot-check
      advisory but does not auto-mutate the prior `Fix + Done` row;
      the user re-walks the new entry.
    - For each genuinely new violation introduced by changes since
@@ -328,18 +328,27 @@ never reasons to drop one:
 - it is out of the ticket's scope
 - a comparable file does it the same way
 
+- the plan said to write it that way
+- an earlier review or decision kept it
+
 The only reason to drop one is that it is factually wrong: the copies
 differ, the name does predict what the code returns and changes, or
 the comment is accurate and describes only its own lines. Quote the
 code that shows it.
+
+Functional findings (`correctness`, `security`, `error-handling`,
+`coverage-gap`) are the other way round: raise one only with evidence,
+a concrete failure scenario, the acceptance criterion it breaks, or the
+line it fails on. A functional hunch with none of these is not a
+finding.
 
 In MERGE_RESOLVED mode, additionally:
 
 - For every prior `Fix + Done` item on this file (from step 2.4, the
   prior consolidated items):
   verify the fix is still in the resolved code. If undone by the
-  merge, file as a regression (`--severity Critical`,
-  `--category regression`).
+  merge, file it again with `--severity Critical`, the prior item's
+  `--category`, and an `--issue` that starts `Regression of #N:`.
 - Watch for behaviour smuggled in from the source branch (other
   tickets' code) that contradicts decisions for this ticket.
 - Pay extra attention to the integration points where the two sides
@@ -434,12 +443,28 @@ Then run `file-review-set-verdict.sh` once:
 | Severity | What |
 |---|---|
 | Critical | Bug, security issue, broken AC, a behaviour-spec update that misrepresents the AC or claims unverified coverage, an absorbed behaviour change, or a missing bundle entry |
-| Major | Quality / maintainability / missing test for new behaviour. Every naming, structure, logging and test-truth finding is at least Major. |
+| Major | Quality / maintainability / missing test for new behaviour. Every `naming`, `structure`, `duplication`, `logging` and `test-readability` finding is at least Major. |
 | Minor | A best-practice breach with no effect on how a reader understands the code |
 
-Use these `--category` tags for the four dimensions: `naming`,
-`structure`, `logging`, `test-truth`. Use `comments` for a comment
-finding and `history` for history carried in code.
+## Category
+
+Give every finding exactly one `--category` from the fixed list in
+`~/git/defra/trade-imports-workspace/.claude/skills/review/assets/file-review-schema.md`
+→ "Category values". `file-review-add-item.sh` refuses any other word.
+
+- Functional: `correctness`, `security`, `error-handling`,
+  `coverage-gap`.
+- Code quality: `naming`, `comments`, `structure`, `duplication`,
+  `logging`, `test-readability`, `history`.
+
+The step 5 dimensions map onto them: Naming is `naming`. Structure is
+`structure`, except one rule in two homes and copied test set-up, which
+are `duplication`. Logging is `logging`. Test truth is
+`test-readability` for a title that over-claims or a test that cannot
+fail, and `correctness` for an absorbed behaviour change. A missing
+test for new behaviour, and a coverage link that does not witness its
+scenario, are `coverage-gap`. A behaviour-spec scenario that misstates
+the AC, and a missing bundle entry, are `correctness`.
 
 ## File type guidance
 

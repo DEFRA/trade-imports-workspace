@@ -30,6 +30,7 @@ paper trail.
       "id": 1,                        // sequential within this file
       "line": "42",                   // string — allows "12-15" ranges or ""
       "rule": "2",                    // 16-rule style guide number, another bundle's rule id, or "code-quality" (string)
+      "category": "structure",        // one of the code-quality categories below
       "severity": "FAIL",             // FAIL | WARN
       "issue": "function declaration where fat-arrow is appropriate",
       "fix": "rewrite as const getRows = () => ...",
@@ -40,6 +41,27 @@ paper trail.
 ```
 
 FAIL / WARN counts derive from `todos` — not stored.
+
+## Category values
+
+Every style finding is a code-quality finding, so `category` is one of
+the code-quality categories the review skill and the build loop's
+verifier use (`tools/review/finding-categories.sh`).
+`file-style-add-item.sh` refuses any other word, including the
+functional ones.
+
+| Category | Use for |
+|---|---|
+| `naming` | A name that does not predict what the code returns and changes; a generic name, a metaphor, a positional boolean |
+| `comments` | A comment or doc comment that is stale, describes other code, decodes a name, or a JSDoc or Javadoc that is wrong |
+| `structure` | Formatting, idiom and convention: fat arrows, early returns, `const`, `async`/`await`, magic values, exports, nesting |
+| `duplication` | One rule or format written in two places; test set-up copied between tests |
+| `logging` | A log line without its ids, a lost cause, a body at INFO, `console.log` |
+| `test-readability` | A test title that claims more than its assertions prove |
+| `history` | A ticket key, backlog or ruling id, release name, or before-and-after narration in code |
+
+A code-quality finding is fixed unless the code shows it is factually
+wrong.
 
 ## Lifecycle
 

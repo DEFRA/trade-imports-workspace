@@ -76,9 +76,14 @@ The house rules in `.claude/rules/code-quality.md` apply to every file.
 
 **Code-quality findings are real by default.** Naming, comments,
 structure, duplication, logging, test readability and history in code
-are never dropped as taste, as pre-existing, as out of scope, or
-because a comparable file does the same. Drop one only when the code
-shows it is factually wrong.
+are never dropped as taste, as pre-existing, as out of scope, because
+a comparable file does the same, or because the plan or an earlier
+decision chose it. Drop one only when the code shows it is factually
+wrong. **Functional findings need evidence**: a failure scenario, a
+broken acceptance criterion or a failing line. Every finding carries
+one category from a fixed list, shared with the build loop's
+verifier; see `assets/file-review-schema.md` → "Category values" and
+`references/WALKER.md` → "Defaults by kind".
 
 **Fix, then report.** When the review runs with `fix: true`, or the
 walker hands it on, findings are fixed by default and reported after.
@@ -302,8 +307,11 @@ and Reuse" and "Statements Made Untrue" in each repo's
 `_consistency-check.md`, add an item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|stale-statement} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
 ```
+
+A "Naming and Reuse" row is `naming`, or `duplication` when it names a
+second copy of something. A "Statements Made Untrue" row is `comments`.
 
 **2. Merge findings that share one root.** Read
 `review-items.sh EUDPA-XXXXX --repo {repo} --json` across every repo.
@@ -322,8 +330,11 @@ three different ways (`5cafe2dd`, `9af27387`, `eee3cfc2`).
 For each group of two or more, add one "decide the owner" item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category owner --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
 ```
+
+The owner item is `duplication` when its members are copies of one
+rule, and `structure` otherwise. Its issue always starts `One rule,`.
 
 Then close each member with a pointer to it:
 
@@ -685,7 +696,7 @@ instructs this). The reconciler simply appends every todo it finds.
 `spot_check` lists prior `Fix + Done` items in files that were
 refreshed — verify they have not regressed. If any have, the user
 re-walks the corresponding new item the reviewer added (with
-`--category regression`).
+the prior item's category and an issue starting `Regression of #N:`).
 
 **Stale items not addressed automatically:** the simplified
 reconciler does NOT auto-mark prior open items as Auto-Resolved when

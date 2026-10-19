@@ -43,13 +43,18 @@ helper named below are only on that repo's
   `logback-ecs-encoder` (1.6.0) does not write SLF4J key-value pairs,
   so a typed number was not possible. The time in milliseconds is in the
   message text as well.
-- **`[UNPROVEN]` Whether CDP's log pipeline accepts this.** The encoder
-  writes flat dotted keys (`"event.duration"`); the CDP logging doc
-  describes these fields as nested, and says the two are not treated the
-  same. Check in dev OpenSearch that the `event.*` fields arrive and
-  that `event.duration` can be sorted as a number. A wrong field type
-  can fail ingestion and raise CDP's own "Log Ingestion Errors" alert.
-  If it does not work, fall back to searching the message text.
+- **CDP drops flat dotted keys, so these fields never reach
+  OpenSearch.** Seen in dev on 2026-10-19 (reference-data 0.24.0): the
+  line arrives with its `message` ("External call mdm/get-countries
+  success in 203 ms"), `service.name` and `trace.id`, but none of the
+  four `event.*` fields. The encoder writes them flat
+  (`"event.category":"external-call"`); CDP keeps `event.*` and
+  `error.*` only when nested (`{"event":{"category":"external-call"}}`),
+  with `event.duration` a number (long). `trace.id` survives flat.
+  The fix is for the line to write a nested `event` object with a
+  numeric duration; the MDC route cannot. Until then, find the lines by
+  their message text: `service.name:"<service>" AND message:"External
+  call"`.
 - **Clean the MDC up.** Use `MDC.putCloseable` in a try-with-resources
   block so the fields do not leak onto later lines from the same
   thread.

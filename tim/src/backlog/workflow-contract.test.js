@@ -2347,6 +2347,8 @@ describe('increment-build-loop', () => {
           '41:   - Update the JSDoc on `decorateCard` (card.js:10) to say it takes the anchor.'
         const LOG_IDS =
           '50:   - The refusal branch logs once with `journeyId` and `portCode`.'
+        const LOG_BESIDE_POSSESSIVE =
+          "55:   - The test reads the log from `driveHandler`'s result."
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -2476,7 +2478,8 @@ describe('increment-build-loop', () => {
                 QUOTED_LOG,
                 QUOTED_DESIGN,
                 DICTATED_JSDOC,
-                LOG_IDS
+                LOG_IDS,
+                LOG_BESIDE_POSSESSIVE
               )
             },
             BASELINE_ANSWER,
@@ -2492,7 +2495,8 @@ describe('increment-build-loop', () => {
             QUOTED_LOG,
             QUOTED_DESIGN,
             DICTATED_JSDOC,
-            LOG_IDS
+            LOG_IDS,
+            LOG_BESIDE_POSSESSIVE
           ].filter((line) => replan.includes(line.replace(/^\d+:/, '').trim()))
 
           expect(replan).toContain(

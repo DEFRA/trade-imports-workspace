@@ -2677,7 +2677,8 @@ const CODE_TEXT_DIRECTIVES = [
   },
   {
     kind: 'a quoted log message',
-    pattern: /\b(logger|log|logs|logged|warn|warns)\b.{0,60}?(["“`]|(?<![A-Za-z])')[A-Za-z]+ [A-Za-z]+/i
+    pattern:
+      /\b(logger|log|logs|logged|warn|warns)\b.{0,60}?(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])'[A-Za-z]+ [A-Za-z][^']*')/i
   }
 ]
 

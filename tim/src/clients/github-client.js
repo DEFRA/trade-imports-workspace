@@ -119,6 +119,22 @@ const jobSummary = (job) => ({
     .map((step) => step.name)
 })
 
+const reportLinesOf = ({ title, summary, text }) =>
+  [title, summary, text]
+    .flatMap((part) => String(part ?? '').split(/\r?\n/))
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+
+const checkReportAsJob = (checkRun) => ({
+  id: checkRun.id,
+  name: checkRun.name,
+  status: checkRun.status,
+  conclusion: checkRun.conclusion,
+  url: checkRun.details_url ?? checkRun.html_url,
+  failedSteps: [],
+  logTail: reportLinesOf(checkRun.output ?? {})
+})
+
 const rerunScopeOf = ({ jobId }, failedOnly) => {
   if (jobId !== null) return 'job'
   return failedOnly ? 'failed-jobs' : 'run'
@@ -235,6 +251,25 @@ export const createGithubClient = ({
     )
     return { runId: id, jobs }
   }
+
+  const checkRunReport = async (repo, id) => {
+    const { data } = await octokit.checks.get({
+      owner: org,
+      repo,
+      check_run_id: id
+    })
+    return { runId: null, jobs: [checkReportAsJob(data)] }
+  }
+
+  const checkRunReportOrNotFound = (repo, id) =>
+    checkRunReport(repo, id).catch((error) => {
+      if (!isNotFound(error)) throw error
+      throw new TimError(
+        'NOT_FOUND',
+        `Can't find a workflow run, job or check with id ${id} in ${repo}.`,
+        error
+      )
+    })
 
   const rerunTargetOf = async (repo, id) => {
     try {
@@ -394,14 +429,14 @@ export const createGithubClient = ({
 
     getRunLog: (repo, id, { failedOnly = false, lines = 100 } = {}) =>
       wrap(`getRunLog(${repo}, ${id})`, async () => {
-        const { runId, jobs } = await jobsOfRun(repo, id).catch((error) => {
+        const actionsRun = await jobsOfRun(repo, id).catch((error) => {
           if (!isNotFound(error)) throw error
-          throw new TimError(
-            'NOT_FOUND',
-            `Can't find a workflow run or job with id ${id} in ${repo}. A check from outside GitHub Actions, such as SonarCloud, has no log here: open its details URL instead.`,
-            error
-          )
+          return null
         })
+        if (actionsRun === null) {
+          return { repo, ...(await checkRunReportOrNotFound(repo, id)) }
+        }
+        const { runId, jobs } = actionsRun
         const chosen = failedOnly
           ? jobs.filter((job) => job.conclusion === 'failure')
           : jobs

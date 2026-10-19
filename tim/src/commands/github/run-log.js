@@ -39,11 +39,12 @@ export const parseRunLogArgs = (input) => {
 
 /**
  * `tim github run-log`'s full behaviour: the last lines of each job's log
- * in a workflow run, or of one job when given a check run id.
+ * in a workflow run, or of one job when given a check run id. A check from
+ * outside GitHub Actions comes back as one job whose log is its report.
  *
  * @param {object} input - The raw arguments, validated by `parseRunLogArgs`
- * @returns {Promise<{repo: string, runId: number, jobs: object[]}>}
- * @throws {TimError} USAGE for a bad argument, before any request; NOT_FOUND when no run or job has the id
+ * @returns {Promise<{repo: string, runId: number | null, jobs: object[]}>}
+ * @throws {TimError} USAGE for a bad argument, before any request; NOT_FOUND when no run, job or check has the id
  */
 export const runRunLog = async (input) => {
   const { repo, id, failedOnly, lines } = parseRunLogArgs(input)
@@ -91,7 +92,8 @@ export const register = (gh, { timVersion }) => {
         '',
         'The id is either a workflow run id or the id `tim github checks` shows',
         'for a check. A check from outside GitHub Actions, such as SonarCloud,',
-        'has no log here: open its details link instead.'
+        'has no log, so its report is shown instead: for SonarCloud, the failed',
+        'quality gate conditions.'
       ].join('\n')
     )
     .action(

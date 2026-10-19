@@ -676,19 +676,67 @@ describe('getRunLog', () => {
     ])
   })
 
-  test('says a non-Actions check has no log here when neither a run nor a job has the id', async () => {
+  test('returns the report of a check from outside GitHub Actions as its log lines', async () => {
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/900`)
+      .reply(404, { message: 'Not Found' })
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/jobs/900`)
+      .reply(404, { message: 'Not Found' })
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/check-runs/900`)
+      .reply(200, {
+        id: 900,
+        name: 'SonarCloud Code Analysis',
+        status: 'completed',
+        conclusion: 'failure',
+        details_url: 'https://sonarcloud.io/dashboard?id=x&pullRequest=58',
+        output: {
+          title: 'Quality Gate failed',
+          summary: '## Failed conditions\n\n  3 New issues  \n',
+          text: null
+        }
+      })
+
+    const result = await createGithubClient({ token: 't' }).getRunLog(REPO, 900)
+
+    expect(result).toEqual({
+      repo: REPO,
+      runId: null,
+      jobs: [
+        {
+          id: 900,
+          name: 'SonarCloud Code Analysis',
+          status: 'completed',
+          conclusion: 'failure',
+          url: 'https://sonarcloud.io/dashboard?id=x&pullRequest=58',
+          failedSteps: [],
+          logTail: [
+            'Quality Gate failed',
+            '## Failed conditions',
+            '3 New issues'
+          ]
+        }
+      ]
+    })
+  })
+
+  test('says nothing has the id when no run, job or check has it', async () => {
     mockPool(ORIGIN)
       .get(`${REPO_PATH}/actions/runs/5`)
       .reply(404, { message: 'Not Found' })
     mockPool(ORIGIN)
       .get(`${REPO_PATH}/actions/jobs/5`)
       .reply(404, { message: 'Not Found' })
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/check-runs/5`)
+      .reply(404, { message: 'Not Found' })
 
     await expect(
       createGithubClient({ token: 't' }).getRunLog(REPO, 5)
     ).rejects.toMatchObject({
       code: 'NOT_FOUND',
-      message: `Can't find a workflow run or job with id 5 in ${REPO}. A check from outside GitHub Actions, such as SonarCloud, has no log here: open its details URL instead.`
+      message: `Can't find a workflow run, job or check with id 5 in ${REPO}.`
     })
   })
 })

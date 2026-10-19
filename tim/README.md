@@ -744,8 +744,10 @@ tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--
   `--failed-only`, it prints the failed steps and the last `--lines` lines of
   the log, without timestamps. The tail ends at the last `##[error]` line, so
   the clean-up after a failure does not push the cause out of view. A check
-  from outside GitHub Actions, such as SonarCloud, has no log here and fails
-  with `NOT_FOUND`: open its details link instead.
+  from outside GitHub Actions, such as SonarCloud, has no log, so `run-log`
+  prints the report it posted to GitHub instead (for SonarCloud, the failed
+  quality gate conditions), with `runId` set to `null`. An id that no run,
+  job or check has fails with `NOT_FOUND`.
 - **`rerun`** takes the same ids as `run-log`. Given the id of a job, it runs
   that job again. Given a run id, it runs every job in the run again, or only
   the failed ones with `--failed-only`. It does not wait: watch the result

@@ -15,7 +15,8 @@ import { projectSlug } from './standards/claude-chain.js'
 import {
   loadCodeStyleRouting,
   topicsForPath,
-  bestPracticeForTopics
+  bestPracticeForTopics,
+  repoRelativeBestPracticeForTopics
 } from './standards/code-style-routing.js'
 import {
   loadReviewRouting,
@@ -233,7 +234,87 @@ describe('#resolveStandards', () => {
     ).toThrow(expect.objectContaining({ code: 'LINT' }))
   })
 
-  test('req-043 topics for a file in a non-workspace repo use the repo-relative path, not the workspace-relative one', () => {
+  test('a controller in a frontend repo lists its repo docs from ~, the topic doc first, each with a sha', () => {
+    seedWorkspace()
+    const routingPath = join(
+      workspace,
+      '.claude/skills/code-style/assets/routing.json'
+    )
+    const routing = JSON.parse(readFileSync(routingPath, 'utf8'))
+    routing.fileTopics.push({ patterns: ['*controller.js'], topics: ['hapi'] })
+    routing.topics.hapi = {
+      bestPractice: ['docs/best-practices/node/style.md'],
+      repoRelativeBestPractice: [
+        'src/server/app/docs/validation.md',
+        'src/server/app/docs/not-in-this-repo.md'
+      ]
+    }
+    routing.unknownTopicHint = 'node|hapi'
+    writeFileSync(routingPath, JSON.stringify(routing))
+    const repoRel = 'repos/trade-imports-plants-frontend'
+    write(`${repoRel}/src/server/app/docs/architecture.md`, '# A\n')
+    write(`${repoRel}/src/server/app/docs/validation.md`, '# V\n')
+    write(`${repoRel}/src/server/app/sets/plants/docs/README.md`, '# R\n')
+    write(`${repoRel}/src/server/app/sets/plants/docs/add-a-page.md`, '# P\n')
+
+    const result = resolveStandards({
+      workspaceRoot: workspace,
+      repos: {
+        workspace: { abs: workspace, rel: '' },
+        'trade-imports-plants-frontend': {
+          abs: join(workspace, repoRel),
+          rel: repoRel
+        }
+      },
+      files: [
+        {
+          repoKey: 'trade-imports-plants-frontend',
+          path: 'src/server/app/sets/plants/features/origin/controller.js'
+        }
+      ],
+      claudeConfigDir,
+      homeDir: workspace
+    })
+
+    const [entry] = result.files
+    expect(entry.repoDocs).toEqual([
+      `~/${repoRel}/src/server/app/docs/validation.md`,
+      `~/${repoRel}/src/server/app/docs/architecture.md`,
+      `~/${repoRel}/src/server/app/sets/plants/docs/README.md`,
+      `~/${repoRel}/src/server/app/sets/plants/docs/add-a-page.md`
+    ])
+    for (const path of entry.repoDocs) {
+      expect(entry.shas[path]).toMatch(/^[0-9a-f]{40}$/)
+    }
+    expect(result.standards.map((s) => s.path)).toEqual(
+      expect.arrayContaining(entry.repoDocs)
+    )
+  })
+
+  test('a repo-level entry lists the repo docs of every set', () => {
+    seedWorkspace()
+    const repoRel = 'repos/web'
+    write(`${repoRel}/src/server/app/sets/a/docs/README.md`, '# A\n')
+    write(`${repoRel}/src/server/app/sets/b/docs/features.md`, '# B\n')
+
+    const result = resolveStandards({
+      workspaceRoot: workspace,
+      repos: {
+        workspace: { abs: workspace, rel: '' },
+        web: { abs: join(workspace, repoRel), rel: repoRel }
+      },
+      repoLevel: ['web'],
+      claudeConfigDir,
+      homeDir: workspace
+    })
+
+    expect(result.repos[0].repoDocs).toEqual([
+      `~/${repoRel}/src/server/app/sets/a/docs/README.md`,
+      `~/${repoRel}/src/server/app/sets/b/docs/features.md`
+    ])
+  })
+
+  test('topics for a file in a non-workspace repo use the repo-relative path, not the workspace-relative one', () => {
     write('CLAUDE.md', '# Root\n')
     write(
       '.claude/skills/code-style/assets/routing.json',
@@ -475,5 +556,13 @@ describe('group L — the live workspace', () => {
     expect(entry.claudeMd).toEqual(['CLAUDE.md', 'tim/CLAUDE.md'])
     expect(entry.imports.length).toBeGreaterThanOrEqual(6)
     expect(entry.topics).toEqual(['node'])
+  })
+
+  test('L-3 the live routing names validation.md as the hapi topic repo doc', () => {
+    const routing = loadCodeStyleRouting(realWorkspaceRoot)
+
+    expect(
+      repoRelativeBestPracticeForTopics(routing, ['node', 'hapi'])
+    ).toEqual(['src/server/app/docs/validation.md'])
   })
 })

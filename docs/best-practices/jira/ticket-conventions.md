@@ -199,8 +199,9 @@ There is no "In Dev" transition; "In Progress" is the nearest.
 
 There is no "Won't Do" transition. `CLOSED` is not a substitute: every
 `CLOSED` ticket on EUDPA carries resolution `Done`, so it reads as
-delivered. `tim jira transition` and `tools/jira/transition-ticket.sh`
-send no fields, so neither can set a resolution.
+delivered. `tools/jira/transition-ticket.sh` sends no fields, so it
+cannot set a resolution. `tim jira transition EUDPA-X "<status>"
+--resolution "<name>"` can, where the transition's screen accepts one.
 
 To drop a ticket:
 
@@ -214,17 +215,16 @@ To drop a ticket:
 
 ### Assigning a ticket
 
-`tools/jira/create-ticket.sh -a` assigns a new ticket to you. Nothing in
-`tim` or `tools/jira/` assigns an existing ticket. Use the Atlassian
-MCP's `editJiraIssue` with `fields: {"assignee": {"accountId": "<id>"}}`
-on site `eaflood.atlassian.net`, or the Jira UI. If assigning becomes
-routine, add an assign command to `tim jira` rather than reaching for
-the MCP each time.
+`tools/jira/create-ticket.sh -a` assigns a new ticket to you.
+`tim jira assign EUDPA-X <accountId|me>` assigns an existing ticket. It is
+a dry run until you add `--confirm`.
 
 ### Links
 
-`tim jira link` creates only "Relates" links. For "Blocks", use
-`tools/jira/link-tickets.sh`, which reads left to right:
+For "Blocks", use `tim jira link EUDPA-X --blocks <key>` or
+`tim jira link EUDPA-X --blocked-by <key>`. It reads the link back and
+reports the direction Jira stored. `tools/jira/link-tickets.sh` also
+works, and reads left to right:
 
 ```bash
 ~/git/defra/trade-imports-workspace/tools/jira/link-tickets.sh EUDPA-181 Blocks EUDPA-183

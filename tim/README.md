@@ -210,6 +210,34 @@ idempotent (a replay returns the first result and writes nothing), and
 3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
 process holds the write lock after every retry.
 
+`tim backlog standards` lists what a task must read before it changes a file
+or a repo, resolved from the working tree at the time you run it:
+
+```bash
+tim backlog standards --files plants-frontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js --json
+tim backlog standards --repo-level trade-imports-animals-frontend --json
+tim backlog standards --lint      # every rule and routing path in the workspace resolves
+```
+
+Each entry lists the matching `.claude/rules` files, the code-style or review
+routing's `bestPractice` files, `repoDocs`, the `CLAUDE.md` chain with its `@`
+imports, and the memory index, each with its blob sha. `repoDocs` are the
+repo's own docs, as `~/` paths, and only files that exist:
+
+1. the file's topics' `repoRelativeBestPractice` from the code-style routing
+   (for example `src/server/app/docs/validation.md` for a controller)
+2. `src/server/app/docs/` `architecture.md`, `features.md`, `flow-and-gates.md`,
+   `journey-flow-and-gates.md` and every `add-a-*.md` recipe
+3. `src/server/app/sets/<set>/docs/` `README.md`, the same named docs and its
+   recipes, for the set that holds the file, or for every set when the file is
+   in none or the entry is for the whole repo
+
+A repo key can be the full key (`workspace`, a folder under `repos/`, or a
+programme's backlog key with `--programme`) or a short form that names one
+repo: `plants-frontend`, `plantsFrontend` and `trade-imports-plants-frontend`
+all name `repos/trade-imports-plants-frontend`. An unknown or ambiguous key
+exits 2 and names the keys you can use.
+
 ### `tim distil` — the DISTIL files in one workarea
 
 The deterministic steps of the requirements-pipeline skill's DISTIL phase, run
@@ -473,6 +501,58 @@ CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
 machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
 on a 16 GB machine) in its shell profile.
 
+A rung whose `run` is `tim build duplication` runs that command in the
+rung's folder. Every repo in gates.json has one, in the unit phase.
+
+### `tim build duplication` — test code a branch copies
+
+```bash
+tim build duplication trade-imports-plants-frontend --json   # a folder under repos/, or a path
+tim build duplication . --base origin/main                   # the default base
+```
+
+Finds blocks of 10 or more lines (and 50 or more tokens) copied between test
+files: `*.test.js`, `*.fit.spec.js`, `*.spec.ts`, `*IT.java` and
+`*Test.java`. It scans every test file in the repo with
+[jscpd](https://www.npmjs.com/package/jscpd), a tim dependency, and keeps a
+block only when one side is a test file changed since `--base` (committed or
+not) and `--base` does not already have the copy. So a clone already on
+`origin/main` never fails a branch. Set-up used by two tests belongs in the
+shared test helper.
+
+The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
+clone is `{lines, tokens, first, second}`, and `first` and `second` are
+`{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
+finds a clone, and 2 when `--base` does not exist.
+
+### `tim build probe` — does a test witness a line
+
+```bash
+tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js \
+  --line 42 --test-file src/server/app/origin/controller.test.js --json
+tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" \
+  --json -- npm --prefix tim test -- src/build/gate.test.js
+```
+
+Blanks out one line of a production file (`--line`, counting from 1), or
+replaces text that appears exactly once (`--search` with `--replace`). Then
+it runs the test, writes the file back byte for byte, checks git shows no
+change to it, and runs the test again. Give the test as `--test-file` or as a
+command after `--`, with every option before the `--`. `--test-file` runs a
+`*.test.js` through `npm test -- --no-coverage`, a `*.fit.spec.js` through
+`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest` and
+`-Dit.test`.
+
+The result is `{file, inversion, redOnBase, greenAfterRestore, restored,
+logs}`. `redOnBase` true means the test failed without the line, so it
+witnesses it. False means it does not: the line is dead, or the test checks
+something else. Use it as review evidence, not as a gate. `greenAfterRestore`
+false means the test was failing before the probe. A run that takes longer
+than `--timeout-seconds` (default 270) counts as failed. The probe refuses a
+file with uncommitted changes (`DIRTY_TREE`), so commit first. It exits 1
+only when it could not put the file back (`NOT_RESTORED`). Logs go to
+`--logs`, or `workareas/build-probe/` in the workspace.
+
 ### `tim build runs archive|report` — what each run cost
 
 Keeps the full transcripts of workflow runs and reports what each stage cost
@@ -510,10 +590,10 @@ JSON also carries `agentMs`, the sum. The increment and stage come from the
 agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
 increment id sit under `(run)`.
 
-### `tim jira create|attach|link|epics` — the Jira write surface
+### `tim jira create|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` are read-only. Creating, attaching, linking and
-listing epics writes to Jira, so all four follow one rule: **dry run by
+`tim jira ticket`/`comments` and `epics` are read-only. `create`, `attach`,
+`link` and `assign` write to Jira, so they follow one rule: **dry run by
 default, a real write needs an explicit `--confirm`** (or, for `create`, a
 matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
 allowlist stops `tim jira *`, so this contract — not the allowlist — is what
@@ -526,6 +606,10 @@ tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be atta
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
 tim jira link EUDPA-200 relates EUDPA-100 --confirm  # creates the link, then GETs the ticket back to verify it landed
+tim jira link EUDPA-200 --blocks EUDPA-300 --confirm # EUDPA-200 blocks EUDPA-300; reads the link back and reports the direction Jira stored
+tim jira link EUDPA-300 --blocked-by EUDPA-200       # dry run of the same link, from the other side
+tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
+tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
 ```
 
@@ -545,6 +629,21 @@ gets written for what did succeed. The `ticket-creator` skill and the
 `prototype` skill's hand-off both build a manifest and call this surface
 rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
 
+`tim jira link` takes exactly one link: `relates <key>`, `--blocks <key>` or
+`--blocked-by <key>`. A positional `blocks` is refused, because the flags
+make the direction explicit. Jira's `issueLink` field names mislead: the
+blocker goes in `inwardIssue` and the blocked ticket in `outwardIssue`. The
+client's `recordBlocker({ blocker, blocked })` owns that mapping. After the
+write, the command reads the ticket's links back; if Jira stored the link the
+other way round it fails with `UNKNOWN` and names the stored direction.
+`--json` puts `{mode, key, target, type, requested, stored, verified}` in
+`result`.
+
+`tim jira assign` leaves a ticket already assigned to that account alone and
+reports `unchanged`, even with `--confirm`. `--json` puts
+`{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
+`assigned` or `unchanged`).
+
 ### `tim jira transition` — move a ticket's status
 
 Moving a ticket is the whole job of this command, so it is **not** a dry run:
@@ -553,17 +652,22 @@ it changes the ticket straight away. It replaces
 
 ```bash
 tim jira transition EUDPA-200 "Done" --json   # moves the ticket to the status named exactly "Done", then reads it back to confirm
-tim jira transition EUDPA-200 --list          # read-only: the transitions the ticket offers, each as `transition -> status`
+tim jira transition EUDPA-200 --list          # read-only: the transitions the ticket offers, each as `transition -> status`, with the resolutions each accepts
+tim jira transition EUDPA-200 "Done" --resolution "Won't Do" --json   # moves the ticket and sets the resolution, then reads both back
 ```
 
 - The name is matched exactly against the status each transition leads to.
-  When no status matches, a transition with that name is used instead, as
-  the shell script did, and the output says which status the ticket ended in.
+  When no status matches, a transition with that name is used instead, and
+  the output says which status the ticket ended in.
+- `--resolution <name>` works only where the transition's screen has a
+  resolution field that offers that name. Otherwise the command fails with
+  `USAGE` before it moves anything, and names the resolutions it does offer.
 - A ticket already in the status is left alone and reported as `unchanged`,
   so running it twice is safe.
 - A status the ticket offers no transition to fails with `USAGE` (exit 2) and
   lists every transition it does offer.
-- `--json` puts `{key, action, status, previousStatus, requested, transition}`
+- `--json` puts
+  `{key, action, status, previousStatus, requested, transition, resolution}`
   in `result` (`action` is `moved`, `unchanged` or `listed`; `--list` gives
   `{key, action, status, transitions}`).
 

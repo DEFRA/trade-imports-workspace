@@ -1,16 +1,18 @@
 #!/bin/bash
 # Set the Disposition (and corresponding Status) on a review item.
 # Usage:
-#   review-mark.sh EUDPA-XXXXX --repo REPO --item N --disposition "Fix"|"Won't Fix"|"Discuss"|"Auto-Resolved" [--note "..."]
+#   review-mark.sh EUDPA-XXXXX --repo REPO --item N --disposition "Fix"|"Won't Fix"|"Discuss"|"Auto-Resolved"|"Merged" [--note "..."]
 #
 # Auto-sets Status:
 #   Fix             → "Not Done"
 #   Discuss         → "Not Done"
 #   Won't Fix       → "—"
 #   Auto-Resolved   → "—"
+#   Merged          → "—"
 #   (cleared)       → null
 #
 # --note overwrites the Notes column. Without --note, Notes is left as-is.
+# Merged needs --note "merged into #N", naming the owner item.
 
 set -e
 
@@ -25,7 +27,8 @@ usage() {
     cat <<EOF
 Usage: $0 EUDPA-XXXXX --repo REPO --item N --disposition VALUE [--note "..."]
 
-  --disposition V   One of: Fix, "Won't Fix", Discuss, Auto-Resolved, "" (clear)
+  --disposition V   One of: Fix, "Won't Fix", Discuss, Auto-Resolved, Merged, "" (clear)
+  --note "..."      Required with Merged: "merged into #N"
 EOF
     exit 1
 }
@@ -47,13 +50,18 @@ done
 [[ -z "$ITEM"   ]] && { echo "--item required" >&2; usage; }
 
 case "$DISPOSITION" in
-    "" | "Fix" | "Won't Fix" | "Discuss" | "Auto-Resolved") ;;
+    "" | "Fix" | "Won't Fix" | "Discuss" | "Auto-Resolved" | "Merged") ;;
     *) echo "Invalid --disposition: $DISPOSITION" >&2; exit 1 ;;
 esac
 
+if [[ "$DISPOSITION" == "Merged" ]] && [[ ! "$NOTE" =~ ^merged\ into\ \#[0-9]+$ ]]; then
+    echo "Merged needs --note \"merged into #N\", naming the owner item." >&2
+    exit 1
+fi
+
 case "$DISPOSITION" in
     "Fix" | "Discuss") STATUS="Not Done" ;;
-    "Won't Fix" | "Auto-Resolved") STATUS="—" ;;
+    "Won't Fix" | "Auto-Resolved" | "Merged") STATUS="—" ;;
     "") STATUS="" ;;
 esac
 

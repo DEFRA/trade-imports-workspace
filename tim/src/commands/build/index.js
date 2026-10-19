@@ -13,6 +13,8 @@ import {
 } from '../../build/gate-result.js'
 import { registerRuns } from './runs.js'
 import { registerStart } from './start.js'
+import { registerProbe } from './probe.js'
+import { registerDuplication } from './duplication.js'
 
 const SCHEMA_VERSION = 1
 
@@ -417,11 +419,13 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, and archive and report its runs"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, and find test code a branch copies"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
   registerGate(build, timVersion)
   registerGateWait(build, timVersion)
   registerRuns(build, timVersion)
+  registerProbe(build, timVersion)
+  registerDuplication(build, timVersion)
 }

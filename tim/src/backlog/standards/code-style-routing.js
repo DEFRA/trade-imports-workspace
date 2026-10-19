@@ -18,7 +18,10 @@ const routingSchema = z.object({
   ),
   topics: z.record(
     z.string(),
-    z.object({ bestPractice: z.array(z.string()).min(1) })
+    z.object({
+      bestPractice: z.array(z.string()).min(1),
+      repoRelativeBestPractice: z.array(z.string()).optional()
+    })
   ),
   unknownTopicHint: z.string()
 })
@@ -128,5 +131,22 @@ export const topicsForPath = (routing, path) => {
 export const bestPracticeForTopics = (routing, topics) => [
   ...new Set(
     topics.flatMap((topic) => routing.topics[topic]?.bestPractice ?? [])
+  )
+]
+
+/**
+ * The union of `repoRelativeBestPractice` paths for a set of topics, in
+ * topic order, deduplicated. Each path is relative to the repo that holds
+ * the file, and may not exist in every repo.
+ *
+ * @param {object} routing - From {@link loadCodeStyleRouting}
+ * @param {string[]} topics
+ * @returns {string[]}
+ */
+export const repoRelativeBestPracticeForTopics = (routing, topics) => [
+  ...new Set(
+    topics.flatMap(
+      (topic) => routing.topics[topic]?.repoRelativeBestPractice ?? []
+    )
   )
 ]

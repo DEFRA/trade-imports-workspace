@@ -14,6 +14,15 @@ import { tmpdir } from 'node:os'
 import { execa } from 'execa'
 import { GATES_PATH } from './gates.js'
 import { serviceFingerprints } from '../exec/stack-fingerprints.js'
+import {
+  commitAll,
+  createRepoOnMain,
+  writeFiles
+} from '../test-support/branched-repo.js'
+import {
+  SET_UP_FIRST_LINE,
+  testFileWithSetUp
+} from '../test-support/copied-set-up.js'
 import { runGate, cannotRunBecause, defaultLogsDir } from './gate.js'
 
 const WORKAREA = 'shared/programme'
@@ -1124,5 +1133,57 @@ describe('cannotRunBecause', () => {
     expect(
       cannotRunBecause({ repo: 'backend', path: missing, run: 'test' })
     ).toBe(`backend is not cloned at ${missing}.`)
+  })
+})
+
+describe('runGate — the duplication rung', () => {
+  const duplicationGate = async () => {
+    const env = workspaceWith({
+      gates: {
+        frontend: {
+          rungs: [
+            { name: 'duplication', phase: 'unit', run: 'tim build duplication' }
+          ]
+        }
+      },
+      repos: { frontend: {} }
+    })
+    const repoPath = join(root, 'repos', 'frontend')
+    await createRepoOnMain(repoPath, {
+      'src/a.test.js': testFileWithSetUp('first', 'a')
+    })
+    return { env, repoPath }
+  }
+
+  const namesPlace = (log, file) =>
+    log.includes(`${file}:${SET_UP_FIRST_LINE}-`)
+
+  test('fails when the branch copies a test set-up block, and names both places in its log', async () => {
+    const { env, repoPath } = await duplicationGate()
+    writeFiles(repoPath, { 'src/b.test.js': testFileWithSetUp('second', 'b') })
+    await commitAll(repoPath, 'copy the set-up')
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    const log = readFileSync(outcome.rungs[0].log, 'utf8')
+    expect({
+      rungs: outcomeOf(outcome.rungs),
+      places: [
+        namesPlace(log, 'src/a.test.js'),
+        namesPlace(log, 'src/b.test.js')
+      ]
+    }).toEqual({ rungs: ['frontend:duplication:FAIL'], places: [true, true] })
+  })
+
+  test('passes when the branch adds a test file with no copied block', async () => {
+    const { env, repoPath } = await duplicationGate()
+    writeFiles(repoPath, {
+      'src/b.test.js': "test('b', () => expect(1).toBe(1))\n"
+    })
+    await commitAll(repoPath, 'add a test')
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(outcomeOf(outcome.rungs)).toEqual(['frontend:duplication:pass'])
   })
 })

@@ -1213,6 +1213,21 @@ describe('tim backlog standards', () => {
     expect(escaping.stderr).toContain('workspace:../x.js')
   })
 
+  test('a short repo key resolves to the folder under repos/, and the entry names the full key', async () => {
+    seedStandardsWorkspace()
+    writeStandardsFile('repos/trade-imports-plants-frontend/src/a.js')
+
+    const run = await runTim(
+      ['backlog', 'standards', '--files', 'plants-frontend:src/a.js', '--json'],
+      workspace
+    )
+
+    expect(run.exitCode).toBe(0)
+    expect(resultOf(run).files[0].file).toBe(
+      'trade-imports-plants-frontend:src/a.js'
+    )
+  })
+
   test('S-12 an unknown repo key exits 2; a backlog naming no repos exits 2 NOT_FOUND', async () => {
     seedStandardsWorkspace()
 
@@ -1223,6 +1238,7 @@ describe('tim backlog standards', () => {
 
     expect(unknown.exitCode).toBe(2)
     expect(unknown.stderr).toContain('nope')
+    expect(unknown.stderr).toContain('`workspace`')
 
     writeRegistry({
       programmes: {

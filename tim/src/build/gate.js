@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runToLog } from '../exec/exec.js'
 import {
   acquireStack,
@@ -12,7 +13,13 @@ import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
-import { loadGates, planRungs, MVN_VERIFY, PHASES } from './gates.js'
+import {
+  loadGates,
+  planRungs,
+  MVN_VERIFY,
+  PHASES,
+  TIM_DUPLICATION
+} from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
@@ -40,13 +47,24 @@ export const defaultLogsDir = (workspaceRoot, workarea) =>
 export const logPathFor = (logsDir, repo, name) =>
   join(logsDir, `gate-${repo}-${name}.log`)
 
-const commandFor = ({ run, scope }) =>
-  run === MVN_VERIFY
-    ? { command: 'mvn', args: ['-B', 'verify'] }
-    : {
-        command: 'npm',
-        args: ['run', run, ...(scope.length > 0 ? ['--', ...scope] : [])]
-      }
+const TIM_CLI = fileURLToPath(new URL('../cli.js', import.meta.url))
+
+const npmCommandFor = ({ run, scope }) => ({
+  command: 'npm',
+  args: ['run', run, ...(scope.length > 0 ? ['--', ...scope] : [])]
+})
+
+const duplicationCommand = () => ({
+  command: process.execPath,
+  args: [TIM_CLI, 'build', 'duplication', '.'],
+  env: { TIM_NO_AUTO_PULL: '1' }
+})
+
+const commandFor = (rung) => {
+  if (rung.run === MVN_VERIFY) return { command: 'mvn', args: ['-B', 'verify'] }
+  if (rung.run === TIM_DUPLICATION) return duplicationCommand()
+  return npmCommandFor(rung)
+}
 
 const readScripts = (path) => {
   try {
@@ -67,6 +85,7 @@ const readScripts = (path) => {
  */
 export const cannotRunBecause = ({ repo, path, run }) => {
   if (!existsSync(path)) return `${repo} is not cloned at ${path}.`
+  if (run === TIM_DUPLICATION) return null
   if (run === MVN_VERIFY) {
     return existsSync(join(path, 'pom.xml'))
       ? null
@@ -109,12 +128,12 @@ const runRung = async (rung, { logsDir, env }) => {
   if (rung.refusal) return failed(rung, rung.refusal)
   const blocker = cannotRunBecause(rung)
   if (blocker) return failed(rung, blocker)
-  const { command, args } = commandFor(rung)
+  const { command, args, env: commandEnv } = commandFor(rung)
   const logPath = logPathFor(logsDir, rung.repo, rung.name)
   try {
     const { exitCode, durationMs, log } = await runToLog(command, args, {
       cwd: rung.path,
-      env,
+      env: { ...env, ...commandEnv },
       logPath
     })
     return rungResult({

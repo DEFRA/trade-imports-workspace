@@ -5,7 +5,7 @@ import picomatch from 'picomatch'
 import { TimError } from '../../errors.js'
 
 /**
- * inc-012's pointer grammar (`.claude/rules/*.md`'s body, after the YAML
+ * The pointer grammar (`.claude/rules/*.md`'s body, after the YAML
  * front matter):
  *
  * 1. Pointers live only in list items of the rule body. A list item is a

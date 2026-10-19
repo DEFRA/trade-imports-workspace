@@ -1,32 +1,17 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { describe, test, expect, beforeEach } from 'vitest'
 import { execa } from 'execa'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  installHttpMocks,
-  closeHttpMocks
-} from '../../test-support/http-mock.js'
+import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
 import { runEpics, renderEpics, parseEpicsOptions } from './epics.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const BASE = 'https://example.atlassian.net'
 
-let mockPool
-let originalEnv
+const jira = mockJiraForEachTest()
 
 beforeEach(() => {
-  originalEnv = { ...process.env }
-  process.env.JIRA_USER = 'sam'
-  process.env.JIRA_TOKEN = 'token'
-  process.env.JIRA_BASE_URL = BASE
   delete process.env.JIRA_PROJECT_KEY
-  ;({ mockPool } = installHttpMocks())
-})
-
-afterEach(() => {
-  process.env = originalEnv
-  closeHttpMocks()
 })
 
 describe('parseEpicsOptions', () => {
@@ -50,7 +35,7 @@ describe('parseEpicsOptions', () => {
 
 describe('runEpics', () => {
   test('returns the project and its open epics', async () => {
-    mockPool(BASE)
+    jira()
       .get(/^\/rest\/api\/3\/search\/jql/)
       .reply(200, {
         issues: [

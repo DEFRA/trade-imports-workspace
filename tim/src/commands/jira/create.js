@@ -93,7 +93,7 @@ export const runCreate = async ({ fromPath, confirmPlanId }) => {
 
   const relates = []
   for (const target of manifest.relates) {
-    await client.linkIssues('Relates', created.key, target)
+    await client.relateIssues(created.key, target)
     relates.push(target)
   }
 

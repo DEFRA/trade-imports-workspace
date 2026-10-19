@@ -2,10 +2,14 @@
 # Render the `## Items` markdown table for one repo from items.{repo}.json.
 # Usage: render-items.sh EUDPA-XXXXX --repo REPO
 #
-# Stdout is the table only (header + separator + rows). Pipes inside
-# cell values are escaped as `\|` so the table stays well-formed.
+#
+# Stdout is the table only (header + separator + rows). A fix's "Must:"
+# and "One way:" parts get a column each; a fix with no labels is all
+# Must. Pipes inside cell values are escaped as `\|`.
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TICKET=""
 REPO=""
@@ -24,10 +28,4 @@ done
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
-echo "| # | File | Line | Severity | Category | Issue | Fix | Disposition | Status | Notes |"
-echo "|---|------|------|----------|----------|-------|-----|-------------|--------|-------|"
-jq -r '
-    def esc: . | tostring | gsub("\\|"; "\\|");
-    .items[] |
-    "| \(.id) | \(.file | esc) | \(.line // "" | esc) | \(.severity // "") | \(.category // "" | esc) | \(.issue // "" | esc) | \(.fix // "" | esc) | \(.disposition // "") | \(.status // "") | \(.notes // "" | esc) |"
-' "$target"
+jq -r -f "$SCRIPT_DIR/items-table.jq" "$target"

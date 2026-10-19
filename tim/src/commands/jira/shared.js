@@ -1,15 +1,35 @@
+import { z } from 'zod'
 import { OK } from '../../constants/exitCodes.js'
+import { TimError } from '../../errors.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
+
+const ISSUE_KEY = /^[A-Z][A-Z0-9_]*-\d+$/
+const ISSUE_KEY_MESSAGE = 'Give a Jira ticket key, for example EUDPA-200.'
+
+export const issueKeySchema = z
+  .string({ error: ISSUE_KEY_MESSAGE })
+  .trim()
+  .regex(ISSUE_KEY, ISSUE_KEY_MESSAGE)
+
+/**
+ * @param {unknown} value
+ * @returns {string} The trimmed key
+ * @throws {TimError} USAGE when `value` is not a Jira ticket key
+ */
+export const parseIssueKey = (value) => {
+  const result = issueKeySchema.safeParse(value)
+  if (!result.success) {
+    throw new TimError('USAGE', result.error.issues[0].message)
+  }
+  return result.data
+}
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
 /**
- * The parse-options -> run -> emit -> exit sequence every `tim jira` write
- * subcommand repeats, named once (mirrors `tim backlog`'s
- * `makeBacklogAction` in `../backlog/shared.js`). Unlike `tim backlog` and
- * `tim spec`, jira commands never resolve a workspace root — they talk to
- * Jira and to files next to the manifest the caller names, nothing else.
+ * A commander action that parses options, runs, prints the result as text
+ * or a JSON envelope, and exits with the matching code.
  *
  * @param {object} args
  * @param {(opts: object) => object} [args.parseOptions] - Validate raw

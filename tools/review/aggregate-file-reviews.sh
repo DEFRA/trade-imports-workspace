@@ -119,20 +119,11 @@ emit_items() {
     echo "## Items"
     echo
     if [[ "$WRITE_ITEMS" == "1" ]] || [[ -f "$review_dir/items.${REPO}.json" ]]; then
-        # Prefer the canonical items.{repo}.json if it exists.
         "$SCRIPT_DIR/render-items.sh" "$TICKET" --repo "$REPO"
     else
-        # Fallback: render directly from per-file todos (one-shot, no
-        # disposition/status — the caller hasn't written items.json yet).
-        echo "| # | File | Line | Severity | Category | Issue | Fix | Disposition | Status | Notes |"
-        echo "|---|------|------|----------|----------|-------|-----|-------------|--------|-------|"
-        echo "$combined" | jq -r '
-            def esc: . | tostring | gsub("\\|"; "\\|");
-            [ .[] as $f | $f.todos[] | . + {file: $f.file} ]
-            | to_entries
-            | .[]
-            | "| \(.key + 1) | \(.value.file | esc) | \(.value.line) | \(.value.severity) | \(.value.category | esc) | \(.value.issue | esc) | \(.value.fix | esc) |  |  |  |"
-        '
+        echo "$combined" \
+            | jq '{items: ([ .[] as $f | $f.todos[] | . + {file: $f.file} ] | to_entries | map(.value + {id: (.key + 1)}))}' \
+            | jq -r -f "$SCRIPT_DIR/items-table.jq"
     fi
 }
 

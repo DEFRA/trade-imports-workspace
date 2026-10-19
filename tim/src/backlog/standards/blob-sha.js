@@ -3,9 +3,7 @@ import { readFileSync } from 'node:fs'
 
 /**
  * Git's blob object hash: `sha1("blob " + byteLength + "\0" + bytes)`,
- * byte-identical to `git hash-object`. Computed on the bytes at resolve
- * time — this is audit only (DESIGN 8.5): nothing compares it or refuses
- * on it.
+ * byte-identical to `git hash-object`.
  *
  * @param {Buffer} buffer
  * @returns {string} 40-hex sha1

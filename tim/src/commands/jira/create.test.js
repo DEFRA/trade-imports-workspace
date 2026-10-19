@@ -4,10 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import {
-  installHttpMocks,
-  closeHttpMocks
-} from '../../test-support/http-mock.js'
+import { JIRA_BASE, mockJiraForEachTest } from '../../test-support/jira-mock.js'
 import {
   runCreate,
   renderCreatePlan,
@@ -17,7 +14,6 @@ import {
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const BASE = 'https://example.atlassian.net'
 
 const validManifest = (overrides = {}) => ({
   schema: 'tim-ticket/1',
@@ -31,22 +27,15 @@ const validManifest = (overrides = {}) => ({
   ...overrides
 })
 
+const jira = mockJiraForEachTest()
+
 let workDir
-let mockPool
-let originalEnv
 
 beforeEach(() => {
-  originalEnv = { ...process.env }
-  process.env.JIRA_USER = 'sam'
-  process.env.JIRA_TOKEN = 'token'
-  process.env.JIRA_BASE_URL = BASE
   workDir = mkdtempSync(join(tmpdir(), 'tim-jira-create-'))
-  ;({ mockPool } = installHttpMocks())
 })
 
 afterEach(() => {
-  process.env = originalEnv
-  closeHttpMocks()
   rmSync(workDir, { recursive: true, force: true })
 })
 
@@ -141,14 +130,14 @@ describe('runCreate — success', () => {
     })
     const { planId } = await runCreate({ fromPath: manifestPath })
 
-    mockPool(BASE)
+    jira()
       .post('/rest/api/2/issue')
       .reply(201, {
         id: '100001',
         key: 'EUDPA-999',
-        self: `${BASE}/rest/api/2/issue/100001`
+        self: `${JIRA_BASE}/rest/api/2/issue/100001`
       })
-    mockPool(BASE)
+    jira()
       .post('/rest/api/2/issue/EUDPA-999/attachments')
       .reply(200, [
         {
@@ -158,7 +147,7 @@ describe('runCreate — success', () => {
           created: '2026-09-28T10:00:00.000Z'
         }
       ])
-    mockPool(BASE).post('/rest/api/2/issueLink').reply(201, {})
+    jira().post('/rest/api/2/issueLink').reply(201, {})
 
     const result = await runCreate({
       fromPath: manifestPath,
@@ -167,7 +156,7 @@ describe('runCreate — success', () => {
 
     expect(result.mode).toBe('created')
     expect(result.key).toBe('EUDPA-999')
-    expect(result.url).toBe(`${BASE}/browse/EUDPA-999`)
+    expect(result.url).toBe(`${JIRA_BASE}/browse/EUDPA-999`)
     expect(result.attachments).toEqual([
       expect.objectContaining({
         filename: 'screenshot.png',
@@ -191,16 +180,14 @@ describe('runCreate — success', () => {
     })
     const { planId } = await runCreate({ fromPath: manifestPath })
 
-    mockPool(BASE)
+    jira()
       .post('/rest/api/2/issue')
       .reply(201, {
         id: '2',
         key: 'EUDPA-501',
-        self: `${BASE}/rest/api/2/issue/2`
+        self: `${JIRA_BASE}/rest/api/2/issue/2`
       })
-    mockPool(BASE)
-      .post('/rest/api/2/issue/EUDPA-501/attachments')
-      .reply(404, {})
+    jira().post('/rest/api/2/issue/EUDPA-501/attachments').reply(404, {})
 
     const result = await runCreate({
       fromPath: manifestPath,
@@ -219,12 +206,12 @@ describe('runCreate — success', () => {
     const manifestPath = writeManifest()
     const { planId } = await runCreate({ fromPath: manifestPath })
 
-    mockPool(BASE)
+    jira()
       .post('/rest/api/2/issue')
       .reply(201, {
         id: '3',
         key: 'EUDPA-500',
-        self: `${BASE}/rest/api/2/issue/3`
+        self: `${JIRA_BASE}/rest/api/2/issue/3`
       })
 
     await runCreate({ fromPath: manifestPath, confirmPlanId: planId })
@@ -242,7 +229,7 @@ describe('renderCreated', () => {
   test('lists attachments and relates, and flags a partial failure', () => {
     const text = renderCreated({
       key: 'EUDPA-999',
-      url: `${BASE}/browse/EUDPA-999`,
+      url: `${JIRA_BASE}/browse/EUDPA-999`,
       attachments: [{ filename: 'a.png', status: 'failed' }],
       relates: ['EUDPA-1'],
       partialFailure: true

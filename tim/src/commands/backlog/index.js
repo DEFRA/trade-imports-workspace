@@ -9,6 +9,7 @@ import { setIncrementField, appendJournalNote } from '../../backlog/state.js'
 import { INCREMENT_ID, SETTABLE_FIELDS } from '../../backlog/state-schema.js'
 import { readJsonFile } from '../../backlog/io.js'
 import { resolveStandards, lintStandards } from '../../backlog/standards.js'
+import { resolveRepoKey } from '../../backlog/standards/repo-keys.js'
 import { TimError } from '../../errors.js'
 import { register as registerLedger } from './ledger.js'
 import { register as registerRows } from './rows.js'
@@ -322,14 +323,6 @@ const resolveRepoMap = ({ workspaceRoot, programme }) => {
   return { workspace: { abs: workspaceRoot, rel: '' }, ...repoEntries }
 }
 
-const requireRepoKey = (repos, repoKey) => {
-  if (repos[repoKey]) return
-  throw new TimError(
-    'USAGE',
-    `Can't find repo key \`${repoKey}\`. Name a programme with --programme, or use \`workspace\` or a folder name under repos/.`
-  )
-}
-
 const renderStandardsEntry = (entry) =>
   [
     entry.file ?? `${entry.repoKey}:${entry.path}`,
@@ -338,6 +331,7 @@ const renderStandardsEntry = (entry) =>
       : `  technologies: ${entry.technologies.join(', ') || '(none)'}`,
     `  topics: ${(entry.topics ?? []).join(', ') || '(none)'}`,
     `  bestPractice: ${entry.bestPractice.join(', ') || '(none)'}`,
+    `  repoDocs: ${entry.repoDocs.join(', ') || '(none)'}`,
     `  claudeMd: ${entry.claudeMd.join(', ') || '(none)'}`,
     `  imports: ${entry.imports.join(', ') || '(none)'}`,
     `  memory: ${entry.memory.join(', ') || '(none)'}`
@@ -566,7 +560,7 @@ export const register = (program, { timVersion }) => {
   backlog
     .command('standards')
     .description(
-      'Every rule, skill-routing bundle, CLAUDE.md and memory-index path a task must read for a set of files or repos, resolved live from the current working tree'
+      'Every rule, skill-routing bundle, repo doc, CLAUDE.md and memory-index path a task must read for a set of files or repos, resolved live from the current working tree'
     )
     .addHelpText(
       'after',
@@ -577,7 +571,7 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--files <repoKey:path>',
-      'A file to resolve standards for, as <repoKey>:<path>. Repeat it, or give several separated by commas.',
+      'A file to resolve standards for, as <repoKey>:<path>. A short key such as plants-frontend works when it names one repo. Repeat it, or give several separated by commas.',
       collectCommaSeparated,
       []
     )
@@ -607,21 +601,21 @@ export const register = (program, { timVersion }) => {
             process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude')
           const homeDir = homedir()
 
-          for (const { repoKey } of parsed.fileSpecs) {
-            requireRepoKey(repos, repoKey)
-          }
-          for (const repoKey of parsed.repoLevel) {
-            requireRepoKey(repos, repoKey)
-          }
+          const files = parsed.fileSpecs.map((spec) => ({
+            ...spec,
+            repoKey: resolveRepoKey(repos, spec.repoKey)
+          }))
+          const repoLevel = parsed.repoLevel.map((repoKey) =>
+            resolveRepoKey(repos, repoKey)
+          )
 
-          const hasStandardsTargets =
-            parsed.fileSpecs.length > 0 || parsed.repoLevel.length > 0
+          const hasStandardsTargets = files.length > 0 || repoLevel.length > 0
           const standardsResult = hasStandardsTargets
             ? resolveStandards({
                 workspaceRoot,
                 repos,
-                files: parsed.fileSpecs,
-                repoLevel: parsed.repoLevel,
+                files,
+                repoLevel,
                 claudeConfigDir,
                 homeDir
               })

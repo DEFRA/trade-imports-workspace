@@ -2,32 +2,41 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import {
-  installHttpMocks,
-  closeHttpMocks
-} from '../../test-support/http-mock.js'
+import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
 import { runAttach, renderAttachResult, parseAttachOptions } from './attach.js'
 
-const BASE = 'https://example.atlassian.net'
+const jira = mockJiraForEachTest()
 
 let workDir
-let mockPool
-let originalEnv
 
 beforeEach(() => {
-  originalEnv = { ...process.env }
-  process.env.JIRA_USER = 'sam'
-  process.env.JIRA_TOKEN = 'token'
-  process.env.JIRA_BASE_URL = BASE
   workDir = mkdtempSync(join(tmpdir(), 'tim-jira-attach-'))
-  ;({ mockPool } = installHttpMocks())
 })
 
 afterEach(() => {
-  process.env = originalEnv
-  closeHttpMocks()
   rmSync(workDir, { recursive: true, force: true })
 })
+
+const filesInWorkDir = (...names) =>
+  names.map((name) => {
+    const path = join(workDir, name)
+    writeFileSync(path, name)
+    return path
+  })
+
+const issueAlreadyHas = (filename) =>
+  jira()
+    .get('/rest/api/2/issue/EUDPA-200?fields=attachment')
+    .reply(200, {
+      fields: {
+        attachment: [{ id: '1', filename, size: 1, created: 'now' }]
+      }
+    })
+
+const acceptsUpload = (id, filename) =>
+  jira()
+    .post('/rest/api/2/issue/EUDPA-200/attachments')
+    .reply(200, [{ id, filename, size: 1, created: 'now' }])
 
 describe('parseAttachOptions', () => {
   test('defaults confirm and replace to false', () => {
@@ -48,55 +57,31 @@ describe('runAttach', () => {
   })
 
   test('dry run skips a filename already on the issue', async () => {
-    writeFileSync(join(workDir, 'existing.png'), 'x')
-    writeFileSync(join(workDir, 'new.png'), 'y')
-    mockPool(BASE)
-      .get('/rest/api/2/issue/EUDPA-200?fields=attachment')
-      .reply(200, {
-        fields: {
-          attachment: [
-            { id: '1', filename: 'existing.png', size: 1, created: 'now' }
-          ]
-        }
-      })
+    const [existing, added] = filesInWorkDir('existing.png', 'new.png')
+    issueAlreadyHas('existing.png')
 
     const result = await runAttach({
       key: 'EUDPA-200',
-      filePaths: [join(workDir, 'existing.png'), join(workDir, 'new.png')],
+      filePaths: [existing, added],
       confirm: false,
       replace: false
     })
 
     expect(result.mode).toBe('dry-run')
     expect(result.planned).toEqual([
-      {
-        path: join(workDir, 'existing.png'),
-        filename: 'existing.png',
-        skip: true
-      },
-      { path: join(workDir, 'new.png'), filename: 'new.png', skip: false }
+      { path: existing, filename: 'existing.png', skip: true },
+      { path: added, filename: 'new.png', skip: false }
     ])
   })
 
   test('--confirm uploads only the files not already there', async () => {
-    writeFileSync(join(workDir, 'existing.png'), 'x')
-    writeFileSync(join(workDir, 'new.png'), 'y')
-    mockPool(BASE)
-      .get('/rest/api/2/issue/EUDPA-200?fields=attachment')
-      .reply(200, {
-        fields: {
-          attachment: [
-            { id: '1', filename: 'existing.png', size: 1, created: 'now' }
-          ]
-        }
-      })
-    mockPool(BASE)
-      .post('/rest/api/2/issue/EUDPA-200/attachments')
-      .reply(200, [{ id: '2', filename: 'new.png', size: 1, created: 'now' }])
+    const [existing, added] = filesInWorkDir('existing.png', 'new.png')
+    issueAlreadyHas('existing.png')
+    acceptsUpload('2', 'new.png')
 
     const result = await runAttach({
       key: 'EUDPA-200',
-      filePaths: [join(workDir, 'existing.png'), join(workDir, 'new.png')],
+      filePaths: [existing, added],
       confirm: true,
       replace: false
     })
@@ -110,25 +95,13 @@ describe('runAttach', () => {
   })
 
   test('--replace re-uploads a file even when the same filename is already there', async () => {
-    writeFileSync(join(workDir, 'existing.png'), 'x')
-    mockPool(BASE)
-      .get('/rest/api/2/issue/EUDPA-200?fields=attachment')
-      .reply(200, {
-        fields: {
-          attachment: [
-            { id: '1', filename: 'existing.png', size: 1, created: 'now' }
-          ]
-        }
-      })
-    mockPool(BASE)
-      .post('/rest/api/2/issue/EUDPA-200/attachments')
-      .reply(200, [
-        { id: '3', filename: 'existing.png', size: 1, created: 'now' }
-      ])
+    const [existing] = filesInWorkDir('existing.png')
+    issueAlreadyHas('existing.png')
+    acceptsUpload('3', 'existing.png')
 
     const result = await runAttach({
       key: 'EUDPA-200',
-      filePaths: [join(workDir, 'existing.png')],
+      filePaths: [existing],
       confirm: true,
       replace: true
     })

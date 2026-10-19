@@ -283,7 +283,7 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 
 ### Requirement: The address form groups its fields under 'Address' and 'Contact details'
 **ID**: REQ-INS-ADDR-021
-The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. It MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name') and keep 'County (optional)' on the add form between 'Town or city' and 'Postcode or Zip code'. It MUST open the add form's Country select on its blank first option, reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. It MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name') and keep 'County (optional)' on the add form between 'Town or city' and 'Postcode or Zip code'. It MUST open the add form's Country select on its blank first option, reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book. The add form MUST show the name, both address lines and the email address at full width, 'Town or city' and 'Postcode or Zip code' at half width, and the phone number at two-thirds width.
 
 #### Scenario: The add and edit forms group their fields under Address and Contact details
 **ID**: SCN-INS-ADDR-021-A
@@ -312,3 +312,11 @@ The system MUST group the address fields under 'Address' and Email address and P
 - **THEN** the add form opens, headed 'Add address details'
 - **WHEN** they select Back
 - **THEN** they return to the address book list
+
+#### Scenario: The add form sizes its fields to the answers they take
+**ID**: SCN-INS-ADDR-021-E
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** the name, both address lines and the email address are full width
+- **AND** 'Town or city' and 'Postcode or Zip code' are half width
+- **AND** the phone number is two-thirds width

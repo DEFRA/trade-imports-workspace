@@ -153,13 +153,14 @@ The system MUST discard anything entered on the add or edit form when the user c
 
 ### Requirement: Deleting an address asks for confirmation, naming the address, before it is removed
 **ID**: REQ-INS-ADDR-011
-The system MUST ask the user to confirm before deleting an address, naming the address in the question, and MUST leave the address untouched if the user cancels instead of confirming.
+The system MUST ask the user to confirm before deleting an address, naming the address in the question and headed 'Delete this address?', and MUST leave the address untouched if the user cancels instead of confirming.
 
 #### Scenario: Delete confirmation names the address and can be backed out of
 **ID**: SCN-INS-ADDR-011-A
 - **GIVEN** the user opens the delete confirmation for an address
 - **WHEN** the page is shown
 - **THEN** it asks the user to confirm deleting that named address, with a way back to its details
+- **AND** the page is headed 'Delete this address?'
 
 #### Scenario: Cancelling the delete confirmation leaves the address untouched
 **ID**: SCN-INS-ADDR-011-B
@@ -219,15 +220,16 @@ The system MUST show a message explaining the address book is empty, and MUST of
 - **WHEN** the user views the address book
 - **THEN** a message explains there are no addresses yet, and an action to add one is offered
 
-### Requirement: Viewing an address lists the full Standard Address Block against its labels, and offers to edit or delete it
+### Requirement: Viewing an address lists its Standard Address Block against its labels, leaving out blank optional fields, and offers to edit or delete it
 **ID**: REQ-INS-ADDR-015
-The system MUST show every field of an address against its label when viewed on its own page, including fields left blank, and MUST offer to edit or delete that address, and a way back to the list.
+The system MUST show each field of an address against its label on its own page. It MUST show address line 2, labelled 'Address line 2 (optional)', after Address line 1, and county, labelled 'County (optional)', after Town or city, only when the address holds a value for them, never as a blank row. It MUST offer to edit or delete that address, and a way back to the list.
 
-#### Scenario: The view page lists every field against its label, blank fields included
+#### Scenario: The view page leaves out a blank address line 2 and county
 **ID**: SCN-INS-ADDR-015-A
-- **GIVEN** the user opens an address that has some optional fields left blank
+- **GIVEN** the user opens an address with address line 2 and county left blank
 - **WHEN** the page is shown
-- **THEN** every field of the Standard Address Block is listed against its label, including the blank optional ones
+- **THEN** every other field is listed against its label
+- **AND** no address line 2 or county row is shown
 
 #### Scenario: The view page offers to edit or delete the address being viewed
 **ID**: SCN-INS-ADDR-015-B
@@ -240,6 +242,12 @@ The system MUST show every field of an address against its label when viewed on 
 - **GIVEN** the user is viewing an address
 - **WHEN** they select Back
 - **THEN** they return to the address book list
+
+#### Scenario: An address with line 2 and county shows them, marked optional
+**ID**: SCN-INS-ADDR-015-D
+- **GIVEN** the user opens an address with address line 2 and county filled in
+- **WHEN** the page is shown
+- **THEN** 'Address line 2 (optional)' follows Address line 1 and 'County (optional)' follows Town or city, each with its value
 
 ### Requirement: Adding from a journey handshake refuses an unrecognised journey type
 **ID**: REQ-INS-ADDR-016
@@ -320,3 +328,32 @@ The system MUST group the address fields under 'Address' and Email address and P
 - **THEN** the name, both address lines and the email address are full width
 - **AND** 'Town or city' and 'Postcode or Zip code' are half width
 - **AND** the phone number is two-thirds width
+
+### Requirement: Opening an address that is not live in the organisation's book returns to the address book
+**ID**: REQ-INS-ADDR-022
+The system MUST take the user to the address book list, and MUST NOT show a 'Page not found' page, when they open the view page for an id that is not a live address in their organisation's book: an unknown id, a malformed id, another organisation's address or a deleted address.
+
+#### Scenario: An unknown address id returns to the address book
+**ID**: SCN-INS-ADDR-022-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the view page for an id that no address has
+- **THEN** the address book list is shown and no 'Page not found' page
+
+#### Scenario: A malformed address id returns to the address book
+**ID**: SCN-INS-ADDR-022-B
+- **GIVEN** a signed-in user
+- **WHEN** they open the view page for an id that is not a valid address id
+- **THEN** the address book list is shown and no 'Page not found' page
+
+#### Scenario: Another organisation's address returns to the address book
+**ID**: SCN-INS-ADDR-022-C
+- **GIVEN** a signed-in user
+- **WHEN** they open the view page for an address in another organisation's book
+- **THEN** the address book list is shown and no 'Page not found' page
+- **AND** none of its details are shown
+
+#### Scenario: A deleted address returns to the address book
+**ID**: SCN-INS-ADDR-022-D
+- **GIVEN** a signed-in user
+- **WHEN** they open the view page for an address that has been deleted
+- **THEN** the address book list is shown and no 'Page not found' page

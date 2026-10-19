@@ -153,7 +153,7 @@ The system MUST discard anything entered on the add or edit form when the user c
 
 ### Requirement: Deleting an address asks for confirmation, summarising the address, before it is removed
 **ID**: REQ-INS-ADDR-011
-The system MUST ask the user to confirm before deleting an address, on a page headed 'Delete this address?' that summarises the address in one 'Address' row, or 'Not applicable' when it has no details to show. The page confirms and warns that the action cannot be undone, offers a red 'Yes, delete' button and a 'No, cancel' link, and MUST leave the address untouched if the user cancels. After a delete the address book says '<Name> address deleted', or 'Address deleted' when the name is blank.
+The system MUST ask the user to confirm before deleting an address, on a page headed 'Delete this address?' summarising the address in one 'Address' row, or 'Not applicable' when it has no details. The page warns that the action cannot be undone, offers a red 'Yes, delete' button and a 'No, cancel' link, and MUST leave the address untouched on cancel. A delete landing on the address book (REQ-INS-ADDR-024) says '<Name> address deleted', or 'Address deleted' for a blank name.
 
 #### Scenario: The delete confirmation summarises the address and asks for confirmation
 **ID**: SCN-INS-ADDR-011-A
@@ -170,7 +170,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 #### Scenario: Confirming deletion removes the address and confirms it
 **ID**: SCN-INS-ADDR-011-C
-- **GIVEN** the user is on an address's delete confirmation
+- **GIVEN** the user is on an address's delete confirmation, opened without a return
 - **WHEN** they select 'Yes, delete'
 - **THEN** they return to the address book, which says '<Name> address deleted' with the name in sentence case, such as 'Green valley farm address deleted' for 'Green Valley Farm'
 - **AND** it is no longer offered for viewing
@@ -240,7 +240,7 @@ The system MUST show a message explaining the address book is empty, and MUST of
 
 ### Requirement: Viewing an address lists its Standard Address Block against its labels, leaving out blank optional fields, and offers to edit or delete it
 **ID**: REQ-INS-ADDR-015
-The system MUST show each field of an address against its label on its own page. It MUST show address line 2, labelled 'Address line 2 (optional)', after Address line 1, and county, labelled 'County (optional)', after Town or city, only when the address holds a value for them, never as a blank row. It MUST offer to edit or delete that address, and a way back to the list.
+The system MUST show each field of an address against its label on its own page. It MUST show address line 2, labelled 'Address line 2 (optional)', after Address line 1, and county, labelled 'County (optional)', after Town or city, only when the address holds a value for them, never as a blank row. It MUST offer to edit or delete that address, and a way back to the list, or to the page it was opened from (REQ-INS-ADDR-024).
 
 #### Scenario: The view page leaves out a blank address line 2 and county
 **ID**: SCN-INS-ADDR-015-A
@@ -257,7 +257,7 @@ The system MUST show each field of an address against its label on its own page.
 
 #### Scenario: Back from the view page returns to the address book
 **ID**: SCN-INS-ADDR-015-C
-- **GIVEN** the user is viewing an address
+- **GIVEN** the user is viewing an address opened without a return
 - **WHEN** they select Back
 - **THEN** they return to the address book list
 
@@ -349,7 +349,7 @@ The system MUST group the address fields under 'Address' and Email address and P
 
 ### Requirement: Opening an address that is not live in the organisation's book returns to the address book
 **ID**: REQ-INS-ADDR-022
-The system MUST take the user to the address book list, and MUST NOT show a 'Page not found' page, when they open the view page for an id that is not a live address in their organisation's book: an unknown id, a malformed id, another organisation's address or a deleted address.
+The system MUST take the user to the address book list, and MUST NOT show a 'Page not found' page, when they open the view page for an id that is not a live address in their organisation's book: an unknown id, a malformed id, another organisation's address or a deleted address, unless the link carries an honoured return, when it lands there (REQ-INS-ADDR-024).
 
 #### Scenario: An unknown address id returns to the address book
 **ID**: SCN-INS-ADDR-022-A
@@ -378,7 +378,7 @@ The system MUST take the user to the address book list, and MUST NOT show a 'Pag
 
 ### Requirement: Deleting an address that is not live in the organisation's book returns to the address book and changes nothing
 **ID**: REQ-INS-ADDR-023
-The system MUST take the user to the address book list, with no 'Page not found' page, when they open the delete page for an id that is not a live address in their organisation's book. A delete posted for such an id MUST change nothing, MUST show no confirmation banner and MUST land on the list.
+The system MUST take the user to the address book list, with no 'Page not found' page, when they open the delete page for an id that is not a live address in their organisation's book. A delete posted for such an id MUST change nothing, MUST show no confirmation banner and MUST land on the list, unless the link carries an honoured return, when it lands there (REQ-INS-ADDR-024).
 
 #### Scenario: An unknown address id's delete page returns to the address book
 **ID**: SCN-INS-ADDR-023-A
@@ -404,3 +404,64 @@ The system MUST take the user to the address book list, with no 'Page not found'
 - **AND** the address has since been deleted
 - **WHEN** they select 'Yes, delete'
 - **THEN** they land on the address book with no confirmation banner and no 'Page not found' page
+
+### Requirement: The view and delete pages return the user to the page they opened the address from
+**ID**: REQ-INS-ADDR-024
+The system MUST honour a return named when the view or delete page is opened, to a page of this service or, outside stub mode, to exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it; 'Yes, delete' MUST land on it, or on the list when it is one of the deleted address's own pages. A dead link MUST land on it.
+
+#### Scenario: Back from the view page follows a return to a page of this service
+**ID**: SCN-INS-ADDR-024-A
+- **GIVEN** the user opens an address with a return to a page of this service
+- **WHEN** they select Back
+- **THEN** that page opens
+- **AND** Edit and Delete carry the same return on
+
+#### Scenario: The delete page reached with a return goes back to the view page still carrying it
+**ID**: SCN-INS-ADDR-024-B
+- **GIVEN** the user opens an address's delete confirmation with a return
+- **WHEN** they select Back or 'No, cancel'
+- **THEN** the address's details open, still carrying the return
+
+#### Scenario: Confirming deletion lands on the return
+**ID**: SCN-INS-ADDR-024-C
+- **GIVEN** the delete confirmation was opened with a return that is not one of that address's own pages
+- **WHEN** they select 'Yes, delete'
+- **THEN** the address is deleted and the return page opens
+
+#### Scenario: Confirming deletion with a return to one of the deleted address's own pages lands on the address book
+**ID**: SCN-INS-ADDR-024-D
+- **GIVEN** the return is one of the deleted address's own pages, such as its details, edit or delete page
+- **WHEN** they select 'Yes, delete'
+- **THEN** the address book list opens, saying '<Name> address deleted'
+
+#### Scenario: A return to a live-animals journey page is honoured
+**ID**: SCN-INS-ADDR-024-E
+- **GIVEN** an address opened with a return to a live-animals journey page on that environment's animals frontend
+- **WHEN** they select Back
+- **THEN** that journey page opens
+- **AND** after 'Yes, delete' they land on it too
+
+#### Scenario: A return to a germinal products page on the animals frontend is honoured
+**ID**: SCN-INS-ADDR-024-F
+- **GIVEN** an address opened with a return to a germinal products page on that same animals frontend
+- **WHEN** they select Back
+- **THEN** they land on that page
+
+#### Scenario: Any other return is ignored
+**ID**: SCN-INS-ADDR-024-G
+- **GIVEN** an address opened with a return on another site (including the plants frontend), one starting with //, or one not starting with /
+- **WHEN** they select Back
+- **THEN** the address book list opens
+- **AND** on its delete confirmation Back and 'No, cancel' go to the address's details
+
+#### Scenario: In stub mode only a return to a page of this service is honoured
+**ID**: SCN-INS-ADDR-024-H
+- **GIVEN** the service runs in stub mode
+- **WHEN** an address is opened with a return on the animals frontend
+- **THEN** Back goes to the address book list
+
+#### Scenario: A dead link carrying an honoured return lands on it
+**ID**: SCN-INS-ADDR-024-I
+- **GIVEN** a view or delete link for an address that is not live in the book carries an honoured return
+- **WHEN** it is opened
+- **THEN** the return page opens, not the address book and not a 'Page not found' page

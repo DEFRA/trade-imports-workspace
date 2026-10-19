@@ -119,6 +119,11 @@ const jobSummary = (job) => ({
     .map((step) => step.name)
 })
 
+const rerunScopeOf = ({ jobId }, failedOnly) => {
+  if (jobId !== null) return 'job'
+  return failedOnly ? 'failed-jobs' : 'run'
+}
+
 const parseRepoFullName = (htmlUrl) => {
   const match = htmlUrl?.match(
     /github\.com\/([^/]+)\/([^/]+)\/(?:pull|issues)\//
@@ -135,7 +140,8 @@ const parseRepoFullName = (htmlUrl) => {
  * @param {string} [opts.token]
  * @param {string} [opts.org]
  * @returns {object} client with whoami / findPrsForTicket / getPr / getPrDiff
- *   / listWorkflowRuns / openPr / listChecks / getRunLog / getRunStatus methods
+ *   / listWorkflowRuns / openPr / listChecks / getRunLog / rerun / getRunStatus
+ *   methods
  * @throws {TimError} AUTH when no token is provided
  */
 export const createGithubClient = ({
@@ -228,6 +234,38 @@ export const createGithubClient = ({
       { owner: org, repo, run_id: id, filter: 'latest', per_page: 100 }
     )
     return { runId: id, jobs }
+  }
+
+  const rerunTargetOf = async (repo, id) => {
+    try {
+      await octokit.actions.getWorkflowRun({ owner: org, repo, run_id: id })
+      return { runId: id, jobId: null }
+    } catch (error) {
+      if (!isNotFound(error)) throw error
+      const { data } = await octokit.actions.getJobForWorkflowRun({
+        owner: org,
+        repo,
+        job_id: id
+      })
+      return { runId: data.run_id, jobId: data.id }
+    }
+  }
+
+  const RERUN_REQUESTS = {
+    job: (repo, { jobId }) =>
+      octokit.actions.reRunJobForWorkflowRun({
+        owner: org,
+        repo,
+        job_id: jobId
+      }),
+    'failed-jobs': (repo, { runId }) =>
+      octokit.actions.reRunWorkflowFailedJobs({
+        owner: org,
+        repo,
+        run_id: runId
+      }),
+    run: (repo, { runId }) =>
+      octokit.actions.reRunWorkflow({ owner: org, repo, run_id: runId })
   }
 
   const jobLog = async (repo, jobId) => {
@@ -377,6 +415,21 @@ export const createGithubClient = ({
           }))
         )
         return { repo, runId, jobs: withLogs }
+      }),
+
+    rerun: (repo, id, { failedOnly = false } = {}) =>
+      wrap(`rerun(${repo}, ${id})`, async () => {
+        const target = await rerunTargetOf(repo, id).catch((error) => {
+          if (!isNotFound(error)) throw error
+          throw new TimError(
+            'NOT_FOUND',
+            `Can't find a workflow run or job with id ${id} in ${repo}. A check from outside GitHub Actions, such as SonarCloud, can't be run again from here.`,
+            error
+          )
+        })
+        const scope = rerunScopeOf(target, failedOnly)
+        await RERUN_REQUESTS[scope](repo, target)
+        return { repo, runId: target.runId, jobId: target.jobId, scope }
       }),
 
     getRunStatus: (repo, runId) =>

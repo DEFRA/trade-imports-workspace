@@ -705,15 +705,17 @@ The increment build loop's done stage closes each ticket with
 `tim build start` moves a ticket to the working status through the same
 client call (`moveToStatus` in `src/clients/jira-client.js`).
 
-### `tim github create-pr|checks|run-log` — open a PR and follow its pipeline
+### `tim github create-pr|checks|run-log|rerun` — open a PR and follow its pipeline
 
-Open a pull request, watch its checks, and read why a job failed. Every repo
+Open a pull request, watch its checks, read why a job failed, and run a job
+again. Every repo
 is a DEFRA repo, named without the `DEFRA/` prefix.
 
 ```bash
 tim github create-pr trade-imports-animals-frontend --head chore/NO_JIRA-tidy-logs --title "Tidy the logs" --body-file pr.md [--base main] [--draft] [--json]
 tim github checks trade-imports-animals-frontend 51 [--watch] [--interval 30] [--timeout 540] [--json]
 tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [--lines 100] [--json]
+tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--json]
 ```
 
 - **`create-pr`** opens the PR, or returns the PR already open from that
@@ -744,6 +746,12 @@ tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [
   the clean-up after a failure does not push the cause out of view. A check
   from outside GitHub Actions, such as SonarCloud, has no log here and fails
   with `NOT_FOUND`: open its details link instead.
+- **`rerun`** takes the same ids as `run-log`. Given the id of a job, it runs
+  that job again. Given a run id, it runs every job in the run again, or only
+  the failed ones with `--failed-only`. It does not wait: watch the result
+  with `checks --watch`. `--json` puts `{repo, runId, jobId, scope}` in
+  `result`, where `scope` is `job`, `failed-jobs` or `run`. A check from
+  outside GitHub Actions fails with `NOT_FOUND`.
 
 ### Workspace safety for repos outside the branch-parity contract
 

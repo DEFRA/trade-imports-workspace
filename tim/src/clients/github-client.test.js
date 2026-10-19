@@ -692,3 +692,91 @@ describe('getRunLog', () => {
     })
   })
 })
+
+describe('rerun', () => {
+  const recordPost = (path, sent) =>
+    mockPool(ORIGIN)
+      .post(path, () => {
+        sent.push(path)
+        return true
+      })
+      .reply(201, {})
+
+  test('runs one job again when the id is a check run id', async () => {
+    const sent = []
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/701`)
+      .reply(404, { message: 'Not Found' })
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/jobs/701`)
+      .reply(200, job({ id: 701, conclusion: 'failure' }))
+    recordPost(`${REPO_PATH}/actions/jobs/701/rerun`, sent)
+
+    const result = await createGithubClient({ token: 't' }).rerun(REPO, 701)
+
+    expect(sent).toEqual([`${REPO_PATH}/actions/jobs/701/rerun`])
+    expect(result).toEqual({ repo: REPO, runId: 300, jobId: 701, scope: 'job' })
+  })
+
+  test('runs only the failed jobs of a run when asked to', async () => {
+    const sent = []
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/300`)
+      .reply(200, { id: 300 })
+    recordPost(`${REPO_PATH}/actions/runs/300/rerun-failed-jobs`, sent)
+
+    const result = await createGithubClient({ token: 't' }).rerun(REPO, 300, {
+      failedOnly: true
+    })
+
+    expect(sent).toEqual([`${REPO_PATH}/actions/runs/300/rerun-failed-jobs`])
+    expect(result).toEqual({
+      repo: REPO,
+      runId: 300,
+      jobId: null,
+      scope: 'failed-jobs'
+    })
+  })
+
+  test('runs every job of a run again by default', async () => {
+    const sent = []
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/300`)
+      .reply(200, { id: 300 })
+    recordPost(`${REPO_PATH}/actions/runs/300/rerun`, sent)
+
+    const result = await createGithubClient({ token: 't' }).rerun(REPO, 300)
+
+    expect(sent).toEqual([`${REPO_PATH}/actions/runs/300/rerun`])
+    expect(result.scope).toBe('run')
+  })
+
+  test('says a non-Actions check cannot be run again when neither a run nor a job has the id', async () => {
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/5`)
+      .reply(404, { message: 'Not Found' })
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/jobs/5`)
+      .reply(404, { message: 'Not Found' })
+
+    await expect(
+      createGithubClient({ token: 't' }).rerun(REPO, 5)
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: `Can't find a workflow run or job with id 5 in ${REPO}. A check from outside GitHub Actions, such as SonarCloud, can't be run again from here.`
+    })
+  })
+
+  test('maps a refused rerun to TimError(NETWORK)', async () => {
+    mockPool(ORIGIN)
+      .get(`${REPO_PATH}/actions/runs/300`)
+      .reply(200, { id: 300 })
+    mockPool(ORIGIN)
+      .post(`${REPO_PATH}/actions/runs/300/rerun`)
+      .reply(403, { message: 'This workflow is already running' })
+
+    await expect(
+      createGithubClient({ token: 't' }).rerun(REPO, 300)
+    ).rejects.toMatchObject({ code: 'NETWORK' })
+  })
+})

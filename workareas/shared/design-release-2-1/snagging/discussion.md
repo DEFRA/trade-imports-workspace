@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in two groups: **to discuss** (14) or **ready to build** (28). Sam settled five on 20 October (see [Settled](#settled)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (12), **blocked** (2) or **ready to build** (28). On 20 October Sam settled five (see [Settled](#settled)) and blocked two (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -14,8 +14,6 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 | Item | Page | Decision |
 |---|---|---|
-| [S08](#s08-commodity-search-results-as-you-type) | What are you importing? | Keep a search box you submit, with the prototype's look, until commodities come from MDM? (design question 3) |
-| Q1 | What are you importing? | Show 'Cow' with 4 species until MDM, rather than the prototype's 'Cattle' list? |
 | [S25](#s25-transit-countries-added-as-soon-as-they-are-picked) | Transit countries | Keep 'Add country' as the confirm step? (design question 4) |
 | [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? (design question 7) |
 | S02, S21 | Origin, Arrival details | Country and port type-aheads: leave out the joined blue search button? Bold matching letters? |
@@ -28,11 +26,13 @@ Everything else is ready to build. Differences that are only how we build it, su
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
 | S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
 
-The three designer questions in detail are below. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
+The designer questions in detail are below. S08 is now blocked, and its section is kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
 There is also one small question with a default, S33's button colour, and six calls we have made that Sam should check.
 
 ## S08: Commodity search results as you type
+
+**Blocked 20 Oct:** this waits for the MDM commodity API and the commodity type-ahead component. See [Blocked](#blocked).
 
 **What the prototype does:** results appear as you type 3 or more characters, grouped by commodity with a checkbox for each species, under a blue icon button ([prototype](screens/prototype/S08--cattle-results-open.png)). The list comes from JavaScript only. With JavaScript off you can type 'cattle', but nothing is listed and there is no way to tick a species, so you cannot finish the page ([prototype, no JavaScript](screens/prototype/S08--typed--nojs.png)).
 
@@ -93,6 +93,18 @@ Sam's rulings on 20 October. Each item is now ready to build.
 - **Commodity search hint (S07):** match the prototype. Use its hint only, with no extra line after a 1 or 2 character search.
 - **ITAHC on What are you importing? (S06):** match the prototype. Keep 'ITAHC' as drawn, not spelled out.
 - **Save and continue from an Overview task (Q3):** it goes back to Overview, as main and the prototype do today.
+
+## Blocked
+
+Sam's rulings on 20 October. Neither is built in design snagging.
+
+- **Commodity search on What are you importing? (S08):** blocked. It waits for the MDM commodity API and the commodity type-ahead component. Its look, the full-width box with the joined icon button, is held back too.
+- **Commodity list, 'Cow' with 4 species against the prototype's 'Cattle' catalogue (Q1):** blocked on the same two. The list keeps 'Cow' until then.
+
+Both wait for:
+
+- EUDPA-617, "Integrate early-access MDM commodity API into live animals frontend" (in development)
+- EUDPA-616, "Add a search type-ahead for choosing commodities, reusable across the journey" (to do)
 
 ## For Sam: calls we made and flagged
 

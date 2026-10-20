@@ -53,7 +53,7 @@ The system MUST offer a placeholder and the origin countries and territories the
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** they choose the Canary Islands and save the page
 - **THEN** the territory's code is what the notification keeps
-- **AND** returning to the page shows "Canary Islands" in the country field
+- **AND** returning to the page shows "Canary Islands (Spain)" in the country field
 
 #### Scenario: The country list holds the reference data service's origin countries and their territories, by name
 **ID**: SCN-ORIGIN-003-D

@@ -175,12 +175,6 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 - **THEN** they return to the address book, which says '<Name> address deleted' with the name in sentence case, such as 'Green valley farm address deleted' for 'Green Valley Farm'
 - **AND** it is no longer offered for viewing
 
-#### Scenario: A repeated line is shown once
-**ID**: SCN-INS-ADDR-011-D
-- **GIVEN** an address whose county repeats its town or city in a different case
-- **WHEN** the user opens its delete confirmation
-- **THEN** the Address row shows that line once
-
 #### Scenario: An address with nothing to show is summarised as Not applicable
 **ID**: SCN-INS-ADDR-011-E
 - **GIVEN** an address with no name, no address lines and no country

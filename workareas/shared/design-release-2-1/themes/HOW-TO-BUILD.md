@@ -136,7 +136,11 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 
 - **Ticket:** none yet.
 - **Branch:** `feat/NO_JIRA-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
-- **Rows:** 19, all ready (inc-202 to inc-220).
+- **Rows:** 17, all ready (inc-202 to inc-220). Consolidated 20 October so each shared component or mechanism is one
+  row: inc-211 ('Add a transporter' beside the search) merged into inc-210, the search box row, and inc-220 (Back from a
+  submitted notification's view) merged into inc-218, the one Back links row. Both merged rows are `merged-into`; no
+  criterion was lost. Shared component rows come first: inc-202 (type-ahead), inc-206 (date picker), inc-210 (search
+  box), and the page rows that use them wait on them.
 - **What it is:** the designers' review of the test environment against the prototype at 56371e2, 19 October
   ([`../snagging/assessment.md`](../snagging/assessment.md), rendered proof in
   [`../snagging/screens.html`](../snagging/screens.html)). It lands next, on its own in wave 2.

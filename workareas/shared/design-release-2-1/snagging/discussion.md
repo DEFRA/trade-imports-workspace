@@ -120,7 +120,7 @@ Sam asked us to make sensible calls and flag them afterwards rather than wait. T
 
 | Snag | Call | Why | Reversal cost |
 |---|---|---|---|
-| S27 | 'Add a transporter' moves above the table now (inc-211), carved out of blocked inc-037 criterion 6. | Section 5 of the ruling is about who manages transporters, not where a button sits on a page we are keeping. | Drop inc-211 and put criterion 6 back in inc-037. |
+| S27 | 'Add a transporter' moves above the table now (inc-211, merged into inc-210 on 20 October), carved out of blocked inc-037 criterion 6. | Section 5 of the ruling is about who manages transporters, not where a button sits on a page we are keeping. | Take inc-210's criteria 11 to 14 out and put criterion 6 back in inc-037. |
 | S32 | Conflict c-087 ('the summary list stays') set aside. Consignment addresses become headed sections (inc-213). | Ruling sam-2026-10-07 lets DR1 override the prototype only where DR1 judged the same difference. DR1 explicitly declined to judge the component (dr1-parity-union backlog lines 17483 and 18095). | Keep inc-085's copy changes and leave the summary list. |
 | S33 | inc-089 ('Place of origin picker searches by country') dropped, and inc-197 merged into inc-193. Claim 16 is taken as superseded. | Prototype commit c3ca339 (9 October) removed the place of origin's country search, so all five pickers share one free-text search. This is the prototype changing, not a reversal. | Restore inc-089 and inc-197. |
 

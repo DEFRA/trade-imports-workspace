@@ -30,12 +30,24 @@ Steps 5 and 6 for one layer can run while step 1 of the next layer starts.
 |---|---|---|
 | 1 | Journey foundation (EUDPA-691), Reference lists (EUDPA-692) | Yes, both |
 | 2 | Design snagging (no ticket yet): the designers' review of `main` against the prototype, 19 October | No: 16 rows ready, cut from `main` |
-| 3 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694), Origin page (EUDPA-695) | 3 of 5 |
-| 4 | Transporters, Identification and permanent address, Type question and templates | 1 of 3 (templates: 13 of 22 rows, 9 held) |
-| 5 | Consignment parties, Overview and review (EUDPA-696) | 1 of 2 |
+| 3 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694) | None live: 693 and 694 are stale branches to salvage from. Origin page (EUDPA-695) is retired: design snagging ports all of it |
+| 4 | Transporters, Identification and permanent address, Type question and templates | None live: templates (EUDPA-690) is a stale branch to salvage from |
+| 5 | Consignment parties, Overview and review (EUDPA-696) | None live: overview and review is a stale branch to salvage from |
 | 6 to 9 | Manage notifications, Animals dashboard, Germinal products, INS dashboard, Waiting on design | None |
 
-Layer numbers match the waves in `themes/themes.json`. Design snagging was put in on 19 October as its own layer, ahead of the rest. It brings finished fixes from the origin page, commodities and import reason, arrival and transit, and overview and review branches to `main`, and takes in 7 planned rows. See `snagging/assessment.md`.
+Layer numbers match the waves in `themes/themes.json`. Design snagging was put in on 19 October as its own layer, ahead of the rest. It salvages finished fixes from the origin page, commodities and import reason, arrival and transit, and overview and review branches to `main`, and takes in 7 planned rows. See `snagging/assessment.md`.
+
+## Stale branches (ruled 20 October)
+
+The five built theme branches will not be merged. Each is a quarry: when its theme is played, it starts on a fresh branch from `main` after design snagging lands, and takes code from the stale branch as its rows' "Salvage:" notes say. Later rows across every theme now hold only what `main` and design snagging still lack. Row by row: `snagging/trim.md`.
+
+| Theme | Stale branch | Open PRs to close when the theme is played (not before) |
+|---|---|---|
+| Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | animals frontend #401, tests #23, performance tests #17 |
+| Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | animals frontend #402, plants frontend #95, tests #24 |
+| Origin page (EUDPA-695), retired | `feat/EUDPA-695-design-release-2-1-origin-page` | animals frontend #403, plants frontend #96, tests #25, once design snagging lands |
+| Type question and templates (EUDPA-690) | `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92, tests #20 |
+| Overview and review (EUDPA-696) | `feat/EUDPA-696-design-release-2-1-overview-and-review` | animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98, tests #26 |
 
 ## Layer 1 pull requests
 
@@ -77,11 +89,11 @@ The workspace OpenSpec changes for each theme also need a PR to `main`. Step 1 w
 |---|---|---|
 | 1 | 5. BA review | **Merged to main 13 October** on Sam's go-ahead. Journey foundation: animals #399, plants #93, INS #46, tests #21, workspace spec #108. Reference lists: stub #18, reference-data #25, animals #400, plants #94, INS #47, tests #22, workspace spec #114. Review pack `layers/1/engineering-review.md`; prototype differences in each theme's `prototype-differences.md`. Next: layer 1 business review page for the BAs. Main merged into the combined branch and every built theme branch (693, 694, 695, 690, 696) on 14 October: all level with main, all PRs green. Carried to layer 2 (EUDPA-693): import reason's "Save and return" skips required checks; k6 walk out of step with the opening run. Plants journey-flow REQ-PLANTS-FLOW-015 coverage partial (unit only) |
 | 2 | 1. Ready (next) | Design snagging: build on `feat/NO_JIRA-design-release-2-1-design-snagging` from `main` (see `themes/HOW-TO-BUILD.md`). Three snags wait on the designers (`snagging/discussion.md`) |
-| 3 | Waiting on layer 2 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694), Origin page (EUDPA-695): once design snagging merges, merge main into each theme branch, drop the ported changes their port notes name, and survey |
+| 3 | Waiting on layer 2 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694): once design snagging merges, cut each theme a fresh branch from main and build its rows, salvaging from the stale branches. Origin page (EUDPA-695) is retired |
 | 4 to 9 | Not started | — |
 
 ## Separate from this plan
 
 - **Page maturity banner.** A new feature, not Design Release 2.1. Proof of concept moves to its own branch from `main`, gets a ticket, and is built properly elsewhere. It comes off the combined branch.
-- **Templates' 9 held rows** stay held until layer 3.
+- **Templates** is rebuilt from `main` in layer 4: 13 rows to rebuild from salvage, 5 deferred.
 - **Stub PR DEFRA/trade-imports-defra-id-stub#13** (isolated E2E users) still unblocks the parked tests patch and the save-template flake.

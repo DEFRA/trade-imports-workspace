@@ -1,5 +1,10 @@
 # Design snagging: coherence pass
 
+> **Superseded on 20 October 2026 by [`trim.md`](trim.md)** for every "keep the snagging version" note, every
+> wait on a design-snagging row and every port or merge note below. Later rows now hold only their deltas, and the
+> five built theme branches are stale: they are salvaged from, never merged. This page is kept as the record of the
+> 19 October pass.
+
 Checked on 19 October 2026, after the design-snagging theme (16 rows, inc-202 to inc-217) was added.
 
 The question: once design-snagging lands, will any later row, or any unmerged theme branch, write a different version of the same copy or look?

@@ -67,9 +67,7 @@
     "workarea": "shared/design-release-2-1",
     "wave": 4,
     "landsAfter": [
-      "arrival-and-transit",
-      "commodities-and-reason",
-      "journey-foundation"
+      "design-snagging"
     ]
   },
   "touches": [
@@ -106,12 +104,11 @@
         "The page ends with a single 'Continue' button: there is no 'Save and return to overview' button and no cancel link (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:48-53; trace:prototype-dr2-1 T1 action 16)",
         "The page's Back link goes to the INS home, and the service navigation highlights Dashboard (prototype:dr2-1-source app/routes.js:10606-10608; trace:prototype-dr2-1 T1 action 15; ruling:sam-2026-10-09-pm p3-085)",
         "The page shows no Draft strip and no notification reference; the origin page reached after choosing Live animals shows both (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:23-57; trace:prototype-dr2-1 T1 action 16 against action 44; conflicts:c-007)",
-        "With Welsh chosen, every string on the notification type page (title, caption, heading, the five options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)",
-        "The 'What are you importing?' page and the origin page show the GOV.UK phase banner with the tag 'Alpha' and the text 'This is a new service. Help us improve it and give your feedback by email.', and its feedback link goes to the real service's feedback destination, not '#' (prototype:dr2-1-source prototype-dr2-1-source-p2-026; trace:animals-fit trace-animals-fit-p5-072)"
+        "With Welsh chosen, every string on the notification type page (title, caption, heading, the five options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)"
       ],
       "dependsOn": [],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -181,33 +178,11 @@
         "The plants types now land on plants' own first page with a new plants draft (templates ruling p1-039), so the plants criterion observes the plants draft, not only the landing. The INS germinal list's 'Create new' leaves this programme (p3-091); the type question's Germinal option stays the way into a germinal notification.",
         "Merge order frontend, plantsfrontend, insfrontend, tests: the animals and plants frontends each gain a start entry that accepts a start from the INS page, before the INS page sends users to them. Plants today creates a draft only from a CSRF-protected POST on its own dashboard (SameSite=Strict crumb), which a hand-over from INS cannot reach, so plantsfrontend gains the start entry too (found by the inc-148 planner, 2026-10-10; see plans/inc-148.md). The Welsh criterion carries req-057 duty for the strings this row adds; req-057 itself sits in the origin page row that finishes the page.",
         "Theme: type-question-and-templates, as before. The INS home's start control (insfrontend dashboard) and the animals frontend's live-animals start entry are listed as shared: the ins-dashboard theme owns those folders.",
-        "req-1910 (the phase banner on the type question and the origin page) is added here by the combiner: the type question is this row's page.",
+        "Salvage: trade-imports-animals-frontend e6f5d7cf, trade-imports-plants-frontend 4d08998, trade-imports-ins-frontend 2d7619e, trade-imports-ins-tests 3205feb and f583ca8 (reads the Alpha banner apart from the page maturity banner) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main.",
+        "req-1910 (the phase banner) is met on main by both frontends' shared layout; the type question page gets it by using that layout.",
         "Its dependency on inc-128 is dropped: that row is blocked, and this row builds now without it."
       ],
-      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern.",
-      "commit": "e6f5d7cf 2d7619e 3205feb 4d08998",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/92",
-          "repo": "trade-imports-plants-frontend",
-          "number": 92
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/45",
-          "repo": "trade-imports-ins-frontend",
-          "number": 45
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern."
     },
     {
       "id": "inc-149",
@@ -224,7 +199,7 @@
         "inc-148"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -276,22 +251,10 @@
         "Combines Create new's label, placement, destination and Welsh copy (req-960, req-962, req-963, req-1024): one button on one template. req-1024 covers the Welsh for both new buttons; its 'Use template' half is observed in the Use template row (inc-153), which lands after this one.",
         "Depends on the start-and-origin area's type-question row (inc-148), which builds the 'What are you importing?' page in the INS front door and its option list and onward routing (plants types to the high-risk plants journey, c-007); this row only points the home at it.",
         "The tests repo's animals and plants dashboard page objects carry the 'Start a new notification' label; any INS end-to-end spec that starts from the INS home's start link changes to 'Create new' and the type question.",
-        "Theme: this row changes the INS home's feature folder, which the ins-dashboard theme's touches also name. With the overall home blocked, the combiner should give that folder to whichever theme builds the home's controls, or keep these rows in ins-dashboard."
+        "Theme: this row changes the INS home's feature folder, which the ins-dashboard theme's touches also name. With the overall home blocked, the combiner should give that folder to whichever theme builds the home's controls, or keep these rows in ins-dashboard.",
+        "Salvage: trade-imports-ins-frontend fd9b1c3, trade-imports-ins-tests 7659d8d and workspace openspec 016663f5 (on the workspace's feat/NO_JIRA-design-release-2-1) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
       ],
-      "gate": null,
-      "commit": "fd9b1c3 7659d8d 016663f5",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/45",
-          "repo": "trade-imports-ins-frontend",
-          "number": 45
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-150",
@@ -301,15 +264,13 @@
         "On a live-animals notification started from the type question, the origin page's Back link goes to the 'What are you importing?' question, which shows Live animals already selected (prototype:dr2-1-source app/routes.js:10586-10600, 10609; trace:prototype-dr2-1 T3 action 10; conflicts:c-011, c-219)",
         "On a live-animals notification started from the live animals notifications list's own create button, the origin page's Back link goes to that list (prototype:dr2-1-source app/routes.js:10586-10600; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:105; ruling:sam-2026-10-09-pm p3-051, p3-081; conflicts:c-011)",
         "Opened from the notification overview, the origin page's Back link goes to the overview (prototype:dr2-1-source app/routes.js:488-498; trace:prototype-dr2-1 T6 action 20; conflicts:c-011)",
-        "Opened from the template review while a saved live-animals template is being edited, the origin page's Back link goes to that template's review (prototype:dr2-1-source app/routes.js:10636, 488-498; ruling:sam-2026-10-09-templates p1-041, p1-043; conflicts:c-011)",
         "Pressing Continue on the type question with Live animals still chosen returns to that same notification's origin page with the same reference, and the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11163-11168; conflicts:c-219)",
         "Choosing Plants for planting instead and pressing Continue lands on the first page of the high-risk plants journey; the live-animals notification, reopened from the dashboard, still has the same reference, Draft status and every answer it had, commodities and species included (ruling:sam-2026-10-09 p1-054, p1-055, p1-056; conflicts:c-007, c-219)",
         "Choosing Germinal products (semen, ova, embryos) instead and pressing Continue sends the user to the germinal products set's start under /germinal-products, and the live-animals notification left behind keeps every answer it had (ruling:sam-2026-10-09 p1-053, p1-054, p1-056; conflicts:c-219)",
         "Starting afresh from the INS home still shows the type question with nothing pre-selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)"
       ],
       "dependsOn": [
-        "inc-148",
-        "inc-171"
+        "inc-148"
       ],
       "theme": "type-question-and-templates",
       "status": "deferred",
@@ -360,7 +321,7 @@
       "openQuestions": [],
       "notes": [
         "Kept as inc-150; requirements unchanged. Combines req-013 (the live-animals origin Back link; the germinal half is req-1740) with req-008: returning to the type question can only be observed through the origin Back link, and both are reviewed on the same two pages.",
-        "Depends on inc-148 (the type question) and on inc-171, the row that makes Back links follow a template review (req-1616), so the template-edit branch of req-013 is observable when this lands.",
+        "Depends on inc-148 (the type question) only. The template-edit branch of req-013 (origin's Back link while changing a saved template) is carried by inc-159's Back-link criterion.",
         "The type pre-selected is the notification's stored category, absent meaning live animals (ruling p1-029), so a live-animals notification needs no backend change. Merge order frontend, insfrontend, tests: the origin Back link must carry the notification to the INS page before the INS page relies on it. Theme: type-question-and-templates, as before; the origin controller is the origin-page theme's folder, so it is listed as shared.",
         "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
       ],
@@ -374,7 +335,6 @@
         "A signed-in user opening Manage templates sees a page titled 'Manage templates - Import notification service - GOV.UK' with the H1 'Manage templates' (prototype:dr2-1-source dashboard-templates.html:9,43; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:15-19; ruling:sam-2026-10-09 claim 103; ruling:sam-2026-10-09-templates claims 17-18)",
         "Under the heading the page shows the line 'Select, manage or create new notification templates' (prototype:dr2-1-source dashboard-templates.html:44; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:19)",
         "Manage templates has no Back link: the page starts with its heading (trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs prototype-dr2-1-specs-p6-012)",
-        "The page shows the Alpha phase banner 'This is a new service. Help us improve it and give your feedback by email.', whose feedback link goes to the same feedback address the service's other pages use, never '#' (prototype:dr2-1-source dashboard-templates.html:12-17)",
         "The templates are listed under an H2 'My templates' (prototype:dr2-1-source dashboard-templates.html:58; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:21)",
         "With no saved templates the page shows 'Show 0 of 0 results' and an empty list, with no empty-state message, no filter, no search, no 'Sort by' control and no pagination control (prototype:dr2-1-source dashboard-templates.html:61,77-81; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:22; ruling:sam-2026-10-09-pm claim 93; c-185)",
         "A user who has never saved a template sees no example templates: the list holds only templates that user has really saved (ruling:sam-2026-10-07 claim 10; ruling:sam-2026-10-09 claim 125; c-183)",
@@ -382,7 +342,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -435,27 +395,10 @@
         "Re-distil (9 October afternoon and templates rulings): req-1300 now says Manage templates has no 'Sort by' control (c-185 replaced by ruling:sam-2026-10-09-pm claims 93-94), so the empty-list criterion adds 'no Sort by control'. The sort itself (req-1299) is blocked on design question 11 in its own row.",
         "Combines the page chrome (req-1291, req-1292, req-1294, req-1296), the list heading, count and empty state (req-1297, req-1298, req-1300), the GOV.UK component rule (req-1306), which every later templates page also follows, and the store (req-1310): one page, one set-up. req-1295 (Templates marked current) stays with the navigation row (inc-152).",
         "Templates belong to both animals sets (live animals and germinal products, ruling:sam-2026-10-09 claims 51 and 127), so the templates pages are not set pages; they sit in the animals frontend beside the live-animals set's features, where the theme already draws them. The plan may place the folder outside sets/live-animals if the germinal set needs to reach it; say so in the plan.",
-        "Plants: no change. Templates cover the animals sets only (ruling:sam-2026-10-09-templates claim 44), and plants' parked d-038 ruling does not adopt the prototype's templates pattern (repo:plantsfrontend p9-086, p9-087)."
+        "Plants: no change. Templates cover the animals sets only (ruling:sam-2026-10-09-templates claim 44), and plants' parked d-038 ruling does not adopt the prototype's templates pattern (repo:plantsfrontend p9-086, p9-087).",
+        "Salvage: trade-imports-animals-frontend 9eab88ea, trade-imports-animals-backend 7b01ce5, trade-imports-ins-tests 997a91b on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. req-1296 (the banner) is met on main by the shared layout."
       ],
-      "gate": "Look at where templates live and the shape of the stored template record (owner, the set it was made in, title, date created, the notification answers it holds), and at the Manage templates page pattern: every later templates row builds its pages and its saves on these.",
-      "commit": "9eab88ea 7b01ce5 997a91b",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "trade-imports-animals-backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": "Look at where templates live and the shape of the stored template record (owner, the set it was made in, title, date created, the notification answers it holds), and at the Manage templates page pattern: every later templates row builds its pages and its saves on these."
     },
     {
       "id": "inc-152",
@@ -468,14 +411,13 @@
         "Choosing Templates from the service navigation on any of these frontends opens the animals frontend's Manage templates page, headed 'Manage templates' (prototype:dr2-1-source app/lib/design-release-2.1-version.js:23-26; trace:prototype-dr2-1 snapshot 30; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-012, p1-040)",
         "On every templates page Templates is the item marked as current, and Dashboard and Address book are not; on the dashboard and address book pages Templates is not marked current and Dashboard and Address book keep their own current marking (prototype:dr2-1-source app/views/layouts/main.html:79-95; trace:e2e c4eb9 snapshot call@56)",
         "A signed-out visitor sees no Templates item on any frontend, as with every other navigation item (prototype:dr2-1-source app/views/layouts/main.html:71-98; trace:e2e 0b934 call@259)",
-        "On every frontend the Templates label has a Welsh draft translation beside its English copy, differing from the English, as 'Dangosfwrdd', 'Llyfr cyfeiriadau', 'Rheoli cyfrif' and 'Allgofnodi' do (prototype:dr2-1-source app/views/layouts/main.html:71-98; ruling:sam-2026-10-07 claim 1)",
-        "On Manage templates, and on every templates page as each lands, Templates is the service navigation item marked as current, and Dashboard and Address book are not (prototype:dr2-1-source app/views/layouts/main.html:79-95; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-015; prototype:dr2-1-specs e2e/templates.fit.spec.js:23)"
+        "On every frontend the Templates label has a Welsh draft translation beside its English copy, differing from the English, as 'Dangosfwrdd', 'Llyfr cyfeiriadau', 'Rheoli cyfrif' and 'Allgofnodi' do (prototype:dr2-1-source app/views/layouts/main.html:71-98; ruling:sam-2026-10-07 claim 1)"
       ],
       "dependsOn": [
         "inc-151"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -550,18 +492,9 @@
         "The navigation lives in each frontend's shared layout and copy, which other areas' rows also change.",
         "Keep req-1295 merged into inc-152 with the layout area's req-965 (the Templates item on every frontend's navigation, plants included under ruling:sam-2026-10-09-templates claim 40), as before: the current marking cannot be seen until the item exists, so on its own this would be a layer split. inc-152's existing criterion on the current marking already observes req-1295.",
         "Depends on inc-151: the item's destination and its current marking need Manage templates. Each later templates page inherits the same layout, so its current marking is seen as that page lands.",
-        "ATTEMPT FAILED: E2E verification ladder red. (1) Visual test baseline stale: trade-imports-ins-tests animals domain origin-of-import baseline images need regeneration (Templates navigation link now visible in page). (2) Plants notification date test flaked: test expects 11/12 Oct but service date was 10 Oct (run crossed midnight). No merges aborted. Patches at logs/inc-152-preserve-*.patch, unresolved conflict lists at logs/inc-152-preserve-*.unresolved.txt. Changes stashed on each repo.",
-        "Landed by hand after the loop's ladder went red only on a stale animals visual baseline (regenerated, darwin and linux) and a plants date check that crossed midnight (passes on re-run). Code, review and fix are the loop's (run wf_1eaee94a-22f)."
+        "Salvage: trade-imports-animals-frontend 37c1ce63, trade-imports-plants-frontend 0742254, trade-imports-ins-frontend def47e5, trade-imports-ins-tests 17038b3 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. Expect to regenerate the animals visual baselines, because the fifth navigation item shows on every page."
       ],
-      "gate": null,
-      "commit": "37c1ce63 0742254 def47e5 17038b3",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-153",
@@ -577,7 +510,7 @@
         "inc-151"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -616,22 +549,10 @@
       "notes": [
         "Re-distil: now depends on today's INS home rather than inc-128 (blocked summary information), per ruling:sam-2026-10-09-templates p1-010 and p1-013.",
         "Depends on the templates row that serves Manage templates (inc-151), since the button's destination cannot be observed before it lands, and on the Create new row (inc-149), since the button sits beside it. Its Welsh criterion observes the Use template half of req-1024, which sits in inc-149.",
-        "Kept apart from inc-149 because the two wait on different rows (the type question and Manage templates); the combiner may merge them if both land together."
+        "Kept apart from inc-149 because the two wait on different rows (the type question and Manage templates); the combiner may merge them if both land together.",
+        "Salvage: trade-imports-ins-frontend 28d32ac and 188f55b (Create new and Use template still show when notifications cannot load), trade-imports-ins-tests b9adef9 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
       ],
-      "gate": null,
-      "commit": "28d32ac b9adef9",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/45",
-          "repo": "trade-imports-ins-frontend",
-          "number": 45
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-154",
@@ -662,7 +583,7 @@
         "inc-148"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -741,32 +662,9 @@
         "req-010 already sits in inc-154, which also holds the templates area's req-1293, req-1313, req-1314 and req-1316 to req-1325. Drafted here as this area's part of that row; the combiner merges it back into inc-154 and keeps that id and its gate. The options offered in template mode (only Live animals and Germinal products, c-220) are the templates area's req-1314 and are not restated here.",
         "Repos in merge order: backend (the template store holds the type), frontend (the template name page), insfrontend (the type page's template mode), tests: the name page must exist before the INS page hands over to it. Theme: type-question-and-templates, as before.",
         "req-2048 (template mode is another way of walking each set's own pages, never a copy or a fork) is added here by the combiner: this is the first row that walks a page in template mode, so it sets the pattern every later templates row copies.",
-        "Merge note (19 Oct): this commit (f806b99a) edits the origin template and controller and kit.js, which design-snagging inc-202 to inc-204 and inc-206 change on main. At the merge, keep main's origin page and kit.dateField and re-apply only the template-mode Back link and controller changes."
+        "Salvage: trade-imports-animals-frontend f806b99a, trade-imports-animals-backend 936a50f, trade-imports-ins-frontend 23f0b03, trade-imports-ins-tests b9532f9 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. Take the template-mode pieces (shared/template-mode.js, the template name page, the Back link and controller hooks), not f806b99a's hunks in the origin template or kit.js."
       ],
-      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes), where a template in progress is held, and that template mode is a mode of the same journey pages rather than a copy of them, so later page changes carry over without rework: every later template-mode page, and the germinal set's template mode (req-1876), copies this.",
-      "commit": "f806b99a7d8d1713b3facbc1a7f2897768b12548 936a50fe2cd036e5ba1617c56896b75c23e8136f 23f0b030d1c683eb8f60559f07ee717d87c2e86f b9532f942becdf4f702b11cf74063684077c4e46",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/45",
-          "repo": "insfrontend",
-          "number": 45
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "tests",
-          "number": 20
-        }
-      ]
+      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes), where a template in progress is held, and that template mode is a mode of the same journey pages rather than a copy of them, so later page changes carry over without rework: every later template-mode page, and the germinal set's template mode (req-1876), copies this."
     },
     {
       "id": "inc-155",
@@ -783,19 +681,14 @@
         "The task list ends with a primary 'Review template' button to the template review and a secondary 'Return to manage templates' button to Manage templates, in place of 'Review and submit' and 'Return to dashboard' (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:97-98)",
         "Nothing on a template's task list or question pages links to Upload documents or the declaration (ruling:sam-2026-10-09 claims 104-105; c-264)",
         "For a notification, the Overview page still shows its status and reference, 'Notification tasklist', its Documents section, 'Review and submit' and 'Return to dashboard' (repo:frontend features/hub; trace:animals-fit hub buttons)",
-        "While a template is being created, the Overview's status strip shows the tag 'Template' with the template's name beside it, in place of the notification's status and reference (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-source app/views/partials/design-release-2.1/notification-status.html:2)",
-        "While a template is being created, the task list is headed 'Template tasklist' instead of 'Notification tasklist' (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:93)",
-        "While a template is being created, the task list has no Documents section and no 'Upload documents' task, and the sections after it read '4. Consignment parties' and '5. Contact address' (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:94-96)",
-        "While a template is being created, the primary button reads 'Review template' and opens the template's review page (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:97)",
-        "While a template is being created, the secondary button reads 'Return to manage templates' and goes to the templates list (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:98)",
         "The Overview shows no 'Save template' button (prototype:dr2-1-source app/routes.js:6564-6588)",
-        "For a notification, the Overview still shows its status and reference, 'Notification tasklist', '4. Documents', 'Review and submit' and 'Return to dashboard' (repo:frontend p4-049, p4-056; trace:animals-fit p4-020, p4-061)"
+        "While creating a template, Save and continue on the transporter step goes to Consignment addresses (roles and addresses), passing over Upload documents (prototype:dr2-1-source app/routes.js:1517-1525; ruling:sam-2026-10-09 claim 21)"
       ],
       "dependsOn": [
         "inc-154"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -865,7 +758,9 @@
         "req-815",
         "req-816",
         "req-817",
-        "req-818"
+        "req-818",
+        "req-543",
+        "req-091"
       ],
       "openQuestions": [],
       "notes": [
@@ -875,23 +770,10 @@
         "Combiner: keep the notification-hub area's req-814 to req-818 merged here as before, and inc-155's id. A germinal template's task list (no Additional details task) is req-1876's.",
         "existingRow inc-155 already holds req-814 to req-818 with the templates area's template task-list requirements: the same set-up, a template being created. Drafted here so this area covers them; the combiner keeps inc-155's id, theme and text, which already carry these criteria, and removes repeats.",
         "Template mode is animals only (ruling:sam-2026-10-09-templates p1-044), so plants is not touched. req-819 is out of scope and not drafted.",
-        "ruling:sam-2026-10-09-templates p1-033 drops a template row's dependency that exists only because the Overview's look changes, so the combiner should check whether inc-155's dependency on inc-098 (the regions) still has a real ordering need; both change the hub template, so I keep it as a same-file ordering, not a look dependency.",
-        "Merge note (19 Oct): this commit (11bd8779) edits the commodity search controller and the hub copy, which design-snagging inc-205, inc-210 and inc-207 (the 'Main import reason' task name) change on main. At the merge, keep main's strings and re-apply only the template-mode Back link and the template task-list copy."
+        "Salvage: trade-imports-animals-frontend 11bd8779, trade-imports-ins-tests 92684fa on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. The run skip past Upload documents is TEMPLATE_MODE_RUN_SKIPPED_PAGE_IDS in flow/template-mode.js, from trade-imports-animals-frontend cab954f8.",
+        "req-543 moves in from inc-169 (removed); req-091 (template-creation return from the commodity page) moves in from inc-166 (removed) and is observed by the 'returns to the template's task list' criterion."
       ],
-      "gate": null,
-      "commit": "11bd8779 92684fa",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-156",
@@ -903,14 +785,13 @@
         "The template review shows five sections, 'About the consignment', 'Description of the goods', 'Transport and arrival', '4. Consignment addresses' and '5. Contact address', with no uploaded documents section and no arrival date row, and reads 'Not applicable' for every unanswered row (prototype:dr2-1-source prototype-dr2-1-source-p11-097, prototype-dr2-1-source-p11-103, prototype-dr2-1-source-p11-108; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-104)",
         "For a cattle template, the Additional details card has 'Certified for' and 'Includes unweaned animals', the Addresses card adds 'County parish holding (CPH) number', there is no identification details card, and 'Main import reason' holds a single row (prototype:dr2-1-source prototype-dr2-1-source-p11-112)",
         "The template review's Back link returns to the template's task list (trace:prototype-dr2-1 T9 action 68; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-089)",
-        "While a template is being created, the review's Change links open each question page directly to change the template in progress, such as Origin of the import and the contact address page, and that page shows the template-creation buttons, not 'Save and return' with a 'Cancel' back to a template page (trace:prototype-dr2-1 T9 action 68 LINKS; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-092; ruling:sam-2026-10-09 claim 103)",
-        "The template review shows the same five sections as the template's task list (About the consignment, Description of the goods, Transport and arrival, Consignment addresses, Contact address) and reads 'Not applicable' for every unanswered row; for cattle its Additional details card has 'Certified for' and 'Includes unweaned animals', its Addresses card adds 'County parish holding (CPH) number', it has no identification details card, and its 'Main import reason' card holds the single row 'Main import reason' (trace:prototype-dr2-1 trace-prototype-dr2-1-p15-090, trace-prototype-dr2-1-p15-091, trace-prototype-dr2-1-p15-090-m1)"
+        "While a template is being created, the review's Change links open each question page directly to change the template in progress, such as Origin of the import and the contact address page, and that page shows the template-creation buttons, not 'Save and return' with a 'Cancel' back to a template page (trace:prototype-dr2-1 T9 action 68 LINKS; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-092; ruling:sam-2026-10-09 claim 103)"
       ],
       "dependsOn": [
         "inc-155"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -965,27 +846,10 @@
         "Combiner: keep the review-and-submit area's req-941 and req-942 merged here as before, and inc-156's id; this area's two requirements alone are not observable without the review page in template mode.",
         "Re-distil (templates ruling): the dependency on 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (inc-101) is dropped: the ruling names the review's new headings as a look-only dependency a template row does not wait for (ruling:sam-2026-10-09-templates claim 33). The template review works on the review as it stands: today its sections run '4. Documents', '5. Consignment parties', '6. Contact address', so the template review's sections without Documents read '4. Consignment parties' and '5. Contact address' until inc-101 renames them '4. Consignment addresses'. When merging req-942's criteria, write the section criterion to hold either way (the review's own numbered sections, without the documents section, renumbered to run 1 to 5), or say in notes that the heading text follows inc-101. Keep the dependency on inc-155 (the task list's 'Review template' button).",
         "backend is listed only where saving from the review needs the templates store; the plan may find no backend change here.",
-        "req-2052 (the template review's five sections and rows) is added here by the combiner."
+        "req-2052 (the template review's five sections and rows) is added here by the combiner.",
+        "Salvage: trade-imports-animals-frontend cab954f8, trade-imports-animals-backend f671d6b and f46ce6e (Javadoc wrap), trade-imports-ins-tests 9712128 and workspace openspec 2fed367b (on the workspace's feat/NO_JIRA-design-release-2-1) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. req-2052 is now observed by the five-sections and cattle-cards criteria."
       ],
-      "gate": null,
-      "commit": "cab954f8 f671d6b 9712128 2fed367b",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "DEFRA/trade-imports-animals-backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "DEFRA/trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "DEFRA/trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-157",
@@ -1006,7 +870,7 @@
         "inc-156"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -1053,27 +917,10 @@
       "notes": [
         "Re-distil (9 October afternoon ruling): the card's 'Use template' is now a GOV.UK secondary button in a form that posts, keeping the design's wording, because using a template stores a draft and every state change is a form post (req-1303, c-309). What pressing it does is built and observed in the use row (inc-160).",
         "Combines saving (req-1340, req-1319), the success banner (req-1307, req-1308), the list order and card frame (req-1301, req-1302, req-1303) and privacy (req-1311): saving is the first moment a template exists, so each is first seen here. The card's answer rows and category rule are in the card-answers row. The cross-user criterion uses a second test user, as the address book's cross-user spec does. The success banner pattern is reused by the delete, discard and change rows.",
-        "Combiner: the review-and-submit area's 'Save template' criterion (req-942) is the same button; it stays in inc-156."
+        "Combiner: the review-and-submit area's 'Save template' criterion (req-942) is the same button; it stays in inc-156.",
+        "Salvage: trade-imports-animals-frontend af1e5051 and d7ccc0eb (keep the saved-template banner when the templates list fails), trade-imports-animals-backend 34230ee, trade-imports-ins-tests c70db5f and e7329b2 (another user opening a saved template) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. e7329b2 asserts 'page not found' while inc-158 asks for Manage templates; settle on inc-158's wording when rebuilding."
       ],
-      "gate": null,
-      "commit": "af1e5051f78091267bb7a36dd2413bdf4f7667c4 34230ee725b5206f44e671fa96a71bd6b48fccbb c70db5f3c9293c0b2689bc1b03f26c3d164d6136",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "DEFRA/trade-imports-animals-backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "DEFRA/trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "DEFRA/trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-158",
@@ -1094,7 +941,7 @@
         "inc-157"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -1142,27 +989,10 @@
       "notes": [
         "Re-distil (9 October afternoon and templates rulings): 'Use template' on the page is a submit button in a form that posts, looking as designed (req-1349, c-309). The section criterion follows the notification review's own numbered sections rather than Design Release 2.1's new headings, so it holds before and after the review's heading row (inc-101) lands, which the templates ruling says a template row does not wait for (claims 6, 31-33). The not-found criterion adds another user's template, as req-1312 says.",
         "Combines the template page (req-1347 to req-1353), what a saved template holds (req-1344, first observable on this page) and the not-found rule (req-1312). req-1312 also names the change, use and delete pages; each of those rows observes it for its own page as it lands (inc-159, inc-160, inc-165).",
-        "The Addresses and Contact address cards' party content is in the card-answers row (req-1346). The page reuses the notification review cards."
+        "The Addresses and Contact address cards' party content is in the card-answers row (req-1346). The page reuses the notification review cards.",
+        "Salvage: trade-imports-animals-frontend 162b2d52, trade-imports-animals-backend bd38400, trade-imports-ins-tests 69e0da7 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
       ],
-      "gate": null,
-      "commit": "162b2d5266f5258487637d21042f7b7caaab5550 bd38400f49aa486614e3fe54ef621afe7bc84af9 69e0da7a257fb842714108cdc37aa21ffb4acf5a",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "DEFRA/trade-imports-animals-backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "DEFRA/trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "DEFRA/trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-159",
@@ -1179,13 +1009,14 @@
         "After a section is changed and saved, the template page's 'Date created' shows the day of that save (prototype:dr2-1-source prototype-dr2-1-source-p14-040; trace:prototype-dr2-1 T5 action 26)",
         "A template never shows or holds an arrival date or time: answering one on the arrival page while creating it, or while changing its arrival details section, leaves the template page with no arrival date or time (prototype:dr2-1-source prototype-dr2-1-source-p14-043, p14-043-m1; trace:prototype-dr2-1 T3 action 20)",
         "Following a Change link and leaving the page without saving, then opening the template page again, abandons the change: the template keeps its saved answers (prototype:dr2-1-source prototype-dr2-1-source-p14-054, p14-056; c-309)",
-        "The change of a template that has been deleted, or of another user's template, goes to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-021; prototype:dr2-1-specs e2e/templates.fit.spec.js:84-85; c-184)"
+        "The change of a template that has been deleted, or of another user's template, goes to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-021; prototype:dr2-1-specs e2e/templates.fit.spec.js:84-85; c-184)",
+        "When changing a template's transporter section, the transporter list keeps its search and its 'Add a transporter' button, and ends with a single 'Save and return' (which still saves the chosen transporter, not a search) beside a 'Cancel' link back to the template page, with no 'Save and continue' or 'Save and return to overview' (prototype:dr2-1-source prototype-dr2-1-source-p7-044; ruling:sam-2026-10-09-pm claim 48; ruling:sam-2026-10-09-templates claim 34; conflicts:c-286)"
       ],
       "dependsOn": [
         "inc-158"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -1222,34 +1053,21 @@
         "req-1360",
         "req-1361",
         "req-1343",
-        "req-1345"
+        "req-1345",
+        "req-167",
+        "req-408",
+        "req-091",
+        "req-291"
       ],
       "openQuestions": [],
       "notes": [
         "Re-distil (9 October afternoon ruling): following a Change link stores nothing until the page is saved (req-1356, c-309), observed by the abandon criterion. Banners stay until the trader leaves or reloads (claim 97, c-006). The not-found criterion adds another user's template (req-1312).",
         "Combines the change journey (req-1356, req-1358 to req-1361), the template page banner and abandon rule (req-1354) and the date-created reset (req-1343), all seen only by changing a saved section, plus the arrival-date rule (req-1345), whose second half needs a change. Eleven criteria because each section's change is reviewed once; split by section only if the plan finds it too big.",
         "The 'Save and return' and 'Cancel' actions change the shared save-actions chrome every question page uses, and take precedence over the amend ending (req-1358). Changing a section is template mode on the same question pages, never a copy (ruling:sam-2026-10-09-templates claims 5, 30).",
-        "Merge note (19 Oct): this commit (11b00c19) makes one-line saveActions edits in the origin, commodity search, Commodity details, Identification details, import reason, port of entry, transit countries, transporter list and consignment addresses templates, and edits the commodity search controller; design-snagging rewrites those pages on main (inc-203, inc-205, inc-207 to inc-211, inc-213, inc-214). At the merge, keep main's pages and re-apply only the saveActions argument and the template-mode lines."
+        "Salvage: trade-imports-animals-frontend 11b00c19, trade-imports-animals-backend f431f57, trade-imports-ins-tests 1ead9d1 and workspace openspec 4e04ccda (on the workspace's feat/NO_JIRA-design-release-2-1) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. Take shared/template-mode.js, kit.js's templateChange and change-return, flow/template-mode.js and task-rows.js. Add the templateChange argument to each page's saveActions call on main's pages rather than cherry-picking 11b00c19's page hunks.",
+        "Requirements moved in from removed rows: req-167 (inc-167, the import reason page), req-408 (inc-170, the transporter list's template-change controls, now its own criterion here), the template-review half of req-091 (inc-166, the commodity pages) and req-291 (inc-168, return to the template from arrival details)."
       ],
-      "gate": null,
-      "commit": "11b00c19b511c2b6015ed5bd99898450d359d1e9 f431f57453cf8880da3f5182493595f94a624efe 1ead9d1da6cf0c3fdb7a6d0f4fc2d34ac8e1f730 4e04ccda",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/106",
-          "repo": "DEFRA/trade-imports-animals-backend",
-          "number": 106
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/398",
-          "repo": "DEFRA/trade-imports-animals-frontend",
-          "number": 398
-        },
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "DEFRA/trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-160",
@@ -1273,7 +1091,7 @@
         "inc-158"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -1321,10 +1139,10 @@
       "notes": [
         "Re-distil (9 October afternoon ruling): using a template is a form post, never a GET (req-1363, c-309); 'Return to dashboard' on the new notification goes to the set's own notification list, which for live animals stays in the animals frontend (req-1364; ruling:sam-2026-10-09-templates claim 3). The not-found criterion adds another user's template (req-1312).",
         "Combines every seeding rule (req-1363 to req-1365, req-1367 to req-1372): one action, one new notification, one set-up per check. Eleven criteria because the seeding rules are reviewed one by one; split only if the plan finds it too big.",
-        "Germinal: using a germinal products template, which starts a germinal products notification in the germinal set, is observed in req-1876's row once the germinal set exists; every criterion here is observed with a live animals template. Seeding party and contact addresses is in the card-answers row. Creating a seeded draft resembles copy-as-new: the plan may reuse the notification copy path."
+        "Germinal: using a germinal products template, which starts a germinal products notification in the germinal set, is observed in req-1876's row once the germinal set exists; every criterion here is observed with a live animals template. Seeding party and contact addresses is in the card-answers row. Creating a seeded draft resembles copy-as-new: the plan may reuse the notification copy path.",
+        "Salvage: trade-imports-animals-frontend 6373d446, trade-imports-ins-tests b2c54aa and workspace openspec 76702db5 (on the workspace's feat/NO_JIRA-design-release-2-1) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. The stale build made no backend commit, although backend is listed in repos."
       ],
-      "gate": null,
-      "commit": "6373d446ef708e02a18ed2ba27ba49e928ce56a4 b2c54aa1379014c32a33b81be67ce63e7bfd6b87 76702db5775b0526ff8f1212decfc653076a6ea5"
+      "gate": null
     },
     {
       "id": "inc-161",
@@ -1343,7 +1161,7 @@
         "inc-160"
       ],
       "theme": "type-question-and-templates",
-      "status": "done",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "backend",
@@ -1374,18 +1192,9 @@
         "Unchanged by the 9 October afternoon and templates rulings: the category is the set the template was made in (c-266) and party addresses are kept separately (c-186).",
         "Combines the card's answer rows (req-1304), the category label (req-1305) and party addresses (req-1346): the card's Consignee and Consignor come from the same saved party addresses. Depends on the save, view and use rows, since its criteria are seen on all three.",
         "Germinal: the 'Germinal products' half of req-1305 is observed in req-1876's row once the germinal set exists; here the label is observed for a live animals template, so the row needs no dependency on the germinal theme.",
-        "ATTEMPT FAILED: Playwright global timeout expired (red verification ladder); no merges aborted; patches at logs/inc-161-preserve-frontend/backend/tests.*; stash refs: frontend/backend/tests each at stash@{0}, workspace-openspec at stash@{0}",
-        "Landed by hand on 12 October: the loop's ladder (run wf_83c351f9-526) was red only because animals-frontend FIT hit its 15-minute global timeout under host load, with no assertion failure; re-run on a quiet machine, 551 passed in 10.7 minutes. Unit and E2E were green in the ladder. CI not watched by the loop."
+        "Salvage: trade-imports-animals-frontend c7a6e67f, trade-imports-animals-backend 3690dfa, trade-imports-ins-tests e4384be on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
       ],
-      "gate": null,
-      "commit": "3690dfa c7a6e67f e4384be",
-      "prs": [
-        {
-          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/20",
-          "repo": "trade-imports-ins-tests",
-          "number": 20
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-163",
@@ -1563,116 +1372,12 @@
       "gate": null
     },
     {
-      "id": "inc-166",
-      "title": "Commodity pages return to where the trader came from: check answers, the overview or a template",
-      "detail": "A trader who opens the commodity pages from check answers, the overview or a template's review should come back there, not walk on through the journey. After a change from check answers, a valid Save and continue on both the commodity page and Commodity details returns to check answers, carried by the real service's change context; from the overview it returns to the overview; while editing a template from its review it returns to the template; and while creating a template a valid Save and continue on the commodity page goes to the overview.",
-      "acceptanceCriteria": [
-        "After choosing Change on a commodity answer from check answers, a valid Save and continue on the commodity page and on Commodity details returns to check answers. (prototype:dr2-1-source prototype-dr2-1-source-p2-100; repo:frontend repo-frontend-p5-038; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-103)",
-        "Opened from the overview, a valid Save and continue on Commodity details returns to the overview. (prototype:dr2-1-source prototype-dr2-1-source-p2-100)",
-        "While editing a template from its review, a valid Save and continue on the commodity page and on Commodity details returns to the template's review. (prototype:dr2-1-source prototype-dr2-1-source-p2-100)",
-        "While a trader is creating a template, a valid Save and continue on the commodity page goes to the notification overview. (prototype:dr2-1-source prototype-dr2-1-source-p2-100; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-026, ruling-sam-2026-10-09-templates-p1-044)"
-      ],
-      "dependsOn": [
-        "inc-156",
-        "inc-159"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p2-100"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p5-038"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p5-103"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "ruling-sam-2026-10-09-templates-p1-026, -p1-044"
-        }
-      ],
-      "requirements": [
-        "req-091",
-        "req-119"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Unchanged in substance: no requirement behind it moved, and ruling 2026-10-09 afternoon (ruling-sam-2026-10-09-pm-p2-014) confirms it goes ahead. Combines the change-context return (req-119) with the template-creation return (req-091): both are where the commodity pages go back to, on the same two controllers. c-021 (ruled): Commodity details returns to check answers too, carried by ?change=1. Template mode walks the same commodity page as a notification and is animals only (templates ruling). Depends on inc-015 in this area, and on the templates area's rows that let a trader create a template and edit it from its review (inc-156, inc-159): the real service has no notification templates today, so the template criteria cannot be observed until those land.",
-        "Stacked on the other themes (Sam, 11 October): this row merges the theme branch its dependency landed on before it builds, so templates merges to main after journey foundation, reference lists, commodities and import reason, and arrival and transit.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/commodities-and-reason",
-          "id": "inc-015"
-        }
-      ],
-      "merge": {
-        "frontend": "origin/feat/EUDPA-693-design-release-2-1-commodities-and-reason",
-        "tests": "origin/feat/EUDPA-693-design-release-2-1-commodities-and-reason"
-      }
-    },
-    {
-      "id": "inc-167",
-      "title": "Main import reason page edits a template from its review",
-      "detail": "Design Release 2.1 lets a trader edit a template page by page from the template's review. Template mode is another way of walking the same journey pages, never a copy of them, so later changes to the main import reason page carry into template mode without rework. Opened that way, the page's Back link goes to the template's review, and saving saves the template and returns there with a confirmation. Template mode applies to the animals sets only.",
-      "acceptanceCriteria": [
-        "Opened from a template's review, the main import reason page's Back link goes to that template's review (prototype:dr2-1-source prototype-dr2-1-source-p4-009; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041)",
-        "Opened from a template's review, a valid 'Save and continue' saves the reason to the template and returns to the template's review, showing '<title> has been updated' with the template's title (prototype:dr2-1-source prototype-dr2-1-source-p4-009)",
-        "The template's review then shows the reason just saved, and the notification the template came from is unchanged (prototype:dr2-1-source prototype-dr2-1-source-p4-009)",
-        "Opened from a template's review, the main import reason page shows the same heading, reasons, follow-up questions and error messages as the notification's main import reason page (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-026, ruling-sam-2026-10-09-templates-p1-029, ruling-sam-2026-10-09-templates-p1-030)"
-      ],
-      "dependsOn": [
-        "inc-156",
-        "inc-159"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p4-009"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "ruling-sam-2026-10-09-templates-p1-026, p1-029, p1-030, p1-031, p1-041, p1-044"
-        }
-      ],
-      "requirements": [
-        "req-167"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Rewritten for ruling:sam-2026-10-09-templates: template mode walks this same page, never a copy (claims p1-026, p1-029, p1-030), and works on the page as it stands when built rather than waiting for other themes' changes to it (claim p1-031); it is animals only (claim p1-044). Kept apart because it needs the templates area's rows that let a template be reviewed and changed (inc-156, inc-159), or the combiner merges it into the templates row that brings editing to each journey page if that row covers every page. No template mode exists in the real frontend today.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null
-    },
-    {
       "id": "inc-168",
       "title": "Arrival details while creating or editing a template",
       "detail": "A template is reused across consignments, so a one-off arrival date does not belong in it: while a live-animals template is being created, arrival details does not ask for the arrival date, saves none, and the section is complete without one. A trader editing a template from its review is sent back to the template review by Back and by Save and continue. The 9 October templates ruling keeps template mode to the animals sets; plants' arrival pages have no template mode.",
       "acceptanceCriteria": [
         "While a live-animals template is being created, arrival details shows no arrival date question, and the other four questions are shown as usual (prototype:dr2-1-source prototype-dr2-1-source-p6-022; repo:frontend repo-frontend-p11-007; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-026)",
-        "While a live-animals template is being created, saving arrival details saves no arrival date, and the template's arrival details count as complete without one (prototype:dr2-1-source prototype-dr2-1-source-p6-023, prototype-dr2-1-source-p6-056; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-028, ruling-sam-2026-10-09-templates-p1-030)",
-        "When arrival details is opened to edit a live-animals template from its review, the Back link goes to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-006; repo:frontend repo-frontend-p11-006; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041)",
-        "When arrival details is opened to edit a live-animals template from its review, Save and continue saves and returns to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-053, prototype-dr2-1-source-p6-083; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-029)"
+        "While a live-animals template is being created, saving arrival details saves no arrival date, and the template's arrival details count as complete without one (prototype:dr2-1-source prototype-dr2-1-source-p6-023, prototype-dr2-1-source-p6-056; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-028, ruling-sam-2026-10-09-templates-p1-030)"
       ],
       "dependsOn": [
         "inc-156",
@@ -1700,145 +1405,29 @@
         }
       ],
       "requirements": [
-        "req-290",
-        "req-291"
+        "req-290"
       ],
       "openQuestions": [],
       "notes": [
-        "Combines req-290 (no arrival date in a template) and req-291 (return to template review): both are arrival details' behaviour in template mode. Keeps its dependencies on the templates rows that create a template through the journey and add the template review (inc-156, inc-159), and on inc-028 for the save routing. Kept in the type-question-and-templates theme so the other arrival rows are not held up by templates.",
+        "Holds req-290 (no arrival date question or value in a template). req-291 (return to the template from arrival details) is carried by inc-159. Salvage for the completion rule: trade-imports-animals-frontend 11b00c19 (flow/template-mode.js, flow/task-rows.js) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates. Once the question is hidden, inc-159's 'answering one on the arrival page while creating it' half no longer applies.",
         "The criteria name live animals only: the germinal set's arrival details does not exist until inc-182 builds it, and adding a dependency on inc-182 here would make the templates and germinal-products themes wait on each other. The germinal half of req-290 and req-291 is observed through inc-186 (germinal templates answered on the germinal set's pages), whose pages copy this behaviour; the combiner should add a germinal criterion to inc-186 if it does not already carry one.",
         "Criterion 2 states only the change: the rest of the completion rule is req-331 (exists). req-1345 (a template never holds an arrival date) belongs to the templates area.",
-        "Stacked on the other themes (Sam, 11 October): this row merges the theme branch its dependency landed on before it builds, so templates merges to main after journey foundation, reference lists, commodities and import reason, and arrival and transit.",
         "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
       ],
       "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/arrival-and-transit",
-          "id": "inc-028"
-        }
-      ],
-      "merge": {
-        "frontend": "origin/feat/EUDPA-694-design-release-2-1-arrival-and-transit",
-        "tests": "origin/feat/EUDPA-694-design-release-2-1-arrival-and-transit"
-      }
-    },
-    {
-      "id": "inc-169",
-      "title": "Template creation leaves out Upload documents",
-      "detail": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment, and Sam's 9 October ruling confirms a template never offers documents. While a trader is creating a template, Upload documents is not a step of the journey and the template's overview offers no Documents task. The same ruling says the prototype's guards on the page's own address are not required, so none is built. No real service has templates yet, so this lands once the templates area has built template creation.",
-      "acceptanceCriteria": [
-        "While creating a template, Save and continue on the transporter step goes to the page for Consignment addresses (roles and addresses), passing over Upload documents. (prototype:dr2-1-source app/routes.js:1517-1525; ruling:sam-2026-10-09 claim 21)",
-        "While creating a template, the template's overview shows no 'Upload documents' task and no Documents section to follow. (prototype:dr2-1-source app/routes.js:1519-1521; ruling:sam-2026-10-09 claim 21)"
-      ],
-      "dependsOn": [
-        "inc-155"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "app/routes.js:1517-1525"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "claim 21"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "p1-044"
-        }
-      ],
-      "requirements": [
-        "req-543"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Kept apart: it can only be observed once template creation exists, which the templates area builds. It depends on the templates area's row that lets a trader create a template and walk its journey (inc-155 today) and on the journey-foundation step-order row (inc-001); both are real ordering needs, not a layer split. Where template mode lives in the shared flow is for the templates area's rows to set, so the row keeps its theme, type-question-and-templates.",
-        "Sam's 9 October ruling (claim 21; conflict c-238): no redirect guard on the page's address in template mode. The templates ruling makes template mode on journey pages animals only (ruling:sam-2026-10-09-templates p1-044), so plants is not touched.",
-        "Depends only on the template task list (inc-155): its dependencies on the opening-run order and the documents guard were look or order dependencies, which ruling:sam-2026-10-09-templates claim 6 drops.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-170",
-      "title": "The transporter list's buttons when amending a notification or editing a template",
-      "detail": "When today's transporter list is reached while amending a submitted notification, or while editing a template from its review, it ends with the controls Design Release 2.1 gives those modes, so the trader can return to where they came from. The controls go on today's list as it stands: its blocked Design Release 2.1 changes (layout, search, shipped records) do not hold them up. Template mode is the animals sets' only; plants pages have none.",
-      "acceptanceCriteria": [
-        "When the notification is being amended, the transporter list ends with a primary 'Save and return' that goes back to the review, a secondary 'Save and continue' and a link-style 'Save and return to overview'. (prototype:dr2-1-source prototype-dr2-1-source-p7-043; ruling:sam-2026-10-09-pm claim 48)",
-        "When the transporter list is edited from a template review, it ends with a single 'Save and return' button, which goes back to the template, and a 'Cancel' link back to the template, and shows no other save button. (prototype:dr2-1-source prototype-dr2-1-source-p7-044; ruling:sam-2026-10-09-pm claim 48; ruling:sam-2026-10-09-templates claim 34; conflicts:c-286)",
-        "In both modes the list's content, search and choice of transporter are today's: only its closing controls change. (ruling:sam-2026-10-09-templates claim 31; conflicts:c-286)"
-      ],
-      "dependsOn": [
-        "inc-159"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-043, -p7-044 (journey-form-actions isAmend and isTemplateReview branches)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "claims 48, 50: inc-170 goes ahead and no longer depends on inc-037"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "claims 31, 34, 44: template mode works on pages as they stand; animals only"
-        }
-      ],
-      "requirements": [
-        "req-407",
-        "req-408"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Combines the two alternative-mode control sets (req-407, req-408): both change only the list's closing controls. c-286 (precedence): the afternoon ruling builds the template-review controls now, on today's list. Dependency on inc-037 dropped (ruling:sam-2026-10-09-pm claim 50). Needs amending a notification (inc-004) and editing a template from its review (inc-159) first; the combiner may fold these criteria into those rows if they change the shared save controls for every page at once.",
-        "Theme kept as type-question-and-templates, as the existing backlog has it, though the change sits in the transporter list's folder; the combiner decides whether the theme boundary needs the folder moved.",
-        "Stacked on the other themes (Sam, 11 October): this row merges the theme branch its dependency landed on before it builds, so templates merges to main after journey foundation, reference lists, commodities and import reason, and arrival and transit.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/journey-foundation",
-          "id": "inc-004"
-        }
-      ],
-      "merge": {
-        "frontend": "origin/feat/EUDPA-691-design-release-2-1-journey-foundation",
-        "tests": "origin/feat/EUDPA-691-design-release-2-1-journey-foundation"
-      }
+      "externalDependsOn": [],
+      "merge": null
     },
     {
       "id": "inc-171",
       "title": "Back links follow the context a page was opened in",
       "detail": "Design Release 2.1 builds every journey page's Back link from how the page was reached: to the overview from an overview task, to the template's review page from a template review, and otherwise to the previous page in the step order, including when the page was opened from the review page's Change link. The context comes from the service's own journey state (the opening run, ?change=1, template editing), not from a from=hub or from=review marker. Today task pages point Back at the overview whatever context they were opened in.",
       "acceptanceCriteria": [
-        "A page opened from its overview task has a 'Back' link to the overview. (prototype:dr2-1-source app/routes.js:488-498, p1-052)",
         "A page reached by 'Save and continue' in the opening run has a 'Back' link to the previous page in the step order: 'Main reason for import' goes back to 'What are you importing?', and 'Commodity details' goes back to 'Main reason for import'. (prototype:dr2-1-source app/routes.js:488-498, 1495-1501)",
         "A page opened from a Change link on the review page has a 'Back' link to the previous page in the step order, not to the review page; 'Save and continue' there still returns to the review page. (prototype:dr2-1-source app/routes.js:488-498, p1-053; ruling:sam-2026-10-09 p1-089)",
-        "A page opened from a template's review page has a 'Back' link to that template's review page. (prototype:dr2-1-source app/routes.js:488-498)",
-        "Pages behind 'Roles and addresses' (the party pickers and the CPH number page) keep their 'Back' link to 'Roles and addresses'. (repo:tests tests/animals/e2e/features/cph-scope.spec.ts:66-73; trace:animals-fit p1-047)",
-        "In the high-risk plants frontend, a journey page opened from the overview, the origin page included, has a Back link to the overview, and a page reached in the opening run has a Back link to the previous page in plants' own step order (repo:plantsfrontend repo-plantsfrontend-p2-018, repo-plantsfrontend-p5-030; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041, ruling-sam-2026-10-09-templates-p1-043)",
-        "Back from plants' first page, its commodity type question, is unchanged, no plants page's Back link goes to the INS type question, and plants pages have no template mode (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-042, ruling-sam-2026-10-09-templates-p1-044; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-051)"
+        "In the high-risk plants frontend, a journey page opened from the overview, the origin page included, has a Back link to the overview, and a page reached in the opening run has a Back link to the previous page in plants' own step order (repo:plantsfrontend repo-plantsfrontend-p2-018, repo-plantsfrontend-p5-030; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041, ruling-sam-2026-10-09-templates-p1-043)"
       ],
-      "dependsOn": [
-        "inc-159"
-      ],
+      "dependsOn": [],
       "theme": "type-question-and-templates",
       "status": "deferred",
       "kind": "feat",
@@ -1879,24 +1468,16 @@
       ],
       "openQuestions": [],
       "notes": [
-        "One slice (req-1616, c-206, c-276). Depends on the opening-run step-order row (the previous page is taken from the new order) and on the templates area's row that lets a template be edited from its review page (inc-159): the template-review criterion cannot be observed before that context exists.",
+        "One slice (req-1616, c-206). It builds on main's opening-run order (journey-foundation inc-001, merged). Back to the template page while changing a saved template is inc-159's. Once design-snagging inc-207 lands, the reason page is headed 'Main import reason'; criterion 2's 'Main reason for import' means that page.",
+        "Main already sends Back to the overview from a page opened from its overview task, and from the party pickers and the CPH page to Roles and addresses; the existing controller tests and cph-scope.spec.ts assert both. The new opening-run and Change-link Back links sit beside those, not in place of them.",
+        "Nothing to salvage: this row was never built on the stale branch. Commodities-and-reason inc-015 (stale) also sets the Commodity details Back link; settle the two when either theme is played.",
         "Re-distil: unchanged in substance from inc-171.",
         "req-1917 (plants' Back links follow the context a page was opened in, animals only for the INS type question) is added here by the combiner, under ruling:sam-2026-10-09-templates claim 7. The Back links sit in each frontend's flow, which journey-foundation owns and which lands first.",
-        "Stacked on the other themes (Sam, 11 October): this row merges the theme branch its dependency landed on before it builds, so templates merges to main after journey foundation, reference lists, commodities and import reason, and arrival and transit.",
         "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
       ],
       "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/journey-foundation",
-          "id": "inc-001"
-        }
-      ],
-      "merge": {
-        "frontend": "origin/feat/EUDPA-691-design-release-2-1-journey-foundation",
-        "plantsfrontend": "origin/feat/EUDPA-691-design-release-2-1-journey-foundation",
-        "tests": "origin/feat/EUDPA-691-design-release-2-1-journey-foundation"
-      }
+      "externalDependsOn": [],
+      "merge": null
     }
   ]
 }

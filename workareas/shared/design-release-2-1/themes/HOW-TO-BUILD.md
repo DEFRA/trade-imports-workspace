@@ -1,7 +1,35 @@
 # How to build the split-off themes
 
-Seven Design Release 2.1 themes are split off the main backlog. Each one builds on its own branch, with one draft pull
+Eight Design Release 2.1 themes are split off the main backlog. Each one builds on its own branch, with one draft pull
 request per repo. Nothing merges to `main` until Sam checks the finished theme.
+
+## Stale branches (ruled 20 October)
+
+Five themes were built on branches that will **not** be merged. Each is now a stale branch: a quarry to take code from,
+not something to finish.
+
+| Theme | Stale branch | Rows left | Open PRs to close when the theme is played |
+|---|---|---|---|
+| Type question and templates (EUDPA-690) | `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | 19 | animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92, tests #20 |
+| Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | 8 | animals frontend #401, tests #23, performance tests #17 |
+| Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | 4 | animals frontend #402, plants frontend #95, tests #24 |
+| Origin page (EUDPA-695) | `feat/EUDPA-695-design-release-2-1-origin-page` | 0: retired | animals frontend #403, plants frontend #96, tests #25 (close once design snagging lands) |
+| Overview and review (EUDPA-696) | `feat/EUDPA-696-design-release-2-1-overview-and-review` | 21 | animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98, tests #26 |
+
+- **When a theme is played,** cut a fresh branch from `main` after design snagging has landed, with the same name in
+  every repo it touches. Use a new name so the stale branch stays as the quarry, for example
+  `feat/EUDPA-696-overview-and-review`, and point the theme's `branch` at it then.
+- **Salvage, don't merge.** Every row that was `done` on a stale branch and is not fully ported by design snagging is
+  back to `todo`, trimmed to what `main` still lacks. Its note starts "Salvage:" and names the commits to take.
+- **Port notes are gone.** "Drop at merge", "trim at merge" and "keep main's version at merge" notes no longer apply.
+  The `merge` fields on templates rows are cleared.
+- **Close the old PRs** in the table above when the fresh branch opens its own. Do not close them before. Delete the
+  stale branches only after salvage is done.
+- `themes.json` marks each of these themes with `staleBranch`. What changed row by row is in
+  [`../snagging/trim.md`](../snagging/trim.md).
+
+Before the performance tests PR #17 is closed, check whether bbc6e24 (EUDPA-676, #21) reached `main` under another
+sha: the stale branch carries it.
 
 On the build machine, pull the workspace branch `feat/NO_JIRA-design-release-2-1` first. Then run
 `tim workspace branch <theme branch>`, open Claude Code at the workspace root and say the phrase for the theme.
@@ -52,75 +80,54 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/reference-lists, branch lifecycle on
   feat/EUDPA-692-design-release-2-1-reference-lists"
 
-## Type question and templates: EUDPA-690
+## Type question and templates: EUDPA-690 (stale branch)
 
 - **Ticket:** [EUDPA-690](https://eaflood.atlassian.net/browse/EUDPA-690)
-- **Branch:** `feat/NO_JIRA-design-release-2-1-type-question-and-templates`. This theme was split before its ticket
-  existed, and a split pointer's branch can't be changed, so the branch keeps the NO_JIRA name.
-- **Rows:** 22, with 18 ready now.
-- **Pull requests:**
-  - [animals frontend #398](https://github.com/DEFRA/trade-imports-animals-frontend/pull/398)
-  - [animals backend #106](https://github.com/DEFRA/trade-imports-animals-backend/pull/106)
-  - [INS frontend #45](https://github.com/DEFRA/trade-imports-ins-frontend/pull/45)
-  - [plants frontend #92](https://github.com/DEFRA/trade-imports-plants-frontend/pull/92)
-  - [tests #20](https://github.com/DEFRA/trade-imports-ins-tests/pull/20)
-- **Say:** "run the increment build loop on shared/design-release-2-1/themes/type-question-and-templates, branch
-  lifecycle on feat/NO_JIRA-design-release-2-1-type-question-and-templates"
+- **Stale branch:** `feat/NO_JIRA-design-release-2-1-type-question-and-templates`. Salvage from it.
+- **When played:** a fresh branch from `main` after design snagging, for example
+  `feat/EUDPA-690-design-release-2-1-type-question-and-templates`.
+- **Rows:** 19: 13 to rebuild with salvage notes, 5 deferred, 1 dropped. Design snagging ports nothing from this theme.
+  4 deferred rows were removed (inc-166, inc-167, inc-169, inc-170): `main` or inc-155 and inc-159 now hold them.
+- **Old PRs to close when played:** animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92,
+  tests #20.
 
-## Commodities and import reason: EUDPA-693
+## Commodities and import reason: EUDPA-693 (stale branch)
 
 - **Ticket:** [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693)
-- **Branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`, stacked on journey foundation with reference
-  lists merged in.
-- **Rows:** 10, with 6 ready. 4 wait until commodities come from MDM.
-- **Pull requests:**
-  - [animals frontend #401](https://github.com/DEFRA/trade-imports-animals-frontend/pull/401)
-  - [tests #23](https://github.com/DEFRA/trade-imports-ins-tests/pull/23)
-  - [performance tests #17](https://github.com/DEFRA/trade-imports-performance-tests/pull/17)
-- **Say:** "run the increment build loop on shared/design-release-2-1/themes/commodities-and-reason, branch lifecycle
-  on feat/EUDPA-693-design-release-2-1-commodities-and-reason"
+- **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`. Salvage from it.
+- **When played:** a fresh branch from `main` after design snagging.
+- **Rows:** 8: 4 to rebuild with salvage notes (Back links, hard stops, blank saves), 4 waiting until commodities come
+  from MDM. inc-011 and inc-020 were removed: design snagging inc-205 and inc-207 port them to `main`.
+- **Old PRs to close when played:** animals frontend #401, tests #23, performance tests #17.
 
-## Arrival and transit: EUDPA-694
+## Arrival and transit: EUDPA-694 (stale branch)
 
 - **Ticket:** [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694)
-- **Branch:** `feat/EUDPA-694-design-release-2-1-arrival-and-transit`, stacked on journey foundation with reference
-  lists merged in.
-- **Rows:** 5, all ready.
-- **Pull requests:**
-  - [animals frontend #402](https://github.com/DEFRA/trade-imports-animals-frontend/pull/402)
-  - [plants frontend #95](https://github.com/DEFRA/trade-imports-plants-frontend/pull/95)
-  - [tests #24](https://github.com/DEFRA/trade-imports-ins-tests/pull/24)
-- **Say:** "run the increment build loop on shared/design-release-2-1/themes/arrival-and-transit, branch lifecycle on
-  feat/EUDPA-694-design-release-2-1-arrival-and-transit"
+- **Stale branch:** `feat/EUDPA-694-design-release-2-1-arrival-and-transit`. Salvage from it.
+- **When played:** a fresh branch from `main` after design snagging.
+- **Rows:** 4: 3 to rebuild with salvage notes (required means of transport, transit page title and redirect, transit
+  country list), 1 dropped. inc-026 went to design snagging inc-208; inc-027 is already on `main` through reference lists.
+- **Old PRs to close when played:** animals frontend #402, plants frontend #95, tests #24.
 
-## Origin page: EUDPA-695
+## Origin page: EUDPA-695 (retired)
 
 - **Ticket:** [EUDPA-695](https://eaflood.atlassian.net/browse/EUDPA-695)
-- **Branch:** `feat/EUDPA-695-design-release-2-1-origin-page`, stacked on journey foundation with reference lists
-  merged in.
-- **Rows:** 3, all buildable in order.
-- **Pull requests:**
-  - [animals frontend #403](https://github.com/DEFRA/trade-imports-animals-frontend/pull/403)
-  - [plants frontend #96](https://github.com/DEFRA/trade-imports-plants-frontend/pull/96)
-  - [tests #25](https://github.com/DEFRA/trade-imports-ins-tests/pull/25)
-- **Say:** "run the increment build loop on shared/design-release-2-1/themes/origin-page, branch lifecycle on
-  feat/EUDPA-695-design-release-2-1-origin-page"
+- **Stale branch:** `feat/EUDPA-695-design-release-2-1-origin-page`. Design snagging inc-202 and inc-203 salvage all of
+  it, including tests 4f9cec8.
+- **Rows:** 0. All 3 rows were removed; inc-203 now holds their criteria and requirement ids. Nothing is left to play.
+- **Old PRs to close once design snagging lands:** animals frontend #403, plants frontend #96, tests #25.
 
-## Overview and review: EUDPA-696
+## Overview and review: EUDPA-696 (stale branch)
 
 - **Ticket:** [EUDPA-696](https://eaflood.atlassian.net/browse/EUDPA-696)
-- **Branch:** `feat/EUDPA-696-design-release-2-1-overview-and-review`, stacked on journey foundation with reference
-  lists, commodities and import reason, arrival and transit, and origin page merged in.
-- **Rows:** 22: 16 ready, 2 waiting on permanent addresses (identification and permanent address theme), 2 blocked
-  and 2 dropped.
-- **Pull requests:**
-  - [animals frontend #404](https://github.com/DEFRA/trade-imports-animals-frontend/pull/404)
-  - [animals backend #107](https://github.com/DEFRA/trade-imports-animals-backend/pull/107)
-  - [INS frontend #51](https://github.com/DEFRA/trade-imports-ins-frontend/pull/51)
-  - [plants frontend #98](https://github.com/DEFRA/trade-imports-plants-frontend/pull/98)
-  - [tests #26](https://github.com/DEFRA/trade-imports-ins-tests/pull/26)
-- **Say:** "run the increment build loop on shared/design-release-2-1/themes/overview-and-review, branch lifecycle on
-  feat/EUDPA-696-design-release-2-1-overview-and-review"
+- **Stale branch:** `feat/EUDPA-696-design-release-2-1-overview-and-review`, in five repos. It also carries merges of the
+  other stale branches, so take only the commits each salvage note names.
+- **When played:** a fresh branch from `main` after design snagging, for example
+  `feat/EUDPA-696-overview-and-review`.
+- **Rows:** 21: 15 to rebuild with salvage notes, 2 never built (inc-108, which waits on permanent addresses, and the
+  inc-117 tests), 2 blocked and 2 dropped. inc-114 was removed: design snagging inc-217 ports it.
+- **Old PRs to close when played:** animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98,
+  tests #26.
 
 ## Design snagging: no ticket yet
 
@@ -131,11 +138,13 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   ([`../snagging/assessment.md`](../snagging/assessment.md), rendered proof in
   [`../snagging/screens.html`](../snagging/screens.html)). It lands next, on its own in wave 2.
 - **What it changes elsewhere:**
-  - It ports finished work from the origin page, commodities and import reason, arrival and transit, and overview and
-    review branches to `main`. Each source row has a note saying what to drop when its theme merges `main`.
+  - It salvages finished work from the stale origin page, commodities and import reason, arrival and transit, and
+    overview and review branches to `main`. The source rows it ports in full were removed on 20 October, and their
+    criteria and requirement ids now sit on the design snagging row that ports them.
   - It takes in documents inc-032, identification inc-046, inc-047 and inc-050, consignment parties inc-085 and inc-086,
     and waiting-on-design inc-190. It also carves two criteria out of transporters inc-037.
-  - The rows that waited on those rows now wait on this theme.
+  - Later rows now hold only their deltas. A later row waits on a design snagging row only where it builds on code
+    that row creates; the rest simply build from `main` after this theme lands.
 - **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with
   `../snagging/screens/prototype/`. The prototype walk is `../prototype-specs/e2e/snagging.fit.spec.js`.
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging, branch lifecycle on
@@ -148,21 +157,11 @@ merged, if its theme never changed that repo.
 
 ## What lands first
 
-- **Templates waits on 4 rows elsewhere.** Its last 4 rows wait for rows in other workareas to be `done`:
-
-  | Templates row | Waits for | Where that row is |
-  |---|---|---|
-  | inc-171 | inc-001 | journey foundation (done) |
-  | inc-170 | inc-004 | journey foundation (done) |
-  | inc-166 | inc-015 | commodities and import reason |
-  | inc-168 | inc-028 | arrival and transit |
-
-  Until they're done, `tim backlog next` skips those rows and the loop builds the rest.
-- **Merge order:** journey foundation and reference lists first, then commodities and import reason, arrival and
-  transit, and origin page, then overview and review and templates.
+- **Order:** journey foundation and reference lists are on `main`. Design snagging lands next. Every other theme
+  starts from `main` after that, on a fresh branch: commodities and import reason and arrival and transit, then
+  templates and overview and review.
+- **No stacking.** No theme merges another theme's branch any more. Templates' old `merge` fields (inc-166, inc-168,
+  inc-170, inc-171) are gone: inc-166 and inc-170 were removed, and inc-168 and inc-171 are deferred with no
+  dependency on another stale theme.
 - **The loop never commits its own backlog writes.** When a theme lands rows another theme waits on, commit and push
   that theme's `backlog.json` on the workspace branch, then pull it on the other machine before its next launch.
-- **Templates stacks on the themes its last 4 rows wait for.** Each of those rows has a `merge` field. inc-166 merges
-  the commodities and import reason branch, inc-168 merges the arrival and transit branch, and inc-170 and inc-171
-  merge the journey foundation branch, each before the row builds. Once they land, the templates pull requests also
-  show those themes' code until those themes merge to `main`.

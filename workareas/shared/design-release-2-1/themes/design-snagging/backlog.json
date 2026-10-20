@@ -260,15 +260,17 @@
     },
     {
       "id": "inc-204",
-      "title": "Region code prefix follows the picked country in the browser, with an empty prefix slot before a country is chosen",
-      "detail": "The designers asked for the grey country-code prefix in front of the region code box (S04). The prototype shows an empty prefix slot as soon as Yes is chosen, and fills it with the country's code the moment a country is picked, with no save. Today the prefix appears only after the page is submitted with a country. This snag is design's answer to design question 2, so waiting-on-design inc-190 moves in here. With JavaScript the page matches the prototype. Without JavaScript the saved country's prefix shows once the page is re-shown, as DR1 shipped. openspec: add req-040 and req-041 to live-animals/journey-pages/origin-of-import as scenarios, with the no-JavaScript case stated.",
+      "title": "Region code prefix shows with JavaScript only: an empty slot, then the picked country's code as soon as it is picked; no prefix without JavaScript",
+      "detail": "The designers asked for the grey country-code prefix in front of the region code box (S04). The prototype shows an empty prefix slot as soon as Yes is chosen, and fills it with the country's code the moment a country is picked, with no save. Today the prefix appears only after the page is submitted with a country. This snag is design's answer to design question 2, so waiting-on-design inc-190 moves in here. Sam ruled on 20 October: the prefix shows with JavaScript only, filling in as soon as a country is picked; without JavaScript there is no prefix at all, not even when the page is shown again. With JavaScript the page matches the prototype. openspec: add req-040 and req-041 to live-animals/journey-pages/origin-of-import as scenarios, with the no-JavaScript case (no prefix) stated.",
       "acceptanceCriteria": [
         "With JavaScript, before any country is chosen, the revealed region code box shows an empty grey prefix in front of it. (review:designers-2026-10-19 S04; prototype:dr2-1-source partials/region-of-origin-code-input.html:14-30 at 56371e2; screens/prototype/S04--no-country-yet.png)",
         "With JavaScript, picking France makes the prefix 'FR', then picking Netherlands makes it 'NL', with no form submission. (review:designers-2026-10-19 S04; prototype:dr2-1-source app/assets/javascripts/country-search.js:106-114; screens/prototype/S04--france-prefix.png)",
         "With JavaScript, picking a subdivision shows its parent country's code, the same code the server stores. (review:designers-2026-10-19 S04; theme:origin-page inc-175)",
         "With JavaScript, clearing the country, or picking one with no code, empties the prefix. (prototype:dr2-1-source app/assets/javascripts/country-search.js:257)",
-        "Without JavaScript, the prefix shows the saved or submitted country's code once the page is re-shown, and a code typed with its prefix, such as 'FR-75', is accepted. (document:dr1-parity-backlog document-dr1-parity-backlog-p4-002; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-056)",
-        "The prefix is hidden from screen readers, and the label and the hint 'Enter up to 5 characters.' still describe the box. (review:designers-2026-10-19 S04)"
+        "Given JavaScript is on and a country is saved, when the page is shown again, or shown with an error, then the prefix shows the saved or submitted country's code straight away, and changing the country changes it. (Sam, 20 Oct; req-040)",
+        "Given JavaScript is off, when the region code box is revealed on first view, after a save and after an error, then there is no prefix slot and no prefix text. (Sam, 20 Oct: no prefix without JavaScript)",
+        "Given JavaScript is off and France is chosen, when the trader types '75' or 'FR-75' in the region code box and saves, then both are stored as FR-75, and anything longer than 5 characters after the prefix is refused with today's error, the same as with JavaScript. (validate.js suffixOf and regionCodeFrom; document:dr1-parity-backlog document-dr1-parity-backlog-p4-002)",
+        "The prefix is hidden from screen readers, as the GOV.UK input component draws it (aria-hidden), and the label and the hint 'Enter up to 5 characters.' still describe the box; the country itself is announced by the country field above. (review:designers-2026-10-19 S04; Sam, 20 Oct)"
       ],
       "dependsOn": [
         "inc-202",
@@ -337,9 +339,10 @@
       "notes": [
         "Moves in waiting-on-design inc-190, unblocked: S04 is design's answer to design question 2. Made the call, flagged to Sam in discussion.md.",
         "Built as a small progressive-enhancement module registered in the existing client bundle (no new webpack entry). It listens for the change event inc-202 adds, and reads a country-to-prefix map the server builds with the same prefix rule as validation, so subdivisions map to their parent.",
-        "Without JavaScript there is no empty slot before a save: the GOV.UK input macro renders no empty prefix, and a filler character would be a hack. Record this in themes/design-snagging/prototype-differences.md (the origin-page workarea is retired).",
+        "Hide approach (Sam, 20 Oct): the server always renders the prefix element, through the GOV.UK input's prefix with classes \"app-js-only\" and an inner span holding the saved country's code (empty before a pick, so the slot exists). CSS hides .app-js-only and shows it only under body.govuk-frontend-supported, the class GOV.UK's page template sets when its JavaScript can run. The script updates the span. Chosen over a script-added prefix because the shown-again and error cases then show the right code at once, with nothing to compute or flash in, and without JavaScript nothing shows.",
         "Plants has no region code question. The change event dispatch is already in both frontends through inc-202. germinal-products inc-176's copy of the origin page takes this behaviour when it is built.",
-        "Tests: origin fit spec (empty slot before a pick; France then Netherlands with no navigation; the existing no-JS prefix-after-save test stays) and the same checks in trade-imports-ins-tests tests/animals/e2e/pages/origin.spec.ts. Regenerate the revealed-state visual baseline. Re-shoot screens/main/S04--region-code-revealed.png."
+        "Tests: origin fit spec (empty slot before a pick; France then Netherlands with no navigation; the existing no-JS prefix-after-save test changes to assert no prefix, after save and after an error) and the same checks in trade-imports-ins-tests tests/animals/e2e/pages/origin.spec.ts. Regenerate the revealed-state visual baseline. Re-shoot screens/main/S04--region-code-revealed.png.",
+        "Validation check, 20 Oct: the stored code does not depend on the prefix being shown. The server joins the saved country's code to what was typed (validate.js regionCodeFrom, from prefixFor(country)) and strips a prefix the trader typed themselves (suffixOf), and the 5-character limit is measured after that. So hiding the prefix without JavaScript changes nothing the server does. One edge case: a trader without JavaScript who types the code with no hyphen, such as 'FR75', is not stripped: it passes the 5-character limit and is stored as 'FR-FR75', the same as today. Without a visible prefix that is a little more likely, so the build should decide whether suffixOf also strips the country code without a hyphen, and test it."
       ],
       "gate": null
     },
@@ -720,17 +723,23 @@
     },
     {
       "id": "inc-210",
-      "title": "Party picker and transporter search boxes use a joined icon search button, in both frontends",
-      "detail": "The designers found the address picker and transporter search boxes look different (S26, S33). The prototype draws one search control everywhere: a box with a square blue search icon button joined to it, under a medium 'Search' label. Main has a smaller box with a separate grey 'Search' text button under it. A real icon submit button works without JavaScript and is allowed by the 9 October afternoon ruling (claims 24-25). This row gives every server search in both frontends that look: the five animals party pickers, the plants consignor, place of destination and consignment contact pickers, and the animals transporter list. Search still runs on the server when the button or Enter is pressed. Filtering or listing as you type stays out: party pickers in waiting-on-design inc-193, transporters in inc-037. The commodity search is not in this row: Sam blocked it on 20 October until the MDM commodity API and the commodity type-ahead component land, and its look moved to inc-014. This row carries inc-086's search criteria (criteria 3 and 4). openspec: live-animals/addresses, plants/addresses, plants/journey-pages consignor-select, place-of-destination and consignment-contact-select, and live-animals/journey-pages/transporter: the search runs from a 'Search' icon button.",
+      "title": "Party picker and transporter search boxes use a joined blue icon search button, and the transporter list filters as you type, in both frontends",
+      "detail": "The designers found the address picker and transporter search boxes look different (S26, S33). The prototype draws one search control everywhere: a box with a square blue search icon button joined to it, under a medium 'Search' label. Main has a smaller box with a separate grey 'Search' text button under it. A real icon submit button works without JavaScript and is allowed by the 9 October afternoon ruling (claims 24-25). This row gives every server search in both frontends that look: the five animals party pickers, the plants consignor, place of destination and consignment contact pickers, and the animals transporter list. Search still runs on the server when the button or Enter is pressed. Filtering or listing as you type stays out for the party pickers (waiting-on-design inc-193). The transporter list now filters as you type (Sam, 20 Oct: \"another one for the blue icon and same behaviour as the rest\"): with JavaScript its rows narrow as the trader types, with matching letters in bold, and without JavaScript today's box you submit stays, its blue icon button submitting the search. This carves req-389 and criterion 3 out of blocked transporters inc-037. The commodity search is not in this row: Sam blocked it on 20 October until the MDM commodity API and the commodity type-ahead component land, and its look moved to inc-014. This row carries inc-086's search criteria (criteria 3 and 4). openspec: live-animals/addresses, plants/addresses, plants/journey-pages consignor-select, place-of-destination and consignment-contact-select, and live-animals/journey-pages/transporter: the search runs from a 'Search' icon button.",
       "acceptanceCriteria": [
         "On the five animals party pickers and the plants consignor, place of destination and consignment contact pickers, the search label 'Search' is medium, and the hint 'Name, address or country' stays. (review:designers-2026-10-19 S33; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-071; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-038)",
         "On those pickers and the animals transporter list, the search runs from a square icon button joined to the right of the box, whose accessible name is 'Search' (Welsh as today); there is no separate 'Search' text button. (review:designers-2026-10-19 S26, S33; prototype:dr2-1-source app/views/design-release-2.1/consignment-address-select.html, transporter.html:87-95 at 56371e2)",
         "With JavaScript off, pressing the icon button or Enter in the box narrows the list on the server, as today, on every one of those pages. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-035; screens/prototype/S26--default--nojs.png shows the prototype does not)",
         "The icon button is GOV.UK blue, as the prototype draws it and as the date picker's calendar button is, with the GOV.UK focus state. (review:designers-2026-10-19 S26, S33; screens/prototype/S33--default.png)",
         "On the pickers the box is half the content column wide, as drawn. (review:designers-2026-10-19 S33; screens/prototype/S33--default.png)",
+        "Given the transporter list with JavaScript on, when the trader types in its search box, then the table shows only the rows that match as they type, by name, address, approval number, type or status, with no page reload and no Search press, and focus stays in the box. (Sam, 20 Oct; req-389, req-390 as today's server filter matches; theme:transporters inc-037 criterion 3)",
+        "Given a filtered transporter list, when rows match, then the letters that match in each shown cell are in bold, drawn by the same escape-then-bold helper as the type-ahead suggestions (inc-202), so a name with '&' shows as written. (Sam, 20 Oct: same behaviour as the rest)",
+        "Given the trader is filtering the transporter list, when the shown rows change, then a polite live region says how many are shown, such as '3 transporters shown', or 'No transporters match', with Welsh machine drafts. A transporter already chosen stays chosen when it is filtered out of view, as the hidden selected field keeps it today. (WCAG 4.1.3; transporters.njk selected field)",
+        "Given JavaScript is off, when the trader presses the blue icon button or Enter in the transporter search, then the search is submitted and the server re-renders the filtered list, as today. (Sam, 20 Oct: the submit box stays as the version without JavaScript; req-389)",
         "Every changed page has no serious or critical accessibility violations, empty, searched and with no matches. (repo:frontend; repo:plantsfrontend)"
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "inc-202"
+      ],
       "theme": "design-snagging",
       "status": "todo",
       "kind": "feat",
@@ -771,7 +780,8 @@
       ],
       "requirements": [
         "req-590",
-        "req-591"
+        "req-591",
+        "req-389"
       ],
       "openQuestions": [
         "Button colour: MoJ Search's default is GOV.UK green; the prototype draws blue (#1d70b8), matching the house date picker toggle. Default: blue, with one override rule beside the date picker's; the designers are asked in discussion.md and can switch it to green.",
@@ -779,11 +789,13 @@
       ],
       "notes": [
         "Build from MoJ Frontend 11.1.0's Search component styling, already a dependency of both frontends, not a hand-built control. Each page is one POST form and the mojSearch macro emits its own form, so put MoJ's input-wrapper and icon-button classes on govukInput and govukButton (the button as the input's after-input slot, MoJ's aria-hidden, unfocusable svg plus visually hidden 'Search' text), and import MoJ's search stylesheet in each frontend's application stylesheet. Keep the search button the first submit in its form so Enter searches. Do not copy the prototype's type=button or its clear 'x'.",
-        "Existing copy covers the label, hint and button name, so no new Welsh.",
-        "The transporter list is part of blocked transporter management (point 5, claim 35). Its search look is carved out here as look and feel only; filtering as you type, the visible heading move and the eight DR2.1 transporters stay in inc-037. Flagged to Sam in discussion.md.",
+        "Existing copy covers the label, hint and button name. The transporter filter's live region adds two strings, which need Welsh machine drafts.",
+        "The transporter list is part of blocked transporter management (point 5, claim 35). Sam ruled on 20 October that its search behaves like the rest, so filtering as you type (req-389, inc-037 criterion 3) is carved out into this row along with its look. The visible heading move and the eight DR2.1 transporters stay in inc-037.",
         "Commodity search: taken out of this row on 20 October. Sam blocked it until EUDPA-617 (Integrate early-access MDM commodity API into live animals frontend) and EUDPA-616 (Add a search type-ahead for choosing commodities, reusable across the journey) land. Its look, a full-width box with the joined blue icon button, is now a criterion of waiting-on-design inc-014. Leave the commodity search template (commodities/search/search.njk) alone here.",
         "Plants dashboard search is not in this row; no snag names it.",
-        "Tests: fit specs and ins-tests page objects find the button by role and name 'Search', which does not change; refresh visual baselines. Rendered proof: re-shoot screens/main/S08--empty.png, S26--list.png, S33--list.png and P-address-selection--list.png."
+        "Tests: fit specs and ins-tests page objects find the button by role and name 'Search', which does not change; refresh visual baselines. Rendered proof: re-shoot screens/main/S08--empty.png, S26--list.png, S33--list.png and P-address-selection--list.png.",
+        "Data source, 20 Oct: the transporter list is not from the address book or a backend. The frontend ships its transporters in services/transporters/records.js and keeps the ones an organisation adds in an in-memory map (register.js), and partiesFor(orgId) joins them: a handful of rows. The server already renders the whole list into the page when nothing is searched. So the filter narrows the rows rendered in the page; it needs no endpoint and no new API. If transporter management (inc-037) later moves the list to the address book or a backend and it grows large, revisit this there.",
+        "Control call: the transporter list is a table of radios with address, approval number, type and status columns, not a single pick list, so the accessible-autocomplete library does not fit it: wrapping it would drop the columns traders compare. \"Same behaviour as the rest\" is built as the same look (the joined blue icon), the same as-you-type narrowing and the same bold matches, with the bold helper shared with inc-202's wrapper. The filter is a small progressive-enhancement module in the existing client bundle."
       ],
       "gate": null
     },
@@ -840,16 +852,14 @@
     },
     {
       "id": "inc-212",
-      "title": "Party picker layout: add button, results heading and count, fieldset, one address line per line, full width, and blank save, in animals and plants",
-      "detail": "The designers found the address pickers' search and address styling differ from the prototype (S33, S36). consignment-parties inc-086 already plans the picker layout in animals and plants. It moves in here, with its search criteria carried by inc-210. The screenshots show one more gap no row planned: the animals pickers sit in the two-thirds column, so names and addresses wrap heavily, while the prototype and the plants pickers use the full width (screens/main/S36--list.png against screens/prototype/S36--consignee.png and screens/main/P-address-selection--list.png). The 'View' link that replaces each row's 'View details' expander stays in consignment-parties inc-090, because it needs the address book to send the trader back to the picker (address-book inc-066) and this theme depends only on main. Prototype 56371e2 (commit c3ca339) removed the place of origin's separate country search, so the place of origin picker is treated like the other four and inc-089 is dropped. openspec: live-animals/addresses and plants/addresses take inc-086's picker scenarios plus 'each animals party picker uses the full page width'.",
+      "title": "Party picker layout: add button, results heading and count, fieldset and blank save, in animals and plants",
+      "detail": "The designers found the address pickers' search styling differs from the prototype (S33). consignment-parties inc-086 already plans the picker layout in animals and plants. It moves in here, with its search criteria carried by inc-210. The address selection snag (S36: address lines, full width and the 'View details' expander) left this row on 20 October: Sam ruled it is \"not for this list, will be covered as needed on the address book theme\", so its criteria and req-600 moved to consignment-parties inc-090, the picker 'View' link row that waits on address-book inc-066 (epic EUDPA-646). Prototype 56371e2 (commit c3ca339) removed the place of origin's separate country search, so the place of origin picker is treated like the other four and inc-089 is dropped. openspec: live-animals/addresses and plants/addresses take inc-086's picker scenarios, less the address-lines one.",
       "acceptanceCriteria": [
         "On each of the five animals pickers on the compose stack, 'Add a new address' is a secondary button beside the picker's heading, and no 'Add a new address' link sits under the intro; in stub mode the pickers offer no add control. (prototype:dr2-1-source prototype-dr2-1-source-p8-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-054; prototype:dr2-1-specs prototype-dr2-1-specs-p3-029; repo:tests repo-tests-p5-022, repo-tests-p5-024)",
         "The high-risk plants consignor and place of destination pickers still offer no 'Add a new address' control. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-015; repo:plantsfrontend repo-plantsfrontend-p6-036)",
         "Under the search, each of those pickers shows the heading 'Select an address' above the results count. (review:designers-2026-10-19 S33; prototype:dr2-1-source prototype-dr2-1-source-p8-059; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-056; repo:plantsfrontend repo-plantsfrontend-p6-008)",
         "The results count reads 'Showing <visible> out of <total> results' in English, with its Welsh counterpart, and changes when a search narrows the list, on the animals pickers and the plants consignor and place of destination pickers. (review:designers-2026-10-19 S33; prototype:dr2-1-source prototype-dr2-1-source-p8-059; prototype:dr2-1-specs prototype-dr2-1-specs-p3-036; repo:plantsfrontend repo-plantsfrontend-p6-008, repo-plantsfrontend-p6-049)",
         "On those pickers the address table sits inside one fieldset whose legend 'Select an address' is read by a screen reader but not shown. (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-057; repo:plantsfrontend repo-plantsfrontend-p6-010)",
-        "On those pickers the Address column shows each address line on its own line, with no commas joining them. (review:designers-2026-10-19 S36; prototype:dr2-1-source prototype-dr2-1-source-p8-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-066; repo:plantsfrontend repo-plantsfrontend-p6-011)",
-        "Each animals party picker uses the full page width, as the prototype and the plants pickers do. (review:designers-2026-10-19 S36; prototype:dr2-1-source app/views/design-release-2.1/consignment-address-select.html:27 at 56371e2; screens/main/P-address-selection--list.png)",
         "The place of origin picker searches by name, address or country like the other four pickers, with no separate 'Enter a country' search. (review:designers-2026-10-19 S33; prototype:dr2-1-source commit c3ca339; screens/prototype/S33--default.png)",
         "On an animals picker, pressing 'Save and continue' with no address chosen shows no error and returns to the roles and addresses page, the party still empty, or still holding the address it held before. (prototype:dr2-1-source prototype-dr2-1-source-p8-072, prototype-dr2-1-source-p8-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-078, trace-prototype-dr2-1-p6-103; prototype:dr2-1-specs prototype-dr2-1-specs-p3-055)",
         "On the plants consignor or place of destination picker, pressing 'Save and continue' with no address chosen shows no error and moves on to the page that picker's save leads to, the party still empty or still holding its earlier address. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-039; repo:plantsfrontend repo-plantsfrontend-p6-032, repo-plantsfrontend-p6-034, repo-plantsfrontend-p6-075, repo-plantsfrontend-p6-086)",
@@ -872,10 +882,6 @@
         {
           "source": "review:designers-2026-10-19",
           "ref": "S33: Search bar visual styling does not follow prototype"
-        },
-        {
-          "source": "review:designers-2026-10-19",
-          "ref": "S36: Styling of addresses is wrong (accordion is not in prototype)"
         },
         {
           "source": "backlog:design-release-2-1",
@@ -959,7 +965,6 @@
         "req-596",
         "req-597",
         "req-598",
-        "req-600",
         "req-603",
         "req-1964"
       ],
@@ -969,12 +974,11 @@
       ],
       "notes": [
         "Moves in consignment-parties inc-086 whole; its search label and icon button criteria (req-590, req-591) are carried by inc-210. inc-086's notes stand: c-093 (add leads to today's INS handshake), c-105 and c-094 (search works without JavaScript; k6's search field and action stay), c-095 (count leaves the caption), c-098 (record-not-in-book refusal stays), c-099 (Save and continue alone).",
-        "Full width: pass the display surface (the existing surfaceClass('display') mechanism, as the dashboard does) from the animals party picker controller. No custom CSS.",
         "inc-089 is dropped against prototype 56371e2 / c3ca339; claim 16 is superseded by the prototype. inc-197 merges into inc-193. Flagged to Sam in discussion.md.",
-        "The 'View' link (S36's accordion) stays in consignment-parties inc-090, which now depends on this row and on address-book inc-066. Until then the 'View details' expander stays.",
         "Tests repo: animals e2e tests and the plants parties and destination specs that expect the blank-save error and the comma-joined address change with this row. Prototype demo: snagging.fit.spec.js already photographs S33 and S36; an optional walk that follows 'View' and comes back belongs with inc-090.",
-        "Rendered proof: re-shoot screens/main/S33--list.png, S33--results.png, S36--list.png, S36--list--mobile.png and P-address-selection--list.png.",
-        "Coherence (19 Oct): the plants consignment contact page has no 'Select an address' heading on main; this row adds it, with the count under it. consignment-parties inc-094 (the plants half of req-754) then finds it in place and adds only the intro sentence."
+        "Rendered proof: re-shoot screens/main/S33--list.png, S33--results.png and P-address-selection--list.png.",
+        "Coherence (19 Oct): the plants consignment contact page has no 'Select an address' heading on main; this row adds it, with the count under it. consignment-parties inc-094 (the plants half of req-754) then finds it in place and adds only the intro sentence.",
+        "20 Oct (Sam): the address selection snag (S36) is not for this list. Its two criteria (each address line on its own line, req-600; animals pickers at full width) moved to consignment-parties inc-090 with the 'View details' to 'View' swap, to land with the address book work (address-book inc-066, epic EUDPA-646). Do not change the picker's address cells or width here."
       ],
       "gate": null
     },

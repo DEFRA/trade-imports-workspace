@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (7), **blocked** (3) or **ready to build** (32). On 20 October Sam settled nine (see [Settled](#settled)), blocked two and split one out into a spike (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (4), **blocked** (3) or **ready to build** (34). On 20 October Sam settled eleven (see [Settled](#settled)), blocked two, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -14,9 +14,6 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 | Item | Page | Decision |
 |---|---|---|
-| S04 | Origin | Origin code prefix fills in on pick with JavaScript, and only after the page is shown again without it? |
-| S26 | Transporter details | A box you submit for now, with filtering as you type left until transporter management? |
-| S36 | Address selection pages | Keep the 'View details' expander until the address book can send the trader back? |
 | Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
 | Q4 | A task saved with nothing in it | 'Complete', 'Not needed', or stay 'To do'? |
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
@@ -24,7 +21,7 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 The designer questions in detail are below. S08 and S25 are now blocked, and their sections are kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
-There is also one small question with a default, S33's button colour, and five calls we have made that Sam should check.
+There is also one small question with a default, S33's button colour, and three calls we have made that Sam should check.
 
 ## S08: Commodity search results as you type
 
@@ -96,6 +93,9 @@ Sam's rulings on 20 October. Each item is now ready to build.
 - **Country type-ahead on the origin page (S02):** bold matching letters and the prototype's blue magnifying-glass styling, through the autocomplete library's own hooks so it can still be upgraded. The button is decorative: it never submits the page, and a click puts you in the box.
 - **Port of entry type-ahead (S21):** the same as the origin country search.
 - **Country questions on Main import reason (S10):** keep the type-ahead, with the same styling as the origin and port searches, at the narrower width drawn inside the revealed panel.
+- **Origin code prefix (S04):** the prefix shows with JavaScript only, filling in as soon as a country is picked. Without JavaScript there's no prefix, and the code is still stored with its country.
+- **Transporter search (S26):** same type-ahead as the other searches, with the blue icon. The submit box stays as the version without JavaScript. The list is already on the page, so the filter needs no new service.
+- **Address selection pages (S36):** moved to the address book theme ("not for this list, will be covered as needed on the address book theme"). It is no longer in design snagging.
 - **CPH number (S37):** three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go. The boxes stop cutting typing short, and the server splits a whole number in the first box, so it works without JavaScript. The designers' prototype still moves the cursor, and should drop the jump so it matches.
 
 ## Blocked
@@ -114,18 +114,16 @@ Both wait for:
 
 ## For Sam: calls we made and flagged
 
-Sam asked us to make sensible calls and flag them afterwards rather than wait. These five change or read an earlier ruling, so he may want to overturn them.
+Sam asked us to make sensible calls and flag them afterwards rather than wait. These three change or read an earlier ruling, so he may want to overturn them.
 
 | Snag | Call | Why | Reversal cost |
 |---|---|---|---|
-| S26 | The transporter search box takes the icon-button look now (inc-210), although transporter management is blocked (point 5, claim 35). | A search box's look is not transporter management. Filtering as you type and the list's content stay blocked in inc-037. | Take the transporters page out of inc-210. |
 | S27 | 'Add a transporter' moves above the table now (inc-211), carved out of blocked inc-037 criterion 6. | Section 5 of the ruling is about who manages transporters, not where a button sits on a page we are keeping. | Drop inc-211 and put criterion 6 back in inc-037. |
 | S32 | Conflict c-087 ('the summary list stays') set aside. Consignment addresses become headed sections (inc-213). | Ruling sam-2026-10-07 lets DR1 override the prototype only where DR1 judged the same difference. DR1 explicitly declined to judge the component (dr1-parity-union backlog lines 17483 and 18095). | Keep inc-085's copy changes and leave the summary list. |
-| S04 | inc-190 unblocked and moved into inc-204. The snag is design's answer to design question 2. | The designers asked for the visible prefix box, and the live update is small, safe progressive enhancement. | Leave inc-190 blocked in waiting-on-design. |
 | S33 | inc-089 ('Place of origin picker searches by country') dropped, and inc-197 merged into inc-193. Claim 16 is taken as superseded. | Prototype commit c3ca339 (9 October) removed the place of origin's country search, so all five pickers share one free-text search. This is the prototype changing, not a reversal. | Restore inc-089 and inc-197. |
 
 Also for Sam:
 
 - **S35, 'error handling is broken':** the review page behaves as the prototype does on current `main`. We need the designers' steps, ideally on a test environment redeployed from `main` after 19 October (#416). No row until then.
-- **S36, the 'View' link:** it stays in consignment-parties inc-090, because it needs the address book to send the trader back to the picker (address-book inc-066). Until then, the 'View details' expander stays. Line-by-line addresses and full width land now in inc-212.
+- **S36, address selection pages:** moved 20 Oct to the address book theme (epic EUDPA-646), as Sam ruled. The whole snag, address lines, full width and the 'View' link in place of the expander, is in consignment-parties inc-090, which waits on address-book inc-066. Until then the pickers stay as they are.
 - **Theme boundaries:** design-snagging builds in folders other themes own: origin, commodities, import-reason, transport, documents, addresses, identification, check-answers, confirmation and declaration. It depends only on `main`, so it should land in a wave before those themes, and they should rebase on it. `tim backlog check` will report overlapping theme paths until the parent backlog's theme entries are re-split. moves.json lists every row that needs to change.

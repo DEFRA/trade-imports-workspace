@@ -189,6 +189,78 @@ describe('getComments', () => {
   })
 })
 
+describe('addComment', () => {
+  test('posts the body and returns the comment Jira created', async () => {
+    const sent = { body: null }
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-200/comment', (body) => {
+        sent.body = body
+        return true
+      })
+      .reply(201, {
+        id: '10500',
+        author: { displayName: 'Sam' },
+        created: '2026-10-20T10:00:00.000+0100',
+        body: 'Closing: no longer reproduces.'
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const comment = await client.addComment(
+      'EUDPA-200',
+      'Closing: no longer reproduces.'
+    )
+
+    expect({ comment, sent: sent.body }).toEqual({
+      comment: {
+        id: '10500',
+        author: 'Sam',
+        createdAt: '2026-10-20T10:00:00.000+0100',
+        body: 'Closing: no longer reproduces.'
+      },
+      sent: { body: 'Closing: no longer reproduces.' }
+    })
+  })
+
+  test('carries Jira’s reason when it refuses the comment', async () => {
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-200/comment')
+      .reply(400, { errors: { comment: 'Comment body can not be empty!' } })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.addComment('EUDPA-200', ' ')).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'addComment(EUDPA-200): comment: Comment body can not be empty!'
+    })
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE).post('/rest/api/2/issue/EUDPA-200/comment').reply(401, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.addComment('EUDPA-200', 'x')).rejects.toMatchObject({
+      code: 'AUTH'
+    })
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).post('/rest/api/2/issue/EUDPA-999/comment').reply(404, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.addComment('EUDPA-999', 'x')).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    })
+  })
+
+  test('maps 429 to TimError(RATE_LIMIT)', async () => {
+    mockPool(BASE).post('/rest/api/2/issue/EUDPA-200/comment').reply(429, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.addComment('EUDPA-200', 'x')).rejects.toMatchObject({
+      code: 'RATE_LIMIT'
+    })
+  })
+})
+
 describe('createIssue', () => {
   test('creates an issue and returns its key, id and browse url', async () => {
     mockPool(BASE)

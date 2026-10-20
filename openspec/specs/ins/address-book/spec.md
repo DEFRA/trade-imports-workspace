@@ -172,7 +172,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 **ID**: SCN-INS-ADDR-011-C
 - **GIVEN** the user is on an address's delete confirmation, opened without a return
 - **WHEN** they select 'Yes, delete'
-- **THEN** they return to the address book, which says '<Name> address deleted' with the name in sentence case, such as 'Green valley farm address deleted' for 'Green Valley Farm'
+- **THEN** they return to the address book, which says '<Name> address deleted' with the name as it is stored, such as 'Green Valley Farm address deleted'
 - **AND** it is no longer offered for viewing
 
 #### Scenario: An address with nothing to show is summarised as Not applicable

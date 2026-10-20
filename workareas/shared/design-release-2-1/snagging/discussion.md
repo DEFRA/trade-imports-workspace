@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (4), **blocked** (3) or **ready to build** (34). On 20 October Sam settled eleven (see [Settled](#settled)), blocked two, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (3), **blocked** (4) or **ready to build** (34). On 20 October Sam settled eleven (see [Settled](#settled)), blocked three, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -15,7 +15,7 @@ Everything else is ready to build. Differences that are only how we build it, su
 | Item | Page | Decision |
 |---|---|---|
 | Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
-| Q4 | A task saved with nothing in it | 'Complete', 'Not needed', or stay 'To do'? |
+| Q4 | A task saved with nothing in it | Blocked, waiting for the designers: 'Complete', 'Not needed', or stay 'To do'? |
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
 | S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
 
@@ -109,6 +109,8 @@ Both wait for:
 
 - EUDPA-617, "Integrate early-access MDM commodity API into live animals frontend" (in development)
 - EUDPA-616, "Add a search type-ahead for choosing commodities, reusable across the journey" (to do)
+
+- **A task saved with nothing in it (Q4):** blocked, waiting for the designers' answer, with no ticket. Main keeps 'To do' until then; plants shows 'Optional'. It stays in the table of questions for the designers at the top.
 
 - **Transit countries added as soon as they are picked (S25):** split out into a spike. It looks for a GOV.UK-compliant component that behaves like the prototype. 'Add country' stays on main until it reports, and the page's look changes are still built in design snagging. Waits for EUDPA-719, "Spike: a GOV.UK-compliant way to add transit countries as soon as they are picked" (relates to EUDPA-616).
 

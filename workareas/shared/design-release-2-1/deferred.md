@@ -19,3 +19,4 @@ this file whenever something is deferred, raised or closed.
 | Plants frontend: stale countries stub data (no subdivisions) and the unused `tradeImportsReferenceDataApi.baseUrl` key | Outside the programme's repos | NO_JIRA chore | Not raised |
 | Workspace: stale "primed at boot … exit(1)" comments in `docker/stack/frontend.compose.yml`, and the consumer list in `docs/repos/trade-imports-reference-data.md` | Outside the programme's repos | NO_JIRA chore, with the row above | Not raised |
 | `MDM_SERVICE_URL` unset in perf-test, ext-test and prod for reference-data | cdp-app-config is Sam's to change | cdp-app-config | Sam's action |
+| Region code box: keep `maxlength` (GOV.UK advises against it) or move to the character count component | A design and accessibility call, not a snag from the review. Raised by the origin page row's plan review in the snagging build (20 Oct) | Designers | To ask |

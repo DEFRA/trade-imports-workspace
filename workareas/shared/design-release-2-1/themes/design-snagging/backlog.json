@@ -104,7 +104,7 @@
       ],
       "dependsOn": [],
       "theme": "design-snagging",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -161,7 +161,25 @@
         "Upgrade path: keep the exact 3.0.2 pin. The unit and end-to-end tests in the criteria pin the hook, so an upgrade that renames or drops templates.suggestion, or changes the option markup, fails loudly.",
         "Rendered proof: after landing, re-shoot screens/main/S02--*, S21--* and P-search--* and compare with screens/prototype/S02--default.png and S21--default.png."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "644ae0baa646cdfe24fbec51383414a21e00d291 13fd2763ff7ce4225e22d5b78935639a53cb66a3 4df9db7e93c49c821349a71a3cabc326ab7e804b",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/421",
+          "repo": "trade-imports-animals-frontend",
+          "number": 421
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/113",
+          "repo": "trade-imports-plants-frontend",
+          "number": 113
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/42",
+          "repo": "trade-imports-ins-tests",
+          "number": 42
+        }
+      ]
     },
     {
       "id": "inc-203",
@@ -198,7 +216,7 @@
         "inc-202"
       ],
       "theme": "design-snagging",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -256,7 +274,25 @@
         "Not snagged but drawn: the bold revealed label (small label class, no custom CSS) and the full-width internal reference box (remove the three-quarters width class). Regenerate the origin visual baseline in trade-imports-ins-tests.",
         "Rendered proof: re-shoot screens/main/S01--empty.png, S03--region-code-revealed.png, S05--empty.png and S04--empty--nojs.png and compare with the prototype shots."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "a24b4fa75893d7b83b233809c033c90901a5d428 70195e62407d2d5906b43158518bbeee76199f3c 84088d4983905491a786046e72521c6a5eb10c15",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/421",
+          "repo": "trade-imports-animals-frontend",
+          "number": 421
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/113",
+          "repo": "trade-imports-plants-frontend",
+          "number": 113
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/42",
+          "repo": "trade-imports-ins-tests",
+          "number": 42
+        }
+      ]
     },
     {
       "id": "inc-204",
@@ -334,7 +370,8 @@
         "req-041"
       ],
       "openQuestions": [
-        "Design review, 20 Oct (snags page, To discuss): Origin code prefix fills in on pick with JavaScript, and only once the page is shown again without it. Acceptable? (S04) Build as written unless the designers choose otherwise."
+        "Design review, 20 Oct (snags page, To discuss): Origin code prefix fills in on pick with JavaScript, and only once the page is shown again without it. Acceptable? (S04) Build as written unless the designers choose otherwise.",
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/docs/add-a-page.md §8 (and its add-a-field.md / add-a-section.md page-JavaScript sections) needs the second route for page JavaScript written in: a small enhancement that reacts to one control goes in src/client/javascripts/components/ as a data-module class registered with createAll in application.js; a page that orchestrates its own behaviour gets a feature entry. Raised by the inc-204 review finding that the recipes name only the feature-entry route."
       ],
       "notes": [
         "Moves in waiting-on-design inc-190, unblocked: S04 is design's answer to design question 2. Made the call, flagged to Sam in discussion.md.",
@@ -342,7 +379,8 @@
         "Hide approach (Sam, 20 Oct): the server always renders the prefix element, through the GOV.UK input's prefix with classes \"app-js-only\" and an inner span holding the saved country's code (empty before a pick, so the slot exists). CSS hides .app-js-only and shows it only under body.govuk-frontend-supported, the class GOV.UK's page template sets when its JavaScript can run. The script updates the span. Chosen over a script-added prefix because the shown-again and error cases then show the right code at once, with nothing to compute or flash in, and without JavaScript nothing shows.",
         "Plants has no region code question. The change event dispatch is already in both frontends through inc-202. germinal-products inc-176's copy of the origin page takes this behaviour when it is built.",
         "Tests: origin fit spec (empty slot before a pick; France then Netherlands with no navigation; the existing no-JS prefix-after-save test changes to assert no prefix, after save and after an error) and the same checks in trade-imports-ins-tests tests/animals/e2e/pages/origin.spec.ts. Regenerate the revealed-state visual baseline. Re-shoot screens/main/S04--region-code-revealed.png.",
-        "Validation check, 20 Oct: the stored code does not depend on the prefix being shown. The server joins the saved country's code to what was typed (validate.js regionCodeFrom, from prefixFor(country)) and strips a prefix the trader typed themselves (suffixOf), and the 5-character limit is measured after that. So hiding the prefix without JavaScript changes nothing the server does. One edge case: a trader without JavaScript who types the code with no hyphen, such as 'FR75', is not stripped: it passes the 5-character limit and is stored as 'FR-FR75', the same as today. Without a visible prefix that is a little more likely, so the build should decide whether suffixOf also strips the country code without a hyphen, and test it."
+        "Validation check, 20 Oct: the stored code does not depend on the prefix being shown. The server joins the saved country's code to what was typed (validate.js regionCodeFrom, from prefixFor(country)) and strips a prefix the trader typed themselves (suffixOf), and the 5-character limit is measured after that. So hiding the prefix without JavaScript changes nothing the server does. One edge case: a trader without JavaScript who types the code with no hyphen, such as 'FR75', is not stripped: it passes the 5-character limit and is stored as 'FR-FR75', the same as today. Without a visible prefix that is a little more likely, so the build should decide whether suffixOf also strips the country code without a hyphen, and test it.",
+        "ATTEMPT FAILED: red verification ladder (plan 5 integration proof and visual baseline check were not run, the docker-compose command was denied by the permission classifier); no merge in progress in any repo so none aborted; local commits none in any repo; patches and unresolved paths at ~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/themes/design-snagging/logs/inc-204-preserve-frontend.staged.patch, inc-204-preserve-frontend.unstaged.patch, inc-204-preserve-frontend.unresolved.txt, inc-204-preserve-frontend.status.txt, inc-204-preserve-tests.staged.patch, inc-204-preserve-tests.unstaged.patch, inc-204-preserve-tests.unresolved.txt, inc-204-preserve-tests.status.txt; stash frontend stash@{0} and tests stash@{0} (both failed-inc-204), workspace openspec stash@{0} (failed-inc-204)"
       ],
       "gate": null
     },
@@ -1784,6 +1822,46 @@
         "Merged into inc-218 on 20 October 2026 (consolidation before handover): one Back links row. Every criterion is inc-218's criteria 11 to 16, and req-899 moved with them."
       ],
       "gate": null
+    },
+    {
+      "id": "inc-221",
+      "title": "Type-ahead, date picker and origin code tidy after the snagging build: one shared test helper per job, no rationale comments, one placeholder vocabulary, in both frontends and the tests repo",
+      "detail": "The type-ahead and origin page rows landed with clean-up their reviewers kept outside each row's footprint. Do it once, after the rows that touch the same files, so the theme merges without duplicate helpers or comments the house rules ban. Behaviour does not change.",
+      "acceptanceCriteria": [
+        "Each FIT and tests-repo job (pick a type-ahead option, open a page, run the axe check, assert the save controls) has one shared helper per frontend and one in the tests repo, with one name across the twin frontends; no spec or page object keeps a local copy.",
+        "The type-ahead style tests (typography, focus indicator, error border) sit in each frontend's cross-page type-ahead spec, not the origin specs.",
+        "Plants has a FIT test for the date picker toggle look, the twin of the animals one.",
+        "No comment in the files these rows touched explains rationale, describes another file or the library, or names a design release; any reason worth keeping is in the set's page-design doc, and each frontend has a repo doc for the shared accessible-autocomplete wrapper (data attributes, the suggestion template hook, the upgrade path).",
+        "The word placeholder means one thing across both frontends' copy keys, controllers and test titles, and the other concept has its own name.",
+        "Test titles carry no (AC1)-style ids, and their openspec coverage links follow the renames; tim spec lint has no findings.",
+        "Unit, FIT and E2E suites stay green with no change in behaviour."
+      ],
+      "dependsOn": [
+        "inc-206",
+        "inc-207",
+        "inc-208",
+        "inc-209"
+      ],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "chore",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "build:wf_f1843529-a67",
+          "ref": "followUps of inc-202 and inc-203 (plan and plan review)"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "notes": [
+        "Swept from the followUps of inc-202 and inc-203 in run wf_f1843529-a67 (BUILD.md 3b), 20 Oct. One row, not one per note: same files, same kind of work. The transit countries placeholder follow-up is already inc-209; the region code maxlength question is in ../../deferred.md."
+      ]
     }
   ]
 }

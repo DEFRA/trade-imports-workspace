@@ -86,7 +86,8 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Stale branch:** `feat/NO_JIRA-design-release-2-1-type-question-and-templates`. Salvage from it.
 - **When played:** a fresh branch from `main` after design snagging, for example
   `feat/EUDPA-690-design-release-2-1-type-question-and-templates`.
-- **Rows:** 19: 13 to rebuild with salvage notes, 5 deferred, 1 dropped. Design snagging ports nothing from this theme.
+- **Rows:** 19: 13 to rebuild with salvage notes, 5 deferred, 1 dropped. Design snagging inc-218 takes deferred inc-171's
+  plants opening-run Back links; inc-171 keeps the Change-link Back link.
   4 deferred rows were removed (inc-166, inc-167, inc-169, inc-170): `main` or inc-155 and inc-159 now hold them.
 - **Old PRs to close when played:** animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92,
   tests #20.
@@ -96,8 +97,9 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Ticket:** [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693)
 - **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`. Salvage from it.
 - **When played:** a fresh branch from `main` after design snagging.
-- **Rows:** 8: 4 to rebuild with salvage notes (Back links, hard stops, blank saves), 4 waiting until commodities come
-  from MDM. inc-011 and inc-020 were removed: design snagging inc-205 and inc-207 port them to `main`.
+- **Rows:** 7: 3 to rebuild with salvage notes (the k6 walk, hard stops, blank saves), 4 waiting until commodities come
+  from MDM. inc-011 and inc-020 were removed: design snagging inc-205 and inc-207 port them to `main`. inc-021 was
+  removed and inc-015's Back links moved out: design snagging inc-218 builds them.
 - **Old PRs to close when played:** animals frontend #401, tests #23, performance tests #17.
 
 ## Arrival and transit: EUDPA-694 (stale branch)
@@ -107,6 +109,7 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **When played:** a fresh branch from `main` after design snagging.
 - **Rows:** 4: 3 to rebuild with salvage notes (required means of transport, transit page title and redirect, transit
   country list), 1 dropped. inc-026 went to design snagging inc-208; inc-027 is already on `main` through reference lists.
+  The transit page's Back link moved from inc-029 to design snagging inc-218.
 - **Old PRs to close when played:** animals frontend #402, plants frontend #95, tests #24.
 
 ## Origin page: EUDPA-695 (retired)
@@ -133,16 +136,22 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 
 - **Ticket:** none yet.
 - **Branch:** `feat/NO_JIRA-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
-- **Rows:** 16, all ready (inc-202 to inc-217).
+- **Rows:** 17, all ready (inc-202 to inc-218).
 - **What it is:** the designers' review of the test environment against the prototype at 56371e2, 19 October
   ([`../snagging/assessment.md`](../snagging/assessment.md), rendered proof in
   [`../snagging/screens.html`](../snagging/screens.html)). It lands next, on its own in wave 2.
+- **Also from a tester (20 October):** inc-218, Back during the opening run, comes from a tester's comment on the
+  journey foundation ticket, EUDPA-691 ([`../snagging/eudpa-691/save-and-status.md`](../snagging/eudpa-691/save-and-status.md)).
+  The amend fault from the same review ([`../snagging/eudpa-691/amend.md`](../snagging/eudpa-691/amend.md)) is a separate
+  ticket, not a row here.
 - **What it changes elsewhere:**
   - It salvages finished work from the stale origin page, commodities and import reason, arrival and transit, and
     overview and review branches to `main`. The source rows it ports in full were removed on 20 October, and their
     criteria and requirement ids now sit on the design snagging row that ports them.
   - It takes in documents inc-032, identification inc-046, inc-047 and inc-050, consignment parties inc-085 and inc-086,
     and waiting-on-design inc-190. It also carves two criteria out of transporters inc-037.
+  - inc-218 takes in commodities and import reason inc-021 whole, and the Back links from commodities and import reason
+    inc-015, arrival and transit inc-029 and type question and templates inc-171 (plants).
   - Later rows now hold only their deltas. A later row waits on a design snagging row only where it builds on code
     that row creates; the rest simply build from `main` after this theme lands.
 - **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with

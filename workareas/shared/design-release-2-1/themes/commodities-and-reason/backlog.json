@@ -242,11 +242,9 @@
     },
     {
       "id": "inc-015",
-      "title": "Commodity page and Commodity details Back links follow the journey, and the k6 walk visits the main import reason between them",
-      "detail": "Design Release 2.1 makes the two commodity pages steps of the journey rather than an overview task that returns to the overview. The commodity page's back link goes to origin and Save and continue goes on to the main import reason; Commodity details comes after the main import reason, its back link goes to the commodity page, and Save and continue goes on to identification, additional or arrival details, whichever applies first. Opened from its overview task, each page still returns to the overview. The k6 performance suite's live-animals walk visits the main import reason between the two commodity pages in the same change, so the suite keeps running.",
+      "title": "The k6 walk visits the main import reason between the commodity page and Commodity details",
+      "detail": "Design Release 2.1 makes the two commodity pages steps of the journey rather than an overview task that returns to the overview. Save and continue on the commodity page goes on to the main import reason; Commodity details comes after the main import reason, and Save and continue goes on to identification, additional or arrival details, whichever applies first. Opened from its overview task, each page still returns to the overview. Main's opening run already gives this order. The k6 performance suite's live-animals walk visits the main import reason between the two commodity pages, so the suite keeps running. The two pages' Back links moved to design-snagging inc-218 on 20 October.",
       "acceptanceCriteria": [
-        "The commodity page's back link goes to the origin of the import page. (prototype:dr2-1-source prototype-dr2-1-source-p2-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-018, trace-prototype-dr2-1-p12-026; prototype:dr2-1-specs prototype-dr2-1-specs-p1-048; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-011)",
-        "The Commodity details page's back link goes to the commodity page ('What are you importing?'). (prototype:dr2-1-source prototype-dr2-1-source-p3-004, prototype-dr2-1-source-p3-005; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-009, trace-prototype-dr2-1-p12-055; prototype:dr2-1-specs prototype-dr2-1-specs-p2-024)",
         "The k6 performance suite's live-animals walk, run against the local stack, visits the main import reason page between the commodity page and Commodity details and passes every check it makes on each page. (prototype:dr2-1-source prototype-dr2-1-source-p3-051; ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-002; repo:perftests repo-perftests-p1-024; c-225)"
       ],
       "dependsOn": [],
@@ -306,8 +304,6 @@
       ],
       "requirements": [
         "req-087",
-        "req-089",
-        "req-108",
         "req-117",
         "req-118",
         "req-1761"
@@ -315,7 +311,8 @@
       "openQuestions": [],
       "notes": [
         "Unchanged in substance; ruling 2026-10-09 afternoon (ruling-sam-2026-10-09-pm-p2-011) confirms the commodity pages' place in the journey goes ahead on today's data. Combines the back-link slices (req-089, -108) with the next-step slices (req-087, -117, -118) and the k6 step-list slice (req-1761): the same journey flow change, observed only together, and the suite breaks the moment the order changes. c-015 (ruled): Design Release 2.1's chaining wins; opened from its overview task a page returns to the overview (ruling-sam-2026-10-09-p1-196). c-016: both pages keep the three return controls. c-018: the no-commodity redirect stays. c-225 (ruled): the performance suite changes in each increment whose change breaks one of its k6 scripts, on that increment's branch name; its 'Cow' search changes with the blocked catalogue row (req-1919), not here. Where Commodity details goes after a change from check answers is req-119's, which the type-question-and-templates branch holds; this row does not change it. The main import reason page already exists; the reason-and-additional-details rows change its copy, not its place. Depends on inc-001 (journey-foundation), which reorders the opening run's step list in the shared flow; this row makes the pages' own back links and next steps agree. The tests repo's journey flow walks the new order.",
-        "Salvage: trade-imports-animals-frontend 3d192e94, trade-imports-ins-tests 327f280, trade-imports-performance-tests 85acbe9 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take the runBackTarget seam (flow/journey-flow.js, run.js, kit.js) and the two controllers' Back links. Main's RUN_STEPS (journey-foundation) already gives the forward order, so req-087, req-117 and req-118 already hold."
+        "Salvage: trade-imports-animals-frontend 3d192e94, trade-imports-ins-tests 327f280, trade-imports-performance-tests 85acbe9 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take the runBackTarget seam (flow/journey-flow.js, run.js, kit.js) and the two controllers' Back links. Main's RUN_STEPS (journey-foundation) already gives the forward order, so req-087, req-117 and req-118 already hold.",
+        "Trimmed 20 October: the commodity page and Commodity details Back-link criteria, with req-089 and req-108, moved to design-snagging inc-218 (Back during the opening run goes to the previous step and the run carries on), under Sam's ruling that already-planned work moves into design snagging. Take only the k6 walk from the salvage commits; the runBackTarget seam and the two controllers' Back links are inc-218's."
       ],
       "gate": "Walk the journey from origin to arrival details: this row moves Commodity details after the main import reason, and every row that walks the journey from here on rests on that order.",
       "externalDependsOn": [
@@ -423,74 +420,6 @@
         "Re-distil: existing row inc-019, unchanged."
       ],
       "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/journey-foundation",
-          "id": "inc-001"
-        }
-      ]
-    },
-    {
-      "id": "inc-021",
-      "title": "Main import reason and Additional details Back links follow Design Release 2.1's journey order",
-      "detail": "Design Release 2.1 follows the main import reason with Commodity details, and places Additional details in the commodity section after Identification details (or Commodity details when no identifiers are needed), going on to Arrival details. Both pages' Back links go to the page before them in the journey instead of always to the overview. Opened from the overview, each page still returns to the overview.",
-      "acceptanceCriteria": [
-        "The main import reason page's Back link goes to What are you importing in the linear journey (prototype:dr2-1-source prototype-dr2-1-source-p4-007; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-007; prototype:dr2-1-specs prototype-dr2-1-specs-p1-075)",
-        "The additional details page's Back link goes to Identification details when any selected species needs identifiers, and to Commodity details otherwise (prototype:dr2-1-source prototype-dr2-1-source-p3-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-094, trace-prototype-dr2-1-p5-096; prototype:dr2-1-specs prototype-dr2-1-specs-p2-069)"
-      ],
-      "dependsOn": [
-        "inc-015"
-      ],
-      "theme": "commodities-and-reason",
-      "status": "todo",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p4-007, p4-008, p4-057, p4-060, p4-061, p3-059, p3-073"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p4-007, p4-033, p5-093, p5-094, p5-096, p12-080"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p1-075, p2-069, p2-070, p2-071"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-196"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p7-002, p7-055, p7-065, p7-083, p7-101, p7-107"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-075"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "trace-e2e-p5-061, trace-e2e-p5-070"
-        }
-      ],
-      "requirements": [
-        "req-163",
-        "req-164",
-        "req-178",
-        "req-179"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Unchanged from the existing row. Combines the reason page's Back and next slices (req-163, req-164) with the additional details page's Back and position slices (req-178, req-179): they are one reorder of the same journey run and its section membership, so building them apart would repeat the flow change and its ladder. The prototype wins c-030, c-031, c-036 and c-037 by default; ruling:sam-2026-10-09 claim p1-196 confirms an overview-opened page returns to the overview.",
-        "Moving Additional details out of the reason's section and after Identification changes the journey's shared flow and run; the commodities area's rows change the same order from the commodity side, and the journey-flow area may own the shared run. Today's fit tests pin both Back links to the overview (repo-frontend-p7-065, repo-frontend-p7-107) and the tests repo's journey flow goes reason then Additional details (repo-tests-p1-075); both change with this row. Depends on inc-001 (the opening run's order) and inc-015 (the commodity pages as journey steps).",
-        "Salvage: trade-imports-animals-frontend 982f2930, trade-imports-ins-tests eea07b3 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take the RUN_BACK_STEPS entries for the main import reason and Additional details, the exported identifiesAnAnimal in task-rows.js, and the two controllers' Back links. Main's run already gives the forward order. 982f2930 also regroups flow.js sections (main import reason into 'commodities', Additional details its own section). No criterion here asks for that, so leave it out unless a row about overview grouping does."
-      ],
-      "gate": "Walk the linear journey from What are you importing to Arrival details for a cattle and a horses-only notification, and check both Back links, before rows that rely on the new order build.",
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/journey-foundation",

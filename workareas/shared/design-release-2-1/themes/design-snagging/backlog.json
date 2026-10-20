@@ -1458,6 +1458,109 @@
         "Coherence (19 Oct): overview-and-review inc-114 also built the plants half (plants 4072036: the small checkbox in a hidden-legend fieldset on the plants declaration). Cherry-pick it with dc9c1e4f rather than building it again; it is salvaged from the stale branch. Only the bold date is new on plants."
       ],
       "gate": null
+    },
+    {
+      "id": "inc-218",
+      "title": "Back during the opening run goes to the previous step and the run carries on, in animals and plants",
+      "detail": "A tester on the journey foundation ticket (EUDPA-691) said Save and continue 'keeps taking me back to the overview' (snagging/eudpa-691/save-and-status.md, point A). A page opened from Overview returning to Overview is as designed. The gap is the Back link: on main it goes to Overview from every guided page except origin, and showing Overview ends the opening run, so from then on every Save and continue returns to Overview. In the Design Release 2.1 prototype, Back goes to the previous step and the run carries on (screens/a1-reason-in-run-back-link.png, a1-after-back-save-continues-to-reason.png). The spec already asks for this. This work was planned in three later rows, the commodity pages and Commodity details (commodities-and-reason inc-015), the main import reason and Additional details (commodities-and-reason inc-021) and transit countries (arrival-and-transit inc-029), and for plants in type-question-and-templates inc-171 (deferred). Under Sam's ruling that already-planned work moves into design snagging, their Back-link criteria and requirement ids move here, so the fix reaches main now. The run state stays the service's own (the opening run flag), with no from=hub marker (ruling:sam-2026-10-09 p1-198). Out of scope: identification details and arrival details, whose Back links the animals spec keeps to Overview. openspec: live-animals/journey-flow takes a scenario under REQ-FLOW-007 for Back then Save and continue carrying the run on; the commodity-selection, commodity-details, import-reason, additional-details and transit-countries Back-link requirements already say this; plants/journey-pages arrival-status, arrival-details, identification-numbers and commodities change their 'Back link opens Overview' scenarios to the opening-run rule, and plants/journey-flow takes the same run scenario.",
+      "acceptanceCriteria": [
+        "The commodity page's back link goes to the origin of the import page. (prototype:dr2-1-source prototype-dr2-1-source-p2-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-018, trace-prototype-dr2-1-p12-026; prototype:dr2-1-specs prototype-dr2-1-specs-p1-048; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-011)",
+        "The Commodity details page's back link goes to the commodity page ('What are you importing?'). (prototype:dr2-1-source prototype-dr2-1-source-p3-004, prototype-dr2-1-source-p3-005; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-009, trace-prototype-dr2-1-p12-055; prototype:dr2-1-specs prototype-dr2-1-specs-p2-024)",
+        "The main import reason page's Back link goes to What are you importing in the linear journey (prototype:dr2-1-source prototype-dr2-1-source-p4-007; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-007; prototype:dr2-1-specs prototype-dr2-1-specs-p1-075)",
+        "The additional details page's Back link goes to Identification details when any selected species needs identifiers, and to Commodity details otherwise (prototype:dr2-1-source prototype-dr2-1-source-p3-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-094, trace-prototype-dr2-1-p5-096; prototype:dr2-1-specs prototype-dr2-1-specs-p2-069)",
+        "When transit countries was reached by Save and continue on arrival details, its Back link goes to arrival details (prototype:dr2-1-source prototype-dr2-1-source-p6-061; prototype:dr2-1-specs prototype-dr2-1-specs-p2-092; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-051)",
+        "When transit countries was opened from the overview's 'Transit countries' task, its Back link goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-061; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-095)",
+        "In the opening run, following the Back link to the previous page and then choosing Save and continue moves to the next step of the run, not to Overview. (review:tester-eudpa-691-2026-10-19; snagging/eudpa-691/save-and-status.md point A; screens/a1-reason-in-run-back-link.png, a1-after-back-save-continues-to-reason.png; prototype:dr2-1-source app/routes.js:489-499, 1579-1597)",
+        "In the opening run, Save and continue on the main import reason page goes to Commodity details, and on Additional details goes to Arrival details; opened from Overview, each returns to Overview. Main's run already does this; it is proved here because these Back links change the same run. (prototype:dr2-1-source prototype-dr2-1-source-p4-008, prototype-dr2-1-source-p3-059; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196; repo:frontend flow/run.js RUN_STEPS)",
+        "In the high-risk plants frontend, a journey page opened from the overview, the origin page included, has a Back link to the overview, and a page reached in the opening run has a Back link to the previous page in plants' own step order (repo:plantsfrontend repo-plantsfrontend-p2-018, repo-plantsfrontend-p5-030; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041, ruling-sam-2026-10-09-templates-p1-043)",
+        "In the high-risk plants frontend, in the opening run, following the Back link from a run step to the previous run step and then choosing Save and continue moves to the next run step, not to Overview; this includes the Back links on arrival status, arrival details, identification numbers and the commodity list, which go to Overview today. (review:tester-eudpa-691-2026-10-19; snagging/eudpa-691/save-and-status.md point A; repo:plantsfrontend flow/run.js RUN_STEPS, shared/kit.js:136, hub/controller.js:140)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:tester-eudpa-691-2026-10-19",
+          "ref": "EUDPA-691 comment: 'Save and continue keeps taking me back to the overview'"
+        },
+        {
+          "source": "review:tester-eudpa-691-2026-10-19",
+          "ref": "snagging/eudpa-691/save-and-status.md point A (main's opening run, the prototype's Back links, proposed criteria; screens/a1-*, a2-*)"
+        },
+        {
+          "source": "theme:commodities-and-reason",
+          "ref": "inc-015 criteria 1 and 2, req-089 and req-108 (moved in 20 October)"
+        },
+        {
+          "source": "theme:commodities-and-reason",
+          "ref": "inc-021 whole row, req-163, req-164, req-178 and req-179 (moved in 20 October; inc-021 removed)"
+        },
+        {
+          "source": "theme:arrival-and-transit",
+          "ref": "inc-029 criteria 2 and 3, req-343 (moved in 20 October)"
+        },
+        {
+          "source": "theme:type-question-and-templates",
+          "ref": "inc-171 criterion 3 (plants) and req-1917 (moved in 20 October)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-074, p3-004, p3-005, p3-059, p3-073, p4-007, p4-008, p6-061; app/routes.js:488-499, 1579-1597"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p3-018, p4-007, p5-009, p5-094, p5-096, p8-051, p12-026, p12-055, p12-095"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-048, p1-075, p2-024, p2-069, p2-092"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-196, p1-198 (overview-opened pages return to the overview; no from=hub marker)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-templates",
+          "ref": "ruling-sam-2026-10-09-templates-p1-041, p1-043 (plants)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "flow/run.js RUN_STEPS; shared/kit.js:137-146; features/hub/controller.js:114; import-reason/controller.js:61; transit-countries.controller.js:61"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p2-018, p5-030; flow/run.js RUN_STEPS; shared/kit.js:136; hub/controller.js:140"
+        }
+      ],
+      "requirements": [
+        "req-089",
+        "req-108",
+        "req-163",
+        "req-164",
+        "req-178",
+        "req-179",
+        "req-343",
+        "req-1917"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Moved in 20 October under Sam's ruling that already-planned work moves into design snagging: commodities-and-reason inc-015's two Back-link criteria (copied in verbatim) with req-089 and req-108; all of commodities-and-reason inc-021 (both criteria verbatim) with req-163, req-164, req-178 and req-179, so inc-021 is removed; arrival-and-transit inc-029's two Back-link criteria (verbatim) with req-343; and type-question-and-templates inc-171's plants criterion (verbatim) with req-1917. inc-171 was deferred, so this brings plants' opening-run Back links forward.",
+        "Settled here: type-question-and-templates inc-171's first criterion ('Commodity details goes back to Main reason for import') is not moved. It contradicts req-108 and the spec (REQ-COMMODITY-DETAILS-009: back to 'What are you importing?', not to the main import reason between them), and its other half repeats inc-021's reason-page criterion. inc-171 keeps only the Change-link Back link and req-1616, whose opening-run half this row delivers.",
+        "Out of scope, as the animals spec says: identification details and arrival details keep their Back link to Overview (identification-details near line 227, arrival-details near line 198), although the prototype sends identification Back to the previous page (routes.js:1655). Transporter, documents and roles and addresses also go Back to Overview in the prototype and are not changed.",
+        "Plants: the plants frontend's arrival-status, arrival-details, identification-numbers and commodities specs say their Back link opens Overview. req-1917 (adopted) and save-and-status.md's plants criterion change that inside the opening run; update those scenarios with this row. Back from plants' first page (the commodity type question) stays as it is.",
+        "Salvage from stale branches (none will be merged): commodities-and-reason animals 3d192e94 and tests 327f280 (the runBackTarget seam in flow/journey-flow.js, run.js and kit.js, and the commodity pages' Back links); animals 982f2930 and tests eea07b3 (RUN_BACK_STEPS entries for the main import reason and Additional details, the exported identifiesAnAnimal in task-rows.js, and both controllers' Back links; leave out its flow.js section regrouping); arrival-and-transit animals 49e22db9 and tests 29c74b5 (kit.runBackLink and the transit countries Back link with its controller, fit and ins-tests assertions only; the title and redirect stay with inc-029, the empty state is inc-209's). Use one Back-link helper: runBackLink and runBackTarget are two names for the same seam.",
+        "The run never restarts once Overview is shown (REQ-FLOW-007-C), so the Back link must not show Overview while the run is on. The Back target comes from the run's own step list and the notification's scope, so a skipped step is skipped going back too.",
+        "Tests: controller tests for each changed Back link in both frontends; a fit test per frontend that walks into the run, follows Back, then Save and continue and asserts the next run step; the tests repo's journey helpers and page objects that assert Back goes to Overview. The existing overview-opened Back-link and CPH-scope tests stay as they are.",
+        "Not in this row (questions for the designers and BAs, see save-and-status.md): whether Save and continue from an Overview task should go on to the next unfinished task; the status of an optional task left empty, such as Transit countries; and the tester's own steps.",
+        "Rendered proof: in each frontend, start a new notification, go two steps in, follow Back, then Save and continue, and shoot the page reached; compare with snagging/eudpa-691/screens/a1-after-back-save-continues-to-reason.png."
+      ],
+      "gate": null
     }
   ]
 }

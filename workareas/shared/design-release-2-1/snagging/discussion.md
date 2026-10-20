@@ -1,16 +1,40 @@
 # Design Release 2.1 snags: points to talk through
 
-Of the 38 snags from 19 October, 33 are fixed or being fixed, S30 needs no change, and for S35 we need the steps you took (see [assessment.md](assessment.md)). Three we would like to talk through with you, because the prototype's version stops working without JavaScript or makes things harder for some users. In each case we agree with the problem you found. Our question is only about how we solve it.
+For the review session on 20 October, the 38 snags and the tester's questions are in two groups: **to discuss** (19) or **ready to build** (23). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
-To see each comparison, open [screens.html](screens.html). We photographed both the prototype and the real service, with and without JavaScript.
+An item is to discuss when one of these applies:
 
-| Snag | Page | What we need from you | Who decides |
-|---|---|---|---|
-| [S08](#s08-commodity-search-results-as-you-type) | What are you importing? | Can search stay a box with a search button until commodities come from MDM? | Designers (design question 3) |
-| [S25](#s25-transit-countries-added-as-soon-as-they-are-picked) | Which countries will the consignment travel through? | Can 'Add country' stay as the confirm step? | Designers (design question 4) |
-| [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? | Designers (design question 7) |
+- the real service would use a different component from the prototype
+- the prototype relies on JavaScript with no fallback
+- it goes against a ruling, the spec or accessibility
+- the behaviour differs
+- only the designers can answer it
 
-There are also two small questions with a default we will follow unless you tell us otherwise, and six calls we have made that Sam should check.
+Everything else is ready to build. Differences that are only how we build it, such as spacing classes, are left out.
+
+| Item | Page | Decision |
+|---|---|---|
+| [S08](#s08-commodity-search-results-as-you-type) | What are you importing? | Keep a search box you submit, with the prototype's look, until commodities come from MDM? (design question 3) |
+| Q1 | What are you importing? | Show 'Cow' with 4 species until MDM, rather than the prototype's 'Cattle' list? |
+| [S25](#s25-transit-countries-added-as-soon-as-they-are-picked) | Transit countries | Keep 'Add country' as the confirm step? (design question 4) |
+| [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? (design question 7) |
+| S02, S21 | Origin, Arrival details | Country and port type-aheads: leave out the joined blue search button? Bold matching letters? |
+| S10 | Main import reason | Keep country questions as type-ahead boxes, not dropdowns? |
+| S11, S28 | Main import reason, Upload documents | Our date picker, whose calendar opens in the page, rather than the prototype's, which covers the fields below? |
+| S04 | Origin | Origin code prefix fills in on pick with JavaScript, and only after the page is shown again without it? |
+| S26 | Transporter details | A box you submit for now, with filtering as you type left until transporter management? |
+| S36 | Address selection pages | Keep the 'View details' expander until the address book can send the trader back? |
+| S07 | What are you importing? | Add a line for 1 or 2 character searches that the prototype does not have? |
+| S06 | What are you importing? | Spell out 'ITAHC' on first use? (default: as drawn) |
+| Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
+| Q3 | Save and continue from an Overview task | Return to Overview, as designed, or go on to the next task that is not complete? |
+| Q4 | A task saved with nothing in it | 'Complete', 'Not needed', or stay 'To do'? |
+| Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
+| S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
+
+The three designer questions in detail are below. Q2 to Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
+
+There are also two small questions with a default, S33's button colour and S06's 'ITAHC', and six calls we have made that Sam should check.
 
 ## S08: Commodity search results as you type
 

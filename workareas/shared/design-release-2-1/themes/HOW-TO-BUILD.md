@@ -136,7 +136,7 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 
 - **Ticket:** none yet.
 - **Branch:** `feat/NO_JIRA-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
-- **Rows:** 17, all ready (inc-202 to inc-218).
+- **Rows:** 18, all ready (inc-202 to inc-219).
 - **What it is:** the designers' review of the test environment against the prototype at 56371e2, 19 October
   ([`../snagging/assessment.md`](../snagging/assessment.md), rendered proof in
   [`../snagging/screens.html`](../snagging/screens.html)). It lands next, on its own in wave 2.

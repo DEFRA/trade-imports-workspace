@@ -87,13 +87,19 @@
   "increments": [
     {
       "id": "inc-202",
-      "title": "Type-ahead search boxes look and behave the same on every page in both frontends, with page-set placeholder text",
+      "title": "Type-ahead search boxes look and behave the same on every page in both frontends: page-set placeholder text, bold matching letters and the joined blue magnifying-glass button",
       "detail": "The designers found the type-ahead search boxes do not match the prototype (S02, S21). Two things are shared by every type-ahead in both frontends: the component's look, and whether a page can set placeholder text. Animals draws a magnifier inside the box; plants still shows the library's dropdown arrow, so one component has two looks (screens/main/P-search--empty.png against screens/main/S02--empty.png). Neither frontend on main lets a page set a placeholder. The origin-page and arrival-and-transit branches each added a placeholder option, in two slightly different ways. This row brings one placeholder option to main for both frontends, gives plants the animals magnifier, and makes a confirmed pick tell the rest of the page that the choice changed, which the region code prefix (inc-204) needs. Page copy is not changed here: each page row sets its own placeholder text. openspec: no journey-page requirement changes; the page rows that set placeholders add their own scenarios.",
       "acceptanceCriteria": [
-        "In both frontends, every type-ahead search box shows the same search icon inside the right of the box and no dropdown arrow, with JavaScript on: on animals Country of origin, Port of entry, transit countries and the four Main import reason fields, and on plants Country of origin, Proposed place of landing and Commodity details. (review:designers-2026-10-19 S02; screens/main/P-search--empty.png, screens/main/S02--empty.png)",
+        "In both frontends, every type-ahead search box shows the prototype's joined square GOV.UK blue button with a white magnifying glass at the right of the box, and no dropdown arrow, with JavaScript on: on animals Country of origin, Port of entry, transit countries and the four Main import reason fields, and on plants Country of origin, Proposed place of landing and Commodity details. (review:designers-2026-10-19 S02; screens/main/P-search--empty.png, screens/main/S02--empty.png)",
         "A page that gives a type-ahead placeholder text shows that text in the empty search box, in the component's grey placeholder colour; a page that gives none shows an empty box, as today. (review:designers-2026-10-19 S02, S21; prototype:dr2-1-source app/views/design-release-2.1/origin-of-the-import.html:49-101 at 56371e2)",
         "With JavaScript turned off, each type-ahead is still a labelled native select whose first option is the page's own select text, never the search placeholder. (review:designers-2026-10-19 S02; screens/main/S02--empty--nojs.png)",
         "Confirming a suggestion by clicking it, pressing Enter on it, or leaving the box on an exact match selects that option in the underlying select and tells the rest of the page that the choice changed. (review:designers-2026-10-19 S04; prototype:dr2-1-source app/assets/javascripts/country-search.js:106-114 at 56371e2)",
+        "Given a type-ahead in either frontend with JavaScript on, when the trader types, for example 'fra' in Country of origin, then each suggestion shows the letters that match what was typed in bold wherever they appear in the name, such as 'France' with 'Fra' in bold. That covers animals Country of origin, Port of entry, transit countries and the four Main import reason country boxes, and plants Country of origin and Proposed place of landing. (Sam, 20 Oct; req-019, req-299; review:designers-2026-10-19 S02, S21, S10)",
+        "Given a suggestion whose text contains characters such as '<' or '&', when it is listed, then it shows exactly as written, and no markup from the list data is run: the bold comes from the library's own templates.suggestion option, which escapes the text before wrapping the match. (Sam, 20 Oct: through the library's own hooks)",
+        "Given a type-ahead with JavaScript on, when it shows, then the joined blue button is decorative: hidden from assistive technology, not in the tab order, never submits the page, and a click on it puts focus in the box. (Sam, 20 Oct: the blue styling on the magnifying glass; req-018, req-296)",
+        "Given Main import reason with Transhipment, Transit or Temporary admission horses chosen, when the conditionally revealed panel opens, then its country boxes take the same bold matches and joined blue button, at the narrower width drawn inside the panel, with the button joined to the box at phone width and the suggestion list as wide as the box. (Sam, 20 Oct: S10, keep the type-ahead with the same styling; screens/prototype/S10--transit-revealed.png)",
+        "Given JavaScript is off, when any of these pages shows, then each type-ahead is a labelled native select at the page's width, with no button and no icon. (review:designers-2026-10-19 S02, S10)",
+        "Given each frontend's unit tests, when the wrapper is built with a stubbed enhanceSelectElement, then a test asserts the call passes templates.suggestion and that the template bolds a match and escapes '<' and '&'. An end-to-end test types into the animals and plants origin search and asserts the bold text in the first suggestion, so a library upgrade that breaks the hook fails. (Sam, 20 Oct: upgrade path)",
         "Every page with a type-ahead in both frontends has no serious or critical accessibility violations with JavaScript on. (repo:frontend; repo:plantsfrontend)"
       ],
       "dependsOn": [],
@@ -135,7 +141,12 @@
           "ref": "src/client/javascripts/components/accessible-autocomplete.js:28-31, 56-69; accessible-autocomplete.scss:15-47"
         }
       ],
-      "requirements": [],
+      "requirements": [
+        "req-018",
+        "req-296",
+        "req-019",
+        "req-299"
+      ],
       "openQuestions": [
         "Design review, 20 Oct (snags page, To discuss): Country and port type-aheads: leave out the prototype's joined blue search button? And should matching letters be bold? (S02, S21) Build as written unless the designers choose otherwise."
       ],
@@ -143,7 +154,11 @@
         "Port from branch: take only the shared-component hunks of origin-page inc-009 (animals f69647ac, plants 831e13a) and arrival-and-transit inc-026 (animals bb6fb2e0, plants b2f3bdc): the placeholder data option in accessible-autocomplete.js and the macro. The two differ: origin-page sets the placeholder only when one is given, and arrival-and-transit always sets it, to '' when absent. Keep origin-page's version, which leaves the library default alone, and its unit test. Both source branches are stale and will not be merged: salvage these hunks from them.",
         "Plants magnifier: port animals' override (hide the dropdown arrow, pad the input, paint the search icon on the wrapper) into the plants accessible-autocomplete stylesheet, and update the plants origin fit spec asserts that read the dropdown arrow and any plants visual baseline.",
         "Change event: dispatch a bubbling change on the select after onConfirm, including the blur-confirm path, in both frontends' copies of accessible-autocomplete.js so they stay identical. trade-imports-plants-prototype picks this up through sync:upstream.",
-        "Joined blue Search button: stays in waiting-on-design inc-188 (design question 1). Bold matches stay out unless Sam reopens req-019 and req-299 (see discussion.md).",
+        "Settled 20 Oct (Sam): \"get this done if possible, hooking into the HMRC autocomplete whilst still maintaining an upgrade path if the library changes. Definitely do the blue styling on the magnifying glass.\" This row now builds bold matching letters and the joined blue magnifying-glass button on every type-ahead in both frontends, including the four Main import reason country boxes (S10: keep the type-ahead, with the same styling). Waiting-on-design inc-188 (the search button, design question 1) moved in and was removed; req-018, req-296, req-019 and req-299 are adopted here.",
+        "Library check, 20 Oct: both frontends depend on alphagov accessible-autocomplete 3.0.2, pinned exactly in package.json, and import it directly. hmrc-frontend is not a dependency of either. Our wrapper (src/client/javascripts/components/accessible-autocomplete.js, the same file in both) is adapted from HMRC Frontend's accessible-autocomplete component at commit 8aba9fc0b60a193d69fea0d3435a5b504cb922c4. HMRC's wrapper takes its options from data attributes and offers no templates hook, so the hooks go on the alphagov library through our wrapper.",
+        "How: pass the library's documented templates.suggestion option from the wrapper. It receives only the suggestion, so the wrapper's source function keeps the last query for it. The template HTML-escapes the suggestion text first, then wraps each case-insensitive match of the query in <strong class=\"app-autocomplete__match\">. Leave templates.inputValue unset, so the chosen value stays plain text. The button is our own element, added by the wrapper after enhancement and styled with app-autocomplete__button classes in accessible-autocomplete.scss. It replaces the painted ::after icon. Do not patch, fork or vendor the library.",
+        "Button call: the joined button is decorative. It is a span with aria-hidden=\"true\", not a button, so it is out of the tab order, and it cannot submit the page. A click on it puts focus in the box. It does not open the list: the library already lists suggestions as the trader types, and a second control that opens the same list would be an unlabelled extra step for keyboard and screen reader users.",
+        "Upgrade path: keep the exact 3.0.2 pin. The unit and end-to-end tests in the criteria pin the hook, so an upgrade that renames or drops templates.suggestion, or changes the option markup, fails loudly.",
         "Rendered proof: after landing, re-shoot screens/main/S02--*, S21--* and P-search--* and compare with screens/prototype/S02--default.png and S21--default.png."
       ],
       "gate": null
@@ -644,7 +659,7 @@
         "Fixed date example: the hint becomes a plain string and exampleText leaves arrival-window.js. The fit spec types its own date from the window or the existing relative-date helper. No trade-imports-ins-tests spec asserts this hint.",
         "Hint grey: add the GOV.UK hint class to the lead-in paragraph and the list inside the hint, keeping their spacing overrides. Assert the class in a view or fit test, probed by removing it.",
         "Plants: refresh the reference text in src/server/app/sets/high-risk-plants/spec/journey-spec.json for the place of landing hint.",
-        "Joined blue Search button: still waiting-on-design inc-188. Bold matches: Sam's call.",
+        "Joined blue magnifying-glass button and bold matches: settled 20 Oct and built for every type-ahead in inc-202, the port of entry box included.",
         "Rendered proof: re-shoot screens/main/S19--empty.png, S20--empty.png, S21--suggestions-open.png, S22--empty.png and S23--empty.png, and plants P-date-input--empty.png."
       ],
       "gate": null
@@ -1566,6 +1581,66 @@
         "Tests: controller tests for each changed Back link in both frontends; a fit test per frontend that walks into the run, follows Back, then Save and continue and asserts the next run step; the tests repo's journey helpers and page objects that assert Back goes to Overview. The existing overview-opened Back-link and CPH-scope tests stay as they are.",
         "Not in this row (questions for the designers and BAs, see save-and-status.md): the status of an optional task left empty, such as Transit countries; and the tester's own steps. Settled 20 Oct (Sam): Save and continue on a page opened from its Overview task returns to Overview, as main and the prototype do; it does not go on to the next unfinished task.",
         "Rendered proof: in each frontend, start a new notification, go two steps in, follow Back, then Save and continue, and shoot the page reached; compare with snagging/eudpa-691/screens/a1-after-back-save-continues-to-reason.png."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-219",
+      "title": "CPH number: three labelled boxes as drawn, no cursor jump, and the whole number kept when typed or pasted in one go, in animals",
+      "detail": "The designers asked for the cursor to jump to the next CPH box when one is full (S37). Sam ruled on 20 October: no cursor jump. Moving focus while someone types fails WCAG 3.2.2 unless users are told first, and GOV.UK forms do not do it. The real problem the designers saw is that typing the 9 digits straight through keeps only '12': each box has a maxlength of 2, 3 or 4, so the browser drops every keystroke after County is full. This row keeps the prototype's three boxes, each with a visible label and styled as drawn, and drops the maxlength cut-off so nothing typed or pasted is lost. When County holds the whole number and Parish and Holding are empty, the server splits it into the three parts on save. That works without JavaScript and needs no new client script. The prototype's own digit filter and paste spreading stay in waiting-on-design inc-093. openspec: live-animals/journey-pages cph-number: no automatic focus moves; the whole number typed into County is kept and split on save.",
+      "acceptanceCriteria": [
+        "Given the CPH number page on a live-animals notification, when it shows, then the 'CPH number' question has three boxes in one row, each with a visible label ('County', 'Parish', 'Holding number', Welsh as today), 2, 3 and 4 characters wide, laid out and styled as the prototype draws them. (review:designers-2026-10-19 S37; prototype:dr2-1-source app/views/design-release-2.1/cph-number.html p9-011; screens/prototype/S37--all-typed-continuously.png)",
+        "Given the CPH number page, with JavaScript on or off, when the trader fills a box, then focus stays in that box: nothing moves focus to the next box, and Backspace in an empty box does not move focus back. (Sam, 20 Oct: no cursor jump; c-006; req-713 out of scope)",
+        "Given the CPH number page with JavaScript off, when the trader types '123456789' straight through into County, then County shows all nine digits; no box cuts typing short. (review:designers-2026-10-19 S37; screens/main/S37--whole-number-typed.png shows only '12' kept today)",
+        "Given County holds '123456789', '12/345/6789' or '12 345 6789' and Parish and Holding are empty, when the trader presses Save and continue, then the number is saved as 123456789 and the consignment addresses page shows it as 12/345/6789. (review:designers-2026-10-19 S37; req-2122)",
+        "Given the trader pastes '12/345/6789' into County, with JavaScript on or off, when they press Save and continue, then it is saved as 123456789, the same as typing it, and focus never moved while pasting. (review:designers-2026-10-19 S37; req-2122)",
+        "Given County holds something that is not 9 digits once spaces and slashes are removed, such as '1234', and Parish and Holding are empty, when the trader saves, then today's per-part error messages show and the boxes keep what was typed. (req-715; c-114)",
+        "Given the trader enters 12, 345 and 6789 in the three boxes, when they save, then it is saved as 123456789, as today. (req-709)",
+        "Given the language is Welsh, when the page shows, then every string this row adds or changes is in Welsh, marked as a machine draft; the labels and errors keep their existing Welsh. (repo:frontend p10-050)",
+        "Given the CPH number page, empty, with the whole number typed into County, and in the error state, when it is checked with axe, then it has no serious or critical violations. (repo:frontend)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:designers-2026-10-19",
+          "ref": "S37: Cursor should move to next field when the correct number of chars have been entered"
+        },
+        {
+          "source": "ruling:sam-2026-10-20",
+          "ref": "Design review, 20 Oct: three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/cph-number.html (p9-011, p9-012, p9-012-m1, p9-012-m2)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/cph-number/template.njk:53-86 (maxlength 2, 3, 4); features/cph-number/validate.js; cph-number.fit.spec.js:99-106"
+        },
+        {
+          "source": "theme:waiting-on-design",
+          "ref": "inc-093: the paste and no-focus-move criteria it shares with this row (its JavaScript digit filter and paste spreading stay there)"
+        }
+      ],
+      "requirements": [
+        "req-709",
+        "req-2122"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Approach chosen: drop the maxlength attributes and let the server split a whole number typed or pasted into County, rather than a script that spreads a paste across the boxes. It is the only one of the two that works without JavaScript, it adds no client script to the page, and it covers typing straight through as well as pasting. The 2, 3 and 4 widths still show the number's shape.",
+        "Server: when Parish and Holding are empty and County, with spaces and slashes removed, is exactly 9 digits, split it into 2, 3 and 4 before the existing per-part checks. Anything else goes through today's checks unchanged.",
+        "Tests: the fit spec asserts maxlength 2, 3 and 4 today (cph-number.fit.spec.js:99-106). Change those asserts to the widths and add the typed-in-one-go and pasted cases, with JavaScript on and off. Add the same in trade-imports-ins-tests tests/animals/e2e for the CPH page, and the validate unit tests for the split.",
+        "Not in this row: the hint wording ('For example 12/345/6789'), the autocomplete and pattern attributes and the blank save are consignment-parties inc-091. This row changes the same template, so whichever lands second rebases.",
+        "The designers' prototype still moves the cursor between the boxes. It should drop the jump so it matches the ruling (noted on the snags page and in discussion.md).",
+        "Plants has no CPH number page. Germinal products asks no CPH number (inc-181)."
       ],
       "gate": null
     }

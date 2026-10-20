@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (11), **blocked** (3) or **ready to build** (28). On 20 October Sam settled five (see [Settled](#settled)), blocked two and split one out into a spike (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (7), **blocked** (3) or **ready to build** (32). On 20 October Sam settled nine (see [Settled](#settled)), blocked two and split one out into a spike (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -14,9 +14,6 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 | Item | Page | Decision |
 |---|---|---|
-| [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? (design question 7) |
-| S02, S21 | Origin, Arrival details | Country and port type-aheads: leave out the joined blue search button? Bold matching letters? |
-| S10 | Main import reason | Keep country questions as type-ahead boxes, not dropdowns? |
 | S04 | Origin | Origin code prefix fills in on pick with JavaScript, and only after the page is shown again without it? |
 | S26 | Transporter details | A box you submit for now, with filtering as you type left until transporter management? |
 | S36 | Address selection pages | Keep the 'View details' expander until the address book can send the trader back? |
@@ -27,7 +24,7 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 The designer questions in detail are below. S08 and S25 are now blocked, and their sections are kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
-There is also one small question with a default, S33's button colour, and six calls we have made that Sam should check.
+There is also one small question with a default, S33's button colour, and five calls we have made that Sam should check.
 
 ## S08: Commodity search results as you type
 
@@ -63,11 +60,13 @@ There is also one small question with a default, S33's button colour, and six ca
 
 ## S37: CPH number cursor moving to the next box
 
+**Settled 20 Oct:** three labelled boxes as drawn, no cursor jump, and the whole number kept when typed or pasted in one go (design snagging, CPH row). The designers' prototype still moves the cursor to the next box, and should drop the jump so it matches. The section below is kept as background.
+
 **What the prototype does:** once County (2 digits) is full, the cursor jumps to Parish (3 digits), then to Holding (4 digits). Backspace in an empty box jumps back and deletes the last digit in the box before it ([prototype](screens/prototype/S37--all-typed-continuously.png)). The boxes have no visible County, Parish and Holding labels.
 
 **Why we think it should differ:**
 
-- Moving the cursor while someone is typing is a 'change of context' under [WCAG 2.2 success criterion 3.2.2 On Input](https://www.w3.org/WAI/WCAG22/Understanding/on-input). Screen reader and screen magnifier users lose their place. Someone who goes back to fix County gets thrown into Parish. Someone typing while looking at the keyboard ends up in the wrong box. The Backspace jump deletes a digit they did not mean to delete.
+- Moving the cursor while someone is typing is a 'change of context' under [WCAG 2.2 success criterion 3.2.2 On Input](https://www.w3.org/WAI/WCAG22/Understanding/on-input). It fails 3.2.2 unless users are told about it before they use the field, and GOV.UK forms don't do it: GDS's guidance on putting effectiveness before efficiency uses this very example. Screen reader and screen magnifier users lose their place. Someone who goes back to fix County gets thrown into Parish. Someone typing while looking at the keyboard ends up in the wrong box. The Backspace jump deletes a digit they did not mean to delete.
 - GOV.UK's own split boxes, the [date input](https://design-system.service.gov.uk/components/date-input/), do not move the cursor, and they label every box visibly.
 - Sam recorded on 9 October that automatic focus moves are not built (req-713), because the accessibility duty comes first.
 
@@ -94,6 +93,10 @@ Sam's rulings on 20 October. Each item is now ready to build.
 - **Commodity search hint (S07):** match the prototype. Use its hint only, with no extra line after a 1 or 2 character search.
 - **ITAHC on What are you importing? (S06):** match the prototype. Keep 'ITAHC' as drawn, not spelled out.
 - **Save and continue from an Overview task (Q3):** it goes back to Overview, as main and the prototype do today.
+- **Country type-ahead on the origin page (S02):** bold matching letters and the prototype's blue magnifying-glass styling, through the autocomplete library's own hooks so it can still be upgraded. The button is decorative: it never submits the page, and a click puts you in the box.
+- **Port of entry type-ahead (S21):** the same as the origin country search.
+- **Country questions on Main import reason (S10):** keep the type-ahead, with the same styling as the origin and port searches, at the narrower width drawn inside the revealed panel.
+- **CPH number (S37):** three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go. The boxes stop cutting typing short, and the server splits a whole number in the first box, so it works without JavaScript. The designers' prototype still moves the cursor, and should drop the jump so it matches.
 
 ## Blocked
 
@@ -111,11 +114,10 @@ Both wait for:
 
 ## For Sam: calls we made and flagged
 
-Sam asked us to make sensible calls and flag them afterwards rather than wait. These six change or read an earlier ruling, so he may want to overturn them.
+Sam asked us to make sensible calls and flag them afterwards rather than wait. These five change or read an earlier ruling, so he may want to overturn them.
 
 | Snag | Call | Why | Reversal cost |
 |---|---|---|---|
-| S21, S02 | Bold matching in type-ahead suggestions stays out (req-019, req-299, claim 3). We suggest reopening it. | The accessible-autocomplete component draws bold matches through its own documented suggestion template. That is look and feel the accepted component already supports, a few lines of config across every type-ahead in both frontends. | Add one small row if Sam reopens it. Not in theme-rows.json. |
 | S26 | The transporter search box takes the icon-button look now (inc-210), although transporter management is blocked (point 5, claim 35). | A search box's look is not transporter management. Filtering as you type and the list's content stay blocked in inc-037. | Take the transporters page out of inc-210. |
 | S27 | 'Add a transporter' moves above the table now (inc-211), carved out of blocked inc-037 criterion 6. | Section 5 of the ruling is about who manages transporters, not where a button sits on a page we are keeping. | Drop inc-211 and put criterion 6 back in inc-037. |
 | S32 | Conflict c-087 ('the summary list stays') set aside. Consignment addresses become headed sections (inc-213). | Ruling sam-2026-10-07 lets DR1 override the prototype only where DR1 judged the same difference. DR1 explicitly declined to judge the component (dr1-parity-union backlog lines 17483 and 18095). | Keep inc-085's copy changes and leave the summary list. |

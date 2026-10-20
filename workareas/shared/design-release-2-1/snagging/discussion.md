@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in two groups: **to discuss** (19) or **ready to build** (23). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in two groups: **to discuss** (14) or **ready to build** (28). Sam settled five on 20 October (see [Settled](#settled)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -20,21 +20,17 @@ Everything else is ready to build. Differences that are only how we build it, su
 | [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? (design question 7) |
 | S02, S21 | Origin, Arrival details | Country and port type-aheads: leave out the joined blue search button? Bold matching letters? |
 | S10 | Main import reason | Keep country questions as type-ahead boxes, not dropdowns? |
-| S11, S28 | Main import reason, Upload documents | Our date picker, whose calendar opens in the page, rather than the prototype's, which covers the fields below? |
 | S04 | Origin | Origin code prefix fills in on pick with JavaScript, and only after the page is shown again without it? |
 | S26 | Transporter details | A box you submit for now, with filtering as you type left until transporter management? |
 | S36 | Address selection pages | Keep the 'View details' expander until the address book can send the trader back? |
-| S07 | What are you importing? | Add a line for 1 or 2 character searches that the prototype does not have? |
-| S06 | What are you importing? | Spell out 'ITAHC' on first use? (default: as drawn) |
 | Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
-| Q3 | Save and continue from an Overview task | Return to Overview, as designed, or go on to the next task that is not complete? |
 | Q4 | A task saved with nothing in it | 'Complete', 'Not needed', or stay 'To do'? |
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
 | S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
 
-The three designer questions in detail are below. Q2 to Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
+The three designer questions in detail are below. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
-There are also two small questions with a default, S33's button colour and S06's 'ITAHC', and six calls we have made that Sam should check.
+There is also one small question with a default, S33's button colour, and six calls we have made that Sam should check.
 
 ## S08: Commodity search results as you type
 
@@ -87,7 +83,16 @@ There are also two small questions with a default, S33's button colour and S06's
 We will build with these defaults unless you tell us otherwise.
 
 1. **Colour of the icon search button (S08, S26, S33).** The Ministry of Justice Search button we use is GOV.UK green by default. The prototype draws it blue (#1d70b8), the same blue as the date picker's calendar button. Matching the blue takes one style rule. **Default: blue, to match your drawing and our date picker.** Tell us if green is better.
-2. **'ITAHC' not spelled out on 'What are you importing?' (S06).** GOV.UK style is to expand an abbreviation the first time it is used. The documents and review pages say 'Intra Trade Animal Health Certificate (ITAHC)'. Traders know the term, so we have used your wording as drawn. **Default: 'ITAHC', as drawn.** Should the first use on this page be spelled out?
+
+## Settled
+
+Sam's rulings on 20 October. Each item is now ready to build.
+
+- **Date picker on Main import reason (S11):** prototype styling, opening in the page rather than over the fields. That means the blue calendar button, the prototype's calendar styling and the example '27/3/2026', with the calendar pushing the fields below it down. "The idea is consistency of display, not consistency of bad layout."
+- **Date picker on Upload documents (S28):** the same. Prototype styling, opening in the page rather than over the drop zone.
+- **Commodity search hint (S07):** match the prototype. Use its hint only, with no extra line after a 1 or 2 character search.
+- **ITAHC on What are you importing? (S06):** match the prototype. Keep 'ITAHC' as drawn, not spelled out.
+- **Save and continue from an Overview task (Q3):** it goes back to Overview, as main and the prototype do today.
 
 ## For Sam: calls we made and flagged
 

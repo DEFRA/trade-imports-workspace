@@ -82,6 +82,13 @@ The system MUST open a new draft when the user copies a notification from its da
 - **WHEN** the user copies it as new from its card
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
+#### Scenario: A notification submitted in an earlier browser session can be copied
+**ID**: SCN-DASH-005-B
+- **GIVEN** a notification was submitted in an earlier browser session
+- **WHEN** the user signs in again and copies it as new from its card
+- **THEN** a new draft opens at Overview, carrying its own reference number
+- **AND** the original is still shown as "Submitted"
+
 ### Requirement: The notification list is paged twenty-five at a time
 **ID**: REQ-DASH-006
 The system MUST page the notification list at twenty-five notifications per page, MUST report the range being shown out of the total, and MUST offer next and previous links that move between pages showing different notifications.

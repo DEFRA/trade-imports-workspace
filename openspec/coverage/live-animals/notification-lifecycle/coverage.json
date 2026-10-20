@@ -114,6 +114,25 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "full", "notes": "amend from dashboard lands with Amend on Overview" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "amending notification renders resume and cancel-amend actions", "strength": "partial", "notes": "clicks Amend and asserts Overview before returning to the dashboard; does not assert the Amend tag on Overview itself" }
           ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-006-C",
+          "name": "An amendment can be started in a later browser session than the one that submitted the notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-from-a-later-session.spec.ts", "test": "amends a notification that an earlier browser session submitted", "strength": "full", "notes": "fresh browser context keeping only the auth cookie; Overview shows Amend and the reference" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/engine/journey.test.js", "test": "Should open a submitted notification the session has not opened for amending and add it to the known list", "strength": "partial", "notes": "asserts the store status and the known-journeys cookie; does not assert Overview showing Amend and the reference" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-006-D",
+          "name": "The dashboard says when a notification could not be amended",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-from-a-later-session.spec.ts", "test": "tells the user a deleted notification could not be amended", "strength": "full", "notes": "banner found by role and its title, with its body" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the could-not-amend banner with its title and body", "strength": "partial", "notes": "renders the banner from ?amendRefused=1 rather than from amending a deleted notification" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should send an amend for a deleted journey back to the dashboard carrying the amend-refused flag", "strength": "partial", "notes": "asserts the redirect and the DELETED status; does not assert the banner" }
+          ]
         }
       ]
     },

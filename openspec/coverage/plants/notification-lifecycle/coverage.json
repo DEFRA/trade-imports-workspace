@@ -86,6 +86,25 @@
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should unfreeze a known submitted notification and land on its hub", "strength": "full", "notes": "amend POST redirects to hub path" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "partial", "notes": "also starts amendment from dashboard; focuses late-flag rather than Overview landing" }
           ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-005-C",
+          "name": "An amendment can be started in a later browser session than the one that submitted the notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/amend-from-a-later-session.spec.ts", "test": "amends a notification that an earlier browser session submitted", "strength": "full", "notes": "fresh browser context keeping only the auth cookie; Overview shows Amend and the reference" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/engine/journey.test.js", "test": "Should open a submitted notification the session has not opened for amending and add it to the known list", "strength": "partial", "notes": "asserts the store status and the known-journeys cookie; does not assert Overview showing Amend and the reference" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-005-D",
+          "name": "The dashboard says when a notification could not be amended",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/amend-from-a-later-session.spec.ts", "test": "tells the user a deleted notification could not be amended", "strength": "full", "notes": "banner found by role and its title, with its body" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the could-not-amend banner with its title and body", "strength": "partial", "notes": "renders the banner from ?amendRefused=1 rather than from amending a deleted notification" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should send an amend for a deleted notification back to the dashboard carrying the amend-refused flag", "strength": "partial", "notes": "asserts the redirect and the DELETED status; does not assert the banner" }
+          ]
         }
       ]
     },

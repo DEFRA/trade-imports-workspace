@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (3), **blocked** (4) or **ready to build** (34). On 20 October Sam settled eleven (see [Settled](#settled)), blocked three, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (2), **blocked** (4) or **ready to build** (35). On 20 October Sam settled twelve (see [Settled](#settled)), blocked three, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -17,7 +17,6 @@ Everything else is ready to build. Differences that are only how we build it, su
 | Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
 | Q4 | A task saved with nothing in it | Blocked, waiting for the designers: 'Complete', 'Not needed', or stay 'To do'? |
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
-| S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
 
 The designer questions in detail are below. S08 and S25 are now blocked, and their sections are kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
@@ -95,6 +94,7 @@ Sam's rulings on 20 October. Each item is now ready to build.
 - **Country questions on Main import reason (S10):** keep the type-ahead, with the same styling as the origin and port searches, at the narrower width drawn inside the revealed panel.
 - **Origin code prefix (S04):** the prefix shows with JavaScript only, filling in as soon as a country is picked. Without JavaScript there's no prefix, and the code is still stored with its country.
 - **Transporter search (S26):** same type-ahead as the other searches, with the blue icon. The submit box stays as the version without JavaScript. The list is already on the page, so the filter needs no new service.
+- **Review page errors (S35):** Sam: "it's the weird red line to the right of fields that appears on the real app, and shouldn't." It is the S34 red bar in unanswered cells, beside the question on desktop and under it on a phone. It goes in the 'no red bars' row; the card's red border and 'Complete …' line stay.
 - **Address selection pages (S36):** moved to the address book theme ("not for this list, will be covered as needed on the address book theme"). It is no longer in design snagging.
 - **CPH number (S37):** three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go. The boxes stop cutting typing short, and the server splits a whole number in the first box, so it works without JavaScript. The designers' prototype still moves the cursor, and should drop the jump so it matches.
 
@@ -126,6 +126,6 @@ Sam asked us to make sensible calls and flag them afterwards rather than wait. T
 
 Also for Sam:
 
-- **S35, 'error handling is broken':** the review page behaves as the prototype does on current `main`. We need the designers' steps, ideally on a test environment redeployed from `main` after 19 October (#416). No row until then.
+- **S35, 'error handling is broken':** answered 20 Oct. It is the red bar in unanswered cells (S34), drawn by `_summary-list-missing.scss:8-13`, and goes in the 'no red bars' row.
 - **S36, address selection pages:** moved 20 Oct to the address book theme (epic EUDPA-646), as Sam ruled. The whole snag, address lines, full width and the 'View' link in place of the expander, is in consignment-parties inc-090, which waits on address-book inc-066. Until then the pickers stay as they are.
 - **Theme boundaries:** design-snagging builds in folders other themes own: origin, commodities, import-reason, transport, documents, addresses, identification, check-answers, confirmation and declaration. It depends only on `main`, so it should land in a wave before those themes, and they should rebase on it. `tim backlog check` will report overlapping theme paths until the parent backlog's theme entries are re-split. moves.json lists every row that needs to change.

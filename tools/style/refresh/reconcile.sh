@@ -49,7 +49,6 @@ items_file="$style_dir/items.${REPO}.json"
 [[ -d "$file_review_dir" ]] || { echo "No file-reviews dir: $file_review_dir" >&2; exit 1; }
 [[ -f "$items_file" ]] || { echo "No items file: $items_file (run aggregate-file-reviews.sh --write-items first)" >&2; exit 1; }
 
-# Collect candidate .style.json files.
 candidate_files=()
 while IFS= read -r f; do candidate_files+=("$f"); done < <(find "$file_review_dir" -maxdepth 1 -name '*.style.json' | sort)
 
@@ -80,7 +79,6 @@ for f in "${candidate_files[@]}"; do
     fi
 done
 
-# Collect new-item actions and refreshed file set.
 declare -a added_ids
 declare -a added_descriptions
 refreshed_files=()
@@ -94,6 +92,7 @@ for f in "${to_process[@]}"; do
         todo=$(jq -c ".todos[$i]" "$f")
         line=$(echo "$todo" | jq -r '.line')
         rule=$(echo "$todo" | jq -r '.rule')
+        category=$(echo "$todo" | jq -r '.category // empty')
         severity=$(echo "$todo" | jq -r '.severity')
         issue=$(echo "$todo" | jq -r '.issue')
         fix=$(echo "$todo" | jq -r '.fix')
@@ -108,6 +107,7 @@ for f in "${to_process[@]}"; do
         args=( "$TICKET" --repo "$REPO" --file "$file_path" --line "$line" \
                --rule "$rule" --severity "$severity" \
                --issue "$issue" --fix "$fix" )
+        [[ -n "$category" ]] && args+=( --category "$category" )
         [[ -n "$bp" ]] && args+=( --best-practice "$bp" )
 
         new_id=$("$ADD_ITEM" "${args[@]}")
@@ -115,7 +115,6 @@ for f in "${to_process[@]}"; do
         added_descriptions+=("$file_path:$line [$severity] $issue")
     done
 
-    # Mark reconciled.
     if [[ "$DRY_RUN" != "1" ]]; then
         now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         jq --arg t "$now" '. + {reconciled_at: $t}' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
@@ -167,7 +166,6 @@ if [[ "$JSON" == "1" ]]; then
     exit 0
 fi
 
-# Human output.
 echo "Reconcile $TICKET / $REPO"
 echo
 echo "  Refreshed files:           ${#to_process[@]}"

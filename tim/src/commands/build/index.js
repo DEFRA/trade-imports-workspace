@@ -13,6 +13,8 @@ import {
 } from '../../build/gate-result.js'
 import { registerRuns } from './runs.js'
 import { registerStart } from './start.js'
+import { registerProbe } from './probe.js'
+import { registerDuplication } from './duplication.js'
 
 const SCHEMA_VERSION = 1
 
@@ -24,8 +26,6 @@ const workareaSchema = z
   .trim()
   .min(1, 'Name a workarea, such as shared/my-programme.')
 
-// The shape `git check-ref-format --branch` accepts, checked without running
-// git so a bad name is refused before anything touches a repo.
 const BRANCH_NAME =
   /^(?!-)(?!.*\.\.)(?!.*\/\/)(?!.*@\{)(?!.*\.lock(\/|$))[A-Za-z0-9._/-]+(?<![./])$/
 
@@ -58,12 +58,9 @@ const gateOptionsSchema = z.object({
   serial: z.boolean()
 })
 
-// Every gate writes its result, so a waiter never reads one an earlier gate
-// left in the same folder: a caller that forgets --result still gets one.
 const defaultResultPath = (logsDir, phase) =>
   join(logsDir, `gate-result-${phase}.json`)
 
-// Under the Bash tool's 600-second ceiling, so one wait always returns by itself.
 const DEFAULT_WAIT_SECONDS = 540
 const MAX_WAIT_SECONDS = 590
 
@@ -208,8 +205,6 @@ const gateEnvelope = (outcome, timVersion) => ({
   metadata: { ranAt: new Date().toISOString() }
 })
 
-// A checkout that failed after others succeeded still reports every repo, so
-// the result stays on the envelope alongside the errors.
 const branchEnvelope = (outcome, ok, timVersion) => ({
   ...jsonEnvelope({ ok: true, result: outcome, timVersion }),
   ok,
@@ -417,11 +412,13 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, and archive and report its runs"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, and find test code a branch copies"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
   registerGate(build, timVersion)
   registerGateWait(build, timVersion)
   registerRuns(build, timVersion)
+  registerProbe(build, timVersion)
+  registerDuplication(build, timVersion)
 }

@@ -210,6 +210,57 @@ idempotent (a replay returns the first result and writes nothing), and
 3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
 process holds the write lock after every retry.
 
+`tim backlog standards` lists what a task must read before it changes a file
+or a repo, resolved from the working tree at the time you run it:
+
+```bash
+tim backlog standards --files plants-frontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js --json
+tim backlog standards --repo-level trade-imports-animals-frontend --json
+tim backlog standards --lint      # every rule and routing path in the workspace resolves
+```
+
+Each entry lists the matching `.claude/rules` files, the code-style or review
+routing's `bestPractice` files, `repoDocs`, the `CLAUDE.md` chain with its `@`
+imports, and the memory index, each with its blob sha. `repoDocs` are the
+repo's own docs, as `~/` paths, and only files that exist:
+
+1. the file's topics' `repoRelativeBestPractice` from the code-style routing
+   (for example `src/server/app/docs/validation.md` for a controller)
+2. `src/server/app/docs/` `architecture.md`, `features.md`, `flow-and-gates.md`,
+   `journey-flow-and-gates.md` and every `add-a-*.md` recipe
+3. `src/server/app/sets/<set>/docs/` `README.md`, the same named docs and its
+   recipes, for the set that holds the file, or for every set when the file is
+   in none or the entry is for the whole repo
+
+A file's rules come from the `.claude/rules` folders on its own folder's
+ancestor chain only, never a whole-workspace scan, so stale copies under
+`workareas/` or `.claude/worktrees/` never apply. A symlinked `.claude` (such
+as `docs/.claude`) is skipped, so the root rules are not counted twice.
+`--lint` walks every `.claude/rules` folder, skipping `node_modules`, `.git`,
+`workareas`, `.claude/worktrees` and dot-folders other than `.claude`.
+
+A rule points at the docs it needs in the list items of its body:
+
+1. A list item is a line starting `- ` plus its indented continuation lines.
+   Paragraph text and fenced code are never read for pointers.
+2. The backticked token after `Topic dir:` is the rule's base folder, and must
+   end with `/`.
+3. Every other backticked token that ends in `.md`, after one level of brace
+   expansion (`a/{b,c}.md`), is a pointer.
+4. A pointer or Topic dir starting `~/git/defra/trade-imports-workspace/` is
+   workspace-relative. Any other pointer resolves against the Topic dir, or the
+   rule's own scope root when it has none.
+5. The resolved paths, without repeats and in the order they appear, are the
+   rule's `pointsTo`.
+
+A repo key can be the full key (`workspace`, a folder under `repos/`, or a
+programme's backlog key with `--programme`) or a short form that names one
+repo: `plants-frontend`, `plantsFrontend` and `trade-imports-plants-frontend`
+all name `repos/trade-imports-plants-frontend`. An unknown or ambiguous key
+exits 2 and names the keys you can use. A `--files` path need not exist yet,
+so a plan can name a file it will create, but it must be relative and stay
+inside the repo.
+
 ### `tim distil` — the DISTIL files in one workarea
 
 The deterministic steps of the requirements-pipeline skill's DISTIL phase, run
@@ -416,6 +467,8 @@ wiki-markup description, and record the key on the row before anything else,
 so a retry never raises a second. A status other than `--in-dev-status` is
 moved there by an exact-name transition; one already at `--done-status` is
 left alone with a warning. Then the ticket is moved onto `--board`, every time.
+Jira's agile API answers a partial rejection with 200 and an error body, so
+only a 204 counts as moved.
 **Branch**: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row,
 checked out in each of the increment's repos (a row naming none takes every repo, in `--repos` order when given) (fast-forwarded to what is
 pushed), tracked from origin, or cut with `--no-track` from a freshly fetched
@@ -448,7 +501,11 @@ starting or refreshing the stack begins straight away, during layer one,
 and is finished before layer two starts. Each FIT rung serves on its own port, clear
 of the stack's, so FIT runs while the stack is up. `--serial` runs one rung at a time instead —
 every unit rung, then every FIT rung, then E2E — to compare against.
-Whichever way it runs, `rungs` comes back in plan order.
+Whichever way it runs, `rungs` comes back in plan order. One repo's rungs
+never overlap, because its FIT rung builds the frontend into the folder its
+unit rungs read. A red or flaky E2E rung leaves each stack container's log
+beside its own, as `gate-stack-after-<repo>-<rung>-<container>.log`, written
+before the stack goes.
 
 If the stack was down, the gate starts it, leases it and always releases it
 afterwards. If this holder already leases it, the gate does not start it
@@ -472,6 +529,58 @@ command exits 1 unless every rung passed. gates.json refuses any rung that names
 CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
 machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
 on a 16 GB machine) in its shell profile.
+
+A rung whose `run` is `tim build duplication` runs that command in the
+rung's folder. Every repo in gates.json has one, in the unit phase.
+
+### `tim build duplication` — test code a branch copies
+
+```bash
+tim build duplication trade-imports-plants-frontend --json   # a folder under repos/, or a path
+tim build duplication . --base origin/main                   # the default base
+```
+
+Finds blocks of 10 or more lines (and 50 or more tokens) copied between test
+files: `*.test.js`, `*.fit.spec.js`, `*.spec.ts`, `*IT.java` and
+`*Test.java`. It scans every test file in the repo with
+[jscpd](https://www.npmjs.com/package/jscpd), a tim dependency, and keeps a
+block only when one side is a test file changed since `--base` (committed or
+not) and `--base` does not already have the copy. So a clone already on
+`origin/main` never fails a branch. Set-up used by two tests belongs in the
+shared test helper.
+
+The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
+clone is `{lines, tokens, first, second}`, and `first` and `second` are
+`{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
+finds a clone, and 2 when `--base` does not exist.
+
+### `tim build probe` — does a test witness a line
+
+```bash
+tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js \
+  --line 42 --test-file src/server/app/origin/controller.test.js --json
+tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" \
+  --json -- npm --prefix tim test -- src/build/gate.test.js
+```
+
+Blanks out one line of a production file (`--line`, counting from 1), or
+replaces text that appears exactly once (`--search` with `--replace`). Then
+it runs the test, writes the file back byte for byte, checks git shows no
+change to it, and runs the test again. Give the test as `--test-file` or as a
+command after `--`, with every option before the `--`. `--test-file` runs a
+`*.test.js` through `npm test -- --no-coverage`, a `*.fit.spec.js` through
+`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest` and
+`-Dit.test`.
+
+The result is `{file, inversion, redWhenInverted, greenAfterRestore, restored,
+logs}`. `redWhenInverted` true means the test failed without the line, so it
+witnesses it. False means it does not: the line is dead, or the test checks
+something else. Use it as review evidence, not as a gate. `greenAfterRestore`
+false means the test was failing before the probe. A run that takes longer
+than `--timeout-seconds` (default 270) counts as failed. The probe refuses a
+file with uncommitted changes (`DIRTY_TREE`), so commit first. It exits 1
+only when it could not put the file back (`NOT_RESTORED`). Logs go to
+`--logs`, or `workareas/build-probe/` in the workspace.
 
 ### `tim build runs archive|report` — what each run cost
 
@@ -510,10 +619,10 @@ JSON also carries `agentMs`, the sum. The increment and stage come from the
 agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
 increment id sit under `(run)`.
 
-### `tim jira create|attach|link|epics` — the Jira write surface
+### `tim jira create|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` are read-only. Creating, attaching, linking and
-listing epics writes to Jira, so all four follow one rule: **dry run by
+`tim jira ticket`/`comments` and `epics` are read-only. `create`, `attach`,
+`link` and `assign` write to Jira, so they follow one rule: **dry run by
 default, a real write needs an explicit `--confirm`** (or, for `create`, a
 matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
 allowlist stops `tim jira *`, so this contract — not the allowlist — is what
@@ -526,6 +635,12 @@ tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be atta
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
 tim jira link EUDPA-200 relates EUDPA-100 --confirm  # creates the link, then GETs the ticket back to verify it landed
+tim jira link EUDPA-200 --blocks EUDPA-300 --confirm # EUDPA-200 blocks EUDPA-300; reads the link back and reports the direction Jira stored
+tim jira link EUDPA-300 --blocked-by EUDPA-200       # dry run of the same link, from the other side
+tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
+tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
+tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added
+tim jira comment EUDPA-200 --file comment.txt --confirm  # posts it, then reads the comments back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
 ```
 
@@ -545,6 +660,27 @@ gets written for what did succeed. The `ticket-creator` skill and the
 `prototype` skill's hand-off both build a manifest and call this surface
 rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
 
+`tim jira link` takes exactly one link: `relates <key>`, `--blocks <key>` or
+`--blocked-by <key>`. A positional `blocks` is refused, because the flags
+make the direction explicit. Jira's `issueLink` field names mislead: the
+blocker goes in `inwardIssue` and the blocked ticket in `outwardIssue`. The
+client's `recordBlocker({ blocker, blocked })` owns that mapping. After the
+write, the command reads the ticket's links back; if Jira stored the link the
+other way round it fails with `UNKNOWN` and names the stored direction.
+`--json` puts `{mode, key, target, type, requested, stored, verified}` in
+`result`.
+
+`tim jira assign` leaves a ticket already assigned to that account alone and
+reports `unchanged`, even with `--confirm`. `--json` puts
+`{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
+`assigned` or `unchanged`).
+
+`tim jira comment` takes the text from `--body` or `--file`, not both, and
+sends it as Jira wiki markup. A ticket that already has a comment with the
+same text is left alone and reports `unchanged`, even with `--confirm`, so a
+retry never posts a duplicate. `--json` puts `{mode, key, body, comment}` in
+`result` (`mode` is `dry-run`, `commented` or `unchanged`).
+
 ### `tim jira transition` — move a ticket's status
 
 Moving a ticket is the whole job of this command, so it is **not** a dry run:
@@ -553,17 +689,22 @@ it changes the ticket straight away. It replaces
 
 ```bash
 tim jira transition EUDPA-200 "Done" --json   # moves the ticket to the status named exactly "Done", then reads it back to confirm
-tim jira transition EUDPA-200 --list          # read-only: the transitions the ticket offers, each as `transition -> status`
+tim jira transition EUDPA-200 --list          # read-only: the transitions the ticket offers, each as `transition -> status`, with the resolutions each accepts
+tim jira transition EUDPA-200 "Done" --resolution "Won't Do" --json   # moves the ticket and sets the resolution, then reads both back
 ```
 
 - The name is matched exactly against the status each transition leads to.
-  When no status matches, a transition with that name is used instead, as
-  the shell script did, and the output says which status the ticket ended in.
+  When no status matches, a transition with that name is used instead, and
+  the output says which status the ticket ended in.
+- `--resolution <name>` works only where the transition's screen has a
+  resolution field that offers that name. Otherwise the command fails with
+  `USAGE` before it moves anything, and names the resolutions it does offer.
 - A ticket already in the status is left alone and reported as `unchanged`,
   so running it twice is safe.
 - A status the ticket offers no transition to fails with `USAGE` (exit 2) and
   lists every transition it does offer.
-- `--json` puts `{key, action, status, previousStatus, requested, transition}`
+- `--json` puts
+  `{key, action, status, previousStatus, requested, transition, resolution}`
   in `result` (`action` is `moved`, `unchanged` or `listed`; `--list` gives
   `{key, action, status, transitions}`).
 
@@ -571,6 +712,89 @@ The increment build loop's done stage closes each ticket with
 `tim jira transition <KEY> "<jiraDoneStatus>" --workspace <root> --json`.
 `tim build start` moves a ticket to the working status through the same
 client call (`moveToStatus` in `src/clients/jira-client.js`).
+
+### `tim github create-pr|checks|run-log|rerun|merge` — open a PR, follow its pipeline and merge it
+
+Open a pull request, watch its checks, read why a job failed, run a job
+again, and merge the PR once it is green. Every repo
+is a DEFRA repo, named without the `DEFRA/` prefix.
+
+```bash
+tim github create-pr trade-imports-animals-frontend --head chore/NO_JIRA-tidy-logs --title "Tidy the logs" --body-file pr.md [--base main] [--draft] [--json]
+tim github checks trade-imports-animals-frontend 51 [--watch] [--interval 30] [--timeout 540] [--json]
+tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [--lines 100] [--json]
+tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--json]
+tim github merge trade-imports-animals-frontend 51 [--method squash|merge|rebase] [--delete-branch] [--json]
+```
+
+- **`create-pr`** opens the PR, or returns the PR already open from that
+  branch and opens nothing new, so running it twice is safe. It prints the PR
+  link. `--json` puts `{repo, number, url, head, base, draft, created}` in
+  `result`; `created` is `false` when the PR was already open. A body file it
+  cannot read fails with `USAGE` before any request is sent.
+- **`checks`** takes a PR number, a branch or a sha. It lists every check run
+  and commit status on that head commit, with an outcome each (`passed`,
+  `failed` or `pending`), the counts, and the SonarCloud gate when SonarCloud
+  reports as a check. When a commit has been checked more than once, only the
+  newest check of each name counts. `--json` puts
+  `{repo, ref, sha, outcome, counts, sonarGate, checks, timedOut}` in
+  `result`.
+- **`checks --watch`** checks again every `--interval` seconds until nothing
+  is pending or `--timeout` seconds pass. It exits 0 when every check passed,
+  1 when any failed, and 2 when checks are still pending at the timeout. The
+  default timeout of 540 seconds fits inside a 10-minute shell call; call it
+  again to keep watching. Without `--watch`, it exits 0 whatever the outcome.
+- A commit with no checks yet counts as pending, because a PR just opened has
+  none until its workflows start. A pass is reported only when two checks in
+  a row see the same checks, because some checks (SonarCloud, a workflow
+  triggered by another) start only after the first ones finish.
+- **`run-log`** takes a workflow run id, or the id `checks` shows for a
+  GitHub Actions check (a job). For each job, or only the failed ones with
+  `--failed-only`, it prints the failed steps and the last `--lines` lines of
+  the log, without timestamps. The tail ends at the last `##[error]` line, so
+  the clean-up after a failure does not push the cause out of view. A check
+  from outside GitHub Actions, such as SonarCloud, has no log, so `run-log`
+  prints the report it posted to GitHub instead (for SonarCloud, the failed
+  quality gate conditions), with `runId` set to `null`. An id that no run,
+  job or check has fails with `NOT_FOUND`.
+- **`rerun`** takes the same ids as `run-log`. Given the id of a job, it runs
+  that job again. Given a run id, it runs every job in the run again, or only
+  the failed ones with `--failed-only`. It does not wait: watch the result
+  with `checks --watch`. `--json` puts `{repo, runId, jobId, scope}` in
+  `result`, where `scope` is `job`, `failed-jobs` or `run`. A check from
+  outside GitHub Actions fails with `NOT_FOUND`.
+- **`merge`** merges a PR only when it is open, not a draft, free of
+  conflicts, not blocked by branch protection, up to date with its base, and
+  every check on its head commit has passed (the same checks `checks` lists;
+  a head with no checks yet counts as not passed). Otherwise it merges
+  nothing and prints every reason. It never bypasses branch protection: a
+  missing review is a refusal, and so is GitHub turning the merge down. The
+  merge is pinned to the head commit it checked, so a push in between makes
+  GitHub refuse it. Without `--method` it squashes when the repo allows it,
+  then falls back to a merge commit, then a rebase. `--delete-branch` deletes
+  the PR branch only after the merge. Running it on a merged PR returns the
+  merge commit with status `already-merged` and merges nothing. It exits 0
+  for `merged` or `already-merged` and 1 for `refused`. `--json` puts
+  `{repo, number, url, branch, status, method, sha, branchDeleted, reasons}`
+  in `result`.
+
+### `tim sonar issues` — why a SonarCloud gate failed
+
+List the open SonarCloud issues on a pull request, a branch or the main
+branch. The project is the repo name, with or without the `DEFRA_` prefix.
+
+```bash
+tim sonar issues trade-imports-plants-frontend --pull-request 108 [--json]
+tim sonar issues trade-imports-plants-frontend --branch main [--json]
+```
+
+- On a pull request, these are the new issues its quality gate counts. Each
+  entry shows the severity, type, rule, file and line, the message and a link.
+- `--json` puts `{project, pullRequest, branch, total, issues}` in `result`.
+- A public project needs no token. `SONAR_TOKEN` is sent when set, so a
+  private project works too.
+- Giving both `--pull-request` and `--branch`, or a PR that is not a number,
+  fails with `USAGE` before any request is sent.
 
 ### Workspace safety for repos outside the branch-parity contract
 

@@ -5,12 +5,17 @@
 #       --line L --severity S --category C \
 #       --issue "..." --fix "..." [--best-practice PATH]
 #
+# C is one of the categories in finding-categories.sh.
+#
 # ID is the ticket (EUDPA-X) or, in local mode, the composite
 # local/<repo>/<branch> id — any non-flag first argument is accepted.
 #
 # Prints the new id.
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/finding-categories.sh"
 
 TICKET=""; REPO=""; FILE=""; LINE=""; SEVERITY=""; CATEGORY=""
 ISSUE=""; FIX=""; BEST_PRACTICE=""
@@ -38,6 +43,8 @@ case "$SEVERITY" in
     Critical|Major|Minor) ;;
     *) echo "Invalid severity: $SEVERITY (must be Critical|Major|Minor)" >&2; exit 1 ;;
 esac
+
+refuse_category_outside "$CATEGORY" "${FUNCTIONAL_CATEGORIES[@]}" "${CODE_QUALITY_CATEGORIES[@]}"
 
 encoded="${FILE//\//_}"
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"

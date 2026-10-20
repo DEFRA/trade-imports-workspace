@@ -43,7 +43,7 @@ describe('resolveWorkspaceRoot', () => {
   })
 
   test('walks up from cwd to find the workspace root', () => {
-    const resolved = resolveWorkspaceRoot({ cwd: inside, env: undefined })
+    const resolved = resolveWorkspaceRoot({ cwd: inside, env: '' })
     expect(resolved).toBe(workspace)
   })
 
@@ -70,7 +70,7 @@ describe('resolveWorkspaceRoot', () => {
       expect(() =>
         resolveWorkspaceRoot({
           cwd: tmpdir(),
-          env: undefined,
+          env: '',
           canonical: empty
         })
       ).toThrow(/Cannot find the workspace root/)
@@ -82,7 +82,7 @@ describe('resolveWorkspaceRoot', () => {
   test('falls back to the canonical path when the walk-up finds nothing', () => {
     const resolved = resolveWorkspaceRoot({
       cwd: tmpdir(),
-      env: undefined,
+      env: '',
       canonical: workspace
     })
 
@@ -94,7 +94,7 @@ describe('resolveWorkspaceRoot', () => {
 
     try {
       expect(
-        resolveWorkspaceRoot({ cwd: inside, env: undefined, canonical: other })
+        resolveWorkspaceRoot({ cwd: inside, env: '', canonical: other })
       ).toBe(workspace)
     } finally {
       rmSync(other, { recursive: true, force: true })

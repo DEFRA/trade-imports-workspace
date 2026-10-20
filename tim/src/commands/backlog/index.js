@@ -9,6 +9,7 @@ import { setIncrementField, appendJournalNote } from '../../backlog/state.js'
 import { INCREMENT_ID, SETTABLE_FIELDS } from '../../backlog/state-schema.js'
 import { readJsonFile } from '../../backlog/io.js'
 import { resolveStandards, lintStandards } from '../../backlog/standards.js'
+import { resolveRepoKey } from '../../backlog/standards/repo-keys.js'
 import { TimError } from '../../errors.js'
 import { register as registerLedger } from './ledger.js'
 import { register as registerRows } from './rows.js'
@@ -36,14 +37,6 @@ const ingestOptsSchema = z
     message: 'A dry run writes nothing, so it takes no --op-id or --expect-sha.'
   })
 
-/**
- * Validate the ingest command's options before any side-effect runs
- * (`.claude/rules/cli-patterns.md`).
- *
- * @param {object} opts
- * @returns {{atoms: boolean, increments: boolean, dryRun: boolean, opId: string|undefined, expectSha: string|undefined}}
- * @throws {TimError} USAGE
- */
 const parseIngestOpts = (opts) => {
   const result = ingestOptsSchema.safeParse(opts)
   if (!result.success) {
@@ -52,13 +45,6 @@ const parseIngestOpts = (opts) => {
   return result.data
 }
 
-/**
- * Validate an increment id positional before any side-effect runs.
- *
- * @param {unknown} value
- * @returns {string}
- * @throws {TimError} USAGE
- */
 const parseIncrementId = (value) => {
   const result = z
     .string()
@@ -76,14 +62,6 @@ const stateSetOptsSchema = z.object({
   expectSha: expectShaSchema.optional()
 })
 
-/**
- * Validate `state set`'s options and parse `--value` as JSON before any
- * side-effect runs.
- *
- * @param {object} opts
- * @returns {{value: any, opId: string|undefined, expectSha: string|undefined}}
- * @throws {TimError} USAGE
- */
 const parseStateSetOpts = (opts) => {
   const result = stateSetOptsSchema.safeParse(opts)
   if (!result.success) {
@@ -109,13 +87,6 @@ const stateNoteOptsSchema = z.object({
   expectSha: expectShaSchema.optional()
 })
 
-/**
- * Validate `state note`'s options before any side-effect runs.
- *
- * @param {object} opts
- * @returns {{file: string, stage: string|undefined, by: string|undefined, opId: string|undefined, expectSha: string|undefined}}
- * @throws {TimError} USAGE
- */
 const parseStateNoteOpts = (opts) => {
   const result = stateNoteOptsSchema.safeParse(opts)
   if (!result.success) {
@@ -124,15 +95,6 @@ const parseStateNoteOpts = (opts) => {
   return result.data
 }
 
-/**
- * Read a note file's text, refusing a missing file with a GDS-plain message
- * rather than a raw `ENOENT`.
- *
- * @param {string} path
- * @returns {string}
- * @throws {TimError} NOT_FOUND when the file is missing; any other
- *   filesystem error propagates unchanged
- */
 const readNoteFile = (path) => {
   try {
     return readFileSync(path, 'utf8').trim()
@@ -215,16 +177,6 @@ const standardsOptsSchema = z
     }
   )
 
-/**
- * Parse one `--files <repoKey>:<path>` value. The path must be relative
- * and stay inside the repo after normalising, with no leading `/` and no
- * escaping `..` — a planned file need not exist yet (a writer may be about
- * to create it), so this is string validation only, before any read.
- *
- * @param {string} spec
- * @returns {{repoKey: string, path: string}}
- * @throws {TimError} USAGE
- */
 const parseFileSpec = (spec) => {
   const separatorIndex = spec.indexOf(':')
   if (separatorIndex <= 0) {
@@ -248,14 +200,6 @@ const parseFileSpec = (spec) => {
   return { repoKey, path: normalised }
 }
 
-/**
- * Validate `tim backlog standards`' options before any filesystem read
- * (`.claude/rules/cli-patterns.md`).
- *
- * @param {object} opts
- * @returns {{fileSpecs: {repoKey: string, path: string}[], repoLevel: string[], programme: string|undefined, lint: boolean}}
- * @throws {TimError} USAGE
- */
 const parseStandardsOpts = (opts) => {
   const result = standardsOptsSchema.safeParse(opts)
   if (!result.success) {
@@ -269,20 +213,6 @@ const parseStandardsOpts = (opts) => {
   }
 }
 
-/**
- * Every repo key `tim backlog standards` may reference, resolved to an
- * absolute path and a workspace-relative path. With `--programme`, the
- * map comes from that programme's backlog header `repos`. Without one,
- * `workspace` is the workspace root and every folder under `repos/` is
- * its own key — the same two vocabularies req-043 §2.17 keeps distinct
- * from a GitHub repo name.
- *
- * @param {object} args
- * @param {string} args.workspaceRoot
- * @param {string} [args.programme]
- * @returns {Record<string, {abs: string, rel: string}>}
- * @throws {TimError} NOT_FOUND when a named programme's backlog names no repos
- */
 const resolveRepoMap = ({ workspaceRoot, programme }) => {
   if (programme) {
     const profile = loadProgramme({ workspaceRoot, key: programme })
@@ -322,14 +252,6 @@ const resolveRepoMap = ({ workspaceRoot, programme }) => {
   return { workspace: { abs: workspaceRoot, rel: '' }, ...repoEntries }
 }
 
-const requireRepoKey = (repos, repoKey) => {
-  if (repos[repoKey]) return
-  throw new TimError(
-    'USAGE',
-    `Can't find repo key \`${repoKey}\`. Name a programme with --programme, or use \`workspace\` or a folder name under repos/.`
-  )
-}
-
 const renderStandardsEntry = (entry) =>
   [
     entry.file ?? `${entry.repoKey}:${entry.path}`,
@@ -338,6 +260,7 @@ const renderStandardsEntry = (entry) =>
       : `  technologies: ${entry.technologies.join(', ') || '(none)'}`,
     `  topics: ${(entry.topics ?? []).join(', ') || '(none)'}`,
     `  bestPractice: ${entry.bestPractice.join(', ') || '(none)'}`,
+    `  repoDocs: ${entry.repoDocs.join(', ') || '(none)'}`,
     `  claudeMd: ${entry.claudeMd.join(', ') || '(none)'}`,
     `  imports: ${entry.imports.join(', ') || '(none)'}`,
     `  memory: ${entry.memory.join(', ') || '(none)'}`
@@ -566,7 +489,7 @@ export const register = (program, { timVersion }) => {
   backlog
     .command('standards')
     .description(
-      'Every rule, skill-routing bundle, CLAUDE.md and memory-index path a task must read for a set of files or repos, resolved live from the current working tree'
+      'Every rule, skill-routing bundle, repo doc, CLAUDE.md and memory-index path a task must read for a set of files or repos, resolved live from the current working tree'
     )
     .addHelpText(
       'after',
@@ -577,7 +500,7 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--files <repoKey:path>',
-      'A file to resolve standards for, as <repoKey>:<path>. Repeat it, or give several separated by commas.',
+      'A file to resolve standards for, as <repoKey>:<path>. A short key such as plants-frontend works when it names one repo. Repeat it, or give several separated by commas.',
       collectCommaSeparated,
       []
     )
@@ -607,21 +530,21 @@ export const register = (program, { timVersion }) => {
             process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude')
           const homeDir = homedir()
 
-          for (const { repoKey } of parsed.fileSpecs) {
-            requireRepoKey(repos, repoKey)
-          }
-          for (const repoKey of parsed.repoLevel) {
-            requireRepoKey(repos, repoKey)
-          }
+          const files = parsed.fileSpecs.map((spec) => ({
+            ...spec,
+            repoKey: resolveRepoKey(repos, spec.repoKey)
+          }))
+          const repoLevel = parsed.repoLevel.map((repoKey) =>
+            resolveRepoKey(repos, repoKey)
+          )
 
-          const hasStandardsTargets =
-            parsed.fileSpecs.length > 0 || parsed.repoLevel.length > 0
+          const hasStandardsTargets = files.length > 0 || repoLevel.length > 0
           const standardsResult = hasStandardsTargets
             ? resolveStandards({
                 workspaceRoot,
                 repos,
-                files: parsed.fileSpecs,
-                repoLevel: parsed.repoLevel,
+                files,
+                repoLevel,
                 claudeConfigDir,
                 homeDir
               })

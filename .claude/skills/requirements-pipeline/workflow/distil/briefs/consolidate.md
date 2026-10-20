@@ -35,14 +35,15 @@ The drafter does pass 1 and pass 2 within its area. The combiner does pass 2 aga
 two areas only where they truly repeat the same set-up.
 
 An `exists` requirement is already met. It goes in the report, never in a `todo` or `blocked` increment. An acceptance
-criterion reads as the change, not a restatement of what is there.
+criterion covers only what the row changes, stated as what is true once the row lands.
 
 ## Each row
 
 - `id`: `inc-001` onwards, in build order. `title`. `detail`: what and why, in plain English.
 - `acceptanceCriteria`: observable. Each ends with its provenance in brackets, such as
   `(confluence:6518997274 §Notification data; trace:ched-pp country-of-origin)`. Keep copy, option, hint and error
-  changes as their own criteria, worded as the new text: the reviewer checks each one.
+  changes as their own criteria, worded as the new text: the reviewer checks each one. How to word them is in
+  [Wording a criterion](#wording-a-criterion).
 - **Every acceptance criterion can be observed in every environment the row names.** Never write one that cannot,
   such as a real cloud service on a local stack that has none. That is a reconcile problem, not yours to settle.
   The drafter lists the requirement in its draft's `unobservable`; the combiner puts it in its answer's
@@ -62,9 +63,54 @@ criterion reads as the change, not a restatement of what is there.
   up. `tim distil coverage` refuses a todo row that covers one.
 - A row that needs somebody to act first for any other reason, such as a platform change, says so in `notes` and is
   `blocked` until they have.
-- `gate` is a review point: the build loop lands the row, then stops so somebody can look before anything that
-  depends on it is built. Set it, saying what to look at, on a row that sets a pattern the rows after it copy, or
-  that builds a question's default many rows rest on. Otherwise `null`.
+- `gate` is a review check: what somebody should look at once the theme is built. Set it, saying what to look at,
+  on a row that sets a pattern the rows after it copy, or that builds a question's default many rows rest on.
+  Otherwise `null`. A build runs unattended, so a gate never waits for a person mid-run: the build session records
+  the check for the end-of-theme review and carries on.
+- **Work the programme pushes out gets no row.** A follow-up ticket for another team, a chore in a repo the backlog
+  does not build, or an action only a person can take goes in your answer's decisions, worded so the main session
+  can add it to the workarea's `deferred.md`.
+
+## Wording a criterion
+
+A criterion is read by the planner, then turned into tests, Behaviour Spec scenarios and code. Every word in it can
+end up in a test title or a comment. So:
+
+- **State what is shown, never what is gone.** A criterion never says "no '<removed copy>'" or "does not show
+  '<old text>'". It says exactly what the page shows. An exact positive check proves a removal; a quoted absence
+  builds `REMOVED_*` constants and tests named after the old version.
+
+  | Bad | Good |
+  |---|---|
+  | There is no "It can be up to 58 characters." sentence under the internal reference field | The internal reference field shows the label "Internal reference (optional)" and no hint |
+
+  Use the design's own text for the label and hint. The example's words show the shape, not the copy.
+- **No ids and no session words in a criterion, a `title` or a `detail`.** Requirement, conflict, row and ruling ids
+  (`req-014`, `c-201`, `inc-004`, `ruling:sam-2026-10-02`) and release or session words ("Design Release 2.1",
+  "the real service", "as ruled") never appear in the sentence. Ids stop at the plan: the planner reads them from
+  `requirements`, `sources`, `notes` and the provenance bracket, and none of them reaches code. The provenance
+  bracket at the end is the one place a source id goes in a criterion.
+
+  | Bad | Good |
+  |---|---|
+  | Saving a submitted notification keeps the c-201 behaviour | Saving a submitted notification with no changes returns to the dashboard and leaves its status as submitted |
+  | The heading matches the real service | The page heading is "Where are the goods coming from?" |
+
+- **A change to how a value is formatted lists every page that shows the value**, in one row. Take the pages from
+  the requirement, which names them: a field's own page, check your answers, the dashboard, the view of a submitted
+  notification. A row that names one page builds one formatter there, and the next row builds a second.
+- **Never name a source as the thing to match.** "As the prototype does" or "like the current service" is not
+  observable. Say what the user sees.
+
+## Cross-cutting chrome goes to its owning theme
+
+Page chrome is the part of every page the layout owns: the page title, the header, the service name, phase and
+maturity banners, the footer and the back link. A criterion about chrome belongs to the row that owns the layout,
+in the foundation theme where the backlog has themes. A feature row that needs the change depends on that row. It
+never carries the chrome criterion itself: a feature row that must meet it before the layout change lands can only
+override the layout on its own pages, and that override stays.
+
+Without themes, put the chrome change in one early row and make every row that relies on it depend on that row.
 
 ## Drafting an area's rows
 
@@ -188,6 +234,12 @@ any.
   `Dropped: ruling:sam-2026-10-02 put req-014 out of scope.` A dropped row covers nothing, so coverage ignores it.
 - A `done` or `deferred` row that covers a requirement now out of scope or already met stays as it is. `tim distil
   coverage` does not flag it, and the report lists it among the ordering decisions to check.
+- **After a ruling that reverses an earlier decision, sweep every `todo` and `blocked` row,** not only the rows whose
+  requirements changed. Search each row's `title`, `detail`, `acceptanceCriteria`, `notes` and `openQuestions` for the
+  old model's words and rewrite every row that still states it. A note recording the reversal is correct: leave it.
+  List each remaining match and why it stays in your answer's decisions. Rows built or set aside are never changed.
+- **A `todo` or `blocked` row whose wording breaks [Wording a criterion](#wording-a-criterion)** (a quoted removal,
+  an id, a session word, a source to match) is rewritten to it, keeping its id.
 - New requirements go in new rows with new ids, after the last existing id.
 
 ## Finishing

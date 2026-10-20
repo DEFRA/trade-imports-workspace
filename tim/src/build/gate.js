@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runToLog } from '../exec/exec.js'
 import {
   acquireStack,
@@ -12,7 +13,13 @@ import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
-import { loadGates, planRungs, MVN_VERIFY, PHASES } from './gates.js'
+import {
+  loadGates,
+  planRungs,
+  MVN_VERIFY,
+  PHASES,
+  TIM_DUPLICATION
+} from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
@@ -40,13 +47,24 @@ export const defaultLogsDir = (workspaceRoot, workarea) =>
 export const logPathFor = (logsDir, repo, name) =>
   join(logsDir, `gate-${repo}-${name}.log`)
 
-const commandFor = ({ run, scope }) =>
-  run === MVN_VERIFY
-    ? { command: 'mvn', args: ['-B', 'verify'] }
-    : {
-        command: 'npm',
-        args: ['run', run, ...(scope.length > 0 ? ['--', ...scope] : [])]
-      }
+const TIM_CLI = fileURLToPath(new URL('../cli.js', import.meta.url))
+
+const npmCommandFor = ({ run, scope }) => ({
+  command: 'npm',
+  args: ['run', run, ...(scope.length > 0 ? ['--', ...scope] : [])]
+})
+
+const duplicationCommand = () => ({
+  command: process.execPath,
+  args: [TIM_CLI, 'build', 'duplication', '.'],
+  env: { TIM_NO_AUTO_PULL: '1' }
+})
+
+const commandFor = (rung) => {
+  if (rung.run === MVN_VERIFY) return { command: 'mvn', args: ['-B', 'verify'] }
+  if (rung.run === TIM_DUPLICATION) return duplicationCommand()
+  return npmCommandFor(rung)
+}
 
 const readScripts = (path) => {
   try {
@@ -67,6 +85,7 @@ const readScripts = (path) => {
  */
 export const cannotRunBecause = ({ repo, path, run }) => {
   if (!existsSync(path)) return `${repo} is not cloned at ${path}.`
+  if (run === TIM_DUPLICATION) return null
   if (run === MVN_VERIFY) {
     return existsSync(join(path, 'pom.xml'))
       ? null
@@ -109,12 +128,12 @@ const runRung = async (rung, { logsDir, env }) => {
   if (rung.refusal) return failed(rung, rung.refusal)
   const blocker = cannotRunBecause(rung)
   if (blocker) return failed(rung, blocker)
-  const { command, args } = commandFor(rung)
+  const { command, args, env: commandEnv } = commandFor(rung)
   const logPath = logPathFor(logsDir, rung.repo, rung.name)
   try {
     const { exitCode, durationMs, log } = await runToLog(command, args, {
       cwd: rung.path,
-      env,
+      env: { ...env, ...commandEnv },
       logPath
     })
     return rungResult({
@@ -158,9 +177,6 @@ const heldPortReason = (port, holder, lease) => {
     : reason
 }
 
-// The first FIT port the workspace stack holds is recorded as the gate's
-// `stack.held`, naming the lease holder, so a caller can tell a held stack
-// from a red rung without reading the reason.
 const heldPortReasons = async (ports, context) => {
   const reasons = []
   for (const port of ports) {
@@ -188,8 +204,6 @@ const runFitRung = async (rung, context) => {
 const runLocalRung = (rung, context) =>
   rung.phase === 'fit' ? runFitRung(rung, context) : runRung(rung, context)
 
-// Each rung's wall-clock span, so a phase's span can be told from its rungs
-// however they overlapped.
 const timed = async (rung, runOne) => {
   const startedAt = performance.now()
   const result = await runOne(rung)
@@ -215,8 +229,6 @@ const runChain = async (chain, runOne) => {
   }))
 }
 
-// At most `limit` chains at once: each worker takes the next chain in plan
-// order as soon as its last one finishes.
 const runChainsAtMost = async (chains, runOne, limit) => {
   const queue = [...chains]
   const worker = async () => {
@@ -230,13 +242,6 @@ const runChainsAtMost = async (chains, runOne, limit) => {
   return (await Promise.all(workers)).flat()
 }
 
-// Each repo's rungs run in plan order, one after another: a repo's FIT
-// builds its frontend into the same folder its unit rungs read, so they
-// never overlap. Different repos run at the same time, at most
-// `parallelRepos` of them when gates.json sets it, because five repos' FIT
-// suites and `mvn verify` at once beside the stack starve a laptop until
-// their own timeouts fire. Results come back in plan order, whatever order
-// they finished in.
 const runEachRepoAtOnce = async (rungs, runOne, parallelRepos) => {
   const positioned = rungs.map((rung, position) => ({ rung, position }))
   const chains = Object.values(
@@ -353,8 +358,6 @@ const refusedE2e = (rungs, lease) => ({
 
 const isExclusive = (rung) => rung.exclusive === true
 
-// Exclusive rungs (performance tests) go first, so they measure a stack the
-// E2E suite has not yet filled with data. Serially, plan order is kept.
 const e2eRunOrder = (rungs, context) =>
   context.exclusiveFirst
     ? [
@@ -368,9 +371,6 @@ const inPlanOrder = (rungs, runs) => {
   return rungs.map((rung) => byRung.get(rung))
 }
 
-// The stack can get ready while the unit and FIT rungs run, but no e2e rung
-// starts until they have all finished. The e2e rungs then run one at a
-// time, so an exclusive rung never shares the machine with another rung.
 const FLAKY_COUNT = /^\s+\d+ flaky\s*$/m
 
 const loggedFlaky = (log) => {
@@ -381,10 +381,6 @@ const loggedFlaky = (log) => {
   }
 }
 
-// A red or flaky e2e rung is often explained only by a service's own log: a
-// 500 page, a dropped socket, a container that restarted. The stack, and
-// those logs with it, goes when the lease is given back, so they are written
-// beside the rung's log straight away.
 const withStackLogs = async (result, rung, context) => {
   if (result.ok && !loggedFlaky(result.log)) return result
   try {
@@ -417,15 +413,6 @@ const runLeasedRungs = async (rungs, context, lease) => {
   return { refresh: refreshed, ...(await runE2eRungs(rungs, context)) }
 }
 
-/**
- * Run the e2e rungs against the workspace stack built from local source,
- * under a lease held as the gate's own holder. A stack that is down is
- * started, leased, and always released again, whatever happened. A stack
- * this holder already leases is brought up to date service by service
- * (rebuilt, restarted or left, see refreshLeasedStack) and left up. A stack
- * leased to anyone else, or up with no lease, is refused and left exactly as
- * it is.
- */
 const runE2e = async (rungs, context) => {
   const blockers = rungs.map((rung) => rung.refusal ?? cannotRunBecause(rung))
   if (blockers.every(Boolean)) {
@@ -434,7 +421,6 @@ const runE2e = async (rungs, context) => {
       stack: NO_E2E_STACK
     }
   }
-  // A laptop that cannot rebuild the stack beside layer one waits for it.
   if (context.stackAfterLocal) await context.localDone
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
@@ -473,8 +459,6 @@ const runE2eTimed = async (rungs, context) => {
   return { ...outcome, startedAt, endedAt: performance.now() }
 }
 
-// One rung at a time, unit then FIT then the e2e phase: the order the gate
-// used before it ran repos at once, kept so the two can be compared.
 const runSerially = async (plan, context) => {
   const runOne = (rung) => runLocalRung(rung, context)
   const unit = await runInOrder(byPhase(plan, 'unit'), runOne)
@@ -484,10 +468,6 @@ const runSerially = async (plan, context) => {
   return { local: [...unit, ...fit], localEndedAt, e2e }
 }
 
-// Three layers, each after the one before has finished, passed or not.
-// Layer one is every unit and FIT rung, repos at the same time; taking the
-// lease and getting the stack ready start beside it. Layer two is every
-// exclusive e2e rung, alone. Layer three is the other e2e rungs.
 const runInLayers = async (plan, context) => {
   const layerOne = runEachRepoAtOnce(
     plan.filter((rung) => rung.phase !== 'e2e'),
@@ -505,8 +485,6 @@ const runInLayers = async (plan, context) => {
   return { local, localEndedAt, e2e }
 }
 
-// The e2e phase counts its rungs and any wait for the stack that ran on
-// past layer one, not stack work layer one already covered.
 const e2eDurationMs = ({ localEndedAt, e2e }) =>
   Math.round(e2e.endedAt - Math.max(localEndedAt, e2e.startedAt))
 
@@ -527,9 +505,6 @@ const exclusiveMs = (runs) =>
     .filter(({ rung }) => isExclusive(rung))
     .reduce((total, { startedAt, endedAt }) => total + endedAt - startedAt, 0)
 
-// Everything in the e2e phase after layer one that is not an exclusive rung
-// (the other e2e rungs, any wait for the stack, taking it down) counts to
-// the e2e layer.
 const layerDurations = (startedAt, ran) => {
   const performanceMs = exclusiveMs(ran.e2e.runs ?? [])
   const afterLocalMs = Math.max(0, ran.e2e.endedAt - ran.localEndedAt)

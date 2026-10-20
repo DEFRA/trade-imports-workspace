@@ -4,10 +4,14 @@
 #   review-add-item.sh EUDPA-XXXXX --repo REPO --file PATH --line N --severity S \
 #                      --category C --issue "..." --fix "..." [--best-practice PATH]
 #
+# C is one of the categories in finding-categories.sh.
 # Disposition, Status, and Notes start null.
 # Prints the new ID to stdout.
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/finding-categories.sh"
 
 TICKET=""
 REPO=""
@@ -57,9 +61,10 @@ case "$SEVERITY" in
     *) echo "Invalid --severity: $SEVERITY (must be Critical|Major|Minor)" >&2; exit 1 ;;
 esac
 
+refuse_category_outside "$CATEGORY" "${FUNCTIONAL_CATEGORIES[@]}" "${CODE_QUALITY_CATEGORIES[@]}"
+
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 
-# Initialise if missing so callers don't have to know.
 if [[ ! -f "$target" ]]; then
     jq -n --arg ticket "$TICKET" --arg repo "$REPO" \
         '{ticket: $ticket, repo: $repo, items: []}' > "$target"

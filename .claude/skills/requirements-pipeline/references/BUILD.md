@@ -75,14 +75,18 @@ repos         the backlog envelope's `repos` map, whatever its keys, copied
               increment ends up built in the animals frontend. The loop's
               preflight stops the run when the args and the envelope differ.
               Under the full lifecycle the key workspace is the workspace
-              repo itself, at path ".", and a repo may set
-              requireApproval: true — see "The workspace repo" below
+              repo itself, at path "." — see "The workspace repo" below.
+              No entry carries requireApproval, the workspace's included
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
-              opus) plans and judges: plan, judge, the consistency reviewer.
+              opus) plans and judges: plan, plan review, judge, the
+              consistency reviewer, and a theme's engineering reviewers
+              and judge.
               code (default sonnet) writes and repairs code: implement, the
               per-group style and code reviewers, the finding verifiers, fix,
-              the ladder, CI fix. light (default haiku) runs a command and
+              the style re-review of the fix, the ladder, CI fix, the style
+              review of a CI fix and its style fix, and a theme's fixer and
+              ladder. light (default haiku) runs a command and
               reports what it said: everything else, the start stage
               included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
@@ -98,19 +102,21 @@ open PR → CI → done, and passes every Jira key, `requireApproval` and
 and that is the point.** The workflow itself has no default for this key —
 a run without it stops before any agent — so this default is something the
 skill supplies, not something the loop falls back to. By the time an
-increment reaches the merge stage it has already been
-through a style reviewer and a code reviewer per (repo, language) group, a
-consistency reviewer across the whole change, an adversarial verifier that
-tries to refute every finding, and a judge that rules every survivor
-fix-now, defer or reject, without a human in the loop. **That multi-agent
+increment reaches the merge stage its plan has been reviewed before any code
+existed, and its code has been through a style reviewer and a code reviewer per (repo, language) group, a
+consistency reviewer across the whole change, a verifier that tries to refute
+every functional finding and keeps every code-quality finding that code does
+not prove wrong, a judge that rules every survivor fix-now, defer or reject,
+a style re-review of the fixer's own hunks, and a style review of every commit a CI fixer
+pushes, without a human in the loop. **That multi-agent
 review, verification and judgement IS the review.** A GitHub approving
 review on top of it is a second, *human* gate, and a run that has to stop
 and wait for one cannot run 24/7 — which is the whole point of this loop.
 
-Set `requireApproval: true` when a programme genuinely wants that second,
-human gate in front of every merge — a run built for a colleague to review
-before anything lands, say, or a programme still earning trust in the loop.
-With it on, every PR of an increment needs an approving review on GitHub
+Set `requireApproval: true` only when the user asks, in as many words, for a
+human approval gate in front of every merge. Never set it because a programme
+or a repo seems to need one, and never write "waits for approval" into a row,
+a note or a handover. With it on, every PR of an increment needs an approving review on GitHub
 before the merge stage may merge any of them, and the loop's whole-increment
 approval sweep, `awaiting-approval` and `changes-requested` stops (below)
 apply exactly as they always have. Because GitHub refuses to let an author
@@ -135,15 +141,17 @@ docs — builds the workspace repo like any other, under the full lifecycle. Its
 entry in the envelope's `repos`, and so in the args, is
 
 ```js
-workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval: true }
+workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
 ```
 
-- **Approval on one repo.** `requireApproval: true` on a repo's entry means
-  its PR needs an approving review before the merge stage merges **any** PR of
-  the increment. The same whole-increment sweep runs on those PRs alone, and
-  stops at `awaiting-approval` with every PR open. The other repos need no
-  approval. The run-level `requireApproval` keeps its meaning: every PR. Keep
-  it on the workspace: its changes steer every later run.
+- **No approval gate, here or on any repo.** The workspace PR merges on green
+  like every other. Its changes steer every later run, and the reviewers,
+  the adversarial verifier and the judge are what guard them. Never add
+  `requireApproval` to a repo's entry. The loop still honours one it finds:
+  that repo's PR then needs an approving review before **any** PR of the
+  increment merges, and the run stops at `awaiting-approval`. A backlog
+  written with one on its workspace entry predates this rule: take it out of
+  the envelope, run `tim backlog check`, and leave it out of the args.
 - **What never rides in a workspace commit.** The files the workspace carried
   in when the increment started and anything under `workareas/` the row does
   not name — the loop's own `backlog.json` writes, plans and logs above all.
@@ -218,16 +226,19 @@ with commits of its own is left as it is. A failure names its step and its exact
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 41 agents on Claude and 47 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 56 agents on Claude and 64 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
+   beyond three, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 24
-   increments on Claude and 21 on Codex.
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 17
+   increments on Claude and 15 on Codex. Under the branch lifecycle the run also
+   keeps room for one theme's engineering review: twice the number of repos, plus 9.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
    one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
    in [`SHAPE.md`](SHAPE.md): each row a requirement (what,
    why, acceptance), never a recipe. The loop plans the how itself, just in time,
-   into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
+   into `<workarea>/plans/<id>.md`, and reviews that plan before any code exists
+   ([The plan and its review](#the-plan-and-its-review)). A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
 4. **Check the gate covers every repo the programme builds.** Branching needs
@@ -245,6 +256,13 @@ with commits of its own is left as it is. A failure names its step and its exact
    branch-lifecycle row that owes only some phases runs those one per call. The
    implementor and fixer run its unit and FIT phases to check themselves. No
    agent picks a repo's test scripts.
+
+   Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
+   fails when a changed test file holds a block of 10 lines or more that also
+   appears elsewhere in the repo's tests, where `origin/main` has no such copy. A stage repairs it by
+   moving the set-up into the shared test helper. A branch-lifecycle branch whose
+   earlier rows copied set-up goes `baseline-red` on that rung: a person moves
+   the set-up into the helper on the branch, then launches again.
 
    **The run holds the workspace stack.** Before its first increment the loop
    takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
@@ -299,7 +317,9 @@ with commits of its own is left as it is. A failure names its step and its exact
    rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
-   it if the run is long; do not carry a stale copy in your head.
+   it if the run is long; do not carry a stale copy in your head. Read
+   `<workarea>/deferred.md` too, if it exists: the register of work the
+   programme has pushed out of its backlog ([step 3b](#3b-catch-anything-the-increments-deferred)).
 
 ## THE RUN
 
@@ -444,9 +464,10 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, specChecks, stopped}`: one entry per increment it attempted,
-each with its `outcome`, one entry per theme whose spec it checked, and one `stopped` saying
-which condition ended the run. Do not trust that report on its own.
+The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`: one entry per
+increment it attempted, each with its `outcome`, one entry per theme whose spec it checked, the
+checks left for whoever reviews a finished theme, every review finding verification refuted, and
+one `stopped` saying which condition ended the run. Do not trust that report on its own.
 
 **The Behaviour Spec.** Every row keeps `openspec/` current, whatever its repos: its plan's
 section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
@@ -458,6 +479,71 @@ scenarios under every prefix the theme touched. Report each `specChecks` entry i
 its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
 by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
 [`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
+
+<a id="the-plan-and-its-review"></a>**The plan and its review.** A plan records decisions, homes and owners, and never writes code
+text: no names for new things, no comment or doc comment text, no test titles or bodies, no log wording and no code
+bodies. Beside its decisions, moves, edits, tests, checks, out of scope and spec sync, it names a home for each new
+constant, entry, argument or helper (the existing mechanism it goes through, by file:line), one owner per rule in
+each twin, the shared test helper to extend, the docs the change makes untrue (or "None" with the grep run), a log
+for every branch that changes an outcome, its departures from written rules, what is reachable once the row lands,
+and the standards to read. Each test is stated as the behaviour it proves and the production line whose removal
+turns it red. Ids in the row become the behaviour they name. The tidy-up is bounded: a plan fixes house-rule
+breaches in the files it edits for the row and in the lines and functions it touches, never widens the row's
+footprint for clean-up alone, and lists wider clean-up in section 7 as follow-ups. A light agent greps the plan for
+code text, and a flagged plan goes back once through the same replan as a denied check. Then a plan reviewer on the
+think tier checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling
+code, and marks each finding structural (layer, owner, a second mechanism, an unstated departure, scope, test
+strategy) or detail (a line-level gap the implementor can close without changing a decision). It can send the plan
+back once. A structural finding still open on the revised plan stops the run at `plan-refused`, before any code
+exists, with those findings in the detail: read the plan and the detail, then rule on the row, rewriting it if the
+requirement is wrong, or launch again. Detail findings still open do not stop the run: a light agent writes them
+into the plan under "Plan review: must address", the implementor gets them as required work, and the consistency
+reviewer reports any left open as code-quality findings, fixed by default. The review narrows nothing later. The
+implementor follows the plan's decisions, homes and owners, owns the names and code shape, and may extend a shared
+test helper. The consistency reviewer treats a plan decision as a finding when its code cannot be explained from
+the code alone or departs from a written repo rule. Each increment's result carries `followUps`, from the plan and
+its reviewer: sweep them in step 3b like `DEFERRED:` lines. See
+[`../workflow/README.md`](../workflow/README.md#the-plan-contract).
+
+**The house rules and the probes and docs lines.** Every stage that plans, writes or judges code
+gets the house rules from `.claude/rules/code-quality.md` inline and is told to read the file in
+full. Each row also reports a `Probes:` line and a `Docs updated:` line beside its `Spec sync:`
+line, and the ladder is red when neither the implementor nor the fixer reported one. A row that
+stopped at the ladder for want of one of these lines is fixed by building it again, not by
+editing the backlog. See
+[`../workflow/README.md`](../workflow/README.md#the-house-rules).
+
+**Findings by kind, and what was refuted.** Each review finding carries a category. A functional
+finding (correctness, security, error handling, a coverage gap) is refuted by default; a
+code-quality finding (naming, comments, structure, duplication, logging, test readability,
+history) is real by default, refuted only by quoted code, and always fixed now, in each twin. A
+twin outside the row's repos becomes an open question on the row. A style re-review then reads the
+fixer's own hunks and sends any new code-quality finding back once. Nothing refuted is dropped
+silently: report the count of `refutedFindings` per increment, and when a theme finishes, its
+`reviewChecks` entry lists the findings refuted across its rows. Put those in front of the
+theme's reviewer with the other review checks. See
+[`../workflow/README.md`](../workflow/README.md#findings-by-kind).
+
+**What the reviewers look for.** The code reviewer also predicts what each name returns and changes and compares it
+with the body, looks for an outcome-changing branch support could not trace in an incident, a second copy of a rule
+or of test set-up, and a test that claims more than it proves or cannot fail. Every reviewer treats a comment, doc
+comment or recipe line in a changed file that the change makes false as in scope, fixed by deleting it. The
+consistency reviewer reads the repo's docs and `add-a-*` recipes from `tim backlog standards`, and a doc, recipe,
+JSDoc or test name outside the diff that still states the old rule is a finding, fixed by updating or deleting it. It
+also judges the implementor's notes against the code. See
+[`../workflow/README.md`](../workflow/README.md#what-the-reviewers-look-for).
+
+**The CI fixer is reviewed too.** It gets the house rules and the standards for each file it edits, and reports each
+commit it pushes. A style reviewer reads those commits and sends any code-quality finding to one style fix before the
+watcher looks again. Sweep its words in step 3b as before.
+
+**A theme's engineering review (branch lifecycle).** Once a theme's last row lands, one reviewer per repo reads the
+whole theme branch against `origin/main` for patterns and tests. Its findings go through the same verifier, judge,
+fix, re-review and ladder, and the fixes land on the branch as one commit per repo, with CI watched. It is a safety
+net behind each row's own review, never a replacement. Report each of its `reviewChecks` entries (the commit it
+landed, its refuted findings, any repo it could not review) with the theme's other review checks. The full lifecycle
+has no theme branch, so it runs no theme review. See
+[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-and-a-whole-theme-are-reviewed-too).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -494,8 +580,9 @@ finish their own work and to mark anything they genuinely left out as
 `DEFERRED: <what>` on its own line. **Sweep every increment in the returned list
 for those, and for a CI fixer's "out of scope" or "not done" wording** — a CI
 fixer works after every reviewer has finished, so what it defers is the
-least-seen work in the whole pipeline. This runs once, after the run stops,
-because the loop no longer hands you control between increments.
+least-seen work in the whole pipeline. Sweep each increment's `followUps` too: the
+wider clean-up its plan and plan reviewer kept out of the row's footprint. This runs once,
+after the run stops, because the loop no longer hands you control between increments.
 
 For each one, check it against `backlog.json`:
 
@@ -512,8 +599,31 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
   and a `notes` line saying which increment and stage it came from. Never a file list or
   commands — the loop plans those. Then run `tim backlog check <workarea>`.
 
+- **Outside the programme** — a follow-up Jira ticket, a chore in a repo the backlog
+  does not build, an action only a person can take → no row. Record it in the register
+  below instead.
+
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
+
+**Keep a register of what the programme pushes out.** `workareas/<workarea>/deferred.md`,
+beside `backlog.json`, lists everything the programme defers out of its backlog: tickets
+raised, tickets still to raise, a person's actions, and every row parked at a platform or
+access stop ([step 3d](#3d-platform-or-access-stop-park-the-row-and-relaunch)). Write the
+entry when the item is deferred, not at the end of the run. Create the file the first
+time:
+
+```markdown
+# <programme>: deferred work
+
+| What | Why | Where it lives | State |
+|---|---|---|---|
+| Give the plants backend repo a SONAR_TOKEN secret | inc-005's SonarCloud scan cannot run without it | Not raised. Owed by the repo admin | Open: inc-005 parked |
+| Update the GBN-AG schema for germinal products | Needs the other team's schema repo | EUDPA-686 | Raised |
+```
+
+Commit it with `backlog.json`, and name it in the handover. A re-distil or a theme split
+never carries this list, so without the file these items vanish.
 
 ### 3c. Archive the run and report what it cost
 
@@ -539,6 +649,13 @@ expensive and five slowest stages. Put those two top-five lists in your report t
 the user, one line each. `--json` gives the same for mining; `report --all`
 compares every archived build-loop run stage by stage.
 
+**Look for savings in the overhead, never in the plan stage.** The plan stage, its review
+included, is the most expensive stage by design: planning against the live tree is where the
+quality comes from. Never slim it, move it to a cheaper model or investigate its cost. When the
+report is used to find time or token wins, look at the work around the real work:
+start-up stages, light agents retelling output, preserve and land overhead, gate runs
+repeated for no change, and stack restarts.
+
 If the run was relaunched after a stop, archive the earlier run ids too —
 `tim build runs archive --all` sweeps every run Claude Code still holds and
 copies only what changed.
@@ -546,6 +663,78 @@ copies only what changed.
 **Not yet in the loop.** The loop does not archive itself; the session does it
 after the run stops. What the loop should change to make this data richer is
 listed under "Run telemetry" in `../workflow/README.md`.
+
+### 3d. Platform or access stop: park the row and relaunch
+
+Some stops are not a code defect but a person's fix that nothing else in the backlog
+needs. One such row must not hold up the rest of the run. Park it and keep building.
+
+The loop does not tell these apart: it stops at `ci-red` or `ladder-red` as it would for
+any red. Parking the row is yours, and relaunching is what carries the run on.
+
+**It is a platform or access stop when** the run stopped at `ci-red`, `ladder-red` or a
+stage failure, and the failure it quotes is one of:
+
+- a platform setting: an empty or missing repo secret (`SONAR_TOKEN`), an organisation
+  setting, a CDP role, GitHub Pages not enabled
+- access only a person can grant: CDP credentials, a `DEVELOPER_API_KEY`, a login needed
+  to reach CDP from this machine
+
+Read the quoted failure, not your guess. A red test, a lint finding or a Sonar issue in
+the code is a code defect: that stop is reported and waits, as below.
+
+**Then, for that row:**
+
+1. Set it aside with the access or fix it needs:
+
+   ```bash
+   tim backlog set <workarea> <id> --status deferred --note "Parked at <reason>: needs <the fix> from <who>" --json
+   ```
+
+   Its ticket, branch and PRs stay recorded, so a later run resumes it.
+2. Re-chain its dependants in `backlog.json`. A row that needs the parked row's output
+   keeps it in `dependsOn`, so it waits too. A row that names it only for ordering, which
+   is most of them, gets the parked row's own `dependsOn` in its place, so it becomes
+   buildable. Under a full theme split, make the same edit in the parent backlog, or the
+   next re-split puts the old order back.
+3. Run `tim backlog check <workarea> --json` until it passes.
+4. Add the row to `deferred.md` ([step 3b](#3b-catch-anything-the-increments-deferred)).
+5. Commit `backlog.json` and `deferred.md`, then relaunch with the same args
+   ([step 3e](#3e-relaunch-before-you-report)).
+
+The PR stays open and the ticket stays In Dev. Do not repair the platform yourself.
+
+**Stop the run only when** the next buildable row needs the parked one's output: the same
+file or the same feature. `tim backlog next` then prints NONE, and the run ends at
+`no-buildable` with the parked row named in the handover.
+
+**To resume a parked row** once the fix is in place, set it back to `todo`
+(`tim backlog set <workarea> <id> --status todo --json`), restore any `dependsOn` you
+moved, mark its `deferred.md` entry done, and launch. The start stage finds its PRs and
+puts it back at CI.
+
+Every other stop still gets the normal ending: archive, report, handover, wait.
+
+### 3e. Relaunch before you report
+
+A run that can carry on is relaunched **before** you write any summary, in the same
+turn. Ending a turn with nothing running is dead time: in an unattended run nobody
+reads the messages as they arrive, and the backlog and logs on disk are the report.
+
+Relaunch with the same args, straight after archiving, when the run stopped at:
+
+- `agent-budget`
+- a platform or access stop you have parked (step 3d)
+- `gate`, under the full lifecycle. A branch run never stops there ([STOP CONDITIONS](#stop-conditions))
+
+Then report what the stopped run did while the new one builds.
+
+**Never stop or hand over because of a count or a guess.** Do not budget increments,
+pick a smaller `stopAfter` than the user asked for, or wrap up because the session
+feels long. Keep `backlog.json`, `deferred.md` and `PROGRAMME-NOTES.md` current after
+every run, so a handover, if one is ever needed, costs nothing. The only reasons to end
+idle are: nothing buildable is left, everything left is truly blocked, or the user must
+decide something no default can stand in for.
 
 ### 4. Report one line per increment
 
@@ -576,15 +765,16 @@ handover prompt.
 | `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
 | `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
-| `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back: the detail names each one. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks |
+| `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
 | `off-branch` | A repo left the run's branch and could not be moved back |
 | `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
-| `land-failed` | The commit could not be made |
+| `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
+| `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
@@ -592,7 +782,7 @@ handover prompt.
 | `done-failed` | The merge is real but the ticket would not move to the finished status. Under the branch lifecycle: the push is real but `tim backlog set --status done` failed |
 | `row-invalid` | Branch lifecycle only. The row's `repos`, `merge` or `gatePhases` do not fit the run: a repo it does not configure, a merge into a repo the row does not build, a gate phase that does not exist |
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
-| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch |
+| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch. A theme's engineering review whose commit would not push stops here too |
 | `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
 
 **Every failure stops the whole run, not just that increment.** The loop never
@@ -600,8 +790,14 @@ skips to the next id after one goes wrong: `tim backlog next` selects on status
 and `dependsOn` alone, so a failed attempt is still the next buildable
 increment, and carrying on would either rebuild it or build on top of a failure.
 
+The loop stops; what you do next depends on the reason. A platform or access
+stop you park and relaunch ([step 3d](#3d-platform-or-access-stop-park-the-row-and-relaunch)).
+`agent-budget` and `gate` you relaunch ([step 3e](#3e-relaunch-before-you-report)).
+Every other stop you report, with the handover, and wait.
+
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
-failing.
+failing. A `ci-red` caused by a platform setting is still not yours to repair:
+park the row instead of stopping.
 
 **`gate` is honoured regardless of `requireApproval`.** A row's own `gate`
 field is a checkpoint somebody set deliberately on that specific increment —
@@ -610,7 +806,14 @@ whether the human approval gate is on or off. **Under the branch lifecycle a
 gate never stops the run**: the run is unattended and merges nothing, so the
 whole theme branch already waits for a person. The loop logs the gate's text
 and returns it in `reviewChecks` (`{ id, check }`), and carries on; put those
-checks in front of the reviewer when the theme finishes. `awaiting-approval` and
+checks in front of the reviewer when the theme finishes.
+
+**A run is unattended end to end: no gate waits for a person mid-run.** Under the
+full lifecycle the loop lands a gated row and stops. Add the gate's check to the
+handover's review checks, then relaunch with the same args. The only hold on a
+person is the finished work: under the branch lifecycle, the theme branch waiting
+to be merged. Never launch a run that expects somebody to look part-way through.
+`awaiting-approval` and
 `changes-requested`, by contrast, fire only when `requireApproval: true`, or
 when a repo of the increment sets it on its own entry.
 
@@ -816,9 +1019,12 @@ stopAfter    <a number, or all>
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).
 <N> todo remain, <M> blocked, <K> dropped.
-Owed to a human: <none, or the one thing>
+Parked: <none, or each id and the fix or access it needs>
+Owed to a human: <none, or each thing and who owes it>
+Review checks for the end of the theme: <none, or each gate's check, each theme's refuted findings, and each theme engineering review's commit and unreviewed repos>
+Refuted findings not yet reviewed: <none, or each id, file and reason from refutedFindings>
 
-Read workareas/<workarea>/PROGRAMME-NOTES.md before the first increment.
+Read workareas/<workarea>/PROGRAMME-NOTES.md and deferred.md before the first increment.
 Raise Dynamic workflow size in /config first.
 ````
 
@@ -838,10 +1044,11 @@ defect.
 `claude` runs every stage as a Claude subagent — the proven path.
 
 `codex` delegates the three token-heavy stages, **implement, review and fix**,
-to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Baseline, plan, verify
-findings, judge, ladder and land stay on Claude either way. Both executors build
-from the same plan file, so the same backlog builds under either with no edit.
-Codex mode is at most `23 + 3g` agents against `17 + 3g`, where `g` is the number of
+to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Baseline, plan, plan review, verify
+findings, judge, the style re-review of the fix, ladder, land, the CI fixer and its style review, and a theme's
+engineering review stay on Claude either way. Both executors build
+from the same reviewed plan file, so the same backlog builds under either with no edit.
+Codex mode is at most `40 + 3g` agents against `32 + 3g`, where `g` is the number of
 (repo, language) groups the changed files fall into — typically 2–6, however many
 files there are, because review and verification fan out per group, not per file.
 Both executors review at the same granularity: Codex runs one review per group plus
@@ -864,6 +1071,16 @@ leaves the tree clean and stops the run with its own reason above.
 - **You orchestrate. You do not implement.** Do not edit repo source, do not fix
   a failing test, do not apply a review finding. If an increment needs work you
   are tempted to do by hand, that is a stop condition, not an invitation.
+- **Fix the factory; never work around it.** When the loop cannot build a kind
+  of row (workspace-only changes, say), change the loop and tim so it can, as a
+  factory change on its own branch with a PR, tests and docs. Once that has
+  merged, add the row and let the loop build it. Never build a row outside the
+  loop and never mark one "built by the orchestrator".
+- **Never merge a PR yourself.** The loop merges its own green increments. A PR
+  you raised by hand, a factory change or a straggler from `pr-left-open` merges
+  only on the user's explicit go in this conversation, whatever a brief says.
+- **Never end a turn idle while the run can carry on.** Relaunch first, then
+  report ([step 3e](#3e-relaunch-before-you-report)).
 - **Do not read diffs, test logs or review argument.** They ran below a death
   boundary for a reason. Reading one to "just check something" is what fills the
   session and ends the run early.

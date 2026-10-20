@@ -119,7 +119,7 @@ describe('the workspace gates.json', () => {
     expect(new Set(e2eRuns)).toEqual(new Set(['test:docker-compose']))
   })
 
-  test('gates the workspace repo itself with tim’s format check, lint and unit tests, run in tim/', () => {
+  test('gates the workspace repo itself with tim’s format check, lint, test duplication check and unit tests, run in tim/', () => {
     const gates = loadGates(workspaceRoot)
 
     const rungs = gates.repos['trade-imports-workspace'].rungs.map(
@@ -129,8 +129,27 @@ describe('the workspace gates.json', () => {
     expect(rungs).toEqual([
       { name: 'format', phase: 'unit', run: 'format:check', cwd: 'tim' },
       { name: 'lint', phase: 'unit', run: 'lint', cwd: 'tim' },
+      {
+        name: 'duplication',
+        phase: 'unit',
+        run: 'tim build duplication',
+        cwd: 'tim'
+      },
       { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' }
     ])
+  })
+
+  test('checks test duplication in every repo the gate builds', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const withoutDuplication = Object.entries(gates.repos)
+      .filter(
+        ([, { rungs }]) =>
+          !rungs.some(({ run }) => run === 'tim build duplication')
+      )
+      .map(([folder]) => folder)
+
+    expect(withoutDuplication).toEqual([])
   })
 
   test('runs both end-to-end suites when a backlog builds the workspace, whose stack they run against', () => {
@@ -272,6 +291,38 @@ describe('parseGates', () => {
     )
 
     expect(problems.message).toContain('is not an npm script name')
+  })
+
+  test('accepts the tim build duplication rung in the unit phase', () => {
+    const problems = problemsOf(
+      gatesWith({
+        backend: {
+          rungs: [unitRung('duplication', 'tim build duplication')]
+        }
+      })
+    )
+
+    expect(problems).toBeNull()
+  })
+
+  test('refuses the tim build duplication rung outside the unit phase', () => {
+    const problems = problemsOf(
+      gatesWith({
+        frontend: {
+          rungs: [
+            {
+              name: 'duplication',
+              phase: 'fit',
+              run: 'tim build duplication'
+            }
+          ]
+        }
+      })
+    )
+
+    expect(problems.message).toContain(
+      'rung "duplication": "tim build duplication" runs in the unit phase.'
+    )
   })
 
   test.each(['/tim', '../tim', '.'])(

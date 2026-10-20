@@ -11,6 +11,8 @@ mvn test            # unit tests only
 mvn verify -DskipTests=true  # skip all tests
 ```
 
+`mvn test` runs no `*IT` class. A green `mvn test` leaves owner scoping, status transitions, Mongo queries and every other IT unverified. Check a backend change with `mvn verify`, with Docker running for Testcontainers.
+
 ---
 
 ## File naming convention
@@ -103,10 +105,8 @@ class MyFeatureIT extends IntegrationBase {
 
     @Test
     void post_shouldCreateRecord() {
-        // Given
         MyDto dto = new MyDto("value");
 
-        // When / Then
         webClient("NoAuth")
             .post()
             .uri("/my-endpoint")
@@ -131,14 +131,17 @@ Examples:
 post_shouldCreateNewNotification
 delete_shouldReturn401_whenAdminSecretHeaderIsMissing
 findAll_shouldReturnEmptyList_whenNoNotifications
-fullCrudFlow_shouldWorkEndToEnd
 ```
 
-Use the HTTP method or operation as the subject prefix (`post_`, `delete_`, `findAll_`). For multi-step scenarios use a descriptive name (`fullCrudFlow_`).
+Use the HTTP method or operation as the subject prefix (`post_`, `delete_`, `findAll_`).
 
-### Given / When / Then
+The rules in [`unit.md` → Test titles and layout](unit.md#test-titles-and-layout) apply to ITs too:
 
-All tests use explicit `// Given`, `// When`, `// Then` comments. For short tests the When and Then can be combined via the fluent chain, but the comment blocks must still be present.
+- The title states what the assertions prove, and nothing more.
+- The test fails without the change it covers.
+- No `// Given`, `// When`, `// Then` comments. Separate set-up, action and assertions with blank lines, and move long set-up into a named helper.
+- One behaviour per test. A create-update-delete flow is three tests, each setting up its own state, not one `fullCrudFlow_shouldWorkEndToEnd`.
+- Set-up used by two IT classes goes in `IntegrationBase` or a shared helper, and the local copies are deleted.
 
 ---
 
@@ -300,6 +303,10 @@ assertThat(duration)
 ## Coverage
 
 JaCoCo enforces **65% line coverage** at the `verify` phase. Build fails if coverage drops below this threshold. No exclusions are configured — all production code counts.
+
+When the gate or SonarCloud reports a coverage gap, check the build config before writing a test. A JaCoCo `report` goal bound to `test` instead of `verify` leaves the `*IT` coverage out of the XML that SonarCloud reads, and looks like missing tests.
+
+No coverage-padding tests. Every assertion pins the behaviour the test name claims: if someone broke the thing in the name (the truncation, the fallback, the refusal), an assertion must fail. Bad: `shouldTruncateLongErrorBodyInLog` that only checks the exception type. Good: the same test asserts the logged body's length. A defensive line with no realistic route to it can stay uncovered.
 
 ---
 

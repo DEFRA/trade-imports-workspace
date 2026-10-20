@@ -1,6 +1,11 @@
 import { createGithubClient } from '../../clients/github-client.js'
 import { resolveGithubToken } from '../auth.js'
 import { makeClientAction } from '../_client-action.js'
+import { register as registerCreatePr } from './create-pr.js'
+import { register as registerChecks } from './checks.js'
+import { register as registerRunLog } from './run-log.js'
+import { register as registerRerun } from './rerun.js'
+import { register as registerMerge } from './merge.js'
 
 const buildGithubClient = async () =>
   createGithubClient({ token: await resolveGithubToken() })
@@ -29,7 +34,11 @@ export const renderPr = (pr) =>
 export const renderDiff = (diff) => diff
 
 export const register = (program, { timVersion }) => {
-  const gh = program.command('github').description('Read GitHub PRs and diffs')
+  const gh = program
+    .command('github')
+    .description(
+      'Open and merge GitHub PRs, read PRs, diffs, checks and run logs, and run jobs again'
+    )
 
   gh.command('prs <ticketId>')
     .description('List PRs across the DEFRA org tagged with the ticket id')
@@ -63,4 +72,10 @@ export const register = (program, { timVersion }) => {
         timVersion
       })
     )
+
+  registerCreatePr(gh, { timVersion })
+  registerChecks(gh, { timVersion })
+  registerRunLog(gh, { timVersion })
+  registerRerun(gh, { timVersion })
+  registerMerge(gh, { timVersion })
 }

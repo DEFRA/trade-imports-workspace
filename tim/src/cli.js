@@ -23,6 +23,7 @@ import { register as registerJira } from './commands/jira/index.js'
 import { register as registerGithub } from './commands/github/index.js'
 import { register as registerConfluence } from './commands/confluence/index.js'
 import { register as registerGha } from './commands/gha/index.js'
+import { register as registerSonar } from './commands/sonar/index.js'
 import { register as registerBacklog } from './commands/backlog/index.js'
 import { register as registerDistil } from './commands/distil/index.js'
 import { register as registerBuild } from './commands/build/index.js'
@@ -158,6 +159,7 @@ export const buildProgram = () => {
   registerGithub(program, { timVersion: pkg.version })
   registerConfluence(program, { timVersion: pkg.version })
   registerGha(program, { timVersion: pkg.version })
+  registerSonar(program, { timVersion: pkg.version })
   registerBacklog(program, { timVersion: pkg.version })
   registerDistil(program, { timVersion: pkg.version })
   registerBuild(program, { timVersion: pkg.version })

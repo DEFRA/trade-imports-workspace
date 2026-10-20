@@ -86,3 +86,21 @@ livestock, animal welfare, journey logs) or links to an animal-only page. List
 each one in the port's report and ask the designer one question: keep it,
 reword it for plants, or leave it out. Until they answer, port it as it is
 and log it in the fidelity table as "words from the animals journey".
+
+## 5. Running the old prototype to see a page
+
+Only when the source and a screenshot are not enough. In the clone:
+
+- Start it with the clone's `dev` script, never its `serve` or `start`
+  script. Those run in production mode, which redirects to https and sets secure-only cookies,
+  so the page fails on plain `http://localhost` and answers are not kept.
+- Create `usage-data-config.json` before the first start, or the Kit waits for
+  an answer to its usage-data question and never finishes starting.
+- The MCP browser switches `localhost` to https, so it cannot open the Kit.
+  Drive it with a Playwright script run by `@playwright/test`, which uses its
+  own browser. Wait for the port to accept connections, not for an HTTP
+  answer.
+- Run one browser at a time (`workers: 1`). The Kit's dev server mixes up
+  answers between parallel sessions and drops a page's data without an error.
+- The MOJ date picker stays open after you fill the date. Press Escape before
+  the next field, or its calendar covers it.

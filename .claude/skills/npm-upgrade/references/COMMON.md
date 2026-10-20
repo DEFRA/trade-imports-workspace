@@ -68,7 +68,7 @@ streaming log tail).
 | Type | Cause | Action |
 |------|-------|--------|
 | Connectivity | VPN/Artifactory down | Stop, report to user |
-| Baseline failure | Repo tests already broken | Stop, report — not an upgrade issue |
+| Baseline failure | Repo tests red before the upgrade | Stop this package and return `BASELINE RED`. The session fixes the tests on the branch in their own commit, re-runs to green, then starts the package again. Never skip it as someone else's problem |
 | Install failure | Peer conflict etc. | Auto-demote: classification → manual, `demoted_from_auto: true`, failure_reason populated |
 | Test failure after upgrade | Breaking change | Rollback, auto-demote (same as above) |
 | Cascade failure | Rollback itself fails | Stop immediately, report — repo is in an inconsistent state |

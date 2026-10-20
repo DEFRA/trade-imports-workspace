@@ -228,28 +228,44 @@ handler: async (request, h) => {
 
 ## 4. Lifecycle hooks
 
-**`onPreResponse`** — catch-all error handler, runs for every response including errors:
+**`onPreResponse`** — the catch-all error handler. It runs for every response, including errors.
+
+The catch-all logs a server error once, as `{ err, statusCode }`, at `error`. It does not log a 4xx: hapi-pino's request-complete line already carries the status, and a refusal is logged with its ids where the handler decided it (see `pino-logging.md` §4a).
 
 ```js
 server.ext('onPreResponse', (request, h) => {
   const { response } = request
 
-  // Pass through successful responses
   if (!response.isBoom) {
     return h.continue
   }
 
   const statusCode = response.output.statusCode
-  request.logger.error({ err: response, statusCode }, 'Request error')
 
-  if (statusCode === 404) {
-    return h.view('errors/404').code(404)
+  if (statusCode >= statusCodes.internalServerError) {
+    request.logger.error({ err: response, statusCode }, 'Request failed')
   }
-  if (statusCode === 403) {
-    return h.view('errors/403').code(403)
-  }
-  return h.view('errors/500').code(statusCode >= 500 ? statusCode : 500)
+
+  return h.view('shared/error', errorPageContext(request, statusCode)).code(statusCode)
 })
+```
+
+Bad (`src/server/common/helpers/errors.js` in the animals frontend): two lines for one failure, the first a bare stack string with no status, the second a message built from the cause.
+
+```js
+request.logger.error(response?.stack)
+const cause = response.data?.cause
+if (cause) {
+  request.logger.error({ err: cause }, `Caused by: ${cause.message}`)
+}
+```
+
+Carry the cause on the error, not in `data`. Wrap the lower error with `{ cause }` before turning it into a Boom, and the `err` serialiser prints the whole chain in the one line:
+
+```js
+} catch (err) {
+  throw Boom.boomify(new Error('Could not save notification', { cause: err }))
+}
 ```
 
 Other extension points:
@@ -543,33 +559,43 @@ The same rule applies to query string values (`?ref=${encodeURIComponent(ref)}`)
 
 ### Error logging shape for fetch clients
 
-When a fetch client throws on a non-OK response, the log line must include the status code. A bare error message string is not enough to triage in production — `Failed to submit notification` could be a 4xx (client bug) or a 5xx (backend down), and the response decision differs.
+When a fetch client throws on a non-OK response, the error must carry the status code. `Failed to submit notification` could be a 4xx (our bug) or a 5xx (backend down), and the response differs.
 
-```js
-// Wrong — status invisible in the log line
-} catch (error) {
-  logger.error(`Failed to fetch document: ${error.message}`)
-  throw error
-}
-
-// Correct — status surfaced
-} catch (error) {
-  logger.error(`Failed to fetch document: ${error.status} ${error.message}`)
-  throw error
-}
-```
-
-When constructing the error itself, attach `status` and `statusText` so callers and tests can match on them:
+Attach `status` and `statusText` to the error, so callers, the catch-all and tests can match on them:
 
 ```js
 if (!response.ok) {
   const error = new Error(`Failed to fetch document: ${response.status} ${response.statusText}`)
   error.status = response.status
   error.statusText = response.statusText
-  logger.error(error.message)
   throw error
 }
 ```
+
+Log the error once, where the outcome is decided, as `{ err }` with the ids. Do not log it in the client and again in the caller.
+
+```js
+// Bad: a string, so the stack, type and cause are lost, and no id
+} catch (error) {
+  logger.error(`Failed to fetch document: ${error.status} ${error.message}`)
+  throw error
+}
+
+// Good
+} catch (err) {
+  request.logger.error({ err, status: err.status, referenceNumber, uploadId }, 'Failed to fetch document')
+  return h.redirect(documentsPath(referenceNumber))
+}
+```
+
+### File uploads to cdp-uploader without JavaScript
+
+A page that uploads a file must work with JavaScript turned off. The exemplar CDP points to is `DEFRA/fcp-sfd-portal-stub`.
+
+- **Same-origin upload.** A reverse proxy on the frontend's own domain routes `/upload-and-scan/` to cdp-uploader. The browser posts the form straight to it, and cdp-uploader's relative `302` comes back to the frontend. No `fetch` or `redirect: 'manual'` is needed. In the exemplar: `nginx/nginx.conf` (`proxy_pass` for `/upload-and-scan/`, `client_max_body_size 100M`).
+- **Initiate on the server.** The route calls cdp-uploader's initiate endpoint and sets the form's `uploadUrl` to the frontend's own domain. In the exemplar: `src/routes/document-upload.js`.
+- **Poll status without JavaScript.** A processing page refreshes itself with `<meta http-equiv="refresh">` and a check-status route until the scan finishes. In the exemplar: `src/views/document-upload/processing.njk`.
+- **Size limit.** CDP's managed nginx adds a `location /upload-and-scan` to every service, with `client_max_body_size 2304M` (about 2.25 GB), proxied straight to cdp-uploader. So `browser → your-service/upload-and-scan` is not held to the roughly 10 MB limit on normal routes, and needs no platform request. Source: `DEFRA/cdp-nginx-upstreams`, `src/templates/server.conf.tpl`.
 
 ---
 
@@ -614,108 +640,9 @@ options: {
 
 ## 10. `server.inject()` for testing
 
-```js
-// src/server/common/test-helpers/mock-auth-config.js
-export const mockAuthConfig = async (importOriginal) => {
-  const original = await importOriginal()
-  return {
-    ...original,
-    config: {
-      ...original.config,
-      get: (key) => mockValues[key] ?? original.config.get(key)
-    }
-  }
-}
-```
+Use `server.inject()` for plugins, auth, routing and error pages. Call `server.initialize()`, not `server.start()`, so no port is bound, and stop with `server.stop({ timeout: 0 })` so the test does not hang.
 
-```js
-// origin.test.js
-import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest'
-import { createServer } from '../../server.js'
-import { notificationClient } from '../common/clients/notification-client.js'
-import { statusCodes } from '../common/constants/status-codes.js'
-
-// Mock OIDC and config — required for every controller test
-vi.mock('../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
-
-vi.mock('../../config/config.js', async (importOriginal) => {
-  const { mockAuthConfig } = await import('../common/test-helpers/mock-auth-config.js')
-  return mockAuthConfig(importOriginal)
-})
-
-describe('#originController', () => {
-  let server
-
-  beforeAll(async () => {
-    vi.spyOn(notificationClient, 'get').mockResolvedValue(null)
-    vi.spyOn(notificationClient, 'submit').mockResolvedValue({ referenceNumber: 'TEST-REF' })
-
-    server = await createServer()
-    await server.initialize()  // initialize, not start (no port binding)
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })  // timeout: 0 prevents hanging
-    vi.restoreAllMocks()
-  })
-
-  test('GET /origin should render the page', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/origin',
-      auth: {
-        strategy: 'session',
-        credentials: { user: {}, sessionId: 'TEST_SESSION_ID' }
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(expect.stringContaining('Origin of the import'))
-  })
-
-  test('POST /origin should redirect on valid input', async () => {
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: '/origin',
-      auth: { strategy: 'session', credentials: { user: {}, sessionId: 'TEST_SESSION_ID' } },
-      payload: { countryCode: 'DE', requiresRegionCode: 'no' }
-    })
-
-    expect(statusCode).toBe(302)
-    expect(headers.location).toBe('/commodities')
-  })
-
-  test('POST /origin should re-render with errors on invalid input', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'POST',
-      url: '/origin',
-      auth: { strategy: 'session', credentials: { user: {} } },
-      payload: {}  // empty — should fail validation
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(expect.stringContaining('Select a country'))
-  })
-
-  test('POST /origin should handle backend failure', async () => {
-    notificationClient.submit.mockRejectedValueOnce(
-      Object.assign(new Error('Backend error'), { status: 500 })
-    )
-
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: '/origin',
-      auth: { strategy: 'session', credentials: { user: {} } },
-      payload: { countryCode: 'DE', requiresRegionCode: 'no' }
-    })
-
-    expect(statusCode).toBe(302)
-    expect(headers.location).toBe('/error')
-  })
-})
-```
+Feature handlers are tested with `driveHandler` against the stub adapters, and backend clients with a fetch mock at the network boundary. Do not spy on a client from a controller test. See `testing/frontend.md` §2, §3 and §6.
 
 ---
 

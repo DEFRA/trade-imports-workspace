@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "required": ["ok", "summary", "changedFiles", "notes", "treesBeforeFix"],
+  "properties": {
+    "ok": {
+      "type": "boolean",
+      "description": "true only if every ruled fix was applied and staged"
+    },
+    "summary": {
+      "type": "string",
+      "description": "What you did, in a few sentences"
+    },
+    "changedFiles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Every file you created or edited, each written <repoKey>:<repo-relative path>, the key one of the configured repos bound to <repos> (or workspace), e.g. frontend:src/server/app/index.js"
+    },
+    "notes": {
+      "type": "string",
+      "description": "For each ruled fix, whether it was applied, and any diagnosis of a red suite"
+    },
+    "treesBeforeFix": {
+      "type": "array",
+      "description": "One entry per repo you edited: the hash git write-tree printed there before your first edit. Empty when the prompt does not ask you to record them",
+      "items": {
+        "type": "object",
+        "required": ["repo", "tree"],
+        "properties": {
+          "repo": { "type": "string", "description": "The repo key, one of the keys in <repos> (or workspace)" },
+          "tree": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

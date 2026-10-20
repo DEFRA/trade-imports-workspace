@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
-import { makeJiraAction } from './shared.js'
+import { makeRunAction } from '../_run-action.js'
 
 const optionsSchema = z.object({
   project: z.string().trim().min(1).optional()
@@ -60,7 +60,7 @@ export const register = (jira, { timVersion }) => {
     )
     .addHelpText('after', '\nExample: tim jira epics --project EUDPA --json')
     .action(
-      makeJiraAction({
+      makeRunAction({
         parseOptions: parseEpicsOptions,
         run: (_context, parsed) => runEpics(parsed),
         renderText: renderEpics,

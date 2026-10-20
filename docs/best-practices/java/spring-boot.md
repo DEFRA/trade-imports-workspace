@@ -776,6 +776,69 @@ Log levels:
 - `WARN` — unexpected but handled
 - `ERROR` — operation failed, needs attention
 
+### What to log
+
+Support reads these logs to answer "what happened to this notification, this user, this call?". Write every log line for that reader.
+
+**Every branch that changes an outcome logs once, with the ids support searches by.** An outcome-changing branch is a refusal, a redirect, a retry, a fallback, a state switch, or a caught exception that the code carries on past. Log it once, where the decision is made, with the reference number, notification id, user id, port code, dependency and operation, or whichever of these are in scope. For each new `catch`, retry or fallback, ask: which log line tells support this happened, and which ids does it carry? If the answer is "none", add one. A silent retry or fallback is a defect.
+
+**Log where the ids are.** If the place that spots the problem does not hold the id, return the result and log in the caller that does.
+
+Bad, from `PortType` in `trade-imports-reference-data`. The enum warns, but it only holds the traffic value, so support cannot tell which port is affected:
+
+```java
+if (type.isEmpty() && REPORTED_UNKNOWN_TRAFFIC.add(stripped)) {
+  log.warn("MDM port traffic '{}' is not a known port type; its ports are listed last with no type", stripped);
+}
+```
+
+Good: `PortType.fromTraffic` returns `Optional.empty()` and does not log. `PortOfEntry(MdmPortOfEntry)`, which holds the port code, logs:
+
+```java
+this.type = PortType.fromTraffic(mdm.getTraffic()).orElse(null);
+if (type == null) {
+  log.warn("Port {} has MDM traffic '{}', which is not a known port type", code, mdm.getTraffic());
+}
+```
+
+**Pass the throwable, never only its message.** Give the exception as the last argument, with no `{}` for it. SLF4J then prints the type, the message, the stack trace and the cause chain. `e.getMessage()` alone drops the type and the cause, and is often null.
+
+Bad, from `ExternalCallMetrics` in `trade-imports-reference-data` and `trade-imports-dynamics-gateway`:
+
+```java
+} catch (RuntimeException e) {
+  log.warn("Could not record external call {}/{}: {}", call.dependency(), call.operation(), e.getMessage());
+}
+```
+
+Good:
+
+```java
+} catch (RuntimeException e) {
+  log.warn("Could not record external call {}/{}", call.dependency(), call.operation(), e);
+}
+```
+
+**A failure line says why it failed.** `ExternalCallMetrics.measure` catches the exception, records the call as failed and rethrows. The log line it writes reads `External call <dependency>/<operation> failure in 5 ms`, with no cause and no status. Support sees a failure and cannot tell a timeout from a refusal. Carry the HTTP status, or the exception type when there is no status, into the failure line. If the exception is rethrown and logged in full where it is handled, do not log its stack trace here as well.
+
+**No request or response bodies at INFO.** Bodies hold personal data (names, addresses) and can be large. Log the status and what the code did with the answer, such as a result count. If a body is the only way to tell two failures apart, log a bounded excerpt at WARN on the failure path only.
+
+Bad, from `AddressLookupClient` in `trade-imports-ins-backend`. Every successful lookup writes the full address list to the log:
+
+```java
+log.info("Address lookup answered: status={} body={}", response.getStatusCode().value(), responseBody);
+```
+
+Good:
+
+```java
+log.info("Address lookup answered: status={}", response.getStatusCode().value());
+```
+
+`logRefusal` in the same class is the acceptable case: a refusal, at WARN, with the body cut to `MAX_LOGGED_BODY_LENGTH`.
+
+**Do not test diagnostic log lines.** A test that pins a spike or debugging log line keeps it alive after the spike ends. Test the outcome; if a log line is part of the contract (an audit event, an ECS field), test that in an IT such as `EcsLoggingIT`.
+
 `logback-spring.xml` — switch format by Spring profile:
 
 ```xml

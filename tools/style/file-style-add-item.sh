@@ -2,8 +2,10 @@
 # Append a todo to a per-file style review JSON. Auto-assigns next id.
 # Usage:
 #   file-style-add-item.sh ID --repo R --file F \
-#       --line L --rule R --severity S \
+#       --line L --rule R --category C --severity S \
 #       --issue "..." --fix "..." [--best-practice PATH]
+#
+# C is one of CODE_QUALITY_CATEGORIES in ../review/finding-categories.sh.
 #
 # ID is the ticket (EUDPA-X) or, in local mode, the composite
 # local/<repo>/<branch> id — any non-flag first argument is accepted.
@@ -12,7 +14,10 @@
 
 set -e
 
-TICKET=""; REPO=""; FILE=""; LINE=""; RULE=""; SEVERITY=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../review/finding-categories.sh"
+
+TICKET=""; REPO=""; FILE=""; LINE=""; RULE=""; CATEGORY=""; SEVERITY=""
 ISSUE=""; FIX=""; BEST_PRACTICE=""
 
 while [[ $# -gt 0 ]]; do
@@ -21,6 +26,7 @@ while [[ $# -gt 0 ]]; do
         --file) FILE="$2"; shift 2 ;;
         --line) LINE="$2"; shift 2 ;;
         --rule) RULE="$2"; shift 2 ;;
+        --category) CATEGORY="$2"; shift 2 ;;
         --severity) SEVERITY="$2"; shift 2 ;;
         --issue) ISSUE="$2"; shift 2 ;;
         --fix) FIX="$2"; shift 2 ;;
@@ -30,7 +36,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-for v in TICKET REPO FILE RULE SEVERITY ISSUE FIX; do
+for v in TICKET REPO FILE RULE CATEGORY SEVERITY ISSUE FIX; do
     [[ -z "${!v}" ]] && { echo "Missing $v" >&2; exit 1; }
 done
 
@@ -38,6 +44,8 @@ case "$SEVERITY" in
     FAIL|WARN) ;;
     *) echo "Invalid severity: $SEVERITY (must be FAIL|WARN)" >&2; exit 1 ;;
 esac
+
+refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}"
 
 encoded="${FILE//\//_}"
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/file-reviews/$REPO/$encoded.style.json"
@@ -49,6 +57,7 @@ jq \
     --argjson id "$next_id" \
     --arg line "$LINE" \
     --arg rule "$RULE" \
+    --arg category "$CATEGORY" \
     --arg severity "$SEVERITY" \
     --arg issue "$ISSUE" \
     --arg fix "$FIX" \
@@ -57,6 +66,7 @@ jq \
         id: $id,
         line: $line,
         rule: $rule,
+        category: $category,
         severity: $severity,
         issue: $issue,
         fix: $fix

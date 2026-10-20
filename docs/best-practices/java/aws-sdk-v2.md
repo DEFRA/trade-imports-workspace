@@ -528,14 +528,12 @@ class S3StorageServiceTest {
 
     @Test
     void upload_shouldCallPutObject() {
-        // Given
         when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
                 .thenReturn(PutObjectResponse.builder().build());
 
-        // When
-        storageService.upload("key/file.json", "content".getBytes(), "application/json");
+        storageService.upload(
+                "key/file.json", "content".getBytes(StandardCharsets.UTF_8), "application/json");
 
-        // Then
         var captor = ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(s3Client).putObject(captor.capture(), any(RequestBody.class));
         assertThat(captor.getValue().key()).isEqualTo("key/file.json");

@@ -90,6 +90,8 @@ defined in [`sources.schema.json`](sources.schema.json):
   rule for drawing theme boundaries, in the user's words or as "Group increments by the code each touches, so themes
   build in parallel without conflicting pull requests." The consolidator then gives every row a theme. Leave it out
   otherwise: a backlog without themes builds as one.
+- **Another programme's work goes in as a source, never as a goal.** Its backlog, branch or report can be read for
+  what it found. The goal never includes copying its records, translating its backlog or patching its tools.
 - `scope` narrows a large source. Distil a slice of a big source well rather than all of it thinly.
 - **Fetch each Confluence page** with
   `tim confluence page <id> --json > workareas/<workarea>/sources/<page-id>.json`, and make that file the
@@ -301,6 +303,18 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
   ruling and returns the contradiction in `goalConflicts`. The main session corrects the goal.
 - **Every adopted requirement carries a delta**: `new`, `change` (with how today differs) or `exists` (with what
   meets it). An `exists` requirement goes in the report, never in a `todo` increment.
+- **A statement and a criterion state the end state.** Old text appears only in a requirement's `deltaNote`. No
+  criterion says "no '<removed copy>'": it says what is shown. No requirement, conflict, row or ruling id and no
+  session word ("the real service", a release name) is written into a statement, title, detail or criterion; ids
+  stop at the plan. A change to how a value is formatted names every page that shows the value. Page chrome (title,
+  header, banners, footer) is built once, in the row or theme that owns the layout. The briefs give bad and good
+  examples.
+- **A design prototype decides look and feel only**: content, wording, layout, components and question order. It
+  never decides architecture, how sets or journeys split, URL paths, the data model or where code lives. A row whose
+  only point is to match a prototype's URLs or structure is not drafted.
+- **Earlier work is a source, never something to absorb.** A new programme reads other programmes' backlogs,
+  branches and fixes as sources. It never backports, migrates or merges them in, and never patches tools that
+  in-flight work still uses.
 - **Every adopted `new` or `change` requirement sits in exactly one increment** that is built or still to build:
   `todo`, `blocked`, `done` or `deferred`. A `dropped`, `rejected` or `merged-into` row covers nothing.
   `tim distil coverage` checks this once `backlog.json` exists.
@@ -349,6 +363,13 @@ Then read two fields the report leaves out:
 Take each question in the report to the user, with its default. Record every answer as a ruling, including "keep
 the default". A question with no ruling stays open on the next launch.
 
+**Only an answer is a ruling.** When the user floats an idea as a question ("maybe the run should start on X?"),
+answer it with your analysis and a recommendation, and leave the report question open. Never write it up as
+"RULED (<who>)", and never credit them with a trade-off they have not seen. Where you build on it anyway, the row's
+`openQuestions` quotes their words and marks the decision OUTSTANDING. Anything touching security, access control or
+data integrity is put to them, and answered, before it lands. Meeting notes work the same way: only what the notes
+record as decided is a decision, and one person's suggestion is an open point.
+
 1. Write the ruling up as `workareas/<workarea>/sources/ruling-<who>-<date>.md`, where `<date>` is like
    `2026-09-29`. Add a letter (`2026-09-29b`) for a second ruling that day:
 
@@ -374,6 +395,18 @@ the default". A question with no ruling stays open on the next launch.
    ```
 
 3. Launch again with the same args.
+4. **When the ruling reverses an earlier decision, sweep every artefact yourself.** The workflow's agents edit
+   what they are told is affected and under-scope it; their success report is not proof. Grep for the old model's
+   words across `distil/requirements.json`, `backlog.json`, every split backlog under `themes/`,
+   `PROGRAMME-NOTES.md`, `deferred.md` and any `plans/` the build has written. Phrasings that record the reversal,
+   and statements true after it, are correct: list them first, so nobody "fixes" them. Justify every other match
+   that remains, one by one. A stale row goes back through a re-distil, never a hand edit.
+
+**Record what the programme pushes out.** When a ruling or the report defers work out of the backlog (a follow-up
+ticket, a chore in a repo the programme does not build, an action that is the owner's), add it to
+`workareas/<workarea>/deferred.md` at once: what, why, where it lives (ticket key or "not raised") and its state. The
+combiner's decisions name such items. [`BUILD.md`](BUILD.md#3b-catch-anything-the-increments-deferred) has the
+file's shape.
 
 A new source goes in the same way: fetch or copy it as in intake, add it to `sources` and `precedence`, and launch.
 A narrower or wider `scope` changes the source's scope hash, so the next launch extracts it again. Nothing needs to

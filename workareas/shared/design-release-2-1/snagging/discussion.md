@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (2), **blocked** (4) or **ready to build** (35). On 20 October Sam settled twelve (see [Settled](#settled)), blocked three, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (0), **blocked** (4) or **ready to build** (37). Nothing is left to discuss. On 20 October Sam settled fourteen (see [Settled](#settled)), blocked three, split one out into a spike (see [Blocked](#blocked)) and moved one to the address book theme. S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -14,9 +14,7 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 | Item | Page | Decision |
 |---|---|---|
-| Q2 | Back while creating | Back goes to the previous page and the run carries on, as the prototype does. Did the tester press Back first? |
 | Q4 | A task saved with nothing in it | Blocked, waiting for the designers: 'Complete', 'Not needed', or stay 'To do'? |
-| Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
 
 The designer questions in detail are below. S08 and S25 are now blocked, and their sections are kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
@@ -94,6 +92,8 @@ Sam's rulings on 20 October. Each item is now ready to build.
 - **Country questions on Main import reason (S10):** keep the type-ahead, with the same styling as the origin and port searches, at the narrower width drawn inside the revealed panel.
 - **Origin code prefix (S04):** the prefix shows with JavaScript only, filling in as soon as a country is picked. Without JavaScript there's no prefix, and the code is still stored with its country.
 - **Transporter search (S26):** same type-ahead as the other searches, with the blue icon. The submit box stays as the version without JavaScript. The list is already on the page, so the filter needs no new service.
+- **Back while creating a notification (Q2):** no change to the plan. Back goes to the previous page and the run carries on, built in design snagging. The question to the tester is dropped, since it would not change what we build.
+- **Back from a submitted notification (Q5):** a bug. Back goes to the dashboard, in animals and plants, which has the same bug. Built in design snagging, moved in from the overview theme's view header row. An amendment in progress and a draft's review keep Overview.
 - **Review page errors (S35):** Sam: "it's the weird red line to the right of fields that appears on the real app, and shouldn't." It is the S34 red bar in unanswered cells, beside the question on desktop and under it on a phone. It goes in the 'no red bars' row; the card's red border and 'Complete …' line stay.
 - **Address selection pages (S36):** moved to the address book theme ("not for this list, will be covered as needed on the address book theme"). It is no longer in design snagging.
 - **CPH number (S37):** three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go. The boxes stop cutting typing short, and the server splits a whole number in the first box, so it works without JavaScript. The designers' prototype still moves the cursor, and should drop the jump so it matches.

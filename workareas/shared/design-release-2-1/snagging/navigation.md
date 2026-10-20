@@ -258,7 +258,9 @@ flowchart TD
 
 ## When you view a submitted notification
 
-View opens the read-only notification, with Copy as new and Delete. Its Back link opens Overview on `main`; the spec and the prototype say the dashboard.
+View opens the read-only notification, with Copy as new and Delete. Its Back link opens Overview on `main`, in animals and plants. Design snagging makes it open the dashboard, as the spec and the prototype say (Sam, 20 Oct: a bug). Not built yet.
+
+On main today:
 
 ```mermaid
 flowchart TD
@@ -270,10 +272,29 @@ flowchart TD
   class OV differs
 ```
 
+Planned in design snagging, as the prototype and spec say:
+
+```mermaid
+flowchart TD
+  A["Dashboard"] -->|"View"| V["Submitted view"]
+  V -.->|"Back"| A2["Dashboard"]
+```
+
+Other uses of the same page, planned:
+
+```mermaid
+flowchart TD
+  C["View after a cancelled amendment"] -.->|"Back"| A["Dashboard"]
+  R["Review of an amendment in progress"] -.->|"Back"| OV["Overview, no change"]
+  D["Review of a draft"] -.->|"Back"| OV2["Overview, no change here"]
+```
+
 | Step | What happens | Status | Code |
 |---|---|---|---|
 | View on the dashboard | Opens the review page, read only | On main | `dashboard/view-model/row/actions.js:30-33` |
-| Back | Overview. The spec (REQ-CYA-003-B) and the prototype say the dashboard, and no row plans the change | Differs | `check-answers/controller.js:134` |
+| Back today | Overview, in animals and plants. The spec (REQ-CYA-003-B) and the prototype say the dashboard | Differs | `check-answers/controller.js:134`; plants `check-answers/controller.js:95` |
+| Back, as planned | The dashboard, for a submitted notification and for the view after a cancelled amendment | Planned: design snagging | design snagging, "Back from a submitted notification's view goes to the notification list" |
+| Back from an amendment or a draft's review | Stays Overview in that row. A draft's review going to the list is planned in the templates theme | On main | `check-answers/controller.js:134` |
 | Amend | Not offered on this page; the prototype offers it here | Prototype | prototype `app/routes.js:6497` |
 
 ## When you amend a submitted notification
@@ -443,7 +464,7 @@ flowchart RL
 
 | Difference | Where it sits |
 |---|---|
-| A submitted notification's view has Back to Overview; the spec (REQ-CYA-003-B) and the prototype say the dashboard | No row plans it |
+| A submitted notification's view has Back to Overview; the spec (REQ-CYA-003-B) and the prototype say the dashboard | Planned: design snagging, since 20 Oct (moved in from the overview theme's view header row) |
 | A draft's review has Back to Overview; the spec says the notification list | The draft review row in the templates theme |
 | Contact address Back goes to Overview; the prototype goes to Roles and addresses | The spec keeps Overview, so not a defect |
 | Identification details Back goes to Overview; the prototype goes to Commodity details | The spec keeps Overview, so not a defect |

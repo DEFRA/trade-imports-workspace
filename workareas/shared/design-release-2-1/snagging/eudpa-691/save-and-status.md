@@ -112,9 +112,14 @@ Plants differs: it already shows an "Optional" status with no tag (plants `hub/c
 
 ## Questions for the designers or BAs, ready to post
 
-1. **Back during a new notification.** In the Design Release 2.1 prototype, Back on a page in the guided sequence goes to the previous page, and Save and continue keeps going through the sequence. In the test environment today, Back goes to Overview, and after that each page returns to Overview. We plan to match the prototype. Can you confirm the tester had used Back, or opened the notification from the dashboard, before Save and continue started returning to Overview?
-2. **Save and continue from an Overview task.** As designed, a page opened from its task on Overview returns to Overview on Save and continue, rather than going on to the next task. Is that still what you want, or should it go on to the next task that is not complete?
-3. **Status of an optional task left empty.** As designed, Transit countries (and other tasks that need no answer, such as Upload documents) reads "To do" until something is added, even after the user saves the page with nothing in it. Should a task the user has saved with nothing in it read "Complete", a different status such as "Not needed", or stay "To do"?
+Updated 20 Oct: Sam settled the first two, so one question is left to post.
+
+1. **Status of an optional task left empty.** As designed, Transit countries (and other tasks that need no answer, such as Upload documents) reads "To do" until something is added, even after the user saves the page with nothing in it. Should a task the user has saved with nothing in it read "Complete", a different status such as "Not needed", or stay "To do"?
+
+Settled 20 Oct, not posted:
+
+- **Back during a new notification:** no change to the plan. Back goes to the previous page and the run carries on, built in design snagging. The question to the tester is dropped, because the answer would not change what we build.
+- **Save and continue from an Overview task:** it returns to Overview, as main and the prototype do.
 
 ## Calls I made
 

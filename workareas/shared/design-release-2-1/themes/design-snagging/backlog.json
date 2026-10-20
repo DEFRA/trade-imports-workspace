@@ -1649,6 +1649,70 @@
         "Plants has no CPH number page. Germinal products asks no CPH number (inc-181)."
       ],
       "gate": null
+    },
+    {
+      "id": "inc-220",
+      "title": "Back from a submitted notification's view goes to the notification list, not Overview, in animals and plants",
+      "detail": "Mapping navigation on main found that Back on a submitted notification's view opens Overview, in live animals (check-answers/controller.js, backLink: hubPath) and in high-risk plants (check-answers/controller.js:95). The spec (req-899, REQ-CYA-003-B) and the prototype send it to the set's own notification list, the dashboard. Sam ruled on 20 October: \"yep bug, fix it.\" overview-and-review inc-111 already planned the Back link as part of the view header; its two Back link criteria and req-899 move in here, and the header itself stays there. The view page is shared, so the row sets the Back target by state: a submitted notification, including one just shown after its amendment was cancelled, goes to the list; an amendment in progress and a draft's review keep Overview. openspec: live-animals/journey-pages/check-your-answers and plants/journey-pages check-answers take the scenario 'Back from a submitted notification's view goes to the notification list'.",
+      "acceptanceCriteria": [
+        "Given a submitted live-animals notification, when the trader opens View on the dashboard and presses Back, then the live-animals notification list (the dashboard) opens, not Overview. (Sam, 20 Oct; req-899; REQ-CYA-003-B; prototype:dr2-1-source prototype-dr2-1-source-p11-016; prototype:dr2-1-specs prototype-dr2-1-specs-p5-101; theme:overview-and-review inc-111 criterion 4)",
+        "Given a submitted high-risk plants notification, when the trader opens its view and presses Back, then the plants notification list opens, not Overview. (Sam, 20 Oct; req-899; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-048, p3-101; repo:plantsfrontend repo-plantsfrontend-p8-005; theme:overview-and-review inc-111 criterion 9)",
+        "Given a live-animals amendment the trader has just cancelled, when the submitted view shows with its 'cancelled' message and they press Back, then the notification list opens. (cancel-amend/controller.js:49-65: the cancelled view is the submitted view)",
+        "Given a notification being amended, when the trader opens the review of the amendment and presses Back, then Overview opens, as today, because the amendment is still in progress. (req-481; snagging/navigation.md 'Amend')",
+        "Given a draft, when the trader opens its review and presses Back, then Overview opens, as today. The spec's notification list for a draft's review is planned in the templates theme, not here. (snagging/navigation.md 'Submit')",
+        "Given the e2e suites, when animals and plants each submit a notification, open its view from the dashboard and press Back, then the test asserts the dashboard heading shows, and an amendment's review still goes back to Overview. (tests repo, animals and plants)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-20",
+          "ref": "Design review, 20 Oct: Back from a submitted notification's view is a bug, fix it"
+        },
+        {
+          "source": "theme:overview-and-review",
+          "ref": "inc-111 criteria 4 and 9 and req-899 (moved in 20 October; the view header stays there)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-016"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-101"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-048, p3-101"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/check-answers/controller.js renderCya backLink: hubPath(journey.journeyId)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/check-answers/controller.js:95 backLink: hubPath(current.journey.journeyId); repo-plantsfrontend-p8-005"
+        }
+      ],
+      "requirements": [
+        "req-899"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "State calls: submitted (readOnly) goes to the list; the view shown after a cancelled amendment is the submitted view, so it goes to the list too. An amendment in progress keeps Overview, its own task list. A draft's review keeps Overview here; the spec's list for a draft is the templates theme's draft review row. No other state reuses the view: a deleted notification is not viewable.",
+        "Animals: in renderCya pick backLink from readOnly (dashboardPath() when the journey is SUBMITTED, else hubPath). Plants: the same at controller.js:95. Update both controller tests' expected backLink.",
+        "req-899 also names the germinal products set root for germinal products. The germinal set is not on main; germinal-products inc-176 takes this when it copies the view.",
+        "The overview-and-review branch (EUDPA-696) carries inc-111's Back link change; drop it when that theme salvages from its stale branch.",
+        "Navigation: snagging/navigation.md and the snags page's 'View a submitted one' tab show this as planned."
+      ],
+      "gate": null
     }
   ]
 }

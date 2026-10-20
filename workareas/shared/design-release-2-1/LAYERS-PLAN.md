@@ -29,7 +29,7 @@ Steps 5 and 6 for one layer can run while step 1 of the next layer starts.
 | Layer | Themes | Branch built? |
 |---|---|---|
 | 1 | Journey foundation (EUDPA-691), Reference lists (EUDPA-692) | Yes, both |
-| 2 | Design snagging (no ticket yet): the designers' review of `main` against the prototype, 19 October | No: 17 rows ready, cut from `main` |
+| 2 | Design snagging (EUDPA-720): the designers' review of `main` against the prototype, 19 October | No: 17 rows ready, cut from `main` |
 | 3 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694) | None live: 693 and 694 are stale branches to salvage from. Origin page (EUDPA-695) is retired: design snagging ports all of it |
 | 4 | Transporters, Identification and permanent address, Type question and templates | None live: templates (EUDPA-690) is a stale branch to salvage from |
 | 5 | Consignment parties, Overview and review (EUDPA-696) | None live: overview and review is a stale branch to salvage from |
@@ -88,7 +88,7 @@ The workspace OpenSpec changes for each theme also need a PR to `main`. Step 1 w
 | Layer | Step | Note |
 |---|---|---|
 | 1 | 5. BA review | **Merged to main 13 October** on Sam's go-ahead. Journey foundation: animals #399, plants #93, INS #46, tests #21, workspace spec #108. Reference lists: stub #18, reference-data #25, animals #400, plants #94, INS #47, tests #22, workspace spec #114. Review pack `layers/1/engineering-review.md`; prototype differences in each theme's `prototype-differences.md`. Next: layer 1 business review page for the BAs. Main merged into the combined branch and every built theme branch (693, 694, 695, 690, 696) on 14 October: all level with main, all PRs green. Carried to layer 2 (EUDPA-693): import reason's "Save and return" skips required checks; k6 walk out of step with the opening run. Plants journey-flow REQ-PLANTS-FLOW-015 coverage partial (unit only) |
-| 2 | 1. Ready (next) | Design snagging: build on `feat/NO_JIRA-design-release-2-1-design-snagging` from `main` (see `themes/HOW-TO-BUILD.md`). 17 rows, consolidated 20 October to one row per shared component. One question waits on the designers, the status of an optional task saved empty, and blocks no row (`snagging/discussion.md`) |
+| 2 | 1. Ready (next) | Design snagging: build on `feat/EUDPA-720-design-release-2-1-design-snagging` from `main` (see `themes/HOW-TO-BUILD.md`). 17 rows, consolidated 20 October to one row per shared component. One question waits on the designers, the status of an optional task saved empty, and blocks no row (`snagging/discussion.md`) |
 | 3 | Waiting on layer 2 | Documents, Address book, Commodities and import reason (EUDPA-693), Arrival and transit (EUDPA-694): once design snagging merges, cut each theme a fresh branch from main and build its rows, salvaging from the stale branches. Origin page (EUDPA-695) is retired |
 | 4 to 9 | Not started | — |
 

@@ -132,10 +132,11 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Old PRs to close when played:** animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98,
   tests #26.
 
-## Design snagging: no ticket yet
+## Design snagging: EUDPA-720
 
-- **Ticket:** none yet.
-- **Branch:** `feat/NO_JIRA-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
+- **Ticket:** [EUDPA-720](https://eaflood.atlassian.net/browse/EUDPA-720) (stub, raised 20 October; filled in per
+  domain once the loop drains).
+- **Branch:** `feat/EUDPA-720-design-release-2-1-design-snagging`, cut from `main`. It stacks on no other theme branch.
 - **Rows:** 17, all ready (inc-202 to inc-220). Consolidated 20 October so each shared component or mechanism is one
   row: inc-211 ('Add a transporter' beside the search) merged into inc-210, the search box row, and inc-220 (Back from a
   submitted notification's view) merged into inc-218, the one Back links row. Both merged rows are `merged-into`; no
@@ -161,7 +162,7 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with
   `../snagging/screens/prototype/`. The prototype walk is `../prototype-specs/e2e/snagging.fit.spec.js`.
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging, branch lifecycle on
-  feat/NO_JIRA-design-release-2-1-design-snagging"
+  feat/EUDPA-720-design-release-2-1-design-snagging"
 
 The stacked themes also carry their branch in repos they don't change, such as the INS frontend, stub, reference-data
 and performance tests, each with a carry-only draft pull request. CI publishes a branch image only from a pull request,

@@ -1,6 +1,6 @@
 # Design Release 2.1 snags: points to talk through
 
-For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (12), **blocked** (2) or **ready to build** (28). On 20 October Sam settled five (see [Settled](#settled)) and blocked two (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
+For the review session on 20 October, the 38 snags and the tester's questions are in three groups: **to discuss** (11), **blocked** (3) or **ready to build** (28). On 20 October Sam settled five (see [Settled](#settled)), blocked two and split one out into a spike (see [Blocked](#blocked)). S30 needs no change. The record is [review.json](review.json), and the snags page is built from it. It replaces the earlier groups: done on a branch, as the prototype, and like the prototype with small differences.
 
 An item is to discuss when one of these applies:
 
@@ -14,7 +14,6 @@ Everything else is ready to build. Differences that are only how we build it, su
 
 | Item | Page | Decision |
 |---|---|---|
-| [S25](#s25-transit-countries-added-as-soon-as-they-are-picked) | Transit countries | Keep 'Add country' as the confirm step? (design question 4) |
 | [S37](#s37-cph-number-cursor-moving-to-the-next-box) | CPH number | One box, or three boxes with no cursor jump? (design question 7) |
 | S02, S21 | Origin, Arrival details | Country and port type-aheads: leave out the joined blue search button? Bold matching letters? |
 | S10 | Main import reason | Keep country questions as type-ahead boxes, not dropdowns? |
@@ -26,7 +25,7 @@ Everything else is ready to build. Differences that are only how we build it, su
 | Q5 | Back from a submitted notification | Go to the dashboard, as the spec and prototype say? On main it goes to Overview, and nothing plans the change |
 | S35 | Review your notification | What steps did you take? On current main it behaves as the prototype does |
 
-The designer questions in detail are below. S08 is now blocked, and its section is kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
+The designer questions in detail are below. S08 and S25 are now blocked, and their sections are kept as background. Q2 and Q4 are from the tester's comments on the journey foundation ticket: see [eudpa-691/save-and-status.md](eudpa-691/save-and-status.md). To see each comparison, open the snags page or [screens.html](screens.html).
 
 There is also one small question with a default, S33's button colour, and six calls we have made that Sam should check.
 
@@ -47,6 +46,8 @@ There is also one small question with a default, S33's button colour, and six ca
 **The question for you:** until commodities come from MDM, are you happy for commodity search to stay a box you submit, with the prototype's look? Once MDM is in, we can look again at showing results as you type, built on top of a search that already works without JavaScript.
 
 ## S25: Transit countries added as soon as they are picked
+
+**Split out 20 Oct:** a spike looks for a GOV.UK-compliant way to add a country as soon as it is picked. 'Add country' stays until it reports. See [Blocked](#blocked).
 
 **What the prototype does:** picking a country from the suggestions adds it to the list straight away, and Remove takes it out without reloading the page. Screen readers hear 'Added Belgium' ([prototype](screens/prototype/S25--two-countries-added.png)). With JavaScript off, the box submits nothing and there is no way to add a country ([prototype, no JavaScript](screens/prototype/S25--default--nojs.png)). The suggestions also cannot be reached with the arrow keys.
 
@@ -105,6 +106,8 @@ Both wait for:
 
 - EUDPA-617, "Integrate early-access MDM commodity API into live animals frontend" (in development)
 - EUDPA-616, "Add a search type-ahead for choosing commodities, reusable across the journey" (to do)
+
+- **Transit countries added as soon as they are picked (S25):** split out into a spike. It looks for a GOV.UK-compliant component that behaves like the prototype. 'Add country' stays on main until it reports, and the page's look changes are still built in design snagging. Waits for EUDPA-719, "Spike: a GOV.UK-compliant way to add transit countries as soon as they are picked" (relates to EUDPA-616).
 
 ## For Sam: calls we made and flagged
 

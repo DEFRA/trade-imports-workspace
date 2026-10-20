@@ -484,13 +484,15 @@
       "acceptanceCriteria": [
         "The edit page's heading and page title are 'Edit address and contact details', with no caption (prototype:dr2-1-source p15-057; trace:prototype-dr2-1 p16-107; prototype:dr2-1-specs p6-158, p6-159)",
         "On the edit page 'Email address' comes before 'Phone number', and the fields use the add form's section headings, order and widths, keeping 'County (optional)' between 'Town or city' and 'Postcode or Zip code' (prototype:dr2-1-source p15-063; trace:prototype-dr2-1 p16-108; trace:ins-fit p3-005-m1, p3-007-m1)",
-        "On the edit page the Country select has no blank placeholder option and shows the stored country selected (prototype:dr2-1-source p15-065; trace:prototype-dr2-1 p16-110; trace:ins-fit p3-013)",
+        "On the edit page the Country select has no blank placeholder option and shows the stored country selected, when the stored country is one offered (prototype:dr2-1-source p15-065; trace:prototype-dr2-1 p16-110; trace:ins-fit p3-013)",
         "The edit page's 'Back' link goes to the page the edit was opened from when one was given, otherwise to the address's view page (prototype:dr2-1-source p15-058; trace:prototype-dr2-1 p16-113; ruling:sam-2026-10-09 p1-092)",
         "'Cancel' on the edit page saves nothing, clears any errors and goes to the page the edit was opened from, by default the address's view page (prototype:dr2-1-source p15-067, p15-068)",
         "The edit page shows no type or uses (prototype:dr2-1-source p15-061; trace:prototype-dr2-1 p16-111; c-181)",
         "After a valid edit the list shows a 'Success' banner reading '<Name> address updated', naming the address as it is stored, for example 'GREEN VALLEY FARM address updated' (prototype:dr2-1-source p15-083; trace:prototype-dr2-1 p16-116; prototype:dr2-1-specs p6-164)",
         "Opening or saving the edit page for an address that is not in the user's address book (unknown, another organisation's, deleted or a malformed id) goes to the page the edit was opened from, or the address book list, saving nothing (prototype:dr2-1-source p15-056, p15-069; repo:insfrontend p3-080, p3-081, p3-093)",
-        "With Welsh selected, the edit page shows a Welsh string for every new or changed English string, and no edit page shows an English string where the Welsh copy is in use; each new Welsh string is marked as an unreviewed machine draft that must not ship to users without Welsh Language Standards sign-off. (repo:insfrontend p3-113 to p3-120)"
+        "With Welsh selected, the edit page shows a Welsh string for every new or changed English string, and no edit page shows an English string where the Welsh copy is in use; each new Welsh string is marked as an unreviewed machine draft that must not ship to users without Welsh Language Standards sign-off. (repo:insfrontend p3-113 to p3-120)",
+        "When an address's stored country is not one the Country select offers, the edit page opens with no country selected, and saving it without choosing one shows 'Select a country' in the 'There is a problem' summary and against the field, saving nothing (decision 2026-10-20)",
+        "Saving the edit page with a country that is not one the list offers shows 'Select a country' and saves nothing, as the add form does (REQ-INS-ADDR-018; decision 2026-10-20)"
       ],
       "dependsOn": [
         "inc-062"
@@ -552,7 +554,8 @@
         "Re-cut 2026-10-15 for the edit ticket: the criterion that an edit keeps the address's type and uses, and req-1275, moved to inc-070 in the types-and-uses ticket, because no address has a type or uses to keep until then; the earlier note's need to post the stored type and uses back moves with it. It now carries the Welsh for the edit page that inc-084 used to hold.",
         "Ticket 3 (edit), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
         "Re-cut 2026-10-19: no longer depends on inc-059, which moved to ticket 6. The dependency was stale: the edit-keeps-type-and-uses criterion it served moved to inc-070 on 2026-10-15.",
-        "Re-cut 2026-10-20 (user ruling): every address book banner names the address as it is stored. The prototype sentence-cased the name on the edit and delete banners but not on add, which mangles names such as 'ABC Farms Ltd'; that casing is not carried over."
+        "Re-cut 2026-10-20 (user ruling): every address book banner names the address as it is stored. The prototype sentence-cased the name on the edit and delete banners but not on add, which mangles names such as 'ABC Farms Ltd'; that casing is not carried over.",
+        "Re-cut 2026-10-20 (user ruling): every frontend validates the whole address it saves, country included, because a user can save it in place (the animals and plants journeys do the same for their copies), so validating in the address book API alone would not protect them. The address book API stores countryCode as given, so a stored code can be one reference data does not offer. Without a placeholder, an unknown stored country would leave the browser to preselect the first option, so a save would quietly change the country; this row keeps a blank option for that case only."
       ],
       "gate": "Ticket 3 (edit) is complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team before building ticket 4 (list)."
     },
@@ -860,7 +863,7 @@
         "On the place of origin and consignor pages the Country select's first option reads 'Select one' (prototype:dr2-1-source p8-084; trace:e2e p9-064; conflicts:c-107)",
         "Saving with a blank name shows 'Enter a name or organisation name', in the error summary and against the name field, the summary link reaching it (prototype:dr2-1-source p8-100; trace:prototype-dr2-1 p7-030; prototype:dr2-1-specs p3-066)",
         "Saving with a blank postcode shows 'Enter a postcode or Zip code' (prototype:dr2-1-source p8-103; trace:prototype-dr2-1 p7-033)",
-        "Saving from an origin-side page with no country chosen shows 'Select a country' (prototype:dr2-1-source p8-104; trace:prototype-dr2-1 p7-034)",
+        "Saving from an origin-side page with no country chosen, or with a country that is not one the list offers, shows 'Select a country' and saves nothing (prototype:dr2-1-source p8-104; trace:prototype-dr2-1 p7-034)",
         "Phone number is required: saving with it blank shows 'Enter a phone number' (prototype:dr2-1-source p8-106; trace:prototype-dr2-1 p7-036)",
         "An over-long postcode or a badly formed email address is still refused with today's messages ('Postcode must be 12 characters or fewer', 'Enter an email address in the correct format') (repo:frontend p9-115, p9-120; conflicts:c-108)"
       ],
@@ -912,7 +915,8 @@
       "openQuestions": [],
       "notes": [
         "Combines the role-split slice with the country placeholder and the four required-field message changes: the same page, the same validation set-up and the same per-role fixtures. The destination-side manual-entry criterion is req-1830, adopted as exists (no search exists today); it stays as a 'still' criterion because this row reshapes exactly those pages, but req-1830 is not listed in requirements. req-646's search-page half (UK-only country on the search pages) is met by the blocked search row, whose pick fills United Kingdom. The country list's content is its own row (req-644). The address-book-add-and-edit area changes the same messages and the same type split in the address book API: combiner, keep the dependency on inc-060 rather than building the messages twice, and on inc-077. Today's length and email-format checks are kept by ruling (c-108; req-668, req-669 exist).",
-        "Ticket 5 (journey add page), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
+        "Ticket 5 (journey add page), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "Re-cut 2026-10-20 (user ruling): every frontend validates the whole address it saves, country included, because a user can save it in place (the animals and plants journeys do the same for their copies), so validating in the address book API alone would not protect them. The address book API stores countryCode as given, so a stored code can be one reference data does not offer."
       ],
       "gate": null
     },

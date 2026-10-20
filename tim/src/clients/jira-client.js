@@ -396,6 +396,26 @@ export const createJiraClient = ({
     },
 
     /**
+     * @param {string} key
+     * @param {string} body - Jira wiki markup, not markdown
+     * @returns {Promise<{id: string, author: string|null, createdAt: string, body: string}>}
+     * @throws {TimError} USAGE carrying Jira's reason when it refuses the comment
+     */
+    addComment: async (key, body) => {
+      const data = await postJson(
+        `/rest/api/2/issue/${encodeURIComponent(key)}/comment`,
+        { body },
+        `addComment(${key})`
+      )
+      return {
+        id: data.id,
+        author: data.author?.displayName ?? null,
+        createdAt: data.created,
+        body: data.body
+      }
+    },
+
+    /**
      * Create an issue. `fields` is sent verbatim as Jira's `{fields: ...}`
      * body — the caller (a manifest-to-fields mapping) owns the shape, this
      * is a thin transport. `description` must already be Jira wiki markup,

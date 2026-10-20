@@ -639,6 +639,8 @@ tim jira link EUDPA-200 --blocks EUDPA-300 --confirm # EUDPA-200 blocks EUDPA-30
 tim jira link EUDPA-300 --blocked-by EUDPA-200       # dry run of the same link, from the other side
 tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
 tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
+tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added
+tim jira comment EUDPA-200 --file comment.txt --confirm  # posts it, then reads the comments back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
 ```
 
@@ -672,6 +674,12 @@ other way round it fails with `UNKNOWN` and names the stored direction.
 reports `unchanged`, even with `--confirm`. `--json` puts
 `{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
 `assigned` or `unchanged`).
+
+`tim jira comment` takes the text from `--body` or `--file`, not both, and
+sends it as Jira wiki markup. A ticket that already has a comment with the
+same text is left alone and reports `unchanged`, even with `--confirm`, so a
+retry never posts a duplicate. `--json` puts `{mode, key, body, comment}` in
+`result` (`mode` is `dry-run`, `commented` or `unchanged`).
 
 ### `tim jira transition` — move a ticket's status
 

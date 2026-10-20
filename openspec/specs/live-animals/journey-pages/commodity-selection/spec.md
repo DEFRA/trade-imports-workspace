@@ -29,13 +29,19 @@ The system MUST list no species for a search of fewer than three characters, so 
 
 ### Requirement: A search can match a commodity's code or a species' common or scientific name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST search the commodity reference data (MDM's live-animal species) against a commodity's code and against a species' common name as well as its scientific name, and MUST offer each species by its scientific name alone, as the reference data spells it.
+The system MUST search the commodity reference data (MDM's live-animal species) against a commodity's code and against a species' common name as well as its scientific name, MUST offer only species under a live-animal commodity code (CN chapter 01), and MUST offer each species by its scientific name alone, as the reference data spells it.
 
 #### Scenario: Searching by common name finds the same species as searching by code
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
 - **THEN** the same species is offered as when searching by that commodity's code, shown by its scientific name alone
+
+#### Scenario: A search offers no commodity code outside the live-animal chapter
+**ID**: SCN-COMMODITY-SELECT-003-B
+- **GIVEN** the reference data lists a species under a live-animal code and under codes for animal products
+- **WHEN** the user searches by that species' common name
+- **THEN** the species is offered under the live-animal code only
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004

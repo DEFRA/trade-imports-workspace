@@ -112,7 +112,7 @@ test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
 
 Seeded state must be indistinguishable from state a user creates through the UI. Invented values break pages that read them back and make tests assert things a real user cannot produce.
 
-- One seed step per page. Each step posts exactly the fields that page's save-and-continue posts. Steps compose in page order to reach any journey state, as in `domain/animals/fixtures/seeded-journey.ts`.
+- One seed step per page. Each step posts exactly the fields that page's save-and-continue posts. Steps compose in page order to reach any journey state, as in `flows/animals/seed-form-steps.ts`.
 - Values come from the data the frontend itself serves. Copy canned entries verbatim; do not write lookalikes.
 - Reference lists (countries, ports) are copies of a real call to the service the frontend uses, as in `resources/reference-data/`. Prefer fetching from the running service over a copy that can drift.
 - Seeded answers stay in step with the answers the journey flow clicks. `api-seed-parity.spec.ts` compares the two.

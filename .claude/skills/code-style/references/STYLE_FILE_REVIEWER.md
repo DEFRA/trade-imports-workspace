@@ -188,7 +188,9 @@ and every name in the whole file against the exception list in step 3a.
 
 For each name, every parameter and local included, predict first: read the name alone and write down
 every kind of value it returns (a fallback of another kind or a null
-included; an empty list or string is the same kind), any error it throws, and what it changes. Then read the
+included; an empty list or string is the same kind), any error it throws
+as an expected outcome (such as not found; not a failure of a service it
+calls), and what it changes. Then read the
 body. A mismatch is a finding. A name need not say when each kind of
 value comes back, and a name that already predicts them all is not a
 finding, even when another name would read better: propose a rename

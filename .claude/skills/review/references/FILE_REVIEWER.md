@@ -221,8 +221,9 @@ the diff adds or renames, and every name a changed line calls:
 
 1. Read the name alone. Write down every kind of value you predict
    it returns (a fallback of another kind or a null included; an empty list
-   or string is the same kind), any
-   error it throws, and what it changes (state, session, database,
+   or string is the same kind), any error it throws as an expected
+   outcome (such as not found; not a failure of a service it calls),
+   and what it changes (state, session, database,
    redirect, log).
 2. Read the body. Compare.
 3. A mismatch is a finding. So is a name that needs its comment to be

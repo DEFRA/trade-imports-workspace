@@ -25,6 +25,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 - Rationale goes in the repo's `docs/` or the behaviour spec, never in code.
 - A comment that explains a name means the name is wrong. Rename, then delete the comment in the same change.
 - When a comment is stale, delete it. Do not reword it.
+- A marker that a test or tool reads, such as the machine-draft header on Welsh copy, is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
 - Bad: `// Hapi validates the full payload before route handlers run, so the token is guaranteed present.` Good: no comment. The route's `validate.payload` schema already says it.
 
@@ -37,7 +38,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
-- A name says every kind of value the code can return, a fallback of another kind or a null included, and any error it throws. An empty list or string is the same kind of value. It need not say when each one comes back. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code; and `requestedPageOrFirst`. Too far: `honouredReturnOffAddressOrAddressBook`, which spells out when the address book wins.
+- A name says every kind of value the code can return, a fallback of another kind or a null included, and any error it throws as an expected outcome, such as not found or refused. A failure of a service it calls need not be named. An empty list or string is the same kind of value. It need not say when each one comes back. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code; and `requestedPageOrFirst`. Too far: `honouredReturnOffAddressOrAddressBook`, which spells out when the address book wins.
 - Rename only when the name mispredicts. A name that already says every kind of value the code returns, and what it changes, stays, even when another name would read better.
 - Name a parameter or local for what it holds at that point. Bad: `id` and `returnTo` for an address id and a return that has passed its checks. Good: `addressId` and `honouredReturn`.
 - Bad: `// c-201: an amendment opens with no errors; Continue refused shows them.` above `const holdsSilently = readOnly || (isAmend && !refused)`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.

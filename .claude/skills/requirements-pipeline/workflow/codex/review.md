@@ -136,7 +136,8 @@ Standing concerns, in priority order:
    both places.
 5. **Names that hide what the code does.** For each function, method, parameter, variable and test the change adds or
    alters, read its name, predict every kind of value it returns (a fallback of another kind or a null
-   included; an empty list or string is the same kind), any error it throws and what it changes, then read its body. Any mismatch is a `naming`
+   included; an empty list or string is the same kind), any error it throws as an expected outcome (such as
+   not found; not a failure of a service it calls) and what it changes, then read its body. Any mismatch is a `naming`
    finding. A name need not say when each kind comes back, and a name that already predicts them all is not
    a finding, even when another name would read better.
 6. **Operability.** A branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state

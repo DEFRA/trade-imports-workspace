@@ -514,7 +514,7 @@ const HOUSE_RULES = `**Comments**
 - Rationale goes in the repo's \`docs/\` or the behaviour spec, never in code.
 - A comment that explains a name means the name is wrong. Rename, then delete the comment in the same change.
 - When a comment is stale, delete it. Do not reword it.
-- A marker that a test or tool reads, such as the machine-draft header on Welsh copy, is not a comment to delete.
+- A marker that a test or tool reads is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
 - Bad: \`// Hapi validates the full payload before route handlers run, so the token is guaranteed present.\` Good: no comment. The route's \`validate.payload\` schema already says it.
 

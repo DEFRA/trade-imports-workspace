@@ -186,7 +186,7 @@ against the rules in the `style-rules.{repo}.{topic}.md` bundle(s) you
 were given and the severity definitions above. Then walk every comment
 and every name in the whole file against the exception list in step 3a.
 
-For each name, predict first: read the name alone and write down what
+For each name, every parameter and local included, predict first: read the name alone and write down what
 it returns in every branch (a fallback, a null, an empty result or a
 throw included) and what it changes. Then read the body. A mismatch is
 a finding. A name that already predicts both is not a finding, even

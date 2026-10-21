@@ -134,7 +134,7 @@ Standing concerns, in priority order:
 4. **Duplication** — a second copy of a rule or of test set-up; a second mechanism beside one the repo
    already has; two classes both doing the same job, where the second silently overwrites the first. Name
    both places.
-5. **Names that hide what the code does.** For each function, method, variable and test the change adds or
+5. **Names that hide what the code does.** For each function, method, parameter, variable and test the change adds or
    alters, read its name, predict what it returns in every branch (a fallback, a null, an empty result or a
    throw included) and what it changes, then read its body. Any mismatch is a `naming` finding. A name that
    already predicts both is not a finding, even when another name would read better.

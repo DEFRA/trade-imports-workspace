@@ -1517,7 +1517,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            'NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its\n  name, predict what it returns in every branch (a fallback, a null, an empty result or a throw included) and what it\n  changes, then read its body. Any mismatch is a `naming` finding. A name that already predicts both is not a finding,\n  even when another name would read better.'
+            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict what it returns in every branch (a fallback, a null, an empty result or a throw included) and what it\n  changes, then read its body. Any mismatch is a `naming` finding. A name that already predicts both is not a finding,\n  even when another name would read better.'
           )
         })
 

@@ -178,6 +178,16 @@ orders.reduce((total, order) => total + order.total, 0)
 items.map(({ name, value }) => `${name}: ${value}`)
 ```
 
+Name a parameter or local for what it holds at that point, not for its type or source:
+
+```js
+// bad
+const findLiveAddress = async (orgId, id) => { ... }
+
+// good
+const findLiveAddress = async (organisationId, addressId) => { ... }
+```
+
 Boolean variables and functions should read as predicates:
 
 ```js

@@ -216,7 +216,7 @@ end state as the Must, not as a question.
 
 #### Naming: predict, then compare
 
-For every function, method, variable, constant, flag and test helper
+For every function, method, parameter, variable, constant, flag and test helper
 the diff adds or renames, and every name a changed line calls:
 
 1. Read the name alone. Write down what you predict it returns in

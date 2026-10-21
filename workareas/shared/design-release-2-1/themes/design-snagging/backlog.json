@@ -871,7 +871,7 @@
         "inc-202"
       ],
       "theme": "design-snagging",
-      "status": "todo",
+      "status": "deferred",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -906,7 +906,8 @@
         "Plants has no transit countries page.",
         "Rendered proof: re-shoot screens/main/S24--empty.png, S24--one-country-added--nojs.png and S25--one-country-added.png.",
         "Out of scope, 20 Oct (Sam): adding a country the moment it is picked (S25) is split out into EUDPA-719, Spike: a GOV.UK-compliant way to add transit countries as soon as they are picked (relates to EUDPA-616). This row keeps the Add country button as the confirm step and builds only the look changes; do not build add-on-pick until the spike reports.",
-        "Merges ins-tests main first: PR 48 (shared notification answers between UI and seeded journeys, EUDPA-687). git merge-tree shows 8 conflicts: domain/animals/constants/journey-options.ts, flows/animals/journey.ts, tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts, hub-groups-and-cya-rows.spec.ts, reference-lists/country-of-origin-list.spec.ts, destination-country-list.spec.ts, port-of-exit-list.spec.ts, tests/plants/e2e/features/reference-lists.spec.ts. Resolve keeping both sides: main's shared answers and seeding, the branch's Design Release 2.1 page objects and copy. Full gate green after the merge."
+        "Merges ins-tests main first: PR 48 (shared notification answers between UI and seeded journeys, EUDPA-687). git merge-tree shows 8 conflicts: domain/animals/constants/journey-options.ts, flows/animals/journey.ts, tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts, hub-groups-and-cya-rows.spec.ts, reference-lists/country-of-origin-list.spec.ts, destination-country-list.spec.ts, port-of-exit-list.spec.ts, tests/plants/e2e/features/reference-lists.spec.ts. Resolve keeping both sides: main's shared answers and seeding, the branch's Design Release 2.1 page objects and copy. Full gate green after the merge.",
+        "Parked 21 Oct after two plan-refused stops (runs wf_1a0723c0-05b and wf_f464bd19-58a). Both refusals were plan-lint false positives: a line telling the implementor NOT to copy an exemplar's comments, then a quoted house rule read as a log message and a jq check on an old coverage title read as a prescribed test title. Requeue (status todo) once the plan lint is loosened. Plan kept at plans/inc-209.md."
       ],
       "gate": null,
       "merge": {
@@ -988,7 +989,7 @@
       ],
       "dependsOn": [],
       "theme": "design-snagging",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -1063,7 +1064,11 @@
         "req-528",
         "req-530"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/server/app/shared/kit.js recoverableSave needs to pass the caught error to onRecoverableFailure(error), and the plants callers that log a recoverable failure need to log it as { err }, as the inc-215 review finding that the documents save/removal left-to-retry warn lines never log the error.",
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.test.js needs its inline typeof value === 'function' ? value('sample', ...) : value replaced by a shared sampleText(value, sampleArguments) helper in plants src/server/app/engine/test-support.js, as the inc-215 review finding that promoting sampleText must delete the local copies.",
+        "Twin fix: the {% set ignored = rows.push(...) %} idiom is still used in other templates (animals: transporters.njk, _added-countries-table.njk, _selected-commodities-table.njk, _selected-commodities-summary.njk, _saved-animals-table.njk, _address-picker.njk, import-reason/template.njk; plants: commodities list.njk, consignment-contact-select, place-of-destination and consignor-select templates). Each needs its rows built in the view-model, as the inc-215 review finding that the throwaway name ignored does not say what it holds (documents template fixed in inc-215)."
+      ],
       "notes": [
         "Moves in documents inc-032 whole. Its dependency on inc-031 was only to land the documents rows in one order on one branch; no criterion needs it, so it is dropped. inc-031 and the rest of the documents theme build after this row.",
         "Layout: pass the display surface (surfaceClass('display')) from documents render.js; wrap the error summary, caption, heading, guidance and details in a two-thirds GOV.UK grid column; wrap the four fields and 'Save and add another' in a nested two-thirds column inside the card; leave the table, refresh link and timeout message outside it. Right-align with the GOV.UK table's numeric format on the Action header and cell. No custom CSS.",
@@ -1072,7 +1077,20 @@
         "Plants has no documents page. germinal-products inc-179 copies this page later and inherits it.",
         "Rendered proof: re-shoot screens/main/S28--empty.png, S29--empty.png and S31--one-uploaded-then-add-another.png."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "c90f1f6e1b1f38e579dbf35a58f47d7f6a12cdbf 1f8528ae2109b5ec866476f3cd974e61214c8123",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/421",
+          "repo": "trade-imports-animals-frontend",
+          "number": 421
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/42",
+          "repo": "trade-imports-ins-tests",
+          "number": 42
+        }
+      ]
     },
     {
       "id": "inc-216",
@@ -1425,7 +1443,8 @@
         "Swept from inc-205's followUps (run wf_6fda24ce-d8b, BUILD.md 3b, 21 Oct): (1) one owner for 'species named by its Latin name, falling back to the stored value': count-drop.js, animal-identification/card/view-model.js, check-answers species-text.js and persistence notification-mapper/shared/lines/species-entry.js all call the commodities service's Latin-name owner (species-entry through a delegate in notification-mapper/commodity-reference.js); (2) animal-identifiers-conditional.spec.ts:80-89 uses the journey's extracted choose-species-and-fill-Commodity-details step, its rationale comments gone; (3) rationale comments gone from commodities tests copy.test.js and consignment-details.controller.test.js, and from flows/animals/journey.ts (:78-79, :84-86, :94-95, :290-292), still-true reasons moved to the tests repo docs, including selectSpecies's reason (a species has no tick box until its own search lists it); (4) openspec REQ-COMMODITY-DETAILS-012 (blank number of packages refused) links tests absent on this branch: write the test or mark the gap; (5) sets/live-animals/docs/copy-status.md lists every MACHINE-DRAFT Welsh copy.cy.js, not only the dashboard; (6) the section id commodityDetails (flow/section-captions) is renamed for the Additional details concept so it no longer shares a name with the Commodity details page; ids only, the copy stays as designed.",
         "Swept from inc-204's followUps (run wf_6fda24ce-d8b, BUILD.md 3b, 21 Oct): (1) plants recipes (sets/high-risk-plants/docs add-a-page.md §8, add-a-field.md, add-a-section.md) add the data-module component route for page JavaScript, mirroring live-animals; (2) tests repo: the certificate answer shared by opening-run, horse-temporary-admission, overview-task-return and animals-admin outbox-event-notification specs moves to a shared builder and the overview navigation to the flow, assertions kept in specs; (3) the notification-view page object gets one 'Region of origin code' summary accessor used by opening-run, hub-groups-and-cya-rows and origin specs; (4) rationale or UI-describing comments deleted (reasons kept move to repo docs): notification-view-page.ts partyRow/editPartyDetails/partyError, status-announcer.js header, _summary-list-missing.scss (to page-design.md), _index.scss boilerplate, shared/layout.njk:9-13, seeded-journey.ts:4, 6, 26, 39, 65; (5) animals FIT: origin and declaration fit specs share one open-notification-view step in fit/live-animals-journey.js, and that file's steps (answerCommodityCounts, expectOverview, expectPageEndsWithPrimaryAlone) hold no expect calls: assertions stay in specs. The no-JS region code truncation question went to ../../deferred.md.",
         "Swept from inc-206's followUps (run wf_6fda24ce-d8b, BUILD.md 3b, 21 Oct): (1) computed-style colour reads in FIT specs become web-first toHaveCSS assertions in both frontends (plants type-ahead.fit.spec.js and origin.fit.spec.js; animals' remaining computedStyle checks, retiring computedStyle when unused); (2) docs/best-practices/node/testing/frontend.md:133 and high-risk-plants/docs/testing.md:67-69 agree on where the plants type-ahead readers live; (3) animals kit.js JSDoc on statusStrip, errorSummary and common shrinks to each contract, no narration of callers. inc-205's identification card section break went to design-snagging-b's inc-214 (laptop B's area). No DEFERRED lines in any of the three rows.",
-        "Swept from inc-207's followUps (run wf_789ac1b5-ab1, BUILD.md 3b, 21 Oct): (1) the machine-draft Welsh status moves from every animals-frontend copy.cy.js header into sets/live-animals/docs/copy-status.md; (2) comments deleted outside touched tests in the animals tests-repo specs: a11y file-level exclusion comments, conditional-pages 72-73, soft-save Arrange/Act/Assert comments from line 36; (3) rationale comments deleted from untouched tests in fit/journey-smoke.fit.spec.js (199-200, 213-214); (4) origin.fit.spec.js asserts origin's whole country list from its placeholder, then renderedCountriesIn leaves fit/live-animals-journey.js; (5) the comment at origin-of-import.visual.spec.ts:11-16 is deleted and its masking reason moves to the tests repo's visual testing docs; (6) stale check-answers test titles re-pointed in openspec/coverage/live-animals/notification-templates/coverage.json:469-470; (7) measured-geometry FIT asserts (hub.fit.spec.js:468, 534-535; commodities/fit/consignment-details.fit.spec.js:211-217; cph-number.fit.spec.js:102; dashboard.fit.spec.js:50) checked against the Playwright guide's 'No measured geometry' rule, appearance checks moved to @visual baselines; (8) type-ahead.fit.spec.js:231-233's toHaveCount(0) no-JavaScript absence check becomes a positive assertion of the form group's children; (9) TypeAhead.selectableOptions in page-objects/shared/type-ahead.ts is replaced or narrowed (it filters out the placeholder in a shared page object, against the whole-list rule) and every spec using it checked; (10) hub copy.test.js transit-row tests (around 366-372) assert each group's exact row list instead of rowByTitle(...).toBeUndefined(). The review-rows items went to overview-and-review inc-102; the reason page label question to ../../deferred.md. No DEFERRED lines in inc-207's judgement."
+        "Swept from inc-207's followUps (run wf_789ac1b5-ab1, BUILD.md 3b, 21 Oct): (1) the machine-draft Welsh status moves from every animals-frontend copy.cy.js header into sets/live-animals/docs/copy-status.md; (2) comments deleted outside touched tests in the animals tests-repo specs: a11y file-level exclusion comments, conditional-pages 72-73, soft-save Arrange/Act/Assert comments from line 36; (3) rationale comments deleted from untouched tests in fit/journey-smoke.fit.spec.js (199-200, 213-214); (4) origin.fit.spec.js asserts origin's whole country list from its placeholder, then renderedCountriesIn leaves fit/live-animals-journey.js; (5) the comment at origin-of-import.visual.spec.ts:11-16 is deleted and its masking reason moves to the tests repo's visual testing docs; (6) stale check-answers test titles re-pointed in openspec/coverage/live-animals/notification-templates/coverage.json:469-470; (7) measured-geometry FIT asserts (hub.fit.spec.js:468, 534-535; commodities/fit/consignment-details.fit.spec.js:211-217; cph-number.fit.spec.js:102; dashboard.fit.spec.js:50) checked against the Playwright guide's 'No measured geometry' rule, appearance checks moved to @visual baselines; (8) type-ahead.fit.spec.js:231-233's toHaveCount(0) no-JavaScript absence check becomes a positive assertion of the form group's children; (9) TypeAhead.selectableOptions in page-objects/shared/type-ahead.ts is replaced or narrowed (it filters out the placeholder in a shared page object, against the whole-list rule) and every spec using it checked; (10) hub copy.test.js transit-row tests (around 366-372) assert each group's exact row list instead of rowByTitle(...).toBeUndefined(). The review-rows items went to overview-and-review inc-102; the reason page label question to ../../deferred.md. No DEFERRED lines in inc-207's judgement.",
+        "Swept from inc-215's followUps (run wf_1bf5bd45-27e, BUILD.md 3b, 21 Oct): (1) the date example hint 'For example, 27/3/2026' is written out in the import reason, transport and documents copy: one shared copy key owns it; (2) the allowed file types hint joins its list with an English formatter, so the Welsh page reads '… or XLSX': Welsh gets its own list joining; (3) the animals frontend architecture.md (lines 169-170) exempts 'a validation 400 that re-renders the page' from logging without separating a field error from a business refusal shown as a field error, such as the 15-document limit: reword it to agree with the house logging rule; (4) kit.recoverableSave now hands its fallback the caught error: every remaining caller logs it as { err }, in animals and in plants (plants kit.js too, from inc-215's twin-fix open question); (5) withScanStatus(documents, refresh) in documents scan/status.js takes a bare true/false: make it a named option in all three callers (documents controller, handlers/load-page.js, check-answers/refusal.js); (6) the upload-documents coverage.json note 'since EUDPA-310' drops the ticket key. Also from inc-215's open questions: the plants dashboard copy.test.js uses a shared sampleText helper instead of its inline copy, and the remaining {% set ignored = rows.push(...) %} templates in both frontends build their rows in the view-model. The Action/Actions hidden header question went to ../../deferred.md. No DEFERRED lines in inc-215."
       ]
     }
   ]

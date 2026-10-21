@@ -1,53 +1,69 @@
 # Live-animals document upload flow
 
 End-to-end sequence for the accompanying-documents journey in
-`trade-imports-animals-frontend` → `trade-imports-animals-backend`
-→ CDP Uploader → S3.
+`trade-imports-animals-frontend` → CDP Uploader → `trade-imports-animals-backend`
+→ S3.
+
+The browser posts the file to the platform's `/upload-and-scan` bypass rather than
+through the frontend, so no document passes through either service. The frontend
+opens an upload session, the browser uploads to it, and the frontend takes the
+document on when the browser is returned.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor U as User (Browser)
+    participant NX as nginx sidecar<br/>(CDP nginx-upstreams)
     participant FE as animals-frontend<br/>(Node/Hapi)
     participant BE as animals-backend<br/>(Java/Spring)
     participant CDP as cdp-uploader<br/>(DEFRA platform)
     participant S3 as S3 (documents bucket)
     participant DB as MongoDB<br/>(accompanying_documents)
 
-    U->>FE: GET /documents (form page)
-    FE-->>U: Render upload form (multipart, 10MB cap)
+    U->>NX: GET /documents
+    NX->>FE: proxy (10M cap on /)
+    FE->>FE: mint correlationId (UUID)
+    FE->>CDP: POST /initiate<br/>{redirect: /documents?upload=correlationId,<br/>callback, s3Bucket, s3Path,<br/>maxFileSize 50MB, mimeTypes,<br/>metadata{correlationId}}
+    CDP-->>FE: {uploadId, statusUrl}
+    FE->>BE: POST /notifications/{journeyId}/document-uploads<br/>{uploadId, correlationId}
+    BE->>DB: save AccompanyingDocument<br/>(PENDING, unclaimed, no details)
+    BE-->>FE: 201
+    FE-->>U: Render form; the Add button carries<br/>formaction=/upload-and-scan/{uploadId}
 
-    U->>FE: POST /documents<br/>(file + reference + dateOfIssue)
-    Note over FE: Validate: type<br/>(PDF/DOC/JPG/PNG/XLS),<br/>size ≤10MB, metadata
+    Note over U,NX: Add submits the file; every other<br/>action posts to the page instead
 
-    FE->>BE: POST /notifications/{journeyId}/document-uploads<br/>{documentType, reference, date, maxSize, mimeTypes}
-    BE->>BE: mint correlationId (UUID)
-    BE->>CDP: POST /initiate<br/>{redirect, callback, s3Bucket, s3Path,<br/>maxFileSize, mimeTypes, metadata{correlationId}}
-    CDP-->>BE: {uploadId, uploadUrl}
-    BE->>DB: save AccompanyingDocument<br/>(scanStatus=PENDING)
-    BE-->>FE: 201 {uploadId, uploadUrl}
-
-    FE->>BE: POST /document-uploads/{uploadId}/file<br/>(multipart, streamed)
-    BE->>CDP: POST /upload-and-scan/{uploadId}<br/>(streamed via ResourceHttpMessageConverter)
-    CDP-->>BE: 202 Accepted
-    BE-->>FE: 202 Accepted
-    FE-->>U: 302 → results page (polling UI)
+    U->>NX: POST /upload-and-scan/{uploadId}<br/>(multipart: file + text fields)
+    NX->>CDP: proxy direct (2304M cap on this path)
+    CDP-->>U: 302 to /documents?upload=correlationId
 
     Note over CDP,S3: async antivirus scan
-    CDP->>S3: PutObject (if clean)
 
-    CDP->>BE: POST /document-uploads/pending/scan-results<br/>{correlationId, scanStatus, files[{s3Key, filename,…}]}
-    BE->>DB: resolve by correlationId,<br/>update scanStatus + files (s3Key null if rejected)
+    U->>NX: GET /documents?upload=correlationId
+    NX->>FE: proxy
+    FE->>BE: GET /notifications/{journeyId}/document-uploads
+    BE-->>FE: documents, each with its correlationId
+    FE->>CDP: GET /status/{uploadId}
+    CDP-->>FE: {uploadStatus, form{documentType, reference,<br/>dateOfIssue, file{filename, hasError, errorCode}}}
+
+    alt file refused, a page rule broken, or at capacity
+        FE-->>U: Re-render with the answers kept and the reason
+    else taken on
+        FE->>BE: POST /document-uploads/{uploadId}/claim<br/>{documentType, documentReference, dateOfIssue}
+        BE->>DB: store the details, mark claimed
+        FE->>FE: append the journey's documents entry
+        FE-->>U: 302 to /documents (clean path)
+    end
+
+    CDP->>S3: PutObject (if clean)
+    CDP->>BE: POST /document-uploads/pending/scan-results<br/>{metadata{correlationId}, form{file},<br/>numberOfRejectedFiles}
+    BE->>DB: resolve by correlationId,<br/>set scanStatus + files (s3Key null if rejected)
 
     loop every 3s, up to 10 attempts
         U->>FE: GET /documents/status (client JS)
         FE->>BE: GET /document-uploads/{uploadId}
-        BE->>DB: findByUploadId
-        BE-->>FE: {scanStatus}
-        FE-->>U: update row (PENDING → COMPLETE/REJECTED)
+        BE-->>FE: {scanStatus, files}
+        FE-->>U: update row (PENDING to COMPLETE or REJECTED)
     end
-
-    Note over U,FE: on settled: reload page to render final state
 
     opt Download later
         U->>FE: GET /documents/{uploadId}/file
@@ -68,24 +84,27 @@ sequenceDiagram
 
 ## Key details
 
-- **Two IDs.** `uploadId` (minted by cdp-uploader, used for all user-facing
-  routes) and `correlationId` (minted by the backend, embedded in cdp
-  metadata so the async scan callback can find the document even before
-  the uploadId is fully persisted). See `DocumentService.initiate()`
-  (`repos/trade-imports-animals-backend/src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:79-106`)
-  and `handleScanResult()` (`:150-159`).
-- **Streaming, not buffering.** Both frontend→backend and backend→cdp-uploader
-  legs stream the multipart body — Hapi has `payload.output: 'stream'`
-  on the route
-  (`repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:308-318`),
-  and the backend uses `ResourceHttpMessageConverter` in
-  `CdpUploaderClient.uploadFile()`
-  (`repos/trade-imports-animals-backend/src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:95-116`)
-  so a 10MB file never sits in the JVM heap.
-- **Scan is fully asynchronous.** The `/file` POST returns 202
-  immediately; final status arrives via the `scan-results` callback.
-  Frontend polls `/documents/status` every 3s (10 attempts max) — see
-  `.../documents/client/scan-status/poll.js` and `scan-poll.js`.
-- **REJECTED files have no `s3Key`.** The download route returns 404
-  rather than streaming a quarantined file
-  (`DocumentService.findFile()` `:220-232`).
+- **Two IDs, neither minted by the backend.** `uploadId` comes from cdp-uploader and
+  keys every user-facing route; `correlationId` is minted by the frontend and rides
+  in the cdp-uploader metadata so the scan callback can find the document. The
+  callback body carries neither a document's details nor the `uploadId`, and the
+  callback URL is fixed inside the `/initiate` request — before an `uploadId`
+  exists — so the frontend is the only party holding both and has to register them.
+- **Unclaimed uploads never reach an event.** A registered document stays unclaimed
+  until the frontend claims it. `OutboxService` reads claimed `COMPLETE` documents
+  only, so a clean scan on an upload the user walked away from does not ship on the
+  next GBN-AG event. See
+  `repos/trade-imports-animals-backend/docs/design-notes.md`.
+- **Nothing is judged twice.** The page judges the submitted fields by its own rules
+  when the browser returns, and sends only validated details on the claim.
+  cdp-uploader judges the file — size and type — on receipt, and a refusal comes
+  back as a form error rather than as a document row.
+- **The size limit is stated and checked before the upload.**
+  `features/documents/upload-config.js` owns the figure, feeding the page's hint,
+  the browser's own check, and the `maxFileSize` cdp-uploader is asked to enforce.
+- **The scan is asynchronous.** The browser is returned as soon as cdp-uploader has
+  the bytes, so a row appears while the scan is still running. The client polls
+  `/documents/status` every 3s (10 attempts); a user without JavaScript uses the
+  manual refresh link.
+- **REJECTED files have no `s3Key`.** The download route answers 404 rather than
+  streaming a quarantined file (`DocumentService.findFile()`).

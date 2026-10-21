@@ -19,8 +19,10 @@ image is not.
 
 The repo keeps an **SVG** and the ticket carries a **PNG**, deliberately:
 
-- **SVG here.** It is the convention `document-upload-flow.svg` set, GitHub renders
-  it, it scales without blurring, and it is a sixth the size.
+- **SVG here.** GitHub renders it, it scales without blurring, and it is a sixth the
+  size of a PNG. That holds for a diagram whose only form is the image. A diagram
+  written as a mermaid fence needs no exported copy, because GitHub renders the
+  fence itself — see `document-upload-flow.md`.
 - **PNG on the ticket.** Jira will not generate a preview for an SVG attachment — it
   accepts the file and resolves the reference, then shows "preview unavailable". This
   was tried and reverted on 26 Aug. Do not switch the ticket back to SVG without

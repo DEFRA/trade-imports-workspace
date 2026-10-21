@@ -67,7 +67,7 @@
           "name": "A file at exactly the size limit is accepted, one byte over is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 10MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 50MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -84,7 +84,15 @@
           "name": "An oversize file submitted without the browser check running is still refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: server rejects an oversize multipart payload", "strength": "full", "notes": "bypasses client check via form.submit(); focuses file field; empty state remains" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: an oversize file past the browser check is refused on receipt", "strength": "full", "notes": "disables the browser check, so the upload service refuses it on receipt; focuses file field; empty state remains" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-004-D",
+          "name": "A file at the full size limit is uploaded, checked and read back",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "full", "notes": "byte-for-byte compare of the download against the uploaded file" }
           ]
         }
       ]
@@ -338,12 +346,20 @@
     },
     {
       "id": "REQ-DOCS-016",
-      "name": "Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave",
+      "name": "Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave",
       "coverage": "full",
       "scenarios": [
-        { "id": "SCN-DOCS-016-A", "name": "Continuing with a filled-in form saves the document", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue saves the document the trader filled in, then leaves once it is scanned", "strength": "full", "notes": "" } ] },
+        { "id": "SCN-DOCS-016-A", "name": "Continuing with a filled-in form keeps the answers and asks for the add action", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue keeps a filled-in form and asks for the add action", "strength": "full", "notes": "answers preserved; the file is re-chosen and added" } ] },
         { "id": "SCN-DOCS-016-B", "name": "Continuing with only the document type says what is missing", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with a document type and nothing else says what is missing", "strength": "full", "notes": "" } ] },
         { "id": "SCN-DOCS-016-C", "name": "Continuing with an untouched form leaves the page", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with an untouched form leaves the page, uploading being optional", "strength": "full", "notes": "" } ] }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-017",
+      "name": "Two tabs on one notification each keep their own upload",
+      "coverage": "full",
+      "scenarios": [
+        { "id": "SCN-DOCS-017-A", "name": "Each of two tabs adds its own document", "coverage": "full", "tests": [ { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "keeps two tabs on one notification from taking each other’s upload", "strength": "full", "notes": "both rows reach Check completed and both survive a reload" } ] }
       ]
     }
   ]

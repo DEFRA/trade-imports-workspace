@@ -46,13 +46,14 @@ const setOptsSchemaFor = (statuses) =>
       branch: z.string().trim().min(1).optional(),
       note: z.string().trim().min(1).optional(),
       openQuestion: z.string().trim().min(1).optional(),
-      pr: z.string().optional()
+      pr: z.string().optional(),
+      merge: z.array(z.string()).optional()
     })
     .refine(
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question or --pr.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr or --merge.'
       }
     )
 
@@ -70,6 +71,23 @@ const parsePr = (raw) => {
   return result.data
 }
 
+const MERGE_PATTERN = /^([^=\s]+)=(\S+)$/
+
+const parseMergeEntry = (entry) => {
+  const match = MERGE_PATTERN.exec(entry.trim())
+  if (!match) {
+    throw new TimError(
+      'USAGE',
+      `--merge "${entry}" must be <repoKey>=<ref>, such as tests=origin/main.`
+    )
+  }
+  return [match[1], match[2]]
+}
+
+const parseMerge = (entries) => Object.fromEntries(entries.map(parseMergeEntry))
+
+const collect = (value, previous = []) => [...previous, value]
+
 /**
  * Validate `tim backlog set`'s options before the backlog is read.
  *
@@ -86,12 +104,14 @@ export const parseSetOpts = (opts, statuses) => {
     branch: opts.branch,
     note: opts.note,
     openQuestion: opts.openQuestion,
-    pr: opts.pr
+    pr: opts.pr,
+    merge: opts.merge
   })
   return Object.fromEntries(
     Object.entries({
       ...parsed,
-      pr: parsed.pr === undefined ? undefined : parsePr(parsed.pr)
+      pr: parsed.pr === undefined ? undefined : parsePr(parsed.pr),
+      merge: parsed.merge === undefined ? undefined : parseMerge(parsed.merge)
     }).filter(([, value]) => value !== undefined)
   )
 }
@@ -182,14 +202,15 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket and branch are replaced; a note, an open question or a pull request is added'
+      'Record build state on one increment: status, commit, ticket and branch are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
       '\nExamples:\n' +
         '  tim backlog set shared/my-programme inc-004 --commit abc1234 --json\n' +
         '  tim backlog set shared/my-programme inc-004 --pr \'{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9","number":9}\' --json\n' +
-        '  tim backlog set shared/my-programme inc-004 --status done --json'
+        '  tim backlog set shared/my-programme inc-004 --status done --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json'
     )
     .option(
       '--status <status>',
@@ -206,6 +227,11 @@ export const register = (backlog, { timVersion }) => {
     .option(
       '--pr <json>',
       'A pull request as JSON with a "url". Merged into the entry with the same url, or added'
+    )
+    .option(
+      '--merge <repoKey=ref>',
+      "A ref the branch lifecycle merges into that repo before it builds the increment, such as tests=origin/main. The repo must be in the increment's repos. Repeat for more than one repo",
+      collect
     )
     .action(
       makeBacklogAction({

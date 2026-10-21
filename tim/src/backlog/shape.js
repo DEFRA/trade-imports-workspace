@@ -371,17 +371,32 @@ const upsertPr = (prs, pr) => {
   return list.map((entry, at) => (at === index ? { ...entry, ...pr } : entry))
 }
 
+const mergeRefsFor = (row, refs) => {
+  const repos = row.repos ?? []
+  const outside = Object.keys(refs).filter(
+    (repoKey) => !repos.includes(repoKey)
+  )
+  if (outside.length) {
+    throw new TimError(
+      'USAGE',
+      `${row.id} does not build ${outside.join(', ')}, so it can't merge into it. Its repos are: ${repos.join(', ') || 'none'}.`
+    )
+  }
+  return { ...(row.merge ?? {}), ...refs }
+}
+
 /**
  * Apply one set of build-state changes to one row, returning the new backlog
  * and what changed. Scalar fields are replaced; `note` and `openQuestion`
- * append; `pr` adds a pull request or merges into the one with the same url.
+ * append; `pr` adds a pull request or merges into the one with the same url;
+ * `merge` sets a ref per repo key, keeping the row's other merge refs.
  *
  * @param {object} args
  * @param {{increments: object[]}} args.backlog
  * @param {string} args.id
- * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}}} args.changes
+ * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>}} args.changes
  * @returns {{backlog: object, changed: Record<string, {before: unknown, after: unknown}>}}
- * @throws {TimError} NOT_FOUND when the id is not in the backlog
+ * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build
  */
 export const setRowFields = ({ backlog, id, changes }) => {
   const index = backlog.increments.findIndex((row) => row.id === id)
@@ -400,6 +415,9 @@ export const setRowFields = ({ backlog, id, changes }) => {
     after.openQuestions = appendTo(before.openQuestions, changes.openQuestion)
   }
   if (changes.pr !== undefined) after.prs = upsertPr(before.prs, changes.pr)
+  if (changes.merge !== undefined) {
+    after.merge = mergeRefsFor(before, changes.merge)
+  }
 
   const changed = Object.fromEntries(
     Object.keys(after)

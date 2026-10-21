@@ -18,7 +18,7 @@ sequenceDiagram
     participant BE as animals-backend<br/>(Java/Spring)
     participant CDP as cdp-uploader<br/>(DEFRA platform)
     participant S3 as S3 (documents bucket)
-    participant DB as MongoDB<br/>(accompanying_documents)
+    participant DB as MongoDB<br/>(document_upload_sessions,<br/>accompanying_documents)
 
     U->>NX: GET /documents
     NX->>FE: proxy (10M cap on /)
@@ -26,7 +26,7 @@ sequenceDiagram
     FE->>CDP: POST /initiate<br/>{redirect: /documents?upload=correlationId,<br/>callback, s3Bucket, s3Path,<br/>maxFileSize 50MB, mimeTypes,<br/>metadata{correlationId}}
     CDP-->>FE: {uploadId, statusUrl}
     FE->>BE: POST /notifications/{journeyId}/document-uploads<br/>{uploadId, correlationId}
-    BE->>DB: save AccompanyingDocument<br/>(PENDING, unclaimed, no details)
+    BE->>DB: save UploadSession<br/>(expires after 24h; no document yet)
     BE-->>FE: 201
     FE-->>U: Render form; the Add button carries<br/>formaction=/upload-and-scan/{uploadId}
 
@@ -40,8 +40,8 @@ sequenceDiagram
 
     U->>NX: GET /documents?upload=correlationId
     NX->>FE: proxy
-    FE->>BE: GET /notifications/{journeyId}/document-uploads
-    BE-->>FE: documents, each with its correlationId
+    FE->>BE: GET /notifications/{journeyId}/document-upload-sessions/{correlationId}
+    BE-->>FE: the session, or 404 if this notification never opened it
     FE->>CDP: GET /status/{uploadId}
     CDP-->>FE: {uploadStatus, form{documentType, reference,<br/>dateOfIssue, file{filename, hasError, errorCode}}}
 
@@ -49,14 +49,14 @@ sequenceDiagram
         FE-->>U: Re-render with the answers kept and the reason
     else taken on
         FE->>BE: POST /document-uploads/{uploadId}/claim<br/>{documentType, documentReference, dateOfIssue}
-        BE->>DB: store the details, mark claimed
+        BE->>DB: write the AccompanyingDocument<br/>(created here unless the scan got in first),<br/>store the details, mark claimed
         FE->>FE: append the journey's documents entry
         FE-->>U: 302 to /documents (clean path)
     end
 
     CDP->>S3: PutObject (if clean)
     CDP->>BE: POST /document-uploads/pending/scan-results<br/>{metadata{correlationId}, form{file},<br/>numberOfRejectedFiles}
-    BE->>DB: resolve by correlationId,<br/>set scanStatus + files (s3Key null if rejected)
+    BE->>DB: resolve the session by correlationId,<br/>write the document if the claim has not yet,<br/>set scanStatus + files (s3Key null if rejected)
 
     loop every 3s, up to 10 attempts
         U->>FE: GET /documents/status (client JS)
@@ -86,14 +86,23 @@ sequenceDiagram
 
 - **Two IDs, neither minted by the backend.** `uploadId` comes from cdp-uploader and
   keys every user-facing route; `correlationId` is minted by the frontend and rides
-  in the cdp-uploader metadata so the scan callback can find the document. The
+  in the cdp-uploader metadata so the scan callback can find its notification. The
   callback body carries neither a document's details nor the `uploadId`, and the
   callback URL is fixed inside the `/initiate` request — before an `uploadId`
   exists — so the frontend is the only party holding both and has to register them.
-- **Unclaimed uploads never reach an event.** A registered document stays unclaimed
-  until the frontend claims it. `OutboxService` reads claimed `COMPLETE` documents
-  only, so a clean scan on an upload the user walked away from does not ship on the
-  next GBN-AG event. See
+- **A session is not a document.** The page opens a session every time it is
+  painted, so a trader who loads, reloads and returns to it opens several; writing a
+  document then would leave the notification holding one per page view. The document
+  is written by whichever of the claim and the scan callback arrives first — both
+  mean a file genuinely exists — and the second adds to it rather than starting
+  another. Sessions nobody uploads through expire a day after they are opened.
+- **The handle alone proves nothing.** `correlationId` comes back from the browser,
+  so looking a session up is scoped to its notification and cannot reach one opened
+  elsewhere.
+- **Unclaimed uploads never reach an event.** A document the scan callback created
+  stays unclaimed until the frontend claims it. `OutboxService` reads claimed
+  `COMPLETE` documents only, so a clean scan on an upload the user walked away from
+  does not ship on the next GBN-AG event. See
   `repos/trade-imports-animals-backend/docs/design-notes.md`.
 - **Nothing is judged twice.** The page judges the submitted fields by its own rules
   when the browser returns, and sends only validated details on the claim.

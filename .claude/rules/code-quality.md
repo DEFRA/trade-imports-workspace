@@ -68,7 +68,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 
 **Logging and errors**
 
-- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by.
+- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by. A user's own input error shown back on the form is not one: do not log it. Another service refusing what this one accepted is: log it at warn.
 - Log the throwable (Java) or `{ err }` (pino), never only its message. Bad: `log.warn("Retryable error, message left for retry: {}", classified.getMessage())`. Good: `log.warn("Retryable error, message {} left for retry", messageId, classified)`.
 - No request or response bodies at INFO.
 - No empty catch. `.catch(() => undefined)` hides the failure it swallows.

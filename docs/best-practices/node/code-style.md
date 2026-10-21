@@ -454,7 +454,7 @@ setTimeout(sync, ONE_DAY_MS)
 if (password.length < MIN_PASSWORD_LENGTH) { ... }
 ```
 
-A named constant used by one function lives in that function. Module scope is for values the module shares.
+A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
 
 ```js
 // bad — a module constant that only one function reads

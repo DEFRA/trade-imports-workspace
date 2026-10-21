@@ -526,8 +526,8 @@ const HOUSE_RULES = `**Comments**
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
-- Predict every branch. A fallback, a null, an empty result and a thrown error are part of what the code returns. Bad: \`countryNameOf(countries, code)\` that returns the code when the list has no name for it. Good: \`countryLabelOf\`, the label shown: the name, else the code.
-- Rename only when the name mispredicts. A name that already predicts what the code returns and changes stays, even when another name would read better.
+- A name says every kind of value the code can return, a fallback, a null or an empty result included, and any error it throws. It need not say when each one comes back. Bad: \`countryNameOf(countries, code)\`, which can return a code. Good: \`countryLabelOf\`, the label shown: the name, else the code; and \`requestedPageOrFirst\`. Too far: \`honouredReturnOffAddressOrAddressBook\`, which spells out when the address book wins.
+- Rename only when the name mispredicts. A name that already says every kind of value the code returns, and what it changes, stays, even when another name would read better.
 - Name a parameter or local for what it holds at that point. Bad: \`id\` and \`returnTo\` for an address id and a return that has passed its checks. Good: \`addressId\` and \`honouredReturn\`.
 - Bad: \`// c-201: an amendment opens with no errors; Continue refused shows them.\` above \`const holdsSilently = readOnly || (isAmend && !refused)\`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: \`linesDroppedBy(lines, type)\` returning \`{ kept, removed }\`. Good: \`keepLinesAllowedBy(lines, type)\`.
@@ -543,7 +543,7 @@ const HOUSE_RULES = `**Comments**
 - Extend the mechanism that exists. Do not add a second one beside it. When a new class or path mirrors one you are editing, extract the shared part in the same change.
 - A pipeline whose callbacks branch or take several steps gets named helpers, so the top function reads as a few named steps.
 - Build only what this change makes reachable.
-- A named constant used by one function lives in that function. Module scope is for values the module shares.
+- A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
 - A scope you are given limits which files you open, never which lines of an opened file you fix. Every file you touch meets these rules in full.
 
 **Tests**
@@ -1503,9 +1503,9 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 `
 
 const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its
-  name, predict what it returns in every branch (a fallback, a null, an empty result or a throw included) and what it
-  changes, then read its body. Any mismatch is a \`naming\` finding. A name that already predicts both is not a finding,
-  even when another name would read better.
+  name, predict every kind of value it returns (a fallback, a null or an empty result included), any error it throws
+  and what it changes, then read its body. Any mismatch is a \`naming\` finding. A name need not say when each kind
+  comes back, and a name that already predicts them all is not a finding, even when another name would read better.
 - OPERABILITY: a branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state switch) with no
   log, or with a log support cannot search by: no ids, no cause, only an error's message. "Support cannot tell
   <what> during an incident" is a full failure scenario for a \`logging\` finding.

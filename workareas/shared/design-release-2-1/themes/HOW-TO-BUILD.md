@@ -161,8 +161,32 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
     that row creates; the rest simply build from `main` after this theme lands.
 - **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with
   `../snagging/screens/prototype/`. The prototype walk is `../prototype-specs/e2e/snagging.fit.spec.js`.
+- **Split across two laptops (21 October).** Six rows moved to design snagging B, below, so a second laptop builds
+  them in parallel: inc-210, inc-212, inc-213, inc-214, inc-217 and inc-219. This backlog keeps a `movedOut` pointer to
+  them. Its merge row, inc-222, waits for all six, then merges B's branch back into this one in every repo. The final
+  tidy, inc-221, waits for inc-222.
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging, branch lifecycle on
   feat/EUDPA-720-design-release-2-1-design-snagging"
+
+## Design snagging B: EUDPA-720, second laptop
+
+- **Ticket:** [EUDPA-720](https://eaflood.atlassian.net/browse/EUDPA-720), the same as design snagging.
+- **Branch:** `feat/EUDPA-720-design-release-2-1-design-snagging-b`, cut from the design snagging branch's tip once
+  inc-204 had landed, in the animals frontend, the plants frontend and the tests repo.
+- **Rows:** 6, moved out of design snagging with `tim backlog split --rows --to design-snagging-b`:
+  - inc-210, the search box with the joined blue icon button on the party pickers and transporter list
+  - inc-212, the party picker layout (waits for inc-210)
+  - inc-213, consignment addresses
+  - inc-214, identification details
+  - inc-217, the declaration and Notification submitted pages
+  - inc-219, the CPH number
+- **Back into the theme:** design snagging's merge row, inc-222, merges this branch into the design snagging branch
+  once all six are done. Nothing from this branch merges to `main` on its own.
+- **Workspace changes** (this backlog, `openspec/`) go on a short workspace branch,
+  `feat/NO_JIRA-design-release-2-1-snagging-b`, merged into `feat/NO_JIRA-design-release-2-1` at the end.
+- **Handover:** [`design-snagging-b/HANDOVER.md`](design-snagging-b/HANDOVER.md).
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging-b, branch lifecycle on
+  feat/EUDPA-720-design-release-2-1-design-snagging-b"
 
 The stacked themes also carry their branch in repos they don't change, such as the INS frontend, stub, reference-data
 and performance tests, each with a carry-only draft pull request. CI publishes a branch image only from a pull request,

@@ -123,6 +123,16 @@ for label in ${excluded_labels[@]+"${excluded_labels[@]}"}; do
   done
 done
 
+# A sidecar publishes its service's host port and proxies to that service, so
+# excluding the service takes the sidecar with it. Left in, the sidecar holds
+# the port the natively-run service binds and forwards to a container that is
+# no longer up.
+for excluded in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"}; do
+  case "$excluded" in
+    trade-imports-animals-frontend) excluded_compose_names+=(cdp-nginx-frontend) ;;
+  esac
+done
+
 up_services=()
 for svc in ${active_services[@]+"${active_services[@]}"}; do
   skip=0

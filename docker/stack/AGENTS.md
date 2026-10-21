@@ -90,7 +90,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `infrastructure.compose.yml` | `mssql`, `servicebus-emulator` (Azure Service Bus emulator the dynamics-gateway talks to), `toxiproxy` (sits in front of servicebus-emulator; lets you sever/restore the gateway's ASB connection for DLQ testing) | `servicebus` |
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend`, `trade-imports-plants-backend` | `backend` |
-| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend` | `frontend` |
+| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend`, `cdp-nginx-frontend` (holds host port 3000 and proxies to the animals frontend, reproducing the CDP `nginx-upstreams` sidecar: a 10M cap on `/` and a 2304M bypass on `/upload-and-scan` straight to `cdp-uploader`; config at `config/nginx/frontend.conf`) | `frontend` |
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `monitoring.compose.yml` | `prometheus` (:9090), `grafana` (:3030) — local view of Micrometer meters | `monitoring` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |

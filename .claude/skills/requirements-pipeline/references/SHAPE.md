@@ -81,7 +81,17 @@ per move in `movedOut`, and `tim backlog check` holds it to these rules:
 - **No row left reuses the id of a row that moved.**
 - **A dependency between the two backlogs is an `externalDependsOn`,** both ways. An `externalDependsOn` on a moved
   row in the old workarea is refused, naming the new one.
-- **The pointer is fixed once written.**
+- **The pointer changes only when rows move back** (below).
+
+### Moving rows back
+
+When the second machine cannot build them, `tim backlog split <workarea>/themes/<theme id> --rows <ids> --back-from
+<new theme id> --write`, run on the backlog that holds the `movedOut` pointer, moves the rows back. Each row keeps
+every field and its status, takes the old theme again, and goes before the first row that waits for it. Dependencies
+between the two backlogs become `dependsOn` again. The pointer loses the rows and is dropped once it holds none. The
+backlog they leave keeps one pointer per move in `movedBack`, and `tim backlog check` refuses a row there that reuses
+one of those ids, so neither machine builds a row twice. A theme left with no rows leaves the landing order in
+`themes.json`, and its entry says `movedBackTo`.
 
 ## Rows for the branch lifecycle
 

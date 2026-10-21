@@ -385,18 +385,34 @@ const mergeRefsFor = (row, refs) => {
   return { ...(row.merge ?? {}), ...refs }
 }
 
+const dependenciesFor = (row, ids, backlog) => {
+  const known = new Set(backlog.increments.map((candidate) => candidate.id))
+  const unknown = ids.filter((id) => !known.has(id))
+  if (unknown.length) {
+    throw new TimError(
+      'USAGE',
+      `The backlog has no ${unknown.join(', ')}, so ${row.id} can't depend on it.`
+    )
+  }
+  if (ids.includes(row.id)) {
+    throw new TimError('USAGE', `${row.id} can't depend on itself.`)
+  }
+  return [...new Set(ids)]
+}
+
 /**
  * Apply one set of build-state changes to one row, returning the new backlog
  * and what changed. Scalar fields are replaced; `note` and `openQuestion`
  * append; `pr` adds a pull request or merges into the one with the same url;
- * `merge` sets a ref per repo key, keeping the row's other merge refs.
+ * `merge` sets a ref per repo key, keeping the row's other merge refs;
+ * `dependsOn` replaces the row's dependencies with other rows of this backlog.
  *
  * @param {object} args
  * @param {{increments: object[]}} args.backlog
  * @param {string} args.id
- * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>}} args.changes
+ * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[]}} args.changes
  * @returns {{backlog: object, changed: Record<string, {before: unknown, after: unknown}>}}
- * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build
+ * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, or a dependency is the row itself or not in the backlog
  */
 export const setRowFields = ({ backlog, id, changes }) => {
   const index = backlog.increments.findIndex((row) => row.id === id)
@@ -417,6 +433,9 @@ export const setRowFields = ({ backlog, id, changes }) => {
   if (changes.pr !== undefined) after.prs = upsertPr(before.prs, changes.pr)
   if (changes.merge !== undefined) {
     after.merge = mergeRefsFor(before, changes.merge)
+  }
+  if (changes.dependsOn !== undefined) {
+    after.dependsOn = dependenciesFor(before, changes.dependsOn, backlog)
   }
 
   const changed = Object.fromEntries(

@@ -337,7 +337,92 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr or --merge.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge or --depends-on.'
+    )
+  })
+
+  test('replaces the rows an increment depends on', async () => {
+    writeBacklog([
+      row(),
+      row({ id: 'inc-002' }),
+      row({ id: 'inc-003', dependsOn: ['inc-001'] })
+    ])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-003',
+      '--depends-on',
+      'inc-001, inc-002'
+    ])
+
+    expect([run.exitCode, readRows()[2].dependsOn]).toEqual([
+      0,
+      ['inc-001', 'inc-002']
+    ])
+  })
+
+  test('clears the rows an increment depends on when given none', async () => {
+    writeBacklog([row(), row({ id: 'inc-002', dependsOn: ['inc-001'] })])
+
+    await runTim(['set', WORKAREA, 'inc-002', '--depends-on', ''])
+
+    expect(readRows()[1].dependsOn).toEqual([])
+  })
+
+  test('refuses, writing nothing, a dependency the backlog does not have', async () => {
+    writeBacklog([row(), row({ id: 'inc-002' })])
+    const before = readFileSync(backlogPath(), 'utf8')
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-002',
+      '--depends-on',
+      'inc-001,inc-009'
+    ])
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).errors[0].message,
+      readFileSync(backlogPath(), 'utf8')
+    ]).toEqual([
+      2,
+      "The backlog has no inc-009, so inc-002 can't depend on it.",
+      before
+    ])
+  })
+
+  test('refuses an increment that depends on itself', async () => {
+    writeBacklog([row()])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--depends-on',
+      'inc-001'
+    ])
+
+    expect([run.exitCode, envelopeOf(run).errors[0].message]).toEqual([
+      2,
+      "inc-001 can't depend on itself."
+    ])
+  })
+
+  test('refuses a dependency that is not a row id', async () => {
+    writeBacklog([row()])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--depends-on',
+      'inc 002'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--depends-on must be row ids separated by commas, such as inc-206,inc-210. "inc 002" is not a row id.'
     )
   })
 

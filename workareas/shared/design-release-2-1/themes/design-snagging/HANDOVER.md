@@ -2,12 +2,13 @@
 
 Paste the block below into a fresh Claude Code session opened at the workspace root.
 
-**Split across two laptops (21 October).** Six rows moved to `design-snagging-b`, built on laptop B on
-`feat/EUDPA-720-design-release-2-1-design-snagging-b`: inc-210, inc-212, inc-213, inc-214, inc-217 and inc-219. This
-backlog keeps a `movedOut` pointer to them, so `tim backlog next` here never offers them. The merge row inc-222 waits
-for all six to be done on laptop B, then merges that branch back into this one in every repo; inc-221, the final
-tidy, waits for inc-222. Count this laptop's progress against the rows this backlog still holds. Laptop B's handover:
-[`../design-snagging-b/HANDOVER.md`](../design-snagging-b/HANDOVER.md).
+**The split across two laptops was reversed on 21 October. This laptop builds every row.** Laptop B is out of
+action and landed nothing. Its six rows came back with `tim backlog split --rows --back-from design-snagging-b`:
+inc-210, inc-212, inc-213, inc-214, inc-217 and inc-219. Each keeps every field and stays todo; inc-212 still waits for
+inc-210. The `movedOut` pointer is gone. The merge row inc-222 is dropped, because there is no branch to merge back.
+The final tidy, inc-221, now waits for the six rows (and inc-206 to inc-209) instead. Laptop B tried inc-210 once and
+failed the ladder; the note on inc-210 says what went wrong. Laptop B's draft pull requests and branches are still
+open: Sam decides what to do with them.
 
 ````
 Build the Design Release 2.1 design snagging theme end to end, on one branch, and stop before anything merges: Sam does a technical review first. Use the requirements-pipeline skill's BUILD phase (branch lifecycle) and the theme-ticket skill around it. Follow workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md and these steps in order.

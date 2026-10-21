@@ -157,7 +157,18 @@ const sourceBacklogOf = ({ backlog, pointer, rows }) => {
   }
 }
 
-const relinkOf = ({ workarea, backlog, isStale, target }) => {
+/**
+ * One other backlog's rows repointed: every `externalDependsOn` entry that
+ * `isStale` matches now names `target` as its workarea.
+ *
+ * @param {object} args
+ * @param {string} args.workarea - The other backlog's workarea
+ * @param {object} args.backlog - The other backlog
+ * @param {(entry: object) => boolean} args.isStale
+ * @param {string} args.target - The workarea the matched entries now name
+ * @returns {{workarea: string, relinked: object[], backlog: object}[]} One entry when anything changed, none otherwise
+ */
+export const relinkOf = ({ workarea, backlog, isStale, target }) => {
   const relinked = rowsOf(backlog).flatMap((row) =>
     asList(row.externalDependsOn)
       .filter(isStale)

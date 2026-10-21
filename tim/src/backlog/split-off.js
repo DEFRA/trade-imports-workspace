@@ -250,6 +250,42 @@ export const movedOutProblems = (backlog) => {
 }
 
 /**
+ * The backlog's moved-back pointers that name a theme: one per
+ * `tim backlog split <home workarea> --rows … --back-from <this theme>` run,
+ * each naming the rows that went back to the backlog they first moved out of.
+ *
+ * @param {object} backlog
+ * @returns {object[]}
+ */
+export const movedBackOf = (backlog) =>
+  Array.isArray(backlog?.movedBack)
+    ? backlog.movedBack.filter(
+        (pointer) => isPlainObject(pointer) && isText(pointer.theme)
+      )
+    : []
+
+/**
+ * The moved-back rule a schema cannot check, for a split backlog: no row here
+ * reuses the id of a row that moved back, so no machine builds it twice.
+ *
+ * @param {object} backlog - A split backlog, with `theme`
+ * @returns {string[]}
+ */
+export const movedBackProblems = (backlog) => {
+  const pointerOfRow = new Map(
+    movedBackOf(backlog).flatMap((pointer) =>
+      textsIn(pointer.increments).map((id) => [id, pointer])
+    )
+  )
+  return rowsOf(backlog)
+    .filter((row) => isText(row.id) && pointerOfRow.has(row.id))
+    .map(
+      (row) =>
+        `${row.id} moved back to ${pointerOfRow.get(row.id).workarea}, theme "${pointerOfRow.get(row.id).theme}", which builds it. Give this row a new id, or build it there.`
+    )
+}
+
+/**
  * The split-off rules a schema cannot check, for a backlog with `themes`:
  * a theme is split off once, never also in `themes`; every theme a pointer
  * depends on is still named; no row here is in a split-off theme or reuses

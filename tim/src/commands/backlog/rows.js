@@ -47,13 +47,14 @@ const setOptsSchemaFor = (statuses) =>
       note: z.string().trim().min(1).optional(),
       openQuestion: z.string().trim().min(1).optional(),
       pr: z.string().optional(),
-      merge: z.array(z.string()).optional()
+      merge: z.array(z.string()).optional(),
+      dependsOn: z.string().optional()
     })
     .refine(
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr or --merge.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge or --depends-on.'
       }
     )
 
@@ -86,6 +87,23 @@ const parseMergeEntry = (entry) => {
 
 const parseMerge = (entries) => Object.fromEntries(entries.map(parseMergeEntry))
 
+const ROW_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
+
+const parseDependsOn = (raw) => {
+  const ids = raw
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+  const invalid = ids.filter((id) => !ROW_ID.test(id))
+  if (invalid.length) {
+    throw new TimError(
+      'USAGE',
+      `--depends-on must be row ids separated by commas, such as inc-206,inc-210. "${invalid.join('", "')}" is not a row id.`
+    )
+  }
+  return ids
+}
+
 const collect = (value, previous = []) => [...previous, value]
 
 /**
@@ -105,13 +123,18 @@ export const parseSetOpts = (opts, statuses) => {
     note: opts.note,
     openQuestion: opts.openQuestion,
     pr: opts.pr,
-    merge: opts.merge
+    merge: opts.merge,
+    dependsOn: opts.dependsOn
   })
   return Object.fromEntries(
     Object.entries({
       ...parsed,
       pr: parsed.pr === undefined ? undefined : parsePr(parsed.pr),
-      merge: parsed.merge === undefined ? undefined : parseMerge(parsed.merge)
+      merge: parsed.merge === undefined ? undefined : parseMerge(parsed.merge),
+      dependsOn:
+        parsed.dependsOn === undefined
+          ? undefined
+          : parseDependsOn(parsed.dependsOn)
     }).filter(([, value]) => value !== undefined)
   )
 }
@@ -202,7 +225,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket and branch are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
+      'Record build state on one increment: status, commit, ticket, branch and dependencies are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
@@ -210,7 +233,10 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --commit abc1234 --json\n' +
         '  tim backlog set shared/my-programme inc-004 --pr \'{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9","number":9}\' --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status done --json\n' +
-        '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json'
+        '  tim backlog set shared/my-programme inc-004 --status dropped --note "Not needed any more" --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json\n' +
+        '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
+        '  tim backlog set shared/my-programme inc-009 --depends-on "" --json'
     )
     .option(
       '--status <status>',
@@ -232,6 +258,10 @@ export const register = (backlog, { timVersion }) => {
       '--merge <repoKey=ref>',
       "A ref the branch lifecycle merges into that repo before it builds the increment, such as tests=origin/main. The repo must be in the increment's repos. Repeat for more than one repo",
       collect
+    )
+    .option(
+      '--depends-on <ids>',
+      'Replace the rows the increment waits for in this backlog, separated by commas. Give "" for none'
     )
     .action(
       makeBacklogAction({

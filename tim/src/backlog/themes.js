@@ -1,5 +1,7 @@
 import { findCycle } from './graph.js'
 import {
+  movedBackOf,
+  movedBackProblems,
   movedOutOf,
   movedOutProblems,
   splitOffOf,
@@ -334,6 +336,7 @@ const splitBacklogProblems = (backlog) => {
           `The backlog is theme "${backlog.theme}"'s split, so it cannot have "splitOff" of its own.`
         ]),
     ...movedOutProblems(backlog),
+    ...movedBackProblems(backlog),
     ...rowsOf(backlog)
       .filter(
         (row) =>
@@ -433,6 +436,14 @@ export const externalDependencyProblems = (backlog, readWorkareaBacklog) =>
         if (moved) {
           return [
             `${row.id} depends on ${id} in ${workarea}, which moved it to ${moved.workarea}. Point the externalDependsOn there.`
+          ]
+        }
+        const movedBack = movedBackOf(other).find((pointer) =>
+          asTextList(pointer.increments).includes(id)
+        )
+        if (movedBack) {
+          return [
+            `${row.id} depends on ${id} in ${workarea}, which moved it back to ${movedBack.workarea}. Point the externalDependsOn there.`
           ]
         }
         return [

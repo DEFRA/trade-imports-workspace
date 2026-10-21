@@ -1503,7 +1503,9 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 `
 
 const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its
-  name, predict what it returns and what it changes, then read its body. Any mismatch is a \`naming\` finding.
+  name, predict what it returns in every branch (a fallback, a null, an empty result or a throw included) and what it
+  changes, then read its body. Any mismatch is a \`naming\` finding. A name that already predicts both is not a finding,
+  even when another name would read better.
 - OPERABILITY: a branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state switch) with no
   log, or with a log support cannot search by: no ids, no cause, only an error's message. "Support cannot tell
   <what> during an incident" is a full failure scenario for a \`logging\` finding.

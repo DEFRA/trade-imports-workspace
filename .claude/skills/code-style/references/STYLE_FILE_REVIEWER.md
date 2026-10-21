@@ -187,8 +187,11 @@ were given and the severity definitions above. Then walk every comment
 and every name in the whole file against the exception list in step 3a.
 
 For each name, predict first: read the name alone and write down what
-it returns and what it changes. Then read the body. A mismatch is a
-finding.
+it returns in every branch (a fallback, a null, an empty result or a
+throw included) and what it changes. Then read the body. A mismatch is
+a finding. A name that already predicts both is not a finding, even
+when another name would read better: propose a rename only to fix a
+misprediction.
 
 Feature folders: production controllers under
 `sets/*/journeys/*/features/*` are independent by design, so

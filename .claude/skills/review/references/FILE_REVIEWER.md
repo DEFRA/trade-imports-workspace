@@ -219,11 +219,14 @@ end state as the Must, not as a question.
 For every function, method, variable, constant, flag and test helper
 the diff adds or renames, and every name a changed line calls:
 
-1. Read the name alone. Write down what you predict it returns and
-   what it changes (state, session, database, redirect, log).
+1. Read the name alone. Write down what you predict it returns in
+   every branch (a fallback, a null, an empty result or a throw
+   included) and what it changes (state, session, database, redirect,
+   log).
 2. Read the body. Compare.
 3. A mismatch is a finding. So is a name that needs its comment to be
-   understood.
+   understood. A name that already predicts both is not a finding,
+   even when another name would read better.
 
 Examples from this codebase:
 

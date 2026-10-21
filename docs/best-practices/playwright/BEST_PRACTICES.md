@@ -103,7 +103,7 @@ test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
 ```
 
 - Seed through the frontend's own save-and-continue routes (`AnimalsSeededJourney`), never by writing to the backend or the database. Only the frontend writes the full record the UI reads back.
-- A seeded draft or submission carries only the mandatory answers, as `submitNotification()` does. Pass `ALL_DATA_ANSWERS_WITHOUT_DOCUMENT` when the test needs the optional ones. Never type the answers in the test: read them from the answer sets in `domain/animals/constants/journey-options.ts`.
+- A seeded draft or submission carries only the mandatory answers, as `submitNotification()` does. Pass `ALL_ANSWERS_WITHOUT_DOCUMENT` when the test needs the optional ones. Never type the answers in the test: read them from the answer sets in `domain/animals/constants/journey-options.ts`.
 - When unsure, keep the test in the browser and say so in the pull request.
 - Never seed for speed. A slow journey test is coverage worth keeping.
 - A test behaves the same on the local stack and on CDP. No flag that seeds on one environment and clicks through on the other.

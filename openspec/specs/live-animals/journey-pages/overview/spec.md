@@ -171,14 +171,13 @@ For a notification, the system MUST mark the "Your commodities" block, the task 
 
 ### Requirement: The third task of About the consignment is Main import reason
 **ID**: REQ-OVERVIEW-011
-The system MUST title the third task of "1. About the consignment" "Main import reason" and MUST NOT show "Main reason for import" on Overview.
+The system MUST title the third task of "1. About the consignment" "Main import reason".
 
 #### Scenario: The first section lists Main import reason third
 **ID**: SCN-OVERVIEW-011-A
 - **GIVEN** a new notification has just been started
 - **WHEN** the user views Overview
 - **THEN** "1. About the consignment" lists "Where is this consignment coming from?", "What are you importing?" and "Main import reason", in that order
-- **AND** "Main reason for import" does not appear
 
 ### Requirement: The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details
 **ID**: REQ-OVERVIEW-012

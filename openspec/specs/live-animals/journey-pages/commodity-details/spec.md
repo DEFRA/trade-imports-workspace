@@ -130,7 +130,7 @@ The system MUST return the user to the commodity selection page once every chose
 
 ### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main reason for import that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
@@ -140,7 +140,7 @@ The system MUST return the user to the commodity selection page ("What are you i
 
 #### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept
 **ID**: SCN-COMMODITY-DETAILS-009-B
-- **GIVEN** the user is in the opening sequence and reached commodity details from main reason for import
+- **GIVEN** the user is in the opening sequence and reached commodity details from main import reason
 - **WHEN** they follow the back link
 - **THEN** "What are you importing?" is shown, with the species they chose still chosen
 

@@ -185,11 +185,10 @@ The system MUST head the page "Main import reason" and give it the browser title
 - **WHEN** it loads
 - **THEN** its heading reads "Main import reason"
 - **AND** the browser title reads "Main import reason - Import notification service - GOV.UK"
-- **AND** "Main reason for import" does not appear on the page
 
-### Requirement: Each destination country and port of exit select opens on Select one, with no divider
+### Requirement: Each destination country and port of exit select and search box opens on Select one, with no divider
 **ID**: REQ-IMPORT-REASON-012
-The system MUST start every destination country and port of exit select on the page with an empty option reading "Select one", selected while nothing is chosen, followed straight by the places or ports with no divider line.
+The system MUST start every destination country and port of exit select on the page with an empty option reading "Select one", selected while nothing is chosen, followed straight by the places or ports with no divider line, and MUST read "Select one" in each such search box with JavaScript while nothing is chosen.
 
 #### Scenario: A destination country select opens on Select one
 **ID**: SCN-IMPORT-REASON-012-A
@@ -204,6 +203,12 @@ The system MUST start every destination country and port of exit select on the p
 - **WHEN** the port of exit list is read
 - **THEN** its first option reads "Select one" and is selected
 - **AND** the next option is the first port, with no divider line between
+
+#### Scenario: Each destination country and port of exit search box reads Select one while empty
+**ID**: SCN-IMPORT-REASON-012-C
+- **GIVEN** the user has chosen a reason that reveals a destination country or a port of exit
+- **WHEN** the page has JavaScript and nothing is chosen
+- **THEN** each such search box reads "Select one"
 
 ### Requirement: Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format
 **ID**: REQ-IMPORT-REASON-013

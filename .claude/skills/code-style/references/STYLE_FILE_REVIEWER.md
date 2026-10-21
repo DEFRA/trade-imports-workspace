@@ -151,6 +151,11 @@ comment and every name is in scope, changed or not:
 decision. Drop a finding only when the code shows it is factually
 wrong.
 
+Copy, layout and components that a design source sets (the
+prototype, a design release, the ticket's acceptance criteria) are
+not style findings, even where a GDS guide disagrees: that goes to
+the designer.
+
 ### 3b. REFRESH mode — check old violations and new changes
 
 ```bash

@@ -168,6 +168,9 @@ seven are code quality: `naming`, `comments`, `structure`, `duplication`, `loggi
   predict what the code returns and what it changes, the comment is accurate and describes only the lines
   below it, the branch does log once with the ids support searches by. "Taste", "pre-existing", "out of
   scope", "a comparable file does it" and "feature folders are independent" are never reasons to drop one.
+- **Design.** Copy, layout and components the increment's design source sets (the prototype, a design
+  release, the `acceptanceCriteria`) are not findings, even where a GDS guide disagrees. Code that differs
+  from its design source is.
 
 Set `confidence` honestly after that check: `certain` (you can cite the evidence), `probable`, `speculative`
 (report it, but say so). A house-rule breach is never taste.

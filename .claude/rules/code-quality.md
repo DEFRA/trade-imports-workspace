@@ -58,6 +58,10 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 - A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
 - A scope you are given limits which files you open, never which lines of an opened file you fix. Every file you touch meets these rules in full.
 
+**Design**
+
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. A review never raises them as findings, even where a guide such as the GDS style guide disagrees. Take that disagreement to the designer. Code that differs from its design source is a finding.
+
 **Tests**
 
 - Set-up used by two tests goes in the shared test helper. Promoting a helper deletes the local copies.

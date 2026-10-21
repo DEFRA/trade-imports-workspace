@@ -343,6 +343,11 @@ differ, the name does predict what the code returns and changes, or
 the comment is accurate and describes only its own lines. Quote the
 code that shows it.
 
+Copy, layout and components that a design source sets (the
+prototype, a design release, the ticket's acceptance criteria) are
+not findings, even where a GDS guide disagrees: that goes to the
+designer. Code that differs from its design source is a finding.
+
 Functional findings (`correctness`, `security`, `error-handling`,
 `coverage-gap`) are the other way round: raise one only with evidence,
 a concrete failure scenario, the acceptance criterion it breaks, or the

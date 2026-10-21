@@ -30,7 +30,7 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list the chosen commodities in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row — one row per commodity, except under commodity code 01061900, where each chosen species has its own row named by the species — and MUST let the user remove a row on its own: removing a commodity row drops every species of that commodity, removing a species row drops that one species and leaves the rest of its commodity, and neither affects another row's saved counts. Removing the last species under a commodity removes that commodity's row too.
+The system MUST list the chosen commodities in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a row on its own without affecting another row's saved counts.
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
@@ -50,6 +50,7 @@ The system MUST list the chosen commodities in a table with the columns "Commodi
 - **WHEN** they view the commodity details page
 - **THEN** the 01061900 species has its own row, named by the species, with the commodity's code
 - **AND** removing that row drops only that species, while a row under any other code removes its whole commodity
+- **AND** removing the last species under a commodity removes that commodity's row too
 
 #### Scenario: Each row's Species cell lists the Latin names chosen under it
 **ID**: SCN-COMMODITY-DETAILS-003-D

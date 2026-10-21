@@ -90,14 +90,14 @@ module.exports = [
   // ===== Session 4 — code-style =====
   {
     n: 4, skill: "code-style", file: "04-code-style",
-    oneLiner: "Lint a PR's JavaScript against the team's 17-rule style guide, then triage and apply the fixes.",
+    oneLiner: "Lint a PR's JavaScript against the team's 16-rule style guide, then triage and apply the fixes.",
     whyTitle: "One rule set, applied consistently",
     why: [
       "Plain linters miss the things this team actually cares about: project-specific conventions, and JSDoc that has quietly drifted out of sync with the code. Catching those by eye across a multi-repo PR is dull, slow work — and the kind that gets skipped under pressure.",
-      "code-style reviews every .js file in a ticket's PRs against one agreed 17-rule guide, lets you triage the findings, then applies the ones you accept — editing, testing and committing each file for you, and backing out anything that breaks a test.",
+      "code-style reviews every .js file in a ticket's PRs against one agreed 16-rule guide, lets you triage the findings, then applies the ones you accept — editing, testing and committing each file for you, and backing out anything that breaks a test.",
     ],
     benefits: [
-      ["One agreed standard", "the same 17-rule guide applied to every file, every time"],
+      ["One agreed standard", "the same 16-rule guide applied to every file, every time"],
       ["Catches JSDoc drift", "the doc-vs-code mismatches a plain linter won't"],
       ["Fixes, not just flags", "accepted fixes applied, tested and committed for you"],
     ],
@@ -112,7 +112,7 @@ module.exports = [
     outputs: [
       ["style-review.<repo>.md", "verdict, file-by-file summary, and the Items table"],
       ["Items table", "each row: the rule, severity (FAIL / WARN), the issue, and the suggested fix"],
-      ["style-rules.<repo>.md", "the baked rule bundle it checks against (the 17 rules + JSDoc)"],
+      ["style-rules.<repo>.md", "the baked rule bundle it checks against (the 16 rules + JSDoc)"],
       ["commits", "applied fixes land as real commits; broken tests are reverted, not forced"],
     ],
     usage: [

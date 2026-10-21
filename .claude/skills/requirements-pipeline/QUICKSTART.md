@@ -16,9 +16,13 @@ Read `workareas/shared/<programme>/report.md`. It starts with a summary, then an
 
 ## 2. Build
 
-Every run goes ticket → branch → build → PR → CI → merge → ticket done — the
-loop merges each increment itself once it is green, reviewed, adversarially
-verified and judged, then works out the next one and does it again:
+Every run goes ticket → branch → plan → build → PR → CI → merge → ticket done.
+A reviewer checks each plan before any code is written. A plan built wrong
+(wrong layer or owner, wrong scope, tests that cannot prove the row) stops the
+row; smaller gaps the reviewer finds become required work for the build, and the
+review after it checks they were done. The loop merges each
+increment itself once it is green, reviewed, verified and judged, and every
+fix after that is reviewed too. Then it works out the next one and does it again:
 
 > Build every increment from shared/hrp-origin-and-commodity, epic EUDPA-12345.
 
@@ -34,4 +38,4 @@ To put a human approval gate back in front of every merge, say "... and require 
 
 ## When it stops
 
-It prints a handover prompt. Paste that into a new session to carry on. It stops when it has built what you asked for, when the backlog has nothing left to build, or when it runs out of the 1,000 agents one run gets — none of which is a failure, and the last two just mean launching it again. Otherwise it stops for a genuine failure — CI that stayed red, a red base branch, a half-merged increment — or for an increment carrying a designed review gate. `awaiting-approval` and `changes-requested` only happen if you asked for the human approval gate; otherwise the loop never waits on a person.
+It prints a handover prompt. Paste that into a new session to carry on. It stops when it has built what you asked for, when the backlog has nothing left to build, or when it runs out of the 1,000 agents one run gets — none of which is a failure, and the last two just mean launching it again. An increment that stops on a platform setting or on access only a person can grant (a missing repo secret, CDP credentials) is parked, logged in `deferred.md` beside the backlog, and the session relaunches to build the rest. A row with a review gate is landed, its check saved for the end of the theme, and the run carries on. Otherwise it stops for a genuine failure: CI that stayed red on the code, a red base branch, a half-merged increment. `awaiting-approval` and `changes-requested` only happen if you asked for the human approval gate; otherwise the loop never waits on a person.

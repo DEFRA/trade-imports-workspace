@@ -2,18 +2,22 @@
 # Append a new item to items.{repo}.json at the next available ID.
 # Usage:
 #   style-add-item.sh EUDPA-XXXXX --repo REPO --file PATH --line N --rule R --severity S \
-#                     --issue "..." --fix "..." [--best-practice PATH]
+#                     --issue "..." --fix "..." [--category C] [--best-practice PATH]
 #
 # Disposition, Status, and Notes start null.
 # Prints the new ID to stdout.
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../review/finding-categories.sh"
+
 TICKET=""
 REPO=""
 FILE=""
 LINE=""
 RULE=""
+CATEGORY=""
 SEVERITY=""
 ISSUE=""
 FIX=""
@@ -22,10 +26,11 @@ BEST_PRACTICE=""
 usage() {
     cat <<EOF
 Usage: $0 EUDPA-XXXXX --repo REPO --file PATH --line N --rule R --severity S \\
-    --issue "..." --fix "..." [--best-practice PATH]
+    --issue "..." --fix "..." [--category C] [--best-practice PATH]
 
   --rule R        Style guide rule number (1-17)
   --severity S    One of: FAIL, WARN
+  --category C    One of: ${CODE_QUALITY_CATEGORIES[*]}
   --best-practice Optional citation path under docs/best-practices/
 EOF
     exit 1
@@ -37,6 +42,7 @@ while [[ $# -gt 0 ]]; do
         --file) FILE="$2"; shift 2 ;;
         --line) LINE="$2"; shift 2 ;;
         --rule) RULE="$2"; shift 2 ;;
+        --category) CATEGORY="$2"; shift 2 ;;
         --severity) SEVERITY="$2"; shift 2 ;;
         --issue) ISSUE="$2"; shift 2 ;;
         --fix) FIX="$2"; shift 2 ;;
@@ -62,9 +68,12 @@ case "$SEVERITY" in
     *) echo "Invalid --severity: $SEVERITY (must be FAIL|WARN)" >&2; exit 1 ;;
 esac
 
+if [[ -n "$CATEGORY" ]]; then
+    refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}"
+fi
+
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
 
-# Initialise if missing so callers don't have to know.
 if [[ ! -f "$target" ]]; then
     mkdir -p "$(dirname "$target")"
     jq -n --arg ticket "$TICKET" --arg repo "$REPO" \
@@ -78,6 +87,7 @@ jq \
     --arg file "$FILE" \
     --arg line "$LINE" \
     --arg rule "$RULE" \
+    --arg category "$CATEGORY" \
     --arg severity "$SEVERITY" \
     --arg issue "$ISSUE" \
     --arg fix "$FIX" \
@@ -86,7 +96,10 @@ jq \
         id: $id,
         file: $file,
         line: $line,
-        rule: $rule,
+        rule: $rule
+    }
+    + (if $category != "" then {category: $category} else {} end)
+    + {
         severity: $severity,
         issue: $issue,
         fix: $fix,

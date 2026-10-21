@@ -1,8 +1,8 @@
 # Codex brief — REVIEW FIXER
 
 You apply a ruled list of fixes to an increment's **staged, uncommitted** change. The increment id and
-the fix list are in the prompt that pointed you here. The list has already been reviewed, refuted and
-judged — **apply exactly what it says and nothing else.**
+the fix list are in the prompt that pointed you here. The list has already been reviewed, verified and
+judged, or found by the style re-review of an earlier fix — **apply exactly what it says and nothing else.**
 
 ## Your shell is normal
 
@@ -41,6 +41,16 @@ land stage commits them.
   improvise an alternative, and never weaken or delete a test to make a fix land.
 - Read the increment before you start: its `acceptanceCriteria` are the contract every fix serves, and
   `<plan>` is how it was built.
+- Read `<workspace>/.claude/rules/code-quality.md` in full before your first edit. Its house rules bind
+  every line of code, comment, name, test title and log line you write, and they win over any guide,
+  exemplar or neighbouring file that says otherwise. The prompt that pointed you here repeats them. A
+  code-quality fix is delete, rename or extract. For a comment finding, delete the comment; where it explains
+  a name, rename and delete the comment. Never reword it. Where a fix names the same change in a twin repo,
+  make it there too.
+- **Where the prompt asks you to record the staged trees**, run `git -C <repo> write-tree` in each repo before
+  your first edit there, and report each hash in `treesBeforeFix` with its repo key. A Claude reviewer reads
+  your own hunks against those trees after you finish, and sends back any new code-quality finding once.
+  Where the prompt does not ask, report `treesBeforeFix` as an empty list.
 - Keep the house idiom: for Java, mirror the package idiom already in the repo you are editing — read
   what is there rather than assuming a package name. Otherwise the workspace best practices under
   `<workspace>/docs/best-practices/`.
@@ -48,11 +58,12 @@ land stage commits them.
 
 ## Verify before you report
 
-A repo's own rungs — format check, lint, typecheck, unit tests, `mvn verify` — belong to `tim build gate`,
-which reads them from `<skills>/requirements-pipeline/references/gates.json`. Check your fixes with its unit
-phase, and never pick, add or substitute a script for those rungs:
+A repo's own rungs — format check, lint, typecheck, unit tests, `mvn verify`, the duplication check on changed
+test files — belong to `tim build gate`, which reads them from `<skills>/requirements-pipeline/references/gates.json`.
+Check your fixes with its unit phase, and never pick, add or substitute a script for those rungs:
 `<gateUnit>`
-It prints one JSON line; each rung has an `ok` and a `log`. Where `<gateUnit>` is bound to `none`, this row's
+It prints one JSON line; each rung has an `ok` and a `log`. A red `duplication` rung is repaired by moving the
+copied set-up into the shared test helper and deleting every copy. Where `<gateUnit>` is bound to `none`, this row's
 gate phases leave out unit: run no gate phase. Then run the plan's sections 5 and 6 checks as
 the plan writes them, each to a file under `<logs>`, read once.
 
@@ -82,8 +93,10 @@ what you tried.
 ## Report
 
 Your final message must satisfy the schema given via `--output-schema`: `ok`, `summary`, `changedFiles`,
-`notes`. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`, the repo key being one of
+`notes`, `treesBeforeFix`. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`, the repo key being one of
 the keys in `<repos>` (or `workspace` for a file in the workspace repo itself) — review is grouped by repo
 and language from it. In `notes`, state for
 each ruled fix whether it was applied, name anything you deliberately left alone, and write down any
-diagnosis of a red suite and what got it green — the ladder stage is given your notes.
+diagnosis of a red suite and what got it green — the ladder stage is given your notes. Where a fix changed
+behaviour, wrote a "full" coverage link or made a doc untrue, add the `Spec sync:`, `Probes:` or
+`Docs updated:` line the prompt asks for, each on a line of its own.

@@ -740,6 +740,8 @@ Common `autocomplete` values: `given-name`, `family-name`, `email`, `tel`, `bday
 
 ## 9. Custom project components
 
+Before adding a component, a CSS rule or any JavaScript behaviour, follow "Stay in the GOV.UK toolbox" in `../gds/components.md`: GOV.UK Frontend first, every page works without JavaScript, and each prototype behaviour is triaged before it is built.
+
 Components follow the `macro.njk` + `template.njk` pattern under `src/server/common/components/`:
 
 ```nunjucks

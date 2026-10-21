@@ -78,16 +78,34 @@ mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/p
 Then read the file you just created. Confirm both `Tests run:` totals
 (surefire and failsafe) and `BUILD SUCCESS`.
 
-**If tests fail in any repo:**
-```
-CANNOT START: pre-existing test failures in {repo}
-Unit: [pass/fail summary]
-Integration: [pass/fail summary, backend only]
-E2E: [pass/fail summary]
+**If tests fail in any repo: fix first, then continue.** A red test on
+the branch is ours to fix, whoever caused it and whenever. "Pre-existing",
+"flaky", "unrelated" and "separate issue" are not reasons to stop or
+skip.
 
-Resolve failures before running the implementor.
-```
-And stop. Do not attempt any fixes.
+1. Report what is red:
+   ```
+   RED BEFORE FIXES: {repo}
+   Unit: [pass/fail summary]
+   Integration: [pass/fail summary, backend only]
+   E2E: [pass/fail summary]
+   Fixing these first.
+   ```
+2. Diagnose from the structured artifacts (`error-context.md`,
+   Surefire and Failsafe reports), never from console output. A test
+   that fails differently on each run points to a race to find, not
+   to the environment.
+3. Fix the cause in the repo it lives in, on the current branch. Commit
+   it on its own, before any review item, with a message that names
+   the failing test.
+4. Re-run the same suite to a new file and read it. Repeat until
+   green.
+5. Continue to Step 4.
+
+Stop only when the fix needs something you cannot do from here (a
+credential, a platform change, a decision that belongs to someone
+else). Then report exactly what is red, what you tried, and what is
+needed.
 
 ---
 
@@ -109,6 +127,13 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/re
 **Fix:** {fix text from the items table}
 ```
 
+Pass the Fix text whole. Its **Must** is what the fixer has to make
+true; its **One way** is a suggestion the fixer may improve on.
+
+Fixes are applied by default and reported after. Use `Discuss` only for
+a genuine engineering trade-off. A choice between GOV.UK guidance and
+what the page does is not one: follow GOV.UK.
+
 Wait for the subagent to return before spawning the next one (fixes
 within the same repo may affect shared files or tests).
 
@@ -119,7 +144,7 @@ within the same repo may affect shared files or tests).
 | `DONE` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
 | `SKIPPED` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
 | `FAILED` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
-| `CANNOT START` | **Stop immediately.** Report pre-existing failures. Ask user to resolve before re-running. |
+| `RED` | `review-set-status.sh ... --status Done --note "{short-sha}"` for the item, then fix the failing test as in Step 3 (fix first, then continue) before spawning the next fixer. |
 | `WON'T FIX` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
 
 ---
@@ -153,6 +178,7 @@ Results:
   🔍 Auto-resolved:  N items (already fixed in code)
   ❌ Won't Fix:      N items (fixer determined not applicable)
   🔥 Failed:         N items
+  🧪 Red tests fixed: N (commits listed below)
 
 Fixed:
   #{N} [{repo}] — {description} ({short-sha})
@@ -160,6 +186,10 @@ Fixed:
 
 Failed (Status=Failed in the items table — re-run to retry):
   #{N} [{repo}] — {reason}
+  ...
+
+Red tests fixed:
+  [{repo}] {spec or test class} — {cause} ({short-sha})
   ...
 
 Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.

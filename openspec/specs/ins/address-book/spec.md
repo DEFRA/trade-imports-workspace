@@ -159,7 +159,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 **ID**: SCN-INS-ADDR-011-A
 - **GIVEN** the user opens the delete confirmation for an address
 - **WHEN** the page is shown
-- **THEN** the page is headed 'Delete this address?', shows one 'Address' row holding the name, each address line and the country on separate lines, with no email or phone
+- **THEN** the page is headed 'Delete this address?', shows one 'Address' row holding the name, address lines 1 and 2, town or city, county, postcode and country, one per line, with no email or phone
 - **AND** it says 'Confirm that you want to delete this address.' and 'This action cannot be undone.', with a way back to its details
 
 #### Scenario: Following No, cancel leaves the address untouched
@@ -177,7 +177,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 #### Scenario: An address with nothing to show is summarised as Not applicable
 **ID**: SCN-INS-ADDR-011-E
-- **GIVEN** an address with no name, no address lines and no country
+- **GIVEN** an address with no name, address, postcode or country
 - **WHEN** the user opens its delete confirmation
 - **THEN** the Address row shows 'Not applicable'
 
@@ -301,9 +301,9 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 - **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
 
-### Requirement: The address form groups its fields under 'Address' and 'Contact details', as Design Release 2.1 does
+### Requirement: The address form groups its fields under 'Address' and 'Contact details'
 **ID**: REQ-INS-ADDR-021
-The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. On the add form it MUST label the name 'Name or organisation' (the edit form keeps 'Name or organisation name'), keep 'County (optional)' between 'Town or city' and 'Postcode or Zip code', and open the Country select on its blank 'Select one' option. 'Add a new address' MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. It MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name') and keep 'County (optional)' on the add form between 'Town or city' and 'Postcode or Zip code'. It MUST open the add form's Country select on its blank first option, reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book. The add form MUST show the name, both address lines and the email address at full width, 'Town or city' and 'Postcode or Zip code' at half width, and the phone number at two-thirds width.
 
 #### Scenario: The add and edit forms group their fields under Address and Contact details
 **ID**: SCN-INS-ADDR-021-A
@@ -332,6 +332,14 @@ The system MUST group the address fields under 'Address' and Email address and P
 - **THEN** the add form opens, headed 'Add address details'
 - **WHEN** they select Back
 - **THEN** they return to the address book list
+
+#### Scenario: The add form sizes its fields to the answers they take
+**ID**: SCN-INS-ADDR-021-E
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** the name, both address lines and the email address are full width
+- **AND** 'Town or city' and 'Postcode or Zip code' are half width
+- **AND** the phone number is two-thirds width
 
 ### Requirement: Opening an address that is not live in the organisation's book returns to the address book
 **ID**: REQ-INS-ADDR-022
@@ -393,7 +401,7 @@ The system MUST take the user to the address book list, with no 'Page not found'
 
 ### Requirement: The view and delete pages return the user to the page they opened the address from
 **ID**: REQ-INS-ADDR-024
-The system MUST honour a return named when the view or delete page is opened, to a page of this service or, outside stub mode, to exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it; 'Yes, delete' MUST land on it, or on the list when it is one of the deleted address's own pages. A dead link MUST land on it.
+The system MUST honour a return named when the view or delete page is opened, to a page of this service or, outside stub mode, to exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it; 'Yes, delete' MUST land on it, or on the list when it is one of the deleted address's own pages. A dead link MUST land on it, or on the list when it is one of that address's own pages.
 
 #### Scenario: Back from the view page follows a return to a page of this service
 **ID**: SCN-INS-ADDR-024-A
@@ -435,7 +443,7 @@ The system MUST honour a return named when the view or delete page is opened, to
 
 #### Scenario: Any other return is ignored
 **ID**: SCN-INS-ADDR-024-G
-- **GIVEN** an address opened with a return on another site (including the plants frontend), one starting with //, or one not starting with /
+- **GIVEN** an address opened with a return on another site (including the plants frontend), one starting with //, or any other value that is neither a path of this service nor a URL on that environment's animals frontend
 - **WHEN** they select Back
 - **THEN** the address book list opens
 - **AND** on its delete confirmation Back and 'No, cancel' go to the address's details
@@ -448,6 +456,6 @@ The system MUST honour a return named when the view or delete page is opened, to
 
 #### Scenario: A dead link carrying an honoured return lands on it
 **ID**: SCN-INS-ADDR-024-I
-- **GIVEN** a view or delete link for an address that is not live in the book carries an honoured return
+- **GIVEN** a view or delete link for an address that is not live in the book carries an honoured return that is not one of that address's own pages
 - **WHEN** it is opened
 - **THEN** the return page opens, not the address book and not a 'Page not found' page

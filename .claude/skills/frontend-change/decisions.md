@@ -109,3 +109,18 @@ green. It also leaves the main checkout dirty, which silently stalls
 So `journey-builder` gained a workspace worktree, a second commit arm and
 a matching rollback arm (EUDPA-574 step 9) — the per-target half of "for
 free" holds, the plumbing half did not.
+
+## 10. Recipes govern structure, the house rules govern text
+
+**Choice:** "follow the recipe verbatim" covers files, seams, order and
+tests. Comments, names, test titles and log lines follow
+`.claude/rules/code-quality.md`, which Step 1 reads in full. Exemplars
+define structure only.
+
+**Why:** the exemplars were written by agents and carry comments, ids and
+names that need a comment. Copying them verbatim spread those defects to
+every new page.
+
+**Also added:** a "Docs this makes untrue" search in every increment, and
+a red probe before any coverage link is marked `full`, matching
+`spec-cover`. A test never seen failing does not witness a scenario.

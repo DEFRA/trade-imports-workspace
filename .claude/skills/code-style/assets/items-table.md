@@ -27,7 +27,8 @@ helpers under `tools/style/`. Never hand-edit.
       "id": 1,
       "file": "src/path/to/file.js",
       "line": "42",                    // string — allows "12-15" ranges or ""
-      "rule": "2",                     // 16-rule style guide number (string)
+      "rule": "2",                     // 16-rule style guide number, another bundle's rule id, or "code-quality" (string)
+      "category": "structure",         // see file-style-schema.md → "Category values"; absent on older items
       "severity": "FAIL",              // FAIL | WARN
       "issue": "...",
       "fix": "...",
@@ -48,7 +49,7 @@ style vocabulary.
 
 | Value | Meaning |
 |---|---|
-| `FAIL` | A rule the 16-rule guide marks as a hard violation. |
+| `FAIL` | A rule the 16-rule guide marks as a hard violation, or any breach of the house rules in `.claude/rules/code-quality.md`. |
 | `WARN` | A guideline / softer convention; reviewer surface for triage. |
 
 ## Disposition values
@@ -57,7 +58,7 @@ style vocabulary.
 |---|---|---|
 | `null` | Pending — walker has not yet seen, user has not hand-marked. | Default for new rows. |
 | `Fix` | Apply the fix. | Walker on `F`; user hand-mark via `style-mark.sh`. |
-| `Won't Fix` | Decided not to fix. | Walker on `W`; user hand-mark. |
+| `Won't Fix` | The code shows the finding is factually wrong; the note quotes it with its file:line. | Walker Step 4; user hand-mark. |
 | `Discuss` | Defer to a wider conversation. | Walker on `D`. |
 | `Auto-Resolved` | Violation no longer present. | Walker auto-check; refresh reconciler; implementor `SKIPPED` outcome. |
 
@@ -104,7 +105,7 @@ this JSON by `render-items.sh`. Re-render whenever items change.
 Column order in the rendered table:
 
 ```
-| # | File | Line | Rule | Severity | Issue | Fix | Disposition | Status | Notes |
+| # | File | Line | Rule | Category | Severity | Issue | Fix | Disposition | Status | Notes |
 ```
 
 The renderer applies the markdown table escapes (literal `|` → `\|`) —

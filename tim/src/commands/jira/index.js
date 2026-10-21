@@ -5,6 +5,8 @@ import { register as registerAttach } from './attach.js'
 import { register as registerLink } from './link.js'
 import { register as registerEpics } from './epics.js'
 import { register as registerTransition } from './transition.js'
+import { register as registerAssign } from './assign.js'
+import { register as registerComment } from './comment.js'
 
 export const renderTicket = (t) =>
   [
@@ -32,7 +34,7 @@ export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
     .description(
-      "Read Jira tickets and comments, raise a ticket from a manifest, and move a ticket's status (create, attach and link are dry run by default; transition is not)"
+      "Read Jira tickets and comments, raise a ticket from a manifest, comment on, link and assign tickets, and move a ticket's status (create, attach, comment, link and assign are dry run by default; transition is not)"
     )
 
   jira
@@ -64,4 +66,6 @@ export const register = (program, { timVersion }) => {
   registerLink(jira, { timVersion })
   registerEpics(jira, { timVersion })
   registerTransition(jira, { timVersion })
+  registerAssign(jira, { timVersion })
+  registerComment(jira, { timVersion })
 }

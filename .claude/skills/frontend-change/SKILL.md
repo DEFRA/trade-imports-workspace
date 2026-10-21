@@ -19,6 +19,10 @@ The recipes are the instructions — this skill routes to the right one, adds th
 guard rails the docs assume, runs the verification ladder, and records what
 landed in the workspace's behaviour spec. Do not restate or
 improvise around a recipe: read it and follow it, varying as little as possible.
+"Verbatim" covers structure and order: which files, which seams, which tests.
+It never covers the text of comments, names or test titles. Those follow the
+house rules in `.claude/rules/code-quality.md`, and you may improve any name
+that does not say what the code returns or changes.
 The outcome is one verified increment written but uncommitted in the target
 repo, reported and stopped — commit is the caller's call unless they said
 otherwise.
@@ -154,8 +158,16 @@ planning (`ticket`), NOT for the plants prototype or a design release
    cardinality, limits, testing); set/journey work → the
    `sets/<set>/docs/README.md` set index (obligation-model, features,
    journey-flow-and-gates, services, limits, testing).
-3. Read the recipe's exemplar files. The exemplars are the idiom — match them,
-   don't invent.
+3. Read the recipe's exemplar files. They show the structure to match: file
+   layout, the seams a change goes through, the tests that pin it. Agents
+   wrote them, so they define structure only. Never copy an exemplar's
+   comments, a name that needs a comment to be understood, a ticket or
+   ruling id, or any history narration. Where an exemplar breaks a house
+   rule, follow the rule.
+4. Read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+   in full before writing any code. It loads by itself only when a matching
+   file is read, so read it on purpose. A breach is a defect even when the
+   ladder is green.
 
 ## Step 2: Baseline guard
 
@@ -185,9 +197,32 @@ If this is red at baseline, STOP and report — do not build on a broken tree.
 Standing constraints the recipes assume (violating any is a defect even if
 tests pass):
 
+- **The house rules bind.** `.claude/rules/code-quality.md` (read in Step 1)
+  governs every comment, name, test title and log line you write. The
+  exemplars and recipes do not override it.
 - **No display logic in the model or obligations** — copy lives in the feature
   (`copy.en.js` + `copy.cy.js`, both, structure-identical; the copy-parity
-  convention test enforces it). GDS plain English.
+  convention test enforces it). GDS plain English. Never add `label`, `title`,
+  `titleKey`, `hint`, `legend` or `widget` to an obligation or a value domain.
+  A value domain declares codes only. An enum with a reference-data (MDM)
+  source takes its options from `services/<name>/index.js`, never from a
+  hand-written list; only enums with no source, such as yes/no, stay static.
+  `obligation-purity.js` enforces this at boot. Never delete or weaken it.
+- **A prototype decides look and feel only.** From a design prototype take
+  page content, wording, layout, components and question order. Never take
+  architecture from it: how sets, journeys or services split, URL paths, data
+  model shape or where code lives. Those follow this repo's set and feature
+  architecture, and copying a feature page into a second set is the intended
+  design. If an increment's only effect is to make a URL or structure match
+  the prototype, do not build it: report it as a design call.
+- **Build only what this increment makes reachable.** No branch, copy key or
+  test for a state no user can reach once this increment lands.
+- **Docs this makes untrue.** Search the target repo's `docs/`, the set's
+  `docs/` (the recipes included), JSDoc and convention test names for the
+  behaviour you changed. Edit every one that now states the old way in the
+  same increment. A recipe your change makes untrue is part of the change, not
+  a follow-up. Report the edits, or "none" with the search you ran, in the
+  Completion output.
 - **L2 stays set-agnostic** — if your change wants live-animals knowledge in
   engine/model/bridge/flow/services/shared, the knowledge belongs in the set or
   journey and reaches L2 through the existing `configure*` seams in `routes.js`.
@@ -201,6 +236,14 @@ tests pass):
 - Every recipe change includes its co-located Playwright feature spec and axe
   accessibility test per the recipe's own sections — self-contained specs, raw
   locators, no page objects, auto-waiting (no sleeps).
+- **Tests reuse the shared helpers.** Set-up two tests need goes in
+  `src/server/app/engine/test-support.js` for unit tests, or the repo's
+  `fit/` helpers for feature specs (`fit/live-animals-journey.js` in
+  animals, `fit/high-risk-plants-journey.js`, `fit/set-base.js` and
+  `fit/seed-fields.js` in plants). Extending
+  one is in scope. Never write a local copy of a helper's body.
+  "Self-contained" means each spec builds its own state, through these
+  helpers. Each test title states what its assertions prove.
 
 ### Obligation-maintenance guard rails ("change an obligation")
 
@@ -393,6 +436,12 @@ tests repo, which this skill does not touch. `SPEC_SYNC.md` carries the
 full object shape; nothing validates it, so copy the exemplar
 key-for-key.
 
+A link is `strength: "full"` only after a red probe: invert the
+production line the scenario's THEN depends on, run the test and see it
+fail, then restore the line and see it pass. A test that stays green
+proves nothing — rework it, or record the link as `partial`.
+`SPEC_SYNC.md` → "The red probe" has the steps.
+
 ### 5.4 Validate the spec write
 
 Once per capability written, rooted at the spec root from 5.0:
@@ -426,13 +475,18 @@ Two ways this fails, both halts:
 - A behavioural change visible in the diff that no scenario covers — you
   implemented behaviour the spec does not record.
 
+A scenario for a state no user can reach once this increment lands is
+also a halt, even with a diff line behind it. Specify it in the increment
+that makes it reachable.
+
 ### 5.6 Self-check the coverage against the diff
 
 For every `tests[]` link on a scenario this increment touched, confirm
 the `file` appears in the diff's file list (5.1's sense: modified **or**
 newly created) and the named `test` exists in that file's current body. A
 link whose file is not in the diff, on a scenario you touched, was
-carried forward without re-verification — halt.
+carried forward without re-verification — halt. So is a `full` link this
+increment wrote or upgraded with no red probe behind it.
 
 An untouched scenario's existing links are not in scope. Only what this
 increment claims.
@@ -446,7 +500,7 @@ Print a mismatch report instead and hand it to the caller:
 frontend-change HALTED at spec sync: <what disagreed>.
 
 Capability: <capability-path>
-Check: 5.4 validate | 5.5 spec vs diff | 5.6 coverage vs diff
+Check: 5.4 validate | 5.5 spec vs diff | 5.6 coverage vs diff or probe
 Detail: <scenario ID, and the evidence that was missing>
 Spec root: <path>
 Written so far (uncommitted): <paths>
@@ -496,6 +550,8 @@ Spec root: <path>
 Spec files: openspec/specs/<path>/spec.md,
             openspec/coverage/<path>/coverage.json
             <, openspec/coverage/AREAS.md>
+Probes: <n> full links, <n> red then green<; partial: <ids and why>>
+Docs updated: <paths, or "none — searched <terms> in <dirs>">
 Design calls: <flagged decisions, or "none — recipe followed verbatim">
 
 Uncommitted, in TWO checkouts:

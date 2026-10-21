@@ -11,6 +11,9 @@
 #                     across the repo's files; previously-set disposition
 #                     / status / notes are NOT preserved — only call
 #                     --write-items during initial FRESH population.
+#                     It also stamps reconciled_at on every reviewed
+#                     file, so refresh reconcile only picks up work
+#                     reviewed after it.
 #
 # Sections:
 #   --section file-summary  → File Analysis Summary table (verdicts + counts per file)
@@ -84,9 +87,6 @@ if [[ "$WRITE_ITEMS" == "1" ]]; then
             )
         }' > "$items_file.tmp" && mv "$items_file.tmp" "$items_file"
 
-    # Stamp reconciled_at on every reviewed .review.json — refresh
-    # reconcile uses (reviewed_at > reconciled_at) to detect work
-    # done since this FRESH-time accounting.
     now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     for f in "${files[@]}"; do
         reviewed_at=$(jq -r '.reviewed_at // ""' "$f")
@@ -119,20 +119,11 @@ emit_items() {
     echo "## Items"
     echo
     if [[ "$WRITE_ITEMS" == "1" ]] || [[ -f "$review_dir/items.${REPO}.json" ]]; then
-        # Prefer the canonical items.{repo}.json if it exists.
         "$SCRIPT_DIR/render-items.sh" "$TICKET" --repo "$REPO"
     else
-        # Fallback: render directly from per-file todos (one-shot, no
-        # disposition/status — the caller hasn't written items.json yet).
-        echo "| # | File | Line | Severity | Category | Issue | Fix | Disposition | Status | Notes |"
-        echo "|---|------|------|----------|----------|-------|-----|-------------|--------|-------|"
-        echo "$combined" | jq -r '
-            def esc: . | tostring | gsub("\\|"; "\\|");
-            [ .[] as $f | $f.todos[] | . + {file: $f.file} ]
-            | to_entries
-            | .[]
-            | "| \(.key + 1) | \(.value.file | esc) | \(.value.line) | \(.value.severity) | \(.value.category | esc) | \(.value.issue | esc) | \(.value.fix | esc) |  |  |  |"
-        '
+        echo "$combined" \
+            | jq '{items: ([ .[] as $f | $f.todos[] | . + {file: $f.file} ] | to_entries | map(.value + {id: (.key + 1)}))}' \
+            | jq -r -f "$SCRIPT_DIR/items-table.jq"
     fi
 }
 

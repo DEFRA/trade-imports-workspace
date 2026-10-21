@@ -1,7 +1,7 @@
 #!/bin/bash
 # List items from items.{repo}.json files for a ticket.
 # Usage:
-#   review-items.sh EUDPA-XXXXX [--repo REPO] [--filter pending|fix|wont-fix|discuss|auto-resolved]
+#   review-items.sh EUDPA-XXXXX [--repo REPO] [--filter pending|fix|wont-fix|discuss|auto-resolved|merged]
 #                                [--status not-done|done|failed] [--json]
 #
 # TSV output columns (in this order):
@@ -24,7 +24,7 @@ Usage: $0 EUDPA-XXXXX [--repo REPO] [--file PATH] [--filter DISPOSITION] [--stat
 
   --repo R         Limit to one repo
   --file P         Limit to items for one file (exact path match)
-  --filter F       Filter by Disposition: pending|fix|wont-fix|discuss|auto-resolved
+  --filter F       Filter by Disposition: pending|fix|wont-fix|discuss|auto-resolved|merged
   --status S       Filter by Status: not-done|done|failed
   --json           Output JSON array instead of TSV
 EOF
@@ -56,6 +56,7 @@ disposition_label() {
         wont-fix) echo "Won't Fix" ;;
         discuss) echo "Discuss" ;;
         auto-resolved) echo "Auto-Resolved" ;;
+        merged) echo "Merged" ;;
         *) echo "Invalid --filter: $1" >&2; exit 1 ;;
     esac
 }

@@ -1,58 +1,57 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { describe, test, expect } from 'vitest'
 import { execa } from 'execa'
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import {
-  installHttpMocks,
-  closeHttpMocks
-} from '../../test-support/http-mock.js'
+  loadJiraFixture,
+  mockJiraForEachTest
+} from '../../test-support/jira-mock.js'
+import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
 import {
   parseTransitionArgs,
   renderTransition,
   runTransition
 } from './transition.js'
 
-const here = dirname(fileURLToPath(import.meta.url))
-const cliPath = join(here, '..', '..', 'cli.js')
-const fixturesDir = join(here, '..', '..', 'test-support', 'fixtures', 'jira')
-const loadFixture = (name) =>
-  JSON.parse(readFileSync(join(fixturesDir, name), 'utf8'))
-const BASE = 'https://example.atlassian.net'
 const ISSUE = '/rest/api/2/issue/EUDPA-300'
 
-let mockPool
-let originalEnv
+const TRANSITIONS_WITH_RESOLUTIONS = [
+  { id: '11', name: 'Start work', to: 'In Dev', resolutions: null },
+  {
+    id: '31',
+    name: 'Done',
+    to: 'Done',
+    resolutions: ['Done', "Won't Do"]
+  }
+]
 
-beforeEach(() => {
-  originalEnv = { ...process.env }
-  process.env.JIRA_USER = 'sam'
-  process.env.JIRA_TOKEN = 'token'
-  process.env.JIRA_BASE_URL = BASE
-  ;({ mockPool } = installHttpMocks())
-})
-
-afterEach(() => {
-  process.env = originalEnv
-  closeHttpMocks()
-})
+const jira = mockJiraForEachTest()
 
 const issueIn = (status) => {
-  const issue = loadFixture('issue-in-dev.json')
+  const issue = loadJiraFixture('issue-in-dev.json')
   return { ...issue, fields: { ...issue.fields, status: { name: status } } }
 }
 
 const ticketReads = (...statuses) =>
-  statuses.forEach((status) =>
-    mockPool(BASE).get(ISSUE).reply(200, issueIn(status))
-  )
+  statuses.forEach((status) => jira().get(ISSUE).reply(200, issueIn(status)))
 
-const offersTransitions = (body = loadFixture('list-transitions.json')) =>
-  mockPool(BASE).get(`${ISSUE}/transitions`).reply(200, body)
+const offersTransitions = (body = loadJiraFixture('list-transitions.json')) =>
+  jira().get(`${ISSUE}/transitions`).reply(200, body)
+
+const offersTransitionsWithResolutions = () =>
+  jira()
+    .get(`${ISSUE}/transitions?expand=transitions.fields`)
+    .reply(200, loadJiraFixture('list-transitions-with-fields.json'))
+
+const resolutionReads = (resolution) =>
+  jira()
+    .get(`${ISSUE}?fields=resolution`)
+    .reply(200, {
+      key: 'EUDPA-300',
+      fields: { resolution: resolution ? { name: resolution } : null }
+    })
 
 const acceptsTransition = () => {
   const posted = { body: null }
-  mockPool(BASE)
+  jira()
     .post(`${ISSUE}/transitions`, (body) => {
       posted.body = body
       return true
@@ -86,6 +85,18 @@ describe('parseTransitionArgs', () => {
     )
   })
 
+  test('refuses --resolution with --list', () => {
+    expect(() =>
+      parseTransitionArgs({ key: 'EUDPA-300', list: true, resolution: 'Done' })
+    ).toThrowError(
+      expect.objectContaining({
+        code: 'USAGE',
+        message:
+          '--list moves nothing, so it cannot set a resolution. Give a status instead.'
+      })
+    )
+  })
+
   test('refuses a key with neither a status nor --list', () => {
     expect(() => parseTransitionArgs({ key: 'EUDPA-300' })).toThrowError(
       expect.objectContaining({
@@ -112,9 +123,71 @@ describe('runTransition', () => {
         status: 'Done',
         previousStatus: 'In Dev',
         requested: 'Done',
-        transition: 'Done'
+        transition: 'Done',
+        resolution: null
       },
       posted: { transition: { id: '31' } }
+    })
+  })
+
+  test('sets the resolution with the move and confirms both landed', async () => {
+    ticketReads('In Dev', 'Done')
+    offersTransitionsWithResolutions()
+    const posted = acceptsTransition()
+    resolutionReads("Won't Do")
+
+    const result = await runTransition({
+      key: 'EUDPA-300',
+      status: 'Done',
+      resolution: "Won't Do"
+    })
+
+    expect({ result, posted: posted.body }).toEqual({
+      result: {
+        key: 'EUDPA-300',
+        action: 'moved',
+        status: 'Done',
+        previousStatus: 'In Dev',
+        requested: 'Done',
+        transition: 'Done',
+        resolution: "Won't Do"
+      },
+      posted: {
+        transition: { id: '31' },
+        fields: { resolution: { name: "Won't Do" } }
+      }
+    })
+  })
+
+  test('fails when Jira moves the ticket but the resolution did not land', async () => {
+    ticketReads('In Dev', 'Done')
+    offersTransitionsWithResolutions()
+    acceptsTransition()
+    resolutionReads('Done')
+
+    await expect(
+      runTransition({
+        key: 'EUDPA-300',
+        status: 'Done',
+        resolution: "Won't Do"
+      })
+    ).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message:
+        "Jira moved EUDPA-300 to Done, but its resolution is Done, not Won't Do. Check the ticket in Jira."
+    })
+  })
+
+  test('refuses a resolution the transition screen does not take, before moving anything', async () => {
+    ticketReads('To Do')
+    offersTransitionsWithResolutions()
+
+    await expect(
+      runTransition({ key: 'EUDPA-300', status: 'In Dev', resolution: 'Done' })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message:
+        'The "Start work" transition on EUDPA-300 does not let you set a resolution. Run it again without --resolution.'
     })
   })
 
@@ -129,11 +202,25 @@ describe('runTransition', () => {
       status: 'Done',
       previousStatus: 'Done',
       requested: 'Done',
-      transition: null
+      transition: null,
+      resolution: null
     })
   })
 
-  test('accepts a transition name, as the shell script did', async () => {
+  test('reports the current resolution of a ticket already in the status when one was asked for', async () => {
+    ticketReads('Done')
+    resolutionReads('Done')
+
+    const result = await runTransition({
+      key: 'EUDPA-300',
+      status: 'Done',
+      resolution: "Won't Do"
+    })
+
+    expect(result).toMatchObject({ action: 'unchanged', resolution: 'Done' })
+  })
+
+  test('accepts a transition name when no status has that name', async () => {
     ticketReads('To Do', 'In Dev')
     offersTransitions()
     acceptsTransition()
@@ -178,9 +265,9 @@ describe('runTransition', () => {
     })
   })
 
-  test('lists the transitions with --list and moves nothing', async () => {
+  test('lists the transitions and the resolutions each accepts with --list, and moves nothing', async () => {
     ticketReads('In Dev')
-    offersTransitions()
+    offersTransitionsWithResolutions()
 
     const result = await runTransition({ key: 'EUDPA-300', list: true })
 
@@ -188,10 +275,7 @@ describe('runTransition', () => {
       key: 'EUDPA-300',
       action: 'listed',
       status: 'In Dev',
-      transitions: [
-        { id: '11', name: 'Start work', to: 'In Dev' },
-        { id: '31', name: 'Done', to: 'Done' }
-      ]
+      transitions: TRANSITIONS_WITH_RESOLUTIONS
     })
   })
 })
@@ -208,6 +292,53 @@ describe('renderTransition', () => {
         transition: 'Done'
       })
     ).toBe('Moved EUDPA-300 from In Dev to Done.')
+  })
+
+  test('names the resolution a move set', () => {
+    expect(
+      renderTransition({
+        key: 'EUDPA-300',
+        action: 'moved',
+        status: 'Done',
+        previousStatus: 'In Dev',
+        requested: 'Done',
+        transition: 'Done',
+        resolution: "Won't Do"
+      })
+    ).toBe("Moved EUDPA-300 from In Dev to Done, resolution Won't Do.")
+  })
+
+  test('names the current resolution of a ticket already in the status', () => {
+    expect(
+      renderTransition({
+        key: 'EUDPA-300',
+        action: 'unchanged',
+        status: 'Done',
+        previousStatus: 'Done',
+        requested: 'Done',
+        transition: null,
+        resolution: 'Done'
+      })
+    ).toBe(
+      'EUDPA-300 is already Done. Nothing changed.\nIts resolution is Done.'
+    )
+  })
+
+  test('lists the resolutions a transition accepts beside it', () => {
+    expect(
+      renderTransition({
+        key: 'EUDPA-300',
+        action: 'listed',
+        status: 'In Dev',
+        transitions: TRANSITIONS_WITH_RESOLUTIONS
+      })
+    ).toBe(
+      [
+        'EUDPA-300 is In Dev. It offers these transitions (transition -> the status it leads to):',
+        '  - Start work -> In Dev',
+        "  - Done -> Done (resolution: Done, Won't Do)"
+      ].join('\n')
+    )
   })
 
   test('notes when the name given was a transition rather than the status', () => {
@@ -272,7 +403,7 @@ describe('renderTransition', () => {
 
 describe('tim jira transition (spawn)', () => {
   const spawnTim = (args, env = {}) =>
-    execa('node', [cliPath, 'jira', 'transition', ...args], {
+    execa('node', [TIM_CLI_PATH, 'jira', 'transition', ...args], {
       reject: false,
       env: { ...process.env, ...env }
     })
@@ -311,7 +442,7 @@ describe('tim jira transition (spawn)', () => {
 
   test('accepts --workspace, as the build loop passes it', async () => {
     const { stdout } = await spawnTim(
-      ['EUDPA-300', '--list', '--workspace', here, '--json'],
+      ['EUDPA-300', '--list', '--workspace', import.meta.dirname, '--json'],
       { JIRA_USER: '', JIRA_TOKEN: '', JIRA_BASE_URL: '' }
     )
 
@@ -321,14 +452,15 @@ describe('tim jira transition (spawn)', () => {
     })
   })
 
-  test('shows both forms in --help', async () => {
+  test('shows the move, --list and --resolution forms in --help', async () => {
     const { stdout } = await spawnTim(['--help'])
 
     expect(stdout).toContain(
       [
         'Examples:',
         '  tim jira transition EUDPA-200 "Done" --json',
-        '  tim jira transition EUDPA-200 --list'
+        '  tim jira transition EUDPA-200 --list',
+        `  tim jira transition EUDPA-200 "Done" --resolution "Won't Do" --json`
       ].join('\n')
     )
   })

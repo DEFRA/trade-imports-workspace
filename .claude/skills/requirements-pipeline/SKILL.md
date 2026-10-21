@@ -25,7 +25,9 @@ Read the phase file in full before you start it, and read
 [`references/SHAPE.md`](references/SHAPE.md) either way: the schema defines every field,
 and SHAPE.md holds the judgement rules a schema cannot. Together they are the contract
 both phases keep. A run can do DISTIL and stop for Sam's answers, then come back for BUILD in another
-session — the backlog on disk is the only hand-off.
+session — the backlog on disk is the only hand-off. Beside it, `deferred.md` lists everything the programme
+pushed out of its backlog: tickets raised or still to raise, a person's actions, and rows parked at a platform or
+access stop.
 
 ## What lives here
 

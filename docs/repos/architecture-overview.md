@@ -162,6 +162,14 @@ Each item says whether it is intended, planned, or an unresolved gap.
   frontend for architecture purposes.
 - **Unused Mongo config in `trade-imports-stub` and `reference-data`: template
   leftover.** No code uses it, and it can be ignored.
+- **The Node frontends share no package: intended.** `animals-frontend`,
+  `plants-frontend` and `ins-frontend` each keep their own copy of the
+  server set-up, clients and feature folders. A shared package would tie
+  their releases together. The cost is drift, so keep the copies aligned in
+  folder structure and conventions, and fix a rule in every twin in the same
+  change. Never propose extracting a shared package. The journey-only
+  folders (`model`, `bridge`, `engine`, `flow`, `sets`) are compared between
+  animals and plants only, because `ins-frontend` is not a journey.
 
 Related: [`README.md`](README.md) in this folder for the per-repo pages,
 [`../local-setup.md`](../local-setup.md) for running the stack.

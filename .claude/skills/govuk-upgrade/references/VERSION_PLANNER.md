@@ -32,7 +32,7 @@ Schema: `~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/assets
 ## Workflow
 
 1. Read the pre-baked changelog section.
-2. Scan the repo for patterns from the changelog (Grep tool).
+2. Scan the repo for patterns from the changelog (Bash `grep -rn`).
 3. Record findings via the `version-*` helpers.
 
 ---
@@ -57,7 +57,7 @@ component / pattern / accessibility / styles areas:
 ## Step 2: Scan the repo
 
 For each breaking change, recommended change, or deprecated feature in
-the changelog, search the repo using the Grep tool.
+the changelog, search the repo with one Bash `grep -rn` call per pattern.
 
 **File types to scan and what to look for:**
 
@@ -68,10 +68,9 @@ the changelog, search the repo using the Grep tool.
 | `*.js`, `*.ts`, `*.mjs` | Import paths (`govuk-frontend`), class names, constructor calls, method names |
 | `package.json` | The `govuk-frontend` version constraint |
 
-Use the Grep tool with `path: ~/git/defra/trade-imports-workspace/repos/{repo-name}/src`
-and `glob` filters such as `**/*.njk`, `**/*.scss`, `**/*.js`. Avoid
-shelling out to `grep -r` — the Grep tool gives ripgrep semantics and
-doesn't burn shell allowlist surface.
+For example `grep -rn --include="*.njk" govukHeader ~/git/defra/trade-imports-workspace/repos/{repo-name}/src`.
+Do not use the Grep or Glob tools: they are not on the allowlist, so each
+call waits on a permission prompt. Do not pipe the `grep`.
 
 ---
 

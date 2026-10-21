@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { z } from 'zod'
 import { TimError } from '../../errors.js'
 
-/** Workspace-relative path to the code-style skill's routing data. */
 export const CODE_STYLE_ROUTING_PATH =
   '.claude/skills/code-style/assets/routing.json'
 
@@ -18,7 +17,10 @@ const routingSchema = z.object({
   ),
   topics: z.record(
     z.string(),
-    z.object({ bestPractice: z.array(z.string()).min(1) })
+    z.object({
+      bestPractice: z.array(z.string()).min(1),
+      repoRelativeBestPractice: z.array(z.string()).optional()
+    })
   ),
   unknownTopicHint: z.string()
 })
@@ -28,9 +30,7 @@ const REFUSED_PATTERN_CHARS = /[[\]{}\\]/
 /**
  * Compile one `file-topics.sh`-style shell-case pattern to an anchored
  * RegExp: every regex metacharacter is escaped, `*` becomes `.*` and `?`
- * becomes `.`. Refuses `[`, `]`, `{`, `}` and `\\` — bash and this compiler
- * would treat them differently, so refusing them keeps the two readers
- * from diverging silently.
+ * becomes `.`.
  *
  * @param {string} pattern
  * @returns {RegExp}
@@ -90,15 +90,14 @@ export const loadCodeStyleRouting = (workspaceRoot) => {
       }
     }
     for (const pattern of entry.patterns) {
-      shellPatternToRegExp(pattern) // throws PARSE on a refused character
+      shellPatternToRegExp(pattern)
     }
   }
   return routing
 }
 
 /**
- * Every topic a path matches, in the routing file's `topics` key order —
- * the emission order `file-topics.sh` also uses (jq `keys_unsorted`).
+ * Every topic a path matches, in the routing file's `topics` key order.
  *
  * @param {object} routing - From {@link loadCodeStyleRouting}
  * @param {string} path - Workspace-relative, `/`-separated
@@ -128,5 +127,22 @@ export const topicsForPath = (routing, path) => {
 export const bestPracticeForTopics = (routing, topics) => [
   ...new Set(
     topics.flatMap((topic) => routing.topics[topic]?.bestPractice ?? [])
+  )
+]
+
+/**
+ * The union of `repoRelativeBestPractice` paths for a set of topics, in
+ * topic order, deduplicated. Each path is relative to the repo that holds
+ * the file, and may not exist in every repo.
+ *
+ * @param {object} routing - From {@link loadCodeStyleRouting}
+ * @param {string[]} topics
+ * @returns {string[]}
+ */
+export const repoRelativeBestPracticeForTopics = (routing, topics) => [
+  ...new Set(
+    topics.flatMap(
+      (topic) => routing.topics[topic]?.repoRelativeBestPractice ?? []
+    )
   )
 ]

@@ -52,7 +52,7 @@ The system MUST NOT offer any way to change a submitted notification's answers u
 
 ### Requirement: Amending a submitted notification re-enters it at Overview
 **ID**: REQ-PLANTS-LIFECYCLE-005
-The system MUST let the user start an amendment on a submitted notification from the dashboard or from the notification's read-only view, re-entering the notification at Overview with editing enabled and marked "Amend".
+The system MUST let the user start an amendment on a submitted notification from the dashboard or from the notification's read-only view, re-entering the notification at Overview with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
 
 #### Scenario: Starting an amendment opens Overview with editing enabled
 **ID**: SCN-PLANTS-LIFECYCLE-005-A
@@ -65,6 +65,18 @@ The system MUST let the user start an amendment on a submitted notification from
 - **GIVEN** a submitted notification's read-only view is open
 - **WHEN** the user chooses "Amend this notification"
 - **THEN** they land on Overview, with the notification's status shown as "Amend"
+
+#### Scenario: An amendment can be started in a later browser session than the one that submitted the notification
+**ID**: SCN-PLANTS-LIFECYCLE-005-C
+- **GIVEN** a notification was submitted in an earlier browser session
+- **WHEN** the user signs in again and starts an amendment on it from the dashboard
+- **THEN** they land on Overview, with the notification's status shown as "Amend" and its reference number shown
+
+#### Scenario: The dashboard says when a notification could not be amended
+**ID**: SCN-PLANTS-LIFECYCLE-005-D
+- **GIVEN** a notification shown on the dashboard has since been deleted
+- **WHEN** the user starts an amendment on it from the dashboard
+- **THEN** the dashboard shows a notification banner titled "Important" that reads "This notification could not be amended."
 
 ### Requirement: Resubmitting an amendment keeps the edited answers and returns the notification to Submitted
 **ID**: REQ-PLANTS-LIFECYCLE-006

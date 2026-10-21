@@ -10,6 +10,17 @@ filter).
 
 Items schema: `assets/items-table.md`.
 
+## Default: fix
+
+Every style item is a code-quality item, with a category from the list
+the review skill and the build loop's verifier share (`naming`,
+`comments`, `structure`, `duplication`, `logging`, `test-readability`,
+`history`). It is fixed unless the code proves it wrong. Won't Fix only
+with a note that quotes the code, with its file:line, showing the
+finding is factually wrong. These never justify Won't Fix: taste,
+"pre-existing", "out of scope", "a nearby file does it", "feature
+folders are independent", the plan, or an earlier decision.
+
 ---
 
 **Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
@@ -44,11 +55,11 @@ the bottom:
 ```markdown
 **Walking style EUDPA-XXXXX** — N pending items
 
-| # | Severity | File:Line | Rule | Issue | Fix | Cite |
-|---|---|---|---|---|---|---|
-| 1 | 🛑 FAIL | `frontend/src/util.js:14` | 11 | `var` declaration | Use `const` (or `let` if reassigned) | node/code-style.md |
-| 2 | ⚠️ WARN | `frontend/src/router.js:42` | 13 | Bare `'PENDING'` literal | Extract to `SCAN_STATUS_PENDING` | — |
-| 3 | 🛑 FAIL | `admin/src/auth.js:8` | 2 | `function getUser()` declaration | Rewrite as `const getUser = () =>` | node/code-style.md |
+| # | Severity | File:Line | Rule | Category | Issue | Fix | Cite |
+|---|---|---|---|---|---|---|---|
+| 1 | 🛑 FAIL | `frontend/src/util.js:14` | 11 | structure | `var` declaration | Use `const` (or `let` if reassigned) | node/code-style.md |
+| 2 | ⚠️ WARN | `frontend/src/router.js:42` | 13 | structure | Bare `'PENDING'` literal | Extract to `SCAN_STATUS_PENDING` | — |
+| 3 | 🛑 FAIL | `admin/src/auth.js:8` | code-quality | history | `// EUDPA-565: …` above `getUser` | Delete the comment | — |
 ...
 
 **Triage:** type one character per item, in order.
@@ -65,7 +76,12 @@ Severity badges:
 - 🛑 **FAIL**
 - ⚠️ **WARN**
 
-`Rule` column: the 16-rule guide number (1-16).
+`Rule` column: the 16-rule guide number (1-16), another bundle's rule
+id, or `code-quality` for a house-rule finding from
+`.claude/rules/code-quality.md`.
+
+`Category` column: the item's `category`; `—` for an item from before
+categories existed.
 
 Cite column: show the `best_practice` field if present; `—` otherwise.
 
@@ -91,6 +107,11 @@ Map each character to the item at the same index. Apply:
 | `W` | Mark Won't Fix | `style-mark.sh ... --disposition "Won't Fix"` |
 | `D` | Defer to Step 4 slow-track (don't mutate yet) | — |
 | `S` | Skip — leave pending | — |
+
+`W` is not applied from the batch. The item goes to the Step 4
+slow-track, where Won't Fix needs the quoted code that shows the
+finding is factually wrong (see "Default: fix"). Without it, mark Fix.
+Count these under Discuss in the batch summary.
 
 Each `style-mark.sh` invocation is a separate Bash call (no
 chaining). Run them as the user expects feedback — you can fan them
@@ -130,7 +151,9 @@ For each item marked `D`, in input order:
 
 4. **Conclude with a disposition** — call the matching helper:
    - "fix it" → `style-mark.sh ... --disposition "Fix" --note "{agreed approach}"`
-   - "leave it" → `style-mark.sh ... --disposition "Won't Fix" --note "{reason}"`
+   - "leave it" → `style-mark.sh ... --disposition "Won't Fix" --note "{reason}"`.
+     The reason is the quoted code, with its file:line, that shows the
+     finding is factually wrong; any other reason leaves it Fix.
    - "defer to PR thread / standup / wider conversation":
      ```bash
      ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
@@ -184,5 +207,5 @@ mode is the hot path. Don't:
 - Read the source file before Step 4. The Step 2 list is JSON-only.
 - Print code snippets before Step 4.
 - Check whether the violation is "still present" — if the user spots
-  a stale item, they hit `W` or `S`.
+  a stale item, they hit `D`, and Step 4 marks it Auto-Resolved.
 - Verbose-log between items. The Step 3 summary line is enough.

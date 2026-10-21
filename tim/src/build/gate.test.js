@@ -14,6 +14,15 @@ import { tmpdir } from 'node:os'
 import { execa } from 'execa'
 import { GATES_PATH } from './gates.js'
 import { serviceFingerprints } from '../exec/stack-fingerprints.js'
+import {
+  commitAll,
+  createRepoOnBranchFromMain,
+  writeFiles
+} from '../test-support/branched-repo.js'
+import {
+  SET_UP_FIRST_LINE,
+  testFileWithSetUp
+} from '../test-support/copied-set-up.js'
 import { runGate, cannotRunBecause, defaultLogsDir } from './gate.js'
 
 const WORKAREA = 'shared/programme'
@@ -33,10 +42,6 @@ const writeExecutable = (path, body) => {
 const stackStatePath = () => join(root, 'stack-state')
 const stackCallsPath = () => join(root, 'stack-calls')
 
-// A workspace with its own gates.json, a backlog building `repos`, and stack
-// scripts and a `docker` that share one state file: run-stack.sh marks the
-// stack up, stop-stack.sh marks it down, and `docker ps` lists a container
-// while it is up. Every stack script call is recorded.
 const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
@@ -481,9 +486,6 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
-  // Builds repos/frontend as a dev service: a dev overlay that names it, a
-  // git checkout of it, and a dev-service.sh that records each call and
-  // fails when `dev-service-fails` exists.
   const withDevService = async () => {
     mkdirSync(join(root, 'docker', 'stack'), { recursive: true })
     writeFileSync(
@@ -740,12 +742,9 @@ describe('runGate — e2e rungs', () => {
   })
 })
 
-// Every rung runs in repos/<folder>, so ../../ is the workspace root.
 const atRoot = (file) => `../../${file}`
 
-// A script that marks its own start, then waits up to five seconds for
-// another script's mark: it passes only when the two run at the same time.
-const meetsWith = (mine, theirs) =>
+const passesOnlyWhileRunningBeside = (mine, theirs) =>
   `touch ${atRoot(mine)}; tries=0; while [ ! -f ${atRoot(theirs)} ]; do tries=$((tries+1)); [ $tries -gt 100 ] && exit 1; sleep 0.05; done`
 
 const appendTo = (file, line) => `echo ${line} >> ${atRoot(file)}`
@@ -774,8 +773,11 @@ describe('runGate — running repos at the same time', () => {
     async () => {
       const env = workspaceWith(
         twoRepos({
-          alpha: { 'format:check': 'true', test: meetsWith('alpha', 'beta') },
-          beta: { test: meetsWith('beta', 'alpha') }
+          alpha: {
+            'format:check': 'true',
+            test: passesOnlyWhileRunningBeside('alpha', 'beta')
+          },
+          beta: { test: passesOnlyWhileRunningBeside('beta', 'alpha') }
         })
       )
 
@@ -902,7 +904,9 @@ describe('runGate — running repos at the same time', () => {
       const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
       writeFileSync(
         join(root, 'repos', 'frontend', 'package.json'),
-        JSON.stringify({ scripts: { test: meetsWith('unit', 'stack-state') } })
+        JSON.stringify({
+          scripts: { test: passesOnlyWhileRunningBeside('unit', 'stack-state') }
+        })
       )
 
       const outcome = await gate(env)
@@ -1124,5 +1128,57 @@ describe('cannotRunBecause', () => {
     expect(
       cannotRunBecause({ repo: 'backend', path: missing, run: 'test' })
     ).toBe(`backend is not cloned at ${missing}.`)
+  })
+})
+
+describe('runGate — the duplication rung', () => {
+  const duplicationGate = async () => {
+    const env = workspaceWith({
+      gates: {
+        frontend: {
+          rungs: [
+            { name: 'duplication', phase: 'unit', run: 'tim build duplication' }
+          ]
+        }
+      },
+      repos: { frontend: {} }
+    })
+    const repoPath = join(root, 'repos', 'frontend')
+    await createRepoOnBranchFromMain(repoPath, {
+      'src/a.test.js': testFileWithSetUp('first', 'a')
+    })
+    return { env, repoPath }
+  }
+
+  const namesPlace = (log, file) =>
+    log.includes(`${file}:${SET_UP_FIRST_LINE}-`)
+
+  test('fails when the branch copies a test set-up block, and names both places in its log', async () => {
+    const { env, repoPath } = await duplicationGate()
+    writeFiles(repoPath, { 'src/b.test.js': testFileWithSetUp('second', 'b') })
+    await commitAll(repoPath, 'copy the set-up')
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    const log = readFileSync(outcome.rungs[0].log, 'utf8')
+    expect({
+      rungs: outcomeOf(outcome.rungs),
+      places: [
+        namesPlace(log, 'src/a.test.js'),
+        namesPlace(log, 'src/b.test.js')
+      ]
+    }).toEqual({ rungs: ['frontend:duplication:FAIL'], places: [true, true] })
+  })
+
+  test('passes when the branch adds a test file with no copied block', async () => {
+    const { env, repoPath } = await duplicationGate()
+    writeFiles(repoPath, {
+      'src/b.test.js': "test('b', () => expect(1).toBe(1))\n"
+    })
+    await commitAll(repoPath, 'add a test')
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(outcomeOf(outcome.rungs)).toEqual(['frontend:duplication:pass'])
   })
 })

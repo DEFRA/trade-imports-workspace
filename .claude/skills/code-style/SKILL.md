@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 16-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "style review this branch", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). Also runs in Local mode against a `REPO:BRANCH` pair with no ticket and no PR, including when invoked programmatically by another skill. NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
+description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 16-rule style guide + JSDoc; the house code-quality rules on comments and names for every file). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "style review this branch", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). Also runs in Local mode against a `REPO:BRANCH` pair with no ticket and no PR, including when invoked programmatically by another skill. NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
@@ -13,11 +13,22 @@ language-neutrally and takes its ruleset from the pre-baked
 per-(repo,topic) `style-rules.{repo}.{topic}.md` bundle(s) rather than an
 inlined catalogue. Discovery routes each file through `tools/style/file-topics.sh`, a thin
 jq reader of `assets/routing.json`'s path→topic map (java, node, gds,
-playwright, k6; additive, so a Playwright spec gets both playwright and
-node); rule-bundling then reads the per-topic best-practice lists from
+playwright, k6; additive, so a Playwright spec, and the tests repo's
+`flows/`, `page-objects/` and `domain/` TypeScript, gets both playwright
+and node); rule-bundling then reads the per-topic best-practice lists from
 the same file via `tools/style/bake-rules-bundle.sh`. `assets/routing.json`
 is the single source of truth for the file-type mapping; edit it, not
 the scripts, to add a topic.
+
+Every reviewer also reads `.claude/rules/code-quality.md` in full. Its
+house rules on comments, ids, history and names apply to every file
+whatever its topic, and comments and vague names anywhere in a touched
+file are in scope, not just on changed lines. Findings under those
+rules are real by default: "taste", "pre-existing", "out of scope",
+"a comparable file does it", the plan and an earlier decision never
+drop one. Every finding carries a code-quality category from the list
+the `review` skill and the build loop's verifier share; see
+`assets/file-style-schema.md` → "Category values".
 
 Per-repo state lives in
 `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
@@ -464,12 +475,26 @@ Or on failure:
 Reason: unit tests broke after change, all items reverted
 ```
 
-Or on pre-existing-failures:
+A summary with a `Failing:` line means the implementor committed its
+items and proved a test is red without its change too. Fix that test
+first, as below, before the next group.
+
+Or when tests were red before the edit:
 ```
-CANNOT START: {repo}/{file} — pre-existing test failures
+RED BEFORE FIXES: {repo}/{file}
+Unit: [pass/fail summary]
+E2E: [pass/fail summary]
 ```
-**Stop immediately on `CANNOT START`** — pre-existing failures must be
-resolved before continuing.
+**On `RED BEFORE FIXES`, fix first, then continue.** A red test on the
+branch is ours to fix, whoever caused it and whenever. "Pre-existing",
+"flaky", "unrelated" and "separate issue" are not reasons to stop.
+Diagnose from `test-results/*/error-context.md` and the test reports,
+fix the cause on the current branch, commit that fix on its own, re-run
+the suite to a new file until it is green, then spawn the implementor
+for the same group again. Stop only when the fix needs something you
+cannot do from here (a credential, a platform change, a decision that
+belongs to someone else), and report what is red, what you tried and
+what is needed.
 
 ## Step I4: Final Report
 
@@ -482,7 +507,8 @@ Results:
   ✅ Done:          {N} items across {F} files
   ⏭️  Auto-Resolved: {N} items (already fixed)
   ❌ Failed:        {N} items
-  🚫 Stopped:       [yes/no — pre-existing failures]
+  🧪 Red tests fixed: {N} (commit per fix)
+  🚫 Stopped:       [yes/no — what blocked the fix and what is needed]
 
 Done:
   {repo}/{file} → items #...,#... (commit {sha})

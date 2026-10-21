@@ -1,0 +1,40 @@
+{
+  "programme": "code-quality-dry-run",
+  "generatedFrom": ["document:code-quality-report-v2"],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does."
+  ],
+  "repos": {
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "touches": [
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend",
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification"
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "Refusals and redirects in check answers, cancel amend and delete notification are logged with the ids support searches by",
+      "detail": "When the plants service refuses a trader's request or redirects them away from what they asked for, support cannot tell from the logs that it happened or why. Check answers refuses Continue with a 400 when answers are incomplete; cancelling an amendment and deleting a notification each redirect when the notification is not in a state that allows it. Each of these outcome-changing branches should leave one log line that names the outcome and carries the notification reference and journey id, so a support engineer investigating a trader's report can find it.",
+      "acceptanceCriteria": [
+        "When check answers refuses Continue because answers are incomplete, one log line at info level records the refusal with the notification reference and journey id.",
+        "When cancel amend redirects because the notification is not being amended, one log line records the redirect and its reason with the notification reference and journey id.",
+        "When delete notification redirects because the notification cannot be deleted, one log line records the redirect and its reason with the notification reference and journey id.",
+        "A page that renders normally logs nothing new."
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["plantsfrontend"],
+      "sources": [{ "source": "document:code-quality-report-v2", "ref": "trade-imports-plants-frontend open issues" }],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [],
+      "gate": null
+    }
+  ]
+}

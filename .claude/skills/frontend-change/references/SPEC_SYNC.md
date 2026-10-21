@@ -207,6 +207,20 @@ never describing tests or how the spec was authored; `journey-flow` owns
 whether a PAGE is offered and `journey-obligations` whether a QUESTION
 applies, neither stating the other's half.
 
+**What a scenario may say.** Also owned by `config.yaml`, and the ones an
+increment breaks most often:
+
+- A scenario states what the page shows now. It never quotes copy the
+  increment removed. Bad: `THEN the page no longer shows "Internal
+  reference (optional)"`. Good: `THEN the hint under the field reads
+  "<the current hint>"`.
+- No scenario for a state the service cannot reach yet. If this increment
+  builds a branch whose trigger lands later, the scenario lands with the
+  trigger.
+- No ticket keys, backlog ids or ruling ids in requirement or scenario
+  text. Bad: `The page MUST hide answer errors until Continue (c-201)`.
+  Good: the same sentence with no id.
+
 ## Writing coverage.json
 
 Coverage is workspace-owned and outside the OpenSpec CLI. Its rules are in
@@ -267,7 +281,30 @@ An increment written by this skill adds **fit** links: the co-located
 this skill does not touch — leave an existing `e2e` link alone, and never
 add one for a test this increment did not write.
 
-`coverage: "full"` means a strong witness exists, not that the suite is
+### The red probe
+
+A link gets `strength: "full"` only once a probe has shown the test can
+fail. This is the same probe `spec-cover` runs before it claims `full`.
+For each link this increment writes as `full`, or upgrades to `full`:
+
+1. Find the production line the scenario's THEN depends on: the copy key,
+   the gate condition, the redirect, the status rule.
+2. Invert it: change the copy, negate the condition, point the redirect
+   elsewhere.
+3. Run that one test with the repo's own script (`npm --prefix <target
+   repo> run test:fit -- -g '<test name>'`, or the unit script with the
+   test file). It **must fail**.
+4. Restore the line exactly. Run the test again. It **must pass**.
+5. Check `git -C <target repo> diff` shows no trace of the inversion.
+
+If the test stays green in step 3, it does not witness the scenario.
+Rework the assertion and probe again, or record the link as `partial`
+with a `notes` clause saying what it does not prove. Never mark `full`
+on a test you have not seen fail.
+
+Report the count in the Completion output's `Probes:` line.
+
+`coverage: "full"` means a probed witness exists, not that the suite is
 trustworthy. A scenario with no test is an honest hole, and it has a
 shape of its own — the cited exemplar is all-`full`, so it does not show
 this case:

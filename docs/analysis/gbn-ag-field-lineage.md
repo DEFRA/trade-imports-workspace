@@ -7,16 +7,18 @@ fields that are silently dropped along the way and for gaps in the
 
 **Audited as of** 2026-09-02, against `main` on:
 
-| Repo | Commit (2026-09-02 original) | Commit (2026-09-28 §5 re-check) |
-|---|---|---|
-| `trade-imports-animals-frontend` | `1b53dbde` | `9b45dc9e` |
-| `trade-imports-animals-backend` | `0ba6596` | `ca0a4b8` |
-| `trade-imports-dynamics-gateway` | `4860117` | `c3ec805` |
-| `trade-imports-schemas` | `7a0e269` | `cd8d5b0` |
+| Repo | Commit (2026-09-02 original) | Commit (2026-09-28 §5 re-check) | Commit (2026-10-19 §6 PIMS v0.2.0 review) |
+|---|---|---|---|
+| `trade-imports-animals-frontend` | `1b53dbde` | `9b45dc9e` | `97663584` (`main`) |
+| `trade-imports-animals-backend` | `0ba6596` | `ca0a4b8` | `9c852a9` (EUDPA-614 branch = `main` `49f4168` + EUDPA-614) |
+| `trade-imports-dynamics-gateway` | `4860117` | `c3ec805` | `f391259` (EUDPA-614 branch = `main` `9c02cbd` + EUDPA-614) |
+| `trade-imports-schemas` | `7a0e269` | `cd8d5b0` | `73747f3` (`main`) |
 
 The 2026-09-28 column is the state §5's findings and the corrections marked with that date
 were verified against — not a full re-audit of §§1–4, which remain as-of 2026-09-02 plus
-the dated amendments folded in since.
+the dated amendments folded in since. The same goes for the 2026-10-19 column and §6: it
+re-checks the seven fields PIMS raised, plus the two already planned for PIMS v0.3.0, and
+nothing else.
 
 Cross-checked against the Confluence page
 [INS Portal → PIMS data mapping](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6525093960)
@@ -39,11 +41,19 @@ dictionary". Read §5 first if you are answering a similar question — includin
 "check which `schemaVersion` the consumer read" step, which now precedes any
 investigation of a reported missing field.
 
+§6 records PIMS's **2026-10-19** review of the v0.2.0 schema: seven fields they still need,
+traced through every hop, plus the two fields already planned for v0.3.0. It is the
+evidence base for EUDPA-615 (PIMS v0.3.0). It found two defects as well as missing value
+lists: the internal market purpose never reaches the event, and the generic event breaks
+its own schema in two places.
+
 | Ticket | Hop | Status | PRs |
 |---|---|---|---|
 | [EUDPA-368](https://eaflood.atlassian.net/browse/EUDPA-368) | §1 frontend → aggregate | IN QA | frontend#300, backend#94, tests#187 (closed) |
 | [EUDPA-369](https://eaflood.atlassian.net/browse/EUDPA-369) | §2 aggregate → generic GBN-AG | Merged (all 3 PRs) | backend#96, dynamics-gateway#20, tests#212 (merged) |
 | [EUDPA-370](https://eaflood.atlassian.net/browse/EUDPA-370) | §3 generic → PIMS | Merged (all PRs) — dual-emitting v0.1.0 and v0.2.0 | schemas#56, schemas#57, schemas#58; dynamics-gateway#21, dynamics-gateway#23 (all merged) |
+| [EUDPA-614](https://eaflood.atlassian.net/browse/EUDPA-614) | §2 country subdivision + region of origin code on the event | schemas merged; backend, gateway, ins-backend, tests PRs open | schemas#65, schemas#66 (merged); backend#111, dynamics-gateway#29, ins-backend#24, ins-tests#36 (open) |
+| [EUDPA-615](https://eaflood.atlassian.net/browse/EUDPA-615) | §3 / §6 generic → PIMS v0.3.0 | Being rewritten from §6 | — |
 
 A fuller, table-formatted version of this analysis (colour-coded mapped/gap/derived
 pills, collapsible full field inventories per hop) was published as a Claude
@@ -629,3 +639,307 @@ fields. **Establish which `schemaVersion` a complaint refers to before investiga
 
 - No schema slot anywhere for Weight, Transporter Status, Species id, or Species
   Family/Class/Type Name (§4 point 3 — unchanged).
+
+---
+
+## 6. PIMS v0.2.0 review: "the absolute bare minimum we don't have" (2026-10-19)
+
+PIMS reviewed `gbn-ag-pims-v0.2.0.schema.json` (with Monica Rivera) and listed seven things
+still missing. Five ask for a list of expected values, one is a missing party, and one is a
+link caseworkers can follow to a document. They also flagged "a couple of other fields that
+might require further discussion", not named yet.
+
+Each item below was traced through all four hops at the commits in the 2026-10-19 column
+above. Two more fields were already planned for v0.3.0 before this review: the country
+subdivision and region of origin code (EUDPA-614), and the document-type `urlId` (EUDPA-310
+decision D8). They are included so §6 covers everything v0.3.0 needs to carry.
+
+### Summary
+
+| # | PIMS item | What PIMS gets on v0.2.0 today | Why | What's needed | Where |
+|---|---|---|---|---|---|
+| 1 | Animals certified as | `GOODS_CERTIFIED_AS` clause, `content` = one of 16 frontend kebab-case keys | No published list; schema implies TRACES `ched_consignment_clause` codes, which we don't use | A Defra codelist of the 16 values, `urlId` on the clause | schemas, backend, gateway, PIMS schema |
+| 2 | Internal market purpose | **Nothing** | **Defect:** the backend only emits the clause when the reason is `INTERNAL_MARKET`, but the frontend stores `internalMarket`; and the clause's `content` is hardcoded `null` | Fix the condition, map `purposeInInternalMarket`, plus a codelist of the 11 values | backend, schemas, gateway, PIMS schema |
+| 3 | Purpose (reason for import) | `PURPOSE` clause, `content` = one of 5 camelCase keys | No published list; docs and samples spell it `INTERNAL_MARKET`, the code sends `internalMarket` | Agree one spelling, a codelist, `urlId` on the clause | schemas, backend, gateway, PIMS schema |
+| 4 | Person responsible | **Nothing** | `exchangedDocument.issuer` is hardcoded `null` on the generic event (breaking its own schema, which requires it), and is not in the PIMS v0.2.0 schema at all | Map the consignment contact the journey already collects into `issuer`; add `issuer` to PIMS v0.3.0 | backend, gateway, PIMS schema |
+| 5 | Document type | `referenceDocument[].typeCode` from the 14-code Defra list, **without** `urlId` | The codelist exists in schemas but isn't published anywhere PIMS can read; v0.2.0 drops `urlId` (EUDPA-310 D8) | Share or host the codelist; carry `urlId` in v0.3.0 | schemas, gateway, PIMS schema |
+| 6 | Animal identifier | `identifier[]` entries with `typeCode` (`EAR_TAG`, `PASSPORT`, `MICROCHIP`, `TATTOO`) and `content`, **no** `urlId` | No codelist file; backend sends `urlId: null` against a `const` in the generic schema; docs list `LEG_RING`, `IDENTIFICATION_DETAILS`, `DESCRIPTION`, which are never sent | A codelist of the 4 values, `urlId` populated, stale codes struck from the docs | schemas, backend, gateway, PIMS schema |
+| 7 | Document URL | **Nothing** | No event carries a storage id or a link, and there is no caseworker-facing document view anywhere | A decision (static link vs PIMS builds it), a caseworker-accessible download route, and a slot in v0.3.0 | backend (+ a viewer), schemas, gateway, PIMS schema |
+| — | Country subdivision | `subordinateTradeCountrySubDivision` (single object, `106`) — on the EUDPA-614 branch, now the MDM subdivision code, not the region of origin code | EUDPA-614 changed what the `106` entry means | v0.3.0 must say so, and decide whether it stays one object or becomes the generic event's array | schemas, gateway |
+| — | Region of origin code | **Nothing** | New generic field from EUDPA-614; v0.2.0 has no slot | Add `originCountry.regionOfOriginCode` | schemas, gateway |
+| — | Document type `urlId` | **Nothing** (see item 5) | EUDPA-310 D8 deferred it to v0.3.0 | Add `referenceDocument[].urlId` | schemas, gateway |
+
+None of the five value lists PIMS asked for is published anywhere a consumer can read
+today. Only the document-type list exists as a file
+(`schemas/codelists/gbn-ag-document-types.json`), and its `refdata.tbc.defra.gov.uk` host is
+a placeholder; the schemas repo is private and has no publish step. `trade-imports-reference-data`
+serves only countries and ports of entry.
+
+### 1–3. The three clauses: animals certified as, internal market purpose, purpose
+
+All three travel on `exchangedDocument.firstSignatoryAuthentication.includedClause[]` as
+`{ identifier, content, urlId }`. They are separate questions, stored in separate fields:
+
+| PIMS item | Frontend obligation (page) | Backend field | Clause `identifier` |
+|---|---|---|---|
+| Animals certified as | `animalsCertifiedFor` (Additional details) | `AdditionalDetails.certifiedFor` | `GOODS_CERTIFIED_AS` |
+| Purpose | `reasonForImport` (Main reason for import) | `NotificationBase.reasonForImport` | `PURPOSE` |
+| Internal market purpose | `purposeInInternalMarket` (same page, only when reason = internal market) | `NotificationBase.purposeInInternalMarket` | `INTERNAL_MARKET_PURPOSE` |
+
+Every value list is hardcoded in a frontend `stub.js`; nothing reads reference data. The
+backend stores each as a plain `String` with no enum or validation, and the event carries
+the frontend's own key unchanged, with `urlId` always `null` (`Clause.java`).
+
+**Animals certified as** — `services/certification-purposes/stub.js` (16 values). The
+obligation (`obligations/sections/misc.js`) says the list "come[s] from MDM in production",
+but no MDM call exists.
+
+| Value sent | Label |
+|---|---|
+| `further-keeping` | Further keeping |
+| `slaughter` | Slaughter |
+| `confined-establishment` | Confined establishment |
+| `germinal-products` | Germinal products |
+| `registered-equine-animal` | Registered equine animal |
+| `travelling-circus-animal-act` | Travelling circus/animal act |
+| `exhibition` | Exhibition |
+| `event-or-activity-near-borders` | Event or activity near borders |
+| `release-into-the-wild` | Release into the wild |
+| `dispatch-centre` | Dispatch centre |
+| `relaying-area-purification-centre` | Relaying area / purification centre |
+| `ornamental-aquaculture-establishment` | Ornamental aquaculture establishment |
+| `technical-use` | Technical use |
+| `quarantine-or-similar-establishment` | Quarantine or similar establishment |
+| `live-aquatic-animals-for-human-consumption` | Live aquatic animals for human consumption |
+| `other` | Other |
+
+**Purpose** — `services/import-reason-purpose/stub.js` (5 values). Each reason asks its own
+follow-up questions (`import-reason.js`):
+
+| Value sent | Label | Follow-up |
+|---|---|---|
+| `internalMarket` | Internal market | Purpose in the internal market |
+| `transhipmentOrOnwardTravel` | Transhipment or onward travel | Destination country |
+| `transit` | Transit | Port of exit, destination country |
+| `reEntry` | Re-entry | — |
+| `temporaryAdmissionHorses` | Temporary admission horses | Exit date, port of exit |
+
+**Internal market purpose** — same stub file (11 values). `validate.js` calls it "the
+service's own words rather than reference data", and several (rescue, research, companion
+animal, racing, approved premises, restocking) are UK-specific, with no obvious TRACES
+equivalent.
+
+| Value sent | Label |
+|---|---|
+| `transfer-of-ownership-sale-gift` | Transfer of ownership - Sale/gift |
+| `transfer-of-ownership-rescue` | Transfer of ownership - Rescue |
+| `breeding` | Breeding |
+| `research` | Research |
+| `racing-competition-show-or-training` | Racing, competition, show or training |
+| `approved-premises-or-body` | Approved premises or body |
+| `companion-animal-not-for-resale-or-rehoming` | Companion animal not for resale or rehoming |
+| `production` | Production |
+| `slaughter` | Slaughter |
+| `fattening` | Fattening |
+| `restocking` | Restocking |
+
+**Defect: the internal market purpose never reaches the event.** `Authentication.from`
+adds the `INTERNAL_MARKET_PURPOSE` clause only when
+`Clause.INTERNAL_MARKET.equals(reasonForImport)`, where `INTERNAL_MARKET = "INTERNAL_MARKET"`.
+The frontend stores `internalMarket`, so the condition never matches a real notification.
+Even when it does, `Clause.internalMarketPurpose()` builds the clause with `content` hardcoded
+`null`; `purposeInInternalMarket` is never read. `GbnAgMapperTest`'s comment "sub-purpose not
+in domain (gap G2)" is out of date: EUDPA-368 added the field.
+
+**Why the tests didn't catch it.** The backend and gateway test fixtures use TRACES-style
+values the frontend never sends: `INTERNAL_MARKET` for the reason, `BREEDING_AND_PRODUCTION`
+for certified-as (`GbnAgMapperTest.java`), and the gateway's hand-written
+`notification-submitted-from-backend.json` contains an `INTERNAL_MARKET_PURPOSE` clause the
+backend can't produce. The generic samples do the same (`gbn-ag-v1-example.json`). So the
+event's real vocabulary appears nowhere in tests or docs. `pims-data-mapping.md` adds a third
+spelling (`content = Transit`).
+
+**Schemas.** `gbn-ag-v1.schema.json` requires the `PURPOSE` and `GOODS_CERTIFIED_AS` clauses
+and says their `urlId` points at TRACES `ched_consignment_clause`
+(`schemas/profiles/imports/README.md` says that list "supplies the values for purpose and
+animal certification category"). That list is in no repo, and our values don't match it. The
+schema's description says `INTERNAL_MARKET_PURPOSE` is required when the purpose is internal
+market, but the `allOf` doesn't enforce it. `pims-data-mapping.md` confirms all three rows
+(PIMS rows 3, 16 and modified row 10) without listing any values.
+
+**Decision needed:** publish our own Defra codelists of the values the journey actually
+offers (as `gbn-ag-document-types.json` does for documents), or map our keys onto TRACES
+`ched_consignment_clause` codes. The first is quicker and honest about the UK-specific
+values; the second only helps if PIMS already holds the TRACES list. Either way, agree one
+spelling per value, and decide whether the event sends the frontend key or a code.
+
+### 4. Person responsible
+
+The journey **already collects it.** The mandatory "Contact address for consignment" page
+(`features/contact/`, obligation `contactAddress`) is the design's "person responsible for the
+consignment from when it enters Great Britain until authorities complete their checks"
+(DR1 prototype intro). The trader picks an organisation address-book entry. The frontend sends it
+as `consignment` (`{ name, email, phone, address }`) and the backend stores it as
+`NotificationBase.consignment` (`ConsignmentParty`).
+
+**It stops there.** Nothing in `outbox/gbnag/` reads `getConsignment()`, and
+`ExchangedDocument.from` passes a literal `null` for `issuer`, pinned by `GbnAgMapperTest`
+("where it belongs on the event is still an open question… gap G1"). Because `issuer` is
+**required** by `gbn-ag-v1.schema.json`, every generic event breaks its own schema. The
+gateway reads `issuer` and deliberately drops it (`PimsExchangedDocument`,
+`PimsGbnAgDataMapperV2`: "deferred to its own follow-up ticket"), and the PIMS v0.2.0 schema
+has no `issuer` at all (`-changes.md`: "Explicitly not added"). That follow-up ticket was
+never raised.
+
+`TradeParty.from(ConsignmentParty)` already exists, so the backend change is small. Two
+gaps remain:
+
+- **No named person.** Address-book entries have no contact person, so `TradeParty`
+  deliberately never sets `definedContact[].personName`. `pims-data-mapping.md` (row 14)
+  puts the organisation in `name`/`postalAddress` and the person, phone and email in
+  `definedContact[]`. Email and phone can go in `definedContact[]` without a name.
+- **Two sources described, one built.** `pims-data-mapping.md` describes the organisation
+  half as the Defra ID organisation record, and "Contact Address" (row 30) as the signed-in
+  user's preferred gov.uk address, both landing in `issuer`. What's built is a
+  trader-picked address-book contact. Defra ID claims carry no address, and the only
+  identity that reaches PIMS is the event envelope's `actor` (`displayName`,
+  `organisationId`; no email, phone, organisation name or address).
+
+**Recommendation:** map the consignment contact into `issuer`, since that's what the
+design calls the person responsible and the data exists. Update rows 14 and 30 of
+`pims-data-mapping.md` to describe what's sent, rather than build the Defra ID route.
+
+### 5. Document type
+
+The list PIMS asked for exists: `schemas/codelists/gbn-ag-document-types.json`
+(`$id` `https://refdata.tbc.defra.gov.uk/gbn-ag-document-types`), 14 codes. The backend
+maps its `DocumentType` enum onto them (`ReferencedDocument.java`), and only documents
+whose virus scan is complete go on the event.
+
+| Code | Document | Code basis |
+|---|---|---|
+| `4` | Laboratory sampling results for aflatoxin | UNTDID 1001 (test report) |
+| `380` | Commercial invoice | UNTDID 1001 |
+| `636` | Health certificate | UNTDID 1001 |
+| `705` | Bill of lading | UNTDID 1001 |
+| `710` | Sea waybill | UNTDID 1001 |
+| `720` | Rail waybill | UNTDID 1001 (rail consignment note) |
+| `740` | Air waybill | UNTDID 1001 |
+| `853` | Veterinary health certificate | UNTDID 1001 |
+| `856` | ITAHC | UNTDID 1001 (inspection certificate, as TRACES uses it) |
+| `911` | Import permit | UNTDID 1001 (import licence) |
+| `916` | Other | UNTDID 1001 (related document) — only when the trader picks "Other" |
+| `GBN1` | Letter of authority | Defra |
+| `GBN2` | Catch certificate | Defra |
+| `GBN3` | Journey log | Defra |
+
+What's missing is a way for PIMS to read it. The host is a placeholder, the schemas repo
+is private, and `pims-data-mapping.md` lists the codes only in prose. PIMS v0.2.0 also drops
+`urlId` (EUDPA-310 D8), so the payload doesn't even name the list. Two smaller points: the
+generic schema doesn't restrict `typeCode` to these codes, and the frontend still uses its
+own hardcoded list (EUDPA-430 not done), which matches today but isn't tied to the file.
+
+### 6. Animal identifier
+
+**What's sent.** `TradeProductInstance` emits one instance per animal, with
+`identifier[]` entries of `typeCode` + `content`. There are exactly four typeCodes, all
+Defra-invented strings with no TRACES or UN/CEFACT basis: `EAR_TAG`, `PASSPORT`,
+`MICROCHIP`, `TATTOO`. Horse name goes in the instance's `name`, not as an identifier, and
+permanent address goes in `permanentLocation`. `content` is free text, trimmed, up to 58
+characters, with no format check for any type.
+
+| Commodity (CN) | Identifiers asked |
+|---|---|
+| Cattle (`0102`) | Ear tag, passport |
+| Horse (`0101`) | Microchip, passport, horse name |
+| Cat, dog (`01061900`) | Microchip, passport, tattoo, plus permanent address (mandatory) |
+| Fish (`0301`) | None |
+
+**What's documented but never sent.** `gbn-ag-v1.schema.json`, the data dictionary and
+`pims-data-mapping.md` list `LEG_RING`, which has no frontend field or backend constant.
+`pims-data-mapping.md` also still lists `IDENTIFICATION_DETAILS` and `DESCRIPTION` (removed
+by EUDPA-500), with an outstanding action to add them to a codelist. The mapping doc says
+permanent address applies to ferrets as well; the commodity catalogue has no ferret.
+
+**`urlId`.** The generic schema pins `urlId` to a `const`
+(`https://codelists.tbc.defra.gov.uk/animal_identifier_types`), but the backend always sends
+`null`, and the record has no `@JsonInclude(NON_NULL)`. The gateway drops the null, so PIMS
+gets no pointer to any list. No `animal_identifier_types` codelist file exists, and the docs
+use two different placeholder hosts (`codelists.tbc…` and `refdata.tbc…`).
+
+**A competing model.** The generic schema also describes identifiers as trade-line
+`additionalInformationNote` entries with TRACES subject code
+`INDIVIDUAL_IDENTIFICATION_NUMBER` (and the event samples use it). Nothing emits it, and it
+loses the identifier type. It should be removed or reconciled, so PIMS isn't shown two
+shapes.
+
+### 7. Document URL
+
+PIMS asks whether they build the link or receive one. Neither is possible today:
+
+- **Nothing on any event identifies the stored file.** `referenceDocument[].identifier` is
+  the trader's reference printed on the document, which isn't unique and isn't a storage
+  handle. The storage handles (`uploadId`, `correlationId`, Mongo `id`, `s3Key`) stay in
+  `accompanying_documents`. EUDPA-310 decision D10 left the file off the event.
+- **There is no caseworker-facing document view.** The backend's
+  `GET /document-uploads/{upload-id}/file` streams from S3. Like every animals-backend route,
+  it has no application-level authentication (the only filter, `AdminSecretFilter`, guards
+  delete and replay) and relies on CDP's internal network, so it can't be handed to PIMS
+  users. The animals frontend's `…/accompanying-documents/{uploadId}/file` needs a Defra ID
+  trader session. INS frontend and animals-admin have no document page. No presigned URLs
+  are generated anywhere.
+- **The schema already has a slot.** The core `ReferencedDocument.attachmentBinaryObject`
+  (`uri`, `filename`, `mimeCode`) is described as "a link to the stored file", and the generic
+  samples use `uri:documentid:<uuid>`. Nothing populates it, the gateway's inbound
+  `ReferencedDocument` would reject it (`ignoreUnknown = false`) until it's modelled there,
+  and PIMS v0.2.0 leaves it out.
+
+The two options:
+
+| | PIMS builds the link | We send a link |
+|---|---|---|
+| Needs on the event | A stable per-document id (e.g. `uploadId`) | `attachmentBinaryObject.uri` (+ `filename`, `mimeCode`) |
+| Needs from us | A caseworker-accessible download route and its base URL | The same route, plus a decision on its URL shape |
+| Pros | Event stays free of environment-specific URLs; PIMS controls the link | Simpler for PIMS; one source of truth for the link |
+| Cons | PIMS hardcodes our route; changing it breaks them | URL baked into every event, so environments and moves break old events |
+
+Either way, **the hard part is the route, not the event**: something caseworkers can open,
+authenticated for them rather than for a trader. That's a design decision (INS, animals-admin
+or a new service) and probably its own ticket. `pims-data-mapping.md` still says "Document URL
+stays a consumer-side concern; not added to the schema", which this request reverses.
+
+### Already planned for v0.3.0
+
+- **Country subdivision.** EUDPA-614 changed the `106` entry from the region of origin code to
+  the MDM subdivision code (e.g. `ES-CN`) and made the generic field an **array**. The gateway on
+  the EUDPA-614 branch picks the `106` entry and still sends v0.2.0's **single object**, with a
+  new meaning. v0.3.0 must document the meaning, and decide whether to keep one object or match
+  the generic array. PIMS should be told the meaning changed on the v0.2.0 stream too.
+- **Region of origin code.** New field `originCountry.regionOfOriginCode` (the disease zone from
+  the health certificate). Not sent to PIMS until v0.3.0 has a slot for it.
+- **Document type `urlId`.** EUDPA-310 decision D8: v0.3.0 is a copy of v0.2.0 plus
+  `referenceDocument[].urlId`, with a `-changes.md` sidecar and a sample.
+
+### Defects found, separate from the value lists
+
+1. **Internal market purpose never emitted** — the `INTERNAL_MARKET` / `internalMarket` mismatch
+   plus hardcoded `null` content (items 1–3).
+2. **Generic event breaks its own schema twice** — required `issuer` always absent (item 4), and
+   identifier `urlId` sent as `null` against a `const` (item 6). The same class as the
+   `finalDestinationLocation.postalAddress` mismatch in §3.
+3. **Test fixtures and samples use values the frontend never sends**, which hid defect 1.
+
+### Decisions needed before v0.3.0 can be minted
+
+1. Codelists for the three clauses: our own Defra lists, or a mapping onto TRACES
+   `ched_consignment_clause` (items 1–3).
+2. One spelling per value, and whether the event sends the frontend key or a code (items 1–3, 6).
+3. Where the codelists are published so PIMS can read them: share the files, or host them (the
+   EUDPA-429 ownership question) (items 1–3, 5, 6).
+4. Person responsible: confirm the consignment contact is the right source, and that no named
+   person is acceptable (item 4).
+5. `LEG_RING`: implement it or strike it (item 6).
+6. Document URL: who builds it, and where caseworkers open documents (item 7). The route is
+   probably separate work, so v0.3.0 may need to carry only the id or `uri` slot.
+7. Subdivision: one object or an array in v0.3.0.
+8. What PIMS's "couple of other fields" are, so v0.3.0 is cut once.

@@ -115,8 +115,11 @@ description structure, AC quality, parent/epic, label conformance
 | Check | Question |
 |-------|----------|
 | Context | Is the "why" explained? |
+| Recommendation | Does it say what should happen, not only what happened? |
 | Scope | In/out of scope clear? |
 | Specificity | Concrete details? |
+| No history | Is it free of timelines, commit hashes and audit dumps, with evidence linked instead? |
+| Markup | Does it render? No literal Markdown, no `class="error"` in `ticket.sh EUDPA-X full`. |
 
 ### Acceptance Criteria
 | Check | Question |
@@ -125,6 +128,17 @@ description structure, AC quality, parent/epic, label conformance
 | Testable | Can each be verified? |
 | Complete | Cover full scope? |
 | Unambiguous | One interpretation? |
+| Open items only | Is every AC still to do? An item marked DONE belongs in the description or tech notes. |
+| End state | Does each AC say what is true afterwards, not quote what is being removed? |
+
+### Architecture and investigation tickets
+| Check | Question |
+|-------|----------|
+| Questions, not moves | Is the scope a list of questions, not steps such as "move this folder there"? |
+| Decision as output | Is the AC an ADR or decision note plus follow-up tickets? |
+
+A ticket that prescribes moves before the investigation is NEEDS WORK.
+Suggest the questions those moves were meant to answer.
 
 ### Technical Clarity
 | Check | Question |
@@ -137,9 +151,21 @@ description structure, AC quality, parent/epic, label conformance
 ### Estimability
 | Check | Question |
 |-------|----------|
-| Sized | Fits in a sprint? |
+| Sized | Can the team estimate it as one piece of work? (EUDPA has no sprints.) |
 | Unknowns | Too many to estimate? |
 | Spike | Investigation first? |
+
+Before you call a ticket SPIKE REQUIRED, ask whether the apply is
+large or mechanical once a plan exists. Many tickets here are
+plan-heavy and apply-light: most of the work is the analysis, and the
+change that follows is small because the logic it touches lives in one
+place. AC that mix "evaluate options" or "team picks an option" with
+the change itself do not make a ticket a spike on their own.
+
+Example: a ticket to shrink a bloated `gh-pages` branch listed several
+options whose effort seemed to vary five-fold. The publishing logic
+lives in one reusable workflow, so every option came down to a small
+PR plus a one-off history rewrite. The ticket was READY.
 
 ## Step 4: Write Review
 
@@ -167,9 +193,9 @@ recommended.
 
 | Verdict | Criteria |
 |---------|----------|
-| **READY** | Clear description, testable AC, team can estimate |
-| **NEEDS WORK** | Missing info needed before refinement |
-| **SPIKE REQUIRED** | Too many unknowns - needs investigation first |
+| **READY** | Clear description, testable AC, team can estimate. Includes plan-heavy, apply-light tickets where the investigation fits in the ticket and the change after it is small. |
+| **NEEDS WORK** | Missing info needed before refinement, or the ticket breaks a convention in `ticket-conventions.md` (history in the body, answered AC, prescribed moves on an architecture ticket, broken markup). |
+| **SPIKE REQUIRED** | Even the set of options is unknown, or the change genuinely ranges from days to weeks depending on the option chosen. |
 
 **Next-step prose by verdict:**
 

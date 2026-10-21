@@ -37,7 +37,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
-- A name says every kind of value the code can return, a fallback, a null or an empty result included, and any error it throws. It need not say when each one comes back. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code; and `requestedPageOrFirst`. Too far: `honouredReturnOffAddressOrAddressBook`, which spells out when the address book wins.
+- A name says every kind of value the code can return, a fallback of another kind or a null included, and any error it throws. An empty list or string is the same kind of value. It need not say when each one comes back. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code; and `requestedPageOrFirst`. Too far: `honouredReturnOffAddressOrAddressBook`, which spells out when the address book wins.
 - Rename only when the name mispredicts. A name that already says every kind of value the code returns, and what it changes, stays, even when another name would read better.
 - Name a parameter or local for what it holds at that point. Bad: `id` and `returnTo` for an address id and a return that has passed its checks. Good: `addressId` and `honouredReturn`.
 - Bad: `// c-201: an amendment opens with no errors; Continue refused shows them.` above `const holdsSilently = readOnly || (isAmend && !refused)`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.

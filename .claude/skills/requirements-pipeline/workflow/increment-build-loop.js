@@ -2609,6 +2609,9 @@ ${BOUNDED_TIDY_UP}
       belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
       repo's script that takes that project down, as a check of its own. "None" is an answer.
+      Sections 5 and 6 check behaviour: what a page, a test or the spec does. Never a check that a file stays
+      untouched or unchanged: scope is a decision (section 0 or 7), not a test, and a later stage may depart from it
+      for a stated reason.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions. Then
       "Follow-ups:", each wider clean-up you noticed outside the row's footprint as one line a backlog row could be
       written from. "None" is an answer.
@@ -4864,6 +4867,10 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
    A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
    the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
+   The plan states decisions, not a script. A plan check that only fails because the implementor or fixer departed
+   from the plan for a stated reason (a review finding, a red rung) — a file the plan said stays untouched, a home
+   it moved — is a note, not a failure: say so in your summary, with the departure and its reason, and leave it out
+   of failures[]. A check of behaviour (the page does X, the spec says Y) stays pass or fail.
 ${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
 ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
@@ -4911,7 +4918,8 @@ ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
 ${RUN_STACK_RULE}
 In ran[], list every gate rung as \`<repo> <name>\`, every plan check and every spec check you ran. In failures[], one
 line per red rung or check, with its reason and its log.
-Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
+Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it. A
+plan check noted as a stated departure counts as passed: it never by itself turns a green gate red.
 Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
   ))

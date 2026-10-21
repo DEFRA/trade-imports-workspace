@@ -722,6 +722,14 @@ that names a denied form back to the planner once, with the commands named, and
 refuses a second one as `plan-refused`. The ladder and the consistency reviewer
 report a denied check rather than rewriting it.
 
+A plan check proves behaviour, never scope. The planner writes no "file X stays
+untouched" checks: scope is a decision, and a later stage may depart from it.
+When a plan check fails only because the implementor or fixer departed from the
+plan for a stated reason (a review finding, a red rung), the ladder notes the
+departure in its summary and counts the check as passed. A plan check never by
+itself turns a green gate red (design-release-2-1 inc-204, where a fixer's
+duplication fix touched three test files the plan had frozen).
+
 ### The start stage
 
 Under the full lifecycle one light agent runs

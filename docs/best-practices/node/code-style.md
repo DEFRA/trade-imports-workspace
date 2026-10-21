@@ -444,6 +444,20 @@ setTimeout(sync, ONE_DAY_MS)
 if (password.length < MIN_PASSWORD_LENGTH) { ... }
 ```
 
+A named constant used by one function lives in that function. Module scope is for values the module shares.
+
+```js
+// bad — a module constant that only one function reads
+const PARSE_BASE = 'https://relative-path.invalid'
+const toInsPath = (path) => new URL(path, PARSE_BASE) /* ... */
+
+// good — the constant sits beside its one use
+const toInsPath = (path) => {
+  const standInOrigin = 'https://relative-path.invalid'
+  /* ... new URL(path, standInOrigin) ... */
+}
+```
+
 ---
 
 ## 14. Prefer `async`/`await`

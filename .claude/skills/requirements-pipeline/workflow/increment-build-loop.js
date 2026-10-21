@@ -526,6 +526,9 @@ const HOUSE_RULES = `**Comments**
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
+- Predict every branch. A fallback, a null, an empty result and a thrown error are part of what the code returns. Bad: \`countryNameOf(countries, code)\` that returns the code when the list has no name for it. Good: \`countryLabelOf\`, the label shown: the name, else the code.
+- Rename only when the name mispredicts. A name that already predicts what the code returns and changes stays, even when another name would read better.
+- Name a parameter or local for what it holds at that point. Bad: \`id\` and \`returnTo\` for an address id and a return that has passed its checks. Good: \`addressId\` and \`honouredReturn\`.
 - Bad: \`// c-201: an amendment opens with no errors; Continue refused shows them.\` above \`const holdsSilently = readOnly || (isAmend && !refused)\`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: \`linesDroppedBy(lines, type)\` returning \`{ kept, removed }\`. Good: \`keepLinesAllowedBy(lines, type)\`.
 - Bad: \`report()\` that also clears expired faults. Good: clear them where a name says so, and let \`report()\` only read.
@@ -540,6 +543,8 @@ const HOUSE_RULES = `**Comments**
 - Extend the mechanism that exists. Do not add a second one beside it. When a new class or path mirrors one you are editing, extract the shared part in the same change.
 - A pipeline whose callbacks branch or take several steps gets named helpers, so the top function reads as a few named steps.
 - Build only what this change makes reachable.
+- A named constant used by one function lives in that function. Module scope is for values the module shares.
+- A scope you are given limits which files you open, never which lines of an opened file you fix. Every file you touch meets these rules in full.
 
 **Tests**
 

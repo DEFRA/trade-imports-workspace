@@ -182,21 +182,69 @@ The system MUST refuse to save and continue from the origin page when the user h
 - **AND** the origin task does not read "Complete"
 - **AND** re-opening the page shows the required answer still held as "Yes"
 
-### Requirement: Once a region code is required, the chosen country's code is shown as a fixed prefix beside the region code field
+### Requirement: With JavaScript, the chosen country's code is shown as a fixed prefix beside the region code field
 **ID**: REQ-ORIGIN-012
-The system MUST show the chosen country's own code as a fixed prefix beside the region code field, once the page has been saved with a country chosen and a region code required.
+With JavaScript, the system MUST show the chosen country's code as a fixed prefix beside the region code field. The prefix MUST be empty before a country is chosen, when it is cleared and when the country has no code, fill in as a country is picked without saving, and show the saved or submitted code when the page is shown again or with an error. The prefix MUST be hidden from screen readers, and the field MUST be named by its label and described by the hint "Enter up to 5 characters.".
 
-#### Scenario: The country's code prefixes the region code field
+#### Scenario: With JavaScript, the country's code prefixes the region code field
 **ID**: SCN-ORIGIN-012-A
-- **GIVEN** the user has chosen France, answered that a region code is required, and saved
+- **GIVEN** the user has JavaScript, has chosen France, answered that a region code is required, typed "75" and saved
 - **WHEN** they return to the origin of the import page
 - **THEN** the region code field carries France's code as a fixed prefix
+- **AND** the region code field holds "75"
 
-#### Scenario: The prefix follows whichever country was chosen
+#### Scenario: With JavaScript, the prefix follows whichever country was chosen
 **ID**: SCN-ORIGIN-012-B
-- **GIVEN** the user has chosen Ireland, answered that a region code is required, and saved
+- **GIVEN** the user has JavaScript, has chosen Ireland, answered that a region code is required, and saved
 - **WHEN** they return to the origin of the import page
 - **THEN** the region code field carries Ireland's code as a fixed prefix, not France's
+
+#### Scenario: With JavaScript, the prefix is empty before a country is chosen
+**ID**: SCN-ORIGIN-012-C
+- **GIVEN** the user has JavaScript and has chosen no country
+- **WHEN** they answer that a region code is required
+- **THEN** the revealed region code field shows an empty prefix in front of it
+
+#### Scenario: With JavaScript, choosing a country fills the prefix without saving
+**ID**: SCN-ORIGIN-012-D
+- **GIVEN** the user has JavaScript and has answered that a region code is required
+- **WHEN** they choose France
+- **THEN** the prefix reads France's code with no save
+- **WHEN** they then choose the Netherlands
+- **THEN** the prefix reads the Netherlands' code with no save
+
+#### Scenario: With JavaScript, choosing a territory fills the prefix with its country's code
+**ID**: SCN-ORIGIN-012-E
+- **GIVEN** the user has JavaScript and has answered that a region code is required
+- **WHEN** they choose "Canary Islands (Spain)"
+- **THEN** the prefix reads ES with no save
+
+#### Scenario: With JavaScript, clearing the country empties the prefix
+**ID**: SCN-ORIGIN-012-F
+- **GIVEN** the user has JavaScript, has answered that a region code is required and has chosen France
+- **WHEN** they clear the country
+- **THEN** the prefix is empty
+
+#### Scenario: With JavaScript, a refused page shows the submitted country's code as the prefix
+**ID**: SCN-ORIGIN-012-G
+- **GIVEN** the user has JavaScript, has chosen France, answered that a region code is required and left the code empty
+- **WHEN** they save and continue and the page is shown with an error
+- **THEN** the prefix reads France's code
+- **WHEN** they then choose the Netherlands
+- **THEN** the prefix reads the Netherlands' code
+
+#### Scenario: With JavaScript, choosing a country with no code empties the prefix
+**ID**: SCN-ORIGIN-012-H
+- **GIVEN** the user has JavaScript, has answered that a region code is required and has chosen France
+- **WHEN** they choose a country that has no code
+- **THEN** the prefix is empty
+
+#### Scenario: The prefix is hidden from screen readers and the field keeps its label and hint
+**ID**: SCN-ORIGIN-012-I
+- **GIVEN** the user has JavaScript and has answered that a region code is required
+- **WHEN** the region code field is read by a screen reader
+- **THEN** the prefix is not announced
+- **AND** the field is named by its label and described by the hint "Enter up to 5 characters."
 
 ### Requirement: On a notification, the back link's target depends on whether the journey already has answers
 **ID**: REQ-ORIGIN-013
@@ -273,7 +321,7 @@ The system MUST keep a region code typed under Yes with no country chosen on the
 
 ### Requirement: Each territory in the country list is named with its country, and keeps its code
 **ID**: REQ-ORIGIN-018
-The system MUST name every territory in the country of origin list "<territory> (<country>)", for example "Canary Islands (Spain)", with or without JavaScript. It MUST sort the list alphabetically by the name shown. It MUST save a chosen territory by its own code, and on return MUST show it by that name with its country's code as the region code prefix.
+The system MUST name every territory in the country of origin list "<territory> (<country>)", for example "Canary Islands (Spain)", with or without JavaScript. It MUST sort the list alphabetically by the name shown. It MUST save a chosen territory by its own code, and on return MUST show it by that name and, with JavaScript, with its country's code as the region code prefix.
 
 #### Scenario: A territory is named with its country, with or without JavaScript
 **ID**: SCN-ORIGIN-018-A
@@ -289,7 +337,7 @@ The system MUST name every territory in the country of origin list "<territory> 
 
 #### Scenario: A chosen territory keeps its code and is shown back with its country's prefix
 **ID**: SCN-ORIGIN-018-C
-- **GIVEN** the user chose "Canary Islands (Spain)", answered that a region code is required, typed a code and saved
+- **GIVEN** the user has JavaScript, chose "Canary Islands (Spain)", answered that a region code is required, typed a code and saved
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows "Canary Islands (Spain)", the notification keeps the territory's code, and the region code field carries Spain's code, ES, as its fixed prefix
 
@@ -311,3 +359,38 @@ The system MUST, when the page is shown for a template being created, end it wit
 - **WHEN** they choose a country and select "Save and continue"
 - **THEN** "What are you importing?" is shown for the template
 - **AND** returning to "Origin of the import" shows the chosen country
+
+### Requirement: The region code is saved with the country's code whether or not the trader typed it
+**ID**: REQ-ORIGIN-020
+The system MUST save the region code as the chosen country's code joined to the rest, whether or not the trader typed the country's code, and MUST measure the five-character limit on the rest after any typed country code is removed. A typed country code is removed only when it is followed by the hyphen.
+
+#### Scenario: Without JavaScript, a region code typed with or without the country code is saved joined
+**ID**: SCN-ORIGIN-020-A
+- **GIVEN** the user has no JavaScript, has chosen France and answered that a region code is required
+- **WHEN** they type "75", or "FR-75", and save
+- **THEN** the region code saved is "FR-75" in both cases
+
+#### Scenario: A typed country code does not count towards the five-character limit
+**ID**: SCN-ORIGIN-020-B
+- **GIVEN** JavaScript is off, the user has chosen France and answered that a region code is required
+- **WHEN** they type "FR-" followed by five characters and save and continue
+- **THEN** the region code saved is "FR-" followed by those five characters
+- **WHEN** they type "FR-" followed by six characters and save and continue
+- **THEN** an error names the region code's limit and nothing is saved
+- **AND** the typed country code does not count towards the five-character limit
+
+#### Scenario: A country's letters typed without the hyphen are kept as typed
+**ID**: SCN-ORIGIN-020-C
+- **GIVEN** the user has chosen France and answered that a region code is required
+- **WHEN** they type "FR75" with no hyphen and save
+- **THEN** the region code saved is "FR-FR75"
+
+### Requirement: Without JavaScript the region code field has no prefix
+**ID**: REQ-ORIGIN-021
+Without JavaScript the system MUST show no region code prefix, on first view, after a save or after an error.
+
+#### Scenario: Without JavaScript, the region code field has no prefix
+**ID**: SCN-ORIGIN-021-A
+- **GIVEN** the user has no JavaScript
+- **WHEN** the region code field is shown on first view, after a save, or after an error
+- **THEN** the field has no prefix, empty or filled

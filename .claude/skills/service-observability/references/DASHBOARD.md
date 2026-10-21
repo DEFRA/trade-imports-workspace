@@ -1,8 +1,9 @@
 Build the service's custom Grafana dashboard in the CDP dev playground.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
-No dashboard has been imported from the template yet. Each fact that
-comes only from the CDP monitoring docs is marked `[UNPROVEN]`.
+The template was first imported for reference-data (EUDPA-632). Each
+fact that comes only from the CDP monitoring docs is marked
+`[UNPROVEN]`.
 
 Claude generates the dashboard JSON from
 `assets/dashboard.template.json`; the developer imports it in Grafana.
@@ -47,9 +48,10 @@ table is a change to the template, and the reverse.
 CloudWatch, namespace `<service>` (the service's `aws.emf.namespace`,
 which defaults to the service name). The template picks its data
 sources through two dashboard variables, `cloudwatch` and `opensearch`,
-so it carries no data source ids. `[UNPROVEN]` the OpenSearch data
-source's plugin type (`grafana-opensearch-datasource`) and that the
-CloudWatch region `default` is right for CDP.
+so it carries no data source ids. The OpenSearch variable's plugin type,
+`grafana-opensearch-datasource`, works (the log panel showed data on
+reference-data, 2026-10-21). `[UNPROVEN]` that the CloudWatch region
+`default` is right for CDP.
 
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
@@ -78,8 +80,9 @@ One panel reads logs, not metrics:
 |---|---|---|
 | Slowest dependency calls | OpenSearch | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
 
-`[UNPROVEN]` Grafana queries OpenSearch with Lucene, not DQL. Build the query in
-OpenSearch Dashboards with DQL switched off, then copy it across. This
+Grafana queries OpenSearch with Lucene, not DQL: build the query in
+OpenSearch Dashboards with DQL switched off, then copy it across. The
+template's query works as written (reference-data, 2026-10-21). This
 panel finds nothing unless the service writes the `event.*` fields as a
 nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.

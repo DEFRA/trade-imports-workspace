@@ -81,15 +81,17 @@ reaches OpenSearch flat.
   2026-10-19 (reference-data 0.24.0): the line arrived with its
   `message`, `service.name` and `trace.id`, but none of the four
   `event.*` fields. The nested key-value-pair version above replaced it.
-  `[UNPROVEN]` until the next release is checked in dev:
-  `event.category:"external-call" AND service.name:"<service>"` should
-  find the lines in OpenSearch, sortable by `event.duration`, and CDP's
-  "Log Ingestion Errors" alert should stay quiet for the service.
+- **The nested version reaches OpenSearch.** Seen in dev on 2026-10-21
+  (reference-data 0.27.0): `event.category:"external-call" AND
+  service.name:"<service>"` finds the lines, and Grafana's "Slowest
+  dependency calls" panel shows them sorted by `event.duration` as a
+  number. `[UNPROVEN]` that CDP's "Log Ingestion Errors" alert stays
+  quiet for the service.
 - **One flat `event.*` key is left on every line.** The ECS encoder
   (1.6.0) always writes `"event.dataset":"<service>"` flat, so the call
   line holds that flat key and the nested `event` object side by side.
-  `[UNPROVEN]` whether CDP accepts the mix. If "Log Ingestion Errors"
-  fires after release, this is the first suspect.
+  CDP indexes the line with the mix (the nested fields arrive), but if
+  "Log Ingestion Errors" fires, this is the first suspect.
 - **The first tests passed while the fields were being dropped.** They
   read the MDC on the captured log event, not the JSON the encoder
   writes. Test the encoded JSON (see Tests).

@@ -219,7 +219,7 @@ The system MUST let the user save and continue once a means of transport is chos
 **ID**: REQ-ARRIVAL-012
 The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen, and MUST begin the ordinary port list with a blank "Select a port" entry.
 
-#### Scenario: The port search reads as Design Release 2.1 words it
+#### Scenario: The port search is hinted and shows "Select a port"
 **ID**: SCN-ARRIVAL-012-A
 - **GIVEN** the user is on the arrival details page with no port chosen
 - **WHEN** the page loads
@@ -250,7 +250,7 @@ The system MUST offer the means of transport as "Air", "Rail", "Road" and "Sea",
 
 ### Requirement: The transport identification hint opens "Enter one of the following:"
 **ID**: REQ-ARRIVAL-014
-The system MUST open the transport identification hint with "Enter one of the following:" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).
+The system MUST open the transport identification hint with "Enter one of the following:" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number), with the lead-in and the list shown in the same grey as the page's other hints.
 
 #### Scenario: The transport identification hint leads with its instruction
 **ID**: SCN-ARRIVAL-014-A
@@ -258,6 +258,7 @@ The system MUST open the transport identification hint with "Enter one of the fo
 - **WHEN** the page loads
 - **THEN** the transport identification hint opens with "Enter one of the following:"
 - **AND** it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)
+- **AND** the lead-in and the list are shown in the same grey as the page's other hints
 
 ### Requirement: Each arrival question is set in the medium label size
 **ID**: REQ-ARRIVAL-015
@@ -268,3 +269,13 @@ The system MUST set each of the five arrival questions (arrival date, port of en
 - **GIVEN** a user on the arrival details page
 - **WHEN** the page loads
 - **THEN** the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size
+
+### Requirement: The arrival date hint gives a fixed example
+**ID**: REQ-ARRIVAL-016
+The system MUST hint the arrival date with "The expected date of arrival at the port of entry. For example, 27/3/2026", whatever the day.
+
+#### Scenario: The arrival date hint reads the same on every day
+**ID**: SCN-ARRIVAL-016-A
+- **GIVEN** a user on the arrival details page
+- **WHEN** the page loads
+- **THEN** the arrival date hint reads exactly "The expected date of arrival at the port of entry. For example, 27/3/2026"

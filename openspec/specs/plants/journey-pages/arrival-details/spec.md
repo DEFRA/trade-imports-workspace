@@ -36,7 +36,7 @@ The system MUST ask for the arrival date under one of three labels: "Expected da
 
 ### Requirement: A potatoes notification also asks for the time and the place of landing
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-002
-The system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field, hinted "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code."
+The system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field, hinted "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code." and showing "Select a place of landing" while no port is chosen.
 
 #### Scenario: Potatoes see the time and the searchable place of landing
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-A
@@ -50,6 +50,12 @@ The system MUST ask a potatoes notification for the expected time of arrival and
 - **GIVEN** a potatoes notification is on the arrival details
 - **WHEN** the page loads
 - **THEN** the place of landing hint reads "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code."
+
+#### Scenario: The place of landing search shows "Select a place of landing" until a port is chosen
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-C
+- **GIVEN** a potatoes notification is on the arrival details with no port chosen
+- **WHEN** the page loads
+- **THEN** the place of landing search shows "Select a place of landing"
 
 ### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-003

@@ -5,7 +5,7 @@
   "requirements": [
     {
       "id": "REQ-DOCS-001",
-      "name": "The page states its upload constraints and shows an empty state before anything is added",
+      "name": "The page states its upload constraints before anything is added",
       "coverage": "full",
       "scenarios": [
         {
@@ -13,7 +13,8 @@
           "name": "The empty page states its constraints",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders feature copy, upload constraints and empty state", "strength": "full", "notes": "accept attribute, must-be / smaller-than / allowed types, empty copy, add and continue" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders the reference with no hint, the date hint, the upload constraints and no added-documents table", "strength": "full", "notes": "accept attribute, size and file-type bullets, and the File upload card text ending with the Save and add another button" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lays out the empty page with two-thirds guidance and a full-width card showing no added-documents table", "strength": "partial", "notes": "JavaScript off: the card text ends with the Save and add another button — does not assert the constraint bullets" }
           ]
         },
         {
@@ -51,8 +52,8 @@
           "name": "A fifteenth document is accepted and a sixteenth is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a fifteenth document and rejects a sixteenth with the maximum-documents error", "strength": "full", "notes": "fifteen Check-completed rows, sixteenth error link, list stays at fifteen" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "rejects another upload after the maximum document capacity is reached", "strength": "full", "notes": "uploads MAX_DOCUMENTS (15) then one more; error links to #documents-added and preserves the typed reference" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a fifteenth document and rejects a sixteenth with the maximum-documents error", "strength": "partial", "notes": "fifteen Check-completed rows; the summary link and the inline Attachment error both show the limit message; list stays at fifteen — the changed assertions are not probed against the stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "refuses a sixteenth document with the limit message in the summary and on the Attachment field, keeping the typed reference", "strength": "full", "notes": "uploads MAX_DOCUMENTS (15) then one more; the summary link focuses the Attachment control, the same message shows inline on that field, and the typed reference is preserved" }
           ]
         }
       ]
@@ -60,7 +61,7 @@
     {
       "id": "REQ-DOCS-004",
       "name": "Each accompanying document has a maximum file size",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-DOCS-004-A",
@@ -73,10 +74,10 @@
         {
           "id": "SCN-DOCS-004-B",
           "name": "Picking a grossly oversize file is refused before any document is added",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-reject.spec.ts", "test": "refuses an oversize file pick without adding a document", "strength": "full", "notes": "empty-state copy still shown" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: client-side oversize error focuses the summary and retains metadata", "strength": "partial", "notes": "client oversize path with metadata retained — does not assert the empty-list clause (page already had metadata filled, no prior docs)" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-reject.spec.ts", "test": "refuses an oversize file pick without adding a document", "strength": "partial", "notes": "the File upload card still ends with the Save and add another button after the refusal — the changed assertion is not probed against the stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: client-side oversize error focuses the summary and retains metadata", "strength": "partial", "notes": "client oversize path with metadata retained — does not assert that no table is shown (page already had metadata filled, no prior docs)" }
           ]
         },
         {
@@ -84,7 +85,7 @@
           "name": "An oversize file submitted without the browser check running is still refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: server rejects an oversize multipart payload", "strength": "full", "notes": "bypasses client check via form.submit(); focuses file field; empty state remains" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: server rejects an oversize multipart payload", "strength": "full", "notes": "bypasses client check via form.submit(); focuses file field; the File upload card still ends with the Save and add another button" }
           ]
         }
       ]
@@ -92,15 +93,15 @@
     {
       "id": "REQ-DOCS-005",
       "name": "Only supported file types can be uploaded",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-DOCS-005-A",
           "name": "An unsupported file type is rejected",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: unsupported type links to and focuses the upload while preserving metadata", "strength": "partial", "notes": "focus + preserved reference/date — does not re-assert empty-state copy (no document row is added either)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "rejects an unsupported file type without adding a document", "strength": "full", "notes": "error summary shown and the empty state remains; fit link carries focus and preserved reference/date" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: unsupported type links to and focuses the upload while preserving metadata", "strength": "partial", "notes": "focus + preserved reference/date — does not assert that no table is shown (no document row is added either)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "rejects an unsupported file type without adding a document", "strength": "partial", "notes": "error summary shown and the File upload card still ends with the Save and add another button; fit link carries focus and preserved reference/date — the changed assertion is not probed against the stack" }
           ]
         }
       ]
@@ -242,7 +243,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "downloads a saved document with safe response headers", "strength": "partial", "notes": "content-type PDF, nosniff, body starts with %PDF- — not a full byte-for-byte compare against the upload buffer" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "uploads, scans, downloads and removes a document through the real uploader", "strength": "full", "notes": "expect(downloaded).toEqual(uploaded) byte-for-byte; application/pdf and nosniff" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "uploads, scans, downloads and removes a document", "strength": "full", "notes": "expect(downloaded).toEqual(uploaded) byte-for-byte; application/pdf and nosniff" }
           ]
         },
         {
@@ -250,7 +251,8 @@
           "name": "Removing a document takes it off the notification",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "removes a saved document and restores the empty state", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "removes a saved document and leaves the page showing no added-documents table", "strength": "full", "notes": "the row is gone and the File upload card text ends with the Save and add another button" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "uploads, scans, downloads and removes a document", "strength": "partial", "notes": "through the real uploader: after Remove the card ends with the Save and add another button — not probed against the stack" }
           ]
         }
       ]
@@ -333,7 +335,8 @@
       "scenarios": [
         { "id": "SCN-DOCS-015-A", "name": "The guidance sits above the form", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "tells the trader what to attach, above the form", "strength": "full", "notes": "" } ] },
         { "id": "SCN-DOCS-015-B", "name": "The additional documents table is behind a closed expander", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "full", "notes": "" } ] },
-        { "id": "SCN-DOCS-015-C", "name": "The guidance links out to GOV.UK in a new tab", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "links out to the GOV.UK guidance in a new tab", "strength": "full", "notes": "" } ] }
+        { "id": "SCN-DOCS-015-C", "name": "The guidance links out to GOV.UK in a new tab", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "links out to the GOV.UK guidance in a new tab", "strength": "full", "notes": "" } ] },
+        { "id": "SCN-DOCS-015-D", "name": "The additional documents table names the documents each consignment needs", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "partial", "notes": "reads the rows from copy, so the exact wording is pinned in copy.test.js" }, { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should carry the pre-form guidance the trader needs to act on", "strength": "full", "notes": "the additional-documents rows pinned exactly" } ] }
       ]
     },
     {
@@ -344,6 +347,39 @@
         { "id": "SCN-DOCS-016-A", "name": "Continuing with a filled-in form saves the document", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue saves the document the trader filled in, then leaves once it is scanned", "strength": "full", "notes": "" } ] },
         { "id": "SCN-DOCS-016-B", "name": "Continuing with only the document type says what is missing", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with a document type and nothing else says what is missing", "strength": "full", "notes": "" } ] },
         { "id": "SCN-DOCS-016-C", "name": "Continuing with an untouched form leaves the page", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with an untouched form leaves the page, uploading being optional", "strength": "full", "notes": "" } ] }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-017",
+      "name": "The document reference has no hint and the date of issue hints an example date",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-017-A",
+          "name": "The reference carries no hint and the date of issue carries an example",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders the reference with no hint, the date hint, the upload constraints and no added-documents table", "strength": "full", "notes": "the reference field's accessible description is exactly empty; the date hint is read from copy" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should hint the date of issue with an example date in both locales", "strength": "full", "notes": "the hint pinned exactly in English and Welsh" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-018",
+      "name": "The added-documents table is headed and keeps each row's actions at its end",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-018-A",
+          "name": "The table shows five headings with each row's actions at its end",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lists the document under five headings with View file and Remove right-aligned at the end of the row", "strength": "full", "notes": "the five column headings, View file and Remove in the last cell, and the Action header and last cell right-aligned" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "lists an added document under five headings with View file and Remove at the end of the row", "strength": "partial", "notes": "through the real uploader: the five headings and the right-aligned last cell holding View file and Remove — not probed against the stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "keeps a long reference inside the card with View file and Remove on the row", "strength": "partial", "notes": "JavaScript off: View file and Remove are in the row's last cell — does not assert the header text" }
+          ]
+        }
       ]
     }
   ]

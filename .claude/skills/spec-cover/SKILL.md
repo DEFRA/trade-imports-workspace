@@ -120,6 +120,14 @@ tim spec lint --capability <prefix> --json
 
 Fix any coverage fallout yourself until this is clean.
 
+For a test in `trade-imports-ins-tests`, also run `npm --prefix
+~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run lint`.
+Do not add a service tag by hand. Once the test is committed, if it
+exercises a service from another domain, run the `service-tag` skill for
+that service: lint rejects a service tag in a domain that service already
+runs by path. The words are defined in [Test and spec
+vocabulary](../../../docs/testing/test-and-spec-vocabulary.md).
+
 ## Step 5: Commit — same branch name in both repos
 
 Cross-repo branch parity (workspace rule 2): the service repo commit

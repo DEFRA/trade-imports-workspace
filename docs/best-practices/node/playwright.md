@@ -28,11 +28,13 @@ repos/trade-imports-ins-tests/
     └── ui.ts                            ← test.extend() with animalsPages, plantsPages, animalsJourney, …
 ```
 
-Not every domain has every folder. Each domain has a local script per suite,
-`test:docker-compose:<domain>[:a11y|:security]`, and a CDP profile per suite,
+Not every domain has every folder. Each domain has a local script,
+`test:docker-compose:<domain>`. Some domains also have `:a11y`, `:security` or
+`:visual` variants; `package.json` lists them. Each suite has a CDP profile,
 `<domain>:<suite>`.
 
 Tags used in this project. Tags select the suite; the path selects the domain (`tests/<domain>/`).
+The tests repo's README and `config/service-tags.ts` hold the full lists.
 
 | Tag | Purpose |
 |-----|---------|
@@ -40,6 +42,11 @@ Tags used in this project. Tags select the suite; the path selects the domain (`
 | `@active` | ZAP active-scan suite (destructive, docker-compose only) |
 | `@compose` | Requires the full workspace stack |
 | `@visual` | Visual regression snapshots |
+| `@dynamics` | Dynamics checks, run by the CDP `dynamics` profile; pull-request runs leave them out |
+| `@mongodb` | Reads Mongo directly, so skips itself outside the compose stack |
+| `@smoke` | Broad and shallow: touches the app's critical paths to show the build works at all, not that any feature is right |
+| `@auth` | Sign-in specs, one set per domain |
+| Service tags (`@ins-backend`, …) | A spec another service's pull request should also run. See [Test and spec vocabulary](../../testing/test-and-spec-vocabulary.md); add them with the `service-tag` skill, not by hand |
 
 Fixtures are named per domain, as in `fixtures/ui.ts`: `animalsPages`,
 `plantsPages` and so on for page objects, `animalsJourney` and

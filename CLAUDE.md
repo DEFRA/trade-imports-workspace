@@ -218,7 +218,8 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
 - `docs/testing/` — how this project tests, and the general theory behind it:
   - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, profile, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
-  - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
+  - [`config/e2e-tests-pr-scope.json`](config/e2e-tests-pr-scope.json) — the suites and service tags each repo's PR-triggered GitHub Actions e2e run covers.
+  - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — how a PR run applies that scope file, what it leaves out, the scheduled runs, and why.
   - [`docs/testing/e2e-tests-cdp.md`](docs/testing/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.
   - [`docs/testing/theory/`](docs/testing/theory/) — general testing theory (pyramid, classification, doubles, flaky tests and so on), not specific to this project.
 - `docs/analysis/` — point-in-time, cross-repo investigation write-ups (not

@@ -215,7 +215,7 @@ Run the standard script from the tests repo, against a running stack, and send t
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-run.log 2>&1
 ```
 
-Use `test:docker-compose:<domain>` for one domain. The script list is in [`node/playwright.md` §12](../node/playwright.md#12-how-tests-run-in-this-project).
+Use `test:docker-compose:<domain>` for one domain. The script list is in [`node/playwright.md` §12](../node/playwright.md#12-how-tests-run-in-this-project), and the tags and what each one selects are in [`node/playwright.md` §1](../node/playwright.md#1-project-structure). To run what a repo's pull request runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../../config/e2e-tests-pr-scope.json).
 
 ### Diagnose from the test results, not the console
 

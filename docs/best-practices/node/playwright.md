@@ -696,7 +696,7 @@ Each test creates the notification it needs, so tests can run in any order and i
 ```typescript
 // Wrong — the test is about the opening run, but the run is seeded
 test('walks a notification through every opening-run task', async ({ animalsSeededJourney }) => {
-  await animalsSeededJourney.createDraftNotification('readyToSubmit')
+  await animalsSeededJourney.createDraftNotification()
   // ...
 })
 

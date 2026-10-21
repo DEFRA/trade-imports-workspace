@@ -549,7 +549,7 @@ const HOUSE_RULES = `**Comments**
 
 **Design**
 
-- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. A review never raises them as findings, even where a guide such as the GDS style guide disagrees. Take that disagreement to the designer. Code that differs from its design source is a finding.
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Where a guide such as the GDS style guide disagrees, a review raises a \`design\` finding: the question for the designer, never a code fix. Code that differs from its design source is a correctness finding.
 
 **Tests**
 
@@ -1492,10 +1492,16 @@ const CI_FIX_SCHEMA = {
 
 const FUNCTIONAL_CATEGORIES = ['correctness', 'security', 'error-handling', 'coverage-gap']
 const CODE_QUALITY_CATEGORIES = ['naming', 'comments', 'structure', 'duplication', 'logging', 'test-readability', 'history']
-const FINDING_CATEGORIES = [...FUNCTIONAL_CATEGORIES, ...CODE_QUALITY_CATEGORIES]
+const DESIGN_CATEGORIES = ['design']
+const FINDING_CATEGORIES = [...FUNCTIONAL_CATEGORIES, ...CODE_QUALITY_CATEGORIES, ...DESIGN_CATEGORIES]
 
 const isCodeQuality = (finding) => CODE_QUALITY_CATEGORIES.includes(finding.category)
-const kindOf = (finding) => (isCodeQuality(finding) ? 'code quality' : 'functional')
+const isDesign = (finding) => DESIGN_CATEGORIES.includes(finding.category)
+const kindOf = (finding) => {
+  if (isCodeQuality(finding)) return 'code quality'
+  if (isDesign(finding)) return 'design'
+  return 'functional'
+}
 const quotedList = (words) => words.map((word) => `\`${word}\``).join(', ')
 
 const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
@@ -1505,6 +1511,10 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 - code quality: ${quotedList(CODE_QUALITY_CATEGORIES)}. Formatting, idiom, convention and the wrong layer are
   \`structure\`; a test title that claims more than its assertions prove is \`test-readability\`; an id, ticket key or
   before-and-after narration in code is \`history\`.
+- design: ${quotedList(DESIGN_CATEGORIES)}. Copy, layout or a component the design source sets (the prototype, a design
+  release, the acceptanceCriteria) that a guide such as the GDS style guide disagrees with. Name both in \`why\`, and
+  write the question for the designer in \`fix\`. Code that differs from its design source is \`correctness\`, not
+  \`design\`.
 `
 
 const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its
@@ -1601,7 +1611,9 @@ accurate and describes only the lines below it, the branch does log once with th
 code in \`quote\`, with its file:line. A refutation with no quote leaves the finding standing. "Taste", "pre-existing",
 "out of the increment's scope", "a comparable file does it", "feature folders are independent" and the like are never
 grounds to refute one. A tool call that failed is not evidence: when you could not read the code, the finding is real.
-A house-rule breach is never taste and never out of scope, whatever its kind.`
+A house-rule breach is never taste and never out of scope, whatever its kind.
+DESIGN (${quotedList(DESIGN_CATEGORIES)}): real only when the design source does set the copy, layout or component and
+the guide rule does say otherwise. Cite both in \`reasoning\`.`
 
 const describeFindingKind = (finding) => `[${finding.category ?? 'no category'}, ${kindOf(finding)}]`
 
@@ -1781,6 +1793,8 @@ FOR EACH finding decide exactly one of:
   it is never silently dropped:
   \`${setRow(id, "--open-question '<the question, and the finding that raised it>'")}\`.
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
+  Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
+  its question with "For the designer:".
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.

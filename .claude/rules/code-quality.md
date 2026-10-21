@@ -60,7 +60,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 
 **Design**
 
-- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. A review never raises them as findings, even where a guide such as the GDS style guide disagrees. Take that disagreement to the designer. Code that differs from its design source is a finding.
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Where a guide such as the GDS style guide disagrees, a review raises a `design` finding: the question for the designer, never a code fix. Code that differs from its design source is a correctness finding.
 
 **Tests**
 

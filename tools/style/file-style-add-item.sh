@@ -5,7 +5,7 @@
 #       --line L --rule R --category C --severity S \
 #       --issue "..." --fix "..." [--best-practice PATH]
 #
-# C is one of CODE_QUALITY_CATEGORIES in ../review/finding-categories.sh.
+# C is one of CODE_QUALITY_CATEGORIES or DESIGN_CATEGORIES in ../review/finding-categories.sh.
 #
 # ID is the ticket (EUDPA-X) or, in local mode, the composite
 # local/<repo>/<branch> id — any non-flag first argument is accepted.
@@ -45,7 +45,7 @@ case "$SEVERITY" in
     *) echo "Invalid severity: $SEVERITY (must be FAIL|WARN)" >&2; exit 1 ;;
 esac
 
-refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}"
+refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}" "${DESIGN_CATEGORIES[@]}"
 
 encoded="${FILE//\//_}"
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/file-reviews/$REPO/$encoded.style.json"

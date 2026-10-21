@@ -157,7 +157,7 @@ Standing concerns, in priority order:
 Give every finding one `category`. The prompt that pointed you here lists them and says which defect goes in
 which. The first four are functional: `correctness`, `security`, `error-handling`, `coverage-gap`. The other
 seven are code quality: `naming`, `comments`, `structure`, `duplication`, `logging`, `test-readability`,
-`history`. The kind decides how you check the finding.
+`history`. The last, `design`, is for the designer. The kind decides how you check the finding.
 
 - **Functional.** Actively try to kill it before you write it down. Check it against the real file (not just
   the diff), against the increment's `acceptanceCriteria`, and against what the repo actually does elsewhere:
@@ -168,9 +168,11 @@ seven are code quality: `naming`, `comments`, `structure`, `duplication`, `loggi
   predict what the code returns and what it changes, the comment is accurate and describes only the lines
   below it, the branch does log once with the ids support searches by. "Taste", "pre-existing", "out of
   scope", "a comparable file does it" and "feature folders are independent" are never reasons to drop one.
-- **Design.** Copy, layout and components the increment's design source sets (the prototype, a design
-  release, the `acceptanceCriteria`) are not findings, even where a GDS guide disagrees. Code that differs
-  from its design source is.
+- **Design.** Copy, layout or a component the increment's design source sets (the prototype, a design
+  release, the `acceptanceCriteria`) that a guide such as the GDS style guide disagrees with is a `design`
+  finding. Report it only when you can quote both the design source and the guide rule: name both in `why`,
+  and write the question for the designer in `fix`. It is never fixed in code. Code that differs from its
+  design source is not `design`: it is `correctness`.
 
 Set `confidence` honestly after that check: `certain` (you can cite the evidence), `probable`, `speculative`
 (report it, but say so). A house-rule breach is never taste.

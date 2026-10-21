@@ -744,6 +744,14 @@ To the user, from the returned list:
 inc-NNN  landed   <title>            PR #123 · EUDPA-4567
 ```
 
+Then list, under "For the designer", every open question starting "For the designer:" on
+the rows the run built. These are `design` findings: copy, layout or a component the design
+source sets and a guide disagrees with. The code keeps the design; the designer decides.
+
+```bash
+jq -r '.increments[] | select(.id == "inc-NNN") | .openQuestions[]? | select(startswith("For the designer:"))' <backlog>
+```
+
 Then the stop reason, then the handover prompt. Do not read the diffs and do not
 open the test logs. Everything worth reading already ran inside the workflow.
 

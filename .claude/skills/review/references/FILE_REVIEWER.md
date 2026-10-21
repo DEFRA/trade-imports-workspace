@@ -343,10 +343,13 @@ differ, the name does predict what the code returns and changes, or
 the comment is accurate and describes only its own lines. Quote the
 code that shows it.
 
-Copy, layout and components that a design source sets (the
-prototype, a design release, the ticket's acceptance criteria) are
-not findings, even where a GDS guide disagrees: that goes to the
-designer. Code that differs from its design source is a finding.
+Copy, layout or a component that a design source sets (the
+prototype, a design release, the ticket's acceptance criteria) and a
+guide such as the GDS style guide disagrees with is a `design`
+finding. Add it only when you can name both: the design source and
+the guide rule go in the issue, and the question for the designer in
+the fix. It is never fixed in code. Code that differs from its design
+source is `correctness`, not `design`.
 
 Functional findings (`correctness`, `security`, `error-handling`,
 `coverage-gap`) are the other way round: raise one only with evidence,
@@ -468,6 +471,7 @@ Give every finding exactly one `--category` from the fixed list in
   `coverage-gap`.
 - Code quality: `naming`, `comments`, `structure`, `duplication`,
   `logging`, `test-readability`, `history`.
+- Design: `design`, for the designer.
 
 The step 5 dimensions map onto them: Naming is `naming`. Structure is
 `structure`, except one rule in two homes and copied test set-up, which

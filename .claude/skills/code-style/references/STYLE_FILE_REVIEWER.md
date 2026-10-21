@@ -151,10 +151,12 @@ comment and every name is in scope, changed or not:
 decision. Drop a finding only when the code shows it is factually
 wrong.
 
-Copy, layout and components that a design source sets (the
-prototype, a design release, the ticket's acceptance criteria) are
-not style findings, even where a GDS guide disagrees: that goes to
-the designer.
+Copy, layout or a component that a design source sets (the
+prototype, a design release, the ticket's acceptance criteria) and a
+guide such as the GDS style guide disagrees with is a `design`
+finding, at WARN. Add it only when you can name both: the design
+source and the guide rule go in `--issue`, and the question for the
+designer goes in `--fix`. It is never fixed in code.
 
 ### 3b. REFRESH mode — check old violations and new changes
 
@@ -213,7 +215,7 @@ The per-file `.style.json` placeholder was initialised by
 `prepare-style.sh`. For every violation you decide to flag:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
+~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history|design} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
 ```
 
 `--category` is one of the code-quality categories the review skill

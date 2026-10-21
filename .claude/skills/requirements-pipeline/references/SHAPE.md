@@ -70,6 +70,19 @@ parent keeps one pointer per such theme in `splitOff`, and `tim backlog check` h
 `tim distil coverage` counts every requirement a pointer holds, in `requirements` or `pickUp`, as covered by the
 split backlog, and refuses a row in the parent that covers one.
 
+## Rows moved out of a split backlog
+
+`tim backlog split <workarea>/themes/<theme id> --rows <ids> --to <new theme id> --write` moves rows out of a split
+backlog into a new theme's split backlog beside it (see
+[`DISTIL.md`](DISTIL.md#9-moving-rows-out-of-a-split-theme-to-a-second-machine)). The old backlog keeps one pointer
+per move in `movedOut`, and `tim backlog check` holds it to these rules:
+
+- **Only a split backlog has `movedOut`,** and it never names the backlog's own theme, or one theme twice.
+- **No row left reuses the id of a row that moved.**
+- **A dependency between the two backlogs is an `externalDependsOn`,** both ways. An `externalDependsOn` on a moved
+  row in the old workarea is refused, naming the new one.
+- **The pointer is fixed once written.**
+
 ## Rows for the branch lifecycle
 
 A backlog built onto an existing branch (the build loop's `lifecycle: 'branch'`, see [`BUILD.md`](BUILD.md#branch-lifecycle))

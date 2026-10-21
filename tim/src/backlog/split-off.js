@@ -201,6 +201,55 @@ const pointerDependencyProblems = (pointers, themeIds) => {
 }
 
 /**
+ * The backlog's moved-out pointers that name a theme: one per
+ * `tim backlog split <workarea> --rows … --to <theme>` run on this split
+ * backlog.
+ *
+ * @param {object} backlog
+ * @returns {object[]}
+ */
+export const movedOutOf = (backlog) =>
+  Array.isArray(backlog?.movedOut)
+    ? backlog.movedOut.filter(
+        (pointer) => isPlainObject(pointer) && isText(pointer.theme)
+      )
+    : []
+
+/**
+ * The moved-out rules a schema cannot check, for a split backlog: rows move
+ * to a theme other than its own, each theme once, and no row here reuses the
+ * id of a row that moved.
+ *
+ * @param {object} backlog - A split backlog, with `theme`
+ * @returns {string[]}
+ */
+export const movedOutProblems = (backlog) => {
+  const pointers = movedOutOf(backlog)
+  const pointerOfRow = new Map(
+    pointers.flatMap((pointer) =>
+      textsIn(pointer.increments).map((id) => [id, pointer])
+    )
+  )
+  return [
+    ...duplicatesIn(pointers.map((pointer) => pointer.theme)).map(
+      (id) => `Rows moved to theme "${id}" more than once in "movedOut".`
+    ),
+    ...pointers
+      .filter((pointer) => pointer.theme === backlog.theme)
+      .map(
+        (pointer) =>
+          `"movedOut" names this backlog's own theme, "${pointer.theme}". Rows move to another theme's backlog.`
+      ),
+    ...rowsOf(backlog)
+      .filter((row) => isText(row.id) && pointerOfRow.has(row.id))
+      .map(
+        (row) =>
+          `${row.id} moved to ${pointerOfRow.get(row.id).workarea}, to build on ${pointerOfRow.get(row.id).branch}. Give this row a new id, or build it there.`
+      )
+  ]
+}
+
+/**
  * The split-off rules a schema cannot check, for a backlog with `themes`:
  * a theme is split off once, never also in `themes`; every theme a pointer
  * depends on is still named; no row here is in a split-off theme or reuses

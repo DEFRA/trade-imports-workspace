@@ -4,6 +4,11 @@ import { join } from 'node:path'
 import { loadBacklogSchema } from '../../backlog/backlog-schema.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import { checkBacklog } from '../../backlog/shape.js'
+import {
+  defaultMovedBranch,
+  indexWithMovedRows,
+  planMoveRows
+} from '../../backlog/move-rows.js'
 import { splitOffOf } from '../../backlog/split-off.js'
 import {
   THEMES_FOLDER,
@@ -11,7 +16,8 @@ import {
   defaultBranchPrefix,
   planRelink,
   planSplit,
-  planSplitOff
+  planSplitOff,
+  themeWorkareaOf
 } from '../../backlog/split.js'
 import {
   normaliseWorkarea,
@@ -35,6 +41,16 @@ const themeIdSchema = z
     '--theme must be a theme id: lower-case words joined by hyphens, such as origin-pages.'
   )
 
+const BRANCH_NAME = /^[A-Za-z0-9][A-Za-z0-9._/-]*[A-Za-z0-9]$/
+
+const rowIdSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9._-]*$/,
+    '--rows must be row ids separated by commas, such as inc-210,inc-212.'
+  )
+
 const splitOptsSchema = z.object({
   write: z.boolean().optional().default(false),
   relink: z.boolean().optional().default(false),
@@ -43,17 +59,72 @@ const splitOptsSchema = z.object({
     .string()
     .trim()
     .regex(
-      /^[A-Za-z0-9][A-Za-z0-9._/-]*[A-Za-z0-9]$/,
+      BRANCH_NAME,
       '--branch-prefix must be a branch name with no spaces, such as feat/EUDPA-123-plants.'
     )
-    .optional()
+    .optional(),
+  rows: z.array(rowIdSchema).optional().default([]),
+  to: z
+    .string()
+    .trim()
+    .regex(
+      /^[a-z0-9]+(-[a-z0-9]+)*$/,
+      '--to must be a theme id: lower-case words joined by hyphens, such as origin-pages-b.'
+    )
+    .optional(),
+  branch: z
+    .string()
+    .trim()
+    .regex(
+      BRANCH_NAME,
+      '--branch must be a branch name with no spaces, such as feat/EUDPA-123-origin-pages-b.'
+    )
+    .optional(),
+  title: z.string().trim().min(1, '--title needs some text.').optional()
 })
+
+const refuseMixedModes = (parsed) => {
+  const moving = parsed.rows.length > 0 || parsed.to !== undefined
+  if (parsed.relink && parsed.theme.length) {
+    throw new TimError(
+      'USAGE',
+      'Give --relink on its own. Splitting a theme off with --theme already relinks the themes split off before it.'
+    )
+  }
+  if (!moving && (parsed.branch !== undefined || parsed.title !== undefined)) {
+    throw new TimError(
+      'USAGE',
+      '--branch and --title go with --rows and --to. To name theme branches, give --branch-prefix.'
+    )
+  }
+  if (!moving) return
+  if (!parsed.rows.length || parsed.to === undefined) {
+    throw new TimError(
+      'USAGE',
+      'Give --rows and --to together: the rows to move, and the theme id of the backlog they move to.'
+    )
+  }
+  if (parsed.relink || parsed.theme.length || parsed.branchPrefix) {
+    throw new TimError(
+      'USAGE',
+      'Give --rows and --to without --theme, --relink or --branch-prefix. Name the new branch with --branch.'
+    )
+  }
+}
+
+const splitRowIds = (values) =>
+  (values ?? []).flatMap((value) =>
+    String(value)
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean)
+  )
 
 /**
  * Validate `tim backlog split`'s options before the backlog is read.
  *
  * @param {object} opts
- * @returns {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined}}
+ * @returns {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined, rows: string[], to: string|undefined, branch: string|undefined, title: string|undefined}}
  * @throws {TimError} USAGE
  */
 export const parseSplitOpts = (opts) => {
@@ -61,15 +132,18 @@ export const parseSplitOpts = (opts) => {
     write: opts.write,
     relink: opts.relink,
     theme: opts.theme,
-    branchPrefix: opts.branchPrefix
+    branchPrefix: opts.branchPrefix,
+    rows: splitRowIds(opts.rows),
+    to: opts.to,
+    branch: opts.branch,
+    title: opts.title
   })
-  if (parsed.relink && parsed.theme.length) {
-    throw new TimError(
-      'USAGE',
-      'Give --relink on its own. Splitting a theme off with --theme already relinks the themes split off before it.'
-    )
+  refuseMixedModes(parsed)
+  return {
+    ...parsed,
+    theme: [...new Set(parsed.theme)],
+    rows: [...new Set(parsed.rows)]
   }
-  return { ...parsed, theme: [...new Set(parsed.theme)] }
 }
 
 const bodyOf = (value) => `${JSON.stringify(value, null, 2)}\n`
@@ -269,6 +343,129 @@ const runRelink = ({
   }
 }
 
+const requireSplitBacklog = (backlog, workarea) => {
+  if (typeof backlog.theme === 'string') return
+  throw new TimError(
+    'USAGE',
+    `--rows moves rows out of a theme's split backlog, and ${workarea} is not one. To split a whole theme off a themed backlog, give --theme.`
+  )
+}
+
+const textsIn = (list) =>
+  Array.isArray(list)
+    ? list.filter((value) => typeof value === 'string' && value.trim())
+    : []
+
+const programmeWorkareas = (parentWorkarea, parentBacklog, index) => [
+  parentWorkarea,
+  ...textsIn((index?.themes ?? []).map((entry) => entry?.workarea)),
+  ...splitOffOf(parentBacklog).map((pointer) => pointer.workarea),
+  ...(Array.isArray(parentBacklog?.themes)
+    ? parentBacklog.themes
+        .filter((theme) => typeof theme?.id === 'string')
+        .map((theme) => themeWorkareaOf(parentWorkarea, theme.id))
+    : [])
+]
+
+const defaultMovedTitle = (backlog, branch) =>
+  `Rows moved out of theme "${backlog.theme}" to build on ${branch}`
+
+const runMoveRows = ({
+  workspaceRoot,
+  workarea,
+  path,
+  schema,
+  backlog,
+  readFromDisk,
+  options,
+  now
+}) => {
+  requireSplitBacklog(backlog, workarea)
+  const sourceProblems = checkBacklog(backlog, schema, {
+    readWorkareaBacklog: readFromDisk
+  }).problems
+  if (sourceProblems.length) throw refuse(sourceProblems, `in ${path}`)
+
+  const parentWorkarea = backlog.parent.workarea
+  const indexPath = join(
+    workareaDirFor(workspaceRoot, parentWorkarea),
+    THEMES_FOLDER,
+    THEMES_INDEX
+  )
+  const index = readIndex(indexPath)
+  const branch = options.branch ?? defaultMovedBranch(backlog, options.to)
+  const plan = planMoveRows({
+    backlog,
+    workarea,
+    rowIds: options.rows,
+    toTheme: options.to,
+    branch,
+    readWorkareaBacklog: readFromDisk,
+    otherWorkareas: programmeWorkareas(
+      parentWorkarea,
+      readFromDisk(parentWorkarea),
+      index
+    ),
+    at: now().toISOString()
+  })
+  const planned = new Map([
+    [workarea, plan.backlog],
+    [plan.workarea, plan.newBacklog],
+    ...plan.relinks.map((relink) => [relink.workarea, relink.backlog])
+  ])
+  const reader = (other) => planned.get(other) ?? readFromDisk(other)
+  const problems = [...planned].flatMap(([plannedWorkarea, plannedBacklog]) =>
+    checkBacklog(plannedBacklog, schema, {
+      readWorkareaBacklog: reader
+    }).problems.map((problem) => `${plannedWorkarea}: ${problem}`)
+  )
+  if (problems.length) throw refuse(problems, 'after the move')
+
+  const newPath = backlogPathFor(workspaceRoot, plan.workarea)
+  const relinkPathOf = (relink) =>
+    backlogPathFor(workspaceRoot, relink.workarea)
+  const newIndex = index
+    ? indexWithMovedRows({
+        index,
+        fromTheme: backlog.theme,
+        fromWorkarea: workarea,
+        rowsLeft: plan.backlog.increments.length,
+        newBacklog: plan.newBacklog,
+        title: options.title ?? defaultMovedTitle(backlog, branch)
+      })
+    : null
+  const changedPaths = plannedFiles(
+    [
+      { path, value: plan.backlog },
+      { path: newPath, value: plan.newBacklog },
+      ...plan.relinks.map((relink) => ({
+        path: relinkPathOf(relink),
+        value: relink.backlog
+      })),
+      ...(newIndex ? [{ path: indexPath, value: newIndex }] : [])
+    ],
+    options.write
+  )
+  return {
+    path,
+    written: options.write,
+    changed: changedPaths.has(path),
+    movedTo: {
+      theme: options.to,
+      workarea: plan.workarea,
+      path: newPath,
+      branch,
+      rows: plan.pointer.increments,
+      changed: changedPaths.has(newPath)
+    },
+    index: newIndex
+      ? { path: indexPath, changed: changedPaths.has(indexPath) }
+      : null,
+    moveRewired: plan.rewired,
+    relinked: relinkedFilesOf(plan.relinks, relinkPathOf, changedPaths)
+  }
+}
+
 /**
  * Split a themed backlog into one backlog per theme, and index them. Checks
  * the parent first and every split backlog before writing any, and writes
@@ -283,13 +480,18 @@ const runRelink = ({
  * waits on a row a later early split moved out of the parent at that row's
  * new workarea.
  *
+ * With `rows` and `to`, given a theme's split backlog, moves those rows into
+ * a new split backlog for theme `to`, on its own branch, and leaves a pointer
+ * to them in `movedOut` ({@link planMoveRows}). The themes index gains the
+ * new theme in the old one's wave.
+ *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
- * @param {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined}} args.options
- * @param {() => Date} [args.now] - The clock a split-off pointer's time is read from
+ * @param {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined, rows?: string[], to?: string, branch?: string, title?: string}} args.options
+ * @param {() => Date} [args.now] - The clock a split-off or moved-out pointer's time is read from
  * @returns {object} What was, or would be, written
- * @throws {TimError} USAGE when the backlog has no themes or is itself a split, or a theme cannot be split off; LINT when it, or a split, is out of shape
+ * @throws {TimError} USAGE when the backlog has no themes or is itself a split, a theme cannot be split off, or rows cannot be moved; LINT when it, or a split, is out of shape
  */
 export const runSplit = ({
   workspaceRoot,
@@ -301,8 +503,20 @@ export const runSplit = ({
   const path = backlogPathFor(workspaceRoot, workarea)
   const schema = loadBacklogSchema(workspaceRoot)
   const backlog = readJsonFile(path)
-  requireThemedParent(backlog, workarea)
   const readFromDisk = workareaBacklogReader(workspaceRoot)
+  if (options.rows?.length) {
+    return runMoveRows({
+      workspaceRoot,
+      workarea,
+      path,
+      schema,
+      backlog,
+      readFromDisk,
+      options,
+      now
+    })
+  }
+  requireThemedParent(backlog, workarea)
   if (options.relink) {
     return runRelink({
       workspaceRoot,
@@ -480,10 +694,13 @@ const renderSplitOff = (result) =>
     )
   ].join('\n')
 
-const describeRelinks = (relinked) =>
+const describeRelinks = (
+  relinked,
+  heading = 'Rows that now wait for a row where an early split moved it:'
+) =>
   relinked.length
     ? [
-        'Rows that now wait for a row where an early split moved it:',
+        heading,
         ...relinked.map(
           (entry) =>
             `  ${entry.id} waits for ${entry.dependsOn} in ${entry.workarea}`
@@ -502,7 +719,48 @@ const renderRelink = (result) => {
   ].join('\n')
 }
 
+const describeDropped = (dropped) =>
+  dropped.length
+    ? [
+        'Dependencies dropped because the row is already done, so the new branch has it:',
+        ...dropped.map(
+          (entry) => `  ${entry.id} no longer waits for ${entry.dependsOn}`
+        )
+      ]
+    : []
+
+const renderMoveRows = (result) =>
+  [
+    `${countOf(result.movedTo.rows.length, 'row')} (${result.movedTo.rows.join(', ')}) move to ${result.movedTo.workarea}, theme "${result.movedTo.theme}", to build on ${result.movedTo.branch}.`,
+    'The backlog they leave keeps a pointer to them in "movedOut", so nothing drafts them again.',
+    ...describeWaits(
+      result.moveRewired.left,
+      'Rows left behind that now wait for a moved row:',
+      'No row left behind waits for a moved row.'
+    ),
+    ...describeWaits(
+      result.moveRewired.moved,
+      'Moved rows that wait for a row left behind:',
+      'No moved row waits for a row left behind.'
+    ),
+    ...describeDropped(result.moveRewired.dropped),
+    ...describeRelinks(
+      result.moveRewired.relinked,
+      'Rows in other backlogs that now wait for a moved row in its new workarea:'
+    ),
+    writeLine(
+      [
+        { changed: result.changed },
+        result.movedTo,
+        ...(result.index ? [result.index] : []),
+        ...result.relinked
+      ],
+      result.written
+    )
+  ].join('\n')
+
 const renderSplit = (result) => {
+  if (result.movedTo) return renderMoveRows(result)
   if (result.rewired) return renderSplitOff(result)
   if (result.relinked) return renderRelink(result)
   return renderFullSplit(result)
@@ -514,7 +772,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('split <workarea>')
     .description(
-      "Split a themed backlog into one backlog per theme, under <workarea>/themes/<theme id>/, and write themes.json with the landing order. A dependsOn on another theme's row becomes an externalDependsOn. Checks every split backlog first. With --theme, splits only that theme off, early: its rows leave the main backlog, which keeps a pointer to them in splitOff. A dry run unless given --write"
+      "Split a themed backlog into one backlog per theme, under <workarea>/themes/<theme id>/, and write themes.json with the landing order. A dependsOn on another theme's row becomes an externalDependsOn. Checks every split backlog first. With --theme, splits only that theme off, early: its rows leave the main backlog, which keeps a pointer to them in splitOff. With --rows and --to, given a theme's split backlog, moves those rows into a new theme's backlog beside it, to build on a second machine: the old backlog keeps a pointer to them in movedOut. A dry run unless given --write"
     )
     .addHelpText(
       'after',
@@ -525,8 +783,14 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog split shared/my-programme --theme origin-pages --json\n' +
         '  tim backlog split shared/my-programme --theme origin-pages --write --json\n' +
         '  tim backlog split shared/my-programme --relink --write --json\n' +
+        '  tim backlog split shared/my-programme/themes/origin-pages --rows inc-004,inc-007 --to origin-pages-b --json\n' +
+        '  tim backlog split shared/my-programme/themes/origin-pages --rows inc-004,inc-007 --to origin-pages-b --branch feat/EUDPA-123-origin-pages-b --write --json\n' +
+        'With --rows, a moved row stops waiting for a row left behind that is done, because the new branch is cut from the old one.\n' +
+        'Any other dependency between the two backlogs becomes an externalDependsOn, and every other backlog in the programme\n' +
+        'that waits for a moved row is pointed at its new workarea.\n' +
         'Exits 1, writing nothing, when the backlog or any split backlog is out of shape.\n' +
-        'Exits 2 when --theme names a theme the backlog does not have, or one already split off.'
+        'Exits 2 when --theme names a theme the backlog does not have, or one already split off,\n' +
+        'or when --rows names a row the backlog does not have, or one that is not todo or blocked.'
     )
     .option('--write', 'Write the split backlogs and themes.json')
     .option(
@@ -543,6 +807,21 @@ export const register = (backlog, { timVersion }) => {
       '--branch-prefix <prefix>',
       'The part of each theme branch before its theme id. Default feat/NO_JIRA-<programme>'
     )
+    .option(
+      '--rows <ids>',
+      "Move these rows, separated by commas, out of a theme's split backlog. Give it with --to",
+      collect,
+      []
+    )
+    .option(
+      '--to <theme id>',
+      'The new theme the --rows move to. Its backlog is written to <parent>/themes/<theme id>/'
+    )
+    .option(
+      '--branch <name>',
+      "The branch the new theme builds on. Default the split backlog's branch with its theme id swapped for --to"
+    )
+    .option('--title <text>', "The new theme's title in themes.json")
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) =>

@@ -912,6 +912,21 @@ says a theme split off early waits on a row the parent no longer has, run
   in the split backlog for them, then update the parent's pointer as
   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
 
+### Moving rows to a second machine
+
+To build some rows of a theme already building on one machine in parallel on another, move them into a new theme
+backlog with `tim backlog split <workarea>/themes/<theme id> --rows <ids> --to <new theme id> --write --json`
+([`DISTIL.md`](DISTIL.md#9-moving-rows-out-of-a-split-theme-to-a-second-machine)). It is safe while the loop runs
+on the old backlog: `tim backlog next` there no longer offers the moved rows, and the old backlog keeps a `movedOut`
+pointer to them.
+
+- **Cut the new branch from the old one's tip,** once the row in flight has landed, and open its draft pull requests.
+  The second machine runs the loop on `<workarea>/themes/<new theme id>` with that backlog's `repos` and `branch`.
+- **Bring it back with a merge row.** Add a `chore` row to the old backlog that waits for every moved row through
+  `externalDependsOn`, sets `merge` to `origin/<new branch>` for each repo, and says in its acceptance criteria
+  that both sets of behaviour survive the merge and the full gate is green. Make the old theme's final row depend
+  on it.
+
 ## Branch lifecycle
 
 `lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already exists in every backlog

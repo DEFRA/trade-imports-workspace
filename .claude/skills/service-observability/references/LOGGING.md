@@ -81,9 +81,15 @@ reaches OpenSearch flat.
   2026-10-19 (reference-data 0.24.0): the line arrived with its
   `message`, `service.name` and `trace.id`, but none of the four
   `event.*` fields. The nested key-value-pair version above replaced it.
-  `[UNPROVEN]` until the next release is checked in dev OpenSearch:
+  `[UNPROVEN]` until the next release is checked in dev:
   `event.category:"external-call" AND service.name:"<service>"` should
-  find the lines, sortable by `event.duration`.
+  find the lines in OpenSearch, sortable by `event.duration`, and CDP's
+  "Log Ingestion Errors" alert should stay quiet for the service.
+- **One flat `event.*` key is left on every line.** The ECS encoder
+  (1.6.0) always writes `"event.dataset":"<service>"` flat, so the call
+  line holds that flat key and the nested `event` object side by side.
+  `[UNPROVEN]` whether CDP accepts the mix. If "Log Ingestion Errors"
+  fires after release, this is the first suspect.
 - **The first tests passed while the fields were being dropped.** They
   read the MDC on the captured log event, not the JSON the encoder
   writes. Test the encoded JSON (see Tests).
@@ -100,7 +106,7 @@ reaches OpenSearch flat.
 
 | Test | Proves |
 |---|---|
-| Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.*` keys; `trace.id` and `error.*` kept; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
+| Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.category`, `event.action`, `event.outcome` or `event.duration` keys (the ECS encoder's own flat `event.dataset` stays); `trace.id` and `error.*` kept; a null value written as JSON `null` and a non-finite number as a string; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
 | Unit test with a capturing log appender | One line per call, with the four `event.*` key-value pairs, and the duration a `Long` |
 | Same, with metrics disabled | The line is still written |
 | Integration test sending `x-cdp-request-id`, encoding the line with the root logger's `CONSOLE` encoder | `logback-spring.xml` names the new encoder, and the line carries `trace.id` and the nested `event` object |

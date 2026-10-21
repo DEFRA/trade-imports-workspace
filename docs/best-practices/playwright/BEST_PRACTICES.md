@@ -95,7 +95,7 @@ Seed only when the journey is set-up for a different assertion: one page, one tr
 ```typescript
 // Good: the declaration page's own behaviour, reached from a seeded draft
 test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
-  const referenceNumber = await animalsSeededJourney.createDraftNotification('readyToSubmit');
+  const referenceNumber = await animalsSeededJourney.createDraftNotification();
   await animalsSeededJourney.resumeInUi(referenceNumber, animalsPages.notificationView);
   await animalsPages.notificationView.continueButton.click();
   await animalsPages.declaration.heading.waitFor();
@@ -103,6 +103,7 @@ test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
 ```
 
 - Seed through the frontend's own save-and-continue routes (`AnimalsSeededJourney`), never by writing to the backend or the database. Only the frontend writes the full record the UI reads back.
+- A seeded draft or submission carries only the mandatory answers, as `submitNotification()` does. Pass `ALL_DATA_ANSWERS_WITHOUT_DOCUMENT` when the test needs the optional ones. Never type the answers in the test: read them from the answer sets in `domain/animals/constants/journey-options.ts`.
 - When unsure, keep the test in the browser and say so in the pull request.
 - Never seed for speed. A slow journey test is coverage worth keeping.
 - A test behaves the same on the local stack and on CDP. No flag that seeds on one environment and clicks through on the other.

@@ -2373,6 +2373,12 @@ describe('increment-build-loop', () => {
           '130:- SCN-CYA-002-A, unit "Should mark a blank plain answer missing" and "Should mark a blank date missing": `partial` (second Then only). "Should write an unanswered optional row out as Not applicable on a finished card": `partial` (first Then only).'
         const NEW_TEST_RETITLED =
           '133:   - Rename the cap test to "Should refuse a sixteenth document".'
+        const CURRENT_AND_OLD_TITLES_DESCRIBED =
+          '359:**Every link to the option-list FIT test** (test at 587, retitled in section 2) moves with the retitle. Three links point at it today, but none by the title this branch holds. They name "the transit type-ahead offers every captured country and territory, territories named with their country, in alphabetical order behind a search placeholder", a title only the arrival-and-transit branch has. On this branch the test is titled "the transit type-ahead offers every captured country behind a search placeholder". So each link dangles now, and setting it to the new title also fixes that:'
+        const EXISTING_TEST_RETITLED =
+          '159:- **Test at 587-607:** expect the first option to be the select text, and retitle it to "the no-JavaScript list opens with the select text".'
+        const RENAMED_TEST_TITLE_DICTATED =
+          '160:- The test at a.test.js:40 is currently titled "Should show the cap", and the renamed test is titled "Should refuse a sixteenth document".'
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -2547,7 +2553,8 @@ describe('increment-build-loop', () => {
                 JQ_CHECK,
                 FENCED_CHECK,
                 NAMED_CHECK,
-                EXISTING_TITLES_QUOTED
+                EXISTING_TITLES_QUOTED,
+                CURRENT_AND_OLD_TITLES_DESCRIBED
               )
             },
             BASELINE_ANSWER,
@@ -2568,7 +2575,9 @@ describe('increment-build-loop', () => {
               'inc-900 plan lint': lintFound(
                 QUOTED_HOUSE_RULE,
                 LOGGER_CALL,
-                NEW_TEST_RETITLED
+                NEW_TEST_RETITLED,
+                EXISTING_TEST_RETITLED,
+                RENAMED_TEST_TITLE_DICTATED
               )
             },
             BASELINE_ANSWER,
@@ -2579,10 +2588,21 @@ describe('increment-build-loop', () => {
           const replan = promptOf(run, 'inc-900 replan')
 
           expect(
-            [QUOTED_HOUSE_RULE, LOGGER_CALL, NEW_TEST_RETITLED].filter((line) =>
+            [
+              QUOTED_HOUSE_RULE,
+              LOGGER_CALL,
+              NEW_TEST_RETITLED,
+              EXISTING_TEST_RETITLED,
+              RENAMED_TEST_TITLE_DICTATED
+            ].filter((line) =>
               replan.includes(line.replace(/^\d+:/, '').trim())
             )
-          ).toEqual([LOGGER_CALL, NEW_TEST_RETITLED])
+          ).toEqual([
+            LOGGER_CALL,
+            NEW_TEST_RETITLED,
+            EXISTING_TEST_RETITLED,
+            RENAMED_TEST_TITLE_DICTATED
+          ])
         })
 
         test('stops with plan-refused, naming the line, when the replan still writes code text', async () => {

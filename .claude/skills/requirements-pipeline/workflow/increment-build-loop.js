@@ -2658,6 +2658,26 @@ const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test n
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
+const OPEN_QUOTE = `["“\`']`
+
+const QUOTED_TEXT = '(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])\'[A-Za-z]+ [A-Za-z][^\']*\')'
+
+const SOURCE_REFERENCE =
+  '(\\S+\\.(md|js|mjs|ts|java|njk|json|ya?ml)(:\\d+(-\\d+)?)?`?|§ ?\\d+\\w*`?|\\b(house rules?|rules?|guides?|standards?|best[- ]practices?)\\b)'
+
+const CITED_QUOTE = new RegExp(
+  `${SOURCE_REFERENCE}([^"“”.;]{0,40}?([:(—–]|\\b(says|states|exempts|reads))\\s*|\\s+)["“][^"”]*["”]`,
+  'gi'
+)
+
+const CHECK_COMMAND_SPAN =
+  /`(\$ )?(grep|rg|jq|tim|npm|npx|node|git|mvn|\.\/mvnw|sed|awk|curl|find|bash|docker|make|wc|head|tail|cat)\b[^`]*`/g
+
+const CHECK_COMMAND_LINE = /^([-*]|\d+\.|\|)?\s*(\$\s*)?(grep|rg|jq|tim|npm|npx|node|git|mvn|curl|docker|bash)\s/
+
+const EXISTING_TEST_REFERENCE =
+  /\b(existing|already|current|currently)\b|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+
 const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a comment or doc comment to add, keep, copy or reword',
@@ -2676,31 +2696,56 @@ const CODE_TEXT_DIRECTIVES = [
   { kind: 'Arrange/Act/Assert comments or a dictated test body', pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i },
   {
     kind: 'a prescribed test title',
-    pattern: /\b(it|test|describe)\(\s*["'`]|\b(titled|test title|test name)\s*:?\s*["“`']|["“`']should [a-z]+ [a-z]+/i
+    pattern: new RegExp(
+      `\\b(it|test|describe)\\(\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,20}?\\b(titled|named|called)\\s*:?\\s*${OPEN_QUOTE}|\\b(test title|test name)\\s*:?\\s*${OPEN_QUOTE}|\\b(add|adds|adding|write|writes|writing|new|rename|renames|retitle|retitles|titled|named|called)\\b[^.;"“]{0,40}?${OPEN_QUOTE}should [a-z]+ [a-z]+`,
+      'i'
+    ),
+    unless: EXISTING_TEST_REFERENCE
   },
   {
     kind: 'a quoted log message',
-    pattern:
-      /\b(logger|log|logs|logged|warn|warns)\b.{0,60}?(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])'[A-Za-z]+ [A-Za-z][^']*')/i
+    pattern: new RegExp(
+      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
+      'i'
+    )
   }
 ]
 
 const DELETION_DIRECTIVE =
   /\b(delete|deletes|deleting|deleted|remove|removes|removing|removed|drop|drops|strip|strips|never|without)\b|\bno (comments?|jsdoc|javadoc|doc comments?)\b/i
 
-const codeTextDirectiveOf = (grepLine) => {
+const NEGATED_COMMENT_WORDS = new RegExp(
+  `\\b(none|no|not|nothing|nor|don't|doesn't|do not|does not)\\b( [^ .;:]+){0,5} ${COMMENT_WORDS}\\b`,
+  'i'
+)
+
+const isInstructionNotToWrite = (text) => DELETION_DIRECTIVE.test(text) || NEGATED_COMMENT_WORDS.test(text)
+
+const withoutCheckCommands = (text, checkCommands) =>
+  checkCommands
+    .filter(Boolean)
+    .reduce((remaining, command) => remaining.replaceAll(command, ' '), text)
+    .replace(CHECK_COMMAND_SPAN, ' ')
+
+const withoutCitedQuotes = (text) => text.replace(CITED_QUOTE, (cited) => cited.replace(/["“][^"”]*["”]$/, '"…"'))
+
+const proseOf = (text, checkCommands) => withoutCitedQuotes(withoutCheckCommands(text, checkCommands))
+
+const codeTextDirectiveOf = (grepLine, checkCommands) => {
   const [, lineNumber, text] = grepLine.match(/^(\d+):(.*)$/) ?? [null, '?', grepLine]
-  if (DELETION_DIRECTIVE.test(text)) return null
-  const directive = CODE_TEXT_DIRECTIVES.find(({ pattern }) => pattern.test(text))
+  if (CHECK_COMMAND_LINE.test(text.trim())) return null
+  const prose = proseOf(text, checkCommands)
+  if (isInstructionNotToWrite(prose)) return null
+  const directive = CODE_TEXT_DIRECTIVES.find(({ pattern, unless }) => pattern.test(prose) && !unless?.test(prose))
   return directive ? { lineNumber, kind: directive.kind, text: text.trim() } : null
 }
 
-const codeTextDirectivesIn = (stdout) =>
+const codeTextDirectivesIn = (stdout, checkCommands = []) =>
   String(stdout ?? '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map(codeTextDirectiveOf)
+    .map((line) => codeTextDirectiveOf(line, checkCommands))
     .filter(Boolean)
 
 const planLintCommand = (id) => `grep -n -i -E ${shellQuoted(PLAN_LINT_PREFILTER)} ${WORKAREA_TILDE}/plans/${id}.md`
@@ -2717,17 +2762,20 @@ The loop reads the lines itself.`,
     light({ label, phase: 'Plan', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-const codeTextOf = async (id, label) => {
+const codeTextOf = async (id, label, plan) => {
   const answer = await readPlanLintLines(id, label)
   if (!answer) return null
   if (answer.exitCode === GREP_FOUND_NONE) return []
   if (answer.exitCode !== 0) return null
-  return codeTextDirectivesIn(answer.stdout)
+  return codeTextDirectivesIn(
+    answer.stdout,
+    (plan?.checks ?? []).map((check) => check.command)
+  )
 }
 
 const planProblemsOf = async (id, plan, lintLabel) => ({
   deniedChecks: deniedChecksOf(plan),
-  codeText: await codeTextOf(id, lintLabel)
+  codeText: await codeTextOf(id, lintLabel, plan)
 })
 
 const hasPlanProblems = ({ deniedChecks, codeText }) => deniedChecks.length > 0 || codeText.length > 0

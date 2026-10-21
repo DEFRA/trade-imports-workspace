@@ -2349,6 +2349,30 @@ describe('increment-build-loop', () => {
           '50:   - The refusal branch logs once with `journeyId` and `portCode`.'
         const LOG_BESIDE_POSSESSIVE =
           "55:   - The test reads the log from `driveHandler`'s result."
+        const LOGGER_CALL =
+          "57:   - The cap refusal calls `logger.info({ journeyId }, 'Capacity refused')`."
+        const UI_COPY_TITLED =
+          '383:  - REQ-OVERVIEW-011 (line 174): the requirement states only that the third task of "1. About the consignment" is titled "Main import reason".'
+        const COMMENTS_NOT_COPIED =
+          "145:- **Structure to follow:** `tests/animals/e2e/visual/origin-of-import.visual.spec.ts`, its structure only. The new file carries none of the exemplar's comments (lines 3 and 11-16 hold rationale, history and a description of another spec):"
+        const QUOTED_HOUSE_RULE =
+          '32:15. **The transit controller\'s refusal branches log, under bounded tidy-up.** Nothing upstream logs them: not `kit.js`, the engine, nor `server.js`\'s catch-all, which logs only 500 and above. House rule, Logging and errors: "Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by." `pino-logging.md` §4a: "`info` for an expected refusal, such as a validation error". So each of the three logs once, at info, at the branch that decides.'
+        const QUOTED_REPO_DOC_AND_RULE =
+          '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
+        const GREP_CHECK =
+          "61:- `grep -rn \"it('should show the cap\" fit/` finds no test the row renames."
+        const JQ_CHECK =
+          "62:- `jq -r '.tests[] | select(.title | test(\"should render the hint\")) | .title' report.json` prints one title."
+        const FENCED_CHECK =
+          '63:npm run test:fit -- --grep "Should show the cap error"'
+        const NAMED_CHECK_COMMAND =
+          'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js -t "Should refuse a sixteenth document"'
+        const NAMED_CHECK =
+          `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
+        const EXISTING_TITLES_QUOTED =
+          '130:- SCN-CYA-002-A, unit "Should mark a blank plain answer missing" and "Should mark a blank date missing": `partial` (second Then only). "Should write an unanswered optional row out as Not applicable on a finished card": `partial` (first Then only).'
+        const NEW_TEST_RETITLED =
+          '133:   - Rename the cap test to "Should refuse a sixteenth document".'
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -2509,6 +2533,56 @@ describe('increment-build-loop', () => {
             DICTATED_JSDOC
           ])
           expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('passes without a replan a plan that only quotes rules, existing titles or UI copy, says what not to copy, or runs checks', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                UI_COPY_TITLED,
+                COMMENTS_NOT_COPIED,
+                QUOTED_HOUSE_RULE,
+                QUOTED_REPO_DOC_AND_RULE,
+                GREP_CHECK,
+                JQ_CHECK,
+                FENCED_CHECK,
+                NAMED_CHECK,
+                EXISTING_TITLES_QUOTED
+              )
+            },
+            BASELINE_ANSWER,
+            {
+              ...PLAN_ANSWER,
+              checks: [{ section: 6, command: NAMED_CHECK_COMMAND }]
+            },
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+          expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('still sends back a plan that dictates a log call or renames a test to a quoted title', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                QUOTED_HOUSE_RULE,
+                LOGGER_CALL,
+                NEW_TEST_RETITLED
+              )
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            [QUOTED_HOUSE_RULE, LOGGER_CALL, NEW_TEST_RETITLED].filter((line) =>
+              replan.includes(line.replace(/^\d+:/, '').trim())
+            )
+          ).toEqual([LOGGER_CALL, NEW_TEST_RETITLED])
         })
 
         test('stops with plan-refused, naming the line, when the replan still writes code text', async () => {

@@ -2676,7 +2676,17 @@ const CHECK_COMMAND_SPAN =
 const CHECK_COMMAND_LINE = /^([-*]|\d+\.|\|)?\s*(\$\s*)?(grep|rg|jq|tim|npm|npx|node|git|mvn|curl|docker|bash)\s/
 
 const EXISTING_TEST_REFERENCE =
-  /\b(existing|already|current|currently)\b|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+
+const DICTATED_TITLE = new RegExp(
+  `\\b(rename|renames|renamed|renaming|retitle|retitles|retitled|retitling)\\b[^.;"“]{0,80}?\\s*:?\\s*${OPEN_QUOTE}|\\b(new|added)\\b[^.;"“]{0,40}?\\b(titled|named|called)\\b|\\b(should|must|will|to) be (titled|named|called)\\b`,
+  'i'
+)
+
+const SENTENCE_BREAK = /(?<=[.;!?])\s+/
+
+const describesAnExistingTest = (sentence) =>
+  EXISTING_TEST_REFERENCE.test(sentence) && !DICTATED_TITLE.test(sentence)
 
 const CODE_TEXT_DIRECTIVES = [
   {
@@ -2697,10 +2707,10 @@ const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a prescribed test title',
     pattern: new RegExp(
-      `\\b(it|test|describe)\\(\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,20}?\\b(titled|named|called)\\s*:?\\s*${OPEN_QUOTE}|\\b(test title|test name)\\s*:?\\s*${OPEN_QUOTE}|\\b(add|adds|adding|write|writes|writing|new|rename|renames|retitle|retitles|titled|named|called)\\b[^.;"“]{0,40}?${OPEN_QUOTE}should [a-z]+ [a-z]+`,
+      `\\b(it|test|describe)\\(\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,20}?\\b(titled|named|called|retitled|renamed)( to)?\\s*:?\\s*${OPEN_QUOTE}|\\b(retitle|retitles)\\b[^.;"“]{0,60}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(rename|renames)\\b[^.;"“]{0,60}?\\b(tests?|specs?|scenarios?|cases?|titles?)\\b[^.;"“]{0,40}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,40}?\\b(rename|renames)\\b[^.;"“]{0,20}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(test title|test name)\\s*:?\\s*${OPEN_QUOTE}|\\b(add|adds|adding|write|writes|writing|new|rename|renames|retitle|retitles|titled|named|called)\\b[^.;"“]{0,40}?${OPEN_QUOTE}should [a-z]+ [a-z]+`,
       'i'
     ),
-    unless: EXISTING_TEST_REFERENCE
+    excusedIn: describesAnExistingTest
   },
   {
     kind: 'a quoted log message',
@@ -2731,12 +2741,17 @@ const withoutCitedQuotes = (text) => text.replace(CITED_QUOTE, (cited) => cited.
 
 const proseOf = (text, checkCommands) => withoutCitedQuotes(withoutCheckCommands(text, checkCommands))
 
+const writesCodeText = ({ pattern, excusedIn }, prose) =>
+  excusedIn
+    ? prose.split(SENTENCE_BREAK).some((sentence) => pattern.test(sentence) && !excusedIn(sentence))
+    : pattern.test(prose)
+
 const codeTextDirectiveOf = (grepLine, checkCommands) => {
   const [, lineNumber, text] = grepLine.match(/^(\d+):(.*)$/) ?? [null, '?', grepLine]
   if (CHECK_COMMAND_LINE.test(text.trim())) return null
   const prose = proseOf(text, checkCommands)
   if (isInstructionNotToWrite(prose)) return null
-  const directive = CODE_TEXT_DIRECTIVES.find(({ pattern, unless }) => pattern.test(prose) && !unless?.test(prose))
+  const directive = CODE_TEXT_DIRECTIVES.find((candidate) => writesCodeText(candidate, prose))
   return directive ? { lineNumber, kind: directive.kind, text: text.trim() } : null
 }
 

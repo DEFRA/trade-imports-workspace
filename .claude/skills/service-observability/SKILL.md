@@ -44,7 +44,7 @@ skill and point its plan at these steps.
 | Part | State |
 |---|---|
 | Metrics, Java service | Proven by tests on `trade-imports-reference-data` |
-| Log line, Java service | **Broken in CDP.** The line arrives but its `event.*` fields are dropped, because they are written flat (`references/LOGGING.md`). The fix is EUDPA-712; until it lands, do not copy how reference-data writes them |
+| Log line, Java service | Proven by tests on `trade-imports-reference-data`: the encoded JSON holds a nested `event` object with a numeric duration (`references/LOGGING.md` → "How to write the fields"). `[UNPROVEN]` in dev OpenSearch until a release with `EcsEventEncoder` is checked there; the earlier MDC version was dropped by CDP |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
 | Dashboard and alert templates | Written from the reference-data code and the CDP docs; not yet imported into Grafana |
 | Dashboard, alerts, Slack routing, promotion, alert testing | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |

@@ -1,13 +1,16 @@
 # Live-animals document upload flow
 
-End-to-end sequence for the accompanying-documents journey in
-`trade-imports-animals-frontend` → CDP Uploader → `trade-imports-animals-backend`
-→ S3.
+End-to-end sequence for the accompanying-documents journey. On the way in the
+file travels browser → nginx sidecar → CDP Uploader → S3, while
+`trade-imports-animals-backend` takes only the calls *about* it: the register,
+the claim and the scan result.
 
-The browser posts the file to the platform's `/upload-and-scan` bypass rather than
-through the frontend, so no document passes through either service. The frontend
-opens an upload session, the browser uploads to it, and the frontend takes the
-document on when the browser is returned.
+`trade-imports-animals-frontend` opens an upload session, the browser posts the
+file straight to the platform's `/upload-and-scan` bypass rather than through
+the frontend, and the frontend takes the document on when the browser is
+returned — so no document's bytes reach either service on the way in. A
+download goes the other way and does pass through both: the backend reads the
+file from S3 and streams it through the frontend to the browser.
 
 ```mermaid
 sequenceDiagram

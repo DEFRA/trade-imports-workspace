@@ -133,7 +133,7 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Virus found" with an error and no way to view it.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Rejected" with an error and no way to view it. The upload service reports a rejection as a message in its own wording and no code, so the system cannot tell a virus from any other refusal the scan makes and MUST NOT name a cause.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -143,17 +143,18 @@ The system MUST show a document as "Scanning for virus" immediately after upload
 - **WHEN** the virus scan completes and the file is clean
 - **THEN** its row shows "Check completed" and a link to view the file appears
 
-#### Scenario: An infected upload is flagged and blocked
+#### Scenario: A rejected upload is flagged and blocked
 **ID**: SCN-DOCS-007-B
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
 - **THEN** its row shows "Scanning for virus"
-- **WHEN** the virus scan completes and finds a virus
-- **THEN** its row shows "Virus found", an error explains the file contains a virus and must be removed, and there is no way to view the file
+- **WHEN** the scan completes and rejects the file
+- **THEN** its row shows "Rejected", an error explains the file cannot be used and must be removed, and there is no way to view the file
+- **AND** neither the row nor the error says a virus was found
 
-### Requirement: The user cannot continue while a document is still being scanned or is infected
+### Requirement: The user cannot continue while a document is still being scanned or has been rejected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Virus found", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the infected one has been removed.
+The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Rejected", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the rejected one has been removed.
 
 #### Scenario: Continuing is blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
@@ -163,12 +164,12 @@ The system MUST refuse to let the user continue past the page while any document
 - **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
 
-#### Scenario: Continuing is blocked while an infected document remains
+#### Scenario: Continuing is blocked while a rejected document remains
 **ID**: SCN-DOCS-008-B
-- **GIVEN** a document on the page has come back "Virus found"
+- **GIVEN** a document on the page has come back "Rejected"
 - **WHEN** the user tries to continue
-- **THEN** the same virus error is shown again
-- **WHEN** they remove the infected document
+- **THEN** the same rejection error is shown again
+- **WHEN** they remove the rejected document
 - **THEN** continuing takes them onward
 
 ### Requirement: Each document's scan status updates independently, and completion is announced

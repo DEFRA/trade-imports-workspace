@@ -140,6 +140,20 @@ Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
 `host.docker.internal:<port>`.
 
+**Excluding a service also removes its sidecar**, so one label can take two
+services out. `run-stack.sh`'s `sidecars` array holds the pairings and the run
+prints each removal in its startup summary.
+
+| Service label | Sidecar removed with it | What a host-side run loses |
+|---|---|---|
+| `frontend` | `animals-frontend-nginx` | host port 3000 is the natively-run frontend's, and `/upload-and-scan` is no longer proxied to `cdp-uploader` (so neither the 10M cap nor the 2304M bypass applies) |
+
+So `-e frontend` cannot upload a document in real mode: the page hands the
+browser the same-origin path `/upload-and-scan/{uploadId}` and hapi has no
+route for it, so the POST 404s. Run the native frontend with `STUB_MODE=true`,
+which serves `/stub-upload-and-scan/{uploadId}` from the app itself, or leave
+the frontend in the stack whenever the journey under test uploads a document.
+
 Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002,
 plants-frontend 3003, defra-id-stub 3007, backend 8085, reference-data 8086,
 stub 8087, gateway 8088, address-book 8089, ins-backend 8090, plants-backend 8091.

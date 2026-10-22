@@ -255,7 +255,10 @@ with commits of its own is left as it is. A failure names its step and its exact
    into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`. A
    branch-lifecycle row that owes only some phases runs those one per call. The
    implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts.
+   agent picks a repo's test scripts. How hard the gate drives this machine
+   (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
+   the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
+   see [`machine-tuning.md`](machine-tuning.md).
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also

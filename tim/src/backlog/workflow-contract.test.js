@@ -2360,15 +2360,14 @@ describe('increment-build-loop', () => {
         const QUOTED_REPO_DOC_AND_RULE =
           '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
         const GREP_CHECK =
-          "61:- `grep -rn \"it('should show the cap\" fit/` finds no test the row renames."
+          '61:- `grep -rn "it(\'should show the cap" fit/` finds no test the row renames.'
         const JQ_CHECK =
-          "62:- `jq -r '.tests[] | select(.title | test(\"should render the hint\")) | .title' report.json` prints one title."
+          '62:- `jq -r \'.tests[] | select(.title | test("should render the hint")) | .title\' report.json` prints one title.'
         const FENCED_CHECK =
           '63:npm run test:fit -- --grep "Should show the cap error"'
         const NAMED_CHECK_COMMAND =
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js -t "Should refuse a sixteenth document"'
-        const NAMED_CHECK =
-          `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
+        const NAMED_CHECK = `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
         const EXISTING_TITLES_QUOTED =
           '130:- SCN-CYA-002-A, unit "Should mark a blank plain answer missing" and "Should mark a blank date missing": `partial` (second Then only). "Should write an unanswered optional row out as Not applicable on a finished card": `partial` (first Then only).'
         const NEW_TEST_RETITLED =

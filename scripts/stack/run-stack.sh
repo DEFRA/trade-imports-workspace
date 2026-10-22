@@ -224,6 +224,17 @@ for entry in "${services[@]}"; do
   fi
 done
 
+for entry in "${sidecars[@]}"; do
+  IFS='|' read -r label sidecar loss <<< "$entry"
+  is_excluded "$label" || continue
+  in_active=0
+  for s in ${active_services[@]+"${active_services[@]}"}; do
+    [ "$s" = "$sidecar" ] && { in_active=1; break; }
+  done
+  [ "$in_active" -eq 0 ] && continue
+  printf '  %-16s %sremoved with %s - %s%s\n' "$sidecar:" "$COLOUR_GREY" "$label" "$loss" "$COLOUR_RESET"
+done
+
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }
 
 # Mongo's entrypoint races itself on a fresh volume and exits 48, taking every

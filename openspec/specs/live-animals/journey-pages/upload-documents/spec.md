@@ -73,13 +73,6 @@ The system MUST reject a document over the maximum file size, both at the point 
 - **AND** an error links to and focuses the file field
 - **AND** the notification still shows no documents added
 
-#### Scenario: A file at the full size limit is uploaded, checked and read back
-**ID**: SCN-DOCS-004-D
-- **GIVEN** the user is adding a document
-- **WHEN** they upload a file at the maximum allowed size
-- **THEN** its row resolves to "Check completed" and offers a way to view it
-- **AND** viewing it serves back the same bytes that were uploaded
-
 ### Requirement: Only supported file types can be uploaded
 **ID**: REQ-DOCS-005
 The system MUST reject a file of an unsupported type without adding it to the notification, linking to and focusing the file field while preserving the reference and date already entered.

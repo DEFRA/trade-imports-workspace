@@ -95,6 +95,17 @@ services:
         condition: service_healthy
       cdp-uploader:
         condition: service_started
+    healthcheck:
+      # Probes the proxied route, so `up --wait` returns only once host port
+      # 3000 serves a request and a sidecar that cannot reach the frontend
+      # reports unhealthy rather than healthy-but-502ing.
+      interval: 5s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3000/health
     image: nginx:1.29-alpine
     ports:
       - '3000:3000'

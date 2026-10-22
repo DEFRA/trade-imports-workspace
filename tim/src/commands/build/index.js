@@ -16,6 +16,7 @@ import { registerStart } from './start.js'
 import { registerProbe } from './probe.js'
 import { registerDuplication } from './duplication.js'
 import { registerMeasure } from './measure.js'
+import { registerWorkers } from './workers.js'
 
 const SCHEMA_VERSION = 1
 
@@ -429,7 +430,7 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, and measure what a command does to the machine"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, and print this machine's worker counts"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
@@ -439,4 +440,5 @@ export const register = (program, { timVersion }) => {
   registerProbe(build, timVersion)
   registerDuplication(build, timVersion)
   registerMeasure(build, timVersion)
+  registerWorkers(build, timVersion)
 }

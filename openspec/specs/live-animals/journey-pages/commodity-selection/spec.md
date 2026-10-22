@@ -136,3 +136,58 @@ The system MUST require every notification to carry at least one commodity line,
 - **GIVEN** a notification carrying no commodity line
 - **WHEN** the user tries to submit it
 - **THEN** the submission is refused, and the missing commodity line is reported
+
+### Requirement: With JavaScript, results follow the search box as the user types
+**ID**: REQ-COMMODITY-SELECT-011
+The system MUST, when JavaScript runs, list the species a search matches as the user types, without loading a new page, and MUST still search when the user presses the search button if the results cannot be fetched.
+
+#### Scenario: Typing a search lists its matches without a new page
+**ID**: SCN-COMMODITY-SELECT-011-A
+- **GIVEN** the user is on the commodity selection page with JavaScript running
+- **WHEN** they type a search that matches species under one commodity
+- **THEN** those species are listed under that commodity's heading
+- **AND** no new page has loaded
+
+#### Scenario: The search button still searches when results cannot be fetched
+**ID**: SCN-COMMODITY-SELECT-011-B
+- **GIVEN** the user is on the commodity selection page with JavaScript running, and results cannot be fetched
+- **WHEN** they type a search and press the search button
+- **THEN** the matching species are listed
+
+### Requirement: The text a search matched is emphasised
+**ID**: REQ-COMMODITY-SELECT-012
+The system MUST emphasise the part of a commodity heading or species label that the search matched.
+
+#### Scenario: A common-name search emphasises the matched words
+**ID**: SCN-COMMODITY-SELECT-012-A
+- **GIVEN** the user is on the commodity selection page
+- **WHEN** they search by a species' common name, or by the leading digits of a commodity code
+- **THEN** the matched words in each species label, or the matched digits in each commodity heading, are emphasised
+
+### Requirement: The number of results is announced
+**ID**: REQ-COMMODITY-SELECT-013
+The system MUST report the number of species a search matched through a polite status message, and MUST report there that nothing was found when a search matches nothing.
+
+#### Scenario: Each search reports how many results it found
+**ID**: SCN-COMMODITY-SELECT-013-A
+- **GIVEN** the user is on the commodity selection page with JavaScript running
+- **WHEN** they type a search matching two species, then one matching one, then one matching nothing
+- **THEN** the status message reads "2 results available", then "1 result available", then "No results found"
+
+### Requirement: With JavaScript, ticking a species updates the tally straight away
+**ID**: REQ-COMMODITY-SELECT-014
+The system MUST, when JavaScript runs, update the selection tally as soon as the user ticks a species, MUST leave focus on the tick box, and MUST keep a species ticked under one search when the user types another.
+
+#### Scenario: Ticking a result updates the tally and keeps focus
+**ID**: SCN-COMMODITY-SELECT-014-A
+- **GIVEN** the user is on the commodity selection page with JavaScript running, and a search has listed results
+- **WHEN** they tick a species
+- **THEN** the tally reports one chosen
+- **AND** focus stays on that tick box
+
+#### Scenario: Species ticked under different typed searches are all saved
+**ID**: SCN-COMMODITY-SELECT-014-B
+- **GIVEN** the user is on the commodity selection page with JavaScript running
+- **WHEN** they tick a species found by one typed search, type another search, tick a second species, then save and continue
+- **THEN** the tally reported two chosen before saving
+- **AND** both species are saved in their canonical order

@@ -1124,6 +1124,39 @@ describe('tim backlog split --rows --back-from', () => {
     ])
   })
 
+  test('moving a row out again puts it back in the emptied theme and takes it off movedBack', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    const run = await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    const away = readJson(pathOf(COMMODITY_B))
+    const checks = await Promise.all(
+      [COMMODITY, COMMODITY_B, WORKAREA].map((workarea) =>
+        runTim(['check', workarea])
+      )
+    )
+
+    expect({
+      reopened: envelopeOf(run).result.movedTo.reopened,
+      branch: away.branch,
+      movedBack: away.movedBack,
+      rows: away.increments.map((row) => [row.id, row.theme]),
+      landing: readJson(indexPath()).landingOrder,
+      checks: checks.map((check) => check.exitCode)
+    }).toEqual({
+      reopened: true,
+      branch: 'feat/NO_JIRA-hrp-origin-and-commodity-commodity-b',
+      movedBack: undefined,
+      rows: [['inc-003', 'commodity-b']],
+      landing: [
+        { wave: 1, themes: ['origin', 'documents'] },
+        { wave: 2, themes: ['commodity', 'commodity-b'] }
+      ],
+      checks: [0, 0, 0]
+    })
+  })
+
   test('tim backlog check flags a row that reuses the id of a row moved back', async () => {
     await splitIntoThemes()
     await moveRows(ORIGIN, 'inc-002', 'origin-b')

@@ -161,31 +161,42 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
     that row creates; the rest simply build from `main` after this theme lands.
 - **Rendered proof:** each row says which screenshots to take again after it lands. Compare them with
   `../snagging/screens/prototype/`. The prototype walk is `../prototype-specs/e2e/snagging.fit.spec.js`.
-- **The split across two laptops was reversed (21 October).** Laptop B is out of action and landed nothing, so its six
-  rows came back here with `tim backlog split --rows --back-from design-snagging-b`: inc-210, inc-212, inc-213,
-  inc-214, inc-217 and inc-219. This laptop builds every row. The merge row, inc-222, is dropped. The final tidy,
-  inc-221, waits for the six rows instead.
+- **Laptop A builds the documents-first rows, then stops (22 October).** Left here: inc-213 (consignment addresses),
+  inc-223 (the upload documents tidy) and inc-218 (Back links). Sam then reviews and merges this branch.
+- **The last five rows moved to laptop B (22 October)** with `tim backlog split --rows --to design-snagging-b`:
+  inc-214 (identification details), inc-216 (check your answers), inc-217 (declaration and Notification submitted),
+  inc-219 (CPH number) and inc-221 (the final tidy). This backlog keeps a `movedOut` pointer to them. See "Design
+  snagging B" below.
+- **Earlier (21 October):** laptop B's first six rows came back here with `--back-from`. The merge row, inc-222, is
+  dropped: laptop B's branch becomes its own PR after this one merges.
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging, branch lifecycle on
   feat/EUDPA-720-design-release-2-1-design-snagging"
 
-## Design snagging B: EUDPA-720, second laptop (reversed, builds nothing)
+## Design snagging B: EUDPA-720, second laptop
 
-- **Reversed on 21 October. Laptop B builds nothing: do not run the build loop on this backlog.** Laptop B is out of
-  action and landed nothing.
-- **Rows:** none left. All six went back to design snagging with `tim backlog split --rows --back-from
-  design-snagging-b`, and laptop A builds them:
-  - inc-210, the search box with the joined blue icon button on the party pickers and transporter list
-  - inc-212, the party picker layout (waits for inc-210)
-  - inc-213, consignment addresses
+- **Laptop B builds the last five design snagging rows (22 October),** so laptop A finishes the documents-first rows
+  and stops for Sam's review. The five moved here with `tim backlog split --rows --to design-snagging-b`. Each was held
+  in laptop A's backlog; here each is todo again.
+- **Branch:** `feat/EUDPA-720-design-release-2-1-design-snagging-b`. Draft PRs: animals frontend #423, plants frontend
+  #114, tests #47. After Sam merges laptop A's branch, this branch becomes the PR for the rest of design snagging.
+- **Rows, in build order:**
+  - inc-217, the declaration and Notification submitted pages. It merges laptop A's branch into all three repos
+    first, because laptop B's branch was cut after inc-204 and is far behind.
   - inc-214, identification details
-  - inc-217, the declaration and Notification submitted pages
+  - inc-216, check your answers without the red bar on a missing answer
   - inc-219, the CPH number
-- **Backlog:** it keeps a `movedBack` pointer to the six, so no machine builds them twice. It has left the landing
-  order in `themes.json`.
-- **Left in place for Sam to decide:** the `feat/EUDPA-720-design-release-2-1-design-snagging-b` branches and draft
-  pull requests in the animals frontend, the plants frontend and the tests repo, and the workspace branch
-  `feat/NO_JIRA-design-release-2-1-snagging-b`.
-- **Handover:** [`design-snagging-b/HANDOVER.md`](design-snagging-b/HANDOVER.md).
+  - inc-221, the final tidy, last. It waits for the four rows above and for laptop A's inc-213, inc-223 and inc-218,
+    and merges `origin/main` into all three repos first, so it builds on Sam's merged snagging work.
+- **Known loop gap:** a relaunch that resumes an already-pushed row skips the merge. Laptop B's session checks the
+  merge happened after inc-217 and after every relaunch.
+- **Workspace branch:** laptop B works on `feat/NO_JIRA-design-release-2-1-snagging-b`, reset from
+  `feat/NO_JIRA-design-release-2-1`, and merges back after each landed row and at the end.
+- **Business tickets:** the theme-ticket WRITE flow runs once for the whole design snagging theme, not on laptop B.
+- **Earlier (21 October):** laptop B's first six rows went back to laptop A after laptop B timed out on inc-210 and
+  landed nothing.
+- **Handover:** [`design-snagging-b/HANDOVER.md`](design-snagging-b/HANDOVER.md), with the paste-in prompt.
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/design-snagging-b, branch lifecycle on
+  feat/EUDPA-720-design-release-2-1-design-snagging-b"
 
 ## Accompanying documents: EUDPA-724, second machine
 

@@ -1,6 +1,6 @@
 import { posix } from 'node:path'
 import { TimError } from '../errors.js'
-import { movedOutOf } from './split-off.js'
+import { movedBackOf, movedOutOf } from './split-off.js'
 import { UNBUILT_STATUSES, themeWorkareaOf } from './themes.js'
 
 const BACKLOG_FILE = 'backlog.json'
@@ -40,19 +40,39 @@ const withThemeSuffix = (text, fromTheme, toTheme) => {
 export const defaultMovedBranch = (backlog, toTheme) =>
   withThemeSuffix(backlog.branch, backlog.theme, toTheme)
 
-const refuseRowsItCannotMove = ({ backlog, rowIds, toTheme, target }) => {
+const tookRowsBackFrom = (targetBacklog, theme) =>
+  movedBackOf(targetBacklog).some((pointer) => pointer.theme === theme)
+
+const refuseTargetItCannotReopen = ({ backlog, branch, target }) => {
+  if (!target.backlog) return
+  if (!tookRowsBackFrom(target.backlog, backlog.theme)) {
+    throw new TimError(
+      'USAGE',
+      `${target.workarea} already has a backlog, and moved no rows back to theme "${backlog.theme}". Give --to a theme id no backlog uses yet, or one that moved rows back here.`
+    )
+  }
+  if (branch !== target.backlog.branch) {
+    throw new TimError(
+      'USAGE',
+      `--branch names ${branch}, but ${target.workarea} builds on ${target.backlog.branch}. Leave --branch out to build there.`
+    )
+  }
+}
+
+const refuseRowsItCannotMove = ({
+  backlog,
+  rowIds,
+  toTheme,
+  branch,
+  target
+}) => {
   if (toTheme === backlog.theme) {
     throw new TimError(
       'USAGE',
       `--to names this backlog's own theme, "${toTheme}". Give the new theme's id.`
     )
   }
-  if (target.exists) {
-    throw new TimError(
-      'USAGE',
-      `${target.workarea} already has a backlog. Give --to a theme id no backlog uses yet.`
-    )
-  }
+  refuseTargetItCannotReopen({ backlog, branch, target })
   const rows = new Map(rowsOf(backlog).map((row) => [row.id, row]))
   const missing = rowIds.filter((id) => !rows.has(id))
   if (missing.length) {
@@ -135,6 +155,41 @@ const newBacklogOf = ({ backlog, toTheme, branch, rows }) => ({
   ...optional('touches', backlog.touches),
   increments: rows
 })
+
+const movedBackWithout = ({ target, fromTheme, moving }) =>
+  movedBackOf(target)
+    .map((pointer) =>
+      pointer.theme === fromTheme
+        ? {
+            ...pointer,
+            increments: asList(pointer.increments).filter(
+              (id) => !moving.has(id)
+            )
+          }
+        : pointer
+    )
+    .filter((pointer) => asList(pointer.increments).length)
+
+const reposJoined = (target, backlog, rows) => {
+  const used = reposUsed(backlog, rows)
+  if (used === undefined) return target.repos
+  return { ...target.repos, ...used }
+}
+
+const reopenedBacklogOf = ({ target, backlog, rows, moving }) => {
+  const movedBack = movedBackWithout({
+    target,
+    fromTheme: backlog.theme,
+    moving
+  })
+  const { increments, movedBack: movedBackBefore, ...envelope } = target
+  return {
+    ...envelope,
+    ...optional('repos', reposJoined(target, backlog, rows)),
+    ...(movedBack.length ? { movedBack } : {}),
+    increments: [...asList(increments), ...rows]
+  }
+}
 
 const pointerOf = ({ toTheme, branch, workarea, target, rows, at }) => ({
   theme: toTheme,
@@ -222,6 +277,10 @@ const waitsOn = ({ rows, isCrossing, workareaOf }) =>
  * the new workarea. Every other backlog given whose `externalDependsOn` names
  * a moved row in the old workarea is pointed at the new one.
  *
+ * When `toTheme` already has a backlog that moved rows back to this one
+ * (`movedBack`), the rows go into it after its own rows, on its branch, and
+ * its `movedBack` pointer loses them, dropped once it holds none.
+ *
  * @param {object} args
  * @param {object} args.backlog - The split backlog, already checked, with `theme`
  * @param {string} args.workarea - Its workarea, normalised
@@ -231,8 +290,8 @@ const waitsOn = ({ rows, isCrossing, workareaOf }) =>
  * @param {(workarea: string) => object|null} args.readWorkareaBacklog - Reads any backlog on disk
  * @param {string[]} args.otherWorkareas - The programme's other backlogs, to point at the rows' new home
  * @param {string} args.at - When the rows moved, as an ISO 8601 time
- * @returns {{workarea: string, backlog: object, newBacklog: object, pointer: object, relinks: object[], rewired: {left: object[], moved: object[], dropped: object[], relinked: object[]}}}
- * @throws {TimError} USAGE when a row is not there or not todo or blocked, the theme is the backlog's own, or its workarea already has a backlog
+ * @returns {{workarea: string, backlog: object, newBacklog: object, reopened: boolean, pointer: object, relinks: object[], rewired: {left: object[], moved: object[], dropped: object[], relinked: object[]}}}
+ * @throws {TimError} USAGE when a row is not there or not todo or blocked, the theme is the backlog's own, or its workarea has a backlog that moved no rows back here or builds on another branch
  */
 export const planMoveRows = ({
   backlog,
@@ -245,14 +304,13 @@ export const planMoveRows = ({
   at
 }) => {
   const targetWorkarea = themeWorkareaOf(backlog.parent.workarea, toTheme)
+  const targetBacklog = readWorkareaBacklog(targetWorkarea)
   refuseRowsItCannotMove({
     backlog,
     rowIds,
     toTheme,
-    target: {
-      workarea: targetWorkarea,
-      exists: Boolean(readWorkareaBacklog(targetWorkarea))
-    }
+    branch,
+    target: { workarea: targetWorkarea, backlog: targetBacklog }
   })
   const moving = new Set(rowIds)
   const done = doneIdsOf(backlog)
@@ -294,7 +352,15 @@ export const planMoveRows = ({
         leftRowOf({ row, moving, target: targetWorkarea })
       )
     }),
-    newBacklog: newBacklogOf({ backlog, toTheme, branch, rows: movedRows }),
+    newBacklog: targetBacklog
+      ? reopenedBacklogOf({
+          target: targetBacklog,
+          backlog,
+          rows: movedRows,
+          moving
+        })
+      : newBacklogOf({ backlog, toTheme, branch, rows: movedRows }),
+    reopened: Boolean(targetBacklog),
     pointer,
     relinks,
     rewired: {
@@ -327,15 +393,18 @@ const relinkIndexEnd = ({ end, moving, from, toTheme, target }) =>
  * The themes index after rows moved from one split theme to a new one: the
  * new theme's entry beside the old one, in the old one's wave, the old
  * entry's row count, and every cross-theme dependency on a moved row pointed
- * at its new workarea.
+ * at its new workarea. A theme already in the index, emptied when its rows
+ * moved back, keeps its entry: its row count updates, it loses `movedBackTo`,
+ * and it rejoins the old one's wave.
  *
  * @param {object} args
  * @param {object} args.index - The themes.json on disk
  * @param {string} args.fromTheme
  * @param {string} args.fromWorkarea
  * @param {number} args.rowsLeft - The rows the old backlog keeps
- * @param {object} args.newBacklog - The new split backlog
- * @param {string} args.title - The new theme's title
+ * @param {object} args.newBacklog - The split backlog the rows moved into
+ * @param {string[]} args.movedIds - The rows that moved
+ * @param {string} [args.title] - The new theme's title; an entry already there keeps its own when none is given
  * @returns {object}
  */
 export const indexWithMovedRows = ({
@@ -344,38 +413,48 @@ export const indexWithMovedRows = ({
   fromWorkarea,
   rowsLeft,
   newBacklog,
+  movedIds,
   title
 }) => {
   const toTheme = newBacklog.theme
   const target = themeWorkareaOf(newBacklog.parent.workarea, toTheme)
-  const moving = new Set(rowsOf(newBacklog).map((row) => row.id))
+  const moving = new Set(movedIds)
   const themes = asList(index.themes)
   const fromEntry = themes.find((entry) => entry?.id === fromTheme)
+  const existing = themes.find((entry) => entry?.id === toTheme)
+  const { movedBackTo, ...existingFields } = existing ?? {}
   const entry = {
+    ...existingFields,
     id: toTheme,
-    title,
+    title: title ?? existing?.title,
     workarea: target,
     branch: newBacklog.branch,
     wave: newBacklog.parent.wave,
-    rows: moving.size,
+    rows: rowsOf(newBacklog).length,
     dependsOn: asList(newBacklog.parent.landsAfter),
     ...optional('touches', newBacklog.touches),
     movedFrom: fromTheme
   }
+  const landing = asList(index.landingOrder)
+  const alreadyLands = landing.some((wave) =>
+    asList(wave?.themes).includes(toTheme)
+  )
   const relinkEnd = (end) =>
     relinkIndexEnd({ end, moving, from: fromWorkarea, toTheme, target })
   return {
     ...index,
-    landingOrder: asList(index.landingOrder).map((wave) =>
-      asList(wave?.themes).includes(fromTheme)
+    landingOrder: landing.map((wave) =>
+      !alreadyLands && asList(wave?.themes).includes(fromTheme)
         ? { ...wave, themes: [...wave.themes, toTheme] }
         : wave
     ),
     themes: [
-      ...themes.map((candidate) =>
-        candidate === fromEntry ? { ...candidate, rows: rowsLeft } : candidate
-      ),
-      entry
+      ...themes
+        .map((candidate) =>
+          candidate === fromEntry ? { ...candidate, rows: rowsLeft } : candidate
+        )
+        .map((candidate) => (candidate === existing ? entry : candidate)),
+      ...(existing ? [] : [entry])
     ],
     crossThemeDependencies: asList(index.crossThemeDependencies).map(
       (dependency) =>

@@ -438,7 +438,10 @@ const runMoveRows = ({
   const parentWorkarea = backlog.parent.workarea
   const indexPath = themesIndexPathOf(workspaceRoot, parentWorkarea)
   const index = readIndex(indexPath)
-  const branch = options.branch ?? defaultMovedBranch(backlog, options.to)
+  const branch =
+    options.branch ??
+    readFromDisk(themeWorkareaOf(parentWorkarea, options.to))?.branch ??
+    defaultMovedBranch(backlog, options.to)
   const plan = planMoveRows({
     backlog,
     workarea,
@@ -476,7 +479,10 @@ const runMoveRows = ({
         fromWorkarea: workarea,
         rowsLeft: plan.backlog.increments.length,
         newBacklog: plan.newBacklog,
-        title: options.title ?? defaultMovedTitle(backlog, branch)
+        movedIds: plan.pointer.increments,
+        title:
+          options.title ??
+          (plan.reopened ? undefined : defaultMovedTitle(backlog, branch))
       })
     : null
   const changedPaths = plannedFiles(
@@ -501,6 +507,7 @@ const runMoveRows = ({
       path: newPath,
       branch,
       rows: plan.pointer.increments,
+      reopened: plan.reopened,
       changed: changedPaths.has(newPath)
     },
     index: newIndex
@@ -881,6 +888,11 @@ const describeDropped = (dropped) =>
 const renderMoveRows = (result) =>
   [
     `${countOf(result.movedTo.rows.length, 'row')} (${result.movedTo.rows.join(', ')}) move to ${result.movedTo.workarea}, theme "${result.movedTo.theme}", to build on ${result.movedTo.branch}.`,
+    ...(result.movedTo.reopened
+      ? [
+          'That backlog moved rows back here before. The rows go in after its own rows, and its "movedBack" pointer no longer names them.'
+        ]
+      : []),
     'The backlog they leave keeps a pointer to them in "movedOut", so nothing drafts them again.',
     ...describeWaits(
       result.moveRewired.left,
@@ -957,7 +969,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('split <workarea>')
     .description(
-      "Split a themed backlog into one backlog per theme, under <workarea>/themes/<theme id>/, and write themes.json with the landing order. A dependsOn on another theme's row becomes an externalDependsOn. Checks every split backlog first. With --theme, splits only that theme off, early: its rows leave the main backlog, which keeps a pointer to them in splitOff. With --rows and --to, given a theme's split backlog, moves those rows into a new theme's backlog beside it, to build on a second machine: the old backlog keeps a pointer to them in movedOut. With --rows and --back-from, given the backlog that moved rows out, moves them back from that theme so this machine builds them: the theme they leave keeps a pointer to them in movedBack. A dry run unless given --write"
+      "Split a themed backlog into one backlog per theme, under <workarea>/themes/<theme id>/, and write themes.json with the landing order. A dependsOn on another theme's row becomes an externalDependsOn. Checks every split backlog first. With --theme, splits only that theme off, early: its rows leave the main backlog, which keeps a pointer to them in splitOff. With --rows and --to, given a theme's split backlog, moves those rows into a new theme's backlog beside it, or into a theme's backlog that moved rows back, to build on a second machine: the old backlog keeps a pointer to them in movedOut. With --rows and --back-from, given the backlog that moved rows out, moves them back from that theme so this machine builds them: the theme they leave keeps a pointer to them in movedBack. A dry run unless given --write"
     )
     .addHelpText(
       'after',
@@ -975,11 +987,14 @@ export const register = (backlog, { timVersion }) => {
         'With --back-from, each row keeps every field and its status, and goes back before the first row here that waits for it.\n' +
         'The movedOut pointer loses the rows and is dropped once empty. A theme left with no rows leaves the landing order in themes.json.\n' +
         'With --rows, a moved row stops waiting for a row left behind that is done, because the new branch is cut from the old one.\n' +
+        'With --to naming a theme that moved rows back here with --back-from, the rows go into its backlog again, after its own rows,\n' +
+        'on its branch, and its movedBack pointer stops naming them. The pointer is dropped once it names no row.\n' +
         'Any other dependency between the two backlogs becomes an externalDependsOn, and every other backlog in the programme\n' +
         'that waits for a moved row is pointed at its new workarea.\n' +
         'Exits 1, writing nothing, when the backlog or any split backlog is out of shape.\n' +
         'Exits 2 when --theme names a theme the backlog does not have, or one already split off,\n' +
         'or when --rows names a row the backlog does not have, or one that is not todo or blocked,\n' +
+        "or when --to names a theme with a backlog that moved no rows back here, or --branch is not that backlog's branch,\n" +
         'or when --back-from names a theme this backlog moved no rows to, or one of --rows did not move there.'
     )
     .option('--write', 'Write the split backlogs and themes.json')
@@ -1005,7 +1020,7 @@ export const register = (backlog, { timVersion }) => {
     )
     .option(
       '--to <theme id>',
-      'The new theme the --rows move to. Its backlog is written to <parent>/themes/<theme id>/'
+      'The theme the --rows move to: a new one, written to <parent>/themes/<theme id>/, or one that moved rows back here'
     )
     .option(
       '--branch <name>',

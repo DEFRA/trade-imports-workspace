@@ -268,6 +268,7 @@ describe('tim backlog notes', () => {
     expect(envelopeOf(run).result).toEqual({
       path: backlogPath(),
       id: 'inc-001',
+      field: 'notes',
       notes: ['Second', 'Third, trimmed'],
       changes: [
         { position: 1, before: 'First', after: null },
@@ -329,6 +330,63 @@ describe('tim backlog notes', () => {
 
     expect(envelopeOf(run).errors[0].message).toBe(
       `${replacement} is empty. A note needs text.`
+    )
+  })
+
+  test('lists the open questions with --open-questions, numbered from 1', async () => {
+    writeBacklog([
+      row({ notes: ['A note'], openQuestions: ['First?', 'Second?'] })
+    ])
+
+    const run = await runTimInWorkspace(workspace, [
+      'backlog',
+      'notes',
+      WORKAREA,
+      'inc-001',
+      '--open-questions'
+    ])
+
+    expect(run.stdout).toBe('1. First?\n\n2. Second?')
+  })
+
+  test('removes an open question with --open-questions --write, leaving the notes', async () => {
+    writeBacklog([
+      row({ notes: ['A note'], openQuestions: ['First?', 'Second?'] })
+    ])
+
+    const run = await runTim([
+      'notes',
+      WORKAREA,
+      'inc-001',
+      '--open-questions',
+      '--remove',
+      '1',
+      '--write'
+    ])
+
+    expect(envelopeOf(run).result.openQuestions).toEqual(['Second?'])
+    expect(readRows()[0]).toEqual(
+      expect.objectContaining({
+        notes: ['A note'],
+        openQuestions: ['Second?']
+      })
+    )
+  })
+
+  test('names open questions when a number is not one of them', async () => {
+    writeBacklog([row({ openQuestions: ['First?'] })])
+
+    const run = await runTim([
+      'notes',
+      WORKAREA,
+      'inc-001',
+      '--open-questions',
+      '--remove',
+      '2'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      'inc-001 has 1 open questions, so it has no open question 2. Open questions count from 1.'
     )
   })
 })

@@ -113,7 +113,7 @@ describe('#planMoveRows', () => {
     )
   })
 
-  test('refuses a theme whose workarea already has a backlog', () => {
+  test('refuses a theme whose backlog moved no rows back here', () => {
     expect(() =>
       plan({
         backlog: splitBacklog([row('inc-001')]),
@@ -121,8 +121,81 @@ describe('#planMoveRows', () => {
         others: { [TARGET]: splitBacklog([]) }
       })
     ).toThrow(
-      `${TARGET} already has a backlog. Give --to a theme id no backlog uses yet.`
+      `${TARGET} already has a backlog, and moved no rows back to theme "origin". Give --to a theme id no backlog uses yet, or one that moved rows back here.`
     )
+  })
+
+  describe('into a theme that moved rows back here', () => {
+    const emptiedBacklog = (movedBack) => ({
+      ...splitBacklog([]),
+      programme: 'hrp-origin-b',
+      theme: 'origin-b',
+      branch: 'feat/EUDPA-1-hrp-origin-b',
+      movedBack,
+      increments: []
+    })
+
+    const pointerBack = (increments) => ({
+      theme: 'origin',
+      workarea: SOURCE,
+      backlog: '../origin/backlog.json',
+      increments,
+      at: '2026-10-20T10:00:00.000Z'
+    })
+
+    test('adds the rows and drops the movedBack pointer once it names none', () => {
+      const result = plan({
+        backlog: splitBacklog([row('inc-001'), row('inc-002')]),
+        rowIds: ['inc-001', 'inc-002'],
+        others: {
+          [TARGET]: emptiedBacklog([pointerBack(['inc-001', 'inc-002'])])
+        }
+      })
+
+      expect([
+        result.reopened,
+        result.newBacklog.programme,
+        result.newBacklog.movedBack,
+        result.newBacklog.increments.map(({ id, theme }) => [id, theme])
+      ]).toEqual([
+        true,
+        'hrp-origin-b',
+        undefined,
+        [
+          ['inc-001', 'origin-b'],
+          ['inc-002', 'origin-b']
+        ]
+      ])
+    })
+
+    test('keeps the ids in the movedBack pointer that did not move again', () => {
+      const result = plan({
+        backlog: splitBacklog([row('inc-001'), row('inc-002')]),
+        rowIds: ['inc-001'],
+        others: {
+          [TARGET]: emptiedBacklog([pointerBack(['inc-001', 'inc-003'])])
+        }
+      })
+
+      expect(result.newBacklog.movedBack).toEqual([pointerBack(['inc-003'])])
+    })
+
+    test('refuses a branch other than the one that backlog builds on', () => {
+      expect(() =>
+        planMoveRows({
+          backlog: splitBacklog([row('inc-001')]),
+          workarea: SOURCE,
+          rowIds: ['inc-001'],
+          toTheme: 'origin-b',
+          branch: 'feat/EUDPA-2-elsewhere',
+          readWorkareaBacklog: () => emptiedBacklog([pointerBack(['inc-001'])]),
+          otherWorkareas: [],
+          at: '2026-10-21T10:00:00.000Z'
+        })
+      ).toThrow(
+        `--branch names feat/EUDPA-2-elsewhere, but ${TARGET} builds on feat/EUDPA-1-hrp-origin-b. Leave --branch out to build there.`
+      )
+    })
   })
 })
 
@@ -155,6 +228,7 @@ describe('#indexWithMovedRows', () => {
       fromWorkarea: SOURCE,
       rowsLeft: 1,
       newBacklog,
+      movedIds: ['inc-002'],
       title: 'Origin, second machine'
     })
 
@@ -163,5 +237,54 @@ describe('#indexWithMovedRows', () => {
       id: 'inc-002',
       workarea: TARGET
     })
+  })
+
+  test('reopens an emptied theme in place, back in the old one wave, keeping its title', () => {
+    const index = {
+      landingOrder: [{ wave: 1, themes: ['origin'] }],
+      themes: [
+        { id: 'origin', rows: 3 },
+        {
+          id: 'origin-b',
+          title: 'Origin, laptop B',
+          rows: 0,
+          movedFrom: 'origin',
+          movedBackTo: 'origin'
+        }
+      ],
+      crossThemeDependencies: []
+    }
+    const newBacklog = {
+      theme: 'origin-b',
+      branch: 'feat/EUDPA-1-hrp-origin-b',
+      parent: { workarea: 'shared/hrp', wave: 1, landsAfter: [] },
+      increments: [row('inc-002', { theme: 'origin-b' })]
+    }
+
+    const result = indexWithMovedRows({
+      index,
+      fromTheme: 'origin',
+      fromWorkarea: SOURCE,
+      rowsLeft: 2,
+      newBacklog,
+      movedIds: ['inc-002']
+    })
+
+    expect([result.landingOrder, result.themes]).toEqual([
+      [{ wave: 1, themes: ['origin', 'origin-b'] }],
+      [
+        { id: 'origin', rows: 2 },
+        {
+          id: 'origin-b',
+          title: 'Origin, laptop B',
+          workarea: TARGET,
+          branch: 'feat/EUDPA-1-hrp-origin-b',
+          wave: 1,
+          rows: 1,
+          dependsOn: [],
+          movedFrom: 'origin'
+        }
+      ]
+    ])
   })
 })

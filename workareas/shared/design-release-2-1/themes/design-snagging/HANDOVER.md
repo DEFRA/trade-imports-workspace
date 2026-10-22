@@ -2,13 +2,23 @@
 
 Paste the block below into a fresh Claude Code session opened at the workspace root.
 
-**The split across two laptops was reversed on 21 October. This laptop builds every row.** Laptop B is out of
-action and landed nothing. Its six rows came back with `tim backlog split --rows --back-from design-snagging-b`:
-inc-210, inc-212, inc-213, inc-214, inc-217 and inc-219. Each keeps every field and stays todo; inc-212 still waits for
-inc-210. The `movedOut` pointer is gone. The merge row inc-222 is dropped, because there is no branch to merge back.
-The final tidy, inc-221, now waits for the six rows (and inc-206 to inc-209) instead. Laptop B tried inc-210 once and
-failed the ladder; the note on inc-210 says what went wrong. Laptop B's draft pull requests and branches are still
-open: Sam decides what to do with them.
+**22 October: this laptop builds the documents-first rows, then stops.** What is left here: inc-213 (consignment
+addresses), inc-223 (the upload documents tidy) and inc-218 (Back links). After inc-218 the loop drains and Sam reviews
+and merges this branch (animals frontend #421, plants frontend #113, tests #42).
+
+**The last five rows moved to laptop B on 22 October,** with `tim backlog split --rows --to design-snagging-b`:
+inc-214 (identification details), inc-216 (check your answers), inc-217 (declaration and Notification submitted),
+inc-219 (CPH number) and inc-221 (the final tidy). They were held here for Sam's review; laptop B builds them on
+`feat/EUDPA-720-design-release-2-1-design-snagging-b`, and that branch becomes the PR for the rest of design snagging
+after Sam merges this one. This backlog keeps a `movedOut` pointer to them, so nothing builds them twice. Laptop B's
+handover: [`../design-snagging-b/HANDOVER.md`](../design-snagging-b/HANDOVER.md).
+
+- Business tickets: the theme-ticket WRITE flow (step 5 below) runs once for the whole theme, on this laptop. Laptop B
+  doesn't run it.
+- Earlier, on 21 October, laptop B's first six rows came back here with `--back-from`, after laptop B timed out on
+  inc-210 and landed nothing. The merge row inc-222 is dropped.
+
+The block below is the original 20 October prompt. Its row counts are from then.
 
 ````
 Build the Design Release 2.1 design snagging theme end to end, on one branch, and stop before anything merges: Sam does a technical review first. Use the requirements-pipeline skill's BUILD phase (branch lifecycle) and the theme-ticket skill around it. Follow workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md and these steps in order.

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { addRow } from '../../backlog/add-row.js'
 import { loadBacklogSchema } from '../../backlog/backlog-schema.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
-import { editNotes, notesOf } from '../../backlog/row-notes.js'
+import { NOTE_FIELDS, editNotes, notesOf } from '../../backlog/row-notes.js'
 import { moveRow } from '../../backlog/row-order.js'
 import { workareaBacklogReader } from '../../backlog/workarea.js'
 import { TimError } from '../../errors.js'
@@ -49,6 +49,7 @@ const REPLACE_ENTRY = /^([1-9]\d*)=(.+)$/
 const notesOptsSchema = z.object({
   remove: z.string().optional(),
   replace: z.array(z.string()).optional().default([]),
+  openQuestions: z.boolean().optional().default(false),
   write: z.boolean().optional().default(false)
 })
 
@@ -120,18 +121,20 @@ const parseReplaceEntry = (entry) => {
  * text, before the backlog is read.
  *
  * @param {object} opts
- * @returns {{remove: number[], replace: Record<number, string>, write: boolean}}
+ * @returns {{remove: number[], replace: Record<number, string>, field: 'notes'|'openQuestions', write: boolean}}
  * @throws {TimError} USAGE, or NOT_FOUND when a replacement file is missing
  */
 export const parseNotesOpts = (opts) => {
   const parsed = parseOptions(notesOptsSchema, {
     remove: opts.remove,
     replace: opts.replace,
+    openQuestions: opts.openQuestions,
     write: opts.write
   })
   return {
     remove: parseRemove(parsed.remove),
     replace: Object.fromEntries(parsed.replace.map(parseReplaceEntry)),
+    field: parsed.openQuestions ? 'openQuestions' : 'notes',
     write: parsed.write
   }
 }
@@ -156,22 +159,31 @@ const renderAdd = (result) =>
     writeLine(result)
   ].join('\n')
 
-const renderNoteList = (notes) =>
+const capitalised = (text) => `${text[0].toUpperCase()}${text.slice(1)}`
+
+const renderNoteList = (notes, words) =>
   notes.length
     ? notes.map((note, at) => `${at + 1}. ${note}`).join('\n\n')
-    : 'No notes.'
+    : `No ${words.many}.`
 
-const renderChange = (change) =>
-  change.after === null
-    ? `Note ${change.position} removed:\n- ${change.before}`
-    : `Note ${change.position} replaced:\n- ${change.before}\n+ ${change.after}`
+const renderChange = (change, words) => {
+  const label = `${capitalised(words.one)} ${change.position}`
+  return change.after === null
+    ? `${label} removed:\n- ${change.before}`
+    : `${label} replaced:\n- ${change.before}\n+ ${change.after}`
+}
 
 const renderNotes = (result) => {
-  if (!result.changes) return renderNoteList(result.notes)
+  const words = NOTE_FIELDS[result.field]
+  const entries = result[result.field]
+  if (!result.changes) return renderNoteList(entries, words)
   if (!result.changes.length) {
-    return `${result.id} already has those notes. Nothing written.`
+    return `${result.id} already has those ${words.many}. Nothing written.`
   }
-  return [...result.changes.map(renderChange), writeLine(result)].join('\n\n')
+  return [
+    ...result.changes.map((change) => renderChange(change, words)),
+    writeLine(result)
+  ].join('\n\n')
 }
 
 const writeIf = (shouldWrite, path, backlog) => {
@@ -266,14 +278,21 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('notes <workarea> <id>')
     .description(
-      `List one row's notes, numbered from 1, or remove and replace them by number. Numbers refer to the notes before the edit. Listing writes nothing; an edit is ${DRY_RUN.toLowerCase()}`
+      `List one row's notes, or with --open-questions its open questions, numbered from 1, or remove and replace them by number. Numbers refer to the list before the edit. Listing writes nothing; an edit is ${DRY_RUN.toLowerCase()}`
     )
     .addHelpText(
       'after',
       '\nExamples:\n' +
         '  tim backlog notes shared/my-programme inc-004 --json\n' +
         '  tim backlog notes shared/my-programme inc-004 --remove 2,5 --json\n' +
-        '  tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --write --json'
+        '  tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --write --json\n' +
+        '  tim backlog notes shared/my-programme inc-004 --open-questions --json\n' +
+        '  tim backlog notes shared/my-programme inc-004 --open-questions --remove 1 --write --json\n' +
+        'To add a note or an open question, use tim backlog set --note or --open-question.'
+    )
+    .option(
+      '--open-questions',
+      "Work on the row's open questions instead of its notes"
     )
     .option(
       '--remove <numbers>',
@@ -294,17 +313,22 @@ export const register = (backlog, { timVersion }) => {
           const current = readJsonFile(path)
           const isEdit =
             options.remove.length > 0 || Object.keys(options.replace).length > 0
-          if (!isEdit) return { path, id, notes: notesOf(current, id) }
+          const { field } = options
+          if (!isEdit) {
+            return { path, id, field, [field]: notesOf(current, id, field) }
+          }
           const edited = editNotes({
             backlog: current,
             id,
             remove: options.remove,
-            replace: options.replace
+            replace: options.replace,
+            field
           })
           return {
             path,
             id,
-            notes: edited.notes,
+            field,
+            [field]: edited.notes,
             changes: edited.changes,
             written: writeIf(
               options.write && edited.changes.length > 0,

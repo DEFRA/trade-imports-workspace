@@ -12,6 +12,12 @@ returned — so no document's bytes reach either service on the way in. A
 download goes the other way and does pass through both: the backend reads the
 file from S3 and streams it through the frontend to the browser.
 
+`{docs}` in the diagram stands for the frontend's documents route,
+`/notifications/{journeyId}/accompanying-documents` — `pageRoutePath` in
+`repos/trade-imports-animals-frontend/src/server/app/shared/paths.js` applied to
+`documentsPage.slug`. Spelling it out on every arrow makes the diagram
+unreadable; every other path below is the literal route.
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -23,10 +29,10 @@ sequenceDiagram
     participant S3 as S3 (documents bucket)
     participant DB as MongoDB<br/>(document_upload_sessions,<br/>accompanying_documents)
 
-    U->>NX: GET /documents
+    U->>NX: GET {docs}
     NX->>FE: proxy (10M cap on /)
     FE->>FE: mint correlationId (UUID)
-    FE->>CDP: POST /initiate<br/>{redirect: /documents?upload=correlationId,<br/>callback, s3Bucket, s3Path,<br/>maxFileSize 50MB, mimeTypes,<br/>metadata{correlationId}}
+    FE->>CDP: POST /initiate<br/>{redirect: {docs}?upload=correlationId,<br/>callback, s3Bucket, s3Path,<br/>maxFileSize 50MB, mimeTypes,<br/>metadata{correlationId}}
     CDP-->>FE: {uploadId, statusUrl}
     FE->>BE: POST /notifications/{journeyId}/document-uploads<br/>{uploadId, correlationId}
     BE->>DB: save UploadSession<br/>(expires after 24h; no document yet)
@@ -37,11 +43,11 @@ sequenceDiagram
 
     U->>NX: POST /upload-and-scan/{uploadId}<br/>(multipart: file + text fields)
     NX->>CDP: proxy direct (2304M cap on this path)
-    CDP-->>U: 302 to /documents?upload=correlationId
+    CDP-->>U: 302 to {docs}?upload=correlationId
 
     Note over CDP,S3: async antivirus scan
 
-    U->>NX: GET /documents?upload=correlationId
+    U->>NX: GET {docs}?upload=correlationId
     NX->>FE: proxy
     FE->>BE: GET /notifications/{journeyId}/document-upload-sessions/{correlationId}
     BE-->>FE: the session, or 404 if this notification never opened it
@@ -54,7 +60,7 @@ sequenceDiagram
         FE->>BE: POST /document-uploads/{uploadId}/claim<br/>{documentType, documentReference, dateOfIssue}
         BE->>DB: write the AccompanyingDocument<br/>(created here unless the scan got in first),<br/>store the details, mark claimed
         FE->>FE: append the journey's documents entry
-        FE-->>U: 302 to /documents (clean path)
+        FE-->>U: 302 to {docs} (clean path)
     end
 
     CDP->>S3: PutObject (if clean)
@@ -62,14 +68,14 @@ sequenceDiagram
     BE->>DB: resolve the session by correlationId,<br/>write the document if the claim has not yet,<br/>set scanStatus + files (s3Key null if rejected)
 
     loop every 3s, up to 10 attempts
-        U->>FE: GET /documents/status (client JS)
+        U->>FE: GET {docs}/status (client JS)
         FE->>BE: GET /document-uploads/{uploadId}
         BE-->>FE: {scanStatus, files}
         FE-->>U: update row (PENDING to COMPLETE or REJECTED)
     end
 
     opt Download later
-        U->>FE: GET /documents/{uploadId}/file
+        U->>FE: GET {docs}/{uploadId}/file
         FE->>BE: GET /document-uploads/{uploadId}/file
         BE->>DB: lookup s3Key (404 if REJECTED)
         BE->>S3: GetObject (streamed)
@@ -116,11 +122,12 @@ sequenceDiagram
   it is ever posted, and the backend re-validates `documentType`,
   `documentReference` and `dateOfIssue` on `ClaimUploadRequest`.
 - **The size limit is stated and checked before the upload.**
-  `features/documents/upload-config.js` owns the figure, feeding the page's hint,
-  the browser's own check, and the `maxFileSize` cdp-uploader is asked to enforce.
+  `repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js`
+  owns the figure, feeding the page's hint, the browser's own check, and the
+  `maxFileSize` cdp-uploader is asked to enforce.
 - **The scan is asynchronous.** The browser is returned as soon as cdp-uploader has
   the bytes, so a row appears while the scan is still running. The client polls
-  `/documents/status` every 3s (10 attempts); a user without JavaScript uses the
-  manual refresh link.
+  `/notifications/{journeyId}/accompanying-documents/status` every 3s (10
+  attempts); a user without JavaScript uses the manual refresh link.
 - **REJECTED files have no `s3Key`.** The download route answers 404 rather than
   streaming a quarantined file (`DocumentService.findFile()`).

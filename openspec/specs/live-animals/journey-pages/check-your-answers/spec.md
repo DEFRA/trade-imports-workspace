@@ -173,23 +173,30 @@ For a notification, the system MUST group the page under the same six numbered s
 - **GIVEN** a species with no identifiers saved
 - **THEN** its block shows no Identification details
 
-### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
+### Requirement: A blank is written out as "Not applicable" on a settled card and left blank on one still outstanding
 **ID**: REQ-CYA-002
-On a notification's review, the system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose copied address breaks the address book's rules (REQ-ADDR-005).
+On a notification's review, the system MUST draw a blank by the card it sits in, not the field: "Not applicable" on a card with nothing further owed; visibly blank, with "Missing" announced in its place for a screen reader, on a card still holding outstanding answers, optional rows included. It MUST NOT raise a role error against a party role nobody has reached yet (REQ-ADDR-005 covers a copied address that breaks the rules).
 
-#### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
+#### Scenario: A blank row is written out on a settled card and left blank on an outstanding one
 **ID**: SCN-CYA-002-A
 - **GIVEN** the user has answered only the entry page of a notification
 - **WHEN** they view the review
 - **THEN** a blank row on a card with nothing further owed reads "Not applicable"
-- **AND** a blank row on a card still holding outstanding answers carries no text at all, with "Missing" announced in its place
-- **AND** every blank row in that marked card is drawn the same way, the optional ones included
+- **AND** a blank row on a card still holding outstanding answers is visibly blank, with "Missing" announced in its place for a screen reader
+- **AND** every blank row in that marked card is left blank in the same way, the optional ones included
 
-#### Scenario: An unanswered party role is marked missing, with no role error shown
+#### Scenario: An unanswered party role is left blank, with no role error shown
 **ID**: SCN-CYA-002-B
 - **GIVEN** a new notification whose party roles have not yet been answered
 - **WHEN** the user views the review
-- **THEN** each unanswered role is marked missing, and no role error is raised against it
+- **THEN** each unanswered role is left visibly blank with "Missing" announced for a screen reader, and no role error is raised against it
+
+#### Scenario: A refused Continue leaves an unfinished card's blank answers blank, marked only by the card
+**ID**: SCN-CYA-002-C
+- **GIVEN** the user has answered only the entry page of a notification
+- **WHEN** they choose Continue on the review and it is refused
+- **THEN** each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
+- **AND** the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
 
 ### Requirement: A back link returns to Overview from an amendment's review, and to the notification list from a draft's review or a submitted notification's view
 **ID**: REQ-CYA-003

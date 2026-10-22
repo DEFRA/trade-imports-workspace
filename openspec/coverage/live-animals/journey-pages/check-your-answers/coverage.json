@@ -243,31 +243,39 @@
     },
     {
       "id": "REQ-CYA-002",
-      "name": "A blank is written out as \"Not applicable\" on a settled card and marked missing on one still outstanding",
+      "name": "A blank is written out as \"Not applicable\" on a settled card and left blank on one still outstanding",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-002-A",
-          "name": "A blank row is written out on a settled card and marked missing on an outstanding one",
+          "name": "A blank row is written out on a settled card and left blank on an outstanding one",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "journey with only the entry page answered writes the settled blanks out and marks the outstanding ones", "strength": "full", "notes": "proves both halves on one page: the internal reference reads Not applicable, the arrival date is marked Missing and carries no Not applicable" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "gives every blank row in a marked card no text and a hidden Missing", "strength": "full", "notes": "proves the decision is per card, so optional rows inside a marked card lose their placeholder too" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should mark a blank plain answer missing", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should mark a blank date missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "journey with only the entry page answered writes the settled blanks out and leaves the outstanding ones blank with a hidden Missing", "strength": "full", "notes": "proves both halves on one page: the internal reference reads Not applicable, the arrival date cell holds only a hidden Missing and carries no Not applicable" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "leaves every blank answer of an unfinished card blank with a hidden Missing", "strength": "full", "notes": "every blank answer in the unfinished card is left blank with a hidden Missing, so optional rows lose their placeholder too" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave a blank plain answer with only a visually hidden Missing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave a blank date with only a visually hidden Missing", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should write an unanswered optional row out as Not applicable on a finished card", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give the same optional row no text at all on an unfinished card", "strength": "full", "notes": "the paired case: the same row drawn both ways, which is what pins the decision to the card" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should anchor and name only the first document card while documents are unfinished, and mark the blank rows of every document card missing", "strength": "partial", "notes": "the blank rows of a part-filled later document card read missing" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave the same optional row with only a visually hidden Missing on an unfinished card", "strength": "full", "notes": "the paired case: the same row drawn both ways, which is what pins the decision to the card" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave the blank rows inside an unfinished documents card with only a visually hidden Missing", "strength": "partial", "notes": "the blank rows of an unfinished documents card hold only the hidden Missing" }
           ]
         },
         {
           "id": "SCN-CYA-002-B",
-          "name": "An unanswered party role is marked missing, with no role error shown",
+          "name": "An unanswered party role is left blank, with no role error shown",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "new journey shows no address error before a role has been answered", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should mark a role that has never been answered missing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave a role that has never been answered with only a visually hidden Missing", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not raise a role error for a role that has never been answered", "strength": "full", "notes": "the negative half: an unreached role is not treated like a role whose copied address breaks the rules" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-002-C",
+          "name": "A refused Continue leaves an unfinished card's blank answers blank, marked only by the card",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "keeps the card marking and leaves the blank answer blank with a hidden Missing after a refused Continue at desktop and phone width", "strength": "full", "notes": "after a refused Continue the card keeps its red border and Complete line while the arrival date cell is left blank with a hidden Missing, at both widths" }
           ]
         }
       ]

@@ -96,6 +96,27 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 | `perf.compose.yml` (--perf only) | sets `STUB_LATENCY_PROFILE=${STUB_PROFILE:-sla}` on `trade-imports-stub` and `trade-imports-defra-id-stub` | — |
 
+## The nginx sidecar in front of the animals frontend
+
+`animals-frontend-nginx` holds host port 3000, so the browser reaches
+`trade-imports-animals-frontend` through it rather than directly. It reproduces
+the CDP `nginx-upstreams` sidecar that every deployed service gets, which is two
+body-size caps:
+
+- **10M on every path except `/upload-and-scan`.** An oversized POST to an
+  ordinary route comes back as a bare nginx 413 before the app sees it, so a
+  local 413 with nothing in the frontend's log is this cap, not hapi's
+  `payload.maxBytes`.
+- **2304M on `/upload-and-scan`**, proxied straight to `cdp-uploader:7337`. That
+  is how the browser's file POST gets past both the 10M cap and the frontend
+  itself.
+
+Config is `config/nginx/animals-frontend.conf`; the full upload sequence is in
+[`workareas/shared/document-upload-flow.md`](../../workareas/shared/document-upload-flow.md).
+
+Excluding the frontend takes the sidecar with it, leaving neither the cap nor
+the bypass — see [`--exclude` (`-e`) labels](#--exclude--e-labels).
+
 ## Choosing between `-d`, `-e`, and `--profile`
 
 | Want to… | Use |

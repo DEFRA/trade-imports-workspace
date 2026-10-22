@@ -318,3 +318,4 @@ The system MUST let a user with the same notification open in two tabs upload a 
 - **WHEN** they add a different document from each tab
 - **THEN** each tab's row resolves to "Check completed"
 - **AND** reloading the page lists both documents
+- **AND** viewing each document serves back the file its own tab uploaded

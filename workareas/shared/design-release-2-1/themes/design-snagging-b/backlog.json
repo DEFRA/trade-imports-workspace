@@ -219,7 +219,7 @@
       ],
       "dependsOn": [],
       "theme": "design-snagging-b",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -342,7 +342,9 @@
         "req-243",
         "req-267"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Card order: the AC says species cards appear in selection order. The page orders cards by the stored commodity lines, which follow the order the species are listed on the species selection page (stub catalogue: Bison bison before Bos taurus), not the order the boxes were ticked; ticking order is not recorded and the prototype checkbox form cannot record it either. Judge ruled this meets the AC and had the spec and test titles reworded to say the order the species are listed for selection (review findings 14, 32, 44). Confirm with Sam that list order is what the designers meant."
+      ],
       "notes": [
         "Moves in identification-and-permanent-address inc-046, inc-047 and inc-050 whole. inc-046's AC2 is corrected to the prototype at 56371e2: under 01061900 each species gets its own row (routes.js:865-884), not a shared Species cell.",
         "inc-046's dependency on inc-045 (the page as a linear journey step) is dropped: no criterion here needs it, and this theme depends only on main. inc-045 stays in its theme and builds on this page.",
@@ -353,7 +355,20 @@
         "From inc-205's followUps (laptop A run wf_6fda24ce-d8b, 21 Oct): animal-identification/_identification-card.njk:80 ends every card with a section break above the Save buttons. Check it against the prototype's Identification details page and keep or remove it to match.",
         "Moved to laptop B 22 Oct (Sam) so laptop A builds the documents-first rows; B's branch becomes the PR for the rest of design snagging."
       ],
-      "gate": "Look at the commodity section and species card structure against screens/prototype/S16--one-animal-saved.png: the germinal copy (inc-052) and the pig, sheep and goat rows lay themselves out inside it."
+      "gate": "Look at the commodity section and species card structure against screens/prototype/S16--one-animal-saved.png: the germinal copy (inc-052) and the pig, sheep and goat rows lay themselves out inside it.",
+      "commit": "71134233d46b98168dd3642c7cd61465ba0a10ee de3d3cf6ef818439705b3473064d8d7c1b8a00fa",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/423",
+          "repo": "trade-imports-animals-frontend",
+          "number": 423
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/47",
+          "repo": "trade-imports-ins-tests",
+          "number": 47
+        }
+      ]
     },
     {
       "id": "inc-216",
@@ -508,7 +523,8 @@
         "Swept from inc-209's followUps (run wf_5cec7777-385, BUILD.md 3b, 22 Oct). Items (1) and (2) (logging validation refusals and recoverableSave fallbacks) and (4) (the documents table's action column) moved to inc-223 on 22 Oct; item (11) dropped, as expectOneLogged is already in engine/test-support.js. Copy: (3) port-of-entry and import-reason copy use the same select text / search placeholder key pair as transit countries. Comments and JSDoc: (5) rows.js and remove-action.js JSDoc cut to the contract, reasons to page-design.md; (6) the save-actions.njk comment block moves to repo docs (the status-announcer.js header and origin-of-import.visual.spec.ts comments are already inc-204 (4) and inc-207 (5)). Test support: (7) plants engine/test-support.js catches up with animals (useStubbedJourney, referenceDataServing, saveFailure, the recoverable error builder, driveHandler state/saveFailure/logger), replacing the local copy at plants party-edit.controller.test.js:292, then frontend.md drops its animals-only marks or stops claiming 'same exports'; (8) frontend.md's test-support table lists, or marks per frontend, registerTestRequestLogger, sampleText, backendJourneyId, backendNotification, animals' referenceDataServing and crumbProtectedServerMounting, and plants' expectEveryLeafToBeCopy; (9) animals feature controller tests (transporters, party-picker, contact, address-return and more) drop their local configure plus beforeAll/beforeEach pair for the shared useStubbedJourney; (10) contact/controller.test.js:273,290 and party-picker.controller.test.js:464 stop spying on state.commit and drive the save failure through driveHandler's saveFailure. Spec: (12) transited-countries coverage.json links reconcile to the arrival-and-transit tests once that theme lands. No DEFERRED lines in inc-209.",
         "Leftover plants edit (22 Oct): inc-209's fixer renamed the transporter copy key countryPlaceholder to countrySelectText in animals, as the review asked, and also renamed the plants twin on the party edit page (copy.en.js, copy.cy.js, party-edit.controller.js) so both frontends share one name. inc-209's repos did not include plants, so the land stage left those three files uncommitted and they blocked inc-212's branch stage. Cleared to HEAD; the change is kept in leftovers/2026-10-22-plants-party-edit.patch. Apply it here (git apply from the plants repo root) so the twins keep one key name, and re-run the plants party edit tests.",
         "Moved to laptop B 22 Oct (Sam) so laptop A builds the documents-first rows; B's branch becomes the PR for the rest of design snagging.",
-        "From inc-217's followUps (laptop B run wf_78986091-ecb, 22 Oct): (1) animals declaration/controller.test.js: replace the currentConcurrencyTokenDiffers spy on kit.base and its comment with set-up through the store; (2) animals confirmation/controller.js: log the redirect of an unsubmitted notification once, with journey id and status; (3) one shared '(opens in a new tab)' copy string and hidden-hint link pattern across features in both frontends; (4) plants declaration copy: move the provisional-statements note into copy-status.md and drop the comments; (5) animals declaration copy/copy.test.js: delete the history and Welsh-mutation comments (move the rationale to docs), declaration/test-support.js: delete the comment that describes callers, and sets/live-animals/docs/journey-flow-and-gates.md:63: remove the ticket key; (6) the 'leaves' helper is copied into each feature's copy/copy.test.js in both frontends: promote it to a shared test helper and delete the copies; (7) live-animals and high-risk-plants add-a-page.md: say how a page carries no reference strip, as declaration and confirmation now do. Outside this theme: when overview-and-review inc-115 lands, move live-animals confirmation REQ-CONFIRM-002 and REQ-CONFIRM-006 back to the declaration redirect and the ITAHC rule (recorded in deferred.md)."
+        "From inc-217's followUps (laptop B run wf_78986091-ecb, 22 Oct): (1) animals declaration/controller.test.js: replace the currentConcurrencyTokenDiffers spy on kit.base and its comment with set-up through the store; (2) animals confirmation/controller.js: log the redirect of an unsubmitted notification once, with journey id and status; (3) one shared '(opens in a new tab)' copy string and hidden-hint link pattern across features in both frontends; (4) plants declaration copy: move the provisional-statements note into copy-status.md and drop the comments; (5) animals declaration copy/copy.test.js: delete the history and Welsh-mutation comments (move the rationale to docs), declaration/test-support.js: delete the comment that describes callers, and sets/live-animals/docs/journey-flow-and-gates.md:63: remove the ticket key; (6) the 'leaves' helper is copied into each feature's copy/copy.test.js in both frontends: promote it to a shared test helper and delete the copies; (7) live-animals and high-risk-plants add-a-page.md: say how a page carries no reference strip, as declaration and confirmation now do. Outside this theme: when overview-and-review inc-115 lands, move live-animals confirmation REQ-CONFIRM-002 and REQ-CONFIRM-006 back to the declaration redirect and the ITAHC rule (recorded in deferred.md).",
+        "From inc-214's followUps (laptop B run wf_c243a700-063, 22 Oct): (1) one owner for the '<name> (<code>)' commodity heading rule, shared by Commodity details' groups and Identification's section builder; (2) one owner for the identification card anchor 'identification-card-<index>', now built in animal-identification/card/view-model.js:110, card/error-summary.js:15 and consignment-details/validation/count-drop.js:30; (3) the duplicated commodity-line fixtures (local linesOf in animal-identification/summary/selected-commodities.test.js:9-18 and consignment-details/view-model/selected-rows.test.js:8-12) move to one shared commodities test-support helper; (4) request-view.parity.test.js seeds a number of animals that matches its identifier records; (5) delete the UI-narrating comments in tests/animals/e2e/features/animal-identifiers-conditional.spec.ts (11-14, 29-32, 40-42, 45-46, 53-54, 76-79, 87, 96-97, 121-125), naming steps in the spec or page object instead; (6) log the Commodity details count-drop refusal at its owner (count-drop.js and the controller branch) with journeyId and line index. No DEFERRED lines in inc-214."
       ],
       "externalDependsOn": [
         {

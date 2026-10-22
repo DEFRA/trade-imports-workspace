@@ -1,4 +1,5 @@
 import { OK } from '../../constants/exitCodes.js'
+import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import {
   defaultMachineConfigPath,
@@ -65,7 +66,7 @@ export const registerWorkers = (build, timVersion) =>
   build
     .command('workers')
     .description(
-      "Print this machine's worker count for each FIT and E2E rung, keyed <repo>/<rung>, from TIM_MACHINE_CONFIG or ~/.config/tim/machine.json: the counts `tim build gate` passes as --workers. A FIT or E2E run made outside the gate passes the same count, so it drives the machine no harder than the gate does. A machine with no file has no counts. See .claude/skills/requirements-pipeline/references/machine-tuning.md."
+      "Print this machine's worker count for each FIT and E2E rung, keyed <repo>/<rung>, from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json: the counts `tim build gate` passes as --workers. A FIT or E2E run made outside the gate passes the same count, so it drives the machine no harder than the gate does. A machine with no file has no counts. See .claude/skills/requirements-pipeline/references/machine-tuning.md."
     )
     .addHelpText(
       'after',
@@ -74,7 +75,10 @@ export const registerWorkers = (build, timVersion) =>
     .action(function workersAction() {
       const globalOpts = this.optsWithGlobals()
       try {
-        const result = machineWorkers(defaultMachineConfigPath())
+        const workspaceRoot = resolveWorkspaceRoot({
+          explicit: globalOpts.workspace
+        })
+        const result = machineWorkers(defaultMachineConfigPath(workspaceRoot))
         emit(
           globalOpts.json
             ? JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))

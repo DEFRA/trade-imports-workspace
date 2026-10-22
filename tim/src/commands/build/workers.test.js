@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
@@ -10,23 +10,24 @@ import {
 import { renderWorkersText } from './workers.js'
 
 let root
-let configDir
+let elsewhere
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true })
-  rmSync(configDir, { recursive: true, force: true })
+  if (elsewhere) rmSync(elsewhere, { recursive: true, force: true })
+  elsewhere = undefined
 })
 
 const runWorkers = (machineJson) => {
   root = createCliWorkspace('tim-build-workers-cli-')
-  configDir = mkdtempSync(join(tmpdir(), 'tim-build-workers-config-'))
-  const configPath = join(configDir, 'machine.json')
-  if (machineJson !== undefined) writeFileSync(configPath, machineJson)
+  const configPath = join(root, 'config', 'machine.json')
+  if (machineJson !== undefined) {
+    mkdirSync(join(root, 'config'))
+    writeFileSync(configPath, machineJson)
+  }
   return {
     configPath,
-    run: runTimInWorkspace(root, ['build', 'workers', '--json'], {
-      env: { TIM_MACHINE_CONFIG: configPath }
-    })
+    run: runTimInWorkspace(root, ['build', 'workers', '--json'])
   }
 }
 
@@ -85,17 +86,38 @@ describe('tim build workers', () => {
       message: `${configPath} has problems:\n  workers.animals: Invalid key in record`
     })
   })
+
+  test('reads the file TIM_MACHINE_CONFIG names in place of the workspace config folder', async () => {
+    root = createCliWorkspace('tim-build-workers-cli-')
+    elsewhere = mkdtempSync(join(tmpdir(), 'tim-build-workers-elsewhere-'))
+    const configPath = join(elsewhere, 'machine.json')
+    writeFileSync(
+      configPath,
+      JSON.stringify({ workers: { 'trade-imports-ins-tests/e2e': 2 } })
+    )
+
+    const finished = await runTimInWorkspace(
+      root,
+      ['build', 'workers', '--json'],
+      { env: { TIM_MACHINE_CONFIG: configPath } }
+    )
+
+    expect(envelopeOf(finished).result).toEqual({
+      config: configPath,
+      workers: { 'trade-imports-ins-tests/e2e': 2 }
+    })
+  })
 })
 
 describe('renderWorkersText', () => {
   test('lists each rung and its count under the file it came from', () => {
     const text = renderWorkersText({
-      config: '/home/me/.config/tim/machine.json',
+      config: '/ws/config/machine.json',
       workers: { 'trade-imports-plants-frontend/fit': 4 }
     })
 
     expect(text).toBe(
-      'Worker counts from /home/me/.config/tim/machine.json:\n  trade-imports-plants-frontend/fit  4'
+      'Worker counts from /ws/config/machine.json:\n  trade-imports-plants-frontend/fit  4'
     )
   })
 
@@ -109,12 +131,10 @@ describe('renderWorkersText', () => {
 
   test('says the file names no counts when its workers are empty', () => {
     const text = renderWorkersText({
-      config: '/home/me/.config/tim/machine.json',
+      config: '/ws/config/machine.json',
       workers: {}
     })
 
-    expect(text).toBe(
-      '/home/me/.config/tim/machine.json names no worker counts.'
-    )
+    expect(text).toBe('/ws/config/machine.json names no worker counts.')
   })
 })

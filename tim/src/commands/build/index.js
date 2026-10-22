@@ -17,6 +17,7 @@ import { registerProbe } from './probe.js'
 import { registerDuplication } from './duplication.js'
 import { registerMeasure } from './measure.js'
 import { registerWorkers } from './workers.js'
+import { registerTune } from './tune.js'
 
 const SCHEMA_VERSION = 1
 
@@ -311,7 +312,7 @@ const registerGate = (build, timVersion) =>
       false
     )
     .description(
-      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or ~/.config/tim/machine.json: a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), and parallelRepos and stackAfterLocal in place of gates.json's. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), and parallelRepos and stackAfterLocal in place of gates.json's. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
@@ -430,7 +431,7 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, and print this machine's worker counts"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, tune this machine's worker counts, and print them"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
@@ -441,4 +442,5 @@ export const register = (program, { timVersion }) => {
   registerDuplication(build, timVersion)
   registerMeasure(build, timVersion)
   registerWorkers(build, timVersion)
+  registerTune(build, timVersion)
 }

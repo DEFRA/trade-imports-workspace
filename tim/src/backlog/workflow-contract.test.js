@@ -1728,7 +1728,10 @@ describe('increment-build-loop', () => {
               why: 'The prototype sets it; the GDS style guide asks for active voice.',
               fix: 'Ask the designer whether to say "You cannot undo this."'
             },
-            { real: true, reasoning: 'The prototype delete page has the same words.' }
+            {
+              real: true,
+              reasoning: 'The prototype delete page has the same words.'
+            }
           )
           const judge = promptOf(run, 'inc-900 judge')
 

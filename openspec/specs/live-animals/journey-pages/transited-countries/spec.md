@@ -69,6 +69,12 @@ The system MUST refuse to add a country when the search field is left blank, whe
 - **THEN** an error names that country as already added
 - **AND** the list still holds only the one entry
 
+#### Scenario: A refused country stays in the search box
+**ID**: SCN-TRANSIT-COUNTRIES-004-D
+- **GIVEN** the user tries to add a country that has already been added
+- **WHEN** the page responds with the refusal
+- **THEN** that country is still in the search box
+
 #### Scenario: An out-of-list or tampered entry is refused and never rendered back
 **ID**: SCN-TRANSIT-COUNTRIES-004-C
 - **GIVEN** a country or territory code that is not one of the offered options, however it was submitted
@@ -85,7 +91,7 @@ The system MUST refuse to add a thirteenth transited country, and once twelve ar
 - **GIVEN** the user has added eleven countries
 - **WHEN** they add a twelfth
 - **THEN** the search field and "Add country" action are no longer shown
-- **AND** a message states the limit of twelve is reached, also announced to assistive technology
+- **AND** the message that announces the twelfth country also states that the limit of twelve is reached, and is announced to assistive technology
 
 #### Scenario: Removing a country at the limit brings the search back
 **ID**: SCN-TRANSIT-COUNTRIES-005-B
@@ -152,13 +158,13 @@ The system MUST send a user who opens the transited countries page to Overview w
 
 ### Requirement: The search offers the origin countries and their territories, each territory named with its country
 **ID**: REQ-TRANSIT-COUNTRIES-009
-The system MUST offer in the transited country search, after the placeholder "Search for a country", the countries and territories the reference data service serves for the country of origin, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name, with or without JavaScript.
+The system MUST offer in the transited country search the countries and territories the reference data service serves for the country of origin, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name, with or without JavaScript.
 
 #### Scenario: The search offers the origin countries and their territories in alphabetical order
 **ID**: SCN-TRANSIT-COUNTRIES-009-A
 - **GIVEN** the user is on the transited countries page
 - **WHEN** the search list is read in full
-- **THEN** after the placeholder "Search for a country" it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order
+- **THEN** it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order
 
 #### Scenario: Each territory is named with its country, with or without JavaScript
 **ID**: SCN-TRANSIT-COUNTRIES-009-B
@@ -176,3 +182,35 @@ The system MUST list an added territory as "<territory> (<country>)", MUST save 
 - **WHEN** they add a territory and save and continue
 - **THEN** no error is shown
 - **AND** when they reopen the page the territory is listed as "<territory> (<country>)"
+
+### Requirement: The country search is labelled, and its empty box and no-JavaScript list carry their own wording
+**ID**: REQ-TRANSIT-COUNTRIES-011
+The system MUST label the transited country search "Enter a country" in the medium label size, MUST show "Search for a country" in the empty search box with JavaScript, and MUST open the list on "Select a country" without JavaScript.
+
+#### Scenario: With JavaScript the empty search box reads "Search for a country"
+**ID**: SCN-TRANSIT-COUNTRIES-011-A
+- **GIVEN** the user is on the transited countries page with JavaScript on
+- **WHEN** the search box is empty
+- **THEN** it is labelled "Enter a country" and reads "Search for a country"
+
+#### Scenario: Without JavaScript the list's first entry reads "Select a country"
+**ID**: SCN-TRANSIT-COUNTRIES-011-B
+- **GIVEN** the user is on the transited countries page with JavaScript off
+- **WHEN** the country list is read in full
+- **THEN** its first entry reads "Select a country", followed by the countries the search offers
+
+#### Scenario: The "Enter a country" label is medium-size
+**ID**: SCN-TRANSIT-COUNTRIES-011-C
+- **GIVEN** the user is on the transited countries page
+- **WHEN** the country search label is read
+- **THEN** it reads "Enter a country" in the medium label size
+
+### Requirement: Each added country's Remove button sits at the right-hand end of its row
+**ID**: REQ-TRANSIT-COUNTRIES-012
+The system MUST draw the Remove button of every added country in the last cell of its row, aligned to the right-hand end of the row.
+
+#### Scenario: Remove is at the right-hand end of each row
+**ID**: SCN-TRANSIT-COUNTRIES-012-A
+- **GIVEN** the user has added two countries
+- **WHEN** the list is read
+- **THEN** each row ends with its Remove button in a right-aligned cell

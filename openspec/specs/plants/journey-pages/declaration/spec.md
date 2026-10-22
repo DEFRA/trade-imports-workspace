@@ -8,7 +8,7 @@ The last step before a high-risk plants notification is submitted, asking the us
 
 ### Requirement: The page asks the user to confirm the declaration, having told them what they are agreeing to
 **ID**: REQ-PLANTS-DECLARATION-001
-The system MUST present the declaration's statements before asking the user to confirm it — that they are notifying under the Plant Health National Notification Scheme, that the relevant plant health authority may spot-check the consignment without prior notice, and that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance — MUST show the date of declaration, and MUST offer a confirmation to agree to and a continue action.
+The system MUST present the declaration's statements before asking the user to confirm it — that they are notifying under the Plant Health National Notification Scheme, that the relevant plant health authority may spot-check the consignment without prior notice, and that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance — MUST show the date of declaration in bold, and MUST offer a confirmation to agree to and a continue action.
 
 #### Scenario: The page presents the declaration's statements, the date, and its confirmation
 **ID**: SCN-PLANTS-DECLARATION-001-A
@@ -16,6 +16,12 @@ The system MUST present the declaration's statements before asking the user to c
 - **WHEN** the page loads
 - **THEN** it presents the declaration's statements and the date of declaration, offering a confirmation to agree to and a continue action
 - **AND** the confirmation is unchecked
+
+#### Scenario: The date of declaration is shown in bold
+**ID**: SCN-PLANTS-DECLARATION-001-B
+- **GIVEN** the user has reached the declaration page
+- **WHEN** the page loads
+- **THEN** the date after "Date of declaration:" is bold
 
 ### Requirement: Continuing without confirming the declaration is rejected, focusing the confirmation
 **ID**: REQ-PLANTS-DECLARATION-002

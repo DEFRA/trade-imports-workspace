@@ -20,13 +20,13 @@ The system MUST confirm a completed submission on its own page, showing the refe
 
 ### Requirement: The confirmation page is not shown for a notification that has not yet been submitted
 **ID**: REQ-CONFIRM-002
-The system MUST redirect a request for the confirmation page to the declaration page when the notification it names has not been submitted (a draft, or an amendment not yet resubmitted).
+The system MUST redirect a request for the confirmation page to the notification's overview when the notification it names has not been submitted.
 
-#### Scenario: Requesting confirmation for an unsubmitted notification opens the declaration
+#### Scenario: Requesting confirmation for an unsubmitted notification opens its overview
 **ID**: SCN-CONFIRM-002-A
 - **GIVEN** a notification has been started but not submitted
 - **WHEN** its confirmation page is requested directly
-- **THEN** the declaration page is shown instead
+- **THEN** the notification's overview, headed "Notification tasklist", is shown instead
 
 ### Requirement: The page tells the user how the consignment must be transported
 **ID**: REQ-CONFIRM-003
@@ -68,7 +68,7 @@ The system MUST offer the user routes to help — where to email about import no
 
 ### Requirement: The page tells the user what they still owe when documents are outstanding
 **ID**: REQ-CONFIRM-006
-The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC or health certificate — even when other documents were uploaded — and MUST NOT show it when one was.
+The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', when the notification was submitted with no document, and MUST NOT show it when any document was uploaded.
 
 #### Scenario: A submission with no documents carries the outstanding-work section
 **ID**: SCN-CONFIRM-006-A
@@ -76,17 +76,11 @@ The system MUST show a "Before the consignment is imported" section, telling the
 - **WHEN** the user reads the confirmation page
 - **THEN** a "Before the consignment is imported" section tells them they still need to 'upload the ITAHC and any other required documents'
 
-#### Scenario: A submission with only other documents still carries the outstanding-work section
-**ID**: SCN-CONFIRM-006-B
-- **GIVEN** a notification was submitted with only a document that is not an ITAHC or health certificate
-- **WHEN** the user reads the confirmation page
-- **THEN** the "Before the consignment is imported" section is still shown
-
-#### Scenario: A submission with an ITAHC or health certificate carries no outstanding-work section
+#### Scenario: A submission with a document carries no outstanding-work section
 **ID**: SCN-CONFIRM-006-C
-- **GIVEN** a notification was submitted with an ITAHC or health certificate
+- **GIVEN** a notification was submitted with a document
 - **WHEN** the user reads the confirmation page
-- **THEN** no "Before the consignment is imported" section is shown
+- **THEN** the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
 
 ### Requirement: The page offers a way to start a new notification directly
 **ID**: REQ-CONFIRM-007

@@ -93,6 +93,12 @@ sequenceDiagram
 
 ## Key details
 
+This file owns the cross-service explanation of the flow: who mints which id,
+why a session is not a document, why the bytes bypass both services, and the
+poll. A service repo's own `docs/` and its code carry only what is true of that
+repo alone and link here for the rest, so one copy has to be re-checked when the
+flow moves.
+
 - **Two IDs, neither minted by the backend.** `uploadId` comes from cdp-uploader and
   keys every user-facing route; `correlationId` is minted by the frontend and rides
   in the cdp-uploader metadata so the scan callback can find its notification. The

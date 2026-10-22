@@ -2,6 +2,8 @@
 
 20 October 2026 · Paul Hodgson
 
+> **Update, 22 October 2026:** the team decided against name suffixes such as `…OrNull`, `…OrUndefined` and `…OrNotFound`. Proposal 1's suffix style, and the suffixed names in the examples below, are not adopted: the house rules now say a name does not name nothing, an expected error or a fallback, and the EUDPA-708 code dropped those suffixes.
+
 The build loop's style, code and consistency reviewers passed ticket 2 of the address-book redesign (EUDPA-708), but a human review then found three kinds of problem they never flag: misleading names, doc comments that repeat the name, and prototype workarounds built as requirements. This note shows examples of each, why the reviewers missed them, and the changes we propose to the style guide, reviewer prompts and distil briefs, with the tests that would prove them.
 
 ## Update, 21 October: Sam's #127 and a test of it

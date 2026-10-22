@@ -527,8 +527,9 @@ const HOUSE_RULES = `**Comments**
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
-- A name says every kind of value the code can return, a fallback of another kind or a null included, and any error it throws as an expected outcome, such as not found or refused. A failure of a service it calls need not be named. An empty list or string is the same kind of value. It need not say when each one comes back. Bad: \`countryNameOf(countries, code)\`, which can return a code. Good: \`countryLabelOf\`, the label shown: the name, else the code; and \`requestedPageOrFirst\`. Too far: \`honouredReturnOffAddressOrAddressBook\`, which spells out when the address book wins.
-- Rename only when the name mispredicts. A name that already says every kind of value the code returns, and what it changes, stays, even when another name would read better.
+- A name's value word covers every value the code can return. Bad: \`countryNameOf(countries, code)\`, which can return a code. Good: \`countryLabelOf\`, the label shown: the name, else the code.
+- Nothing (null or undefined) and an expected error, such as not found, are not part of a name. No suffix names them or a fallback: not \`…OrNull\`, \`…OrUndefined\`, \`…OrNotFound\` or \`…OrAddressBook\`. Bad: \`addressFieldTextOrNull\`, \`liveAddressOrNotFound\`. Good: \`addressFieldText\`, \`loadLiveAddress\`.
+- Rename only when the name mispredicts. A name whose value word covers what the code returns, and that says what it changes, stays, even when another name would read better.
 - Name a parameter or local for what it holds at that point. Bad: \`id\` and \`returnTo\` for an address id and a return that has passed its checks. Good: \`addressId\` and \`honouredReturn\`.
 - Bad: \`// c-201: an amendment opens with no errors; Continue refused shows them.\` above \`const holdsSilently = readOnly || (isAmend && !refused)\`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: \`linesDroppedBy(lines, type)\` returning \`{ kept, removed }\`. Good: \`keepLinesAllowedBy(lines, type)\`.
@@ -1518,10 +1519,11 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 `
 
 const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its
-  name, predict every kind of value it returns (a fallback of another kind or a null included; an empty list or
-  string is the same kind), any error it throws as an expected outcome (such as not found; not a failure of a service it
-  calls) and what it changes, then read its body. Any mismatch is a \`naming\` finding. A name need not say when each kind
-  comes back, and a name that already predicts them all is not a finding, even when another name would read better.
+  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a
+  name that can return a code) or a change it hides is a \`naming\` finding. Nothing (null or undefined) and an expected
+  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is
+  itself a \`naming\` finding. A name that predicts the value and the change is not a finding, even when another name
+  would read better.
 - OPERABILITY: a branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state switch) with no
   log, or with a log support cannot search by: no ids, no cause, only an error's message. "Support cannot tell
   <what> during an incident" is a full failure scenario for a \`logging\` finding.

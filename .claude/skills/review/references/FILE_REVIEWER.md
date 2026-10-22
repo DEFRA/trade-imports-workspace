@@ -219,17 +219,16 @@ end state as the Must, not as a question.
 For every function, method, parameter, variable, constant, flag and test helper
 the diff adds or renames, and every name a changed line calls:
 
-1. Read the name alone. Write down every kind of value you predict
-   it returns (a fallback of another kind or a null included; an empty list
-   or string is the same kind), any error it throws as an expected
-   outcome (such as not found; not a failure of a service it calls),
-   and what it changes (state, session, database,
-   redirect, log).
+1. Read the name alone. Write down the value you predict it returns
+   and what it changes (state, session, database, redirect, log).
 2. Read the body. Compare.
-3. A mismatch is a finding. So is a name that needs its comment to be
-   understood. A name need not say when each kind of value comes
-   back, and a name that already predicts them all is not a finding,
-   even when another name would read better.
+3. A value the name's value word does not cover (a name that can
+   return a code) or a change it hides is a finding. So is a name that
+   needs its comment to be understood. Nothing (null or undefined) and
+   an expected error such as not found are not mismatches, and a
+   suffix that names them or a fallback (`…OrNull`, `…OrNotFound`) is
+   itself a finding. A name that predicts the value and the change is
+   not a finding, even when another name would read better.
 
 Examples from this codebase:
 

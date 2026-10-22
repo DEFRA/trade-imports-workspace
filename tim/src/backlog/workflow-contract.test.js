@@ -1518,7 +1518,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict every kind of value it returns (a fallback of another kind or a null included; an empty list or\n  string is the same kind), any error it throws as an expected outcome (such as not found; not a failure of a service it\n  calls) and what it changes, then read its body. Any mismatch is a `naming` finding. A name need not say when each kind\n  comes back, and a name that already predicts them all is not a finding, even when another name would read better.'
+            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a\n  name that can return a code) or a change it hides is a `naming` finding. Nothing (null or undefined) and an expected\n  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is\n  itself a `naming` finding. A name that predicts the value and the change is not a finding, even when another name\n  would read better.'
           )
         })
 

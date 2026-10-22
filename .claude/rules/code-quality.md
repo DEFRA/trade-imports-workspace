@@ -38,8 +38,9 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
-- A name says every kind of value the code can return, a fallback of another kind or a null included, and any error it throws as an expected outcome, such as not found or refused. A failure of a service it calls need not be named. An empty list or string is the same kind of value. It need not say when each one comes back. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code; and `requestedPageOrFirst`. Too far: `honouredReturnOffAddressOrAddressBook`, which spells out when the address book wins.
-- Rename only when the name mispredicts. A name that already says every kind of value the code returns, and what it changes, stays, even when another name would read better.
+- A name's value word covers every value the code can return. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code.
+- Nothing (null or undefined) and an expected error, such as not found, are not part of a name. No suffix names them or a fallback: not `…OrNull`, `…OrUndefined`, `…OrNotFound` or `…OrAddressBook`. Bad: `addressFieldTextOrNull`, `liveAddressOrNotFound`. Good: `addressFieldText`, `loadLiveAddress`.
+- Rename only when the name mispredicts. A name whose value word covers what the code returns, and that says what it changes, stays, even when another name would read better.
 - Name a parameter or local for what it holds at that point. Bad: `id` and `returnTo` for an address id and a return that has passed its checks. Good: `addressId` and `honouredReturn`.
 - Bad: `// c-201: an amendment opens with no errors; Continue refused shows them.` above `const holdsSilently = readOnly || (isAmend && !refused)`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: `linesDroppedBy(lines, type)` returning `{ kept, removed }`. Good: `keepLinesAllowedBy(lines, type)`.

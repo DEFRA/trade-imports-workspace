@@ -135,11 +135,11 @@ Standing concerns, in priority order:
    already has; two classes both doing the same job, where the second silently overwrites the first. Name
    both places.
 5. **Names that hide what the code does.** For each function, method, parameter, variable and test the change adds or
-   alters, read its name, predict every kind of value it returns (a fallback of another kind or a null
-   included; an empty list or string is the same kind), any error it throws as an expected outcome (such as
-   not found; not a failure of a service it calls) and what it changes, then read its body. Any mismatch is a `naming`
-   finding. A name need not say when each kind comes back, and a name that already predicts them all is not
-   a finding, even when another name would read better.
+   alters, read its name, predict the value it returns and what it changes, then read its body. A value its value
+   word does not cover (a name that can return a code) or a change it hides is a `naming` finding. Nothing (null or
+   undefined) and an expected error such as not found are not mismatches, and a suffix that names them or a fallback
+   (…OrNull, …OrNotFound) is itself a `naming` finding. A name that predicts the value and the change is not a
+   finding, even when another name would read better.
 6. **Operability.** A branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state
    switch) with no log, or with a log support cannot search by: no ids, no cause, only an error's message.
    "Support cannot tell what happened during an incident" is a full failure scenario for a `logging`

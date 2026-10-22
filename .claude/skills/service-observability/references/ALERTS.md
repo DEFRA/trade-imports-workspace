@@ -2,8 +2,10 @@ Build the service's custom alerts, route them to Slack, promote them and
 prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
-No alert has been built, routed or fired from this file yet. Each fact
-that comes only from the CDP monitoring docs is marked `[UNPROVEN]`.
+The alerts were first built and fired in dev for reference-data
+(EUDPA-632, 2026-10-22). None has been routed to Slack or promoted yet.
+Each fact that comes only from the CDP monitoring docs is marked
+`[UNPROVEN]`.
 
 The developer builds the alerts by hand in Grafana, from a build sheet
 Claude writes. Nothing can push them for us: writing to the dev Grafana
@@ -163,6 +165,20 @@ endpoints directly (for reference-data, `GET /countries` and
 `GET /ports-of-entry`). Allow about 10 minutes for the metrics to reach
 CloudWatch and the group to evaluate.
 
+**Call from the CDP Portal terminal, not a laptop.** From a laptop,
+`https://<service>.dev.cdp-int.defra.cloud/...` returns `403` in about
+60 ms from CDP's edge, and the request never reaches the service (seen
+2026-10-22). The Portal terminal for the service in dev can reach it.
+Six rounds, 30 seconds apart:
+
+```bash
+for i in 1 2 3 4 5 6; do printf '%s  ' "$(date +%T)"; curl -s -o /dev/null -w 'countries %{http_code}  ' https://trade-imports-reference-data.dev.cdp-int.defra.cloud/countries; curl -s -o /dev/null -w 'ports %{http_code}\n' https://trade-imports-reference-data.dev.cdp-int.defra.cloud/ports-of-entry; sleep 30; done
+```
+
+Check the calls happened before waiting on an alert:
+`event.category:"external-call" AND event.outcome:"failure" AND
+service.name:"<service>"` in OpenSearch shows one line per failed call.
+
 - **Dev, every rule: lower the threshold.** Change the condition so
   ordinary traffic breaks it, wait for Firing, check the summary shows
   the dependency and operation (not blanks), then put the threshold
@@ -174,9 +190,10 @@ CloudWatch and the group to evaluate.
 - **Dev, the failure rules: a real failure.** Set the dependency's URL
   in the Portal (for reference-data's MDM, `MDM_SERVICE_URL`) to an
   address that does not exist, such as `https://mdm.invalid`, redeploy,
-  and call the endpoints about five times over two to three minutes.
-  "Unavailable" and "calls failing" should fire for that dependency
-  only. Restore the URL and redeploy. This breaks the service in dev
+  and run the loop above. "Unavailable" and "calls failing" fire for
+  that dependency only. Done on reference-data on 2026-10-22: both
+  fired for `mdm` after a dead-end `MDM_SERVICE_URL` and the loop run
+  from the Portal terminal. Restore the URL and redeploy. This breaks the service in dev
   for everyone while it runs, so agree a time with the team. "Slow"
   has no practical real test; the lowered threshold is enough.
 - **Test.** `[UNPROVEN]` The alert is read-only there, so the failure

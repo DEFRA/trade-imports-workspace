@@ -129,7 +129,7 @@ done
 # no longer up.
 for excluded in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"}; do
   case "$excluded" in
-    trade-imports-animals-frontend) excluded_compose_names+=(cdp-nginx-frontend) ;;
+    trade-imports-animals-frontend) excluded_compose_names+=(animals-frontend-nginx) ;;
   esac
 done
 

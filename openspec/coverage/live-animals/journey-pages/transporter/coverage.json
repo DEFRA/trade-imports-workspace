@@ -28,18 +28,21 @@
     },
     {
       "id": "REQ-TRANSPORTER-002",
-      "name": "The list can be searched by name, approval number or address",
+      "name": "The list can be searched by name, address, approval number, type or status, narrowing as the user types",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-002-A",
-          "name": "Searching narrows the list by name, approval number, or address",
+          "name": "Searching narrows the list by name, address, approval number, type or status",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by name leaves only the matching transporter on the list", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by approval number finds the transporter it belongs to", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by address finds the transporter at it", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "carries a labelled search, hinted with what it matches, above the list", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js", "test": "Should match on the type word", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js", "test": "Should match on the status word", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by name leaves only the matching transporter on the list", "strength": "full", "notes": "JavaScript off, so the server narrows the list" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by approval number finds the transporter it belongs to", "strength": "full", "notes": "JavaScript off, so the server narrows the list" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by address finds the transporter at it", "strength": "full", "notes": "JavaScript off, so the server narrows the list" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "narrows to a status when its word is typed", "strength": "full", "notes": "JavaScript on" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "is a medium-labelled box, hinted with what it matches, joined to a blue icon button, filling the left half of the search row", "strength": "full", "notes": "asserts the label, the hint as the box's description and the button named Search" }
           ]
         },
         {
@@ -47,7 +50,43 @@
           "name": "A search matching nothing says so, rather than showing an empty table",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "says so when nothing matches, rather than showing an empty table", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "says so when nothing matches, rather than showing an empty table", "strength": "full", "notes": "JavaScript off" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "says so and hides the table when nothing matches", "strength": "full", "notes": "JavaScript on" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-002-C",
+          "name": "Typing narrows the list in place with bold matches and an announced count",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/transporter-filter.test.js", "test": "Should bold all six letters of an accented name found from plain letters", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/transporter-filter.test.js", "test": "Should announce the message for one transporter shown", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/transporter-filter.test.js", "test": "Should narrow the list without submitting when the search button is pressed", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "narrows the rows with no new page, keeps focus in the box and bolds the matching letters", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "announces how many transporters are shown", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "shows a row hidden by the previous term when a different term is typed after the search button is pressed", "strength": "full", "notes": "JavaScript on; asserts the URL did not change after the button was pressed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "finds a row the first term left out after a refused save", "strength": "full", "notes": "JavaScript on; a refused save sends the whole list back with the term still in the box" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "narrows the listed transporters to the match as the trader types, with no new page", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-002-D",
+          "name": "A transporter chosen before filtering stays chosen when filtered out of view",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/transporter-filter.test.js", "test": "Should keep a ticked radio ticked when its row is filtered out of view", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves the transporter ticked before the list was filtered to hide it", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "saves a transporter ticked before the list was filtered to hide it", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-002-E",
+          "name": "Without JavaScript the button or Enter narrows the list on the server",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "narrows the list on the server when Enter is pressed in the box", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "keeps the term in the box and stays on the list, saving nothing", "strength": "full", "notes": "presses the Search button" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "narrows the list on the server when the Search button is pressed", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
           ]
         }
       ]
@@ -63,6 +102,25 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "opens the transporter task on the list, carrying the introduction and the authorisation guidance", "strength": "full", "notes": "asserts the authorisation lead and every condition, the DAERA-valid and EU-not-valid statements, and the further-guidance link's own href" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-004",
+      "name": "The list offers Add a transporter beside the search, above the transporter choices",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-004-A",
+          "name": "Add a transporter sits beside the search and opens the transporter type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "comes before the table and shares the search row, right-aligned", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "is reached by Tab after the search box and its button, before the first transporter", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "puts Add a transporter before the table", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "Add a transporter opens the transporter type question", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
           ]
         }
       ]

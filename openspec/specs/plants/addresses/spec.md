@@ -32,7 +32,7 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: The picker offers a search of the whole organisation address book, reporting how many matched
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST let the user search the whole organisation address book, MUST narrow the list to matching records, and MUST report how many addresses are shown against how many the book holds. A search matching nothing MUST say so rather than showing an empty table. Clearing the search MUST restore the whole book.
+The system MUST let the user search the whole organisation address book, MUST narrow the list to matching records, and MUST report how many addresses are shown against how many the book holds. A search matching nothing MUST say so rather than showing an empty table. Clearing the search MUST restore the whole book. The search MUST run from a button named "Search" beside its box, or from Enter, on the server.
 
 #### Scenario: The picker shows the first page with its count
 **ID**: SCN-PLANTS-ADDR-002-A
@@ -57,6 +57,13 @@ The system MUST let the user search the whole organisation address book, MUST na
 - **GIVEN** the user has searched the address book
 - **WHEN** they clear the search and search again with nothing entered
 - **THEN** the whole book is listed again, paginated as before
+
+#### Scenario: Without JavaScript, Enter in the search box narrows the list
+**ID**: SCN-PLANTS-ADDR-002-E
+- **GIVEN** the user is on the picker with JavaScript off
+- **WHEN** they enter a term in the search box and press Enter
+- **THEN** only the matching addresses are shown
+- **AND** the search box still holds the term
 
 ### Requirement: A row checked before searching or paging stays checked
 **ID**: REQ-PLANTS-ADDR-003

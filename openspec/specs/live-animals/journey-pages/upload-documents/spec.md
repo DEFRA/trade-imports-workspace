@@ -47,7 +47,7 @@ The system MUST accept up to fifteen documents per notification and MUST reject 
 
 ### Requirement: Each accompanying document has a maximum file size
 **ID**: REQ-DOCS-004
-The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run, preserving the empty state. The file goes to the upload service rather than through this service, so one that gets past the browser's own check is refused on receipt, and the user is returned to the page with the same message.
+The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run, preserving the empty state. However the file is submitted, the user MUST be returned to the page with the same error explaining the file must be smaller than the maximum size.
 
 #### Scenario: A file at exactly the size limit is accepted, one byte over is rejected
 **ID**: SCN-DOCS-004-A
@@ -69,7 +69,7 @@ The system MUST reject a document over the maximum file size, both at the point 
 **ID**: SCN-DOCS-004-C
 - **GIVEN** the user is adding a document, and the browser's own size check has not run
 - **WHEN** an oversize file is nonetheless submitted
-- **THEN** the upload service refuses it and the user is returned to the page
+- **THEN** it is refused, and the page comes back with the error explaining the file must be smaller than the maximum size
 - **AND** an error links to and focuses the file field
 - **AND** the notification still shows no documents added
 
@@ -289,7 +289,7 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 
 ### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, because the file goes to the upload service rather than through this service, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
 
 #### Scenario: Continuing with a filled-in form keeps the answers and asks for the add action
 **ID**: SCN-DOCS-016-A

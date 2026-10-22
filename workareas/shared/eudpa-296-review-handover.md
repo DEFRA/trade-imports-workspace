@@ -1,39 +1,47 @@
 # EUDPA-296 review — where it got to
 
 Handover for a re-review. Written 2026-10-22, **updated the same day** after a
-session that drained the frontend from 65 open items to 19. The review itself
-lives in `workareas/reviews/EUDPA-296/` (gitignored), so this file carries what
-a later session needs and the item files carry the detail while they survive.
+session that drained the frontend from 65 open items to 2 part-done. The review
+itself lives in `workareas/reviews/EUDPA-296/` (gitignored), so this file
+carries what a later session needs and the item files carry the detail while
+they survive.
 
-Plans for all 19 remaining items — already worked out against the code as it
-now stands — are in `eudpa-296-remaining-plans.md` beside this file. Read that
-before re-planning any of them: several items' stated means turned out not to
-work, and that is recorded there rather than left to be rediscovered.
+The two part-done items are written up in `eudpa-296-remaining-plans.md`
+beside this file, with what remains and why it was left rather than guessed at.
+Read it before reopening either: several of the review's stated means turned
+out not to work, and that is recorded there.
 
 ## State by repo
 
 | Repo | Items | Done | Open | Merged | Won't Fix | Notes |
 |---|---|---|---|---|---|---|
 | `animals-backend` | 103 | 85 | 4 | 12 | 2 | pushed; the 4 open are all *Discuss* |
-| `animals-frontend` | 129 | 90 | 19 | 15 + 2 auto | 3 | **3 commits unpushed** |
+| `animals-frontend` | 129 | 107 | 2 part-done | 15 + 2 auto | 3 | **8 commits unpushed** |
 | `ins-tests` | 20 | 11 | 4 | 4 | 1 | the 4 open are deferred — see below |
 | `performance-tests` | 10 | 8 | 0 | 2 | 0 | complete |
 | `workspace` | 37 | 30 | 0 | 6 | 1 | complete |
 
-All ten Criticals are closed. **Every functional item across every repo is
-closed.** The 19 open frontend items are comments, structure, duplication,
-naming, logging and test-readability only. The 8 open *Discuss* items
-(4 backend, 4 ins-tests) are blocked on decisions or on a local stack run, not
-on effort.
+All ten Criticals are closed, and **every functional item across every repo is
+closed.** What is left is:
+
+- **frontend 61** — two of its three spies are gone and the claim leg now runs
+  through the real registration and lookup; the session read remains stood in
+  for, because the stand-in service cannot produce two of cdp-uploader's file
+  entries.
+- **frontend 125** — the in-repo half is done; the figure also lives in
+  `trade-imports-performance-tests` and `trade-imports-ins-tests`, and raising
+  the perf suite's ceiling is a load-test design call.
+- **8 *Discuss* items** (4 backend, 4 ins-tests) blocked on decisions or on a
+  local stack run, not on effort.
 
 Open PRs: frontend #424, backend #114, ins-tests #49, performance-tests #24,
 workspace #141.
 
 ## What the latest session did
 
-Four commits, each gated by the pre-commit hook
+Eight commits, each gated by the pre-commit hook
 (`format:check && lint && npm test`), so every one landed with the full suite
-green:
+green — 3106 tests at the end, up from 3102:
 
 | Commit | Repo | Items |
 |---|---|---|
@@ -41,6 +49,16 @@ green:
 | `51917362` | workspace | the last part of backend 52 |
 | `3bc55e20` | frontend | 62, 64, 65, 66, 67, 80, 82, 87, 112, 113 |
 | `e5458fe6` | frontend | 71, 88, 89, 91, 92, 97, 100, 106, 107, 124 |
+| `14843778` | frontend | 1, 3, 44, 101, 102, 104, 105, 123 |
+| `4d6dcf95` | frontend | 114, 118, 120, 121, 122 |
+| `b5e8c3e3` | frontend | 74, 75, 76 (+ 125 in-repo) |
+| `1d59dcf3` | frontend | 129 |
+
+Every assertion added or changed was proved by an invert-red probe, and the
+documents FIT suite (39 tests) was run locally — so the stub and template
+changes are verified, not assumed. The documents controller's statement
+coverage went from 88.8% to 98.2% on the way, because item 129's two branches
+had no test of any kind before.
 
 Backend 52 is now **complete**: `CDP_UPLOADER_BASE_URL` is gone from
 `docker/stack/backend.compose.yml`, where it bound to nothing once the
@@ -161,10 +179,11 @@ code and should not re-litigate these.
 
 ## What is unpushed
 
-`animals-frontend` has 3 commits (`3bc55e20`, `e5458fe6` and the earlier
-`1338f02c`) plus the 8 that preceded them, none pushed. The workspace repo has
-`51917362` unpushed. Everything in `animals-backend`, `ins-tests` and
-`performance-tests` is pushed.
+`animals-frontend` has 5 commits unpushed — `14843778`, `4d6dcf95`,
+`b5e8c3e3`, `1d59dcf3` and whatever follows. Everything up to and including
+`e5458fe6` is pushed, as is the workspace repo's `51917362`. The workspace repo
+has the two `openspec/coverage/` row fixes and this handover unpushed.
+`animals-backend`, `ins-tests` and `performance-tests` are all pushed.
 
 The frontend's pre-push SonarCloud gate runs `npm ci`, which fails on a node
 below the pinned 24.21.0 and blocks the push — nvm's default has been set to
@@ -175,22 +194,19 @@ for the gate: it runs `npm ci && npm test` then `sonar-scanner`.
 
 1. **Push the frontend and the workspace**, then watch the E2E — checking the
    resolved image tags against their publish times before believing a verdict.
-2. **Work the 19 open frontend items from the plans file**
-   (`eudpa-296-remaining-plans.md`). Suggested order, because they interlock:
-   #123's three additive pieces first (they unblock #1, #3, #44 and the rest of
-   #61), then cluster A in the order #114 → #121 → #120 → #122 (#118 needs no
-   edit at all — it is discharged by #114), then the `save-actions.test.js`
-   trio #105 → #104 → #102, then #101, then the FIT trio #76 → #75 → #74.
-3. **#61 is the only partial.** Two of its three spies come off cleanly; the
-   remaining `read` spy supports two refusal forms the cdp-uploader stub cannot
-   produce, and changing the stub would ship an unverifiable behaviour change
-   to the FIT suite. The reasoning is in the plans file.
-4. **#125 cannot be closed from this repo** — its stated means breaks the
-   webpack build, and the figure also lives in `trade-imports-ins-tests` and
-   `trade-imports-performance-tests`.
-5. **Batch the commits.** The pre-commit hook runs the full 3100-test suite
-   (~90s), so group items by file cluster: roughly five commits for the 19, not
-   nineteen.
+   This is the only thing standing between the review and a merge-ready PR set.
+2. **Decide the two part-done items** (`eudpa-296-remaining-plans.md`): whether
+   to teach the cdp-uploader stand-in the two file entries #61's last spy
+   covers, and whether the perf suite's document ceiling should rise so it can
+   reach the 50 MB path. Both are judgement calls, not outstanding work.
+3. **Three things found while remediating that no item covers**, listed above:
+   the recoverable-save banner that is untrue on the claim path, the
+   `trade-imports-ins-tests` constants file that will break if the cap moves,
+   and the fact that nothing validates the coverage `test` field.
+4. **Batch any further commits.** The pre-commit hook runs the full 3100-test
+   suite (~90s), so group by file cluster rather than committing per item.
+   FIT is not in that suite but runs locally in ~40s:
+   `PORT=3050 npm run test:fit -- --project=features`.
 
 ---
 

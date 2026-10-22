@@ -905,7 +905,7 @@ describe('increment-build-loop', () => {
         answers: [
           {
             ...WORKSPACE_ANSWER,
-            machineConfig: '/home/me/.config/tim/machine.json',
+            machineConfig: '/ws/config/machine.json',
             workers: {
               'trade-imports-animals-frontend/fit': 3,
               'trade-imports-ins-tests/e2e': 2

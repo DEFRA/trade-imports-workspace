@@ -462,7 +462,13 @@ tim build gate shared/my-programme --json                   # unit+FIT (repos at
 tim build gate shared/my-programme --serial --json          # one rung at a time: unit, then FIT, then E2E
 tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
 tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json
+tim build tune                                              # once per machine: time FIT and E2E at 2, 3, 4 workers, save config/machine.json
+tim build workers --json                                    # this machine's worker counts, as the gate reads them
 ```
+
+How hard the gate drives the machine comes from the workspace's gitignored
+`config/machine.json`, which `tim build tune` writes (see
+[`machine-tuning.md`](../.claude/skills/requirements-pipeline/references/machine-tuning.md)).
 
 `tim build start` starts one increment, in three steps. **Derive**: the
 increment `--id` names, or the next buildable one (`--last <id>` stops before

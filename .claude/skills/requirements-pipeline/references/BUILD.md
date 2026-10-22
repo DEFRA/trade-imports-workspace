@@ -257,8 +257,9 @@ with commits of its own is left as it is. A failure names its step and its exact
    implementor and fixer run its unit and FIT phases to check themselves. No
    agent picks a repo's test scripts. How hard the gate drives this machine
    (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
-   the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
-   see [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
+   the machine's own gitignored `config/machine.json`, never from `gates.json`;
+   `tim build tune` writes it once per machine: see
+   [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
    once at launch (`tim build workers`) and gives them to every stage, so a probe,
    plan check or reviewer's FIT or E2E run outside the gate passes the same
    `--workers`. A change to the file reaches the gate at its next run and the

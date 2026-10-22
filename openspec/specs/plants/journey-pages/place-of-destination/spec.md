@@ -23,6 +23,7 @@ The system MUST ask the destination question under the heading and description t
 - **WHEN** the place of destination page loads
 - **THEN** the heading is "Where is the consignment now?"
 - **AND** the description asks for the address where the consignment is being kept
+- **AND** the description tells a consignment still on its way to its intended destination to give that destination
 
 #### Scenario: Changing the arrival answer re-asks the destination under the new sentence
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-001-C
@@ -32,26 +33,28 @@ The system MUST ask the destination question under the heading and description t
 
 #### Scenario: A potatoes notification is asked for the intended destination
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-001-D
-- **GIVEN** a potatoes notification has reached the place of destination
+- **GIVEN** a potatoes notification has reached the place of destination, without ever being asked whether the consignment has arrived
 - **WHEN** the page loads
-- **THEN** the heading is "Place of destination"
+- **THEN** the heading is "Place of destination", as for a consignment still on its way
 - **AND** the description explains where the goods will be kept after arrival for a plant health spot check
 
 ### Requirement: The page offers search of the organisation address book with a count of results
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-002
-The system MUST offer a search of the organisation address book by name, address or country, MUST open on the first page of the whole book captioned with how many are shown against the total, and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole book.
+The system MUST offer a search of the organisation address book by name, address or country, MUST open on the first page of the whole book with how many are shown out of the total under the heading "Select an address", and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole book.
 
 #### Scenario: The picker opens on the first page of the whole book with its count
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-A
 - **GIVEN** the user opens the place of destination page
 - **WHEN** the page loads
-- **THEN** the first page of the organisation's address book is shown, captioned with how many are shown against the total
+- **THEN** the first page of the organisation's address book is shown
+- **AND** under the heading "Select an address" the page reads "Showing 5 out of <total> results"
 
 #### Scenario: Searching narrows the list to matching addresses
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-B
 - **GIVEN** the user is on the place of destination page
 - **WHEN** they search for a term matching some addresses
-- **THEN** only those addresses are shown, captioned with the matching count
+- **THEN** only those addresses are shown
+- **AND** under the heading "Select an address" the page reads "Showing <shown> out of <total> results" for the matches
 
 #### Scenario: A search matching nothing says so, and clearing restores the book
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-C
@@ -95,25 +98,16 @@ The system MUST accept a chosen place of destination, saving it without error, M
 - **WHEN** the user chooses a different address and saves
 - **THEN** the saved destination is the new one, and the old one is no longer associated
 
-### Requirement: Saving with nothing chosen is refused while no destination is held
+### Requirement: Saving with nothing chosen moves on without an error
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-005
-The system MUST refuse save-and-continue when nothing is chosen and no place of destination is held yet, showing an error that names the missing place of destination and focusing the first row, or the search box when nothing matched. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A place of destination already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
+The system MUST NOT refuse save-and-continue when nothing is chosen: it MUST move on, with no error and no place of destination saved. Save-and-return-to-overview with nothing chosen MUST return to Overview, saving nothing. A place of destination already held MUST be kept when the page is saved with nothing chosen, and a submitted value that is not an address in the book MUST be refused, as governed by `plants/addresses`.
 
-#### Scenario: Saving with nothing chosen focuses the first row
+#### Scenario: Saving with nothing chosen moves on and leaves the destination not yet started
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-A
-- **GIVEN** the user is on the place of destination page with nothing chosen, no destination held yet, and results showing
+- **GIVEN** the user is on the place of destination page in the opening sequence with nothing chosen and no destination held yet
 - **WHEN** they save and continue
-- **THEN** an error summary is shown
-- **WHEN** they follow the error
-- **THEN** the first row in the list is focused
-
-#### Scenario: Saving with nothing found focuses the search box
-**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-B
-- **GIVEN** the user has searched for a term matching no address, with no destination held yet
-- **WHEN** they save and continue
-- **THEN** an error summary is shown
-- **WHEN** they follow the error
-- **THEN** the search box is focused
+- **THEN** the consignor page is shown, with no error
+- **AND** Overview shows the destination task not yet started
 
 #### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-C

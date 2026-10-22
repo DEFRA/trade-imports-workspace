@@ -64,25 +64,20 @@ The system MUST accept a chosen address, continue to identification numbers on s
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** Overview is shown, with the consignor task Completed
 
-### Requirement: Saving with nothing chosen while no consignor is held is refused with focused recovery
+### Requirement: Saving with nothing chosen moves on without an error, and a value not in the book is refused
 **ID**: REQ-PLANTS-CONSIGNOR-004
-The system MUST refuse save-and-continue when nothing is chosen and no consignor is held yet, focusing the first address row when the user follows the error, or the search field when a search matched nothing. Choosing an address after the error MUST recover. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A consignor already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
+The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST continue to identification numbers in the opening sequence, or return to Overview when the page was opened from it, with no error and no consignor saved. A consignor already held MUST be kept, as governed by `plants/addresses`. A submitted value that is not an address in the book MUST be refused as governed by `plants/addresses`, and choosing an address after that refusal MUST recover.
 
-#### Scenario: Saving with nothing chosen shows the error and focuses the first row
+#### Scenario: Saving with nothing chosen continues without an error
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
-- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
-- **WHEN** they save and continue and follow the error
-- **THEN** the first address row is focused
+- **GIVEN** the user is on the consignor page in the opening sequence with nothing chosen and no consignor held yet
+- **WHEN** they save and continue
+- **THEN** they reach identification numbers, with no error
+- **AND** Overview shows the consignor task not yet started
 
-#### Scenario: Saving after a no-match search focuses the search field
-**ID**: SCN-PLANTS-CONSIGNOR-004-B
-- **GIVEN** the user has searched for a term that matched nothing, with no consignor held yet
-- **WHEN** they save and continue and follow the error
-- **THEN** the search field is focused
-
-#### Scenario: Choosing an address after the error recovers
+#### Scenario: Choosing an address after a refused value recovers
 **ID**: SCN-PLANTS-CONSIGNOR-004-C
-- **GIVEN** the consignor page, reached in the opening sequence, is showing the nothing-chosen error
+- **GIVEN** the consignor page, reached in the opening sequence, is showing the refusal of a value that is not an address in the book
 - **WHEN** the user chooses an address and saves
 - **THEN** they continue to identification numbers
 

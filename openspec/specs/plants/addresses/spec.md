@@ -32,19 +32,21 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: The picker offers a search of the whole organisation address book, reporting how many matched
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST let the user search the whole organisation address book, MUST narrow the list to matching records, and MUST report how many addresses are shown against how many the book holds. A search matching nothing MUST say so rather than showing an empty table. Clearing the search MUST restore the whole book. The search MUST run from a button named "Search" beside its box, or from Enter, on the server.
+The system MUST search the whole organisation address book on the server, narrowing the list, from the button named "Search" beside the box or by pressing Enter. On the consignor, place of destination and consignment contact pickers it MUST report under the heading "Select an address" how many addresses are shown out of the total, and offer them as one group with that name. A search matching nothing MUST say so, not show an empty table, and clearing it MUST restore the whole book.
 
 #### Scenario: The picker shows the first page with its count
 **ID**: SCN-PLANTS-ADDR-002-A
 - **GIVEN** the user opens the picker
 - **WHEN** the page loads
-- **THEN** the first page of the organisation's address book is shown, captioned with how many are shown against the total
+- **THEN** the first page of the organisation's address book is shown
+- **AND** under the heading "Select an address" the page reads "Showing 5 out of <total> results"
 
 #### Scenario: Searching narrows the list to the matching term
 **ID**: SCN-PLANTS-ADDR-002-B
 - **GIVEN** the user is on the picker
 - **WHEN** they search for a term matching one or more addresses
-- **THEN** only those addresses are shown, with a caption of how many matched
+- **THEN** only those addresses are shown
+- **AND** under the heading "Select an address" the page reads "Showing <shown> out of <total> results" for the matches
 
 #### Scenario: A search matching nothing says so, rather than showing an empty table
 **ID**: SCN-PLANTS-ADDR-002-C
@@ -64,6 +66,12 @@ The system MUST let the user search the whole organisation address book, MUST na
 - **WHEN** they enter a term in the search box and press Enter
 - **THEN** only the matching addresses are shown
 - **AND** the search box still holds the term
+
+#### Scenario: The listed addresses are one group named "Select an address"
+**ID**: SCN-PLANTS-ADDR-002-F
+- **GIVEN** the user opens the picker
+- **WHEN** the page loads
+- **THEN** every listed address belongs to one group named "Select an address"
 
 ### Requirement: A row checked before searching or paging stays checked
 **ID**: REQ-PLANTS-ADDR-003
@@ -91,29 +99,31 @@ The system MUST replace the address a role already holds with a copy of a newly 
 - **WHEN** the user chooses a different address and saves
 - **THEN** the role's saved address is the new one, and the old one is no longer associated with the role
 
-### Requirement: Saving with nothing chosen and no address held, or a value not on the list, is refused and focuses the first row
+### Requirement: Saving with nothing chosen is not refused, and a value not on the list is refused and focuses the first row
 **ID**: REQ-PLANTS-ADDR-005
-The system MUST refuse to save the consignor or place-of-destination picker when nothing has been chosen and the role holds no address yet, and MUST refuse any picker's save of a value that is not an address-book id it offered, a since-deleted record included, preserving the search term. Following the error MUST focus the first row, or the search field when a search left the list empty. A blank contact-address save is governed by `plants/journey-pages/consignment-contact-select`.
-
-#### Scenario: Saving with nothing chosen shows the error and focuses the first row
-**ID**: SCN-PLANTS-ADDR-005-A
-- **GIVEN** the user is on the picker with nothing chosen, for a role that holds no address yet
-- **WHEN** they save and continue
-- **THEN** an error is shown
-- **WHEN** they follow the error
-- **THEN** the first row in the list is focused
+The system MUST NOT refuse a picker's save when nothing has been chosen: it MUST move on without an error, committing nothing, so the role stays empty or keeps the address it held. It MUST refuse any picker's save of a value that is not an address-book id it offered, a since-deleted record included, preserving the search term. Following the error MUST focus the first row, or the search field when a search left the list empty.
 
 #### Scenario: A deleted or missing address-book id is rejected and the search preserved
 **ID**: SCN-PLANTS-ADDR-005-B
 - **GIVEN** the user submits an address-book id that no longer exists
 - **WHEN** the save is attempted
 - **THEN** the save is rejected with the same error, and the search term the user had entered is preserved
+- **WHEN** they follow the error
+- **THEN** the first row in the list is focused
 
-#### Scenario: Saving after a no-match search focuses the search field
-**ID**: SCN-PLANTS-ADDR-005-C
-- **GIVEN** the user has searched for a term matching no address, for a role that holds no address yet
-- **WHEN** they save and continue and follow the error
-- **THEN** the search field is focused
+#### Scenario: Saving the consignor or place of destination picker with nothing chosen moves on
+**ID**: SCN-PLANTS-ADDR-005-D
+- **GIVEN** the user is on the consignor or place of destination picker with nothing chosen, for a role that holds no address yet
+- **WHEN** they save and continue
+- **THEN** they reach the page that picker's save leads to, with no error
+- **AND** the role still holds no address
+
+#### Scenario: An address-book id the book no longer holds is refused after a search that left the list empty
+**ID**: SCN-PLANTS-ADDR-005-E
+- **GIVEN** the user is on a picker where a search left the list empty
+- **WHEN** they save an id the book no longer holds
+- **THEN** the party error is shown
+- **AND** following the error focuses the search field, which still holds the term
 
 ### Requirement: Results are paged, and a choice made on any page is the one saved
 **ID**: REQ-PLANTS-ADDR-006

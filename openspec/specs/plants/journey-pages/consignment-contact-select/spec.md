@@ -8,13 +8,13 @@ Asks which address-book record is the consignment's point of contact, from a sea
 
 ### Requirement: The page offers the address book as a paged table, none chosen in advance
 **ID**: REQ-PLANTS-CONTACT-SELECT-001
-The system MUST ask which contact address to use, offering the organisation's address book as a table of rows under Name, Address and Country headings, each row carrying a control to select it and a route to view its details, with a hint that selecting a contact copies their name and address into the notification. The system MUST show one page of results at a time, reporting how many are shown against the total and offering links to the other pages, and MUST leave every address unchosen when the page is first opened.
+The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and a hint that selecting a contact copies their name and address into the notification. It MUST show one page at a time, reporting under the heading "Select an address" how many are shown out of the total and linking to the other pages, and MUST leave every address unchosen when first opened.
 
 #### Scenario: The page shows the first page of the address book, none preselected
 **ID**: SCN-PLANTS-CONTACT-SELECT-001-A
 - **GIVEN** the user has reached the contact page without answering it before
 - **WHEN** the page loads
-- **THEN** it shows the first page of the organisation's address book, reporting how many addresses are shown against the total
+- **THEN** it shows the first page of the organisation's address book, reading "Showing 5 out of <total> results" under the heading "Select an address"
 - **AND** a record held on a later page is not among the options
 - **AND** a link to the next page of results is offered
 - **AND** no address is shown as chosen, and the copy-on-select hint is shown

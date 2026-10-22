@@ -440,7 +440,7 @@
       ],
       "dependsOn": [],
       "theme": "design-snagging-b",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -472,7 +472,9 @@
         "req-709",
         "req-2122"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Should the consignment addresses page show the saved CPH number with slashes (12/345/6789)? AC4 of inc-219 says it does, but its cited source req-2122 is about entry and saving only, the existing scenario SCN-CPH-007-A and e2e cph-scope.spec.ts assert the nine digits 123456789, and the addresses controller (features/addresses/controller.js:58-66) renders the stored value raw. inc-219 ships the nine-digit display and SCN-CPH-008-B records it. Needs a design ruling; if slashed, render through the one CPH display formatter the review card uses and update SCN-CPH-007-A, SCN-CPH-008-B and the e2e assertions. Raised by the inc-219 review finding on SCN-CPH-008-B versus AC4."
+      ],
       "notes": [
         "Approach chosen: drop the maxlength attributes and let the server split a whole number typed or pasted into County, rather than a script that spreads a paste across the boxes. It is the only one of the two that works without JavaScript, it adds no client script to the page, and it covers typing straight through as well as pasting. The 2, 3 and 4 widths still show the number's shape.",
         "Server: when Parish and Holding are empty and County, with spaces and slashes removed, is exactly 9 digits, split it into 2, 3 and 4 before the existing per-part checks. Anything else goes through today's checks unchanged.",
@@ -482,7 +484,20 @@
         "Plants has no CPH number page. Germinal products asks no CPH number (inc-181).",
         "Moved to laptop B 22 Oct (Sam) so laptop A builds the documents-first rows; B's branch becomes the PR for the rest of design snagging."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "b69ae08d545134d01729e8209ec8bbb0be303368 bf23e3cd83fecea19fdab5a4eed76d3f13540c63",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/423",
+          "repo": "trade-imports-animals-frontend",
+          "number": 423
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/47",
+          "repo": "trade-imports-ins-tests",
+          "number": 47
+        }
+      ]
     },
     {
       "id": "inc-221",
@@ -533,7 +548,8 @@
         "Moved to laptop B 22 Oct (Sam) so laptop A builds the documents-first rows; B's branch becomes the PR for the rest of design snagging.",
         "From inc-217's followUps (laptop B run wf_78986091-ecb, 22 Oct): (1) animals declaration/controller.test.js: replace the currentConcurrencyTokenDiffers spy on kit.base and its comment with set-up through the store; (2) animals confirmation/controller.js: log the redirect of an unsubmitted notification once, with journey id and status; (3) one shared '(opens in a new tab)' copy string and hidden-hint link pattern across features in both frontends; (4) plants declaration copy: move the provisional-statements note into copy-status.md and drop the comments; (5) animals declaration copy/copy.test.js: delete the history and Welsh-mutation comments (move the rationale to docs), declaration/test-support.js: delete the comment that describes callers, and sets/live-animals/docs/journey-flow-and-gates.md:63: remove the ticket key; (6) the 'leaves' helper is copied into each feature's copy/copy.test.js in both frontends: promote it to a shared test helper and delete the copies; (7) live-animals and high-risk-plants add-a-page.md: say how a page carries no reference strip, as declaration and confirmation now do. Outside this theme: when overview-and-review inc-115 lands, move live-animals confirmation REQ-CONFIRM-002 and REQ-CONFIRM-006 back to the declaration redirect and the ITAHC rule (recorded in deferred.md).",
         "From inc-214's followUps (laptop B run wf_c243a700-063, 22 Oct): (1) one owner for the '<name> (<code>)' commodity heading rule, shared by Commodity details' groups and Identification's section builder; (2) one owner for the identification card anchor 'identification-card-<index>', now built in animal-identification/card/view-model.js:110, card/error-summary.js:15 and consignment-details/validation/count-drop.js:30; (3) the duplicated commodity-line fixtures (local linesOf in animal-identification/summary/selected-commodities.test.js:9-18 and consignment-details/view-model/selected-rows.test.js:8-12) move to one shared commodities test-support helper; (4) request-view.parity.test.js seeds a number of animals that matches its identifier records; (5) delete the UI-narrating comments in tests/animals/e2e/features/animal-identifiers-conditional.spec.ts (11-14, 29-32, 40-42, 45-46, 53-54, 76-79, 87, 96-97, 121-125), naming steps in the spec or page object instead; (6) log the Commodity details count-drop refusal at its owner (count-drop.js and the controller branch) with journeyId and line index. No DEFERRED lines in inc-214.",
-        "From inc-216's followUps (laptop B run wf_bcb895f8-7f4, 22 Oct): (1) live-animals FIT specs each define their own phone viewport with differing sizes (type-ahead.fit.spec.js:25, identification.fit.spec.js:32, addresses/fit/hub-picker.fit.spec.js:29, transport/fit/transporters.fit.spec.js:32 and :714, hub.fit.spec.js:530, dashboard.fit.spec.js:137): promote one shared phone viewport to fit/live-animals-journey.js and delete the local copies; (2) promote one shared review summary-row locator (rowFor) to fit/live-animals-journey.js and delete the local copies in check-answers.fit.spec.js, documents/fit/upload.fit.spec.js and documents/fit/scan-status.fit.spec.js. No DEFERRED lines in inc-216."
+        "From inc-216's followUps (laptop B run wf_bcb895f8-7f4, 22 Oct): (1) live-animals FIT specs each define their own phone viewport with differing sizes (type-ahead.fit.spec.js:25, identification.fit.spec.js:32, addresses/fit/hub-picker.fit.spec.js:29, transport/fit/transporters.fit.spec.js:32 and :714, hub.fit.spec.js:530, dashboard.fit.spec.js:137): promote one shared phone viewport to fit/live-animals-journey.js and delete the local copies; (2) promote one shared review summary-row locator (rowFor) to fit/live-animals-journey.js and delete the local copies in check-answers.fit.spec.js, documents/fit/upload.fit.spec.js and documents/fit/scan-status.fit.spec.js. No DEFERRED lines in inc-216.",
+        "From inc-219's followUps (laptop B run wf_bcb895f8-7f4, 22 Oct): (1) tests repo tests/animals/e2e/pages/cph-number.spec.ts: 'accepts a valid CPH number' proves acceptance only by the absence of the error heading, and 'shows an error summary when submitted empty' carries test.slow(); assert the landing page and the saved CPH positively, and remove the slow marker; (2) the tests repo's AnimalsCphNumberPage.fillCphNumber(county, parish, holding) takes a named-parts object, not three positional strings; (3) the '@duplicated-in-frontend' tag on tests repo specs is documented in the tests repo docs, or removed. Its one DEFERRED line, the slashed CPH on the consignment addresses page, is overview-and-review inc-108's (../../deferred.md)."
       ],
       "externalDependsOn": [
         {

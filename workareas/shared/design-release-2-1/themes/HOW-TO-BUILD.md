@@ -1,6 +1,6 @@
 # How to build the split-off themes
 
-Eight Design Release 2.1 themes are split off the main backlog. Each one builds on its own branch, with one draft pull
+Nine Design Release 2.1 themes are split off the main backlog. Each one builds on its own branch, with one draft pull
 request per repo. Nothing merges to `main` until Sam checks the finished theme.
 
 ## Stale branches (ruled 20 October)
@@ -187,6 +187,32 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   `feat/NO_JIRA-design-release-2-1-snagging-b`.
 - **Handover:** [`design-snagging-b/HANDOVER.md`](design-snagging-b/HANDOVER.md).
 
+## Accompanying documents: EUDPA-724, second machine
+
+- **Ticket:** [EUDPA-724](https://eaflood.atlassian.net/browse/EUDPA-724) (stub, raised 22 October under epic
+  EUDPA-328; filled in per domain once the loop drains).
+- **Branch:** `feat/EUDPA-724-design-release-2-1-documents`, cut from `main` in the animals frontend, the animals backend
+  and the tests repo. Not cut yet.
+- **Starts after design snagging merges.** Sam reviews and merges design snagging (animals frontend #421, plants
+  frontend #113, tests #42) once its Back links row, inc-218, lands. Only then does this theme start, from `main`, on
+  another machine.
+- **Rows:** 5, split off the main backlog on 22 October.
+  - 4 ready: inc-031 (open Upload documents once the origin is answered), inc-033 (punctuation in references, no Health
+    certificate), inc-034 (return to where the trader came from), inc-035 (save without waiting for scans).
+  - 1 blocked: inc-036, files up to 50MB, waits on CDP's request size limit (EUDPA-518).
+  - inc-032 went to design snagging inc-215 on 19 October.
+- **Shared code:** this theme owns `features/documents`. The design snagging rows still to come (identification
+  details, the review page, the declaration, the CPH number, the final tidy) don't touch it. Design snagging inc-223,
+  the documents page tidy, does, and lands before the merge. inc-034 extends inc-218's `runBackLink` helper rather than
+  writing a second Back-target rule.
+- **Workspace branch:** both machines would otherwise write to `feat/NO_JIRA-design-release-2-1`. The documents
+  machine works on a short workspace branch, `feat/NO_JIRA-design-release-2-1-documents`, as laptop B did. It pulls the
+  main workspace branch in before every launch and after every landed row, and merges back at the end.
+- **Handover:** [`documents/HANDOVER.md`](documents/HANDOVER.md), with the paste-in prompt. Loop args:
+  [`documents/build-args.json`](documents/build-args.json).
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/documents, branch lifecycle on
+  feat/EUDPA-724-design-release-2-1-documents"
+
 The stacked themes also carry their branch in repos they don't change, such as the INS frontend, stub, reference-data
 and performance tests, each with a carry-only draft pull request. CI publishes a branch image only from a pull request,
 and the loop refuses a repo on its branch with none. Close a carry-only pull request once the themes it carries have
@@ -195,8 +221,8 @@ merged, if its theme never changed that repo.
 ## What lands first
 
 - **Order:** journey foundation and reference lists are on `main`. Design snagging lands next. Every other theme
-  starts from `main` after that, on a fresh branch: commodities and import reason and arrival and transit, then
-  templates and overview and review.
+  starts from `main` after that, on a fresh branch: accompanying documents (on a second machine), commodities and
+  import reason and arrival and transit, then templates and overview and review.
 - **No stacking.** No theme merges another theme's branch any more. Templates' old `merge` fields (inc-166, inc-168,
   inc-170, inc-171) are gone: inc-166 and inc-170 were removed, and inc-168 and inc-171 are deferred with no
   dependency on another stale theme.

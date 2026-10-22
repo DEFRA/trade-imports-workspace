@@ -2,6 +2,7 @@ import { createGithubClient } from '../../clients/github-client.js'
 import { resolveGithubToken } from '../auth.js'
 import { makeClientAction } from '../_client-action.js'
 import { register as registerCreatePr } from './create-pr.js'
+import { register as registerEditPr } from './edit-pr.js'
 import { register as registerChecks } from './checks.js'
 import { register as registerRunLog } from './run-log.js'
 import { register as registerRerun } from './rerun.js'
@@ -74,6 +75,7 @@ export const register = (program, { timVersion }) => {
     )
 
   registerCreatePr(gh, { timVersion })
+  registerEditPr(gh, { timVersion })
   registerChecks(gh, { timVersion })
   registerRunLog(gh, { timVersion })
   registerRerun(gh, { timVersion })

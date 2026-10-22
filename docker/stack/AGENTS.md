@@ -450,6 +450,8 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 | defra-id-stub | `WELL_KNOWN_HOST_OVERRIDE` | `http://localhost:3007` (browser endpoints; token endpoint auto-rewrites to h.d.i.) |
 | animals / plants frontend | `TRADE_IMPORTS_INS_FRONTEND_URL` | `http://localhost:3002` (browser follows the Address book link) |
 | ins frontend | `TRADE_IMPORTS_{ANIMALS,PLANTS}_FRONTEND_URL` | `http://localhost:{3000,3003}` (browser follows the dashboard's journey links) |
+| animals frontend | `CDP_UPLOADER_BASE_URL` | `http://cdp-uploader:7337` (compose DNS — the initiate and status calls never leave the network, and cdp-uploader has no `-e` label) |
+| animals frontend | `CDP_UPLOADER_CALLBACK_URL` | `http://host.docker.internal:8085/document-uploads/pending/scan-results` (cdp-uploader resolves it from inside its own container, so it needs the backend's published port) |
 
 ## Files in this folder
 

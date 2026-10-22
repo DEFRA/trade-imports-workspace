@@ -8,38 +8,33 @@ Working notes for [EUDPA-333](https://eaflood.atlassian.net/browse/EUDPA-333),
 | [`ticket.md`](ticket.md) | The Jira description, mirrored as markdown. Jira is the source of truth. |
 | [`sequence.md`](sequence.md) | Three Mermaid diagrams — the happy path, cancel, and the guard — plus what checking them against the code turned up. |
 | [`happy-path.mmd`](happy-path.mmd) | Standalone source for the happy-path diagram. This is what the image on the ticket is rendered from. |
-| [`happy-path.svg`](happy-path.svg) | The rendered diagram for reading here, matching the `document-upload-flow.md` + `.svg` pairing already used in this directory. GitHub renders it. |
 
-## Two renders, and why
+## The ticket's image, and why nothing rendered is committed
 
 The ticket carries a **rendered image**, because Jira does not render Mermaid. That
 image goes stale silently whenever the design changes, so it is rendered from
 `happy-path.mmd` rather than drawn by hand — the source is diffable even though the
 image is not.
 
-The repo keeps an **SVG** and the ticket carries a **PNG**, deliberately:
+Nothing rendered is kept here. A diagram written as a mermaid fence needs no
+exported copy, because GitHub renders the fence itself: [`sequence.md`](sequence.md)
+carries the happy path that way, and
+[`../document-upload-flow.md`](../document-upload-flow.md) does the same for the
+upload flow. An export would be a third copy of one diagram to keep in step.
 
-- **SVG here.** GitHub renders it, it scales without blurring, and it is a sixth the
-  size of a PNG. That holds for a diagram whose only form is the image. A diagram
-  written as a mermaid fence needs no exported copy, because GitHub renders the
-  fence itself — see `document-upload-flow.md`.
-- **PNG on the ticket.** Jira will not generate a preview for an SVG attachment — it
-  accepts the file and resolves the reference, then shows "preview unavailable". This
-  was tried and reverted on 26 Aug. Do not switch the ticket back to SVG without
-  checking the rendered page, not just the markup: Jira's own HTML reports an SVG
-  attachment as `file-preview-type="image"` whether or not a preview exists, so the
-  markup is not evidence.
-
-The PNG is not committed — it is derivable from the same source, and one rendered
-artefact in version control is enough.
+**PNG on the ticket, never SVG.** Jira will not generate a preview for an SVG
+attachment — it accepts the file and resolves the reference, then shows "preview
+unavailable". This was tried and reverted on 26 Aug. Do not switch the ticket back
+to SVG without checking the rendered page, not just the markup: Jira's own HTML
+reports an SVG attachment as `file-preview-type="image"` whether or not a preview
+exists, so the markup is not evidence.
 
 ## Regenerating
 
-After editing `happy-path.mmd`, render both:
+After editing `happy-path.mmd`, render the ticket's image:
 
 ```bash
-mmdc -i happy-path.mmd -o happy-path.svg -b white          # for the repo
-mmdc -i happy-path.mmd -o /tmp/happy-path.png -b '#fcfcfa' -s 2   # for the ticket
+mmdc -i happy-path.mmd -o /tmp/happy-path.png -b '#fcfcfa' -s 2
 ```
 
 `mmdc` is `@mermaid-js/mermaid-cli`. It drives headless Chrome; if it cannot find

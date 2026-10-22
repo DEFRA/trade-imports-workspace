@@ -13,7 +13,7 @@
           "name": "The page presents three labelled, sized boxes with nothing entered",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "takes the number in three boxes sized to its parts", "strength": "full", "notes": "asserts width/maxlength classes and visible on-screen labels for all three boxes" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "takes the number in three boxes sized to its parts", "strength": "full", "notes": "asserts width classes and visible on-screen labels for all three boxes" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "leaves the CPH number empty on load", "strength": "full", "notes": "" }
           ]
         },
@@ -22,7 +22,7 @@
           "name": "The group carries one hint describing the whole number",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "describes the whole number once, in the real 2/3/4 grouping", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "describes the group with the hint", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -110,6 +110,75 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: the error marks the whole question, not the individual boxes", "strength": "full", "notes": "one govuk-form-group--error, no per-box error messages, all three boxes carry govuk-input--error" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-004-F",
+          "name": "A county box that does not hold nine digits is named per box, keeping what was typed",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should name each part and echo what was typed when the county box holds fewer than nine digits", "strength": "full", "notes": "red with the whole-number check accepting any digit count" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.test.js", "test": "Should name each part when the county box holds fewer than nine digits and the others are empty", "strength": "full", "notes": "red with the whole-number check accepting any digit count" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "names each part and keeps what was typed when the county box holds fewer than nine digits", "strength": "partial", "notes": "JavaScript off; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-008",
+      "name": "A whole CPH number entered in the county box is kept and saved",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-008-A",
+          "name": "Typing all nine digits straight through keeps every digit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps focus in an emptied box on Backspace, and every digit typed straight through the county box with focus in it", "strength": "partial", "notes": "JavaScript on; red probe covered the insertion test, not this one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps all nine digits typed into the county box and saves them", "strength": "partial", "notes": "JavaScript off; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "keeps all nine digits typed straight through the county box and saves them", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-008-B",
+          "name": "A whole number in the county box is saved as nine digits",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.test.js", "test": "Should split the whole number %s typed into the county box into its three parts", "strength": "full", "notes": "bare, slashed and spaced forms; red with the split disabled" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save a whole number with slashes typed into the county box as nine digits", "strength": "full", "notes": "red with the split disabled" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "saves a whole number with slashes inserted into the county box as nine digits", "strength": "partial", "notes": "asserts the addresses page shows 123456789; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-008-C",
+          "name": "Pasting the whole number saves it the same as typing it",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "saves a whole number inserted in one go into the county box", "strength": "full", "notes": "red with a maxlength restored on the county box" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "saves a whole number with slashes inserted into the county box", "strength": "partial", "notes": "JavaScript off; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-009",
+      "name": "Focus is never moved between the boxes automatically",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-009-A",
+          "name": "Filling a box leaves focus in it",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps focus in an emptied box on Backspace, and every digit typed straight through the county box with focus in it", "strength": "partial", "notes": "no focus-moving script exists to invert for a red probe" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-009-B",
+          "name": "Backspace in an empty box leaves focus in it",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps focus in an emptied box on Backspace, and every digit typed straight through the county box with focus in it", "strength": "partial", "notes": "no focus-moving script exists to invert for a red probe" }
           ]
         }
       ]

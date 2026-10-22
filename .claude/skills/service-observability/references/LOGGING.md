@@ -32,42 +32,94 @@ Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
 
 The reference implementation is `ExternalCallMetrics.logCall` in
-`trade-imports-reference-data`. Until EUDPA-632 merges, it and the test
-helper named below are only on that repo's
-`feat/EUDPA-632-observability` branch, not `main`.
+`trade-imports-reference-data`.
+
+### How to write the fields (Java)
+
+CDP keeps `event.*` fields only when they are **nested** in the JSON,
+and needs `event.duration` to be a **number**:
+
+```
+dropped:  "event.category":"external-call", "event.duration":"2882625"
+kept:     "event":{"category":"external-call","duration":2882625}
+```
+
+It drops the flat form without any error. Do not set these fields
+through the MDC. `logback-ecs-encoder` (1.6.0) writes every MDC entry
+as a flat key with a string value, so CDP drops them all.
+
+Two pieces, both copied from reference-data:
+
+1. **Set the fields as SLF4J key-value pairs**, with the duration as a
+   `long`:
+
+   ```java
+   log.atInfo()
+       .addKeyValue("event.category", "external-call")
+       .addKeyValue("event.action", action)
+       .addKeyValue("event.outcome", outcome)
+       .addKeyValue("event.duration", elapsed.toNanos())
+       .setCause(cause)
+       .log("External call {} {} in {} ms", action, outcome, elapsed.toMillis());
+   ```
+
+2. **Copy `EcsEventEncoder`** (package `...imports.logging`) and name it
+   as the CONSOLE appender's encoder in `logback-spring.xml`, in place of
+   `co.elastic.logging.logback.EcsEncoder`. It extends the ECS encoder
+   and overrides its `addCustomFields` hook to write the line's `event.*`
+   key-value pairs as one nested `event` object, with a `Number` written
+   as a JSON number. The ECS encoder ignores key-value pairs, so they
+   are not also written flat. A line with no `event.*` key-value pairs
+   comes out exactly as the ECS encoder writes it.
+
+`trace.id` stays in the MDC, where the request filter puts it. It
+reaches OpenSearch flat.
 
 ### What was learned on reference-data
 
-- **The fields are set through MDC, so `event.duration` is a JSON
-  string**, for example `"event.duration":"2882625"`. The repo's
-  `logback-ecs-encoder` (1.6.0) does not write SLF4J key-value pairs,
-  so a typed number was not possible. The time in milliseconds is in the
-  message text as well.
-- **`[UNPROVEN]` Whether CDP's log pipeline accepts this.** The encoder
-  writes flat dotted keys (`"event.duration"`); the CDP logging doc
-  describes these fields as nested, and says the two are not treated the
-  same. Check in dev OpenSearch that the `event.*` fields arrive and
-  that `event.duration` can be sorted as a number. A wrong field type
-  can fail ingestion and raise CDP's own "Log Ingestion Errors" alert.
-  If it does not work, fall back to searching the message text.
-- **Clean the MDC up.** Use `MDC.putCloseable` in a try-with-resources
-  block so the fields do not leak onto later lines from the same
-  thread.
-- **No failure reason is logged.** The timing hook is not given the HTTP
-  status or the exception. Add `event.reason` if the team wants it.
+- **CDP dropped the MDC version without any error.** Seen in dev on
+  2026-10-19 (reference-data 0.24.0): the line arrived with its
+  `message`, `service.name` and `trace.id`, but none of the four
+  `event.*` fields. The nested key-value-pair version above replaced it.
+- **The nested version reaches OpenSearch.** Seen in dev on 2026-10-21
+  (reference-data 0.27.0): `event.category:"external-call" AND
+  service.name:"<service>"` finds the lines, and Grafana's "Slowest
+  dependency calls" panel shows them sorted by `event.duration` as a
+  number. `[UNPROVEN]` that CDP's "Log Ingestion Errors" alert stays
+  quiet for the service.
+- **One flat `event.*` key is left on every line.** The ECS encoder
+  (1.6.0) always writes `"event.dataset":"<service>"` flat, so the call
+  line holds that flat key and the nested `event` object side by side.
+  CDP indexes the line with the mix (the nested fields arrive), but if
+  "Log Ingestion Errors" fires, this is the first suspect.
+- **The first tests passed while the fields were being dropped.** They
+  read the MDC on the captured log event, not the JSON the encoder
+  writes. Test the encoded JSON (see Tests).
+- **`error.*` may be dropped as well.** The ECS encoder writes
+  `error.type`, `error.message` and `error.stack_trace` flat, and CDP
+  keeps `error.*` only nested. `[UNPROVEN]` Check an error line in dev
+  OpenSearch before relying on those fields.
+- **The exception is logged, but not the HTTP status.** When a call
+  throws, the line carries the exception. A call that returns a failure
+  status has only `event.outcome:failure`. Add `event.reason` if the
+  team wants more.
 
 ### Tests
 
 | Test | Proves |
 |---|---|
-| Unit test with a capturing log appender | One line per call, with the four `event.*` fields |
-| Same, after the call | The MDC is empty again |
+| Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.category`, `event.action`, `event.outcome` or `event.duration` keys (the ECS encoder's own flat `event.dataset` stays); `trace.id` and `error.*` kept; a null value written as JSON `null` and a non-finite number as a string; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
+| Unit test with a capturing log appender | One line per call, with the four `event.*` key-value pairs, and the duration a `Long` |
 | Same, with metrics disabled | The line is still written |
-| Integration test sending `x-cdp-request-id` | The line carries that value as `trace.id` |
+| Integration test sending `x-cdp-request-id`, encoding the line with the root logger's `CONSOLE` encoder | `logback-spring.xml` names the new encoder, and the line carries `trace.id` and the nested `event` object |
+
+The integration test is the one that fails if `logback-spring.xml` is
+left on the plain ECS encoder. The unit tests alone would still pass.
 
 `CapturingLogAppender` in the reference-data tests is the helper to
 copy. It must call `event.prepareForDeferredProcessing()` or the MDC
-values are gone by the time the test reads them.
+values are gone by the time the test reads them. Its `keyValues(event)`
+reads an event's key-value pairs.
 
 ## Follow a request by trace.id
 

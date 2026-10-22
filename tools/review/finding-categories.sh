@@ -3,6 +3,7 @@
 
 FUNCTIONAL_CATEGORIES=(correctness security error-handling coverage-gap)
 CODE_QUALITY_CATEGORIES=(naming comments structure duplication logging test-readability history)
+DESIGN_CATEGORIES=(design)
 
 refuse_category_outside() {
     local category="$1"

@@ -78,7 +78,8 @@ const wordsInShellArray = (source, name) => {
 
 const findingCategoriesOf = (source, wordsInArray) => ({
   functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES')
+  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInArray(source, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -1517,7 +1518,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            'NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its\n  name, predict what it returns and what it changes, then read its body. Any mismatch is a `naming` finding.'
+            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a\n  name that can return a code) or a change it hides is a `naming` finding. Nothing (null or undefined) and an expected\n  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is\n  itself a `naming` finding. A name that predicts the value and the change is not a finding, even when another name\n  would read better.'
           )
         })
 
@@ -1714,6 +1715,30 @@ describe('increment-build-loop', () => {
             'SURVIVED VERIFICATION BECAUSE: REFUTED WITH NO CODE QUOTED, so this code-quality finding stands: A rename is a matter of taste.'
           )
           expect(run.result.refutedFindings).toEqual([])
+        })
+
+        test('hands a design finding to the judge as a question for the designer, never a fix', async () => {
+          const run = await runVerifying(
+            {
+              file: 'frontend:src/delete.njk',
+              line: 12,
+              severity: 'minor',
+              category: 'design',
+              what: '"This action cannot be undone." is passive.',
+              why: 'The prototype sets it; the GDS style guide asks for active voice.',
+              fix: 'Ask the designer whether to say "You cannot undo this."'
+            },
+            {
+              real: true,
+              reasoning: 'The prototype delete page has the same words.'
+            }
+          )
+          const judge = promptOf(run, 'inc-900 judge')
+
+          expect(judge).toContain('[design, design] frontend:src/delete.njk:12')
+          expect(judge).toContain(
+            'Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start\n  its question with "For the designer:".'
+          )
         })
 
         test('returns a refuted functional finding with its reason, and judges nothing', async () => {
@@ -2360,15 +2385,14 @@ describe('increment-build-loop', () => {
         const QUOTED_REPO_DOC_AND_RULE =
           '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
         const GREP_CHECK =
-          "61:- `grep -rn \"it('should show the cap\" fit/` finds no test the row renames."
+          '61:- `grep -rn "it(\'should show the cap" fit/` finds no test the row renames.'
         const JQ_CHECK =
-          "62:- `jq -r '.tests[] | select(.title | test(\"should render the hint\")) | .title' report.json` prints one title."
+          '62:- `jq -r \'.tests[] | select(.title | test("should render the hint")) | .title\' report.json` prints one title.'
         const FENCED_CHECK =
           '63:npm run test:fit -- --grep "Should show the cap error"'
         const NAMED_CHECK_COMMAND =
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js -t "Should refuse a sixteenth document"'
-        const NAMED_CHECK =
-          `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
+        const NAMED_CHECK = `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
         const EXISTING_TITLES_QUOTED =
           '130:- SCN-CYA-002-A, unit "Should mark a blank plain answer missing" and "Should mark a blank date missing": `partial` (second Then only). "Should write an unanswered optional row out as Not applicable on a finished card": `partial` (first Then only).'
         const NEW_TEST_RETITLED =

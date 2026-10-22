@@ -95,7 +95,7 @@ Seed only when the journey is set-up for a different assertion: one page, one tr
 ```typescript
 // Good: the declaration page's own behaviour, reached from a seeded draft
 test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
-  const referenceNumber = await animalsSeededJourney.createDraftNotification('readyToSubmit');
+  const referenceNumber = await animalsSeededJourney.createDraftNotification();
   await animalsSeededJourney.resumeInUi(referenceNumber, animalsPages.notificationView);
   await animalsPages.notificationView.continueButton.click();
   await animalsPages.declaration.heading.waitFor();
@@ -103,6 +103,7 @@ test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
 ```
 
 - Seed through the frontend's own save-and-continue routes (`AnimalsSeededJourney`), never by writing to the backend or the database. Only the frontend writes the full record the UI reads back.
+- A seeded draft or submission carries only the mandatory answers, as `submitNotification()` does. Pass `ALL_ANSWERS_WITHOUT_DOCUMENT` when the test needs the optional ones. Never type the answers in the test: read them from the answer sets in `domain/animals/constants/journey-options.ts`.
 - When unsure, keep the test in the browser and say so in the pull request.
 - Never seed for speed. A slow journey test is coverage worth keeping.
 - A test behaves the same on the local stack and on CDP. No flag that seeds on one environment and clicks through on the other.
@@ -111,7 +112,7 @@ test.beforeEach(async ({ animalsSeededJourney, animalsPages }) => {
 
 Seeded state must be indistinguishable from state a user creates through the UI. Invented values break pages that read them back and make tests assert things a real user cannot produce.
 
-- One seed step per page. Each step posts exactly the fields that page's save-and-continue posts. Steps compose in page order to reach any journey state, as in `domain/animals/fixtures/seeded-journey.ts`.
+- One seed step per page. Each step posts exactly the fields that page's save-and-continue posts. Steps compose in page order to reach any journey state, as in `flows/animals/seed-form-steps.ts`.
 - Values come from the data the frontend itself serves. Copy canned entries verbatim; do not write lookalikes.
 - Reference lists (countries, ports) are copies of a real call to the service the frontend uses, as in `resources/reference-data/`. Prefer fetching from the running service over a copy that can drift.
 - Seeded answers stay in step with the answers the journey flow clicks. `api-seed-parity.spec.ts` compares the two.
@@ -215,7 +216,7 @@ Run the standard script from the tests repo, against a running stack, and send t
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-run.log 2>&1
 ```
 
-Use `test:docker-compose:<domain>` for one domain. The script list is in [`node/playwright.md` §12](../node/playwright.md#12-how-tests-run-in-this-project).
+Use `test:docker-compose:<domain>` for one domain. The script list is in [`node/playwright.md` §12](../node/playwright.md#12-how-tests-run-in-this-project), and the tags and what each one selects are in [`node/playwright.md` §1](../node/playwright.md#1-project-structure). To run what a repo's pull request runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../../config/e2e-tests-pr-scope.json).
 
 ### Diagnose from the test results, not the console
 

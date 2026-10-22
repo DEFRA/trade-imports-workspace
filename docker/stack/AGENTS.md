@@ -410,7 +410,7 @@ The two files disagree on purpose.
 
 ## Hostname rules — no `/etc/hosts` edits required
 
-Two hostnames, used for different audiences:
+Three hostnames, used for different audiences:
 
 - **Browser-visible URLs** use `localhost`. Playwright base URLs,
   `DEFRA_ID_REDIRECT_URL`, `DEFRA_ID_SIGN_OUT_REDIRECT_URL`, and the
@@ -419,7 +419,14 @@ Two hostnames, used for different audiences:
 - **Inter-container URLs** use `host.docker.internal` (auto-injected
   inside containers by Docker Desktop). Mongo, redis, floci, the
   cdp-uploader, the frontend's server-side `DEFRA_ID_OIDC_CONFIGURATION_URL`
-  fetch.
+  fetch. This is the default, because it resolves whether the service at the
+  other end runs in docker or natively under `-e`.
+- **Hops that never leave the compose network** use the compose service name:
+  the animals frontend's `CDP_UPLOADER_BASE_URL`, and both upstreams in
+  `config/nginx/animals-frontend.conf`. Reach for this only where neither end
+  can be run on the host — `cdp-uploader` has no `-e` label, and the nginx
+  sidecar is removed when the frontend is excluded. Wherever `-e` could put one
+  end natively, use `host.docker.internal` instead.
 
 The OIDC token endpoint sits across both audiences. The
 `trade-imports-defra-id-stub` handles this itself: when

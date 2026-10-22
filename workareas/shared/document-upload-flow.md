@@ -107,10 +107,14 @@ sequenceDiagram
   `COMPLETE` documents only, so a clean scan on an upload the user walked away from
   does not ship on the next GBN-AG event. See
   `repos/trade-imports-animals-backend/docs/design-notes.md`.
-- **Nothing is judged twice.** The page judges the submitted fields by its own rules
-  when the browser returns, and sends only validated details on the claim.
-  cdp-uploader judges the file — size and type — on receipt, and a refusal comes
-  back as a form error rather than as a document row.
+- **The page owns the field rules, cdp-uploader owns the file rules.** The page
+  judges the submitted fields by its own rules when the browser returns, and sends
+  only validated details on the claim. cdp-uploader judges the file — size and
+  type — on receipt, and a refusal comes back as a form error rather than as a
+  document row. Each set gets a deliberate second pass by the party that cannot
+  take the first on trust: the browser's own check refuses an oversize file before
+  it is ever posted, and the backend re-validates `documentType`,
+  `documentReference` and `dateOfIssue` on `ClaimUploadRequest`.
 - **The size limit is stated and checked before the upload.**
   `features/documents/upload-config.js` owns the figure, feeding the page's hint,
   the browser's own check, and the `maxFileSize` cdp-uploader is asked to enforce.

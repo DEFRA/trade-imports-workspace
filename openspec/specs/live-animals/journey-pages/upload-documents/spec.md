@@ -286,7 +286,7 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 - **WHEN** they look at its link to the GOV.UK guidance
 - **THEN** it opens in a new tab
 
-### Requirement: Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
+### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
 The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, because the file goes to the upload service rather than through this service, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer and keep them on the page. It MUST let them continue past an untouched form, since uploading documents is optional.
 

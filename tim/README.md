@@ -174,7 +174,13 @@ tim backlog split shared/my-programme --json     # a dry run: one backlog per th
 tim backlog split shared/my-programme --write --branch-prefix feat/EUDPA-123-plants --json
 tim backlog split shared/my-programme --theme origin-pages --json          # a dry run: split one ready theme off early
 tim backlog split shared/my-programme --theme origin-pages --write --json  # its rows leave backlog.json, which keeps a splitOff pointer
+tim backlog move shared/my-programme inc-009 --before inc-004 --write --json   # reorder: the build takes the first buildable row in file order
+tim backlog add shared/my-programme --from inc-012.json --after inc-004 --write --json   # add a row; refused if it puts the backlog out of shape
+tim backlog notes shared/my-programme inc-004 --json                            # list a row's notes, numbered from 1
+tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --write --json
 ```
+
+`move`, `add` and a `notes` edit are dry runs unless given `--write`.
 
 `split` takes a backlog with `themes` and writes one backlog per theme at
 `workareas/<workarea>/themes/<theme id>/backlog.json`, plus

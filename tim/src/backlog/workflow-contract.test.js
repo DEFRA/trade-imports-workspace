@@ -78,7 +78,8 @@ const wordsInShellArray = (source, name) => {
 
 const findingCategoriesOf = (source, wordsInArray) => ({
   functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES')
+  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInArray(source, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -1517,7 +1518,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            'NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its\n  name, predict what it returns and what it changes, then read its body. Any mismatch is a `naming` finding.'
+            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a\n  name that can return a code) or a change it hides is a `naming` finding. Nothing (null or undefined) and an expected\n  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is\n  itself a `naming` finding. A name that predicts the value and the change is not a finding, even when another name\n  would read better.'
           )
         })
 
@@ -1714,6 +1715,30 @@ describe('increment-build-loop', () => {
             'SURVIVED VERIFICATION BECAUSE: REFUTED WITH NO CODE QUOTED, so this code-quality finding stands: A rename is a matter of taste.'
           )
           expect(run.result.refutedFindings).toEqual([])
+        })
+
+        test('hands a design finding to the judge as a question for the designer, never a fix', async () => {
+          const run = await runVerifying(
+            {
+              file: 'frontend:src/delete.njk',
+              line: 12,
+              severity: 'minor',
+              category: 'design',
+              what: '"This action cannot be undone." is passive.',
+              why: 'The prototype sets it; the GDS style guide asks for active voice.',
+              fix: 'Ask the designer whether to say "You cannot undo this."'
+            },
+            {
+              real: true,
+              reasoning: 'The prototype delete page has the same words.'
+            }
+          )
+          const judge = promptOf(run, 'inc-900 judge')
+
+          expect(judge).toContain('[design, design] frontend:src/delete.njk:12')
+          expect(judge).toContain(
+            'Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start\n  its question with "For the designer:".'
+          )
         })
 
         test('returns a refuted functional finding with its reason, and judges nothing', async () => {

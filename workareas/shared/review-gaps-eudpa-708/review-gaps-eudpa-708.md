@@ -2,7 +2,44 @@
 
 20 October 2026 · Paul Hodgson
 
+> **Update, 22 October 2026:** the team decided against name suffixes such as `…OrNull`, `…OrUndefined` and `…OrNotFound`. Proposal 1's suffix style, and the suffixed names in the examples below, are not adopted: the house rules now say a name does not name nothing, an expected error or a fallback, and the EUDPA-708 code dropped those suffixes.
+
 The build loop's style, code and consistency reviewers passed ticket 2 of the address-book redesign (EUDPA-708), but a human review then found three kinds of problem they never flag: misleading names, doc comments that repeat the name, and prototype workarounds built as requirements. This note shows examples of each, why the reviewers missed them, and the changes we propose to the style guide, reviewer prompts and distil briefs, with the tests that would prove them.
+
+## Update, 21 October: Sam's #127 and a test of it
+
+The EUDPA-708 build loop ran on a workspace branch from 16 October, so it never saw [workspace #127](https://github.com/DEFRA/trade-imports-workspace/pull/127) (merged 19 October). #127 added `.claude/rules/code-quality.md` and a predict-then-compare naming check for the reviewers. It covers the doc-comment proposals fully, the naming proposals in part, and not the distil ones.
+
+| Proposal (below) | Status after #127 |
+| --- | --- |
+| 1. Naming rule | Partly covered: "A name predicts what the code returns and what it changes", and "One concept, one name". Not covered: naming parameters for what they hold, and keeping a placeholder inside the one function that uses it. The `…OrNull` suffix style is held back for discussion with the team |
+| 2. Name-audit step for the reviewer | Covered: the style reviewer and the build loop now predict what each name returns, then read the body |
+| 3 to 6. Doc comments | Covered, and stricter than proposed: a doc comment belongs only on an exported public API, so the fix for any other is to delete it |
+| 7 and 8. Distil: prototype quirks | Not covered |
+
+To test #127, a style reviewer on its rules reviewed `return-to.js`, `address-countries.js`, the view and delete controllers and `stored-address.js` as the loop left them (`092e6cc`) and after review (`7d9df5c`), plus two files the review did not touch.
+
+| Run | Findings |
+| --- | --- |
+| Before review, 5 files | 38 |
+| After review, same 5 files | 52 |
+| Control, 2 untouched files | 15 |
+
+What the runs show:
+
+- **Doc comments are solved.** Every redundant JSDoc block was flagged for deletion, including the one-line comments the rework kept.
+- **Naming is half caught.** It found `returnAwayFrom`, `animalsUrl`, the `id` and `value` parameters. It missed `countryNameOf` returning the code, `PARSE_BASE` reading as a real origin, and `UNSAFE_CHARACTERS`.
+- **Names churn.** On the reworked code it proposed alternatives for names that no longer mislead: `honouredReturnOrNull` to `allowedReturnOrNull`, `countryLabelOf` to `countryNameOrCode`, `isOwnPageOf` to `isAddressPageOrSubpage`. A loop applying those would rename on every pass.
+- **A rule was misread.** The reviewer wants `standInOrigin` moved back out to a module constant under rule 13, "no magic strings". But `const standInOrigin = 'https://relative-path.invalid'` is already a named constant, and rule 13 asks only for that, not for where it lives. Its examples are all `UPPER_SNAKE_CASE` constants at the top of a module, which invites the misreading.
+- **Much of the rest is real debt the stricter rules now surface:** `orgId` against `organisationId` elsewhere, `q` for a search term, the Hapi toolkit named `h`, redirects that do not log, a ruling id in a comment, near-duplicate view and delete handlers.
+
+What still needs a change:
+
+1. **A stopping rule for renames:** rename only when the current name mispredicts what the code returns or changes. Not because a different name reads better.
+2. **Edge cases in the naming check:** predict what the code returns in every branch, including a fallback, null or an empty result.
+3. **Parameters and placeholders:** name a parameter for what it holds, and say in rule 13 that a named constant used by only one function should live in that function; module scope is for values shared across the module.
+4. **Distil, proposals 7 and 8, unchanged.**
+5. **Pre-existing debt:** the next increment that touches these files will be asked to fix it. Either budget for that or clear it in one tidy-up.
 
 ## What slipped through
 
@@ -263,6 +300,215 @@ What changed, in summary:
 - **The bug fix:** a return is now normalised, so it is percent-encoded, and `isOwnPageOf` and `landsOnAddressBook` compare pathnames directly, because they only ever see an honoured return.
 - **Comments:** six JSDoc blocks became five one-line comments, and `deadLinkDestination` has none.
 
+## Before and after Sam's improvements
+
+After the human review, the address-book files were refactored under #127's house rules (`.claude/rules/code-quality.md`), in four commits on ins-frontend #63 (`2386e64` to `a4f6c05`). `view.controller.js` shows most of what the rules changed: it went from 103 lines to 83, and gained a log line.
+
+| House rule | What changed in this file |
+| --- | --- |
+| One concept, one name | `orgId` and `id` became `organisationId` and `addressId`, as in the rest of the service and in the log keys |
+| Every branch that changes an outcome logs once | The redirect for an address that is not live now logs, with the ids support searches by |
+| Extend the mechanism that exists; extract the shared part | The load (find the live address, then its country label) moved into `findLiveAddressWithCountryLabel`, shared with the delete page, which repeated it |
+| One rule, one owner | The order of the address fields now lives once, in `fields.js` (`ADDRESS_FIELDS`), shared with the delete summary; nine hand-written rows became one map |
+
+One thing the rules did not fix, and would themselves flag: the loader's result is named `found`, a generic name.
+
+Before, after the human review (`7d9df5c`):
+
+```js
+import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
+import {
+  addressDeletePath,
+  addressEditPath,
+  addressRoutePath
+} from '../../../shared/paths.js'
+import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import {
+  countryLabelOf,
+  getAddressFormCountries
+} from '../address-countries.js'
+import { deadLinkRouteOptions } from '../address-id-params.js'
+import { FIELD_RULES } from '../fields.js'
+import { boomFor, findLiveAddress } from '../stored-address.js'
+import {
+  deadLinkDestination,
+  honouredReturnOrNull,
+  honouredReturnOrAddressBook,
+  pathWithReturn
+} from '../return-to.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
+
+const logger = createLogger()
+const view = 'address-book/view/view'
+const copy = copyFor({ en, cy })
+
+const isOptional = (field) => FIELD_RULES[field]?.required === false
+
+const hasText = (value) => Boolean(value?.trim?.())
+
+export const buildRows = (address, countryLabel) =>
+  [
+    { field: 'name', label: copy.form.fields.name, text: address.name },
+    {
+      field: 'addressLine1',
+      label: copy.form.fields.addressLine1,
+      text: address.addressLine1
+    },
+    {
+      field: 'addressLine2',
+      label: copy.form.fields.addressLine2,
+      text: address.addressLine2
+    },
+    {
+      field: 'townOrCity',
+      label: copy.form.fields.townOrCity,
+      text: address.townOrCity
+    },
+    { field: 'county', label: copy.form.fields.county, text: address.county },
+    {
+      field: 'postcode',
+      label: copy.form.fields.postcode,
+      text: address.postcode
+    },
+    {
+      field: 'countryCode',
+      label: copy.form.fields.countryCode,
+      text: countryLabel
+    },
+    { field: 'email', label: copy.form.fields.email, text: address.email },
+    { field: 'phone', label: copy.form.fields.phone, text: address.phone }
+  ]
+    .filter(({ field, text }) => !isOptional(field) || hasText(text))
+    .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
+
+const get = async (request, toolkit) => {
+  const orgId = kit.requireOrganisationId(request)
+  const { id } = request.params
+  const honouredReturn = honouredReturnOrNull(request)
+
+  try {
+    const address = await findLiveAddress(orgId, id)
+    if (!address) {
+      return toolkit.redirect(honouredReturnOrAddressBook(id, honouredReturn))
+    }
+    const countries = await getAddressFormCountries()
+    return toolkit.view(view, {
+      ...kit.base(address.name, {
+        backLink: honouredReturnOrAddressBook(id, honouredReturn)
+      }),
+      copy,
+      heading: address.name,
+      editHref: pathWithReturn(addressEditPath(id), honouredReturn),
+      deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
+      summaryRows: buildRows(
+        address,
+        countryLabelOf(countries, address.countryCode)
+      )
+    })
+  } catch (err) {
+    throw boomFor(err, () =>
+      logger.error({ err, orgId, id }, 'Failed to load address')
+    )
+  }
+}
+
+export const routes = kit.pageRoutes(
+  addressRoutePath(),
+  { get },
+  deadLinkRouteOptions(deadLinkDestination)
+)
+```
+
+After the refactor under #127's house rules (`a4f6c05`):
+
+```js
+import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
+import {
+  addressDeletePath,
+  addressEditPath,
+  addressRoutePath
+} from '../../../shared/paths.js'
+import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { deadLinkRouteOptions } from '../address-id-params.js'
+import { ADDRESS_FIELDS, FIELD_RULES, addressFieldText } from '../fields.js'
+import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
+import {
+  deadLinkDestination,
+  honouredReturnOrNull,
+  honouredReturnOrAddressBook,
+  pathWithReturn
+} from '../return-to.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
+
+const logger = createLogger()
+const view = 'address-book/view/view'
+const copy = copyFor({ en, cy })
+
+const isOptional = (field) => FIELD_RULES[field]?.required === false
+
+const hasText = (value) => Boolean(value?.trim?.())
+
+const ROW_FIELDS = [...ADDRESS_FIELDS, 'email', 'phone']
+
+export const buildRows = (address, countryLabel) =>
+  ROW_FIELDS.map((field) => ({
+    field,
+    text: addressFieldText(address, countryLabel, field)
+  }))
+    .filter(({ field, text }) => !isOptional(field) || hasText(text))
+    .map(({ field, text }) => ({
+      key: { text: copy.form.fields[field] },
+      value: { text }
+    }))
+
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
+  const honouredReturn = honouredReturnOrNull(request)
+
+  try {
+    const found = await findLiveAddressWithCountryLabel(
+      organisationId,
+      addressId
+    )
+    if (!found) {
+      logger.info(
+        { organisationId, addressId },
+        'Address not live, redirecting away from its view page'
+      )
+      return toolkit.redirect(
+        honouredReturnOrAddressBook(addressId, honouredReturn)
+      )
+    }
+    const { address, countryLabel } = found
+    return toolkit.view(view, {
+      ...kit.base(address.name, {
+        backLink: honouredReturnOrAddressBook(addressId, honouredReturn)
+      }),
+      copy,
+      heading: address.name,
+      editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
+      deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
+      summaryRows: buildRows(address, countryLabel)
+    })
+  } catch (err) {
+    throw boomFor(err, () =>
+      logger.error({ err, organisationId, addressId }, 'Failed to load address')
+    )
+  }
+}
+
+export const routes = kit.pageRoutes(
+  addressRoutePath(),
+  { get },
+  deadLinkRouteOptions(deadLinkDestination)
+)
+```
+
 ## Doc comments
 
 The implementor added a full JSDoc block to most new exports, although `main` had only two `@param` blocks in the whole address-book feature. Every line was accurate, so every reviewer passed them, but most only repeated the signature. Once the names said what each function returns, each block shrank to the one fact the name cannot carry, or went.
@@ -314,7 +560,9 @@ The human `review` skill would not have caught the naming or comment issues eith
 
 ## Proposed changes
 
-All land in the workspace repo on one branch, `chore/NO_JIRA-reviewer-naming-and-distil-mechanisms`. The style guide and doc-comment files are shared by the build loop and the `code-style` skill, so both pick up the changes.
+All land in the workspace repo on one branch, `chore/NO_JIRA-naming-rules-and-distil-mechanisms`. The style guide and doc-comment files are shared by the build loop and the `code-style` skill, so both pick up the changes.
+
+As of 21 October, #127 covers proposals 2 to 6 and part of 1; see the update near the top for what still stands.
 
 | # | Change | File | What it adds |
 | --- | --- | --- | --- |

@@ -134,9 +134,12 @@ Standing concerns, in priority order:
 4. **Duplication** — a second copy of a rule or of test set-up; a second mechanism beside one the repo
    already has; two classes both doing the same job, where the second silently overwrites the first. Name
    both places.
-5. **Names that hide what the code does.** For each function, method, variable and test the change adds or
-   alters, read its name, predict what it returns and what it changes, then read its body. Any mismatch is
-   a `naming` finding.
+5. **Names that hide what the code does.** For each function, method, parameter, variable and test the change adds or
+   alters, read its name, predict the value it returns and what it changes, then read its body. A value its value
+   word does not cover (a name that can return a code) or a change it hides is a `naming` finding. Nothing (null or
+   undefined) and an expected error such as not found are not mismatches, and a suffix that names them or a fallback
+   (…OrNull, …OrNotFound) is itself a `naming` finding. A name that predicts the value and the change is not a
+   finding, even when another name would read better.
 6. **Operability.** A branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state
    switch) with no log, or with a log support cannot search by: no ids, no cause, only an error's message.
    "Support cannot tell what happened during an incident" is a full failure scenario for a `logging`
@@ -154,7 +157,7 @@ Standing concerns, in priority order:
 Give every finding one `category`. The prompt that pointed you here lists them and says which defect goes in
 which. The first four are functional: `correctness`, `security`, `error-handling`, `coverage-gap`. The other
 seven are code quality: `naming`, `comments`, `structure`, `duplication`, `logging`, `test-readability`,
-`history`. The kind decides how you check the finding.
+`history`. The last, `design`, is for the designer. The kind decides how you check the finding.
 
 - **Functional.** Actively try to kill it before you write it down. Check it against the real file (not just
   the diff), against the increment's `acceptanceCriteria`, and against what the repo actually does elsewhere:
@@ -165,6 +168,11 @@ seven are code quality: `naming`, `comments`, `structure`, `duplication`, `loggi
   predict what the code returns and what it changes, the comment is accurate and describes only the lines
   below it, the branch does log once with the ids support searches by. "Taste", "pre-existing", "out of
   scope", "a comparable file does it" and "feature folders are independent" are never reasons to drop one.
+- **Design.** Copy, layout or a component the increment's design source sets (the prototype, a design
+  release, the `acceptanceCriteria`) that a guide such as the GDS style guide disagrees with is a `design`
+  finding. Report it only when you can quote both the design source and the guide rule: name both in `why`,
+  and write the question for the designer in `fix`. It is never fixed in code. Code that differs from its
+  design source is not `design`: it is `correctness`.
 
 Set `confidence` honestly after that check: `certain` (you can cite the evidence), `probable`, `speculative`
 (report it, but say so). A house-rule breach is never taste.

@@ -288,13 +288,14 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 
 ### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, because the file goes to the upload service rather than through this service, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer and keep them on the page. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, because the file goes to the upload service rather than through this service, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
 
 #### Scenario: Continuing with a filled-in form keeps the answers and asks for the add action
 **ID**: SCN-DOCS-016-A
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
 - **WHEN** they continue
-- **THEN** an error says to use the add action to add the document they chose
+- **THEN** an error on the file says to choose a file and use the add action
+- **AND** that error claims nothing about a file already chosen
 - **AND** the answers they typed are still on the form
 - **WHEN** they choose the file again and add it
 - **THEN** the document is added, its row showing the type chosen
@@ -304,6 +305,7 @@ The system MUST never carry the user past the page with the add-a-document field
 - **GIVEN** the user has chosen a document type and filled in nothing else
 - **WHEN** they continue
 - **THEN** errors say the reference and the date of issue are required
+- **AND** an error on the file says to choose a file and use the add action
 - **AND** the user stays on the upload documents page
 
 #### Scenario: Continuing with an untouched form leaves the page

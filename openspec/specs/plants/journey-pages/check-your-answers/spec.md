@@ -171,6 +171,18 @@ The system MUST return the user to Overview when they follow the back link or ch
 - **WHEN** the user follows the back link
 - **THEN** the plants notification list is shown
 
+#### Scenario: An amendment's review back link opens Overview
+**ID**: SCN-PLANTS-CYA-010-C
+- **GIVEN** a notification being amended
+- **WHEN** the user follows the back link from its review
+- **THEN** Overview is shown
+
+#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the notification list
+**ID**: SCN-PLANTS-CYA-010-D
+- **GIVEN** the submitted view shown after an amendment is cancelled
+- **WHEN** the user follows the back link
+- **THEN** the plants notification list is shown
+
 ### Requirement: A draft that would be late shows a warning; a submitted late notification shows a banner
 **ID**: REQ-PLANTS-CYA-011
 The system MUST warn on a draft check-your-answers when submitting today would be late, quoting the commodity type's timing rule, and MUST show a late banner on the read-only view when the notification was recorded late at first submission. The timing rules and the recorded flag are governed by `plants/journey-obligations/review`.

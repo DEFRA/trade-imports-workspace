@@ -178,6 +178,16 @@ orders.reduce((total, order) => total + order.total, 0)
 items.map(({ name, value }) => `${name}: ${value}`)
 ```
 
+Name a parameter or local for what it holds at that point, not for its type or source:
+
+```js
+// bad
+const findLiveAddress = async (orgId, id) => { ... }
+
+// good
+const findLiveAddress = async (organisationId, addressId) => { ... }
+```
+
 Boolean variables and functions should read as predicates:
 
 ```js
@@ -442,6 +452,20 @@ const MIN_PASSWORD_LENGTH = 8
 if (user.role === ROLE_ADMIN) { ... }
 setTimeout(sync, ONE_DAY_MS)
 if (password.length < MIN_PASSWORD_LENGTH) { ... }
+```
+
+A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
+
+```js
+// bad — a module constant that only one function reads
+const PARSE_BASE = 'https://relative-path.invalid'
+const toInsPath = (path) => new URL(path, PARSE_BASE) /* ... */
+
+// good — the constant sits beside its one use
+const toInsPath = (path) => {
+  const standInOrigin = 'https://relative-path.invalid'
+  /* ... new URL(path, standInOrigin) ... */
+}
 ```
 
 ---

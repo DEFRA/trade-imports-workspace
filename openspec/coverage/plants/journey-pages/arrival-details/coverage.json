@@ -562,7 +562,7 @@
     {
       "id": "REQ-PLANTS-ARRIVAL-DETAILS-010",
       "name": "The page offers a full set of save controls and is reachable from Overview",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ARRIVAL-DETAILS-010-A",
@@ -604,22 +604,22 @@
         },
         {
           "id": "SCN-PLANTS-ARRIVAL-DETAILS-010-C",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
-              "test": "renders the caption, the heading and the three save controls",
-              "strength": "partial",
-              "notes": "asserts three save controls including Back; dedicated Back-to-overview asserted in unit"
+              "test": "sends Back to the overview when opened from the overview",
+              "strength": "full",
+              "notes": ""
             },
             {
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
-              "test": "Should send Back to the overview",
+              "test": "Should send Back to the overview when the page is opened from the overview",
               "strength": "full",
               "notes": ""
             }
@@ -645,6 +645,53 @@
               "test": "Should return the arrival details to the overview, not on to the place of destination",
               "strength": "full",
               "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-010-E",
+          "name": "In the opening sequence, the back link opens arrival status, or origin for potatoes",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+              "test": "renders the caption, the heading and the three save controls",
+              "strength": "partial",
+              "notes": "asserts the potato case: Back opens origin"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "fit/journey-smoke.fit.spec.js",
+              "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview",
+              "strength": "partial",
+              "notes": "potato case only: Back from the arrival details opens origin"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should send Back to arrival status for plants or wood while the opening run is on",
+              "strength": "partial",
+              "notes": "href only"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should send Back to origin for potatoes while the opening run is on",
+              "strength": "partial",
+              "notes": "href only"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should send the arrival details back to arrival status for plants or wood, and to origin for potatoes",
+              "strength": "partial",
+              "notes": "the run policy's answer only"
             }
           ]
         }

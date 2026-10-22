@@ -25,6 +25,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 - Rationale goes in the repo's `docs/` or the behaviour spec, never in code.
 - A comment that explains a name means the name is wrong. Rename, then delete the comment in the same change.
 - When a comment is stale, delete it. Do not reword it.
+- A marker that a test or tool reads is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
 - Bad: `// Hapi validates the full payload before route handlers run, so the token is guaranteed present.` Good: no comment. The route's `validate.payload` schema already says it.
 
@@ -37,6 +38,10 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
+- A name's value word covers every value the code can return. Bad: `countryNameOf(countries, code)`, which can return a code. Good: `countryLabelOf`, the label shown: the name, else the code.
+- Nothing (null or undefined) and an expected error, such as not found, are not part of a name. No suffix names them or a fallback: not `…OrNull`, `…OrUndefined`, `…OrNotFound` or `…OrAddressBook`. Bad: `addressFieldTextOrNull`, `liveAddressOrNotFound`. Good: `addressFieldText`, `loadLiveAddress`.
+- Rename only when the name mispredicts. A name whose value word covers what the code returns, and that says what it changes, stays, even when another name would read better.
+- Name a parameter or local for what it holds at that point. Bad: `id` and `returnTo` for an address id and a return that has passed its checks. Good: `addressId` and `honouredReturn`.
 - Bad: `// c-201: an amendment opens with no errors; Continue refused shows them.` above `const holdsSilently = readOnly || (isAmend && !refused)`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: `linesDroppedBy(lines, type)` returning `{ kept, removed }`. Good: `keepLinesAllowedBy(lines, type)`.
 - Bad: `report()` that also clears expired faults. Good: clear them where a name says so, and let `report()` only read.
@@ -51,6 +56,12 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 - Extend the mechanism that exists. Do not add a second one beside it. When a new class or path mirrors one you are editing, extract the shared part in the same change.
 - A pipeline whose callbacks branch or take several steps gets named helpers, so the top function reads as a few named steps.
 - Build only what this change makes reachable.
+- A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
+- A scope you are given limits which files you open, never which lines of an opened file you fix. Every file you touch meets these rules in full.
+
+**Design**
+
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Where a guide such as the GDS style guide disagrees, a review raises a `design` finding: the question for the designer, never a code fix. Code that differs from its design source is a correctness finding.
 
 **Tests**
 
@@ -62,7 +73,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 
 **Logging and errors**
 
-- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by.
+- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by. A user's own input error shown back on the form is not one: do not log it. Another service refusing what this one accepted is: log it at warn.
 - Log the throwable (Java) or `{ err }` (pino), never only its message. Bad: `log.warn("Retryable error, message left for retry: {}", classified.getMessage())`. Good: `log.warn("Retryable error, message {} left for retry", messageId, classified)`.
 - No request or response bodies at INFO.
 - No empty catch. `.catch(() => undefined)` hides the failure it swallows.

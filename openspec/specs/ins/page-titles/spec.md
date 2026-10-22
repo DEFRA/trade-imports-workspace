@@ -8,7 +8,7 @@ What the browser tab and the screen reader announce for a page of the Import not
 
 ### Requirement: Every page's title names the page, then the service, then GOV.UK, joined by hyphens
 **ID**: REQ-INS-PAGE-TITLE-001
-The system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order and joined by hyphens. The system MUST NOT separate them with a pipe. The home page is titled Dashboard.
+The system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order and joined by hyphens. The system MUST NOT separate them with a pipe. The home page is titled Dashboard. An address's own page is titled with that address's name; the delete page is titled 'Delete this address?'.
 
 #### Scenario: A page's title reads page name, service name, GOV.UK
 **ID**: SCN-INS-PAGE-TITLE-001-A
@@ -27,6 +27,18 @@ The system MUST title every page with the page's own name, then the service name
 - **GIVEN** a signed-in trader
 - **WHEN** they open the home
 - **THEN** the title reads `Dashboard - Import notification service - GOV.UK`
+
+#### Scenario: An address's own page is titled with its name
+**ID**: SCN-INS-PAGE-TITLE-001-D
+- **GIVEN** a signed-in trader with an address in their book
+- **WHEN** they open that address's page
+- **THEN** the title reads `<address name> - Import notification service - GOV.UK`
+
+#### Scenario: The delete page is titled Delete this address?
+**ID**: SCN-INS-PAGE-TITLE-001-E
+- **GIVEN** a signed-in trader with an address in their book
+- **WHEN** they open that address's delete page
+- **THEN** the title reads `Delete this address? - Import notification service - GOV.UK`
 
 ### Requirement: A page showing errors opens its whole title with an error prefix
 **ID**: REQ-INS-PAGE-TITLE-002

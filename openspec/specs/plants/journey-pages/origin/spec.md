@@ -149,21 +149,27 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **THEN** they reach Overview
 - **AND** returning to the page shows no country chosen
 
-### Requirement: The back link depends on whether the journey already has an answer
+### Requirement: The back link opens the commodities list in the opening sequence, and otherwise depends on whether the journey already has an answer
 **ID**: REQ-PLANTS-ORIGIN-010
-The system MUST send the user to the dashboard when they follow the back link from this page before any answer is saved, and to Overview once the journey holds an answer.
+The system MUST send the user to the commodities list when they follow the back link from this page during the opening sequence. Outside it, the system MUST send the user to the dashboard before any answer is saved, and to Overview once the journey holds an answer.
 
 #### Scenario: The back link opens the dashboard before any answer is saved
 **ID**: SCN-PLANTS-ORIGIN-010-A
-- **GIVEN** the user has just started a notification and reached the origin of the import page without saving anything
+- **GIVEN** the user has just started a notification and reached the origin of the import page, outside the opening sequence, without saving anything
 - **WHEN** they follow the back link
 - **THEN** the dashboard is shown
 
 #### Scenario: The back link opens Overview once an answer is saved
 **ID**: SCN-PLANTS-ORIGIN-010-B
-- **GIVEN** the user has saved at least one answer on the notification
+- **GIVEN** the opening sequence has ended and the user has saved at least one answer on the notification
 - **WHEN** they return to the origin of the import page and follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the commodities list
+**ID**: SCN-PLANTS-ORIGIN-010-C
+- **GIVEN** the user is in the opening sequence and reached the origin of the import page from the commodities list
+- **WHEN** they follow the back link
+- **THEN** the commodities list is shown
 
 ### Requirement: Completing the origin page completes the origin task row
 **ID**: REQ-PLANTS-ORIGIN-011

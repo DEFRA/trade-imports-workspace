@@ -214,7 +214,7 @@
     },
     {
       "id": "REQ-PLANTS-ORIGIN-010",
-      "name": "The back link depends on whether the journey already has an answer",
+      "name": "The back link opens the commodities list in the opening sequence, and otherwise depends on whether the journey already has an answer",
       "coverage": "full",
       "scenarios": [
         {
@@ -230,8 +230,20 @@
           "name": "The back link opens Overview once an answer is saved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the overview once the notification has an answer", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the overview once the notification has an answer and the page is opened from the overview", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the notification has an answer", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-010-C",
+          "name": "In the opening sequence, the back link opens the commodities list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the commodities list in the opening run", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "following Back from origin to the commodities list and choosing Save and continue returns to origin, not the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the commodities list while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should keep Back on the commodities list when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js", "test": "Should send origin back to the commodities list", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]

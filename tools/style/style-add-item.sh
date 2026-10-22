@@ -30,7 +30,7 @@ Usage: $0 EUDPA-XXXXX --repo REPO --file PATH --line N --rule R --severity S \\
 
   --rule R        Style guide rule number (1-17)
   --severity S    One of: FAIL, WARN
-  --category C    One of: ${CODE_QUALITY_CATEGORIES[*]}
+  --category C    One of: ${CODE_QUALITY_CATEGORIES[*]} ${DESIGN_CATEGORIES[*]}
   --best-practice Optional citation path under docs/best-practices/
 EOF
     exit 1
@@ -69,7 +69,7 @@ case "$SEVERITY" in
 esac
 
 if [[ -n "$CATEGORY" ]]; then
-    refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}"
+    refuse_category_outside "$CATEGORY" "${CODE_QUALITY_CATEGORIES[@]}" "${DESIGN_CATEGORIES[@]}"
 fi
 
 target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"

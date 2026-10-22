@@ -112,8 +112,8 @@
     },
     {
       "id": "REQ-PLANTS-IDENT-NUMBERS-004",
-      "name": "Save-and-return saves; cancel discards later edits; back returns to Overview",
-      "coverage": "full",
+      "name": "Save-and-return saves; cancel discards later edits; back returns to the previous step in the opening sequence and to Overview otherwise",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-IDENT-NUMBERS-004-A",
@@ -125,10 +125,21 @@
         },
         {
           "id": "SCN-PLANTS-IDENT-NUMBERS-004-B",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "saves to overview and cancels without saving subsequent changes", "strength": "full", "notes": "same test ends by following Back to hub" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-004-C",
+          "name": "In the opening sequence, the back link opens the consignor, or the place of destination for potatoes",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.test.js", "test": "Should send Back to the consignor for plants or wood while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.test.js", "test": "Should send Back to the place of destination for potatoes while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.test.js", "test": "Should keep Back on the consignor when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js", "test": "Should send identification numbers back to the consignor for plants or wood, and to the place of destination for potatoes", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]

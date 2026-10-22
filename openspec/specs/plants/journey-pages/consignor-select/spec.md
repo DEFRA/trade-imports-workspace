@@ -87,15 +87,21 @@ The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST co
 - **WHEN** they select save and return to overview
 - **THEN** Overview is shown, with no error and no consignor saved
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to the place of destination in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONSIGNOR-005
-The system MUST return the user to Overview when they follow the back link from the consignor page.
+The system MUST return the user to the place of destination page when they follow the back link from the consignor page during the opening sequence, and to Overview when the page was opened from Overview.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONSIGNOR-005-A
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the opening sequence has ended and the user is on the consignor page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the place of destination
+**ID**: SCN-PLANTS-CONSIGNOR-005-B
+- **GIVEN** the user is in the opening sequence and reached the consignor page from the place of destination
+- **WHEN** they follow the back link
+- **THEN** the place of destination page is shown
 
 ### Requirement: When consignor is out of scope the page is not served
 **ID**: REQ-PLANTS-CONSIGNOR-006

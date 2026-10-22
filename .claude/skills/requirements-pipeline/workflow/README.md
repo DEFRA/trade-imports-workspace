@@ -502,6 +502,7 @@ verified and judged.
 |---|---|---|---|
 | Functional | `correctness`, `security`, `error-handling`, `coverage-gap` | Refuted, unless the evidence is clear | Fix-now, defer or reject, with the bias toward a small increment |
 | Code quality | `naming`, `comments`, `structure`, `duplication`, `logging`, `test-readability`, `history` | Real. Refuted only by quoting code that shows the finding is factually wrong; a refutation with no quote is ignored | Fix-now. The fix is delete, rename or extract, never reword |
+| Design | `design` | Real when the design source sets the copy, layout or component and the guide rule says otherwise | Defer, as an open question starting "For the designer:". Never fixed in code |
 
 "Taste", "pre-existing", "out of the increment's scope", "a comparable file does it" and "feature folders are
 independent" never refute or reject a code-quality finding, and a tool call that failed is not evidence.

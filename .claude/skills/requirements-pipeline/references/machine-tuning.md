@@ -20,6 +20,15 @@ does not go through the gate, so nothing here changes CI.
 
 The gate result lists each rung's `workers` and the `machine.config` it read.
 
+`tim build workers` prints the same counts. The build loop runs it once at
+launch and puts the counts in every stage's guard rails, so a FIT or E2E run a
+stage makes itself (a red probe, a plan check, a reviewer's or fixer's check)
+passes the same `--workers` as the gate. Without that, those runs take the
+scripts' own default: `--workers=100%` started 10 browsers on the machine
+below, two repos at once, and swapped out 208,000 pages in 20 seconds on 22
+October. A change to the file reaches the gate at its next run and the stages
+at the loop's next launch.
+
 ## Measuring a machine
 
 Measure with the stack up, because the build loop holds it up for the whole

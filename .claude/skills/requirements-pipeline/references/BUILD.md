@@ -258,7 +258,11 @@ with commits of its own is left as it is. A failure names its step and its exact
    agent picks a repo's test scripts. How hard the gate drives this machine
    (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
    the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
-   see [`machine-tuning.md`](machine-tuning.md).
+   see [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
+   once at launch (`tim build workers`) and gives them to every stage, so a probe,
+   plan check or reviewer's FIT or E2E run outside the gate passes the same
+   `--workers`. A change to the file reaches the gate at its next run and the
+   stages at the next launch.
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also

@@ -45,6 +45,11 @@ Write into `structure` what your part read and the pages, routes or specs it cov
 - A behaviour you can see is only partly built, such as a route with no page, is `inferred`, and the statement
   says what you saw.
 - Something the scope expects and the repo does not have is a `gap`. Say where you looked.
+- **Say when a claim is a mechanism.** A claim from handler or formatter code, logic that reshapes data for display
+  or storage rather than a view, copy string, validation message or journey step, starts its `note` with
+  `mechanism:` and names the data it works on, such as `mechanism: drops repeated lines of a free-text address`. A
+  prototype's handler code often works around its own data or storage; the reconciler decides whether the target
+  needs it.
 
 ## The tests repo
 

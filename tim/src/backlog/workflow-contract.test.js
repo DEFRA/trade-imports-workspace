@@ -78,7 +78,8 @@ const wordsInShellArray = (source, name) => {
 
 const findingCategoriesOf = (source, wordsInArray) => ({
   functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES')
+  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInArray(source, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -1517,7 +1518,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            'NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its\n  name, predict what it returns and what it changes, then read its body. Any mismatch is a `naming` finding.'
+            'NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its\n  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a\n  name that can return a code) or a change it hides is a `naming` finding. Nothing (null or undefined) and an expected\n  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is\n  itself a `naming` finding. A name that predicts the value and the change is not a finding, even when another name\n  would read better.'
           )
         })
 
@@ -1714,6 +1715,30 @@ describe('increment-build-loop', () => {
             'SURVIVED VERIFICATION BECAUSE: REFUTED WITH NO CODE QUOTED, so this code-quality finding stands: A rename is a matter of taste.'
           )
           expect(run.result.refutedFindings).toEqual([])
+        })
+
+        test('hands a design finding to the judge as a question for the designer, never a fix', async () => {
+          const run = await runVerifying(
+            {
+              file: 'frontend:src/delete.njk',
+              line: 12,
+              severity: 'minor',
+              category: 'design',
+              what: '"This action cannot be undone." is passive.',
+              why: 'The prototype sets it; the GDS style guide asks for active voice.',
+              fix: 'Ask the designer whether to say "You cannot undo this."'
+            },
+            {
+              real: true,
+              reasoning: 'The prototype delete page has the same words.'
+            }
+          )
+          const judge = promptOf(run, 'inc-900 judge')
+
+          expect(judge).toContain('[design, design] frontend:src/delete.njk:12')
+          expect(judge).toContain(
+            'Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start\n  its question with "For the designer:".'
+          )
         })
 
         test('returns a refuted functional finding with its reason, and judges nothing', async () => {
@@ -2349,6 +2374,35 @@ describe('increment-build-loop', () => {
           '50:   - The refusal branch logs once with `journeyId` and `portCode`.'
         const LOG_BESIDE_POSSESSIVE =
           "55:   - The test reads the log from `driveHandler`'s result."
+        const LOGGER_CALL =
+          "57:   - The cap refusal calls `logger.info({ journeyId }, 'Capacity refused')`."
+        const UI_COPY_TITLED =
+          '383:  - REQ-OVERVIEW-011 (line 174): the requirement states only that the third task of "1. About the consignment" is titled "Main import reason".'
+        const COMMENTS_NOT_COPIED =
+          "145:- **Structure to follow:** `tests/animals/e2e/visual/origin-of-import.visual.spec.ts`, its structure only. The new file carries none of the exemplar's comments (lines 3 and 11-16 hold rationale, history and a description of another spec):"
+        const QUOTED_HOUSE_RULE =
+          '32:15. **The transit controller\'s refusal branches log, under bounded tidy-up.** Nothing upstream logs them: not `kit.js`, the engine, nor `server.js`\'s catch-all, which logs only 500 and above. House rule, Logging and errors: "Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by." `pino-logging.md` §4a: "`info` for an expected refusal, such as a validation error". So each of the three logs once, at info, at the branch that decides.'
+        const QUOTED_REPO_DOC_AND_RULE =
+          '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
+        const GREP_CHECK =
+          '61:- `grep -rn "it(\'should show the cap" fit/` finds no test the row renames.'
+        const JQ_CHECK =
+          '62:- `jq -r \'.tests[] | select(.title | test("should render the hint")) | .title\' report.json` prints one title.'
+        const FENCED_CHECK =
+          '63:npm run test:fit -- --grep "Should show the cap error"'
+        const NAMED_CHECK_COMMAND =
+          'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js -t "Should refuse a sixteenth document"'
+        const NAMED_CHECK = `64:- The capacity FIT, ${NAMED_CHECK_COMMAND}, passes.`
+        const EXISTING_TITLES_QUOTED =
+          '130:- SCN-CYA-002-A, unit "Should mark a blank plain answer missing" and "Should mark a blank date missing": `partial` (second Then only). "Should write an unanswered optional row out as Not applicable on a finished card": `partial` (first Then only).'
+        const NEW_TEST_RETITLED =
+          '133:   - Rename the cap test to "Should refuse a sixteenth document".'
+        const CURRENT_AND_OLD_TITLES_DESCRIBED =
+          '359:**Every link to the option-list FIT test** (test at 587, retitled in section 2) moves with the retitle. Three links point at it today, but none by the title this branch holds. They name "the transit type-ahead offers every captured country and territory, territories named with their country, in alphabetical order behind a search placeholder", a title only the arrival-and-transit branch has. On this branch the test is titled "the transit type-ahead offers every captured country behind a search placeholder". So each link dangles now, and setting it to the new title also fixes that:'
+        const EXISTING_TEST_RETITLED =
+          '159:- **Test at 587-607:** expect the first option to be the select text, and retitle it to "the no-JavaScript list opens with the select text".'
+        const RENAMED_TEST_TITLE_DICTATED =
+          '160:- The test at a.test.js:40 is currently titled "Should show the cap", and the renamed test is titled "Should refuse a sixteenth document".'
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -2509,6 +2563,70 @@ describe('increment-build-loop', () => {
             DICTATED_JSDOC
           ])
           expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('passes without a replan a plan that only quotes rules, existing titles or UI copy, says what not to copy, or runs checks', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                UI_COPY_TITLED,
+                COMMENTS_NOT_COPIED,
+                QUOTED_HOUSE_RULE,
+                QUOTED_REPO_DOC_AND_RULE,
+                GREP_CHECK,
+                JQ_CHECK,
+                FENCED_CHECK,
+                NAMED_CHECK,
+                EXISTING_TITLES_QUOTED,
+                CURRENT_AND_OLD_TITLES_DESCRIBED
+              )
+            },
+            BASELINE_ANSWER,
+            {
+              ...PLAN_ANSWER,
+              checks: [{ section: 6, command: NAMED_CHECK_COMMAND }]
+            },
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+          expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('still sends back a plan that dictates a log call or renames a test to a quoted title', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                QUOTED_HOUSE_RULE,
+                LOGGER_CALL,
+                NEW_TEST_RETITLED,
+                EXISTING_TEST_RETITLED,
+                RENAMED_TEST_TITLE_DICTATED
+              )
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            [
+              QUOTED_HOUSE_RULE,
+              LOGGER_CALL,
+              NEW_TEST_RETITLED,
+              EXISTING_TEST_RETITLED,
+              RENAMED_TEST_TITLE_DICTATED
+            ].filter((line) =>
+              replan.includes(line.replace(/^\d+:/, '').trim())
+            )
+          ).toEqual([
+            LOGGER_CALL,
+            NEW_TEST_RETITLED,
+            EXISTING_TEST_RETITLED,
+            RENAMED_TEST_TITLE_DICTATED
+          ])
         })
 
         test('stops with plan-refused, naming the line, when the replan still writes code text', async () => {

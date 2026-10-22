@@ -64,10 +64,12 @@ and `review-add-item.sh` refuse any other word.
 | Code quality | `logging` | An outcome-changing branch with no log, a log without the ids support searches by, a lost cause, a body at INFO |
 | Code quality | `test-readability` | A test title that claims more than its assertions prove; a test that cannot fail |
 | Code quality | `history` | A ticket key, backlog or ruling id, release name, or before-and-after narration in code |
+| Design | `design` | Copy, layout or a component the design source sets that a guide such as the GDS style guide disagrees with. Never fixed in code: it goes to the designer |
 
 A functional finding is kept only with evidence: a failure scenario, a
 broken acceptance criterion, or a quoted line. A code-quality finding
-is fixed unless the code shows it is factually wrong.
+is fixed unless the code shows it is factually wrong. A design finding
+is marked Discuss, for the designer.
 
 ## Lifecycle
 

@@ -32,6 +32,13 @@ Read, in this order:
   shows its absence (a page with no such field, a test that walks past it), that claim too. `change` cites the today
   claim that shows what is there now, and `deltaNote` says how it differs. `exists` cites the today claim that meets
   it.
+- **A prototype's mechanism is not a requirement by default.** A precedence that lets a prototype win covers what a
+  user sees designed: pages, copy, fields and journeys, not the code that feeds them. A claim whose `note` starts
+  `mechanism:`, and any change to how user-entered data is shown (re-casing, de-duplicating, truncating, reordering),
+  becomes a requirement only where the target's own data has the same reason for it. Where it exists because of the
+  prototype's own data or storage, such as a free-text address, data held only in a session or a hard-coded list, and
+  the target's model differs, record it `out-of-scope` and say why. Where its reason is not visible, it is a question
+  conflict whose default is not to build it.
 - **Keep differences at their real granularity.** A heading, a label, a hint, an option, an error message or a
   button that differs is its own requirement, citing the claims that show both versions. Never fold many copy
   differences into "the page matches the design": the builder cannot see what to change, and the reviewer cannot

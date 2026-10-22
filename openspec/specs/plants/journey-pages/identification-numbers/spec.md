@@ -76,9 +76,9 @@ The system MUST refuse to save and continue when a mandatory field on offer is b
 - **WHEN** they leave that field blank and save and return to overview
 - **THEN** they return to Overview with no error shown
 
-### Requirement: Save-and-return saves; cancel discards later edits; back returns to Overview
+### Requirement: Save-and-return saves; cancel discards later edits; back returns to the previous step in the opening sequence and to Overview otherwise
 **ID**: REQ-PLANTS-IDENT-NUMBERS-004
-The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST return to Overview on the back link. While the notification is being amended, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
+The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST send the back link to the consignor (the place of destination for potatoes) during the opening sequence and to Overview otherwise. While the notification is being amended, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
 
 #### Scenario: Save and return to overview keeps the values; cancel discards later edits
 **ID**: SCN-PLANTS-IDENT-NUMBERS-004-A
@@ -87,11 +87,19 @@ The system MUST save the current values and reach Overview on save-and-return-to
 - **THEN** they reach Overview
 - **AND** returning to the page shows the previously saved values, not the discarded edits
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-IDENT-NUMBERS-004-B
-- **GIVEN** the user is on identification numbers
+- **GIVEN** the opening sequence has ended and the user is on identification numbers
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the consignor, or the place of destination for potatoes
+**ID**: SCN-PLANTS-IDENT-NUMBERS-004-C
+- **GIVEN** the user is in the opening sequence and reached identification numbers from the consignor
+- **WHEN** they follow the back link
+- **THEN** the consignor page is shown
+- **WHEN** instead they are on a potatoes notification, which has no consignor, and reached identification numbers from the place of destination
+- **THEN** the place of destination page is shown
 
 ### Requirement: Changing commodity type purges out-of-scope fields and keeps the consignment number
 **ID**: REQ-PLANTS-IDENT-NUMBERS-005

@@ -105,9 +105,9 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 - **THEN** the first address row is focused
 - **AND** the search term they entered is still in the search box
 
-### Requirement: Cancel discards a new choice; the back link returns to Overview
+### Requirement: Cancel discards a new choice; the back link returns to identification numbers in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-Outside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST return to Overview when the user follows the back link.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST send the back link to identification numbers during the opening sequence and to Overview otherwise.
 
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A
@@ -116,11 +116,17 @@ Outside an amendment, the system MUST reach Overview without saving a newly chec
 - **THEN** they reach Overview
 - **AND** returning to the page shows the previously saved address still chosen
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-B
-- **GIVEN** the user is on the contact page
+- **GIVEN** the opening sequence has ended and the user is on the contact page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens identification numbers
+**ID**: SCN-PLANTS-CONTACT-SELECT-005-C
+- **GIVEN** the user is in the opening sequence and reached the contact page from identification numbers
+- **WHEN** they follow the back link
+- **THEN** the identification numbers page is shown
 
 ### Requirement: The page is reachable from Overview's contact task row
 **ID**: REQ-PLANTS-CONTACT-SELECT-008

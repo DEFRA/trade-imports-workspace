@@ -175,7 +175,7 @@ For a notification, the system MUST group the page under the same six numbered s
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
-On a notification's review, the system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose copied address breaks the address book's rules (REQ-ADDR-005).
+On a notification's review, the system MUST draw a blank by the card it sits in: "Not applicable" on a card with nothing further owed, and no text on a card still holding outstanding answers, in the missing style with "Missing" announced for a screen reader. It MUST treat every blank row in a marked card alike, optional or not, and MUST NOT raise a role error against a party role nobody has reached yet; REQ-ADDR-005 reserves that error for a copied address that breaks the address book's rules.
 
 #### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
 **ID**: SCN-CYA-002-A
@@ -212,6 +212,12 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the review of a notification being amended
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the notification list
+**ID**: SCN-CYA-003-D
+- **GIVEN** the user has just cancelled an amendment and the submitted notification's view is shown with its cancelled message
+- **WHEN** they follow the back link
+- **THEN** the live-animals notification list is shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-CYA-004

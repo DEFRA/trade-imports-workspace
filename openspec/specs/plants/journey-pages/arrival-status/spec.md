@@ -71,7 +71,7 @@ The system MUST refuse to save and continue from the page when no status has bee
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-STATUS-006
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to origin when they follow the back link during the opening sequence and to Overview when the page was opened from Overview, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview arrival row
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-006-A
@@ -93,8 +93,14 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **THEN** they reach Overview
 - **AND** returning to the page shows no status chosen
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-006-D
-- **GIVEN** the user is on the arrival-status page
+- **GIVEN** the opening sequence has ended and the user is on the arrival-status page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens origin
+**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-E
+- **GIVEN** the user is in the opening sequence and reached the arrival-status page from origin
+- **WHEN** they follow the back link
+- **THEN** the origin page is shown

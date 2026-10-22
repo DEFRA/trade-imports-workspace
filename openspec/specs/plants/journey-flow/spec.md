@@ -139,7 +139,7 @@ The system MUST show check your answers at the end of the opening run, or by its
 
 ### Requirement: A notification created in this session runs an opening sequence ending on check your answers
 **ID**: REQ-PLANTS-FLOW-007
-The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence.
+The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence; following a back link MUST NOT.
 
 #### Scenario: A newly created notification is walked through the opening sequence to check your answers
 **ID**: SCN-PLANTS-FLOW-007-A
@@ -166,6 +166,12 @@ The system MUST walk a newly created notification through an opening sequence of
 - **GIVEN** the user is in the opening sequence with tasks outstanding
 - **WHEN** they save the last step
 - **THEN** check your answers shows the unfinished notification and names every outstanding task
+
+#### Scenario: Following a back link and saving again carries the opening sequence on
+**ID**: SCN-PLANTS-FLOW-007-E
+- **GIVEN** the user is in the opening sequence on origin
+- **WHEN** they follow the back link to the commodities list and save it
+- **THEN** origin is shown, not Overview
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008

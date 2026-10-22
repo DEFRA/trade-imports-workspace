@@ -128,7 +128,7 @@ The system MUST keep a place of destination whose address-book record has since 
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007
-Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview destination task row.
+Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST send the back link to the arrival details during the opening sequence and to Overview otherwise, and MUST reach the page from the Overview destination task row.
 
 #### Scenario: The page is reachable from the Overview destination row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A
@@ -150,11 +150,17 @@ Outside an amendment, the system MUST offer save-and-continue, save-and-return-t
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-D
-- **GIVEN** the user is on the place of destination page
+- **GIVEN** the opening sequence has ended and the user is on the place of destination page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the arrival details
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-E
+- **GIVEN** the user is in the opening sequence and reached the place of destination page from the arrival details
+- **WHEN** they follow the back link
+- **THEN** the arrival details page is shown
 
 ### Requirement: Completing the destination completes the destination task row
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-008

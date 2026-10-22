@@ -182,7 +182,7 @@ The system MUST show check your answers whatever the notification owes, naming w
 
 ### Requirement: A notification created from the dashboard or the type question runs an opening sequence covering the whole journey, ending on check your answers
 **ID**: REQ-FLOW-007
-The system MUST walk a notification created from the dashboard or the Import Notification Service's type question through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved; reaching either ends it. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
+The system MUST walk a notification created from the dashboard or the Import Notification Service's type question through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved. Reaching either ends it; a back link does not. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
 
 #### Scenario: A newly created notification is walked through the whole opening sequence to review
 **ID**: SCN-FLOW-007-A
@@ -254,6 +254,12 @@ The system MUST walk a notification created from the dashboard or the Import Not
 - **THEN** transit countries is shown
 - **WHEN** instead they save it with Air or Sea chosen
 - **THEN** the transporter list is shown
+
+#### Scenario: Following a back link and saving again carries the opening sequence on
+**ID**: SCN-FLOW-007-K
+- **GIVEN** the user is in the opening sequence on main import reason
+- **WHEN** they follow the back link to what are you importing and save it
+- **THEN** main import reason is shown, not Overview
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

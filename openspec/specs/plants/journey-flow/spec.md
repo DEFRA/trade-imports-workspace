@@ -64,7 +64,7 @@ Outside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check 
 
 #### Scenario: Consignor opened from Overview returns to Overview, not identification numbers
 **ID**: SCN-PLANTS-FLOW-003-E
-- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor or exporter task opened from Overview
+- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor task opened from Overview
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** Overview is shown, not identification numbers, which has its own task
 
@@ -236,7 +236,7 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
 
 #### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
 **ID**: SCN-PLANTS-FLOW-014-A
@@ -257,9 +257,9 @@ While a notification is being amended, the system MUST end each page the hub lin
 #### Scenario: The address pickers offer two controls while amending, and Save and return goes back to the review
 **ID**: SCN-PLANTS-FLOW-014-C
 - **GIVEN** a notification being amended
-- **WHEN** the user opens the consignor or exporter, place of destination or consignment contact picker
+- **WHEN** the user opens the consignor, place of destination or consignment contact picker
 - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
-- **AND** "Save and return" on the consignor or exporter picker returns to the review
+- **AND** "Save and return" on the consignor picker returns to the review
 
 #### Scenario: The commodities list offers two controls while amending
 **ID**: SCN-PLANTS-FLOW-014-D

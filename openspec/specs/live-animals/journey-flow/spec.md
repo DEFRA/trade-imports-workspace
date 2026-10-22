@@ -39,7 +39,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 #### Scenario: Continuing moves on only to a later page of the same task
 **ID**: SCN-FLOW-003-A
-- **GIVEN** the user is on a page whose Overview task holds a later page of the same section — the CPH number page, opened other than from its row
+- **GIVEN** the user is on a page whose Overview task holds a later page of the same section — the CPH number page, opened other than from the CPH section's 'Add a CPH number' link on the addresses page
 - **WHEN** they save and continue
 - **THEN** they are taken to the consignment addresses page, the next page of that task
 

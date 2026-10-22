@@ -24,23 +24,23 @@ The system MUST group the page under three numbered section headings — About t
 
 ### Requirement: Cards that do not apply to the commodity type are omitted
 **ID**: REQ-PLANTS-CYA-002
-The system MUST omit the consignor-or-exporter card for a potatoes notification, and MUST show it when the commodity type is plants for planting or wood and cut trees.
+The system MUST omit the consignor card for a potatoes notification, and MUST show it when the commodity type is plants for planting or wood and cut trees.
 
 #### Scenario: A potatoes notification omits the consignor card
 **ID**: SCN-PLANTS-CYA-002-A
 - **GIVEN** a potatoes notification is open on check-your-answers
 - **WHEN** the user reads the Consignment parties section
-- **THEN** no "Consignor or exporter" card is shown
+- **THEN** no "Consignor" card is shown
 
 #### Scenario: A plants-for-planting notification shows the consignor card
 **ID**: SCN-PLANTS-CYA-002-B
 - **GIVEN** a plants-for-planting notification has a consignor selected
 - **WHEN** the user views check-your-answers after submission
-- **THEN** the "Consignor or exporter" card shows that party's name
+- **THEN** the "Consignor" card shows that party's name
 
 ### Requirement: The party cards read the address line by line, with no telephone number or email address
 **ID**: REQ-PLANTS-CYA-003
-The system MUST show, on the Place of destination, Consignor or exporter and Contact cards, a "Name" row with the selected party's name and an "Address" row reading each address line on its own line followed by the country on its own line, and MUST NOT show a "Telephone number" or "Email address" row.
+The system MUST show, on the Place of destination, Consignor and Contact cards, a "Name" row with the selected party's name and an "Address" row reading each address line on its own line followed by the country on its own line, and MUST NOT show a "Telephone number" or "Email address" row.
 
 #### Scenario: The Contact card reads the contact's address line by line
 **ID**: SCN-PLANTS-CYA-003-A
@@ -54,11 +54,11 @@ The system MUST show, on the Place of destination, Consignor or exporter and Con
 - **WHEN** the user views check-your-answers
 - **THEN** the Place of destination card has only "Name" and "Address" rows, the Address row reading each address line on its own line and then the country
 
-#### Scenario: The Consignor or exporter card has no telephone or email row
+#### Scenario: The Consignor card has no telephone or email row
 **ID**: SCN-PLANTS-CYA-003-C
 - **GIVEN** a plants-for-planting notification has a consignor selected
 - **WHEN** the user views check-your-answers
-- **THEN** the Consignor or exporter card has only "Name" and "Address" rows
+- **THEN** the Consignor card has only "Name" and "Address" rows
 
 ### Requirement: Anything not yet answered is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004
@@ -190,7 +190,7 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 
 ### Requirement: Each party card offers Change and, once an address is held, Edit details
 **ID**: REQ-PLANTS-CYA-012
-The system MUST offer, on a draft's consignor-or-exporter, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
+The system MUST offer, on a draft's consignor, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
 
 #### Scenario: An answered party card offers Change and Edit details; an unanswered one only Change
 **ID**: SCN-PLANTS-CYA-012-A

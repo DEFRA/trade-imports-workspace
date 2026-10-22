@@ -2,29 +2,29 @@
 
 ## Purpose
 
-Asks which address-book record is the consignor or exporter. The page is titled "Consignor or exporter".
+Asks which address-book record is the consignor. The page is titled "Consignor".
 
 ## Requirements
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
 - **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification that is not being amended
 - **WHEN** the page loads
-- **THEN** it shows the parties section caption, the heading "Consignor or exporter", the sender description, and a search box
+- **THEN** it shows the parties section caption, the heading "Consignor", the sender description, and a search box
 - **AND** the three save controls are offered
 
 ### Requirement: The page is reachable from Overview's consignor task row
 **ID**: REQ-PLANTS-CONSIGNOR-002
-The system MUST open this page when the user follows Overview's consignor or exporter task row.
+The system MUST open this page when the user follows Overview's consignor task row.
 
 #### Scenario: Overview's consignor row opens the page
 **ID**: SCN-PLANTS-CONSIGNOR-002-A
 - **GIVEN** a wood or plants-for-planting notification on Overview
-- **WHEN** the user opens the consignor or exporter task row
+- **WHEN** the user opens the consignor task row
 - **THEN** the consignor page is shown
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists

@@ -192,7 +192,7 @@ The system MUST let the user edit a role's copied address on an "Edit address de
 
 ### Requirement: Each picker shows the address the notification holds, with a way to edit its details
 **ID**: REQ-PLANTS-ADDR-010
-The system MUST show, on each picker, the address the notification holds for that role, as edited if it has been, in a card titled "Current consignor or exporter", "Current place of destination" or "Current contact address", with an "Edit details" link to its edit page, beside the list for choosing a different record. A role with no address yet MUST show no such card. The same two actions on check your answers are governed by `plants/journey-pages/check-your-answers`.
+The system MUST show, on each picker, the address the notification holds for that role, as edited if it has been, in a card titled "Current consignor", "Current place of destination" or "Current contact address", with an "Edit details" link to its edit page, beside the list for choosing a different record. A role with no address yet MUST show no such card. The same two actions on check your answers are governed by `plants/journey-pages/check-your-answers`.
 
 #### Scenario: The picker shows the address held, with Edit details
 **ID**: SCN-PLANTS-ADDR-010-A

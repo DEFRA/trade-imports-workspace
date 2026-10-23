@@ -6,7 +6,8 @@ a decision rather than effort, and the analysis behind each is here because it
 cost real work to establish and should not be redone.
 
 `#61` and `#126`, which this file used to carry, are **done** — see the
-handover beside this file for what landed.
+handover beside this file for what landed. Every repo is pushed and all five
+PRs were green at the stop, the E2E included.
 
 Everything below is in `trade-imports-animals-frontend` unless said otherwise.
 
@@ -133,20 +134,36 @@ of the one export the client uses. Verify by adding the import and building.
   `features` project). Anything touching `services/cdp-uploader/stub.js`,
   `services/document-uploads/stub.js`, `upload-config.js`, copy strings or the
   documents template should run it.
-- **Copy strings are cross-repo coupled.** It has now bitten twice on this
-  ticket: a frontend copy change broke an `ins-tests` spec while unit, FIT and
-  `tim spec lint` all passed, and the per-reason scan tag broke
-  `documents-scan-lifecycle.spec.ts` the same way.
-  `ins-tests/page-objects/animals/accompanying-documents-page.ts` hard-codes
+- **The frontend is cross-repo coupled to `ins-tests` by behaviour, not only by
+  strings.** Three times on this ticket: the `'Save and add another'` rename,
+  the per-reason scan tag breaking `documents-scan-lifecycle.spec.ts`, and
+  #131's add control becoming `aria-disabled` at the document cap, which left
+  `documents-limits.spec.ts` clicking a dead button for two minutes. Only the
+  first two are strings. Unit, FIT and `tim spec lint` passed through all three.
+  Known hard-coded couplings:
+  `ins-tests/page-objects/animals/accompanying-documents-page.ts` has
   `'Save and add another'` in a `getByRole` name, and
-  `resources/file-upload/constants.ts` hard-codes the oversize message.
+  `resources/file-upload/constants.ts` has the 50MB figure and the oversize
+  message. **Before pushing a frontend change, grep `ins-tests` for any message,
+  status code, response shape or control state you altered.**
+- **A branch behind `main` fails the E2E for unrelated reasons.** `ins-tests`
+  was 10 commits behind and `workspace` 14, which failed `address-book-delete`
+  on four consecutive runs while every other branch passed. Check with
+  `git -C <repo> rev-list --left-right --count origin/main...HEAD` before
+  diagnosing an E2E failure; `git diff origin/main...HEAD` hides it, because
+  three dots compare against the merge base.
 - **Nothing validates the coverage `test` field** in `openspec/coverage/`. Rows
   have been stale and marked `full` while `tim spec lint` passed throughout.
 - **The pre-commit hook runs `format:check && lint && npm test`** (~90s), so
   batch items by file cluster rather than committing one at a time.
-- **Do not push the frontend from a session.** The pre-push SonarCloud gate runs
-  `npm ci` in the harness environment, which never inherits a PATH we set, so it
-  fails whenever the shell default Node is below the pinned 24.21.0.
+- **The pre-push SonarCloud hook does not fire — run the gate by hand.** It did
+  not run on any of the eight pushes on 23 Oct. The earlier theory here, that
+  `npm ci` fails on a Node below the pinned 24.21.0 in the harness environment,
+  does not fit: a failing gate would have blocked the push, and these returned
+  in seconds. The hook is not being invoked at all. The gate commands are in the
+  handover under "Running the Sonar gates by hand"; both passed when run
+  directly. Pushing from a session is fine, but the gate is yours to run until
+  the `PreToolUse(Bash)` matcher is fixed.
 - **Never regenerate the frontend lock file.** Standing instruction. And
   `npm --prefix … ci` is not equivalent to an in-directory `npm ci`, so prove
   nothing about lock health from it.

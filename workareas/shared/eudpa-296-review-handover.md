@@ -2,9 +2,10 @@
 
 Handover for a re-review. Written 2026-10-22, **last updated 2026-10-23** after
 a session that closed the errorCode thread (backend #104, frontend #135, #134,
-#126) and #61. The review itself lives in `workareas/reviews/EUDPA-296/`
-(gitignored), so this file carries what a later session needs and the item files
-carry the detail while they survive.
+#126) and #61, pushed every repo, and drove all five PRs to green. The review
+itself lives in `workareas/reviews/EUDPA-296/` (gitignored), so this file carries
+what a later session needs and the item files carry the detail while they
+survive.
 
 ## Read this first
 
@@ -15,14 +16,22 @@ posted on the five PRs are **stale** — re-post them once #133, #58 and #125 ar
 settled: `share-review.sh EUDPA-296 --comment-only --summary` regenerates them
 from the item files.
 
-**One thing is unpushed and the push is yours**, not a session's: the frontend's
-pre-push SonarCloud gate runs `npm ci` in the harness environment, which never
-inherits a PATH we set, so it fails whenever the shell default Node is below the
-pinned 24.21.0. Commit freely; push by hand.
+**Everything is pushed and every PR check is green.** Nothing is waiting on a
+hand-push. Three frontend items remain open and all three need a decision rather
+than effort (#133, #58, #125), plus eight *Discuss* items.
+
+**The pre-push SonarCloud hook does not fire.** It did not run on any of the
+eight pushes this session — a push that should take minutes (`npm ci && npm test
+&& sonar-scanner`) returned in seconds. The earlier theory in this file, that
+the harness environment's Node is below the pinned 24.21.0 and `npm ci` fails,
+does not fit: a failing gate would have *blocked* the push. The hook is not
+being invoked at all. Worth checking the `PreToolUse(Bash)` matcher in
+`.claude/settings.json`; it is not protecting pushes today. **Until it is, run
+the gate by hand** — see "Running the Sonar gates by hand" below.
 
 ## What the latest session did
 
-Five commits across three repos, every one gated by its repo's own hook
+Eight commits across four repos, every one gated by its repo's own hook
 (frontend: `format:check && lint && npm test`, ~90s), so each landed with the
 full suite green.
 
@@ -33,6 +42,9 @@ full suite green.
 | `3f388b77` | frontend | 134 |
 | `0ef7c287` | frontend | 126, 61 |
 | `d0fee85` | ins-tests | the E2E that proves 126 end to end |
+| `6ee6ece` | ins-tests | the E2E that #131's fix had made stale |
+| `df98f08` | ins-tests | merge of `origin/main` — the branch was 10 behind |
+| `92f6f315` | workspace | merge of `origin/main` — the branch was 14 behind |
 
 Plus, in this workspace repo: `openspec` REQ-DOCS-007 corrected and
 SCN-DOCS-007-C added, with their coverage rows.
@@ -40,7 +52,9 @@ SCN-DOCS-007-C added, with their coverage rows.
 **Verification at the stop:** backend `mvn verify` green at surefire 545 /
 failsafe 167. Frontend 3153 unit (up from 3106) + 474 FIT, `lint` and
 `format:check` clean. Every assertion added or changed was proved by an
-invert-red probe; the probes are named in each item's note.
+invert-red probe; the probes are named in each item's note. Both SonarCloud
+quality gates run by hand and **passed**. All five PRs green, the E2E included,
+on `workflow_run`-triggered runs that wrote their checks back properly.
 
 ### The errorCode thread, closed
 
@@ -82,13 +96,52 @@ for.
 | Repo | Items | Done | Open | Merged | Won't Fix | Notes |
 |---|---|---|---|---|---|---|
 | `animals-backend` | 103 | 86 | 4 | 12 | 2 | the 4 open are all *Discuss* |
-| `animals-frontend` | 135 | 112 | 3 | 15 + 2 auto | 3 | 1 commit unpushed |
+| `animals-frontend` | 135 | 112 | 3 | 15 + 2 auto | 3 | all pushed |
 | `ins-tests` | 20 | 11 | 4 | 4 | 1 | the 4 open are deferred — see below |
 | `performance-tests` | 10 | 8 | 0 | 2 | 0 | complete |
 | `workspace` | 37 | 30 | 0 | 6 | 1 | complete |
 
-Open PRs: frontend #424, backend #114, ins-tests #49, performance-tests #24,
-workspace #141.
+Open PRs, **all green at the stop**: frontend #424, backend #114, ins-tests #49,
+performance-tests #24, workspace #141.
+
+| PR | Checks |
+|---|---|
+| frontend #424 | E2E, FIT, Lighthouse, SonarCloud, PR checks, Security audit, 3 publish jobs |
+| backend #114 | E2E, SonarCloud, CDP coverage scan, PR checks, 3 publish jobs |
+| ins-tests #49 | E2E, PR checks, Security audit, 3 publish jobs |
+| workspace #141 | build, 3 e2e shards, smoke, merge-reports, deploy-report |
+| performance-tests #24 | lint/unit, LocalStack image run, Security audit, smoke |
+
+## Running the Sonar gates by hand
+
+Needed while the pre-push hook is not firing. Coverage must be fresh first —
+the frontend's `npm test` writes `coverage/lcov.info`, and `sonar-scanner` only
+reads it, so run the suite before the scanner or it measures stale coverage.
+
+```bash
+# frontend, PR-scoped (--json gets the PR number: gh pr view <branch> --repo ... )
+sonar-scanner "-Dsonar.token=$SONAR_TOKEN" \
+  -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=defra \
+  -Dsonar.projectKey=DEFRA_trade-imports-animals-frontend \
+  -Dsonar.qualitygate.wait=true \
+  -Dsonar.pullrequest.key=424 \
+  -Dsonar.pullrequest.branch=feat/EUDPA-296-direct-to-uploader-upload \
+  -Dsonar.pullrequest.base=main
+
+# backend — one reactor build; needs Docker for the Testcontainers ITs
+mvn -q clean verify sonar:sonar "-Dsonar.token=$SONAR_TOKEN" \
+  -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=defra \
+  -Dsonar.projectKey=DEFRA_trade-imports-animals-backend \
+  -Dsonar.qualitygate.wait=true -Dsonar.pullrequest.key=114 \
+  -Dsonar.pullrequest.branch=feat/EUDPA-296-direct-to-uploader-upload \
+  -Dsonar.pullrequest.base=main
+```
+
+`-q` hides the scanner's own `QUALITY GATE STATUS` line, so judge the Maven run
+by its exit code — `-Dsonar.qualitygate.wait=true` fails the build on a red
+gate — or read the PR's SonarCloud check. Only `animals-frontend` and
+`animals-backend` carry `sonar-project.properties`; `ins-tests`,
+`performance-tests` and this repo have no gate to run.
 
 ## What is left, and why
 
@@ -170,12 +223,23 @@ stack exhausted the disk even after reclaiming 38GB.
   Data does document for that attribute. `UploadSessionRepositoryIT`'s TTL
   assertion would prove whether it resolved or silently dropped the index.
 
-## Merge order now matters
+## Merge order matters, and the E2E now proves why
 
-`d0fee85` in ins-tests expects "Virus found". That only holds with **both** the
-backend `errorCode` change (`f35567d`) and the frontend tag change (`0ef7c287`)
-deployed. Against a frontend without the backend change the tag reads
-"Rejected" and that spec fails. Merge the backend first, or the set together.
+Two ins-tests specs only pass with their service counterparts deployed:
+
+- `d0fee85` expects "Virus found", which needs **both** the backend `errorCode`
+  change (`f35567d`) and the frontend tag change (`0ef7c287`). Against a frontend
+  without the backend change the tag reads "Rejected".
+- `6ee6ece` expects the add control to be shut at the document cap, which needs
+  the frontend's #131 fix (`f6cb7ee4`).
+
+**Merge the backend first, or the whole set together.** Merging ins-tests ahead
+of the services turns both specs red on `main`.
+
+`documents-scan-lifecycle` passing in the green runs is the only evidence that
+the refusal reason survives the whole path — cdp-uploader's own scan of a real
+EICAR file, the callback, the stored document, the document API and the page.
+Unit and FIT both run against stand-ins, so neither can prove it.
 
 ## Defects the review actually found
 
@@ -208,6 +272,11 @@ code and should not re-litigate these.
    refusal codes were mapped; `FILE_VIRUS` fell through to the retry message.
 8. **The stand-in claim validated nothing**, which is why the document-reference
    mismatch survived every suite.
+9. **A sixteenth document was scanned and stored before the claim refused it.**
+   The add control stayed live at the fifteen-document cap, so a trader's file
+   went to S3 to be turned away on the return leg: a wasted upload and an object
+   nothing references. Fixed in `f6cb7ee4`; the ins-tests spec that still drove
+   the old behaviour was fixed in `6ee6ece`.
 
 ## Patterns to re-check, because they recurred
 
@@ -220,11 +289,26 @@ code and should not re-litigate these.
   Any new assertion here deserves an invert-red probe before it is trusted.
   Note `toStrictEqual` does **not** help: it treats a key present-and-undefined
   as present. Assert the property.
-- **Cross-repo string coupling.** A copy change in the frontend broke an
-  ins-tests spec while unit, FIT and `tim spec lint` all passed — and it
-  happened again this session with the scan tag. Nothing short of the E2E that
-  runs the repos together could see it. If a fix changes a message, status code
-  or response shape, grep the other repos.
+- **Cross-repo behaviour coupling, not just strings.** A copy change in the
+  frontend broke an ins-tests spec while unit, FIT and `tim spec lint` all
+  passed. It happened three times on this ticket: the "Save and add another"
+  rename, the per-reason scan tag, and #131 closing the add control at the
+  document cap — that last one is not a string at all, it is a control becoming
+  `aria-disabled`, and the spec sat clicking it for two minutes. Nothing short
+  of the E2E that runs the repos together could see any of them. **If a fix
+  changes a message, a status code, a response shape, or whether a control is
+  operable, grep the ins-tests repo before you push.**
+- **A branch that has fallen behind `main` fails the E2E for reasons that are
+  nothing to do with your change.** `address-book-delete` failed on four
+  consecutive runs of this branch while every other branch passed, because
+  ins-tests was 10 commits behind and carried pre-EUDPA-708 specs against an
+  `ins-frontend:latest` that had shipped the delete page. The workspace repo was
+  14 behind for the same reason. **Check before trusting an E2E verdict:**
+  `git -C <repo> rev-list --left-right --count origin/main...HEAD` — the left
+  number is how far behind you are. Merge `main` in rather than diagnosing the
+  symptom. Note `git diff origin/main...HEAD` (three dots) hides this: it
+  compares against the merge base, so files main has moved on show no
+  difference. Use `HEAD..origin/main` to see what you are missing.
 - **The behaviour spec can encode a false premise.** REQ-DOCS-007 stated "the
   upload service reports a rejection as a message in its own wording and no
   code … and MUST NOT name a cause" as a requirement. It was a mistaken belief
@@ -233,6 +317,25 @@ code and should not re-litigate these.
 - **Stale branch images.** An E2E can log `Tests image: branch (...)` and still
   run yesterday's bytes, because the tag is overwritten when the later build
   finishes. Compare the publish completion time with the stack's pull time.
+- **Do not re-trigger an E2E with `workflow_dispatch`. Wait, or re-run the
+  publish.** Learned the hard way this session, at the cost of two wasted stack
+  runs:
+  - `e2e-tests.yml` declares `concurrency: group: e2e-${branch}` with
+    `cancel-in-progress: true`, scoped per repo. A manual dispatch therefore
+    **cancels the legitimate `workflow_run` cascade** that the publish had
+    already started — the very run that was about to refresh the PR check.
+  - `pending-status` and `report-status` are gated on
+    `github.event.workflow_run.event == 'pull_request'`, so a dispatched run
+    never writes its result back. The tests pass and the PR still shows the old
+    failure.
+  - A manual dispatch **on this workspace repo** also sets `MANUAL=true` in
+    `scripts/ci/resolve-scope.sh`, which then reads the `suites`/`tags` inputs
+    instead of `config/e2e-tests-pr-scope.json`. Dispatch with neither and
+    `Resolve test scope` fails in every shard before a test runs.
+  - **The right move:** let the push's own cascade finish. If a check really is
+    stale, `gh run rerun <publish-run-id>` on *Publish Branch Image* — it keeps
+    the original `pull_request` event, so the cascade fires with full context and
+    `report-status` updates the check. Verified on one repo before the other two.
 - **`npm test` does not run FIT**, and `coverage.json` cites FIT specs as its
   witnesses. CI runs FIT, so the pipeline is the gate, but a local green means
   less than it looks. FIT locally:
@@ -281,18 +384,29 @@ code and should not re-litigate these.
 
 ## Where to pick up
 
-1. **Push the frontend and this workspace repo**, then watch the E2E — checking
-   the resolved image tags against their publish times before believing a
-   verdict, and remembering the merge order above.
-2. **Decide #133** (the crumb boundary — the analysis is above and in the item),
+Nothing is waiting on code or a push. What is left is decisions.
+
+1. **Decide #133** (the crumb boundary — the analysis is above and in the item),
    **#125**'s perf-suite ceiling, and whether **#58**'s cdp-uploader cleanup is
    a platform-team ask.
-3. **Settle the backend's claim-endpoint shape once** (#15 vs #19), since both
-   change the route the frontend calls.
-4. **The four ins-tests items need one local stack run**, not more analysis.
-5. **Batch any further commits.** The frontend's pre-commit hook runs the full
-   3150-test suite (~90s), so group by file cluster rather than committing per
-   item.
+2. **Settle the backend's claim-endpoint shape once** (#15 vs #19), since both
+   change the route the frontend calls and neither can be applied from one repo.
+3. **The four ins-tests items need one local stack run**, not more analysis.
+4. **Re-post the PR summaries** once those are settled:
+   `share-review.sh EUDPA-296 --comment-only --summary`.
+5. **Merge in the order above**, or the set together.
+
+Before a re-review, a short re-verification, in this order — it is cheaper than
+diagnosing a red E2E backwards:
+
+1. `git -C <repo> rev-list --left-right --count origin/main...HEAD` in all five
+   repos. Anything behind gets `main` merged in first.
+2. The frontend's `npm test` and `PORT=3050 npm run test:fit -- --project=features`.
+3. The two Sonar gates by hand (see above), while the pre-push hook is dead.
+4. Let the push's own E2E cascade run. Do not dispatch it.
+
+Batch any further commits: the frontend's pre-commit hook runs the full
+3150-test suite (~90s), so group by file cluster rather than committing per item.
 
 ---
 

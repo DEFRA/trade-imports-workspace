@@ -1737,7 +1737,30 @@ describe('increment-build-loop', () => {
 
           expect(judge).toContain('[design, design] frontend:src/delete.njk:12')
           expect(judge).toContain(
-            'Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start\n  its question with "For the designer:".'
+            'Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start\n  its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design\n  source and the code at file:line (permalinks where the verifier gave them) and the guide rule\'s link.'
+          )
+        })
+
+        test('tells the verifier to read the design source rather than refute a design finding unread', async () => {
+          const run = await runVerifying(
+            {
+              file: 'frontend:src/edit.njk',
+              line: 18,
+              severity: 'minor',
+              category: 'design',
+              what: 'The edit page labels the name field differently from the add page.',
+              why: 'The add page says "Name or organisation"; the edit page says "Name or organisation name".',
+              fix: 'Ask the designer whether both pages should use one label.'
+            },
+            {
+              real: true,
+              reasoning: 'The prototype sets both labels, on two partials.'
+            }
+          )
+          const verifier = promptOf(run, 'inc-900 verify:frontend-nunjucks')
+
+          expect(verifier).toContain(
+            'A source you did not read, or a finding that did\nnot read it, is never grounds to refute: read it.'
           )
         })
 

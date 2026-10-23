@@ -11,6 +11,34 @@ beside this file, with what remains and why it was left rather than guessed at.
 Read it before reopening either: several of the review's stated means turned
 out not to work, and that is recorded there.
 
+## A second reviewer, 23 Oct — six items reopened or raised
+
+An external review of the PR set found four defects this review missed,
+and outgrew the reasoning on two it had closed. All six are in the item
+files:
+
+| Item | Repo | What |
+|---|---|---|
+| **#130** | frontend | Continue discards a part-filled document in silence when no type is chosen — `startsADocument` gates on an offered type, so a typed reference, date and file are dropped by `leavePage` |
+| **#131** | frontend | The add form is still live at capacity, so a 16th file uploads to S3 and is only refused on the return leg |
+| **#132** | frontend | The browser oversize check binds to the form's `submit` with no `event.submitter` check, so an oversize file blocks Continue and Remove too |
+| **#133** | frontend | The CSRF crumb and the concurrency token are posted to cdp-uploader and read back from its status endpoint |
+| **#58** | frontend | **Reopened.** The Won't Fix reasoning covered the backend session's 24h TTL only; cdp-uploader's own session state and orphaned S3 objects are not cleaned up |
+| **#7** | backend | **Reopened.** Closed on "the service is not live, so the population is empty" — dev and test environments do hold documents, and they read `claimed=false` and stop shipping |
+
+Three of their points were already recorded and need no new item: the
+empty-form retry after a successful claim (the banner defect noted
+below), the claim's missing ownership check (backend #15/#19, *Discuss*),
+and the size cap's other homes (#125). Two need a decision rather than
+code — whether dropping "virus" from the rejected tag is agreed product
+wording, and the merge order. One could not be checked from here: three
+nginx differences from CDP (`proxy_request_buffering off`, `Host $host`
+rather than `$http_host`, and added `X-Forwarded-*`/`X-Real-IP`) are
+confirmed present in our config, but `cdp-nginx-upstreams` is not cloned
+locally so the comparison is unverified. The buffering one matters most —
+it changes exactly the large-upload behaviour this ticket exists to
+change, so the local stack may not prove what it appears to.
+
 ## State by repo
 
 | Repo | Items | Done | Open | Merged | Won't Fix | Notes |

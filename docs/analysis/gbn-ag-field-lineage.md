@@ -235,16 +235,16 @@ open question below; not blocking EUDPA-369).
 Two further gaps surfaced during EUDPA-369 planning (Amir Naveed, 2026-09-11), not
 present in the original pass:
 
-- **Species id** — each species line has an id (e.g. `1148346` for Bos taurus) that has
-  no GBN-AG schema slot at all and isn't sent. Whether one is needed is an open
-  question, not scheduled against any ticket yet.
+- **Species identity** — a submitted line is identified by its CN code plus Latin name
+  (e.g. `0102` and `Bos taurus`); no MDM species id is stored or sent. Whether GBN-AG
+  needs any further species identifier is an open question, not scheduled against any
+  ticket yet.
 - **CPH number's address** — as above: `finalDestinationLocation.identifier` is sent,
   the schema-mandated accompanying address is not. Flagged as an open question for
   whoever owns the schema/Confluence mapping to resolve; not scoped into any ticket yet.
-- **`TradeLineItem.commonName`** — still sends the commodity name (e.g. "Cow") rather
-  than the species' everyday name (e.g. "Cattle") that the schema and PIMS mapping doc
-  call for; `ins-backend` already displays the commodity-name value on notification
-  cards. A proper fix spans frontend, backend and ins-backend — flagged as needing a
+- **`TradeLineItem.commonName`** — sends the line's CN code (e.g. `0102`) rather than
+  the species' everyday name (e.g. "Cattle") that the schema and PIMS mapping doc call
+  for; `ins-backend` displays that same code on notification cards. A proper fix spans frontend, backend and ins-backend — flagged as needing a
   follow-up ticket, not yet raised.
 
 ### Disputed / likely intentional

@@ -8,7 +8,7 @@ Asks how much of each chosen species the consignment carries — one number of a
 
 ### Requirement: The page asks a number of animals, and where owed a number of packages, per species chosen — starting empty
 **ID**: REQ-COMMODITY-DETAILS-001
-The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading nested under its commodity's heading, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
+The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its scientific name, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
 
 #### Scenario: The page presents one set of questions per chosen species, all empty
 **ID**: SCN-COMMODITY-DETAILS-001-A
@@ -36,7 +36,7 @@ The system MUST list the chosen commodities in a table naming each row's commodi
 **ID**: SCN-COMMODITY-DETAILS-003-A
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
-- **THEN** the table lists each commodity by name and code, one row per commodity except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
+- **THEN** the table lists each commodity by its code and the common names of the species chosen under it, one row per commodity except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B

@@ -8,7 +8,7 @@ What the commodities on a notification bring into play — the largest set of ob
 
 ### Requirement: A commodity that calls for a County Parish Holding number brings it into play for the whole notification
 **ID**: REQ-OB-COMMODITY-001
-The system MUST ask the notification for a County Parish Holding number, as a mandatory answer, when any one of its commodity lines carries a commodity that calls for one, judged across every line rather than only the most recently added.
+The system MUST ask the notification for a County Parish Holding number, as a mandatory answer, when any one of its commodity lines carries a commodity that calls for one, judged across every line rather than only the most recently added. Every commodity code calls for one except the codes let off — horses (0101) and cats, dogs, ferrets and other live mammals (01061900) — so a code new to the reference data is asked rather than let off.
 
 #### Scenario: Adding a commodity that calls for a CPH number brings it into play
 **ID**: SCN-OB-COMMODITY-001-A
@@ -22,9 +22,15 @@ The system MUST ask the notification for a County Parish Holding number, as a ma
 - **WHEN** the user works through the journey
 - **THEN** the County Parish Holding number is not asked for
 
+#### Scenario: A commodity code on no list of its own is asked for a CPH number
+**ID**: SCN-OB-COMMODITY-001-C
+- **GIVEN** a notification whose only commodity line carries a code that no other commodity rule names
+- **WHEN** the user works through the journey
+- **THEN** the County Parish Holding number is asked for
+
 ### Requirement: A commodity that requires unweaned-animal tracking brings that question into play for the whole notification
 **ID**: REQ-OB-COMMODITY-002
-The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle commodity, and MUST NOT ask it for any other commodity, including equine, sheep and goat.
+The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle or pig commodity, and MUST NOT ask it for any other commodity, including equine, sheep and goat.
 
 #### Scenario: Adding a commodity requiring unweaned tracking brings the question into play
 **ID**: SCN-OB-COMMODITY-002-A
@@ -77,11 +83,17 @@ The system MUST NOT ask for any identifier — typed or free-text — for an ani
 
 ### Requirement: A commodity that requires a permanent address asks for one per animal
 **ID**: REQ-OB-COMMODITY-006
-The system MUST ask for a permanent address for each animal on a line whose commodity requires one, as a mandatory answer, and MUST NOT ask for it otherwise.
+The system MUST ask for a permanent address for each animal on a line whose commodity requires one, as a mandatory answer, and MUST NOT ask for it otherwise. The line's species decides, not its code: the domestic cat, the domestic dog and the ferret require one, and the other species sharing their code, the genus Felis among them, do not.
 
 #### Scenario: A commodity requiring a permanent address asks for one for each animal
 **ID**: SCN-OB-COMMODITY-006-A
 - **GIVEN** the user is entering identification details for an animal on a commodity line
 - **WHEN** that line's commodity requires a permanent address
 - **THEN** a permanent address is asked for, as a mandatory answer for that animal
+
+#### Scenario: Another species under the same code is not asked for one
+**ID**: SCN-OB-COMMODITY-006-B
+- **GIVEN** the user is entering identification details for an animal on a line of the genus Felis
+- **WHEN** the identification details are shown
+- **THEN** no permanent address is asked for
 

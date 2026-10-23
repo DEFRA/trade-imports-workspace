@@ -28,9 +28,10 @@ verifier and judge apply the same defaults.
   nearby file does it", "feature folders are independent", the plan,
   or an earlier decision.
 - **Design** (`design`): never fixed in code. Mark it Discuss with the
-  note `For the designer: <the question>`, naming the design source
-  and the guide rule, and list it under "For the designer" in the
-  batch summary.
+  note `For the designer: <the question and its options>`, carrying
+  the item's evidence (the design source and the code at file:line,
+  and the guide rule's link), and list it under "For the designer" in
+  the batch summary.
 
 ---
 

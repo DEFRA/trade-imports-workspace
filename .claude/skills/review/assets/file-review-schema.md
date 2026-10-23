@@ -64,7 +64,7 @@ and `review-add-item.sh` refuse any other word.
 | Code quality | `logging` | An outcome-changing branch with no log, a log without the ids support searches by, a lost cause, a body at INFO |
 | Code quality | `test-readability` | A test title that claims more than its assertions prove; a test that cannot fail |
 | Code quality | `history` | A ticket key, backlog or ruling id, release name, or before-and-after narration in code |
-| Design | `design` | Copy, layout or a component the design source sets that a guide such as the GDS style guide disagrees with. Never fixed in code: it goes to the designer |
+| Design | `design` | Copy, layout or a component where a guide such as the GDS style guide disagrees with the design source, the design source sets two different things for one element, or it does not show the case the code handles. Carries the design source and the code at file:line, the guide rule's link, and the question with its options. Never fixed in code: it goes to the designer |
 
 A functional finding is kept only with evidence: a failure scenario, a
 broken acceptance criterion, or a quoted line. A code-quality finding

@@ -47,7 +47,7 @@ The system MUST replace an address's entire record on edit, so an optional field
 **ID**: SCN-INS-ADDR-003-B
 - **GIVEN** an address exists under one name
 - **WHEN** the user edits it to a new name
-- **THEN** the address book list shows the new name, and no longer shows the old one
+- **THEN** the address book list shows the address under its new name
 
 ### Requirement: A newly created address persists its full set of details
 **ID**: REQ-INS-ADDR-004
@@ -119,7 +119,7 @@ The system MUST reject an email address that is not validly formatted, with an e
 
 ### Requirement: Saving a new or edited address shows a confirmation naming it
 **ID**: REQ-INS-ADDR-009
-The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address and stating whether it was added or updated.
+The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An edit's confirmation reads '<Name> address updated'.
 
 #### Scenario: Adding an address confirms it and lists it
 **ID**: SCN-INS-ADDR-009-A
@@ -132,12 +132,12 @@ The system MUST return the user to the address book list on a successful save, a
 **ID**: SCN-INS-ADDR-009-B
 - **GIVEN** the user edits an address, changing its name
 - **WHEN** they save it
-- **THEN** they return to the address book, a confirmation names the address as updated
-- **AND** the address is offered for viewing under its new name, no longer under the old one
+- **THEN** they return to the address book, and the address book says '<new name> address updated'
+- **AND** the address is offered for viewing under its new name
 
-### Requirement: Cancelling the add or edit form discards changes and returns to the address book
+### Requirement: Cancelling the add or edit form discards changes
 **ID**: REQ-INS-ADDR-010
-The system MUST discard anything entered on the add or edit form when the user cancels, and MUST return them to the address book list without saving. On the add form opened from the address book, cancelling is a 'Cancel and return to address book' link below 'Save and continue'.
+The system MUST discard anything entered on the add or edit form when the user cancels, and MUST NOT save it. Cancelling the add form returns the user to the address book list: on the add form opened from the address book, cancelling is a 'Cancel and return to address book' link below 'Save and continue'. Cancelling the edit form goes to the page the edit was opened from, by default the address's details page (REQ-INS-ADDR-025).
 
 #### Scenario: Cancelling add discards the form without creating an address
 **ID**: SCN-INS-ADDR-010-A
@@ -149,7 +149,14 @@ The system MUST discard anything entered on the add or edit form when the user c
 **ID**: SCN-INS-ADDR-010-B
 - **GIVEN** the user has changed a field on an existing address without saving
 - **WHEN** they cancel
-- **THEN** they return to the address book, the change is discarded, and the address is still offered for viewing under its original name
+- **THEN** the address's details open, the change is discarded, and the address keeps its original name
+
+#### Scenario: Cancelling an edit opened with a return lands on that return
+**ID**: SCN-INS-ADDR-010-C
+- **GIVEN** the user opened the edit form with a return to a page of this service and has typed a new name without saving
+- **WHEN** they cancel
+- **THEN** that page opens
+- **AND** the address keeps its original name
 
 ### Requirement: Deleting an address asks for confirmation, summarising the address, before it is removed
 **ID**: REQ-INS-ADDR-011
@@ -160,7 +167,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 - **GIVEN** the user opens the delete confirmation for an address
 - **WHEN** the page is shown
 - **THEN** the page is headed 'Delete this address?', shows one 'Address' row holding the name, address lines 1 and 2, town or city, county, postcode and country, one per line, with no email or phone
-- **AND** it says 'Confirm that you want to delete this address.' and 'This action cannot be undone.', with a way back to its details
+- **AND** it says 'Confirm that you want to delete this address.' and 'Deletions are permanent and you cannot undo this.', with a way back to its details
 
 #### Scenario: Following No, cancel leaves the address untouched
 **ID**: SCN-INS-ADDR-011-B
@@ -273,24 +280,24 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
 - **GIVEN** the user is adding an address
 - **WHEN** they leave the name, postcode, country and phone number blank and save
-- **THEN** the summary and each field show 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
+- **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
-#### Scenario: Clearing name, postcode, country and phone on edit shows the same messages, and nothing is saved
+#### Scenario: Clearing name, postcode and phone on edit with no country chosen shows the same messages, and nothing is saved
 **ID**: SCN-INS-ADDR-018-B
-- **GIVEN** the user is editing an address
-- **WHEN** they clear the name, postcode, country and phone number and save
+- **GIVEN** the user is editing an address whose stored country is not one the list offers
+- **WHEN** they clear the name, postcode and phone number and save with no country chosen
 - **THEN** the summary and each field show the same four messages
 - **AND** the stored address is unchanged
 
 #### Scenario: A country that is not offered is refused as if none were chosen
 **ID**: SCN-INS-ADDR-018-C
-- **GIVEN** the user is adding an address
+- **GIVEN** the user is adding or editing an address
 - **WHEN** the form is saved with a country that is not one the list offers
 - **THEN** the save is blocked and 'Select a country' is shown
 
@@ -298,12 +305,12 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 **ID**: SCN-INS-ADDR-018-D
 - **GIVEN** a service creates an address with the name, postcode, country and phone number blank
 - **WHEN** the request is made
-- **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
+- **THEN** it is refused with a validation error giving 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
 
 ### Requirement: The address form groups its fields under 'Address' and 'Contact details'
 **ID**: REQ-INS-ADDR-021
-The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms. It MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name') and keep 'County (optional)' on the add form between 'Town or city' and 'Postcode or Zip code'. It MUST open the add form's Country select on its blank first option, reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book. The add form MUST show the name, both address lines and the email address at full width, 'Town or city' and 'Postcode or Zip code' at half width, and the phone number at two-thirds width.
+The system MUST group the address fields under 'Address' and Email address and Phone number under 'Contact details' on the add and edit forms, with Email address before Phone number and 'County (optional)' between 'Town or city' and 'Postcode or Zip code' on both, and the edit form MUST ask for nothing else. Both MUST show the name, address lines and email address full width, town, county, postcode and country half width, and the phone number two-thirds width.
 
 #### Scenario: The add and edit forms group their fields under Address and Contact details
 **ID**: SCN-INS-ADDR-021-A
@@ -311,35 +318,21 @@ The system MUST group the address fields under 'Address' and Email address and P
 - **WHEN** the page is shown
 - **THEN** the address fields sit under 'Address', and Email address and Phone number under 'Contact details'
 
-#### Scenario: The add form names the name field 'Name or organisation' and keeps County
-**ID**: SCN-INS-ADDR-021-B
-- **GIVEN** the user opens the add form
-- **WHEN** the page is shown
-- **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)' and 'Postcode or Zip code', in that order
-- **AND** the edit form still labels the name 'Name or organisation name'
-
-#### Scenario: The add form opens the Country select on Select one
-**ID**: SCN-INS-ADDR-021-C
-- **GIVEN** the user opens the add form
-- **WHEN** the page is shown
-- **THEN** no country is selected
-- **AND** the Country select's blank first option reads 'Select one'
-
-#### Scenario: Add a new address opens the add form, with a Back link to the address book
-**ID**: SCN-INS-ADDR-021-D
-- **GIVEN** the user is on the address book
-- **WHEN** they choose 'Add a new address'
-- **THEN** the add form opens, headed 'Add address details'
-- **WHEN** they select Back
-- **THEN** they return to the address book list
-
 #### Scenario: The add form sizes its fields to the answers they take
 **ID**: SCN-INS-ADDR-021-E
 - **GIVEN** the user opens the add form
 - **WHEN** the page is shown
 - **THEN** the name, both address lines and the email address are full width
-- **AND** 'Town or city' and 'Postcode or Zip code' are half width
+- **AND** 'Town or city', 'County', 'Postcode or Zip code' and the Country select are half width
 - **AND** the phone number is two-thirds width
+
+#### Scenario: The edit form takes the add form's order and widths
+**ID**: SCN-INS-ADDR-021-F
+- **GIVEN** the user opens the edit form
+- **WHEN** the page is shown
+- **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number', in that order
+- **AND** they sit at the add form's widths
+- **AND** nothing else is asked
 
 ### Requirement: Opening an address that is not live in the organisation's book returns to the address book
 **ID**: REQ-INS-ADDR-022
@@ -401,7 +394,7 @@ The system MUST take the user to the address book list, with no 'Page not found'
 
 ### Requirement: The view and delete pages return the user to the page they opened the address from
 **ID**: REQ-INS-ADDR-024
-The system MUST honour a return named when the view or delete page is opened, to a page of this service or, outside stub mode, to exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it; 'Yes, delete' MUST land on it, or on the list when it is one of the deleted address's own pages. A dead link MUST land on it, or on the list when it is one of that address's own pages.
+The system MUST honour a return given when the view or delete page is opened, if it is a page of this service or, outside stub mode, exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it, and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it. 'Yes, delete' and a dead link MUST land on it, or on the list when it is one of that address's own pages.
 
 #### Scenario: Back from the view page follows a return to a page of this service
 **ID**: SCN-INS-ADDR-024-A
@@ -459,3 +452,83 @@ The system MUST honour a return named when the view or delete page is opened, to
 - **GIVEN** a view or delete link for an address that is not live in the book carries an honoured return that is not one of that address's own pages
 - **WHEN** it is opened
 - **THEN** the return page opens, not the address book and not a 'Page not found' page
+
+### Requirement: The edit page is headed 'Edit address and contact details' and returns the user to where they opened it
+**ID**: REQ-INS-ADDR-025
+The system MUST head the edit page 'Edit address and contact details', with no caption. Its 'Back' link MUST go to the page named by an honoured return (REQ-INS-ADDR-024), otherwise to the address's details page. Opening or saving the edit page for an address that is not live in the user's book MUST save nothing and land on the honoured return, or on the address book list, and MUST NOT show a 'Page not found' page.
+
+#### Scenario: The edit page is headed Edit address and contact details
+**ID**: SCN-INS-ADDR-025-A
+- **GIVEN** a live address
+- **WHEN** its edit page opens
+- **THEN** it is headed 'Edit address and contact details' with no caption
+
+#### Scenario: Back goes to the address's details by default
+**ID**: SCN-INS-ADDR-025-B
+- **GIVEN** the edit page opened without a return
+- **WHEN** the user selects Back
+- **THEN** the address's details open
+
+#### Scenario: Back follows an honoured return
+**ID**: SCN-INS-ADDR-025-C
+- **GIVEN** the edit page opened with a return to a page of this service
+- **WHEN** the user selects Back
+- **THEN** that page opens
+
+#### Scenario: An edit link for an address not in the book goes back
+**ID**: SCN-INS-ADDR-025-D
+- **GIVEN** an edit link for an unknown, malformed, another organisation's or deleted address
+- **WHEN** it is opened
+- **THEN** the address book list opens, or the honoured return when the link carries one that is not one of that address's own pages
+- **AND** no 'Page not found' page is shown
+
+#### Scenario: Saving an address deleted meanwhile changes nothing
+**ID**: SCN-INS-ADDR-025-E
+- **GIVEN** the edit page is open and the address has since been deleted
+- **WHEN** the user saves
+- **THEN** they land on the address book list
+- **AND** the address stays deleted, unchanged
+
+### Requirement: The edit form's Country select shows the stored country without a blank option when it is offered
+**ID**: REQ-INS-ADDR-026
+The system MUST show the edit form's Country select with no blank option and the stored country selected when that country is one the list offers, and MUST open it on a blank option with no country selected when the stored country is not one the list offers.
+
+#### Scenario: The edit form's Country select shows the stored country with no blank option
+**ID**: SCN-INS-ADDR-026-A
+- **GIVEN** an address whose country is one the list offers
+- **WHEN** the user opens the edit form
+- **THEN** the Country select has no blank option
+- **AND** that country is selected
+
+#### Scenario: An unoffered stored country opens with no country selected
+**ID**: SCN-INS-ADDR-026-B
+- **GIVEN** an address whose stored country is not one the list offers
+- **WHEN** the user opens the edit form
+- **THEN** the Country select opens on a blank option
+- **AND** no country is selected
+
+### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' and is opened directly from the address book
+**ID**: REQ-INS-ADDR-027
+The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+
+#### Scenario: The add form names the name field 'Name or organisation' and keeps County
+**ID**: SCN-INS-ADDR-027-A
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)' and 'Postcode or Zip code', in that order
+- **AND** the edit form labels the name 'Name or organisation' too
+
+#### Scenario: The add form opens the Country select on Select a country
+**ID**: SCN-INS-ADDR-027-B
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** no country is selected
+- **AND** the Country select's blank first option reads 'Select a country'
+
+#### Scenario: Add a new address opens the add form, with a Back link to the address book
+**ID**: SCN-INS-ADDR-027-C
+- **GIVEN** the user is on the address book
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add form opens, headed 'Add address details'
+- **WHEN** they select Back
+- **THEN** they return to the address book list

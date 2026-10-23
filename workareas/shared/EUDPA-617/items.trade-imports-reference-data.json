@@ -10,9 +10,9 @@
       "issue": "MdmCommodity declares description (l.10), isSelectable (l.12), speciesCount (l.13) and species/scientificNames (l.14), but nothing in src/main reads them: CommoditySearchService only calls code() and isGerminal(). Breaks 'Build only what this change makes reachable'; Spring Boot's ObjectMapper ignores unknown JSON properties, so the fields are not needed to deserialise.",
       "fix": "Must: MdmCommodity holds only the fields production code reads (code, isGerminal) and gains others in the change that first reads them. One way: delete description, isSelectable, speciesCount and species, and the builder calls in MdmServiceTest/CommoditySearchServiceTest that set them.",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmCommodity.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete description, isSelectable, speciesCount and species, and the builder calls in MdmServiceTest/CommoditySearchServiceTest that set them."
     },
     {
       "id": 2,
@@ -22,9 +22,9 @@
       "issue": "MdmProductPage declares page (l.9), size (l.10) and totalPages (l.12), but CommoditySearchService and SpeciesCheckService read only content() and totalElements(); MdmService's empty-page fallback also sets only those two. Breaks 'Build only what this change makes reachable'.",
       "fix": "Must: MdmProductPage holds only content and totalElements until a caller reads more. One way: delete page, size and totalPages, and the .page(0)/.size(100) builder calls in CommoditySearchServiceTest.",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductPage.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete page, size and totalPages, and the .page(0)/.size(100) builder calls in CommoditySearchServiceTest."
     },
     {
       "id": 3,
@@ -34,9 +34,9 @@
       "issue": "MdmProductSearchResult declares description (l.14), isGerminal (l.15), isSelectable (l.16) and speciesCount (l.17), but CommoditySearchService never reads them (germinal status comes from a separate getCommodities call). The commodity-row half of the record (code, description, isGerminal, isSelectable, speciesCount, @JsonProperty(\"scientificNames\") species) is also a second copy of MdmCommodity's component list, so the MDM commodity shape now has two homes.",
       "fix": "Must: the search-result record holds only the fields production code reads (resultType, speciesName, commonName, commodityCnCode, code, species), and the MDM commodity-row shape is declared once. One way: delete the four unread components; if the commodity fields grow again, have the record reuse MdmCommodity (e.g. @JsonUnwrapped) rather than repeat its components.",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductSearchResult.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete the four unread components; if the commodity fields grow again, have the record reuse MdmCommodity (e.g. @JsonUnwrapped) rather than repeat its components."
     },
     {
       "id": 4,
@@ -59,9 +59,9 @@
       "fix": "Must: the helper's name says what it returns (the MDM page to use) without naming the fallback, and both callers use the new name. One way: rename to pageFrom(body, requestName, requestedFor) or productPageOf(...).",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "rename to pageFrom(body, requestName, requestedFor) or productPageOf(...)."
     },
     {
       "id": 6,
@@ -97,9 +97,9 @@
       "fix": "Must: every trace-id log line names the MDM call and the value it was made for (search term, codes or code and page). One way: pass the request name and requestedFor into logTraceId, e.g. log.info(\"MDM trace id for {} request for {} is {}\", requestName, requestedFor, traceId).",
       "best_practice": "java/spring-boot.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "pass the request name and requestedFor into logTraceId, e.g. log.info(\"MDM trace id for {} request for {} is {}\", requestName, requestedFor, traceId)."
     },
     {
       "id": 9,
@@ -121,9 +121,9 @@
       "issue": "MdmSpecies declares commodityCnCode (l.6), but no production code reads it: CommoditySearchService reads speciesName/commonName from nested species and SpeciesCheckService reads speciesName only. Only MdmServiceTest sets it. Breaks 'Build only what this change makes reachable'.",
       "fix": "Must: MdmSpecies holds only the fields production code reads. One way: delete commodityCnCode and the .commodityCnCode(...) builder calls in MdmServiceTest.",
       "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmSpecies.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete commodityCnCode and the .commodityCnCode(...) builder calls in MdmServiceTest."
     },
     {
       "id": 11,
@@ -146,9 +146,9 @@
       "fix": "Must: invalid input to both endpoints is refused with a 400 ProblemDetail (missing body, null lines, a line without code or latinName, page < 0, size outside 1..100, non-numeric page/size, malformed JSON), and only a well-formed request reaches the services. One way: make the body required with @Valid, add @NotNull/@NotBlank to SpeciesCheckRequest.lines and CommodityLine components, annotate the class @Validated with @Min(0) page and @Min(1) @Max(100) size, and add 400 handlers for MethodArgumentTypeMismatchException, HttpMessageNotReadableException and ConstraintViolationException in GlobalExceptionHandler; drop the service-side clamping and null-body fallbacks it replaces.",
       "best_practice": "java/spring-boot.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "make the body required with @Valid, add @NotNull/@NotBlank to SpeciesCheckRequest.lines and CommodityLine components, annotate the class @Validated with @Min(0) page and @Min(1) @Max(100) size, and add 400 handlers for MethodArgumentTypeMismatchException, HttpMessageNotReadableException and ConstraintViolationException in GlobalExceptionHandler; drop the service-side clamping and null-body fallbacks it replaces."
     },
     {
       "id": 13,
@@ -159,9 +159,9 @@
       "fix": "Must: the default search parameter on GET /commodities follows the REST guide's name for it, the same in the frontend client (client.js fetchCommodities), the stub repo and the reference-data controller. One way: rename to @RequestParam(value = \"q\", required = false) String q and update the frontend client and trade-imports-stub in the same branch.",
       "best_practice": "rest-api/rest-api.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "rename to @RequestParam(value = \"q\", required = false) String q and update the frontend client and trade-imports-stub in the same branch."
     },
     {
       "id": 14,
@@ -172,9 +172,9 @@
       "fix": "Must: CommodityGroup is immutable like its sibling records, holding its own unmodifiable copy of species, and rejects a null code or species list. One way: add a compact constructor with Objects.requireNonNull(code, \"code\") and species = List.copyOf(species).",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "add a compact constructor with Objects.requireNonNull(code, \"code\") and species = List.copyOf(species)."
     },
     {
       "id": 15,
@@ -185,9 +185,9 @@
       "fix": "Must: total, page and size on CommoditySearchResponse mean one thing (the count and paging of species matches the response lists), and the reference-data service and the frontend stub both compute them that way. One way: count the species the service keeps after germinal filtering and de-duplication and page over those, or, if MDM row paging stays, rename the fields to say they count MDM rows and change the frontend stub to match.",
       "best_practice": "rest-api/rest-api.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchResponse.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "count the species the service keeps after germinal filtering and de-duplication and page over those, or, if MDM row paging stays, rename the fields to say they count MDM rows and change the frontend stub to match."
     },
     {
       "id": 16,
@@ -198,9 +198,9 @@
       "fix": "Must: the generated OpenAPI document describes both commodity endpoints and every field of their request and response records, with required fields marked REQUIRED and commonName marked nullable. One way: add @Tag/@Operation to CommoditiesController and @Schema(description, requiredMode, example) to each record component.",
       "best_practice": "java/openapi-springdoc.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchResponse.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "add @Tag/@Operation to CommoditiesController and @Schema(description, requiredMode, example) to each record component."
     },
     {
       "id": 17,
@@ -211,9 +211,9 @@
       "fix": "Must: each branch that leaves MDM rows or species out of the response logs once per search, with the search term and the codes (or a count) left out. One way: count species skipped by the limit and rows with no code while grouping, and log one line after the stream in search() when either count is non-zero, beside the germinal log.",
       "best_practice": "java/spring-boot.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "count species skipped by the limit and rows with no code while grouping, and log one line after the stream in search() when either count is non-zero, beside the germinal log."
     },
     {
       "id": 18,
@@ -235,9 +235,9 @@
       "issue": "MINIMUM_SEARCH_LENGTH (line 27) and MAXIMUM_PAGE_SIZE (line 28) are package-private class constants, but only search() reads them and no test imports them (grep finds no other use). House rule: a literal used by one function lives in that function.",
       "fix": "Must: each limit sits where its only reader is, or is shared because a second reader (such as the test) uses it. One way: either move both into search() as locals, or make CommoditySearchServiceTest use them (for example the clamp test asserting size == MAXIMUM_PAGE_SIZE) so the package-private scope is earned.",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Keep MINIMUM_SEARCH_LENGTH and MAXIMUM_PAGE_SIZE as package-private constants and have CommoditySearchServiceTest use them (for example the clamp test asserting size == MAXIMUM_PAGE_SIZE) so the scope is earned."
     },
     {
       "id": 20,
@@ -248,9 +248,9 @@
       "fix": "Must: CommoditySpecies states which components may be null: latinName is rejected when null, commonName is declared nullable. One way: a compact constructor with Objects.requireNonNull(latinName, \"latinName\") and @Nullable on commonName.",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySpecies.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "a compact constructor with Objects.requireNonNull(latinName, \"latinName\") and @Nullable on commonName."
     },
     {
       "id": 21,
@@ -260,9 +260,9 @@
       "issue": "The rule 'no lines means nothing to check' has two homes: the compact constructor (line 10) keeps a null lines list as null, so SpeciesCheckService.check (line 24) has to test request.lines() == null again. SpeciesCheckResponse's constructor already shows the other choice and always holds a list.",
       "fix": "Must: SpeciesCheckRequest.lines() never returns null, and SpeciesCheckService no longer checks it for null. One way: lines = lines == null ? List.of() : List.copyOf(lines); then check() reads request == null ? List.of() : request.lines().",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckRequest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "lines = lines == null ? List.of() : List.copyOf(lines); then check() reads request == null ? List.of() : request.lines()."
     },
     {
       "id": 22,
@@ -273,9 +273,9 @@
       "fix": "Must: the record and its lines field carry @Schema descriptions, with lines' requiredMode stated. One way: @Schema(description = \"Commodity lines whose species to check against MDM\") on the record and on lines.",
       "best_practice": "java/openapi-springdoc.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckRequest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "@Schema(description = \"Commodity lines whose species to check against MDM\") on the record and on lines."
     },
     {
       "id": 23,
@@ -285,9 +285,9 @@
       "issue": "One concept, several names: the response field is 'missing' (line 7), while SpeciesCheckService decides it with isUnlisted, and the twin frontend reads it through linesWithUnlistedSpecies and an 'unlisted' local (check-answers/refusal.js lines 12, 30) and shows speciesNoLongerOffered. A line that arrives with no code is also returned as 'missing', which the word does not cover.",
       "fix": "Must: the lines the check refuses carry one name from this response field through SpeciesCheckService to the frontend client and refusal.js, and that name covers both cases it returns (a Latin name not listed under its code, and a line with no code or Latin name). One way: name the field unlisted and keep linesWithUnlistedSpecies in the frontend, renaming the service's local and the test assertions in the same change.",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckResponse.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "name the field unlisted and keep linesWithUnlistedSpecies in the frontend, renaming the service's local and the test assertions in the same change."
     },
     {
       "id": 24,
@@ -298,9 +298,9 @@
       "fix": "Must: the record and its field carry @Schema descriptions, with requiredMode = REQUIRED on the list. One way: @Schema(description = \"Lines whose species MDM does not list under their code\", requiredMode = Schema.RequiredMode.REQUIRED).",
       "best_practice": "java/openapi-springdoc.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckResponse.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "@Schema(description = \"Lines whose species MDM does not list under their code\", requiredMode = Schema.RequiredMode.REQUIRED)."
     },
     {
       "id": 25,
@@ -311,9 +311,9 @@
       "fix": "Must: each check that returns at least one line logs once, at info or warn, with the code and Latin name of every returned line and which rule returned it (not listed under its code, or no code/Latin name). One way: collect the missing lines, then log.warn(\"Species check found {} lines not listed in MDM: {}\", missing.size(), missing) before building the response, with @Slf4j on the class as CommoditySearchService has.",
       "best_practice": "java/spring-boot.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "collect the missing lines, then log.warn(\"Species check found {} lines not listed in MDM: {}\", missing.size(), missing) before building the response, with @Slf4j on the class as CommoditySearchService has."
     },
     {
       "id": 26,
@@ -335,9 +335,9 @@
       "issue": "isUnlisted(line, latinNamesByCode) (line 32) reads as a pure test of one line, but on a code it has not seen it calls MDM for every page of that code's species and writes the result into the caller's map (computeIfAbsent, line 36). The name hides the MDM calls and the map change. speciesOf (line 40) returns Latin names, which the map one line above already calls latinNamesByCode: two names for one value.",
       "fix": "Must: the predicate's name and parameters show that it may fetch from MDM and fill a shared lookup, or the fetch and fill move out of the predicate; the method that returns a code's Latin names is named for Latin names, matching latinNamesByCode. One way: build the lookup first (latinNamesByCode = codes.stream().distinct().collect(toMap(identity(), this::fetchLatinNamesOf))), then filter with a pure isListed(line, latinNamesByCode).",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "build the lookup first (latinNamesByCode = codes.stream().distinct().collect(toMap(identity(), this::fetchLatinNamesOf))), then filter with a pure isListed(line, latinNamesByCode)."
     },
     {
       "id": 28,
@@ -347,9 +347,9 @@
       "issue": "PAGE_SIZE (line 18) is a package-private class constant used by one method, speciesOf, and no test imports it: SpeciesCheckServiceTest repeats the literal 100 at lines 63, 64 and 97. The house rule keeps a literal used by one function in that function, and module scope only for a shared value or one a test imports.",
       "fix": "Must: the species page size has one home. Either it lives inside speciesOf, or it stays at class scope and SpeciesCheckServiceTest refers to SpeciesCheckService.PAGE_SIZE in place of the literal 100. One way: replace eq(100) in the test's givenMdmSpeciesPage and verify calls with eq(SpeciesCheckService.PAGE_SIZE).",
       "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "replace eq(100) in the test's givenMdmSpeciesPage and verify calls with eq(SpeciesCheckService.PAGE_SIZE)."
     },
     {
       "id": 29,
@@ -359,9 +359,9 @@
       "issue": "The class Javadoc that recorded why calls are timed at the Feign transport, not in MdmService (MdmClientInterceptor fetches the Trade token inside the MDM request, so service-level timing would add token time to MDM's figures), is deleted and the reasoning now has no home: the repo has no docs/ folder and nothing else states it. The next person to move timing into MdmService gets the token-time skew back.",
       "fix": "Must: the reason ExternalCallFeignCapability times calls at the transport is stated in the repo's docs/ (or the behaviour spec), and nowhere in code. One way: add a short docs/observability.md (or a section in README.md) covering the external-call metric, why it is measured in a Feign Capability, and the operation names in ExternalCall.",
       "file": "src/main/java/uk/gov/defra/trade/imports/metrics/ExternalCallFeignCapability.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "add a short docs/observability.md (or a section in README.md) covering the external-call metric, why it is measured in a Feign Capability, and the operation names in ExternalCall."
     },
     {
       "id": 30,
@@ -372,9 +372,9 @@
       "fix": "Must: a test fails when the null-content check is removed, for at least one of the page-returning methods. One way: add searchProducts_returnsEmptyPage_whenMdmContentIsNull returning ResponseEntity.ok(new MdmProductPage<>(null, 0, 100, 5L, 1)) and asserting an empty content and zero total.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "add searchProducts_returnsEmptyPage_whenMdmContentIsNull returning ResponseEntity.ok(new MdmProductPage<>(null, 0, 100, 5L, 1)) and asserting an empty content and zero total."
     },
     {
       "id": 31,
@@ -385,9 +385,9 @@
       "fix": "Must: no // Given, // When, // Then comments in the file; set-up, action and assertions are separated by blank lines, and no comment claims behaviour the assertions do not prove. One way: delete the comments and keep the blank-line layout the new tests already use.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete the comments and keep the blank-line layout the new tests already use."
     },
     {
       "id": 32,
@@ -398,9 +398,9 @@
       "fix": "Must: one shared test helper (for example beside CapturingEmfEnvironment in the metrics test package) builds an enabled EmfMetricWriter over a CapturingEmfEnvironment, and CommoditiesControllerTest and LookupMetricsTest call it with no local copies. One way: a static CapturingEmfEnvironment.writer() or a CapturingMetrics test fixture returning the writer and its captured documents",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditiesControllerTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "a static CapturingEmfEnvironment.writer() or a CapturingMetrics test fixture returning the writer and its captured documents"
     },
     {
       "id": 33,
@@ -411,9 +411,9 @@
       "fix": "Must: each test's assertions alone prove its title: the trimmed term reached MDM, and MDM was asked for the clamped page and size. One way: have the stubbed MDM page carry a species row for the matched term and assert the group comes back, so an untrimmed or unclamped call would visibly return nothing; or retitle the clamp test to what it asserts (the response reports the clamped page and size).",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Strengthen the test so it proves its title (do not retitle instead). Hamid's One way: have the stubbed MDM page carry a species row for the matched term and assert the group comes back, so an untrimmed or unclamped call would visibly return nothing; or retitle the clamp test to what it asserts (the response reports the clamped page and size)."
     },
     {
       "id": 34,
@@ -424,9 +424,9 @@
       "fix": "Must: each of these branches has a test that fails if the branch is removed. One way: add one test where MDM returns a row with resultType null and a commodity row holding a species with no speciesName beside a valid species row, asserting only the valid species is grouped, and one where the page's totalElements is null, asserting total is 0.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "add one test where MDM returns a row with resultType null and a commodity row holding a species with no speciesName beside a valid species row, asserting only the valid species is grouped, and one where the page's totalElements is null, asserting total is 0."
     },
     {
       "id": 35,
@@ -436,9 +436,9 @@
       "issue": "Two stop conditions of SpeciesCheckService.speciesOf have no test: the empty-page stop (speciesPage.content().isEmpty(), service line 48) and the missing total (totalElements() == null, line 47). Every paging test sets a total that ends the loop on its own, so deleting the empty-page guard leaves the suite green; that guard is what stops repeated MDM calls when MDM's total is larger than the species it actually returns.",
       "fix": "Must: a test fails if the empty-page stop is removed, and a test pins what happens when MDM sends no total. One way: a test where page 0 has species with total 300 and page 1 is empty, asserting a species from page 0 is listed and that page 2 is never requested (an unstubbed page would throw under strict stubs); and a test with a page whose totalElements is null.",
       "file": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "a test where page 0 has species with total 300 and page 1 is empty, asserting a species from page 0 is listed and that page 2 is never requested (an unstubbed page would throw under strict stubs); and a test with a page whose totalElements is null."
     },
     {
       "id": 36,
@@ -448,9 +448,9 @@
       "issue": "check_returnsEveryLine_forACodeMdmHasNoSpeciesFor (line 68) claims every line is returned, but the request holds one line (line 71), so the assertion proves only that a single line comes back.",
       "fix": "Must: the title states what the assertions prove. One way: send two lines under 030111 with different Latin names and assert both come back, or retitle to check_returnsTheLine_forACodeMdmHasNoSpeciesFor.",
       "file": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Strengthen the test so it proves its title (do not retitle instead). Hamid's One way: send two lines under 030111 with different Latin names and assert both come back, or retitle to check_returnsTheLine_forACodeMdmHasNoSpeciesFor."
     },
     {
       "id": 37,
@@ -460,9 +460,9 @@
       "issue": "SPECIES_PATH holds /mdm-service/mdm/trade/product/commodities/0102/species, the species path of one commodity code only, but the name reads as the species endpoint in general; the 0102 fixture it is stubbed with (line 37) and the checkSpecies test that relies on code 0102 depend on that hidden code",
       "fix": "Must: the constant's name says it is the species path for commodity 0102. One way: rename to SPECIES_OF_0102_PATH (or build it from a speciesPathOf(code) helper)",
       "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "rename to SPECIES_OF_0102_PATH (or build it from a speciesPathOf(code) helper)"
     },
     {
       "id": 38,
@@ -473,9 +473,9 @@
       "fix": "Must: the test title states exactly what its assertions prove, and if grouping by code is claimed, the fixture has rows under at least two kept codes and the assertion shows two groups. One way: add a 01061900/0102 mixed fixture and assert two CommodityGroups, or retitle to searchCommodities_shouldListSpeciesRowsThatShareACodeInOneGroup",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Strengthen the test so it proves its title (do not retitle instead). Hamid's One way: add a 01061900/0102 mixed fixture and assert two CommodityGroups, or retitle to searchCommodities_shouldListSpeciesRowsThatShareACodeInOneGroup"
     },
     {
       "id": 39,
@@ -486,9 +486,9 @@
       "fix": "Must: every test in the class builds expected CommoditySpecies through the one helper, and private helpers sit after the tests. One way: replace the inline builders at lines 49, 68 and 70 with species(...) and move species() down beside stubSearch()",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "replace the inline builders at lines 49, 68 and 70 with species(...) and move species() down beside stubSearch()"
     },
     {
       "id": 40,
@@ -499,9 +499,9 @@
       "fix": "Must: IntegrationBase carries no doc comment on its package-private or protected helpers and no section-label comments. One way: delete the Javadoc and the two comments, and extract registerMockedServiceUrls(registry) and registerOAuthProperties(registry) if the grouping is worth naming",
       "best_practice": "java/modern-java.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/integration/IntegrationBase.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "delete the Javadoc and the two comments, and extract registerMockedServiceUrls(registry) and registerOAuthProperties(registry) if the grouping is worth naming"
     },
     {
       "id": 41,
@@ -511,9 +511,9 @@
       "issue": "The class declares two loggers: Lombok @Slf4j (line 41, its log field never used) and a hand-written LOGGER = LoggerFactory.getLogger(IntegrationBase.class) (line 46, used at line 115)",
       "fix": "Must: IntegrationBase has one logger. One way: drop the LOGGER field and the Logger/LoggerFactory imports and use the @Slf4j log in usingStub()",
       "file": "src/test/java/uk/gov/defra/trade/imports/integration/IntegrationBase.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "drop the LOGGER field and the Logger/LoggerFactory imports and use the @Slf4j log in usingStub()"
     },
     {
       "id": 42,
@@ -523,9 +523,9 @@
       "category": "comments",
       "issue": "README.md:87 says MDM responses are cached for cache.mdm.ttl-minutes and that dependencies are not probed for that reason. Commodity search and species check call MDM on every request, uncached; only countries and ports are cached, so DependencyAvailable for MDM now moves with every search.",
       "fix": "Must: the README says which MDM calls are cached. One way: Countries and ports are cached for cache.mdm.ttl-minutes; commodity search and species check are not, so DependencyAvailable for MDM reflects the latest search.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Countries and ports are cached for cache.mdm.ttl-minutes; commodity search and species check are not, so DependencyAvailable for MDM reflects the latest search."
     },
     {
       "id": 43,
@@ -535,9 +535,9 @@
       "category": "structure",
       "issue": "One rule, 5 findings: reference-data #6, #7, #9, #18, #26. What a missing or empty MDM answer means: MdmService turns a 200 with no body or null content into an ordinary empty answer (three inline copies plus pageOrEmpty, one log message for two cases), CommoditySearchService and SpeciesCheckService each restate that a null totalElements counts as zero, and SpeciesCheckService then reports every line on that code as missing, so the frontend refuses a valid draft.",
       "fix": "Must: one owner in MdmService decides what a missing body means (an error the callers can tell apart from a real empty answer), with one log per case naming the call; the callers stop restating it. One way: throw an MdmUnavailableException for a missing body or content, map it to 503 in the handler, and drop the null-totalElements checks from the two services.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "throw an MdmUnavailableException for a missing body or content, map it to 503 in the handler, and drop the null-totalElements checks from the two services."
     },
     {
       "id": 44,
@@ -547,9 +547,9 @@
       "category": "naming",
       "issue": "One rule, 2 findings: reference-data #4, #11. The Latin name has three names along one path: speciesName in MdmSpecies and MdmProductSearchResult, scientificNames in MDM JSON, and latinName in the rest of the service and its API.",
       "fix": "Must: one Java name for the Latin name, with MDM names only in @JsonProperty. One way: rename the record components to latinName and keep @JsonProperty(\"speciesName\").",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "rename the record components to latinName and keep @JsonProperty(\"speciesName\")."
     }
   ]
 }

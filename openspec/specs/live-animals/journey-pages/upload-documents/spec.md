@@ -126,7 +126,7 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Rejected" with an error and no way to view it. The upload service reports a rejection as a message in its own wording and no code, so the system cannot tell a virus from any other refusal the scan makes and MUST NOT name a cause.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. The upload service reports the reason it refused a file alongside its own wording, so a refused document MUST be shown as the reason it was refused for — "Virus found", "Upload failed" or "Download failed" — and MUST say the same to assistive technology. A reason the system has no wording for MUST be shown as "Rejected" rather than named wrongly.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -136,14 +136,20 @@ The system MUST show a document as "Scanning for virus" immediately after upload
 - **WHEN** the virus scan completes and the file is clean
 - **THEN** its row shows "Check completed" and a link to view the file appears
 
-#### Scenario: A rejected upload is flagged and blocked
+#### Scenario: A rejected upload is flagged and blocked, naming the reason
 **ID**: SCN-DOCS-007-B
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
 - **THEN** its row shows "Scanning for virus"
-- **WHEN** the scan completes and rejects the file
-- **THEN** its row shows "Rejected", an error explains the file cannot be used and must be removed, and there is no way to view the file
-- **AND** neither the row nor the error says a virus was found
+- **WHEN** the scan completes and refuses the file for carrying a virus
+- **THEN** its row shows "Virus found", an error explains the file cannot be used and must be removed, and there is no way to view the file
+- **AND** assistive technology is told the file contains a virus
+
+#### Scenario: A refusal the system has no wording for is not named wrongly
+**ID**: SCN-DOCS-007-C
+- **GIVEN** the user has uploaded a document
+- **WHEN** the scan refuses the file for a reason the system has no wording for
+- **THEN** its row shows "Rejected" rather than naming a cause, and there is no way to view the file
 
 ### Requirement: The user cannot continue while a document is still being scanned or has been rejected
 **ID**: REQ-DOCS-008

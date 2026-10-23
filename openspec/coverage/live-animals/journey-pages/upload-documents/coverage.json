@@ -171,11 +171,20 @@
         },
         {
           "id": "SCN-DOCS-007-B",
-          "name": "A rejected upload is flagged and blocked",
+          "name": "A rejected upload is flagged and blocked, naming the reason",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Rejected with error summary and no view link", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders a rejected document and its per-file error until it is removed", "strength": "full", "notes": "scanning → Rejected, error, zero view links" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should name the reason virus.pdf was refused for, in the tag and the key the client rewrites by", "strength": "full", "notes": "the tag text and the key the polled client rewrites by; sibling cases cover the upload and download failures" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-007-C",
+          "name": "A refusal the system has no wording for is not named wrongly",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should fall back to the plain refusal tag for a reason it has no wording for", "strength": "full", "notes": "an undeclared code falls back to Rejected rather than naming a cause" }
           ]
         }
       ]

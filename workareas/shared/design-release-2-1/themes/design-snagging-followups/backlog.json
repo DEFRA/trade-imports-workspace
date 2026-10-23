@@ -62,7 +62,10 @@
       "theme": "design-snagging-followups",
       "status": "blocked",
       "kind": "fix",
-      "repos": ["frontend", "tests"],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -89,7 +92,9 @@
       "theme": "design-snagging-followups",
       "status": "todo",
       "kind": "fix",
-      "repos": ["frontend"],
+      "repos": [
+        "frontend"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -115,7 +120,11 @@
       "theme": "design-snagging-followups",
       "status": "todo",
       "kind": "fix",
-      "repos": ["frontend", "plantsfrontend", "tests"],
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -142,7 +151,10 @@
       "theme": "design-snagging-followups",
       "status": "todo",
       "kind": "fix",
-      "repos": ["frontend", "plantsfrontend"],
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -167,7 +179,10 @@
       "theme": "design-snagging-followups",
       "status": "todo",
       "kind": "feat",
-      "repos": ["plantsfrontend", "tests"],
+      "repos": [
+        "plantsfrontend",
+        "tests"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -192,7 +207,9 @@
       "theme": "design-snagging-followups",
       "status": "todo",
       "kind": "chore",
-      "repos": ["plantsfrontend"],
+      "repos": [
+        "plantsfrontend"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -214,7 +231,10 @@
       "theme": "design-snagging-followups",
       "status": "blocked",
       "kind": "fix",
-      "repos": ["frontend", "tests"],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
       "sources": [
         {
           "source": "review:engineering-2026-10-23",
@@ -225,6 +245,37 @@
       "openQuestions": [
         "Sam: should Notification submitted list the ITAHC as owed when other documents were uploaded but no ITAHC?"
       ],
+      "gate": null
+    },
+    {
+      "id": "inc-231",
+      "title": "Upload documents: every save button checks a part-filled document and never drops one",
+      "detail": "BA find, 23 Oct. On animals Upload documents, Save and continue drops a part-filled document with no error whenever no document type is chosen (startsADocument in documents/form/payload.js:45-48 counts only an offered type), and Save and return to overview always leaves via leavePage, throwing away even a complete document (documents/controller.js:293-335). Save and add another already checks correctly through documentAddErrors (form/errors.js:54-61). The all-or-nothing rule (Confluence 6497338582, Documents: 'Optional - All-or-nothing') is the document's own rule, so under the 7 October ruling (c-211) Save and return refuses a half-filled document rather than skipping it. Fix: a document is started when any of reference, type (offered or not), date text or a file with content is given; route by that on every button; on Save and return, a complete document is saved and the trader goes to the overview. Unit tests at controller.test.js:582-614 pin the current wrong behaviour and change. Origin and main reason for import are as designed (only required-answer checks are skipped on Save and return). Plants has no upload documents page, so it is unaffected. Assumes Sam confirms the all-or-nothing group counts as its own rule (recommended, matches the BA's scenario).",
+      "acceptanceCriteria": [
+        "Given I am adding a document and have given some but not all of its reference, type, date of issue and attachment, when I select Save and add another, Save and continue or Save and return to overview, then I stay on the page with an error for each detail not given, what I typed is kept, and no document is added. (BA, 23 Oct; spec REQ-DOCS-016)",
+        "Given a reference, date of issue and attachment but no type, when I select Save and continue, then I see 'Select a document type' and no document is added.",
+        "Given every detail of a document is filled in, when I select Save and return to overview, then Overview is shown and reopening Upload documents lists the document.",
+        "Given nothing is filled in, when I select Save and return to overview, then Overview is shown with no error.",
+        "Given a document with an impossible date or an unsupported file type, when I select Save and return to overview, then that field's error is shown and nothing is added.",
+        "The same holds without JavaScript.",
+        "openspec upload-documents REQ-DOCS-016 covers every save button and defines a started document as any of the four details, and journey-flow REQ-FLOW-004 gains a scenario that an all-or-nothing group is refused on Save and return; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug report 23 Oct (Save and continue / Save and return drop a part-filled document); investigation of origin/main documents/controller.js:293-335, form/payload.js:45-48, controller.test.js:582-614"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
       "gate": null
     }
   ]

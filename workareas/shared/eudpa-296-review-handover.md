@@ -11,6 +11,57 @@ beside this file, with what remains and why it was left rather than guessed at.
 Read it before reopening either: several of the review's stated means turned
 out not to work, and that is recorded there.
 
+## Read this first: a Critical is open again, and the PASS comments are stale
+
+**The PASS comments posted on all five PRs no longer hold.** They state
+Critical 0 open. Frontend **#126 is Critical and has been reopened**, on
+evidence that the premise it was closed on is false. Re-post the
+summaries once #126, #104 and #135 are settled — `share-review.sh
+EUDPA-296 --comment-only --summary` regenerates them from the item
+files.
+
+### What the cdp-uploader source says
+
+Read on 23 Oct from `DEFRA/cdp-uploader`, which is the authority here and
+had not been consulted:
+
+`src/server/common/constants/file-errors.js` declares **six** rejection
+codes, each paired with a message — `FILE_VIRUS`, `FILE_EMPTY`,
+`FILE_TOO_LARGE`, `FILE_INVALID_TYPE`, `FILE_UPLOAD_FAILED`,
+`FILE_DOWNLOAD_FAILED`. And `src/__fixtures__/file-details-rejected-virus.js`
+carries `errorCode: 'FILE_VIRUS'` **alongside** `errorMessage`, so the
+code travels on the wire.
+
+That overturns three of this review's conclusions:
+
+- **Defect 6 / item #126 was closed on a false premise.** It was fixed by
+  making every REJECTED document read `copy.scanTags.rejected` and
+  announce the same, reasoning that a post-scan rejection arrives as
+  prose with no code so the page could not name the cause. The cause is
+  on the wire. The page cannot read it only because
+  `CdpScanResultFile` omits the field.
+- **Defect 4's "assumption that cdp-uploader emits `FILE_EMPTY`"** was not
+  an assumption. It is a documented code.
+- **The "Virus found" → "Rejected" wording** was therefore a workaround
+  for a limitation that does not exist. Per-reason wording is a real
+  choice, which is what the external reviewer's point 1 was asking about.
+
+It also exposed a live defect: the frontend maps **three of the six**
+codes, so `FILE_VIRUS` falls through to "The file could not be uploaded.
+Try again." A trader whose file holds a virus is invited to re-upload it.
+
+| Item | Repo | What |
+|---|---|---|
+| **#104** | backend | `CdpScanResultFile` has no `errorCode`, so the reason is discarded at the boundary — the single omission everything else follows from |
+| **#135** | frontend | Three of six codes unmapped; a virus is told to try again |
+| **#126** | frontend | **Reopened, Critical, Discuss.** Per-reason wording is now possible; needs a product decision rather than a workaround |
+| **#134** | frontend | The stand-in claim validates nothing, which is why the reference mismatch (#13) survived every suite |
+
+**Do these four together.** They are one thread: carry the code across
+the boundary, map all six, decide the wording on evidence, and make the
+stubs emit the real codes — which also closes **#61**'s last spy, since
+`FILE_EMPTY` and the absent-file case stop being unproducible.
+
 ## A second reviewer, 23 Oct — six items reopened or raised
 
 An external review of the PR set found four defects this review missed,

@@ -1,9 +1,22 @@
-# EUDPA-296 — the frontend items still open
+# EUDPA-296 — the frontend items, all closed
 
-Written 2026-10-22, **rewritten 2026-10-23** after the owner closed the scope.
-The frontend's 136 items are now 112 Done, 15 Merged, 5 Won't Fix,
-2 Auto-Resolved and **2 open**: `#136` and `#58`, the only work left on the
-ticket.
+Written 2026-10-22, rewritten 2026-10-23 when the owner closed the scope, and
+**closed out 2026-10-23**: `#136` and `#58`, the last two items on the ticket,
+both landed. **No item is open in any repo** — `review-counts.sh EUDPA-296`
+reads 250 Fix+Done, 39 Merged, 15 Won't Fix, 2 Auto-Resolved, 1 Discuss+Done.
+
+| Item | Commit | What landed |
+|---|---|---|
+| `#136` | `a291e389` | The page says the document was not saved to the notification instead of claiming the answers were saved, carries the handle that takes the upload on again, and holds Continue back until the notification lists every document the service has taken on |
+| `#58` | `4b221a52` | A session is opened per page view, not per render: a render reuses the one the page is already showing, carried in the refresh link and a hidden form field, looked up on the notification rather than trusted from the handle |
+
+Both are **committed but not pushed** at the time of writing, so the PR's E2E
+cascade has not run on them. Verified locally: 3179 unit (up from 3153),
+474 FIT (`PORT=3050 npm run test:fit -- --project=features`), lint and
+`format:check` clean, and the frontend SonarCloud gate run by hand against
+PR 424 — **PASSED**. Every new assertion was proved by an invert-red probe.
+The dev-mode stack E2E could not be run from that session: the permission
+system refused the stack bring-up.
 
 `#61` and `#126`, which this file used to carry, are **done** — see the
 handover beside this file for what landed. Every repo is pushed and all five
@@ -66,19 +79,31 @@ code rather than assumed:
 Note the same problem covers `retryRemoveIndex` and `retryRemoveUploadId`, which
 are rendered on the recoverable-save path and cross the boundary too.
 
-## #58 — unclaimed upload sessions and orphaned S3 objects (IN SCOPE)
+## #58 — unclaimed upload sessions and orphaned S3 objects (DONE, `4b221a52`)
 
-**What is fixed.** The backend's own upload session has a 24h TTL, so a
-registration the browser never returns with expires.
+**What was already fixed.** The backend's own upload session has a 24h TTL, so
+a registration the browser never returns with expires.
 
-**The work, and it is ours.** The page mints a session on every render,
-including each tick of the no-JS refresh link (`MAX_POLL_ATTEMPTS`), so one
-document's scan leaves a run of sessions and unreferenced S3 objects behind.
-Reuse the session already open for the page view. That is a change to
-`handlers/open-upload-session.js` and the `get` path, and it needs care: the
-correlation handle is what scopes an upload to a notification — the one rule
-that matters, because the handle arrives from the browser — so reuse must not
-let two concurrent adds share one handle.
+**What landed.** `handlers/open-upload-session.js` became
+`handlers/add-form-session.js`: it reuses the session the page view is already
+showing where the request carries its handle, and opens one otherwise. The
+handle travels under one key, `uploadSession` — in the refresh link's query
+(`contracts/upload-session.js` `OPEN_SESSION_KEY`, used by
+`view-model/refresh.js`) and in a hidden field on the form, so a GET re-render
+and a POST re-render both reuse. It is looked up with
+`findByCorrelationId({ journeyId, correlationId })`, which is journey-scoped, so
+a handle another notification opened reaches nothing and the page view opens its
+own. A page view carrying no handle always opens its own session, which is how
+two concurrent adds are kept from sharing one handle. An unreadable lookup logs
+at warn and opens a new session rather than failing the page. The reasoning is
+in the repo beside the code, in `sets/live-animals/docs/add-a-collection.md`.
+
+**The one corner it does not cover,** recorded rather than hidden: a trader who
+uses the browser's Back button onto a page whose session has since been
+consumed, and then clicks refresh, keeps the consumed session where the old
+code would have opened a fresh one. Their add is refused by the upload service
+and recovers on a reload. Closing it needs single-use tracking of a session,
+which means server-side state the page does not have.
 
 **Out of scope, and not reachable from here.** cdp-uploader's own session state
 and the S3 objects from abandoned uploads are not cleaned up by that TTL, and we

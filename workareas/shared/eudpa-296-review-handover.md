@@ -9,7 +9,16 @@ survive.
 
 ## Read this first
 
-**One Critical is open: #136**, raised 23 Oct. The original ten are all closed —
+**Both remaining items have landed. Nothing is open on this ticket in any
+repo.** `#136` is `a291e389` and `#58` is `4b221a52`, both in
+`animals-frontend`, both committed on
+`feat/EUDPA-296-direct-to-uploader-upload` and **not yet pushed** — so the PR
+checks have not seen them, and the E2E cascade has not run on them. What was
+verified before the stop, and what is still owed, is under "Where to pick up".
+The sections below this one are the state as of the earlier stop; read them for
+the reasoning, not for what is open.
+
+**One Critical was open: #136**, raised 23 Oct. The original ten are all closed —
 #126 was reopened as Critical that day because the premise it had been closed on
 was false, and is now Done on evidence with the owner's wording decision
 recorded below. #136 is new, found while remediating rather than by the review's
@@ -113,7 +122,7 @@ for.
 | Repo | Items | Done | Open | Merged | Won't Fix | Notes |
 |---|---|---|---|---|---|---|
 | `animals-backend` | 103 | 86 | 0 | 12 | 6 | complete |
-| `animals-frontend` | 136 | 112 | **2** | 15 + 2 auto | 5 | #136 and #58 — the only work left on the ticket |
+| `animals-frontend` | 136 | 114 | 0 | 15 + 2 auto | 5 | complete — #136 `a291e389`, #58 `4b221a52`, both unpushed |
 | `ins-tests` | 20 | 11 | 0 | 4 | 5 | complete |
 | `performance-tests` | 10 | 8 | 0 | 2 | 0 | complete |
 | `workspace` | 37 | 30 | 0 | 6 | 1 | complete |
@@ -397,23 +406,37 @@ code and should not re-litigate these.
 
 ## Where to pick up
 
-Nothing is waiting on a decision any more. Two items of code, then merge.
+**Both items are written and committed. What is left is a push, the E2E and the
+merge.**
 
-1. **#136** — the claimed-but-unlisted document and the untrue banner. Critical
-   and user-facing; do this first. Both halves matter: say something true on
-   that path, and stop Continue proceeding past a claimed upload the collection
-   does not hold.
-2. **#58** — reuse the session already open for the page view, so a scan does
-   not leave a run of orphan registrations behind. Keep the correlation handle
-   per-add.
-3. **Re-post the PR summaries** once both land:
-   `share-review.sh EUDPA-296 --comment-only --summary`. They currently state
-   Critical 0 open, which #136 makes false.
-4. **Merge in the order above**, or the set together.
+1. **Push `animals-frontend`.** `a291e389` (#136) and `4b221a52` (#58) are
+   local only. The push's own cascade is what runs the E2E — do not dispatch
+   `e2e-tests.yml` by hand, for the reasons under "Patterns to re-check".
+2. **Watch the documents specs in that run.**
+   `documents-refresh-no-js.spec.ts` is the one #58 changes the behaviour
+   under: it clicks the refresh link in a loop, which is exactly the render
+   that used to open a session on every tick. Its only href assertion is
+   `/attempt=1/`, which still matches now the link also carries
+   `uploadSession=<handle>` — read, not assumed.
+3. **Re-post the PR summaries:**
+   `share-review.sh EUDPA-296 --comment-only --summary`. The posted PASS
+   comments state Critical 0 open, which was false while #136 was open and is
+   true again now.
+4. **Merge the set together, or the backend first** — see "Merge order
+   matters".
 
-Both are in `animals-frontend` and both touch the documents controller, so they
-batch into one commit cluster — the pre-commit hook runs the full suite, so that
-is the cheaper shape.
+**Verified before the stop:** 3179 unit tests (up from 3153), 474 FIT, `lint`
+and `format:check` clean, and the frontend SonarCloud gate run by hand against
+PR 424 — **PASSED**. Every new assertion was proved by an invert-red probe: the
+banner body, the retry handle, the Continue gate, the stub's claimed tracking,
+session reuse, and the journey-scoping of a carried handle each went red with
+its own production line disabled.
+
+**Not verified: the E2E.** The dev-mode stack could not be started from that
+session — the permission system refused `run-stack.sh -d` and `tim docker dev`
+alike. The change is to the upload journey, and this ticket has been bitten
+three times by couplings only the E2E could see, so treat the push's run as
+load-bearing rather than a formality.
 
 Before a re-review, a short re-verification, in this order — it is cheaper than
 diagnosing a red E2E backwards:

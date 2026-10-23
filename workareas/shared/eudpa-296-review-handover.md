@@ -9,12 +9,69 @@ survive.
 
 ## Read this first
 
-**Both remaining items have landed. Nothing is open on this ticket in any
-repo.** `#136` is `a291e389` and `#58` is `4b221a52`, both in
-`animals-frontend`, both committed on
-`feat/EUDPA-296-direct-to-uploader-upload` and **not yet pushed** — so the PR
-checks have not seen them, and the E2E cascade has not run on them. What was
-verified before the stop, and what is still owed, is under "Where to pick up".
+**Both remaining items have landed, and so has `main`. Nothing is open on this
+ticket in any repo, and everything is pushed.** `#136` is `a291e389` and `#58`
+is `4b221a52`, both in `animals-frontend`.
+
+**Then EUDPA-720 happened, and it is the thing to know about this branch now.**
+*Design Release 2.1 design snagging* (`032c9ed8`, 335 files, +12,709/−7,859)
+landed on `main` and rewrote the same documents feature this branch rewrote.
+PR 424 went `CONFLICTING`, and **GitHub stops running a conflicting PR's
+checks** — there is no merge ref for a `pull_request` workflow to build, so a
+push produces no runs at all. That is why a push on this branch looked like it
+had done nothing, and no amount of re-pushing would have fixed it. Merging
+`main` in is what restored the checks.
+
+The merge is `f1480eb5` (frontend), `0aa2668` (ins-tests) and `e6782006` (this
+repo): 71 conflict hunks across 21 files in the frontend, reconciled rather
+than taken from one side. The frontend's `032c9ed8` and ins-tests' `ed430c9`
+are two halves of one change and had to be merged together.
+
+**The frontend merge commit's own message is the record of what was decided and
+why.** Read it before re-reviewing the documents feature. The short version:
+this branch wins where `main`'s side is the byte-proxy path AC1/AC2 deleted
+(`postAdd`, `uploadOutcome`, `saveAddedDocument`, `handleOversizePayload`, the
+local size/type checks); `main` wins where it made a deliberate change (the
+`recoverableSave(request, …, ids)` signature and its one central log,
+`kit.logRefusal` as the only refusal log, copy-deck file messages, the
+`hasDocumentsNotClearedByScan` rename, the summary-card layout, `jsdom` in
+place of cheerio — which is not in the merged lock, and the lock was not
+regenerated).
+
+**Three traps this merge produced, all of which git merged *cleanly*:**
+
+- `documentScanCardErrors` came out with `request` as both a positional and a
+  destructured parameter — a SyntaxError. Both sides had added `request`, in
+  different positions.
+- `addedDocumentRows` came out declared twice on the ins-tests page object,
+  which is invalid TypeScript.
+- `claimReturnedUpload` kept the old two-argument `recoverableSave` call while
+  `main` had changed the signature, so the **save thunk was the failure
+  handler**: every return from the upload service logged #136's "could not save
+  the document" and redirected without appending. The unit suite saw it only as
+  a missing document; it took driving the claim end to end to see why. **If a
+  shared signature changes under this branch again, grep every call site** —
+  the ones that conflicted are not the ones that bite.
+
+A fourth was caught by the gate rather than by lint: `render` reached 76 lines
+against SonarCloud's 75-line S138 limit, because both sides had added to it.
+The local `sonarjs/max-lines-per-function` is set to 200, so `npm run lint`
+passes on a function the gate fails. Split in `b03c2a6c`.
+
+**Two of `main`'s own statements were made false by this branch and are
+corrected rather than kept:** the 50 MB cap (`main` never moved it from 10, and
+the direct-to-uploader session enforces it, so the CDP ingress cap does not
+bound it) and the status column, which names the refusal reason per #126. The
+document cap's limit error keeps this branch's summary link to
+`#documents-added` rather than `main`'s field error on `#file`, because #131
+shuts the add control at the cap — `#file` would send a trader to a control
+they cannot use. `page-design.md` says so.
+
+Verification at this stop: frontend **3416 unit** (from 3179 here plus `main`'s
+additions) and **619 FIT**, `lint`, `lint:arch` and `format:check` clean, and
+the frontend SonarCloud gate run by hand — **PASSED**. ins-tests `lint` (563
+tests tag-checked) and `typecheck` clean. `tim` 3289 tests pass.
+
 The sections below this one are the state as of the earlier stop; read them for
 the reasoning, not for what is open.
 
@@ -53,7 +110,10 @@ the harness environment's Node is below the pinned 24.21.0 and `npm ci` fails,
 does not fit: a failing gate would have *blocked* the push. The hook is not
 being invoked at all. Worth checking the `PreToolUse(Bash)` matcher in
 `.claude/settings.json`; it is not protecting pushes today. **Until it is, run
-the gate by hand** — see "Running the Sonar gates by hand" below.
+the gate by hand** — see "Running the Sonar gates by hand" below. Still not
+firing on the four pushes after the EUDPA-720 merge, and the gate run by hand
+**caught a real failure** those pushes would otherwise have carried (the
+`render` S138 breach above). It is worth fixing.
 
 ## What the latest session did
 

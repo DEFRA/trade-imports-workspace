@@ -9,7 +9,7 @@ Each folder holds `description.txt` — the Jira description field, verbatim —
 
 ## The tickets
 
-Five themes have their filled-in tickets. Every one is `In Dev` and hangs
+Five themes have their filled-in tickets. Design snagging's are `Deskcheck` (merged to main on 23 October); the rest are `In Dev`. All hang
 off epic **EUDPA-328**.
 
 ### Journey foundation — 74 scenarios, 19 files
@@ -63,7 +63,7 @@ The row counts include the second build's five rows from
 `themes/design-snagging-b/backlog.json` (inc-214, inc-216, inc-217, inc-219,
 and the final tidy inc-221), which `derived.json` does not
 read. Merged-into rows are listed with that state; the dropped row inc-222 is
-left out. The work is on draft PRs, not merged.
+left out. The work merged to main on 23 October (animals #421, plants #113, tests #42); the engineering review's follow-ups are in `themes/design-snagging-followups/backlog.json`.
 
 Every theme's per-domain scenarios and files sum to its own totals, which is how
 a dropped or double-counted file gets caught. Each new ticket *relates to* the

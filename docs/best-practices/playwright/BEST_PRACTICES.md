@@ -132,7 +132,7 @@ Use role-based and label-based locators. See [`node/playwright.md` §4](../node/
 
 Avoid CSS class selectors (`.govuk-button`), XPath and generated ids.
 
-A page-object accessor returns what its name says. `options` means every rendered option. If a filtered view is useful, give it its own name, such as `selectableOptions`.
+A page-object accessor returns what its name says. `options` means every rendered option, and a spec asserts that whole list.
 
 ## Assertions
 
@@ -154,7 +154,7 @@ await expect.poll(() => collection.countDocuments({ referenceNumber }), { timeou
 
 ### Assert the whole rendered list
 
-When a test lists the options of a `<select>` or any rendered list, assert every item the page renders, in order: the placeholder, any divider, then the real options. Do not hide a divider with `option:not([disabled])` or filter it out in a page object. The full list catches a divider being removed by accident.
+When a test lists the options of a `<select>` or any rendered list, assert every item the page renders, in order: the select text, any divider, then the real options. Do not hide a divider with `option:not([disabled])` or filter it out in a page object. The full list catches a divider being removed by accident.
 
 ```typescript
 // Bad

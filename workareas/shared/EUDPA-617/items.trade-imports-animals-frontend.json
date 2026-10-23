@@ -3557,9 +3557,9 @@
       "category": "structure",
       "issue": "One rule, 6 findings: animals-frontend #76, #214, #226; ins-tests #6, #21; workspace #1. What a notification sends as its commodity name: mapper-a sets commodity.name to lines[0].commodityCode, so PIMS gets 0102 as TradeLineItem description and commonName on every line, the INS read model and dashboard show 0102, and the frontend dashboard card shows a bare code. The oracles, the outbox and aggregated E2E specs and the GBN-AG lineage doc were each changed to expect the code. The ticket (14 Oct decision 3) says each line saves and sends the common name and commodity description, and the common name each line now stores never reaches the payload.",
       "fix": "Must: one decision, recorded on the ticket, on what commodity.name (and the PIMS commonName/description) carries; the mapper sends it; the oracles, both E2E specs, the dashboard row and the lineage doc assert or describe that one value. One way: send the commodity description (from reference-data) as commodity.name and the species common name per species, which needs a backend change for the species common name; until then revert the E2E expectations to a named constant and raise the backend ticket.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "S12 stands: commodity.name carries the CN code (0102) for now; real names come via EUDPA-669 (decision recorded on EUDPA-617 comments 935687, 935689; Tarun asked on EUDPA-669 comment 935688). Fix is one stated value everywhere, not a revert. (1) docs/analysis/gbn-ag-field-lineage.md:245 (workspace #1): use Hamid's wording 'sends the first line's CN code (e.g. 0102) on every line, from commodity.name; each line also stores MDM's common name, which the frontend mapper does not send', and point to EUDPA-669. Also correct the section 4 row near line 406: PimsLineItemMapperV2 on dynamics-gateway main passes description/scientificName/commonName to PIMS v0.2.0, so the gateway does not drop them. (2) Oracles (#226), dashboard row (#214) and ins-tests outbox and aggregated specs (ins-tests #6, #21) keep 0102, asserted against a named constant rather than a literal."
     },
     {
       "id": 288,
@@ -3569,9 +3569,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: animals-frontend #254, #276; workspace #12. The permanent-address rule: the ticket (14 Oct decision 5, confirmed by design on 15 Oct) keys it on 01061900 plus the Latin name, but rules.js, the identifiers.js gate and REQ-OB-COMMODITY-006 in the spec all say species alone. MDM lists one species under several codes, so a cat or dog line under another code is asked a mandatory permanent address.",
       "fix": "Must: one owner holds the permanent-address rule as code plus Latin name, the gate and the spec both state it, and a test fails if a listed species under another code gets the question. One way: make PERMANENT_ADDRESS_SPECIES a map keyed by 01061900 in rules.js, gate on both commodityCode and speciesLatinName in identifiers.js, and rewrite REQ-OB-COMMODITY-006.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Follow ticket decision 5 (14 Oct, confirmed by design 15 Oct) and plan S9; this replaces S14(e)'s species-alone choice. (1) rules.js: hold PERMANENT_ADDRESS_SPECIES as code plus Latin name: { '01061900': ['Felis catus', 'Canis familiaris', 'Canis lupus familiaris', 'Mustela putorius furo'] }. (2) identifiers.js (~line 164): gate permanentAddress on both the line's commodityCode and its speciesLatinName (#254, #276). (3) Add a test that a listed species under another code is not asked for a permanent address; make the existing 'genus Felis under 01061900' whitelist test exercise the code half. (4) Update services.md (says the rule is keyed on species); rewrite REQ-OB-COMMODITY-006 in openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md:86 to 'a line of code 01061900 whose species is ...' and add a scenario for the same species under another code (workspace #12). Context: in today's MDM capture (fixtures/commodities.json) all four species sit only under 01061900, so behaviour does not change now; this guards against MDM's re-upload."
     },
     {
       "id": 289,
@@ -3581,9 +3581,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: animals-frontend #191; workspace #16. The search result cap: SEARCH_PAGE_SIZE = 10 and REQ-COMMODITY-SELECT-011 both cap a search at ten species with no sign that more exist, but the ticket (15 Oct) agreed one page of up to 100, and what happens past the cap is still an open design question. Searching 0102 lists 10 of 15 species, which also makes SCN-COMMODITY-SELECT-003-A untrue.",
       "fix": "Must: one agreed cap, recorded on the ticket, used by the frontend, the spec and the ins-tests client, with the page saying when results were cut off if a cap stays. One way: ask on EUDPA-617, set SEARCH_PAGE_SIZE to the answer (100 per the 15 Oct decision), align REQ-011 and SCN-003-A, and add a refine-your-search message.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Follow the ticket's 15 Oct decision (comment item 5: one page of up to 100 results); this replaces plan S6's frontend size of 10. (1) Set SEARCH_PAGE_SIZE to 100 in matching.js; reference-data already defaults to and caps at 100, so this is frontend-only. (2) Rewrite REQ-COMMODITY-SELECT-011 in openspec/specs/live-animals/journey-pages/commodity-selection/spec.md to say up to 100. (3) Make SCN-COMMODITY-SELECT-003-A true again: searching by code, common name or Latin name offers the same species; check the ins-tests expectedSearches, which leaves out Bison bison. (4) No 'refine your search' or 'showing 100 of N' message: what happens past 100 stays design's open question on the ticket (15 Oct). Today only 01061900 (120 species) exceeds 100."
     },
     {
       "id": 290,

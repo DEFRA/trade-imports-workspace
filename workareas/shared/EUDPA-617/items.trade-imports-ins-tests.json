@@ -72,9 +72,9 @@
       "issue": "Absorbed behaviour change: the expected trade line description and commonName changed from 'Cow' to the CN code '0102' (commodityLines.cattle.commodityCode) while the journey still picks cattle, so the test now locks in a GBN-AG event that sends PIMS the code as both description and commonName. The ticket's agreed decisions (comment of 14 Oct, decision 3) say each line saves and sends PIMS the CN code, Latin name, common name and commodity description; the frontend mapper (mapper-a/commodity.js commodityFromLinesA, name: lines[0].commodityCode) now fills commodity.name with the code.",
       "fix": "Must: the outbox assertions state the description and commonName the ticket agreed PIMS receives for a cattle line (the MDM commodity description and common name), and the frontend sends those values; if the team instead decides the code is the right value, that decision is recorded on the ticket and in the behaviour spec before this expectation is kept. One way: add description and commonName to CommodityLine for cattle from the reference-data stub row, assert line.description toEqual([commodityLines.cattle.description]) and line.commonName toBe(commodityLines.cattle.commonName), and fix commodityFromLinesA to carry them.",
       "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Under S12 (recorded on EUDPA-617 comments 935687 and 935689; same note as animals-frontend #287), 0102 is the stated value until EUDPA-669 lands, so keep 0102 rather than restoring 'Cow' as the finding suggests. Assert it against a named constant, not a literal: e.g. commodityLines.cattle.commodityCode for the outbox description and commonName, and the same constant for draftDoc.commodity and submittedDoc.commodity in the aggregated spec. Add a short comment that the real commodity name comes with EUDPA-669."
     },
     {
       "id": 7,
@@ -261,9 +261,9 @@
       "issue": "Absorbed behaviour change: the expected aggregated commodity changed from commodityCodes.cow ('Cow') to '0102' at lines 57 and 78 on the same journey set-up, so the INS read model now holds a CN code where it held a commodity name. The INS dashboard renders this field straight into its Commodity column (trade-imports-ins-frontend features/dashboard/view-model/list.js line 74, stub row 'Cattle'; read from the live clone at main fee6874, not in this PR set), so traders would see '0102'. The ticket does not ask for the dashboard or read model to change.",
       "fix": "Must: the aggregated commodity value is the one the INS dashboard is meant to show for a cattle notification, agreed on the ticket, and the test asserts that value; a change to a code is only kept if the dashboard copy and its stub are changed with it in the same PR set. One way: have the frontend send the commodity description or common name as commodity.name (see the outbox finding) and assert draftDoc.commodity and submittedDoc.commodity against that named constant.",
       "file": "tests/ins/e2e/features/aggregated-notification.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Under S12 (recorded on EUDPA-617 comments 935687 and 935689; same note as animals-frontend #287), 0102 is the stated value until EUDPA-669 lands, so keep 0102 rather than restoring 'Cow' as the finding suggests. Assert it against a named constant, not a literal: e.g. commodityLines.cattle.commodityCode for the outbox description and commonName, and the same constant for draftDoc.commodity and submittedDoc.commodity in the aggregated spec. Add a short comment that the real commodity name comes with EUDPA-669."
     }
   ]
 }

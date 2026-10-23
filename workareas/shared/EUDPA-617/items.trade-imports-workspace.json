@@ -10,9 +10,9 @@
       "issue": "The TradeLineItem.commonName bullet says it 'sends the line's CN code'. It sends the first line's code on every line: the frontend's commodityFromLinesA sets commodity.name to lines[0].commodityCode, and the backend's TradeLineItem.linesFrom(commodity.getName(), c) puts that one name on every complement. A notification with lines under 0102 and 01061900 sends commonName 0102 on the 01061900 lines too. The bullet also leaves out that each line now holds MDM's own common name (commonName, from the search row via seedLine), which speciesEntryFromLine does not send, and that changes the scope of the 'proper fix'. (Backend checked at a9d26fc, which has no PR in this set.)",
       "fix": "Must: the bullet says commonName carries the first line's CN code on every TradeLineItem, and that MDM's common name is held on each line but not sent. One way: 'sends the first line's CN code (e.g. 0102) on every line, from commodity.name; each line also stores MDM's common name, which the frontend mapper does not send.'",
       "file": "docs/analysis/gbn-ag-field-lineage.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Under S12 (recorded on EUDPA-617 comments 935687 and 935689; same note as animals-frontend #287), rewrite the TradeLineItem.commonName bullet in Hamid's words: 'sends the first line's CN code (e.g. 0102) on every line, from commodity.name; each line also stores MDM's common name, which the frontend mapper does not send'. Point to EUDPA-669 (comment 935688) for the real names and payload changes. Also correct the section 4 row near line 406 that says the gateway drops description, scientificName and commonName: PimsLineItemMapperV2 on dynamics-gateway main passes them to PIMS v0.2.0."
     },
     {
       "id": 2,
@@ -142,9 +142,9 @@
       "issue": "REQ-OB-COMMODITY-006 says 'The line's species decides, not its code'. The ticket's 14 Oct decision 5 keys the permanent-address question on '01061900 + Latin name', and the product owner's 15 Oct reply (Monica Rivera) keys it on code + species too. The frontend (rules.js PERMANENT_ADDRESS_SPECIES, gated on speciesLatinName only) follows the spec, not the decision. MDM lists one species under several live-animal codes (the ins-tests data has Bos taurus under 0102 and 01061900, and Struthio under 01063300 and 01063980), so a Felis catus or Canis familiaris row under any code other than 01061900 would be asked for a permanent address, which the agreed rule does not do.",
       "fix": "Must: the spec states the permanent-address rule the ticket agreed (code 01061900 together with the domestic cat, dog or ferret species), and the frontend gate matches it; or the ticket records a decision to key on species alone. One way: reword REQ-006 to 'a line of code 01061900 whose species is ...', add a scenario for the same species under another code, and gate permanentAddress on both commodityCode and speciesLatinName.",
       "file": "openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Follow ticket decision 5 (14 Oct, confirmed by design 15 Oct) and plan S9; this replaces S14(e)'s species-alone choice. (1) rules.js: hold PERMANENT_ADDRESS_SPECIES as code plus Latin name: { '01061900': ['Felis catus', 'Canis familiaris', 'Canis lupus familiaris', 'Mustela putorius furo'] }. (2) identifiers.js (~line 164): gate permanentAddress on both the line's commodityCode and its speciesLatinName (#254, #276). (3) Add a test that a listed species under another code is not asked for a permanent address; make the existing 'genus Felis under 01061900' whitelist test exercise the code half. (4) Update services.md (says the rule is keyed on species); rewrite REQ-OB-COMMODITY-006 in openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md:86 to 'a line of code 01061900 whose species is ...' and add a scenario for the same species under another code (workspace #12). Context: in today's MDM capture (fixtures/commodities.json) all four species sit only under 01061900, so behaviour does not change now; this guards against MDM's re-upload."
     },
     {
       "id": 13,
@@ -190,9 +190,9 @@
       "issue": "REQ-COMMODITY-SELECT-011 caps one search at ten species (frontend SEARCH_PAGE_SIZE = 10), but the ticket's 15 Oct decision is 'one page of up to 100 results for now', and what to do past the cap is still an open design question there. The spec settles it as 'reached by a narrower search', though the page gives no sign that results were cut off. It also breaks SCN-COMMODITY-SELECT-003-A (line 35): searching '0102' lists 10 of its 15 species (the ins-tests expectedSearches list leaves out Bison bison, which the frontend fit 'saves pairs' test reaches by name), so searching by common or Latin name does not always offer the same species as searching by code.",
       "fix": "Must: the result cap in the spec and the code matches the cap the ticket agreed (100), or the ticket records the change to ten with the designer's answer on what happens past the cap; and SCN-COMMODITY-SELECT-003-A is true for every species under the cap. One way: ask in EUDPA-617 which cap applies, then align REQ-011, SEARCH_PAGE_SIZE and the 003-A wording with the answer, plus a 'refine your search' message if the cap stays.",
       "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Follow the ticket's 15 Oct decision (comment item 5: one page of up to 100 results); this replaces plan S6's frontend size of 10. (1) Set SEARCH_PAGE_SIZE to 100 in matching.js; reference-data already defaults to and caps at 100, so this is frontend-only. (2) Rewrite REQ-COMMODITY-SELECT-011 in openspec/specs/live-animals/journey-pages/commodity-selection/spec.md to say up to 100. (3) Make SCN-COMMODITY-SELECT-003-A true again: searching by code, common name or Latin name offers the same species; check the ins-tests expectedSearches, which leaves out Bison bison. (4) No 'refine your search' or 'showing 100 of N' message: what happens past 100 stays design's open question on the ticket (15 Oct). Today only 01061900 (120 species) exceeds 100."
     },
     {
       "id": 17,

@@ -9,7 +9,7 @@ Each folder holds `description.txt` — the Jira description field, verbatim —
 
 ## The tickets
 
-All four fully built themes have their tickets. Every one is `In Dev` and hangs
+Five themes have their filled-in tickets (design snagging's final tidy row is still in progress). Every one is `In Dev` and hangs
 off epic **EUDPA-328**.
 
 ### Journey foundation — 74 scenarios, 19 files
@@ -42,6 +42,29 @@ off epic **EUDPA-328**.
 | `origin-page-animals/` | [EUDPA-695](https://eaflood.atlassian.net/browse/EUDPA-695) | Live animals journey | 3 | 14 | 3 |
 | `origin-page-plants/` | [EUDPA-704](https://eaflood.atlassian.net/browse/EUDPA-704) | High-risk plants journey | 1 | 2 | 1 |
 
+### Design snagging — 100 scenarios, 26 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `design-snagging-animals/` | [EUDPA-720](https://eaflood.atlassian.net/browse/EUDPA-720) | Live animals journey | 21 | 72 | 14 |
+| `design-snagging-plants/` | [EUDPA-730](https://eaflood.atlassian.net/browse/EUDPA-730) | High-risk plants journey | 12 | 28 | 12 |
+| `design-snagging-common/` | [EUDPA-729](https://eaflood.atlassian.net/browse/EUDPA-729) | Common to both frontends | 7 | (summary) | (summary) |
+
+72 + 28 = 100 scenarios and 14 + 12 = 26 files. The common ticket is not a
+domain: it summarises the search boxes, date pickers and Back links both
+frontends share, with representative scenarios from both, all already counted
+in the two domain tickets. It goes beyond this skill's one-ticket-per-domain
+split, at Sam's request. Both domain tickets *relate to* it and point to it.
+
+EUDPA-720 was the stub raised at split time; it is now the live animals ticket,
+updated in place, and its folder was renamed from `design-snagging-stub/`.
+
+The row counts include the second build's five rows from
+`themes/design-snagging-b/backlog.json` (inc-214, inc-216, inc-217, inc-219,
+and the final tidy inc-221, still in progress), which `derived.json` does not
+read. Merged-into rows are listed with that state; the dropped row inc-222 is
+left out. The work is on draft PRs, not merged.
+
 Every theme's per-domain scenarios and files sum to its own totals, which is how
 a dropped or double-counted file gets caught. Each new ticket *relates to* the
 ticket the theme was split with.
@@ -55,7 +78,7 @@ skill existed, so their descriptions are updated in place rather than created.
 Three themes are not fully drained, so their tickets would describe unfinished
 work: commodities and import reason (4 rows blocked on MDM commodities), overview
 and review (2 todo, 2 blocked) and type question and templates (9 rows held).
-Each still has only the stub raised at split time. The ten unsplit themes in the
+Each still has only the stub raised at split time, as does documents (EUDPA-724). The ten unsplit themes in the
 main backlog have no tickets at all.
 
 All three hang off epic **EUDPA-328**, "Catch up frontend with prototype".

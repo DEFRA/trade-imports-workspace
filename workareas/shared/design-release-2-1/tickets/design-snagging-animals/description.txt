@@ -1,0 +1,328 @@
+h3. Background
+
+Design Release 2.1 design snagging fixes what the designers found when they compared the test environment with the prototype on 19 October, plus one tester comment on EUDPA-691 about Back links during the opening run. For a live animals notification it touches most of the journey: the region of origin code, Identification details, the CPH number, the consignment addresses, the address pickers, the transporter list, transit countries, the review page, the declaration and Notification submitted, and Upload documents.
+
+Several fixes bring work built on earlier theme branches to the test environment now: the origin page wording, the What are you importing? inset and Commodity details Species column, Main import reason, and the arrival details wording. Their behaviour was specified under those themes, so it is not counted again here.
+
+The search boxes, date pickers and Back links behave the same in both frontends and are described once on the common frontend ticket EUDPA-729. This ticket points there rather than repeat that behaviour in full, but its counts include every live animals scenario.
+
+This ticket covers the *live animals journey only*. The high-risk plants journey has its own ticket, EUDPA-730, and gets far fewer of these changes. The work is not merged yet. It is on draft pull requests: [animals frontend #421|https://github.com/DEFRA/trade-imports-animals-frontend/pull/421] and [tests #42|https://github.com/DEFRA/trade-imports-ins-tests/pull/42] hold most of it. A second, parallel build is on [animals frontend #423|https://github.com/DEFRA/trade-imports-animals-frontend/pull/423] and [tests #47|https://github.com/DEFRA/trade-imports-ins-tests/pull/47], which will be folded into the first set.
+
+h3. What changes for the user
+
+h4. The region of origin code shows its country prefix as soon as a country is picked
+
+With JavaScript, answering that a region code is required shows an empty grey prefix in front of the region code box. Picking a country fills it with that country's code straight away, with no save, and it follows any later change of country. A territory such as the Canary Islands shows its country's code. Without JavaScript there is no prefix at all; a code typed with or without the country's letters is saved joined to them, and the typed country code does not count towards the five-character limit.
+
+h4. Identification details is laid out as the prototype draws it
+
+The summary table gains a Species column. Each commodity has its own section, with a bordered card for each species headed by its Latin name. In each card the entry form comes first and the saved animals follow below it. Once the declared number of animals has been entered, the card shows only the saved animals, with no completion message. The identifier fields are labelled Microchip, Passport and Tattoo, with no hint.
+
+h4. The CPH number keeps every digit
+
+The CPH number keeps its three labelled boxes, styled as drawn. The cursor does not jump to the next box as the prototype's does, because moving focus while someone types fails accessibility guidance and GOV.UK forms do not do it. Typing or pasting the whole nine-digit number into the first box now keeps every digit and saves it as nine digits. Before, the browser dropped everything after the first two. Opened from the consignment addresses page, the CPH page saves and goes back there.
+
+h4. Consignment addresses has a headed section per party
+
+The page is no longer a table. Each party (place of origin, consignor, consignee, importer, place of destination) has a heading, its hint, and either a named link such as "Add a consignor" or the chosen name and full address with Change and Edit details links. A CPH number section appears only when a commodity needs one.
+
+h4. Address pickers, transporter list and transit countries
+
+The address pickers list their addresses under "Select an address". Saving with nothing chosen goes back to the consignment addresses page with no error. "Add a transporter" sits beside the transporter search, above the list. On transit countries the "Enter a country" label is medium-size, the empty-list line has gone, and Remove sits at the right of each row. The search boxes themselves are on the common frontend ticket.
+
+h4. Review, declaration and Notification submitted
+
+On the review page an unanswered row in an unfinished card is left blank, with no red bar. The card itself is still marked by its red left border and its "Complete" line, and screen readers still hear "Missing". The date of declaration is bold, and the declaration checkbox is the small style. Notification submitted takes the Design Release 2.1 wording, with help links that open in a new tab.
+
+h4. Upload documents and arrival details
+
+Upload documents takes the Design Release 2.1 guidance and hints, its card runs full width with the table inside it, and each row's View file and Remove sit at the right. The date of issue hint gives one example date. The arrival date hint reads the same every day rather than showing today's date.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 30 scenarios carry the change's core behaviour. The live animals specification gained *72 scenarios across 14 files* in total. Every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full. Search box, type-ahead and Back link scenarios shared with high-risk plants are on the common frontend ticket.
+
+h4. Region of origin code prefix
+
+h5. With JavaScript, the country's code prefixes the region code field
+
+* *GIVEN* the user has JavaScript, has chosen France, answered that a region code is required, typed "75" and saved
+* *WHEN* they return to the origin of the import page
+* *THEN* the region code field carries France's code as a fixed prefix
+* *AND* the region code field holds "75"
+
+h5. With JavaScript, choosing a country fills the prefix without saving
+
+* *GIVEN* the user has JavaScript and has answered that a region code is required
+* *WHEN* they choose France
+* *THEN* the prefix reads France's code with no save
+* *WHEN* they then choose the Netherlands
+* *THEN* the prefix reads the Netherlands' code with no save
+
+h5. With JavaScript, choosing a territory fills the prefix with its country's code
+
+* *GIVEN* the user has JavaScript and has answered that a region code is required
+* *WHEN* they choose "Canary Islands (Spain)"
+* *THEN* the prefix reads ES with no save
+
+h5. The prefix is hidden from screen readers and the field keeps its label and hint
+
+* *GIVEN* the user has JavaScript and has answered that a region code is required
+* *WHEN* the region code field is read by a screen reader
+* *THEN* the prefix is not announced
+* *AND* the field is named by its label and described by the hint "Enter up to 5 characters."
+
+h5. A typed country code does not count towards the five-character limit
+
+* *GIVEN* JavaScript is off, the user has chosen France and answered that a region code is required
+* *WHEN* they type "FR-" followed by five characters and save and continue
+* *THEN* the region code saved is "FR-" followed by those five characters
+* *WHEN* they type "FR-" followed by six characters and save and continue
+* *THEN* an error names the region code's limit and nothing is saved
+* *AND* the typed country code does not count towards the five-character limit
+
+h5. Without JavaScript, the region code field has no prefix
+
+* *GIVEN* the user has no JavaScript
+* *WHEN* the region code field is shown on first view, after a save, or after an error
+* *THEN* the field has no prefix, empty or filled
+
+The specification also covers the prefix following a different saved country, being empty before a country is chosen, emptying when the country is cleared or has no code, showing the submitted country after an error, saving "75" or "FR-75" as "FR-75" without JavaScript, and keeping letters typed without the hyphen.
+
+h4. Identification details
+
+h5. The summary lists every commodity with its species and a change link, ahead of the sections
+
+* *GIVEN* the user has chosen more than one commodity
+* *WHEN* they open the identification details page
+* *THEN* a summary table headed Commodity code, Common name, Species and Number of animals lists every commodity, ahead of the identification sections
+* *AND* each row offers a Change link that opens commodity selection
+
+h5. Two species of one commodity share a row listing both Latin names and their total
+
+* *GIVEN* the user has chosen two species under one commodity (for example, two cattle species with 2 and 3 animals)
+* *WHEN* they open the identification details page
+* *THEN* the summary shows one row for that commodity, named by the catalogue's name for it, listing both Latin names
+* *AND* its number of animals is the total of the two species
+
+h5. A commodity with two species shows one section holding two cards
+
+* *GIVEN* the user has chosen two cattle species, each with a number of animals, and a horse
+* *WHEN* they open the identification details page
+* *THEN* a section headed "Cow (0102)" holds one card for each cattle species, each headed by its Latin name
+* *AND* a separate section holds the horse's card
+
+h5. Reaching the declared count leaves only the saved-animals table
+
+* *GIVEN* a species has a declared count of two animals and one identifier record has been added
+* *WHEN* the user adds the second identifier record
+* *THEN* that species' card shows only its saved-animals table with both records removable, and no entry form, "save and add another" option or completion message
+* *WHEN* the user removes one of the saved records
+* *THEN* the entry form reopens, ready for a replacement record
+
+h5. A card button saves only its own species and shows no error for another
+
+* *GIVEN* a valid ear tag is typed into one species' form and an over-length ear tag into another species' form
+* *WHEN* the user presses the first species' card button
+* *THEN* the first species' animal is saved and no error summary is shown
+* *AND* the first species' form reloads empty and the second species' typed value is not saved
+
+The specification also covers each species under commodity code 01061900 having its own summary row, a species with no number of animals having no card, the saved-animals table sitting below the form and card button, Save and continue saving a one-animal species but not a species of several, a 58-character identifier saved without surrounding spaces, and the identifier fields labelled Microchip, Passport and Tattoo with no hint.
+
+h4. CPH number
+
+h5. Typing all nine digits straight through keeps every digit
+
+* *GIVEN* the user is on the CPH number page
+* *WHEN* they type 123456789 straight through into the county box
+* *THEN* the county box shows all nine digits
+
+h5. A whole number in the county box is saved as nine digits
+
+* *GIVEN* the county box holds 123456789, 12/345/6789 or 12 345 6789 and the parish and holding boxes are empty
+* *WHEN* the user saves and continues
+* *THEN* the number is saved as 123456789
+* *AND* the consignment addresses page shows 123456789 in its CPH section
+
+h5. Pasting the whole number saves it the same as typing it
+
+* *GIVEN* the user pastes 12/345/6789 into the county box
+* *WHEN* they save and continue
+* *THEN* the number is saved as 123456789
+
+h5. Filling a box leaves focus in it
+
+* *GIVEN* the user is on the CPH number page
+* *WHEN* they fill the county box
+* *THEN* focus stays in the county box
+
+h5. Saving from the CPH section's add link returns to the consignment addresses page, showing the number
+
+* *GIVEN* the user opened the CPH number page from the CPH section's 'Add a CPH number' link on the consignment addresses page
+* *WHEN* they save a valid CPH number
+* *THEN* the consignment addresses page is shown
+* *AND* the CPH section shows the nine digits
+
+The specification also covers Backspace in an empty box leaving focus there, a county box that does not hold nine digits being named per box and keeping what was typed, the back link returning to the consignment addresses page or Overview depending on where the page was opened from, and saving without the add link's context also returning to the consignment addresses page.
+
+h4. Consignment addresses
+
+h5. The page shows a headed section for each party role with a named link to add its address
+
+* *GIVEN* the user has reached the consignment addresses page on a new notification
+* *WHEN* the page loads
+* *THEN* the paragraph "Add all the addresses that are involved in the consignment." is shown under the heading
+* *AND* a section is shown for each of Place of origin, Consignor, Consignee, Importer and Place of destination, each headed by the role and followed by its hint
+* *AND* the sections offer the links "Add a place of origin", "Add a consignor", "Add a consignee", "Add an importer" and "Add a place of destination"
+* *AND* a continue action is offered
+
+h5. A section shows the chosen address with Change and Edit details once an address is chosen
+
+* *GIVEN* the user has chosen an address for a party role from the picker
+* *WHEN* they return to the consignment addresses page
+* *THEN* that role's section shows the name in bold, then each address line on its own line, the last line ending with the country, such as "Hull, HU9 5PX, United Kingdom"
+* *AND* the section offers "Change" and "Edit details" links, and does not offer the link that adds an address
+
+h5. A CPH-eligible commodity brings the CPH section into the page, empty
+
+* *GIVEN* the notification has a commodity line the service treats as requiring a CPH number
+* *WHEN* the user views the consignment addresses page
+* *THEN* a section headed "County parish holding (CPH) number" is shown, with no value yet added, offering the link "Add a CPH number"
+
+The specification also covers "Add a consignor" opening the consignor picker, no CPH section without a CPH-eligible commodity, the page working without JavaScript, and no serious or critical accessibility violations on the empty or complete page at desktop and phone width.
+
+h4. Address pickers, transporter list and transit countries
+
+h5. Saving with nothing selected returns to the consignment addresses page with the role still empty
+
+* *GIVEN* the user is choosing an address for a consignment role that holds no address yet
+* *WHEN* they save without selecting an address
+* *THEN* they return to the consignment addresses page with no error
+* *AND* the role still shows no address added
+
+h5. An address not in the book is refused and the first address is focused
+
+* *GIVEN* the user is choosing an address for a consignment role and submits an address that is not in the book
+* *WHEN* the save is attempted
+* *THEN* an error is shown naming that role, and nothing is saved
+* *WHEN* they follow the error
+* *THEN* the first address in the list is focused, with none checked, and the search term they entered is kept
+
+h5. Add a transporter sits beside the search and opens the transporter type question
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* the page loads
+* *THEN* "Add a transporter" is shown on the search row, above the list of transporters
+* *AND* pressing Tab from the search box reaches the "Search" button, then "Add a transporter", then the transporter choices
+* *WHEN* they choose "Add a transporter"
+* *THEN* the "Choose a transporter type" page opens
+
+h5. The "Enter a country" label is medium-size
+
+* *GIVEN* the user is on the transited countries page
+* *WHEN* the country search label is read
+* *THEN* it reads "Enter a country" in the medium label size
+
+h5. Remove is at the right-hand end of each row
+
+* *GIVEN* the user has added two countries
+* *WHEN* the list is read
+* *THEN* each row ends with its Remove button in a right-aligned cell
+
+The specification also covers the listed addresses forming one group named "Select an address", saving with nothing selected keeping an edited address, a refused address after an empty search focusing the search field, an edited address held to the address book's field rules, the transporter search matching by name, address, approval number, type or status, a chosen transporter staying chosen when filtered out of view, a refused transit country staying in the search box, and the "Select a country" first entry without JavaScript. Search and filter-as-you-type scenarios are on the common frontend ticket.
+
+h4. Review page, declaration and Notification submitted
+
+h5. A refused Continue leaves an unfinished card's blank answers blank, marked only by the card
+
+* *GIVEN* the user has answered only the entry page of a notification
+* *WHEN* they choose Continue on the review and it is refused
+* *THEN* each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
+* *AND* the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
+
+h5. The date of declaration is shown in bold
+
+* *GIVEN* the user has reached the declaration page
+* *WHEN* the page loads
+* *THEN* the date after "Date of declaration:" is bold
+
+h5. A submission with a document carries no outstanding-work section
+
+* *GIVEN* a notification was submitted with a document
+* *WHEN* the user reads the confirmation page
+* *THEN* the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
+
+The specification also covers a blank row reading "Not applicable" on a settled card and left blank on an outstanding one, an unanswered party role left blank with no role error, and the confirmation page for an unsubmitted notification opening its overview instead.
+
+h4. Upload documents and arrival details
+
+h5. The reference carries no hint and the date of issue carries an example
+
+* *GIVEN* the user opens the upload documents page
+* *WHEN* the page loads
+* *THEN* the Document reference field has no hint
+* *AND* the hint under the Date of issue field reads "For example, 27/3/2026"
+
+h5. The table shows five headings with each row's actions at its end
+
+* *GIVEN* the user has added a document and its scan has completed
+* *WHEN* the page shows the added-documents table
+* *THEN* its column headings are "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action"
+* *AND* the row's "View file" and "Remove" sit at the right-hand end of the row
+
+h5. The arrival date hint reads the same on every day
+
+* *GIVEN* a user on the arrival details page
+* *WHEN* the page loads
+* *THEN* the arrival date hint reads exactly "The expected date of arrival at the port of entry. For example, 27/3/2026"
+
+The specification also covers the additional documents table naming the documents each consignment needs, and the port of entry hint and its "Select a port" placeholder.
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-202|Type-ahead search boxes: page placeholder text, bold matching letters and the joined blue magnifying-glass button (see the common frontend ticket)|Done|
+|inc-203|Origin page wording, country labels and field styling, specified under the origin page theme (EUDPA-695)|Done|
+|inc-204|Region code prefix with JavaScript only: an empty slot, then the picked country's code as soon as it is picked|Done|
+|inc-205|What are you importing? and Commodity details: ITAHC inset, search hint, Species column and spacing, specified under the commodities and import reason theme|Done|
+|inc-206|Every date picker: the blue calendar button and a calendar that opens in the page (see the common frontend ticket)|Done|
+|inc-207|Main import reason: heading, child fields and exit date, mostly specified under the commodities and import reason theme|Done|
+|inc-208|Arrival details wording, hints and transport options|Done|
+|inc-209|Transit countries: medium label, search placeholder, no empty-list line, Remove at the right|Done|
+|inc-210|Search boxes with the joined blue icon button on the address pickers and transporter list; the transporter list filters as you type; "Add a transporter" beside the search|Done|
+|inc-211|"Add a transporter" beside the search, above the list|Merged into inc-210|
+|inc-212|Address picker layout: results grouped under "Select an address", and a blank save|Done|
+|inc-213|Consignment addresses: one headed section per party with the full address and named add links; "Consignor"|Done|
+|inc-214|Identification details: Species column, a section per commodity with a card per species, form above the saved animals, no completion message|Done|
+|inc-215|Upload documents: guidance, hints, table and limit error, with a full-width card and the table inside it|Done|
+|inc-216|Review page: an unanswered row in an unfinished card is left blank, with no red bar|Done|
+|inc-217|Declaration and Notification submitted: wording, links, small checkbox and bold date|Done|
+|inc-218|Back links go to the previous step during the opening run, and to the notification list from a submitted notification's view (see the common frontend ticket)|Done|
+|inc-219|CPH number: three labelled boxes, no cursor jump, and the whole number kept when typed or pasted in one go|Done|
+|inc-220|Back from a submitted notification's view goes to the notification list|Merged into inc-218|
+|inc-221|Final tidy of the type-ahead, date picker and origin code after the build, with no change a user sees|In progress|
+|inc-223|Upload documents tidy: one date example, the Welsh file type list, logged refusals and save fallbacks, a right-aligned action column|Done|
+
+Eighteen rows are built, two were merged into others, and the final tidy row is still in progress. Rows inc-214, inc-216, inc-217, inc-219 and inc-221 come from the second, parallel build. Many rows changed both frontends, so they also appear on the high-risk plants ticket. That is how the programme works, not duplication. One more row in this theme was dropped and not built: it would have merged the second build's branches by hand, and the draft pull requests fold them in instead. Rows that changed only the tests are not listed, because they change nothing a user sees.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 72 scenarios across these 14 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|13|
+|[Identification details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/identification-details/spec.md]|11|
+|[CPH number|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/cph-number/spec.md]|10|
+|[Addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/addresses/spec.md]|7|
+|[Consignment addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md]|7|
+|[Transited countries|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/transited-countries/spec.md]|5|
+|[Transporter|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/transporter/spec.md]|5|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|4|
+|[Upload documents|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/upload-documents/spec.md]|3|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/arrival-details/spec.md]|2|
+|[Confirmation|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/confirmation/spec.md]|2|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-flow/spec.md]|1|
+|[Declaration|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/declaration/spec.md]|1|
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|1|
+
+Theme totals: 100 scenarios across 26 files, of which 72 scenarios and 14 files are live animals and 28 scenarios and 12 files are high-risk plants. This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

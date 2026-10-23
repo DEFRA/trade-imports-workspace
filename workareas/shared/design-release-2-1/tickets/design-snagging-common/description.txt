@@ -1,0 +1,167 @@
+h3. Background
+
+Design Release 2.1 design snagging fixes what the designers found when they compared the test environment with the prototype on 19 October, plus one tester comment on EUDPA-691 about Back links during the opening run.
+
+Four of those fixes behave the same way in both the live animals and the high-risk plants frontends: the type-ahead search boxes, the search boxes with a joined icon button, the date picker, and Back links. This ticket describes them once, so a reader can check them in either service.
+
+This ticket summarises shared behaviour. Its scenarios are already counted in the two domain tickets: the live animals ticket EUDPA-720 (72 scenarios) and the high-risk plants ticket EUDPA-730 (28 scenarios). Those tickets point here rather than repeat this behaviour in full.
+
+The work is not merged yet. It is on draft pull requests: [animals frontend #421|https://github.com/DEFRA/trade-imports-animals-frontend/pull/421], [plants frontend #113|https://github.com/DEFRA/trade-imports-plants-frontend/pull/113] and [tests #42|https://github.com/DEFRA/trade-imports-ins-tests/pull/42] hold most of it. A second, parallel build is on [animals frontend #423|https://github.com/DEFRA/trade-imports-animals-frontend/pull/423], [plants frontend #114|https://github.com/DEFRA/trade-imports-plants-frontend/pull/114] and [tests #47|https://github.com/DEFRA/trade-imports-ins-tests/pull/47], which will be folded into the first set.
+
+h3. What changes for the user
+
+h4. Type-ahead search boxes look and behave the same everywhere
+
+Every type-ahead box in both frontends now has the same look: a blue magnifying-glass button joined to the right of the box, and the letters that match what was typed shown in bold in the suggestions. Plants used to show a dropdown arrow instead; it now matches animals. Each page sets its own placeholder text for an empty box.
+
+Pages and their placeholders: in live animals, transit countries and the country of origin read "Search for a country", the port of entry reads "Select a port", and the destination country and port of exit fields on Main import reason read "Select one". In high-risk plants, the country of origin reads "Search for a country" and the place of landing on a potatoes notification reads "Select a place of landing".
+
+h4. Search boxes with a joined icon button
+
+Server search boxes now look like the prototype: a box under a medium "Search" label, with a square blue search button joined to it, in place of a separate grey "Search" button underneath. Pressing the button or Enter searches, with or without JavaScript.
+
+Pages: the five live animals address pickers (place of origin, consignor, consignee, importer and place of destination), the high-risk plants consignor, place of destination and consignment contact pickers, and the live animals transporter list.
+
+The transporter list also filters as you type when JavaScript is on, with matching letters in bold and the number of results announced. Without JavaScript it searches when the button or Enter is pressed. "Add a transporter" now sits on the search row, above the list. The address pickers still search only when the button or Enter is pressed.
+
+h4. Date pickers
+
+Every date picker in both frontends now has the blue calendar button with a white calendar icon, and the calendar opens in the page, pushing the next question down rather than covering it and the buttons. Before, only the live animals arrival date did this. Examples are the arrival date, the exit date on Main import reason and the document date of issue.
+
+h4. Back links during the opening run
+
+When a trader first fills in a notification, the service takes them through the questions in order (the opening run). Back now goes to the previous question in that run, and choosing Save and continue after going back carries the run on. Before, Back went to Overview, which ended the run, so every later Save and continue returned to Overview too.
+
+A page opened from Overview still goes back to Overview. Back from a submitted notification's view, including the view shown after an amendment is cancelled, now goes to that service's notification list rather than Overview. An amendment in progress still goes back to Overview.
+
+Live animals keeps Back to Overview on identification details and arrival details, as its specification says. The pages each run passes through differ between the two services: see each domain ticket.
+
+h3. Acceptance criteria
+
+Copied from the services' behaviour specifications. These are representative scenarios from both services. Each says which service it comes from; the sentence after it names the other pages where the same behaviour applies.
+
+h4. Type-ahead placeholders
+
+h5. Live animals: with JavaScript the empty search box reads "Search for a country"
+
+* *GIVEN* the user is on the transited countries page with JavaScript on
+* *WHEN* the search box is empty
+* *THEN* it is labelled "Enter a country" and reads "Search for a country"
+
+h5. Live animals: each destination country and port of exit search box reads Select one while empty
+
+* *GIVEN* the user has chosen a reason that reveals a destination country or a port of exit
+* *WHEN* the page has JavaScript and nothing is chosen
+* *THEN* each such search box reads "Select one"
+
+h5. High-risk plants: the place of landing search shows "Select a place of landing" until a port is chosen
+
+* *GIVEN* a potatoes notification is on the arrival details with no port chosen
+* *WHEN* the page loads
+* *THEN* the place of landing search shows "Select a place of landing"
+
+The live animals port of entry search ("Select a port") is specified the same way. The joined magnifying-glass button and bold matching letters on the type-ahead are a look-and-feel change with no scenario of their own in the specification; they are checked by the tests on the pull requests.
+
+h4. Search boxes with the joined icon button
+
+h5. Live animals: without JavaScript, Enter in the search box narrows the list
+
+* *GIVEN* the user is choosing an address for a consignment role with JavaScript off
+* *WHEN* they enter a term in the search box and press Enter
+* *THEN* only the matching records are listed
+* *AND* the search box still holds the term
+
+h5. High-risk plants: without JavaScript, Enter in the search box narrows the list
+
+* *GIVEN* the user is on the picker with JavaScript off
+* *WHEN* they enter a term in the search box and press Enter
+* *THEN* only the matching addresses are shown
+* *AND* the search box still holds the term
+
+h5. Live animals: typing narrows the transporter list in place with bold matches and an announced count
+
+* *GIVEN* the user is on the transporter list with JavaScript on
+* *WHEN* they type the plain letters "garcia" into the search box
+* *THEN* only the transporter named "García Livestock Transport SL" is shown, with the letters "García" in bold
+* *AND* the page does not reload and the search box keeps focus
+* *AND* the number of transporters shown is announced
+* *WHEN* they press the "Search" button or Enter and then type a term matching another transporter
+* *THEN* that transporter is shown
+
+The transporter list without JavaScript narrows on the server when the button or Enter is pressed, keeping the term in the box.
+
+h4. Date pickers
+
+The date picker change has no scenario in the specification: it changed how the calendar looks and where it opens, not what a date question accepts. It is checked by the tests on the pull requests.
+
+h4. Back links
+
+h5. Live animals: following a back link and saving again carries the opening sequence on
+
+* *GIVEN* the user is in the opening sequence on main import reason
+* *WHEN* they follow the back link to what are you importing and save it
+* *THEN* main import reason is shown, not Overview
+
+h5. High-risk plants: following a back link and saving again carries the opening sequence on
+
+* *GIVEN* the user is in the opening sequence on origin
+* *WHEN* they follow the back link to the commodities list and save it
+* *THEN* origin is shown, not Overview
+
+h5. High-risk plants: in the opening sequence, the back link opens commodity type
+
+* *GIVEN* the user is in the opening sequence and reached the commodities list from commodity type
+* *WHEN* they follow the back link
+* *THEN* the commodity type page is shown
+
+h5. High-risk plants: the back link opens Overview when the list was opened from Overview
+
+* *GIVEN* the opening sequence has ended and the user is on the commodities list
+* *WHEN* they follow the back link
+* *THEN* Overview is shown
+
+The same two rules, previous step in the opening run and Overview otherwise, apply on every high-risk plants page in the run: origin, arrival status, arrival details, place of destination, consignor, identification numbers and consignment contact. The high-risk plants ticket lists them.
+
+h5. Live animals: the submitted view shown after an amendment is cancelled has a back link to the notification list
+
+* *GIVEN* the user has just cancelled an amendment and the submitted notification's view is shown with its cancelled message
+* *WHEN* they follow the back link
+* *THEN* the live-animals notification list is shown
+
+h5. High-risk plants: the submitted view shown after an amendment is cancelled has a back link to the notification list
+
+* *GIVEN* the submitted view shown after an amendment is cancelled
+* *WHEN* the user follows the back link
+* *THEN* the plants notification list is shown
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-202|Type-ahead search boxes: page placeholder text, bold matching letters and the joined blue magnifying-glass button, in both frontends|Done|
+|inc-206|Every date picker: the blue calendar button and a calendar that opens in the page, in both frontends|Done|
+|inc-210|Search boxes with the joined blue icon button on the address pickers and transporter list; the transporter list filters as you type; "Add a transporter" beside the search|Done|
+|inc-211|"Add a transporter" beside the search, above the list|Merged into inc-210|
+|inc-218|Back links go to the previous step during the opening run, and to the notification list from a submitted notification's view|Done|
+|inc-220|Back from a submitted notification's view goes to the notification list|Merged into inc-218|
+|inc-221|Final tidy of the type-ahead, date picker and origin code after the build, with no change a user sees|In progress|
+
+Each row changed both frontends, so each also appears on the live animals and high-risk plants tickets. The final tidy row is still being built.
+
+h3. Where this is specified
+
+This ticket adds no scenarios of its own. The scenarios above come from these files, and each domain ticket links every file its service gained. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||Service||
+|[Transited countries|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/transited-countries/spec.md]|Live animals|
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|Live animals|
+|[Addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/addresses/spec.md]|Live animals|
+|[Transporter|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/transporter/spec.md]|Live animals|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-flow/spec.md]|Live animals|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|Live animals|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-details/spec.md]|High-risk plants|
+|[Addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/addresses/spec.md]|High-risk plants|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-flow/spec.md]|High-risk plants|
+|[Commodities|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/commodities/spec.md]|High-risk plants|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|High-risk plants|
+
+This description is generated from those specifications. If they change, this ticket is regenerated to match.

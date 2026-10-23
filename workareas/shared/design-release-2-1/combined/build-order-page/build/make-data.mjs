@@ -40,16 +40,20 @@ const JIRA_BROWSE = 'https://eaflood.atlassian.net/browse'
  * split time to supply the branch name, not yet split by domain — worth showing,
  * because a card with only a stub is a card whose business ticket is still a
  * placeholder.
+ *
+ * "common" is not a domain either. It is a ticket summarising behaviour both
+ * frontends share, already counted in the theme's domain tickets.
  */
 const DOMAIN_BADGE = {
   animals: { emoji: '🐄', label: 'Live animals' },
   plants: { emoji: '🌱', label: 'High-risk plants' },
   ins: { emoji: '🚪', label: 'Front door' },
   admin: { emoji: '🗂️', label: 'Animals admin' },
+  common: { emoji: '🔗', label: 'Common to both frontends' },
   stub: { emoji: '🎫', label: 'Stub only, not yet split by domain' }
 }
 
-const DOMAIN_ORDER = ['animals', 'plants', 'ins', 'admin', 'stub']
+const DOMAIN_ORDER = ['animals', 'plants', 'ins', 'admin', 'common', 'stub']
 
 /* ---------------------------------------------------------------- reading --- */
 

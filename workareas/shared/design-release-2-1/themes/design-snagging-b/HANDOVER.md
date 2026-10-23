@@ -46,7 +46,7 @@ Build the Design Release 2.1 design snagging B rows end to end, on one branch, a
 
 1. Branch and draft PRs
    - `tim workspace branch feat/EUDPA-720-design-release-2-1-design-snagging-b` so the animals frontend, plants frontend and tests checkouts are on it. Pull each from origin.
-   - Check the draft PRs against main are still open: animals frontend #423, plants frontend #114, ins-tests #47 (`tim github prs EUDPA-720`). If a branch or PR is missing, stop and tell Sam which: don't cut it from main.
+   - Check the draft PRs against main are still open: animals frontend #423, plants frontend #114, ins-tests #47 (`gh search prs EUDPA-720 --owner DEFRA --state open`). If a branch or PR is missing, stop and tell Sam which: don't cut it from main.
    - The branch was cut from laptop A's branch after inc-204 and is far behind it. The first row, inc-217, merges origin/feat/EUDPA-720-design-release-2-1-design-snagging into all three repos before it builds (its `merge` field).
 
 2. Build: one Workflow launch of the increment build loop by scriptPath (.claude/skills/requirements-pipeline/workflow/increment-build-loop.js, never by name), lifecycle branch, every Jira key null:

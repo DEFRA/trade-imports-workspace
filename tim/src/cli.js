@@ -20,9 +20,7 @@ import { register as registerDocker } from './commands/docker/index.js'
 import { register as registerStart } from './commands/start.js'
 import { register as registerAuth } from './commands/auth.js'
 import { register as registerJira } from './commands/jira/index.js'
-import { register as registerGithub } from './commands/github/index.js'
 import { register as registerConfluence } from './commands/confluence/index.js'
-import { register as registerGha } from './commands/gha/index.js'
 import { register as registerSonar } from './commands/sonar/index.js'
 import { register as registerBacklog } from './commands/backlog/index.js'
 import { register as registerDistil } from './commands/distil/index.js'
@@ -83,7 +81,7 @@ const launchInteractive = async ({ workspaceRoot }) => {
 
 // Keep the workspace current for anyone who reaches for tim, without them
 // having to remember to pull. Never blocks the command: if the workspace
-// cannot be resolved (jira, github and friends do not need one) or git is
+// cannot be resolved (jira, confluence and friends do not need one) or git is
 // unavailable, the command runs regardless. Notes go to stderr so a --json
 // stdout stays a single parseable line.
 const syncWorkspace = async (actionCommand) => {
@@ -156,9 +154,7 @@ export const buildProgram = () => {
   registerStart(program, { timVersion: pkg.version })
   registerAuth(program, { timVersion: pkg.version })
   registerJira(program, { timVersion: pkg.version })
-  registerGithub(program, { timVersion: pkg.version })
   registerConfluence(program, { timVersion: pkg.version })
-  registerGha(program, { timVersion: pkg.version })
   registerSonar(program, { timVersion: pkg.version })
   registerBacklog(program, { timVersion: pkg.version })
   registerDistil(program, { timVersion: pkg.version })

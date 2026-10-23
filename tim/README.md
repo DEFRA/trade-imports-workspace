@@ -37,36 +37,30 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 
 #### Menu quick reference
 
-| Menu path                                                    | CLI equivalent                    |
-| ------------------------------------------------------------ | --------------------------------- |
-| Workspace → Status                                           | `tim workspace status`            |
-| Workspace → Branch                                           | `tim workspace branch [name]`     |
-| Workspace → Install                                          | `tim workspace install`           |
-| Workspace → Lint                                             | `tim workspace lint`              |
-| Workspace → Test                                             | `tim workspace test`              |
-| Workspace → Clean                                            | `tim workspace clean`             |
-| Workspace → Setup                                            | `tim workspace setup`             |
-| Workspace → Update                                           | `tim workspace update`            |
-| Workspace → Reset                                            | `tim workspace reset`             |
-| Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
-| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
-| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`                 |
-| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`              |
-| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`       |
-| Start → Frontend (npm run dev)                               | `tim start frontend`              |
-| Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
-| Start → Admin (npm run dev)                                  | `tim start admin`                 |
-| Auth                                                         | `tim auth`                        |
-| Jira → Look up a ticket                                      | `tim jira ticket <id>`            |
-| Jira → Read comments on a ticket                             | `tim jira comments <id>`          |
-| GitHub → Find pull requests for a ticket                     | `tim github prs <ticketId>`       |
-| GitHub → Open a single PR                                    | `tim github pr <repo> <number>`   |
-| GitHub → Show a PR diff                                      | `tim github diff <repo> <number>` |
-| Confluence → Look up a page                                  | `tim confluence page <id>`        |
-| GitHub Actions → Recent workflow runs for a repo             | `tim gha runs <repo>`             |
-| GitHub Actions → Status of a single run                      | `tim gha status <repo> <runId>`   |
-| GitHub Actions → Wait for a run to finish                    | `tim gha wait <repo> <runId>`     |
-| Quit                                                         | exits the menu                    |
+| Menu path                                                    | CLI equivalent                |
+| ------------------------------------------------------------ | ----------------------------- |
+| Workspace → Status                                           | `tim workspace status`        |
+| Workspace → Branch                                           | `tim workspace branch [name]` |
+| Workspace → Install                                          | `tim workspace install`       |
+| Workspace → Lint                                             | `tim workspace lint`          |
+| Workspace → Test                                             | `tim workspace test`          |
+| Workspace → Clean                                            | `tim workspace clean`         |
+| Workspace → Setup                                            | `tim workspace setup`         |
+| Workspace → Update                                           | `tim workspace update`        |
+| Workspace → Reset                                            | `tim workspace reset`         |
+| Docker → Start the stack (run-stack.sh)                      | `tim docker up`               |
+| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`              |
+| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`             |
+| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`          |
+| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`   |
+| Start → Frontend (npm run dev)                               | `tim start frontend`          |
+| Start → Backend (mvn spring-boot:run)                        | `tim start backend`           |
+| Start → Admin (npm run dev)                                  | `tim start admin`             |
+| Auth                                                         | `tim auth`                    |
+| Jira → Look up a ticket                                      | `tim jira ticket <id>`        |
+| Jira → Read comments on a ticket                             | `tim jira comments <id>`      |
+| Confluence → Look up a page                                  | `tim confluence page <id>`    |
+| Quit                                                         | exits the menu                |
 
 ### Direct CLI
 
@@ -725,70 +719,23 @@ The increment build loop's done stage closes each ticket with
 `tim build start` moves a ticket to the working status through the same
 client call (`moveToStatus` in `src/clients/jira-client.js`).
 
-### `tim github create-pr|checks|run-log|rerun|merge` — open a PR, follow its pipeline and merge it
+### GitHub: use the GitHub CLI
 
-Open a pull request, watch its checks, read why a job failed, run a job
-again, and merge the PR once it is green. Every repo
-is a DEFRA repo, named without the `DEFRA/` prefix.
+tim has no GitHub commands. Use `gh` directly. Every repo is a DEFRA repo.
 
-```bash
-tim github create-pr trade-imports-animals-frontend --head chore/NO_JIRA-tidy-logs --title "Tidy the logs" --body-file pr.md [--base main] [--draft] [--json]
-tim github checks trade-imports-animals-frontend 51 [--watch] [--interval 30] [--timeout 540] [--json]
-tim github run-log trade-imports-animals-frontend 117937645478 [--failed-only] [--lines 100] [--json]
-tim github rerun trade-imports-animals-frontend 117937645478 [--failed-only] [--json]
-tim github merge trade-imports-animals-frontend 51 [--method squash|merge|rebase] [--delete-branch] [--json]
-```
-
-- **`create-pr`** opens the PR, or returns the PR already open from that
-  branch and opens nothing new, so running it twice is safe. It prints the PR
-  link. `--json` puts `{repo, number, url, head, base, draft, created}` in
-  `result`; `created` is `false` when the PR was already open. A body file it
-  cannot read fails with `USAGE` before any request is sent.
-- **`checks`** takes a PR number, a branch or a sha. It lists every check run
-  and commit status on that head commit, with an outcome each (`passed`,
-  `failed` or `pending`), the counts, and the SonarCloud gate when SonarCloud
-  reports as a check. When a commit has been checked more than once, only the
-  newest check of each name counts. `--json` puts
-  `{repo, ref, sha, outcome, counts, sonarGate, checks, timedOut}` in
-  `result`.
-- **`checks --watch`** checks again every `--interval` seconds until nothing
-  is pending or `--timeout` seconds pass. It exits 0 when every check passed,
-  1 when any failed, and 2 when checks are still pending at the timeout. The
-  default timeout of 540 seconds fits inside a 10-minute shell call; call it
-  again to keep watching. Without `--watch`, it exits 0 whatever the outcome.
-- A commit with no checks yet counts as pending, because a PR just opened has
-  none until its workflows start. A pass is reported only when two checks in
-  a row see the same checks, because some checks (SonarCloud, a workflow
-  triggered by another) start only after the first ones finish.
-- **`run-log`** takes a workflow run id, or the id `checks` shows for a
-  GitHub Actions check (a job). For each job, or only the failed ones with
-  `--failed-only`, it prints the failed steps and the last `--lines` lines of
-  the log, without timestamps. The tail ends at the last `##[error]` line, so
-  the clean-up after a failure does not push the cause out of view. A check
-  from outside GitHub Actions, such as SonarCloud, has no log, so `run-log`
-  prints the report it posted to GitHub instead (for SonarCloud, the failed
-  quality gate conditions), with `runId` set to `null`. An id that no run,
-  job or check has fails with `NOT_FOUND`.
-- **`rerun`** takes the same ids as `run-log`. Given the id of a job, it runs
-  that job again. Given a run id, it runs every job in the run again, or only
-  the failed ones with `--failed-only`. It does not wait: watch the result
-  with `checks --watch`. `--json` puts `{repo, runId, jobId, scope}` in
-  `result`, where `scope` is `job`, `failed-jobs` or `run`. A check from
-  outside GitHub Actions fails with `NOT_FOUND`.
-- **`merge`** merges a PR only when it is open, not a draft, free of
-  conflicts, not blocked by branch protection, up to date with its base, and
-  every check on its head commit has passed (the same checks `checks` lists;
-  a head with no checks yet counts as not passed). Otherwise it merges
-  nothing and prints every reason. It never bypasses branch protection: a
-  missing review is a refusal, and so is GitHub turning the merge down. The
-  merge is pinned to the head commit it checked, so a push in between makes
-  GitHub refuse it. Without `--method` it squashes when the repo allows it,
-  then falls back to a merge commit, then a rebase. `--delete-branch` deletes
-  the PR branch only after the merge. Running it on a merged PR returns the
-  merge commit with status `already-merged` and merges nothing. It exits 0
-  for `merged` or `already-merged` and 1 for `refused`. `--json` puts
-  `{repo, number, url, branch, status, method, sha, branchDeleted, reasons}`
-  in `result`.
+| To                                   | Run                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Find the PRs for a ticket            | `gh search prs EUDPA-X --owner DEFRA --json repository,number,title,url,state`              |
+| Read a PR or its diff                | `gh pr view <n> --repo DEFRA/<repo>`, `gh pr diff <n> --repo DEFRA/<repo>`                  |
+| Open a PR, unless one is open        | `gh pr list --repo DEFRA/<repo> --head <branch> --state open`, then `gh pr create`          |
+| Edit or close a PR                   | `gh pr edit <n> --repo DEFRA/<repo>`, `gh pr close <n> --repo DEFRA/<repo> --comment …`     |
+| Watch a PR's checks                  | `timeout 540 gh pr checks <n> --repo DEFRA/<repo> --watch` (exit 0 pass, 1 fail, 8 pending) |
+| Read a failed job's log              | `gh run view <runId> --repo DEFRA/<repo> --log-failed`                                      |
+| Read a SonarCloud check's report     | `gh api repos/DEFRA/<repo>/check-runs/<id> --jq '.output'`                                  |
+| Run a job again                      | `gh run rerun <runId> --repo DEFRA/<repo> [--failed]`, or `--job <jobId>`                   |
+| List, check or wait for Actions runs | `gh run list`, `gh run view <id>`, `gh run watch <id> --exit-status`                        |
+| Merge a green PR                     | `gh pr merge <n> --repo DEFRA/<repo> --squash --match-head-commit <sha>`                    |
+| Check GitHub sign-in                 | `gh auth status`                                                                            |
 
 ### `tim sonar issues` — why a SonarCloud gate failed
 
@@ -833,7 +780,7 @@ Onboards a Claude Code session at the workspace root for a designer working
 on the plants prototype, in one idempotent command:
 
 ```bash
-tim prototype setup          # add the CLAUDE.local.md designer note, the upstream remote, install, and check Jira/GitHub readiness
+tim prototype setup          # add the CLAUDE.local.md designer note, the upstream remote, install, and check Jira and Confluence readiness
 tim prototype setup --remove # take the designer note back out of CLAUDE.local.md, leaving everything else in the file untouched
 ```
 
@@ -841,7 +788,7 @@ It writes a marker-delimited block into a gitignored `CLAUDE.local.md` at
 the workspace root (running it again replaces the block with the same text
 rather than duplicating it), reuses the `workspace setup`/`install` building
 blocks scoped to just `trade-imports-plants-prototype`, and reports
-Jira/GitHub auth readiness via the same probes `tim auth` uses — without
+Jira and Confluence auth readiness via the same probes `tim auth` uses — without
 failing the command when Jira isn't configured yet. It never touches Jira
 and never pushes.
 
@@ -861,12 +808,11 @@ The menu only opens when stdout is a TTY and the user has not asked for plain te
 | Variable                                   | Used for                                                                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL` | Jira and Confluence (Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token)                                                    |
-| `GITHUB_TOKEN`                             | GitHub and GitHub Actions. If unset, `tim` falls back to one `gh auth token` call at startup                                                      |
 | `TIM_WORKSPACE`                            | Workspace root override (same as `--workspace`)                                                                                                   |
 | `TIM_GITHUB_BASE_URL`                      | Clone URL prefix override for `workspace setup` (default `https://github.com/DEFRA`) — used by the behavioural tests to clone from local fixtures |
 | `TIM_NO_AUTO_PULL`                         | Set to any value to turn off the automatic workspace pull described below                                                                         |
 
-Run [`../tools/auth.sh`](../tools/auth.sh) to verify your setup against the bash side. `tim auth` (when it lands) does the same via library clients.
+Run [`../tools/auth.sh`](../tools/auth.sh) to verify your setup against the bash side. `tim auth` checks Jira and Confluence through library clients. For GitHub, run `gh auth status`.
 
 ## Staying up to date
 
@@ -910,6 +856,7 @@ Project conventions live in [`CLAUDE.md`](CLAUDE.md) and `.claude/rules/`. Highl
 
 - **Test on input/output.** No `toHaveBeenCalled[With]` — render the component, spawn the CLI, or call the function and assert on what comes back. Pre-commit hook (`forbid-spy-assertions.sh`) enforces this.
 - **Library-first integrations.** External services go through typed clients under `src/clients/`. No shelling out to `gh`, `jq`, `curl`, or `../tools/*.sh`.
+- **No GitHub in tim.** GitHub work uses the GitHub CLI (`gh`) directly, outside tim. Never add a GitHub command or client to tim.
 - **Mock at the network boundary.** `undici` MockAgent for HTTP; never `vi.mock()` your own client modules.
 - **Code and tests ship together.** Every new `src/**/*.js` lands with a sibling `*.test.js`.
 - **GDS plain English** for all user-facing strings.

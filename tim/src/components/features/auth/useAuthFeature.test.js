@@ -40,7 +40,6 @@ const Harness = ({ probe, onReturn = () => {} }) => {
 describe('useAuthFeature', () => {
   test('selecting Auth probes every service and renders the results screen', async () => {
     const results = [
-      { service: 'github', ok: true, user: { login: 'sam' } },
       {
         service: 'jira',
         ok: false,
@@ -52,9 +51,8 @@ describe('useAuthFeature', () => {
 
     const { lastFrame } = render(createElement(Harness, { probe }))
 
-    await vi.waitFor(() => expect(lastFrame()).toContain('github'))
+    await vi.waitFor(() => expect(lastFrame()).toContain('confluence'))
     const frame = lastFrame()
-    expect(frame).toContain('github')
     expect(frame).toContain('jira')
     expect(frame).toContain('confluence')
     expect(frame).toContain('Missing JIRA_TOKEN')
@@ -62,13 +60,13 @@ describe('useAuthFeature', () => {
 
   test('a probe that throws surfaces the error screen', async () => {
     const probe = async () => {
-      throw new Error('GitHub CLI unavailable')
+      throw new Error('Jira is unavailable')
     }
 
     const { lastFrame } = render(createElement(Harness, { probe }))
 
     await vi.waitFor(() =>
-      expect(lastFrame()).toMatch(/error:GitHub CLI unavailable/)
+      expect(lastFrame()).toMatch(/error:Jira is unavailable/)
     )
   })
 
@@ -87,7 +85,7 @@ describe('useAuthFeature', () => {
 
   test('pressing Enter on the results screen returns to the main menu', async () => {
     const probe = async () => [
-      { service: 'github', ok: true, user: { login: 'sam' } }
+      { service: 'jira', ok: true, user: { displayName: 'Sam F' } }
     ]
     let returned = false
     const { stdin, lastFrame } = render(

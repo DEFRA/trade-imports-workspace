@@ -83,6 +83,8 @@ To make one change across several repos, services or environments, apply it to o
 
 When `tim` or a `tools/` script lacks an option you need, add it (with its `--help` and tests) and commit it. Do not reach for a one-off `curl`, `jq` or raw API call.
 
+GitHub is the exception. Use the GitHub CLI (`gh`) directly for pull requests, checks, Actions runs and the GitHub API (`gh api`). Never wrap `gh` or the GitHub API in `tim` or a new `tools/` script.
+
 ### 9. Workspace config is committed and portable
 
 Config at the workspace root (MCP servers, hooks, settings) goes in a committed file with no machine-specific paths, so every clone gets it. Not in local scope (`~/.claude.json`).
@@ -123,9 +125,14 @@ Run `make help` from this directory to see all cross-repo commands.
 ## `tim` CLI (alternative to Make + tools/)
 
 [`tim/`](tim/) is a Node.js CLI that mirrors the Makefile + read-only
-parts of `tools/`. Library-first integrations (octokit, REST clients —
+parts of `tools/`. Library-first integrations (REST clients —
 no shell-out to `gh`/`jq`), behaviourally tested, deterministic
 `--json` output for skill use. Dual-runs with the bash; pick whichever.
+
+tim has no GitHub commands. For pull requests, checks, Actions runs and
+GitHub auth, use the GitHub CLI directly: `gh search prs EUDPA-X --owner
+DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
+`gh auth status` (see rule 8).
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
@@ -133,9 +140,7 @@ tim --help                # full surface
 tim workspace status      # equivalent of `make status` + jq-friendly --json
 tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
-tim auth                  # equivalent of tools/auth.sh
-tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
-tim github create-pr|checks|run-log   # open a PR (idempotent), watch its checks (--watch exits 0/1/2), read a failed job's log
+tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
@@ -171,7 +176,7 @@ See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary
 mocking via nock) and [`tim/README.md`](tim/README.md) for usage and
 the env-var contract (the same `JIRA_USER`/`JIRA_TOKEN`/`JIRA_BASE_URL`
-/ `GITHUB_TOKEN` the bash uses — seamless pickup).
+the bash uses — seamless pickup).
 
 Skills should prefer `tim <cmd> --json` over bare bash once a surface
 is covered by tim — the JSON envelope is schema-versioned and stable.

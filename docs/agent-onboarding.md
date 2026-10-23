@@ -299,7 +299,7 @@ this workspace — there is no separate, prototype-only setup:
    without you ever having to name it), adds the prototype's fetch-only
    `upstream` remote (`trade-imports-plants-frontend`, push disabled),
    installs the prototype's dependencies with its pinned npm version, and
-   reports Jira/GitHub readiness. It never touches Jira and never pushes.
+   reports Jira and Confluence readiness (for GitHub, run `gh auth status`). It never touches Jira and never pushes.
    Re-run it with `--remove` to take the note back out.
 4. **Open Claude Code at the workspace root**
    (`~/git/defra/trade-imports-workspace`), not inside

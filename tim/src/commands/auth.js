@@ -1,29 +1,9 @@
-import { createGithubClient } from '../clients/github-client.js'
 import { createJiraClient } from '../clients/jira-client.js'
 import { createConfluenceClient } from '../clients/confluence-client.js'
-import { run as runProcess } from '../exec/exec.js'
 import { OK, ERROR, MISSING_DEP } from '../constants/exitCodes.js'
 import { isTimError } from '../errors.js'
 
 const SCHEMA_VERSION = 1
-
-/**
- * Resolve a GitHub token: explicit env var first, otherwise fall back to
- * one `gh auth token` shell-out. Returns null if neither is available.
- */
-export const resolveGithubToken = async (env = process.env) => {
-  if (env.GITHUB_TOKEN) return env.GITHUB_TOKEN
-  try {
-    const result = await runProcess('gh', ['auth', 'token'])
-    if (result.exitCode === 0 && result.stdout.trim()) {
-      return result.stdout.trim()
-    }
-    return null
-  } catch (error) {
-    if (error?.code === 'MISSING_DEP') return null
-    throw error
-  }
-}
 
 /**
  * Probe each external integration via its client's whoami(). Returns a
@@ -32,16 +12,8 @@ export const resolveGithubToken = async (env = process.env) => {
  * Factory overrides are for tests — production callers should rely on
  * the defaults.
  */
-export const probeAll = async ({
-  githubFactory,
-  jiraFactory,
-  confluenceFactory
-} = {}) => {
-  const defaultGithub = async () =>
-    createGithubClient({ token: await resolveGithubToken() })
-
+export const probeAll = async ({ jiraFactory, confluenceFactory } = {}) => {
   const services = [
-    { label: 'github', factory: githubFactory ?? defaultGithub },
     { label: 'jira', factory: jiraFactory ?? (() => createJiraClient()) },
     {
       label: 'confluence',
@@ -73,7 +45,7 @@ const renderText = (results) =>
   results
     .map((r) =>
       r.ok
-        ? `${r.service}: OK — ${r.user.displayName ?? r.user.name ?? r.user.login ?? r.user.user ?? '(unknown user)'}`
+        ? `${r.service}: OK — ${r.user.displayName ?? r.user.user ?? '(unknown user)'}`
         : `${r.service}: FAILED — ${r.error.code}: ${r.error.message}`
     )
     .join('\n')
@@ -105,7 +77,7 @@ export const register = (program, { timVersion }) => {
   program
     .command('auth')
     .description(
-      'Check authentication against GitHub, Jira, and Confluence using the same env vars as ../tools/auth.sh'
+      'Check authentication against Jira and Confluence. For GitHub, run gh auth status'
     )
     .action(async function authAction() {
       const globalOpts = this.optsWithGlobals()

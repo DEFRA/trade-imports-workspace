@@ -270,6 +270,11 @@ file, a class or a function.
 | A pattern outside the design system | `constraint` | What it does, and what would replace it |
 | Surface the corpus never reached | any, `confidence: "gap"` | What you expected to find and did not |
 
+User-entered data that a page shows differently from how it was entered, such as re-cased, with lines left out,
+truncated or reordered, is a claim of its own, `kind: rule`. Its `note` starts with `mechanism:` and says what
+changed, such as `mechanism: the banner shows 'ABC Farms Ltd' as 'Abc farms ltd'`. The reconciler decides whether
+the target needs it.
+
 Ids take the part's prefix your prompt gives, such as `trace-ched-pp-p3-001`, so no two parts or
 sources clash.
 

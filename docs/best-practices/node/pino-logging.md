@@ -169,7 +169,9 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 
 **No bodies at INFO.** Never log a request or response body at `info`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs. If a body is the only way to tell two failures apart, log a bounded excerpt at `warn` on the failure path only.
 
-**Pick the level by who must act.** `warn` for a handled fallback or retry. `error` for a failure someone must look at. `info` for an expected refusal, such as a validation error or a not-found.
+**Pick the level by who must act.** `warn` for a handled fallback or retry, and for another service refusing what this one accepted, such as the backend rejecting a form the frontend validated: the two sides' rules have drifted. `error` for a failure someone must look at. `info` for an expected refusal, such as a not-found, a dead link or a refused return address.
+
+**Do not log a user's own input errors.** A field the user left blank or mistyped, shown back to them on the form, is the page doing its job. Logging it buries the lines support needs and risks writing personal data.
 
 ### Bad and good
 

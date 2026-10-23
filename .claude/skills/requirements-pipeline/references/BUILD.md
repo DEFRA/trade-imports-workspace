@@ -255,7 +255,10 @@ with commits of its own is left as it is. A failure names its step and its exact
    into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`. A
    branch-lifecycle row that owes only some phases runs those one per call. The
    implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts.
+   agent picks a repo's test scripts. How hard the gate drives this machine
+   (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
+   the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
+   see [`machine-tuning.md`](machine-tuning.md).
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also
@@ -742,6 +745,14 @@ To the user, from the returned list:
 
 ```
 inc-NNN  landed   <title>            PR #123 · EUDPA-4567
+```
+
+Then list, under "For the designer", every open question starting "For the designer:" on
+the rows the run built. These are `design` findings: copy, layout or a component the design
+source sets and a guide disagrees with. The code keeps the design; the designer decides.
+
+```bash
+jq -r '.increments[] | select(.id == "inc-NNN") | .openQuestions[]? | select(startswith("For the designer:"))' <backlog>
 ```
 
 Then the stop reason, then the handover prompt. Do not read the diffs and do not

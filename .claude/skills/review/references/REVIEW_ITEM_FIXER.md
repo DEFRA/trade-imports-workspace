@@ -212,6 +212,12 @@ WON'T FIX: #N — [reason this change would be harmful or incorrect]
 Items table NOT updated. The batch implementor will mark Won't Fix.
 ```
 
+Your item is the one finding you fix. Every line you change still meets
+the house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`.
+A breach elsewhere in the file that no item covers goes in your output as
+a new finding, with its file:line; another item's finding stays for that
+item.
+
 For a code-quality item (`naming`, `comments`, `structure`,
 `duplication`, `logging`, `test-readability`, `history`), the reason
 must quote the code, with its file:line, that shows the finding is

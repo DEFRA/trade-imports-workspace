@@ -103,16 +103,38 @@ for (const row of rows) {
 
 const themeOfRow = new Map(rows.map((row) => [row.id, row.theme]))
 
+/** The theme counter each backlog status adds to, one entry per status in the backlog schema. */
+const COUNTER_OF_STATUS = {
+  todo: 'todo',
+  done: 'done',
+  blocked: 'blocked',
+  deferred: 'deferred',
+  dropped: 'dropped',
+  rejected: 'rejected',
+  'merged-into': 'merged'
+}
+
 const themes = new Map()
 for (const row of rows) {
   if (!row.theme) throw new Error('row ' + row.id + ' has no theme')
   if (!themes.has(row.theme)) {
-    themes.set(row.theme, { id: row.theme, rows: 0, done: 0, todo: 0, blocked: 0, deferred: 0, dropped: 0 })
+    themes.set(row.theme, {
+      id: row.theme,
+      rows: 0,
+      done: 0,
+      todo: 0,
+      blocked: 0,
+      deferred: 0,
+      dropped: 0,
+      rejected: 0,
+      merged: 0
+    })
   }
+  const counter = COUNTER_OF_STATUS[row.status]
+  if (!counter) throw new Error('row ' + row.id + ' has unknown status ' + row.status)
   const theme = themes.get(row.theme)
   theme.rows += 1
-  if (theme[row.status] === undefined) throw new Error('row ' + row.id + ' has unknown status ' + row.status)
-  theme[row.status] += 1
+  theme[counter] += 1
 }
 
 // Which Jira ticket covers which theme, per domain. Absent on a programme whose
@@ -124,8 +146,9 @@ for (const theme of themes.values()) {
   if (!meta[theme.id]) throw new Error('no themes.meta.json entry for theme ' + theme.id)
   theme.name = meta[theme.id].name
   theme.ticket = meta[theme.id].ticket
-  // Dropped rows sit outside the total: they are not work anyone will do.
-  theme.live = theme.rows - theme.dropped
+  // Dropped, rejected and merged rows sit outside the total: they are not work anyone will do.
+  theme.excluded = theme.dropped + theme.rejected + theme.merged
+  theme.live = theme.rows - theme.excluded
 
   const forTheme = ticketsByTheme[theme.id] || {}
   theme.tickets = Object.keys(forTheme)
@@ -150,9 +173,14 @@ for (const theme of themes.values()) {
 
 /* ----------------------------------------------------------------- graph ---- */
 
-/** Theme-to-theme dependencies, from the rows' own cross-row dependencies. */
+/**
+ * Theme-to-theme dependencies, from the cross-row dependencies of rows still to
+ * be worked. A dropped, rejected or merged row orders nothing.
+ */
+const NOT_WORK = new Set(['dropped', 'rejected', 'merged-into'])
 const edges = new Set()
 for (const row of rows) {
+  if (NOT_WORK.has(row.status)) continue
   const deps = [...(row.dependsOn || []), ...(row.externalDependsOn || []).map((dep) => dep.id)]
   for (const dep of deps) {
     const parent = themeOfRow.get(dep)
@@ -407,6 +435,9 @@ const totals = {
   blocked: all.reduce((n, t) => n + t.blocked, 0),
   deferred: all.reduce((n, t) => n + t.deferred, 0),
   dropped: all.reduce((n, t) => n + t.dropped, 0),
+  rejected: all.reduce((n, t) => n + t.rejected, 0),
+  merged: all.reduce((n, t) => n + t.merged, 0),
+  excluded: all.reduce((n, t) => n + t.excluded, 0),
   ticketed: all.filter((t) => t.ticket).length,
   ready: all.filter((t) => t.ready).length,
   edgesRecorded: pairs.length,

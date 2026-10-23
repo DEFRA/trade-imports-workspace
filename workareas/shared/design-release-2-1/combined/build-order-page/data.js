@@ -1,19 +1,22 @@
 window.DR21_BUILD_ORDER = {
-  "generatedAt": "2026-10-13",
+  "generatedAt": "2026-10-23",
   "totals": {
-    "themes": 17,
+    "themes": 18,
     "levels": 8,
-    "rows": 201,
-    "live": 195,
-    "done": 53,
-    "blocked": 45,
-    "deferred": 9,
+    "rows": 198,
+    "live": 190,
+    "done": 28,
+    "blocked": 43,
+    "deferred": 5,
     "dropped": 6,
-    "ticketed": 7,
+    "rejected": 0,
+    "merged": 2,
+    "excluded": 8,
+    "ticketed": 9,
     "ready": 2,
-    "edgesRecorded": 48,
-    "edgesDrawn": 25,
-    "percent": 27
+    "edgesRecorded": 45,
+    "edgesDrawn": 21,
+    "percent": 15
   },
   "levels": [
     1,
@@ -27,6 +30,87 @@ window.DR21_BUILD_ORDER = {
   ],
   "themes": [
     {
+      "id": "arrival-and-transit",
+      "rows": 4,
+      "done": 0,
+      "todo": 3,
+      "blocked": 0,
+      "deferred": 0,
+      "dropped": 1,
+      "rejected": 0,
+      "merged": 0,
+      "name": "Arrival and transit",
+      "ticket": "EUDPA-694",
+      "excluded": 1,
+      "live": 3,
+      "tickets": [
+        {
+          "domain": "animals",
+          "key": "EUDPA-694",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-694",
+          "emoji": "🐄",
+          "label": "Live animals"
+        },
+        {
+          "domain": "plants",
+          "key": "EUDPA-703",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-703",
+          "emoji": "🌱",
+          "label": "High-risk plants"
+        }
+      ],
+      "level": 1,
+      "follows": [],
+      "followsAll": [],
+      "inherits": 0,
+      "state": "open",
+      "ready": false
+    },
+    {
+      "id": "design-snagging",
+      "rows": 17,
+      "done": 14,
+      "todo": 0,
+      "blocked": 0,
+      "deferred": 0,
+      "dropped": 1,
+      "rejected": 0,
+      "merged": 2,
+      "name": "Design snagging",
+      "ticket": "EUDPA-720",
+      "excluded": 3,
+      "live": 14,
+      "tickets": [
+        {
+          "domain": "animals",
+          "key": "EUDPA-720",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-720",
+          "emoji": "🐄",
+          "label": "Live animals"
+        },
+        {
+          "domain": "plants",
+          "key": "EUDPA-730",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-730",
+          "emoji": "🌱",
+          "label": "High-risk plants"
+        },
+        {
+          "domain": "common",
+          "key": "EUDPA-729",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-729",
+          "emoji": "🔗",
+          "label": "Common to both frontends"
+        }
+      ],
+      "level": 1,
+      "follows": [],
+      "followsAll": [],
+      "inherits": 0,
+      "state": "done",
+      "ready": false
+    },
+    {
       "id": "journey-foundation",
       "rows": 7,
       "done": 7,
@@ -34,8 +118,11 @@ window.DR21_BUILD_ORDER = {
       "blocked": 0,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Journey foundation",
       "ticket": "EUDPA-691",
+      "excluded": 0,
       "live": 7,
       "tickets": [
         {
@@ -75,8 +162,11 @@ window.DR21_BUILD_ORDER = {
       "blocked": 0,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Reference lists",
       "ticket": "EUDPA-692",
+      "excluded": 0,
       "live": 3,
       "tickets": [
         {
@@ -109,16 +199,49 @@ window.DR21_BUILD_ORDER = {
       "ready": false
     },
     {
-      "id": "address-book",
-      "rows": 23,
+      "id": "type-question-and-templates",
+      "rows": 19,
       "done": 0,
-      "todo": 21,
+      "todo": 13,
+      "blocked": 0,
+      "deferred": 5,
+      "dropped": 1,
+      "rejected": 0,
+      "merged": 0,
+      "name": "Type question and templates",
+      "ticket": "EUDPA-690",
+      "excluded": 1,
+      "live": 18,
+      "tickets": [
+        {
+          "domain": "stub",
+          "key": "EUDPA-690",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-690",
+          "emoji": "🎫",
+          "label": "Stub only, not yet split by domain"
+        }
+      ],
+      "level": 1,
+      "follows": [],
+      "followsAll": [],
+      "inherits": 0,
+      "state": "open",
+      "ready": false
+    },
+    {
+      "id": "address-book",
+      "rows": 22,
+      "done": 0,
+      "todo": 20,
       "blocked": 2,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Address book",
       "ticket": null,
-      "live": 23,
+      "excluded": 0,
+      "live": 22,
       "tickets": [],
       "level": 2,
       "follows": [
@@ -132,56 +255,19 @@ window.DR21_BUILD_ORDER = {
       "ready": true
     },
     {
-      "id": "arrival-and-transit",
-      "rows": 6,
-      "done": 5,
-      "todo": 0,
-      "blocked": 0,
-      "deferred": 0,
-      "dropped": 1,
-      "name": "Arrival and transit",
-      "ticket": "EUDPA-694",
-      "live": 5,
-      "tickets": [
-        {
-          "domain": "animals",
-          "key": "EUDPA-694",
-          "url": "https://eaflood.atlassian.net/browse/EUDPA-694",
-          "emoji": "🐄",
-          "label": "Live animals"
-        },
-        {
-          "domain": "plants",
-          "key": "EUDPA-703",
-          "url": "https://eaflood.atlassian.net/browse/EUDPA-703",
-          "emoji": "🌱",
-          "label": "High-risk plants"
-        }
-      ],
-      "level": 2,
-      "follows": [
-        "journey-foundation",
-        "reference-lists"
-      ],
-      "followsAll": [
-        "journey-foundation",
-        "reference-lists"
-      ],
-      "inherits": 2,
-      "state": "done",
-      "ready": false
-    },
-    {
       "id": "commodities-and-reason",
-      "rows": 10,
-      "done": 6,
-      "todo": 0,
+      "rows": 7,
+      "done": 0,
+      "todo": 3,
       "blocked": 4,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Commodities and import reason",
       "ticket": "EUDPA-693",
-      "live": 10,
+      "excluded": 0,
+      "live": 7,
       "tickets": [
         {
           "domain": "stub",
@@ -199,21 +285,58 @@ window.DR21_BUILD_ORDER = {
         "journey-foundation"
       ],
       "inherits": 1,
+      "state": "blocked",
+      "ready": false
+    },
+    {
+      "id": "design-snagging-b",
+      "rows": 5,
+      "done": 4,
+      "todo": 1,
+      "blocked": 0,
+      "deferred": 0,
+      "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
+      "name": "Design snagging B",
+      "ticket": "EUDPA-720",
+      "excluded": 0,
+      "live": 5,
+      "tickets": [],
+      "level": 2,
+      "follows": [
+        "design-snagging"
+      ],
+      "followsAll": [
+        "design-snagging"
+      ],
+      "inherits": 1,
       "state": "part",
       "ready": false
     },
     {
       "id": "documents",
-      "rows": 6,
+      "rows": 5,
       "done": 0,
-      "todo": 5,
+      "todo": 4,
       "blocked": 1,
       "deferred": 0,
       "dropped": 0,
-      "name": "Documents",
-      "ticket": null,
-      "live": 6,
-      "tickets": [],
+      "rejected": 0,
+      "merged": 0,
+      "name": "Upload documents",
+      "ticket": "EUDPA-724",
+      "excluded": 0,
+      "live": 5,
+      "tickets": [
+        {
+          "domain": "stub",
+          "key": "EUDPA-724",
+          "url": "https://eaflood.atlassian.net/browse/EUDPA-724",
+          "emoji": "🎫",
+          "label": "Stub only, not yet split by domain"
+        }
+      ],
       "level": 2,
       "follows": [
         "journey-foundation"
@@ -226,139 +349,79 @@ window.DR21_BUILD_ORDER = {
       "ready": true
     },
     {
-      "id": "origin-page",
-      "rows": 3,
-      "done": 3,
-      "todo": 0,
-      "blocked": 0,
-      "deferred": 0,
-      "dropped": 0,
-      "name": "Origin page",
-      "ticket": "EUDPA-695",
-      "live": 3,
-      "tickets": [
-        {
-          "domain": "animals",
-          "key": "EUDPA-695",
-          "url": "https://eaflood.atlassian.net/browse/EUDPA-695",
-          "emoji": "🐄",
-          "label": "Live animals"
-        },
-        {
-          "domain": "plants",
-          "key": "EUDPA-704",
-          "url": "https://eaflood.atlassian.net/browse/EUDPA-704",
-          "emoji": "🌱",
-          "label": "High-risk plants"
-        }
-      ],
-      "level": 2,
-      "follows": [
-        "reference-lists"
-      ],
-      "followsAll": [
-        "reference-lists"
-      ],
-      "inherits": 1,
-      "state": "done",
-      "ready": false
-    },
-    {
       "id": "identification-and-permanent-address",
-      "rows": 12,
+      "rows": 9,
       "done": 0,
-      "todo": 10,
+      "todo": 7,
       "blocked": 1,
       "deferred": 0,
       "dropped": 1,
+      "rejected": 0,
+      "merged": 0,
       "name": "Identification and permanent address",
       "ticket": null,
-      "live": 11,
+      "excluded": 1,
+      "live": 8,
       "tickets": [],
       "level": 3,
       "follows": [
-        "commodities-and-reason"
+        "commodities-and-reason",
+        "type-question-and-templates",
+        "design-snagging-b"
       ],
       "followsAll": [
         "commodities-and-reason",
-        "journey-foundation"
+        "design-snagging",
+        "design-snagging-b",
+        "type-question-and-templates"
       ],
-      "inherits": 2,
+      "inherits": 5,
       "state": "open",
       "ready": false
     },
     {
       "id": "transporters",
-      "rows": 12,
+      "rows": 11,
       "done": 0,
-      "todo": 1,
+      "todo": 0,
       "blocked": 11,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Transporters",
       "ticket": null,
-      "live": 12,
+      "excluded": 0,
+      "live": 11,
       "tickets": [],
       "level": 3,
       "follows": [
-        "documents",
+        "design-snagging",
         "address-book"
       ],
       "followsAll": [
         "address-book",
-        "documents",
-        "journey-foundation",
+        "design-snagging",
         "reference-lists"
       ],
-      "inherits": 4,
+      "inherits": 3,
       "state": "blocked",
       "ready": false
     },
     {
-      "id": "type-question-and-templates",
-      "rows": 23,
-      "done": 13,
-      "todo": 0,
-      "blocked": 0,
-      "deferred": 9,
-      "dropped": 1,
-      "name": "Type question and templates",
-      "ticket": "EUDPA-690",
-      "live": 22,
-      "tickets": [
-        {
-          "domain": "stub",
-          "key": "EUDPA-690",
-          "url": "https://eaflood.atlassian.net/browse/EUDPA-690",
-          "emoji": "🎫",
-          "label": "Stub only, not yet split by domain"
-        }
-      ],
-      "level": 3,
-      "follows": [
-        "commodities-and-reason",
-        "arrival-and-transit"
-      ],
-      "followsAll": [
-        "arrival-and-transit",
-        "commodities-and-reason",
-        "journey-foundation"
-      ],
-      "inherits": 4,
-      "state": "part",
-      "ready": false
-    },
-    {
       "id": "consignment-parties",
-      "rows": 13,
+      "rows": 10,
       "done": 0,
-      "todo": 13,
+      "todo": 10,
       "blocked": 0,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Consignment parties",
       "ticket": null,
-      "live": 13,
+      "excluded": 0,
+      "live": 10,
       "tickets": [],
       "level": 4,
       "follows": [
@@ -367,24 +430,27 @@ window.DR21_BUILD_ORDER = {
       ],
       "followsAll": [
         "address-book",
-        "identification-and-permanent-address",
-        "journey-foundation"
+        "design-snagging",
+        "identification-and-permanent-address"
       ],
-      "inherits": 5,
+      "inherits": 8,
       "state": "open",
       "ready": false
     },
     {
       "id": "overview-and-review",
-      "rows": 22,
-      "done": 16,
-      "todo": 2,
+      "rows": 21,
+      "done": 0,
+      "todo": 17,
       "blocked": 2,
       "deferred": 0,
       "dropped": 2,
+      "rejected": 0,
+      "merged": 0,
       "name": "Overview and review",
       "ticket": "EUDPA-696",
-      "live": 20,
+      "excluded": 2,
+      "live": 19,
       "tickets": [
         {
           "domain": "stub",
@@ -403,8 +469,8 @@ window.DR21_BUILD_ORDER = {
         "arrival-and-transit",
         "identification-and-permanent-address"
       ],
-      "inherits": 5,
-      "state": "part",
+      "inherits": 7,
+      "state": "open",
       "ready": false
     },
     {
@@ -415,8 +481,11 @@ window.DR21_BUILD_ORDER = {
       "blocked": 0,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Manage notifications",
       "ticket": null,
+      "excluded": 0,
       "live": 6,
       "tickets": [],
       "level": 5,
@@ -426,7 +495,7 @@ window.DR21_BUILD_ORDER = {
       "followsAll": [
         "overview-and-review"
       ],
-      "inherits": 6,
+      "inherits": 8,
       "state": "open",
       "ready": false
     },
@@ -438,21 +507,24 @@ window.DR21_BUILD_ORDER = {
       "blocked": 3,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Animals dashboard",
       "ticket": null,
+      "excluded": 0,
       "live": 14,
       "tickets": [],
       "level": 6,
       "follows": [
-        "manage-notifications",
-        "type-question-and-templates"
+        "manage-notifications"
       ],
       "followsAll": [
+        "design-snagging",
         "manage-notifications",
         "overview-and-review",
         "type-question-and-templates"
       ],
-      "inherits": 8,
+      "inherits": 9,
       "state": "open",
       "ready": false
     },
@@ -464,14 +536,16 @@ window.DR21_BUILD_ORDER = {
       "blocked": 1,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Germinal products",
       "ticket": null,
+      "excluded": 0,
       "live": 20,
       "tickets": [],
       "level": 7,
       "follows": [
         "animals-dashboard",
-        "origin-page",
         "documents",
         "consignment-parties"
       ],
@@ -480,15 +554,14 @@ window.DR21_BUILD_ORDER = {
         "arrival-and-transit",
         "commodities-and-reason",
         "consignment-parties",
+        "design-snagging",
         "documents",
         "identification-and-permanent-address",
-        "journey-foundation",
         "manage-notifications",
-        "origin-page",
         "overview-and-review",
         "type-question-and-templates"
       ],
-      "inherits": 13,
+      "inherits": 14,
       "state": "open",
       "ready": false
     },
@@ -500,8 +573,11 @@ window.DR21_BUILD_ORDER = {
       "blocked": 8,
       "deferred": 0,
       "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "INS dashboard",
       "ticket": null,
+      "excluded": 0,
       "live": 8,
       "tickets": [],
       "level": 8,
@@ -513,21 +589,24 @@ window.DR21_BUILD_ORDER = {
         "germinal-products",
         "type-question-and-templates"
       ],
-      "inherits": 14,
+      "inherits": 15,
       "state": "blocked",
       "ready": false
     },
     {
       "id": "waiting-on-design",
-      "rows": 13,
+      "rows": 10,
       "done": 0,
       "todo": 0,
-      "blocked": 12,
+      "blocked": 10,
       "deferred": 0,
-      "dropped": 1,
+      "dropped": 0,
+      "rejected": 0,
+      "merged": 0,
       "name": "Waiting on design",
       "ticket": null,
-      "live": 12,
+      "excluded": 0,
+      "live": 10,
       "tickets": [],
       "level": 8,
       "follows": [
@@ -539,14 +618,15 @@ window.DR21_BUILD_ORDER = {
         "arrival-and-transit",
         "commodities-and-reason",
         "consignment-parties",
+        "design-snagging",
+        "design-snagging-b",
         "germinal-products",
         "journey-foundation",
         "manage-notifications",
-        "origin-page",
         "transporters",
         "type-question-and-templates"
       ],
-      "inherits": 15,
+      "inherits": 16,
       "state": "blocked",
       "ready": false
     }
@@ -555,14 +635,28 @@ window.DR21_BUILD_ORDER = {
     "nodeW": 150,
     "nodeH": 60,
     "canvasW": 900,
-    "viewBox": "-60 10 1040 1145",
+    "viewBox": "-60 10 1040 1108",
     "boxes": {
-      "journey-foundation": {
+      "arrival-and-transit": {
+        "x": 25,
+        "y": 44,
+        "w": 150,
+        "h": 97,
+        "cx": 100
+      },
+      "design-snagging": {
         "x": 200,
         "y": 44,
         "w": 150,
         "h": 112,
         "cx": 275
+      },
+      "journey-foundation": {
+        "x": 375,
+        "y": 44,
+        "w": 150,
+        "h": 112,
+        "cx": 450
       },
       "reference-lists": {
         "x": 550,
@@ -571,107 +665,100 @@ window.DR21_BUILD_ORDER = {
         "h": 112,
         "cx": 625
       },
+      "type-question-and-templates": {
+        "x": 725,
+        "y": 44,
+        "w": 150,
+        "h": 82,
+        "cx": 800
+      },
+      "design-snagging-b": {
+        "x": 60,
+        "y": 220,
+        "w": 150,
+        "h": 60,
+        "cx": 135
+      },
       "commodities-and-reason": {
-        "x": 25,
+        "x": 270,
         "y": 220,
         "w": 150,
         "h": 82,
-        "cx": 100
+        "cx": 345
       },
       "documents": {
-        "x": 200,
+        "x": 480,
         "y": 220,
+        "w": 150,
+        "h": 82,
+        "cx": 555
+      },
+      "address-book": {
+        "x": 690,
+        "y": 220,
+        "w": 150,
+        "h": 60,
+        "cx": 765
+      },
+      "identification-and-permanent-address": {
+        "x": 200,
+        "y": 366,
         "w": 150,
         "h": 60,
         "cx": 275
       },
-      "arrival-and-transit": {
-        "x": 375,
-        "y": 220,
-        "w": 150,
-        "h": 97,
-        "cx": 450
-      },
-      "address-book": {
+      "transporters": {
         "x": 550,
-        "y": 220,
+        "y": 366,
         "w": 150,
         "h": 60,
         "cx": 625
       },
-      "origin-page": {
-        "x": 725,
-        "y": 220,
-        "w": 150,
-        "h": 97,
-        "cx": 800
-      },
-      "identification-and-permanent-address": {
-        "x": 113,
-        "y": 381,
-        "w": 150,
-        "h": 60,
-        "cx": 188
-      },
-      "type-question-and-templates": {
-        "x": 375,
-        "y": 381,
-        "w": 150,
-        "h": 82,
-        "cx": 450
-      },
-      "transporters": {
-        "x": 638,
-        "y": 381,
-        "w": 150,
-        "h": 60,
-        "cx": 713
-      },
       "consignment-parties": {
         "x": 200,
-        "y": 527,
+        "y": 490,
         "w": 150,
         "h": 60,
         "cx": 275
       },
       "overview-and-review": {
         "x": 550,
-        "y": 527,
+        "y": 490,
         "w": 150,
         "h": 82,
         "cx": 625
       },
       "manage-notifications": {
         "x": 375,
-        "y": 673,
+        "y": 636,
         "w": 150,
         "h": 60,
         "cx": 450
       },
       "animals-dashboard": {
         "x": 375,
-        "y": 797,
+        "y": 760,
         "w": 150,
         "h": 60,
         "cx": 450
       },
       "germinal-products": {
         "x": 375,
-        "y": 921,
+        "y": 884,
         "w": 150,
         "h": 60,
         "cx": 450
       },
       "ins-dashboard": {
         "x": 200,
-        "y": 1045,
+        "y": 1008,
         "w": 150,
         "h": 60,
         "cx": 275
       },
       "waiting-on-design": {
         "x": 550,
-        "y": 1045,
+        "y": 1008,
         "w": 150,
         "h": 60,
         "cx": 625
@@ -684,30 +771,30 @@ window.DR21_BUILD_ORDER = {
       },
       "2": {
         "top": 220,
-        "height": 97
-      },
-      "3": {
-        "top": 381,
         "height": 82
       },
+      "3": {
+        "top": 366,
+        "height": 60
+      },
       "4": {
-        "top": 527,
+        "top": 490,
         "height": 82
       },
       "5": {
-        "top": 673,
+        "top": 636,
         "height": 60
       },
       "6": {
-        "top": 797,
+        "top": 760,
         "height": 60
       },
       "7": {
-        "top": 921,
+        "top": 884,
         "height": 60
       },
       "8": {
-        "top": 1045,
+        "top": 1008,
         "height": 60
       }
     },
@@ -718,127 +805,107 @@ window.DR21_BUILD_ORDER = {
       {
         "parent": "germinal-products",
         "child": "waiting-on-design",
-        "d": "M 505 981 V 997 H 570 V 1045"
+        "d": "M 505 944 V 960 H 570 V 1008"
       },
       {
-        "parent": "journey-foundation",
-        "child": "documents",
-        "d": "M 275 156 V 220"
-      },
-      {
-        "parent": "documents",
+        "parent": "design-snagging",
         "child": "transporters",
-        "d": "M 330 280 V 333 H 658 V 381"
+        "d": "M 330 156 V 172 H 650 V 318 H 570 V 366"
       },
       {
         "parent": "commodities-and-reason",
         "child": "identification-and-permanent-address",
-        "d": "M 45 302 V 333 H 188 V 381"
+        "d": "M 345 302 V 318 H 275 V 366"
+      },
+      {
+        "parent": "type-question-and-templates",
+        "child": "identification-and-permanent-address",
+        "d": "M 800 126 V 188 H 250 V 334 H 330 V 366"
+      },
+      {
+        "parent": "design-snagging-b",
+        "child": "identification-and-permanent-address",
+        "d": "M 135 280 V 318 H 220 V 366"
       },
       {
         "parent": "address-book",
         "child": "transporters",
-        "d": "M 680 280 V 333 H 768 V 381"
+        "d": "M 820 280 V 318 H 680 V 366"
       },
       {
         "parent": "reference-lists",
         "child": "address-book",
-        "d": "M 625 156 V 220"
+        "d": "M 625 156 V 172 H 765 V 220"
       },
       {
         "parent": "address-book",
         "child": "consignment-parties",
-        "d": "M 570 280 V 349 H 330 V 527"
+        "d": "M 710 280 V 334 H 370 V 442 H 330 V 490"
       },
       {
         "parent": "identification-and-permanent-address",
         "child": "consignment-parties",
-        "d": "M 133 441 V 479 H 220 V 527"
+        "d": "M 220 426 V 490"
       },
       {
         "parent": "overview-and-review",
         "child": "manage-notifications",
-        "d": "M 625 609 V 625 H 450 V 673"
+        "d": "M 625 572 V 588 H 450 V 636"
       },
       {
         "parent": "manage-notifications",
         "child": "animals-dashboard",
-        "d": "M 450 733 V 749 H 395 V 797"
+        "d": "M 450 696 V 760"
       },
       {
         "parent": "animals-dashboard",
         "child": "germinal-products",
-        "d": "M 450 857 V 873 H 468 V 921"
+        "d": "M 450 820 V 884"
       },
       {
         "parent": "germinal-products",
         "child": "ins-dashboard",
-        "d": "M 395 981 V 997 H 275 V 1045"
-      },
-      {
-        "parent": "origin-page",
-        "child": "germinal-products",
-        "d": "M 800 317 V 365 H 805 V 873 H 505 V 921"
+        "d": "M 395 944 V 960 H 275 V 1008"
       },
       {
         "parent": "documents",
         "child": "germinal-products",
-        "d": "M 220 280 V 365 H 95 V 873 H 395 V 921"
+        "d": "M 555 302 V 318 H 715 V 836 H 505 V 884"
       },
       {
         "parent": "consignment-parties",
         "child": "germinal-products",
-        "d": "M 275 587 V 625 H 352 V 889 H 432 V 921"
+        "d": "M 275 550 V 588 H 355 V 836 H 395 V 884"
       },
       {
         "parent": "transporters",
         "child": "waiting-on-design",
-        "d": "M 713 441 V 479 H 720 V 997 H 680 V 1045"
-      },
-      {
-        "parent": "type-question-and-templates",
-        "child": "animals-dashboard",
-        "d": "M 450 463 V 479 H 715 V 749 H 505 V 797"
-      },
-      {
-        "parent": "journey-foundation",
-        "child": "arrival-and-transit",
-        "d": "M 330 156 V 172 H 395 V 220"
-      },
-      {
-        "parent": "reference-lists",
-        "child": "arrival-and-transit",
-        "d": "M 570 156 V 172 H 505 V 220"
+        "d": "M 625 426 V 442 H 720 V 960 H 680 V 1008"
       },
       {
         "parent": "journey-foundation",
         "child": "commodities-and-reason",
-        "d": "M 220 156 V 172 H 100 V 220"
+        "d": "M 395 156 V 204 H 345 V 220"
       },
       {
-        "parent": "reference-lists",
-        "child": "origin-page",
-        "d": "M 680 156 V 172 H 800 V 220"
+        "parent": "design-snagging",
+        "child": "design-snagging-b",
+        "d": "M 220 156 V 172 H 135 V 220"
+      },
+      {
+        "parent": "journey-foundation",
+        "child": "documents",
+        "d": "M 505 156 V 204 H 555 V 220"
       },
       {
         "parent": "arrival-and-transit",
         "child": "overview-and-review",
-        "d": "M 505 317 V 349 H 620 V 479 H 680 V 527"
+        "d": "M 100 141 V 188 H 460 V 442 H 570 V 490"
       },
       {
         "parent": "identification-and-permanent-address",
         "child": "overview-and-review",
-        "d": "M 243 441 V 495 H 570 V 527"
-      },
-      {
-        "parent": "commodities-and-reason",
-        "child": "type-question-and-templates",
-        "d": "M 155 302 V 349 H 395 V 381"
-      },
-      {
-        "parent": "arrival-and-transit",
-        "child": "type-question-and-templates",
-        "d": "M 395 317 V 365 H 505 V 381"
+        "d": "M 330 426 V 458 H 680 V 490"
       }
     ]
   },
@@ -846,6 +913,9 @@ window.DR21_BUILD_ORDER = {
     "backlog.json",
     "themes/arrival-and-transit/backlog.json",
     "themes/commodities-and-reason/backlog.json",
+    "themes/design-snagging/backlog.json",
+    "themes/design-snagging-b/backlog.json",
+    "themes/documents/backlog.json",
     "themes/journey-foundation/backlog.json",
     "themes/origin-page/backlog.json",
     "themes/overview-and-review/backlog.json",

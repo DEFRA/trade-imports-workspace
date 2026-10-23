@@ -1,17 +1,22 @@
 # EUDPA-296 — the frontend items still open
 
-Written 2026-10-22, **rewritten 2026-10-23**. The frontend's 135 items are now
-112 Done, 15 Merged, 3 Won't Fix, 2 Auto-Resolved and **3 open**. All three need
-a decision rather than effort, and the analysis behind each is here because it
-cost real work to establish and should not be redone.
+Written 2026-10-22, **rewritten 2026-10-23** after the owner closed the scope.
+The frontend's 136 items are now 112 Done, 15 Merged, 5 Won't Fix,
+2 Auto-Resolved and **2 open**: `#136` and `#58`, the only work left on the
+ticket.
 
 `#61` and `#126`, which this file used to carry, are **done** — see the
 handover beside this file for what landed. Every repo is pushed and all five
 PRs were green at the stop, the E2E included.
 
+`#133` and `#125` are **Won't Fix** — neither is functional. Their analysis is
+kept below unchanged, because it cost real work to establish and a re-review
+should meet the reasoning rather than redo it, **not** because either is still
+open. `#136` is written up in the handover and in its item.
+
 Everything below is in `trade-imports-animals-frontend` unless said otherwise.
 
-## #133 — the crumb and concurrency token crossing to cdp-uploader
+## #133 — the crumb and concurrency token crossing to cdp-uploader (WONT FIX)
 
 **The finding is real.** `template.njk:65-66` put `crumb` and
 `concurrencyToken` as hidden inputs in the one form on the page, and the add
@@ -61,28 +66,28 @@ code rather than assumed:
 Note the same problem covers `retryRemoveIndex` and `retryRemoveUploadId`, which
 are rendered on the recoverable-save path and cross the boundary too.
 
-## #58 — unclaimed upload sessions and orphaned S3 objects
+## #58 — unclaimed upload sessions and orphaned S3 objects (IN SCOPE)
 
 **What is fixed.** The backend's own upload session has a 24h TTL, so a
 registration the browser never returns with expires.
 
-**What remains is not this repo's.** cdp-uploader's own session state and the S3
-objects from abandoned uploads are not cleaned up by that TTL, and neither is
-reachable from here — we open a session through its API and never learn its
-storage keys for an upload that was never claimed. The honest next step is to
-ask the platform team what cdp-uploader does with an initiated-but-never-
-completed session, rather than to build something here that cannot reach it.
-
-A second, cheaper half **is** ours and is worth weighing: the page mints a
-session on every render, including each tick of the no-JS refresh link
-(`MAX_POLL_ATTEMPTS`), so one document's scan leaves a run of sessions behind.
-Reusing the session already open for the page view would cut the volume sharply
-without needing anything from cdp-uploader. That is a change to
+**The work, and it is ours.** The page mints a session on every render,
+including each tick of the no-JS refresh link (`MAX_POLL_ATTEMPTS`), so one
+document's scan leaves a run of sessions and unreferenced S3 objects behind.
+Reuse the session already open for the page view. That is a change to
 `handlers/open-upload-session.js` and the `get` path, and it needs care: the
-correlation handle is what scopes an upload to a notification, so reuse must not
+correlation handle is what scopes an upload to a notification — the one rule
+that matters, because the handle arrives from the browser — so reuse must not
 let two concurrent adds share one handle.
 
-## #125 — the document-size cap's other homes
+**Out of scope, and not reachable from here.** cdp-uploader's own session state
+and the S3 objects from abandoned uploads are not cleaned up by that TTL, and we
+cannot reach them: we open a session through its API and never learn its storage
+keys for an upload that was never claimed. If it matters, ask the platform team
+what cdp-uploader does with an initiated-but-never-completed session. Do not
+build something here that cannot reach it.
+
+## #125 — the document-size cap’s other homes (WONT FIX)
 
 **What landed.** `sets/live-animals/docs/page-design.md` no longer restates
 50 MB; it names `MAX_FILE_SIZE_MB` in

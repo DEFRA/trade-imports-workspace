@@ -9,16 +9,33 @@ survive.
 
 ## Read this first
 
-**All ten Criticals are closed again.** Frontend #126 was reopened as Critical
-on 23 Oct because the premise it had been closed on was false; it is now Done
-on evidence, with the owner's wording decision recorded below. The PASS comments
-posted on the five PRs are **stale** — re-post them once #133, #58 and #125 are
-settled: `share-review.sh EUDPA-296 --comment-only --summary` regenerates them
-from the item files.
+**One Critical is open: #136**, raised 23 Oct. The original ten are all closed —
+#126 was reopened as Critical that day because the premise it had been closed on
+was false, and is now Done on evidence with the owner's wording decision
+recorded below. #136 is new, found while remediating rather than by the review's
+own pass, and is the only user-facing defect left.
+
+The PASS comments posted on the five PRs are **stale and now wrong** — they state
+Critical 0 open. Re-post them once #136 and #58 land:
+`share-review.sh EUDPA-296 --comment-only --summary` regenerates them from the
+item files.
 
 **Everything is pushed and every PR check is green.** Nothing is waiting on a
-hand-push. Three frontend items remain open and all three need a decision rather
-than effort (#133, #58, #125), plus eight *Discuss* items.
+hand-push.
+
+**The scope is now closed: two items left, both in the frontend.** The owner
+reviewed the remaining eleven on 23 Oct against one test — is it functional —
+and ruled that only the two that are get done:
+
+| Item | Repo | What | Why it is in scope |
+|---|---|---|---|
+| **#136** | frontend | **Critical, new.** A claimed document can be left off the notification while the page says the answers were saved, and Continue carries the journey on without it | a false statement to the trader and the two repos disagreeing about the notification |
+| **#58** | frontend | A session and a backend registration minted on every render, including each no-JS refresh tick, leaving orphaned cdp-uploader sessions and unreferenced S3 objects | a real resource leak |
+
+**Everything else is Won't Fix**, each with its evidence kept in the item so a
+re-review does not reopen it: frontend #133 and #125; backend #7, #15, #19 and
+#32; ins-tests #8, #16, #17 and #20. The reasoning is per-item below under
+"Closed by owner decision". Do not re-raise them.
 
 **The pre-push SonarCloud hook does not fire.** It did not run on any of the
 eight pushes this session — a push that should take minutes (`npm ci && npm test
@@ -95,11 +112,14 @@ for.
 
 | Repo | Items | Done | Open | Merged | Won't Fix | Notes |
 |---|---|---|---|---|---|---|
-| `animals-backend` | 103 | 86 | 4 | 12 | 2 | the 4 open are all *Discuss* |
-| `animals-frontend` | 135 | 112 | 3 | 15 + 2 auto | 3 | all pushed |
-| `ins-tests` | 20 | 11 | 4 | 4 | 1 | the 4 open are deferred — see below |
+| `animals-backend` | 103 | 86 | 0 | 12 | 6 | complete |
+| `animals-frontend` | 136 | 112 | **2** | 15 + 2 auto | 5 | #136 and #58 — the only work left on the ticket |
+| `ins-tests` | 20 | 11 | 0 | 4 | 5 | complete |
 | `performance-tests` | 10 | 8 | 0 | 2 | 0 | complete |
 | `workspace` | 37 | 30 | 0 | 6 | 1 | complete |
+
+`review-items.sh` is trustworthy here: every item carries its disposition and,
+where it was done, its commit hash.
 
 Open PRs, **all green at the stop**: frontend #424, backend #114, ins-tests #49,
 performance-tests #24, workspace #141.
@@ -145,83 +165,76 @@ gate — or read the PR's SonarCloud check. Only `animals-frontend` and
 
 ## What is left, and why
 
-Three frontend items and eight *Discuss* items. **None is blocked on effort.**
+Two items, both in `animals-frontend`. Nothing else is in scope.
 
-### frontend #133 — the stated means does not work
+### frontend #136 — a claimed document can go missing while the page says it saved
 
-The crumb and concurrency token are posted to cdp-uploader and read back from
-its status endpoint. Both remedies the item offers are blocked by the page's own
-shape, and this was checked rather than assumed:
+**Critical, and the only user-facing defect left.** Raised 23 Oct on the owner's
+instruction; it was found while remediating and had no item of its own.
 
-- The page has **one** form, because the add button reaches cdp-uploader by
-  `formaction`. Continue needs the document fields (item #130: a part-filled
-  document must not be discarded in silence) and Remove needs the crumb and
-  token.
-- An HTML control belongs to exactly one form, so the document fields cannot sit
-  in both an add form and a page form.
-- Moving the crumb out leaves Remove and Continue unprotected without
-  JavaScript. Moving the document fields into an add-only form regresses #130
-  for a no-JS user. Mirroring hidden copies between two forms needs JavaScript,
-  which progressive enhancement forbids relying on. A header-borne crumb
-  (hapi crumb's `restful` mode) is JS-only for the same reason.
+`claimReturnedUpload` wraps the append in `kit.recoverableSave`. When the claim
+has already succeeded and `state.appendEntry` then fails, the failure branch logs
+*"Took on the returned upload but could not save the document"* and returns
+`renderTakeOnFailure(request, h, pageState, EMPTY_FORM)`. Three things follow:
 
-So the real choice is: **accept the exposure and record why** (the crumb is
-session-bound, the token is a staleness check and not an authorisation one, and
-cdp-uploader is a DEFRA platform service inside the same trust boundary), **or
-change the architecture** so the typed answers are held in this service's own
-session keyed by `correlationId` instead of round-tripped through cdp-uploader —
-which would mean only the file crosses, and is a design change well beyond a
-review fix. Needs a decision.
+- the backend holds the document with `claimed=true`, so `OutboxService` will
+  submit it;
+- the notification does not list it, because the append is what would have added
+  it;
+- `layout.njk` renders "Sorry, there is a problem with the service. **Your
+  answers on this page have been saved.** Try again in a few minutes." — untrue
+  on this path, and `EMPTY_FORM` means the typed answers are not even
+  redisplayed. The only working retry is a browser reload, which nothing on the
+  page suggests.
 
-### frontend #58 — reopened, and partly not ours
+And `leavePage` gates only on `isStillSettling(pageState.documents)`. The
+document is absent from that collection, so **nothing holds Continue back** and
+the trader proceeds with a claimed-but-unlisted document. The two repos then
+disagree about what the notification contains.
 
-The 24h TTL covers the backend's own upload session. cdp-uploader's session
-state and the orphaned S3 objects from abandoned uploads are not cleaned up, and
-that cleanup belongs to cdp-uploader rather than to this repo. Worth raising
-with the platform team rather than fixing here.
+This sits above item #115, whose Must was satisfied by wrapping the append in
+`recoverableSave` with a logged failure — that made the failure visible to
+support but left the trader misinformed and the journey continuable.
 
-### frontend #125 — one half needs the owner
+### frontend #58 — the resource leak, scoped to the half we own
 
-The in-repo half is done. `repos/trade-imports-performance-tests/src/config/traffic.js`
-caps `DOCUMENT_CAP_KILOBYTES` at `10_000`, so the perf suite cannot reach the
-50 MB path; raising it to `50_000` is **a load-test design decision** (50 MB
-bodies across many VUs has real cost). Left deliberately.
+Every render of the page mints an upload session and registers a backend record
+that nothing removes. `get` calls `addFormTarget`, the refusal path calls it
+again, and so does `finishTheDocument`; each runs
+`handlers/open-upload-session.js`, which POSTs cdp-uploader `/initiate` and then
+creates a PENDING record keyed on a correlation id the browser will never return
+with. The no-JS refresh link re-GETs the page on every tick while a scan
+settles, up to `MAX_POLL_ATTEMPTS`, so one document's scan leaves a run of
+orphan registrations and unreferenced S3 objects behind.
 
-`repos/trade-imports-ins-tests/resources/file-upload/constants.ts` also
-hard-codes the figure and the oversize message. The honest fix is for those
-specs to read it off `form[data-max-file-size]`, which makes the frontend the
-owner across the repo boundary. **This is the one that will actually break if
-the cap moves.**
+**In scope:** reuse the session already open for the page view. Reuse must not
+let two concurrent adds share one correlation handle — the handle is what scopes
+an upload to a notification, and that scoping is the one rule that matters
+because the handle arrives from the browser.
 
-### ins-tests #8, #16, #17, #20 — deferred for want of a stack run
+**Out of scope:** cdp-uploader's own session state and the objects from
+abandoned uploads. The backend's 24h TTL covers only its own session, and we
+cannot reach cdp-uploader's storage keys for an upload that was never claimed.
+If it matters, it is an ask to the platform team, not work in this repo.
 
-All four restructure or delete e2e specs. CI proving a new shape green does not
-prove it can fail, and the invert-red probe needs local execution. The local
-stack exhausted the disk even after reclaiming 38GB.
+## Closed by owner decision — do not re-raise
 
-- **#20's stated means is not implementable.** Moving `documents-reject`'s
-  distinct assertion into `documents-limits` cannot work: that assertion is
-  `'You have not added any documents yet.'` and a document is already in the
-  table by the time the boundary test refuses one. The genuinely distinct
-  scenario is a refusal on the *first* document with an empty table. Its Must is
-  sound; its means is not.
-- **#16 must not be done before #20** or the work may be thrown away.
+Ruled out on 23 Oct against one test: is it functional. Each item keeps its full
+evidence so a re-review meets the reasoning rather than the smell.
 
-### backend #7, #15, #19, #32 — all *Discuss*
+| Item | Repo | Why not |
+|---|---|---|
+| #133 | frontend | Security hygiene, not a defect. Bounded exposure — session-bound crumb, staleness token, cdp-uploader inside the same trust boundary. Both stated remedies are blocked by the page having one form; the proper fix (hold typed answers in our own session keyed by `correlationId`) is a design change for its own ticket. |
+| #125 | frontend | Test reach and test brittleness, not a product defect. The in-repo half is done. |
+| #7 | backend | **We do not care about the pre-existing documents in the test environments.** The mechanism is real — `private boolean claimed = false` is a primitive, so a document written before the field existed reads `false`, and the outbox filters `ClaimedIsTrue`, so it never ships. Production population is empty while the service is not live. |
+| #15 / #19 | backend | API shape, and they contradict each other — #15 wants the route under `/notifications/{ref}/`, #19 wants the verb out of the URL. The route works. One cross-repo decision if ever revisited, not two review items. |
+| #32 | backend | Configurability, not behaviour. The 24h TTL works. Attempted and reverted: `@Indexed(expireAfter)` does not resolve property placeholders and broke the whole Spring context. |
+| #8, #16, #17, #20 | ins-tests | Test structure. The suite is green and proves what it claims. #20's stated means is additionally not implementable — see its note. |
 
-- **#7** (`claimed` backfill) — reopened: dev and test environments do hold
-  documents that read `claimed=false` and stop shipping. The mechanism is real;
-  the question is whether those environments matter enough to migrate.
-- **#15 and #19 conflict with each other and both need the frontend.** #15 wants
-  the claim route under `/notifications/{ref}/`; #19 wants the verb out of the
-  URL. Both change the route the frontend calls at
-  `services/document-uploads/real.js:41`. **Decide the claim endpoint's shape
-  once, across both repos.**
-- **#32** (upload-session retention in configuration) — attempted and reverted:
-  `@Indexed(expireAfter)` does not resolve property placeholders. Untried
-  alternative is the SpEL form `#{@someConfigBean.retention()}`, which Spring
-  Data does document for that attribute. `UploadSessionRepositoryIT`'s TTL
-  assertion would prove whether it resolved or silently dropped the index.
+Two findings recorded earlier also stay unactioned, both non-functional: nothing
+validates the coverage `test` field in `openspec/coverage/` (a tooling gap — a
+row can cite a deleted test and still read `full`), and ~40 files hold a local
+copy of `getHandlerOf` now promoted to `engine/test-support.js` (a chore).
 
 ## Merge order matters, and the E2E now proves why
 
@@ -384,17 +397,23 @@ code and should not re-litigate these.
 
 ## Where to pick up
 
-Nothing is waiting on code or a push. What is left is decisions.
+Nothing is waiting on a decision any more. Two items of code, then merge.
 
-1. **Decide #133** (the crumb boundary — the analysis is above and in the item),
-   **#125**'s perf-suite ceiling, and whether **#58**'s cdp-uploader cleanup is
-   a platform-team ask.
-2. **Settle the backend's claim-endpoint shape once** (#15 vs #19), since both
-   change the route the frontend calls and neither can be applied from one repo.
-3. **The four ins-tests items need one local stack run**, not more analysis.
-4. **Re-post the PR summaries** once those are settled:
-   `share-review.sh EUDPA-296 --comment-only --summary`.
-5. **Merge in the order above**, or the set together.
+1. **#136** — the claimed-but-unlisted document and the untrue banner. Critical
+   and user-facing; do this first. Both halves matter: say something true on
+   that path, and stop Continue proceeding past a claimed upload the collection
+   does not hold.
+2. **#58** — reuse the session already open for the page view, so a scan does
+   not leave a run of orphan registrations behind. Keep the correlation handle
+   per-add.
+3. **Re-post the PR summaries** once both land:
+   `share-review.sh EUDPA-296 --comment-only --summary`. They currently state
+   Critical 0 open, which #136 makes false.
+4. **Merge in the order above**, or the set together.
+
+Both are in `animals-frontend` and both touch the documents controller, so they
+batch into one commit cluster — the pre-commit hook runs the full suite, so that
+is the cheaper shape.
 
 Before a re-review, a short re-verification, in this order — it is cheaper than
 diagnosing a red E2E backwards:

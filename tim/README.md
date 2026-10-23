@@ -723,19 +723,20 @@ client call (`moveToStatus` in `src/clients/jira-client.js`).
 
 tim has no GitHub commands. Use `gh` directly. Every repo is a DEFRA repo.
 
-| To                                   | Run                                                                                         |
-| ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Find the PRs for a ticket            | `gh search prs EUDPA-X --owner DEFRA --json repository,number,title,url,state`              |
-| Read a PR or its diff                | `gh pr view <n> --repo DEFRA/<repo>`, `gh pr diff <n> --repo DEFRA/<repo>`                  |
-| Open a PR, unless one is open        | `gh pr list --repo DEFRA/<repo> --head <branch> --state open`, then `gh pr create`          |
-| Edit or close a PR                   | `gh pr edit <n> --repo DEFRA/<repo>`, `gh pr close <n> --repo DEFRA/<repo> --comment …`     |
-| Watch a PR's checks                  | `timeout 540 gh pr checks <n> --repo DEFRA/<repo> --watch` (exit 0 pass, 1 fail, 8 pending) |
-| Read a failed job's log              | `gh run view <runId> --repo DEFRA/<repo> --log-failed`                                      |
-| Read a SonarCloud check's report     | `gh api repos/DEFRA/<repo>/check-runs/<id> --jq '.output'`                                  |
-| Run a job again                      | `gh run rerun <runId> --repo DEFRA/<repo> [--failed]`, or `--job <jobId>`                   |
-| List, check or wait for Actions runs | `gh run list`, `gh run view <id>`, `gh run watch <id> --exit-status`                        |
-| Merge a green PR                     | `gh pr merge <n> --repo DEFRA/<repo> --squash --match-head-commit <sha>`                    |
-| Check GitHub sign-in                 | `gh auth status`                                                                            |
+| To                                   | Run                                                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find the PRs for a ticket            | `gh search prs EUDPA-X --owner DEFRA --json repository,number,title,url,state`                                                                                            |
+| Read a PR or its diff                | `gh pr view <n> --repo DEFRA/<repo>`, `gh pr diff <n> --repo DEFRA/<repo>`                                                                                                |
+| Open a PR, unless one is open        | `gh pr list --repo DEFRA/<repo> --head <branch> --state open`, then `gh pr create`                                                                                        |
+| Edit or close a PR                   | `gh pr edit <n> --repo DEFRA/<repo>`, `gh pr close <n> --repo DEFRA/<repo> --comment …`                                                                                   |
+| Check a PR's checks once             | `gh pr checks <n> --repo DEFRA/<repo>` (exit 0 pass, 1 fail, 8 pending)                                                                                                   |
+| Wait for a PR's checks to finish     | `gh pr checks <n> --repo DEFRA/<repo> --watch` (exit 0 pass, 1 fail; it waits with no limit)                                                                              |
+| Read a failed job's log              | `gh run view <runId> --repo DEFRA/<repo> --log-failed`, or `gh run view --job <jobId> --log-failed`                                                                       |
+| Read a SonarCloud check's report     | `gh api repos/DEFRA/<repo>/check-runs/<id> --jq '.output'`                                                                                                                |
+| Run a job again                      | `gh run rerun <runId> --repo DEFRA/<repo> [--failed]`, or `--job <jobId>`                                                                                                 |
+| List, check or wait for Actions runs | `gh run list`, `gh run view <id>`, `gh run watch <id> --exit-status`                                                                                                      |
+| Merge a green PR                     | Run `gh pr checks <n> --repo DEFRA/<repo>` and merge only when it exits 0: `gh pr merge <n> --repo DEFRA/<repo> --squash --match-head-commit <sha>` checks nothing itself |
+| Check GitHub sign-in                 | `gh auth status`                                                                                                                                                          |
 
 ### `tim sonar issues` — why a SonarCloud gate failed
 

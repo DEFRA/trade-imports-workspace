@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Matches the spec (code headings, scientific name alone) but adds a fourth home for the species display rule beside species-name.js and species-latin-name.js.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "How a species is shown now has four homes: speciesLabelFor here (identity on the Latin name), speciesLatinNameOf in check-answers/view-model/cards/consignment/species/species-latin-name.js (also imported by animal-identification/card/view-model.js), an inline entry.speciesLatinName in consignment-details/view-model/groups.js:6, and commodities/species-name.js speciesName (commonName ?? speciesLatinName), which states a contradicting rule for consignment-details/selected-rows.js and animal-identification/summary/selected-commodities.js. The spec now says a species is shown by its scientific name alone; changing that again means finding every copy.",
+      "fix": "Must: one function owns how a species is labelled on the live-animals journey, and the search results, the selected summary, commodity details, animal identification and check answers all call it; no page reads speciesLatinName or commonName directly for display. One way: make commodities/species-name.js the owner (returning the Latin name, as the spec states), import it from search/view-model and the other features, and delete labels.js speciesLabelFor and species-latin-name.js."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

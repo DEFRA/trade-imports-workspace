@@ -1,0 +1,55 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The identifiedCommodityCodes switch is correct, but 'commodity' now holds a code, leaves() copies the shared helper, the comments carry history and rationale, and one title over-claims locale coverage.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 86,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "After the switch from list() to identifiedCommodityCodes() the callback parameter at line 86 and expectLabelledIn's second parameter (line 75) are still called 'commodity', but they now hold a CN commodity code such as '0102', not a commodity",
+      "fix": "Must: every local and parameter in this test that holds a commodity code is named for a code. One way: rename 'commodity' to 'code' (or 'commodityCode') in the flatMap callback, the pairs destructuring at line 93 and expectLabelledIn's signature and message",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 23,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "copy.test.js declares its own leaves() walker (lines 23-28), a line-for-line copy of the shared helper leaves() in src/server/app/shared/copy-leaves.js:9",
+      "fix": "Must: this test walks copy with the shared leaves() helper and holds no local copy. One way: import { leaves } from src/server/app/shared/copy-leaves.js and delete lines 23-28",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 71,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The comment at lines 71-74 narrates a before/after ('The commodity now sets the running order ... so the copy block is a lookup rather than a list') and describes how the page renders, not the lines below it",
+      "fix": "Must: no comment in this file narrates history or describes code other than the lines below it. One way: delete lines 71-74; the test title already states what it proves"
+    },
+    {
+      "id": 4,
+      "line": 31,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Rationale comments above tests at lines 31-32, 54, 99-100, 131-133, 147-148 and 158-160 explain why copy reads as it does (the user's reading, APHA visits, the other table's columns) instead of describing the lines below them",
+      "fix": "Must: the file holds no rationale comments; reasons for copy choices live in the behaviour spec or the repo's docs/, and test titles carry what each test proves. One way: delete those comments, moving any reason not already in openspec into the matching spec scenario"
+    },
+    {
+      "id": 5,
+      "line": 33,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should have a non-empty string (or string-returning function) at every leaf' over-claims: the loop walks only the English block (leaves(copy)); the Welsh block copy.cy.js, used by other tests in the same describe, is never walked, so an empty Welsh leaf passes",
+      "fix": "Must: the title states exactly which copy blocks the assertions cover. One way: walk both copy and copyCy in the loop, or retitle to name the English copy only"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

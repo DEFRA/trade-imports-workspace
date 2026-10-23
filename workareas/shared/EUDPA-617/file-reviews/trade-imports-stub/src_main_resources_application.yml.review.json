@@ -1,0 +1,38 @@
+{
+  "file": "src/main/resources/application.yml",
+  "repo": "trade-imports-stub",
+  "commit": "60be5df2892b87d7c2bdc5628eec2802d0373670",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New product paths are profiled, but the species path reference-data calls escapes latency and faults, and the interface label is now stale.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 131,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The mdm latency and fault paths match the request URI exactly, so /mdm/trade/product/commodities/{code}/species, which trade-imports-reference-data calls in production (MdmClient.java:50, ExternalCall get-commodity-species), is never delayed or faulted: a --perf stack answers it at zero latency and resilience runs cannot fail it, so the species lookup's timeout and fallback go untested against the stub. README.md:82 records the gap instead of closing it.",
+      "fix": "Must: every MDM path reference-data calls, the templated species path included, is delayed by the mdm latency profile and can carry an mdm fault. One way: let StubLatencies.forPath and StubFaults match a path template (for example /mdm/trade/product/commodities/*/species) and list it here, then drop the README sentence that excuses it.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 122,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "The mdm interface-name still reads 'countries and border control posts' although this PR adds the product search and commodities paths to the same integration; /latency-profiles reports this label, so it now understates what the profile covers.",
+      "fix": "Must: the mdm interface-name names every MDM interface the profile's paths cover. One way: 'MDM reference data through APIM: countries, border control posts and products'."
+    },
+    {
+      "id": 3,
+      "line": 124,
+      "severity": "Minor",
+      "category": "history",
+      "issue": "The mdm block this PR edits carries a ruling id in its service-level-source ('Interim (c-011 default)'), as does trade-token at line 111; the house rules ban ruling ids in code and config the repo ships.",
+      "fix": "Must: no ruling ids in application.yml values. One way: 'Interim default: §9.5 MDM through APIM latency is TBC', with the ruling recorded in docs/ if it is needed."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

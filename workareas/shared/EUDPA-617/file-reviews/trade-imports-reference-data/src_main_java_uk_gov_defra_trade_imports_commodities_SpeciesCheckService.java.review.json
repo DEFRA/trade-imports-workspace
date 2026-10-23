@@ -1,0 +1,46 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The check works for the happy path, but a null MDM body refuses valid species, refusals leave no log trace, and the predicate name hides its MDM calls.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "check() decides which lines are refused at submit (lines 26-28: a Latin name not under its code; lines 33-35: a line with no code or Latin name) and logs nothing. The frontend's check-answers/refusal.js turns every returned line into a 'species no longer offered' refusal, so support cannot tell during an incident which code and Latin name blocked a trader's submission, or that a line arrived with no code.",
+      "fix": "Must: each check that returns at least one line logs once, at info or warn, with the code and Latin name of every returned line and which rule returned it (not listed under its code, or no code/Latin name). One way: collect the missing lines, then log.warn(\"Species check found {} lines not listed in MDM: {}\", missing.size(), missing) before building the response, with @Slf4j on the class as CommoditySearchService has.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 36,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "speciesOf (lines 40-53) cannot tell 'MDM lists no species for this code' from 'MDM sent no usable answer'. MdmService.getCommoditySpecies turns a 200 with a null body or null content into an empty page (MdmService.pageOrEmpty, lines 88-90), so speciesOf returns an empty set and isUnlisted (lines 36-37) reports every line on that code as missing. refusal.js then refuses the trader's submission with 'species no longer offered' for species MDM still holds. The ticket's 14-15 Oct notes say MDM is mid data clean-up and upload, which is when an empty or null body for a live code is most likely.",
+      "fix": "Must: a species check reports a line as missing only when MDM answered with a species list for its code; a null body or null content from MDM for a code fails the check (an error the frontend sees as the check being unavailable) instead of refusing the lines. One way: have the species lookup for the check throw (or return an Optional) when MDM's body or content is null, keeping pageOrEmpty's empty-page fallback for the search path only, and add a test with a null-body page asserting the check fails rather than returning the line."
+    },
+    {
+      "id": 3,
+      "line": 32,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "isUnlisted(line, latinNamesByCode) (line 32) reads as a pure test of one line, but on a code it has not seen it calls MDM for every page of that code's species and writes the result into the caller's map (computeIfAbsent, line 36). The name hides the MDM calls and the map change. speciesOf (line 40) returns Latin names, which the map one line above already calls latinNamesByCode: two names for one value.",
+      "fix": "Must: the predicate's name and parameters show that it may fetch from MDM and fill a shared lookup, or the fetch and fill move out of the predicate; the method that returns a code's Latin names is named for Latin names, matching latinNamesByCode. One way: build the lookup first (latinNamesByCode = codes.stream().distinct().collect(toMap(identity(), this::fetchLatinNamesOf))), then filter with a pure isListed(line, latinNamesByCode)."
+    },
+    {
+      "id": 4,
+      "line": 18,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "PAGE_SIZE (line 18) is a package-private class constant used by one method, speciesOf, and no test imports it: SpeciesCheckServiceTest repeats the literal 100 at lines 63, 64 and 97. The house rule keeps a literal used by one function in that function, and module scope only for a shared value or one a test imports.",
+      "fix": "Must: the species page size has one home. Either it lives inside speciesOf, or it stays at class scope and SpeciesCheckServiceTest refers to SpeciesCheckService.PAGE_SIZE in place of the literal 100. One way: replace eq(100) in the test's givenMdmSpeciesPage and verify calls with eq(SpeciesCheckService.PAGE_SIZE)."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

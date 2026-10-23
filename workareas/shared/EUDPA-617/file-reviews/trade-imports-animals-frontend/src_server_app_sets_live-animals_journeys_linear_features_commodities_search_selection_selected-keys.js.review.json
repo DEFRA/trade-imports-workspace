@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/selected-keys.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Keys from the payload are now checked against search rows that each new search overwrites, so a species ticked under an earlier search can be dropped silently, and storedKeys runs a check that can never drop anything.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "mergedKeysFromPayload keeps only keys found in the rows stored by the latest search, and drops the rest without a log. Because replaceStoredSearchRows overwrites the stored rows on every search, a species ticked on an earlier results page goes missing: search 'cattle' in one tab, search 'cat' in a second tab, then tick Bos taurus in the first tab and press Continue. The key is gone from the stored rows, so the trader gets the 'select a commodity' 400 error, or that species is silently left out of the lines saved beside the others. This breaks the spec requirement that the system MUST keep every species the user has chosen, whichever search brought it on screen (commodity-selection/spec.md:80). Before this PR the key was checked against the static catalogue, so the stored rows did not matter.",
+      "fix": "Must: a posted key that matches a real commodity and species is never lost because a later search replaced the stored rows; if a key can still be refused, the refusal is logged once at warn with the journey id and the refused key. One way: keep the shown rows adding up across searches until the page saves (merge them into the stored rows rather than replacing them), and log the keys knownKeysInCanonicalOrder throws away.",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "storedKeys checks the saved lines' keys against lineRowsByKey(linesOf(answers)), a map built from those same lines, so every key is always known and the filter can never drop anything. The call reads as a validity check that does nothing; only the dedupe and sort take effect.",
+      "fix": "Must: storedKeys only does what has an effect (dedupe and canonical order of the saved line keys), and no reader is led to think saved lines are checked against anything. One way: split the dedupe-and-sort out of knownKeysInCanonicalOrder in keys.js into its own exported helper, and call that from storedKeys on linesOf(answers).map(lineKey)."
+    },
+    {
+      "id": 3,
+      "line": 7,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The comment above mergedKeysFromPayload (lines 7-9) describes the UI and template ('Only the results panel carries tick boxes', a hidden selection value) and uses a metaphor ('rides back'). The house rules forbid comments that describe the UI and put rationale in docs/. Since this PR it also leaves out that unknown keys are now dropped.",
+      "fix": "Must: no comment above mergedKeysFromPayload describes the page or template; the function and parameter names carry its meaning, and the explanation of the carried hidden selection lives in the set's docs if it is worth keeping. One way: delete the comment and add a line about the carried selection field to src/server/app/sets/live-animals/docs/services.md beside the commoditySearchRows note.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

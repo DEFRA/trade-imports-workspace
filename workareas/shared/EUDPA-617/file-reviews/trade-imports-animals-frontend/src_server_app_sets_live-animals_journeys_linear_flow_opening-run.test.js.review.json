@@ -1,0 +1,45 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The run redirects are unchanged and correct, but the fish seed is now an ostrich under a fish name and comment, the new cat seed copies shared helpers and no longer tests a fresh pick, and some titles and comments break the house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 109,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "fishLineSeed and the comment above it ('A consignment of Atlantic salmon: Fish is on none of the identifier allowlists') now describe a seed that is no longer fish. The diff changed the line to commodityCode '01063300', speciesLatinName 'Struthio', which the stub fixture lists as Ostriches. The name and the comment both mispredict the set-up, and the comment explains the set-up instead of a name doing it.",
+      "fix": "Must: the seed's name says what it holds and why the identification page has nothing to ask (a commodity code with no identifiers), and no comment is needed. One way: rename it to unidentifiedLineSeed (or ostrichLineSeed) and delete the comment on lines 109-110."
+    },
+    {
+      "id": 2,
+      "line": 192,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The diff adds withCat (lines 192-197), a second Felis catus line seed beside lineSeed (lines 97-107, the same 01061900|Felis catus line). It also types the key '01061900|Felis catus' by hand twice (lines 203, 211), although search/test-support.js exports FELIS_CATUS_ROW and selection/line-key.js exports lineKey. Seeding the line as an answer also changes what the test proves: the POST now re-saves a species already on the notification, where before it was a fresh pick. contract.test.js:224 shows the intended set-up, a flow-only commoditySearchRows seed.",
+      "fix": "Must: the cat seed and its key come from the shared search test support, with no local copy, and the test still witnesses a fresh pick from shown search rows moving the run on. One way: seed { countryOfOrigin: 'FR', commoditySearchRows: [FELIS_CATUS_ROW] } (flow-only, as contract.test.js does), post species: [lineKey(FELIS_CATUS_ROW)], and delete withCat; build lineSeed's line from FELIS_CATUS_ROW too."
+    },
+    {
+      "id": 3,
+      "line": 166,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles claim more than their assertions prove, or narrate history. Line 166: '... — origin is an ordinary page now' ('now' is before/after narration). Line 629: 'Should fall back to the section flow once the run is complete (change=1 and plain saves unaffected)' runs only a plain save with no change query, so nothing proves the change=1 half.",
+      "fix": "Must: each title states only what its assertions prove, in present tense, with no history. One way: line 166 'Should send a journey with no run record to the hub after origin'; line 629 'Should send a plain origin save to the hub once the run is complete', or add a change=1 case if that claim is wanted."
+    },
+    {
+      "id": 4,
+      "line": 232,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules or give rationale rather than the lines below them. Lines 123-124 explain why the fixture exists. Lines 232-233 describe the flow config ('the page is the commodities section's last page'). Lines 257-259 explain what the test is for. Lines 312-314 describe how the add spokes behave in production.",
+      "fix": "Must: opening-run.test.js holds no comment that explains rationale or describes production modules; names and titles carry the meaning, and any rationale lives in the flow doc. One way: delete the four comments, rename completeSeed/driveAddSpoke if the meaning is lost, and move any reason worth keeping into journey-flow-and-gates.md."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

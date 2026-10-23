@@ -1,0 +1,48 @@
+{
+  "file": "src/server/app/bridge/obligation-source.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:04Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The ENFORCED_AT_CONTINUE switch from commoditySelection to commodityCode is correct and covered by gates.test.js, but the file carries comments that narrate other modules or decode names, an alias pair naming one concept twice, and an error message that names a non-existent key category.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 43,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules rather than the lines below them: L43-47 narrates engine/evaluate/cardinality.js collectionCapAt and appendEntryAt; L52-57 banner narrates the evaluator, finalise, the engine write paths and submitJourney; L72-74 narrates runtime notification projections and the journey envelope.",
+      "fix": "Must: every comment in the file describes only the lines directly below it, with rationale moved to the repo's docs/ or the behaviour spec. One way: delete the three blocks; name MAX_ENTRIES_FROM's purpose in the identifier if needed (e.g. ENTRY_CAP_FIELD_BY_COLLECTION) and move the answer-key recognition rationale into src/server/app/docs/.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 21,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments decode names or carry rationale: L21-23 explains what templatePath means for obligationByPath; L29 'never a set-specific list' is rationale for SystemPopulated; L59-60 explains what flowOnlyObligations holds. House rule: a comment that explains a name means the name is wrong.",
+      "fix": "Must: each name says what it holds without a comment, and the three comments are gone. One way: rename the parameter to dottedNamePath (or similar) and delete L21-23; delete L29; fold L59-60 into the flowOnlyObligations rename raised separately.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 61,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "flowOnlyObligations (L61) is a pass-through alias of flowOnlyKeys and returns key strings, not obligations, so its value word mispredicts and one concept carries two names; obligationByName (L19) likewise re-exports configuredObligationByName under a second name.",
+      "fix": "Must: one name per concept, and the name of the flow-only list says it returns keys. One way: drop the flowOnlyObligations wrapper and call flowOnlyKeys directly at L65 and L82 (updating importers), and have callers import obligationByName from model/obligations/manifest.js instead of the re-export.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 4,
+      "line": 166,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "assertRecognisedAnswerKeys's error message lists 'a declared auxiliary entry key' as an accepted category, but unrecognisedAnswerKeys only accepts manifest names, flow-only keys and SYSTEM_ANSWER_KEYS; 'auxiliary' appears nowhere else in src/server/app, so a developer hitting the error is sent looking for a declaration mechanism that does not exist.",
+      "fix": "Must: the thrown message lists exactly the key categories the check accepts. One way: remove 'or a declared auxiliary entry key' from the message."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "docs/analysis/gbn-ag-field-lineage.md",
+  "repo": "trade-imports-workspace",
+  "commit": "f7d977cd529d089ca4abd13cd88d9d1cdcf14ed4",
+  "pr": 135,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commonName bullet misstates which code is sent (the first line's, on every line), and both rewritten bullets break the doc's dated-amendment convention.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 245,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The TradeLineItem.commonName bullet says it 'sends the line's CN code'. It sends the first line's code on every line: the frontend's commodityFromLinesA sets commodity.name to lines[0].commodityCode, and the backend's TradeLineItem.linesFrom(commodity.getName(), c) puts that one name on every complement. A notification with lines under 0102 and 01061900 sends commonName 0102 on the 01061900 lines too. The bullet also leaves out that each line now holds MDM's own common name (commonName, from the search row via seedLine), which speciesEntryFromLine does not send, and that changes the scope of the 'proper fix'. (Backend checked at a9d26fc, which has no PR in this set.)",
+      "fix": "Must: the bullet says commonName carries the first line's CN code on every TradeLineItem, and that MDM's common name is held on each line but not sent. One way: 'sends the first line's CN code (e.g. 0102) on every line, from commodity.name; each line also stores MDM's common name, which the frontend mapper does not send.'"
+    },
+    {
+      "id": 2,
+      "line": 235,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The doc follows a dated-amendment rule (header lines 8-20: an 'Audited as of' commit table, and corrections 'marked with that date'). This change rewrites the Species identity (line 238) and TradeLineItem.commonName (line 245) bullets in place to describe October 2026, EUDPA-617 behaviour. They still sit under 'Two further gaps surfaced during EUDPA-369 planning (Amir Naveed, 2026-09-11)', with no date and no frontend commit added to the audit table. A reader would take the CN-code behaviour as the 2026-09-11 finding, checked against a commit that predates it.",
+      "fix": "Must: the updated facts carry the date and the commit they were checked against, as the doc's own convention requires, and the 2026-09-11 finding stays readable as it was. One way: add a dated 'Correction (2026-10, EUDPA-617)' note under the bullets with the frontend and backend commits, or add a column to the audit table."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/species-check.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The real-mode check fails open on a reply without a missing list, and the stub check sits outside the stub module.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 24,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "realCall returns (await checkSpecies(lines)).missing ?? [], so a reference-data reply without a missing array (a contract drift, a proxy or gateway answering 200 with another body) reads as 'every species listed' and the submission check passes without having checked anything, silently. reference-data's SpeciesCheckResponse always sets missing (List.copyOf), so the fallback never helps a valid reply; it only fails open on an invalid one.",
+      "fix": "Must: a species-check reply without a missing array is treated as reference data failing (503 via callReferenceData), never as all species listed. One way: return checkSpecies(lines).then(({ missing }) => { if (!Array.isArray(missing)) throw new Error('Species check reply has no missing list'); return missing }) and add a real-mode test for a reply of {}."
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The stub's species check (listedInStub, reading COMMODITY_GROUPS) lives in species-check.js, while the stub's search (searchCommodities) lives in stub.js, the module that owns the stub catalogue. Stub behaviour now has two homes, and species-check.js reaches into the stub's data rather than calling a stub function as search.js does.",
+      "fix": "Must: stub.js owns every stub answer over COMMODITY_GROUPS, and species-check.js calls it the same way search.js calls searchCommodities. One way: move listedInStub into stub.js as an exported unlistedLinesInStub(lines) and use stubCall: () => unlistedLinesInStub(lines)."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

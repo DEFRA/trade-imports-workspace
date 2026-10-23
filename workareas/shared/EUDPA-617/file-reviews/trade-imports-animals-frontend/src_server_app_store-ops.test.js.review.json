@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/store-ops.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The re-keyed fixtures leave the permanent-address wipe test unable to fail, since its seeded line has no species, and a stale comment still names Cow.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 514,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Lines 41-44 and 514-537: catsLine now seeds only commodityCode '01061900' with no speciesLatinName, but permanentAddress is gated on species (obligations/sections/commodities/identifiers.js:169, allowListed(speciesLatinName, permanentAddressSpecies, ...)). The test 'Should destroy a nested permanentAddress at its exact depth-2 path when the enclosing commodity leaves the gate' therefore seeds a unit that was never in the gate: it still passes if the commit keeps '01061900', so it cannot fail on the behaviour its title claims. The helper name catsLine also no longer predicts its value, since the line holds no cat.",
+      "fix": "Must: the permanent-address test seeds a line inside the gate (a permanent-address species) and fails if the commit leaves the line in the gate; the helper's name says what the line holds. One way: give catsLine speciesLatinName: FELIS_CATUS (keeping the name honest), and retitle the test to say the address is destroyed when the line's species leaves the permanent-address list."
+    },
+    {
+      "id": 2,
+      "line": 270,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines 270-271 comment '// containsUnweanedAnimals is gated on an unweaned-triggering commodity (Cow) existing in ANY line (frame:anyItem) and carries wipeOnExit.' describes another module (the obligation definition) and names 'Cow', a commodity name this PR removes (rules are now keyed by CN code, UNWEANED_CODES = 0102/0103), so it is stale.",
+      "fix": "Must: no comment above the test; the test title and seeded data say which line triggers the unweaned question. One way: delete the comment and, if needed, name the seeded line's code with a constant such as CATTLE_CODE."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

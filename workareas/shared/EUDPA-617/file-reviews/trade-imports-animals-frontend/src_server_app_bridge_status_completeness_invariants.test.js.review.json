@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/bridge/status/completeness/invariants.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commodityCode rename is correct, matches production gating and leaves every expected value unchanged, but the file's comments and metaphorical test titles break the house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments at lines 12-14, 25-26, 34, 47-48, 84-86, 121-126, 138, 150-151, 179-181 (rewritten in this PR) and 212-213 explain other modules (gateAdmits, manifest.js, vitest, the production identifier leaves) and give rationale, not the lines below; lines 12-14 are also untrue: they say the manifest avoids pulling in the live-animals set, but line 1 imports SET_ID from sets/live-animals/set.js",
+      "fix": "Must: the file carries no comment that describes another module, a library or rationale, and none that is untrue; what a fixture is for is said by its name or the test title, and any rationale lives in the repo docs or behaviour spec. One way: delete these comments, rename fixtures where needed (e.g. equalsGateLeaf -> unreadableGateLeaf, fannedElsewhereLeaf -> leafGatedOnOtherGroup) and move the 'unreadable gate keeps the floor' rationale to the completeness docs"
+    },
+    {
+      "id": 2,
+      "line": 88,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Test titles at lines 88, 99, 110, 127, 139, 168, 182, 201 and 214 state metaphors ('hold the floor open', 'bite', 'go vacuous', 'stand the floor down') instead of what the assertions prove, which is whether emptyCollectionSatisfiesFloor reports an empty collection satisfied (true) or not (false); 'hold the floor open' (line 88) asserts true, the same outcome other titles call 'stand the floor down', so a reader cannot tell the outcome from the title",
+      "fix": "Must: every title in the file says the observable result its assertion checks (empty collection satisfied / not satisfied) and the input condition, using one vocabulary. One way: 'Should report an empty collection satisfied when the collection does not require an entry', 'Should report an empty collection unsatisfied when an allow-list gate admits the line's commodity code', and so on"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

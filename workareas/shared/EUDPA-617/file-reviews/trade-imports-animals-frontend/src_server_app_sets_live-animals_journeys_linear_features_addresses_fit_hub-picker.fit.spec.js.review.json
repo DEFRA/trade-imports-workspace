@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Species swaps correctly track the MDM stub data (ostriches non-exempt, 'Equus cabalus' exempt), but the species literals are duplicated across FIT specs instead of living in the journey helper.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 124,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The CPH tests pass species Latin names as bare literals ('Struthio' at 124, 'Equus cabalus' at 139) that other FIT specs already name locally (EQUUS_CABALUS and STRUTHIO in commodities/fit/identification.fit.spec.js; 'Equus cabalus' again in additional-details.fit.spec.js); the stub-data spelling lives in several specs",
+      "fix": "Must: each stub species a FIT spec drives by name is declared once in the set's journey helper and imported by every spec. One way: export named species constants (for example OSTRICH = 'Struthio', HORSE = 'Equus cabalus') from fit/live-animals-journey.js beside the 'Felis catus' default of unlockSections, and replace the local copies",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 157,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Comment 'The selector pins placement: the section name is the element directly above the role heading...' explains why the selector was chosen: rationale in code",
+      "fix": "Must: no rationale comment in the test. One way: delete the comment, or move the reason to the set's docs; a named locator such as captionDirectlyAboveHeading can carry the intent"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

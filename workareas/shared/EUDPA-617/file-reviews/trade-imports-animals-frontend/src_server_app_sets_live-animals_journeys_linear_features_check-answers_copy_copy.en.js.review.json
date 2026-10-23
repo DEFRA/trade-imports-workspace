@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new message reads well, but it sits in the card-id map errors.cards, making that map's comment untrue, and the file's other comments break the house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 152,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "speciesNoLongerOffered (line 152) is added to errors.cards, a map whose keys are review card ids holding each card's 'Complete <card>' line (incomplete-cards.js:77 reads copy.errors.cards[card.id]; check-answers.test.js:1814 asserts each card id maps to a string). It is a function, not a card id, and it makes the comment on lines 144-146 ('One line per review card that still has answers outstanding') untrue.",
+      "fix": "Must: errors.cards holds only card-id keys, and the unlisted-species message lives under its own key in errors, mirrored in copy.cy.js, with no comment left untrue. One way: move it to errors.species.notListed (or similar) in both copy files, update refusal.js and the two tests, and delete the 144-146 comment.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe the page and its rendering rather than the lines below, and hold design rationale: 3-4 and 6-8 explain how blanks are drawn and what a screen reader is told; 49; 121-122; 137-138 ('The review ends with the button and nothing else...').",
+      "fix": "Must: no comment in the copy file holds rationale or describes the UI; each key's name says what the string is for. One way: delete the comments, renaming any key whose purpose they decode, and move the design rationale to docs/ or the behaviour spec.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

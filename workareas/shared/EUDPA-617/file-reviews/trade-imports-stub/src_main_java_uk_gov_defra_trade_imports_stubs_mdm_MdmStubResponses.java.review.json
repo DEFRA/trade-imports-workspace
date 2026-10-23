@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java",
+  "repo": "trade-imports-stub",
+  "commit": "60be5df2892b87d7c2bdc5628eec2802d0373670",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct trace-header extraction, but the subscription-key header stays copied in three controllers and the constants belong inside the one function using them.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "This PR makes MdmStubResponses the shared home for what every MDM stub answer carries, but the request header the three MDM controllers require stays declared three times as OCP_APIM_SUBSCRIPTION_KEY = \"Ocp-Apim-Subscription-Key\" (CountriesController.java:20, PortsOfEntryController.java:18, and a new third copy at ProductController.java:26).",
+      "fix": "Must: the MDM subscription-key header name has one owner that every MDM stub controller uses. One way: a public constant in this class (or a sibling MdmHeaders) imported by the three controllers, with the local copies deleted.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "TRACE_HEADER and TRACE_ID (lines 7-8) are module-scope constants used only by withTraceHeader; the house rule puts a literal used by one function inside that function.",
+      "fix": "Must: the trace header name and value live in withTraceHeader. One way: return response.header(\"x-ms-middleware-request-id\", \"stub-trace-id\"); and delete the two fields."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

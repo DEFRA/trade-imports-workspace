@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/bridge/scope.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commoditySelection-to-commodityCode rename is correct and complete in the assertions, but the line helper keeps a stale parameter name and pins every line to Bos taurus (horse line included), and the file's comments and shape-parity title describe other modules and history.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "line(commodity, units) helper: the parameter 'commodity' now holds a CN commodity code ('0102', '0101') written to commodityCode, and the helper silently fixes speciesLatinName to 'Bos taurus' for every line, so line('0101', [{ horseName: 'Dobbin' }]) at line 107 builds a horse line whose species is cattle. The rename to codes stopped part-way through the helper's vocabulary.",
+      "fix": "Must: the helper's parameter names what it holds (a commodity code), and every line the tests build has a species that fits its code, or the species is passed in. One way: line(commodityCode, speciesLatinName, units) and pass 'Equus caballus' for the 0101 line.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules and claim more than the lines below: lines 8-11 ('makeScope returns the scope object the controllers consume', 'pinned against the manifest'), lines 122-126 ('the obligations the evaluator does not model ... so their owning pages stay reachable') and line 150 ('the scope object the controllers consume') describe controllers, the evaluator and pages; line 54 ('still in scope, optional') claims 'optional', which no assertion checks.",
+      "fix": "Must: the file carries no comment that describes callers, other modules or unasserted behaviour; describe and test titles say what is proved. One way: delete the block comments at 8-11, 122-126 and 149-151 and the line-54 comment; move any rationale to the repo docs.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 153,
+      "severity": "Major",
+      "category": "history",
+      "issue": "describe 'scope bridge — makeScope shape parity' and title 'Should expose the same members with the same types' (line 154) compare against an earlier scope implementation that no longer exists in the file; 'the same' as what is never stated, so the title narrates history instead of stating what the assertions prove (inScope is a Set, has/answered are functions, readyForCheckYourAnswers is a boolean).",
+      "fix": "Must: the describe and test titles state the current contract the assertions check, with no parity-with-the-past wording. One way: describe('scope bridge — makeScope result') and it('Should return inScope as a Set, has and answered as functions and readyForCheckYourAnswers as a boolean').",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

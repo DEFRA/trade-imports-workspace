@@ -1,0 +1,29 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmSpecies.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:14Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct mapping, but one unread field and a name for the Latin name that differs from the rest of the service.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MdmSpecies declares commodityCnCode (l.6), but no production code reads it: CommoditySearchService reads speciesName/commonName from nested species and SpeciesCheckService reads speciesName only. Only MdmServiceTest sets it. Breaks 'Build only what this change makes reachable'.",
+      "fix": "Must: MdmSpecies holds only the fields production code reads. One way: delete commodityCnCode and the .commodityCnCode(...) builder calls in MdmServiceTest."
+    },
+    {
+      "id": 2,
+      "line": 6,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "speciesName (l.6) holds the species' Latin name, which the rest of the service calls latinName (CommoditySpecies, CommodityLine, the /commodities and /commodities/species-check API) and the containing lists map from scientificNames. SpeciesCheckService compares line.latinName() against species.speciesName(), so the same value is read under two names in one expression. Breaks 'One concept, one name, from request header to repository'.",
+      "fix": "Must: the Java name for the species' Latin name is latinName in MdmSpecies, as everywhere else in the service, with MDM's wire name kept only in @JsonProperty. One way: rename to @JsonProperty(\"speciesName\") String latinName and update CommoditySearchService and SpeciesCheckService callers."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

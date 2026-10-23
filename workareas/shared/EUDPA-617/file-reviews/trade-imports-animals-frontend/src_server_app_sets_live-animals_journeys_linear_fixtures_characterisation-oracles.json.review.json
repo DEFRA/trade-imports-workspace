@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The regenerated oracles match the new mapper and obligations, but they pin commodity.name as a bare CN code, which goes against the ticket's decision to send the commodity description.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 867,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The oracle now pins the outbound notification's commodity.name to a bare CN code ('0102' at lines 867, 1191, 1712; '01063300' at 2017) where it was the commodity name ('Cow'). commodity.name feeds GBN-AG TradeLineItem description/commonName and the ins-backend notification cards (docs/analysis/gbn-ag-field-lineage.md section 2), so PIMS and the INS dashboard would show '0102'. The ticket's 14 Oct decision 3 says a line sends the commodity description (added by reference-data), not the code. The source is mapper-a/commodity.js commodityFromLinesA (name: lines[0].commodityCode).",
+      "fix": "Must: the commodity.name sent on the record is the agreed value for that field (the commodity description, or a decision recorded on the ticket that the code is intended), and this oracle pins that value. One way: carry the description on the line, map it in commodityFromLinesA, and regenerate the oracle; or record the decision on EUDPA-617 if the code is deliberate for now."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

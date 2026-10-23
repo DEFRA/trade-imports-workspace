@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/model/analysis/reachability/witness/synthesise.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "anyNotInUnionOf witness synthesis is correct and tested, but list gate types now live in two places with a silent notInUnionOf fall-through, the gatedParentGroupId option duplicates witness-shapes.js with an opposite default and no effect on the consumer, and internal helpers carry rationale JSDoc.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Which gate types are list gates is written twice: LIST_GATE_TYPES (lines 7-12) and the case labels of synthesiseListGateWitness (lines 118-139). The 'case notInUnionOf: default:' fall-through (135-137) means a type added to LIST_GATE_TYPES without a case is silently synthesised as a notInUnionOf witness instead of reaching the OPAQUE 'unrecognised gateType' default.",
+      "fix": "Must: one place lists the list gate types and how each is synthesised, and an unlisted gateType always reaches the OPAQUE unrecognised-gateType result. One way: replace LIST_GATE_TYPES and synthesiseListGateWitness with a single map from gateType to synthesiser, look it up first in synthesiseFromMetadata, and drop the default fall-through."
+    },
+    {
+      "id": 2,
+      "line": 85,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "synthesiseNotInUnionOfWitness adds a withGatedParentGroupId option (85-103) that copies the conditional-key logic of firstListedValueWitness (witness-shapes.js:7-22) with the opposite default (true here, falsy there), so the same option name means different things in two builders. The only consumer, fidelity/witness-fulfilments.js:13 'if (witness.gatedParentGroupId)', treats an absent key and null alike, so the flag changes no outcome; it only shapes the object for toEqual assertions.",
+      "fix": "Must: one rule decides whether a witness carries gatedParentGroupId, owned by one function that every list-gate synthesiser uses. One way: always set gatedParentGroupId: meta.gatedParentGroupId ?? null in a shared witness builder in witness-shapes.js, delete the withGatedParentGroupId option from both builders, and update the toEqual expectations in reachability.test.js."
+    },
+    {
+      "id": 3,
+      "line": 72,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "JSDoc blocks on internal, unexported helpers: synthesiseBranchedGateWitness (14-20, 'split out because...' is rationale) and synthesiseNotInUnionOfWitness (72-84, with rationale about authoring defects and manifest commodity-code unions). The paragraph this PR adds (82-83) describes a caller ('for the notification-level anyNotInUnionOf') and explains an option name.",
+      "fix": "Must: doc comments only on the exported synthesiseWitness; no comment describes callers or carries rationale. One way: delete both internal JSDoc blocks, move the sentinel/union rationale to the repo's docs (for example src/server/app/docs/obligation-model.md) if it is worth keeping, and let the code say the rest."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

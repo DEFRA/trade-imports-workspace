@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The switch to code-keyed identifiers and species-keyed address is correct; the cap-reached refusal is silent and two rationale comments remain.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 95,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Rationale comments: lines 95-97 above capReachedResponse ('a stale form racing the engine-enforced cardinality link. Surface the rejection; never save silently.') and lines 123-124 above withEmptyFormGuard ('never append an empty record — name the gap instead') explain why and describe the UI action that calls them, not the lines below",
+      "fix": "Must: no rationale or caller-describing comments in forms.js; the function names carry the meaning. One way: delete both comments"
+    },
+    {
+      "id": 2,
+      "line": 109,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "capReachedResponse (lines 109-120) refuses an add on a line already at its declared count and re-renders, with no log line. A stale form being refused by an engine cap is not the trader's own input error, so support cannot see it happened or for which journey, line index and cap",
+      "fix": "Must: the cap-reached refusal logs once, at warn, with the journey id, the line index and the cap. One way: log in capReachedResponse before returning the render, using request.logger with { journeyId: request.params.journeyId, lineIndex: addIndex, cap }",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

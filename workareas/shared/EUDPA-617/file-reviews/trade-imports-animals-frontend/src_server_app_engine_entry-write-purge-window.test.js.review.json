@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/engine/entry-write-purge-window.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Fixture migration to commodityCode/speciesLatinName is correct against rules.js (horseName gated on 0101), but the renamed fixture needs a comment to decode it, the header comments narrate history, and the set-up is copied from commit-purge-authority.test.js.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "STALE_0102_LINE (renamed in this PR from STALE_COW_LINE) needs the comment on lines 17-18 to decode it: the name gives a bare commodity code and the word 'stale', but not that the fixture is a cattle line carrying a horseName that 0102 does not scope. The comment also restates the obligation rule from services/commodities/rules.js (horseName is gated on 0101), which the house rules forbid (a comment describes only the lines below it, never another module)",
+      "fix": "Must: the fixture name says what the fixture holds (a 0102 line with a horseName it does not scope), and the lines 17-18 comment is gone. One way: rename to CATTLE_LINE_WITH_HORSE_NAME (and HORSE_LINE stays), then delete the comment"
+    },
+    {
+      "id": 2,
+      "line": 14,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Lines 14-15 narrate history and describe other modules: 'Every entry mutation now rebuilds and evaluates the canonical snapshot. These tests pin that the old stale-answer window has closed.' ('now', 'old ... window has closed'). The file name entry-write-purge-window.test.js carries the same history word ('window')",
+      "fix": "Must: no comment in the file narrates a before/after or describes the write pipeline, and the file name states the behaviour under test rather than the closed defect. One way: delete lines 14-15 and rename the file to something like entry-write-purge.test.js, matching its describe 'entry-write canonical purge'"
+    },
+    {
+      "id": 3,
+      "line": 47,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 47-65 (journeyId, buildRequest, seed, durable, wipeOf and the beforeEach that configures records/session stubs and creates a journey) are a verbatim copy of commit-purge-authority.test.js lines 34-50. Set-up used by two tests belongs in engine/test-support.js",
+      "fix": "Must: one shared helper in engine/test-support.js owns the purge-test set-up (seed, durable read-back, wipe set, stub configuration and journey creation), and both test files call it with no local copies left. One way: export a purgeTestJourney() factory from test-support.js returning { seed, durable, wipeOf, buildRequest } after configuring the stubs, and use it in both files"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

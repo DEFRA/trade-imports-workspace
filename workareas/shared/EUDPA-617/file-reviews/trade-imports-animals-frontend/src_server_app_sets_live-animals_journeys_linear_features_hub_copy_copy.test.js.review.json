@@ -1,0 +1,49 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Seed data migrates correctly to commodityCode and speciesLatinName, but the file has comments that describe other modules, history narration, a leftover 'cow' name and seven copies of the same set-up.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 55,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules or carry test rationale instead of the lines below them: lines 55-56 (why the regex is anchored), 95-97 and 405-407 (what the copy parity test checks), 288-289 (what the identification obligation asks on one species), 515-516 (why overland transport is chosen).",
+      "fix": "Must: no comment in the file describes another module, the service's rules or the test's own rationale; names carry the intent. One way: delete the comments and let names say it, e.g. A_JOURNEY_PAGE_URL_UNDER_SET_BASE, a seed named twoIdentifiedSpeciesSeed and roadSeedShowingEveryRow, and move the copy-parity rationale to the set's docs/testing.md if it is worth keeping.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 66,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Comment on temporaryAdmissionSeed (lines 66-68) narrates history ('the state the retired \"Exit details\" task used to appear in') and makes a count claim ('the one reason that opens both').",
+      "fix": "Must: the seed states only what it is now, with no history and no count. One way: delete the comment and rename the seed for the state it sets up, e.g. owingExitQuestionsSeed.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 279,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "cowLine (line 279) keeps the retired 'Cow' commodity-name vocabulary after this PR moved lines to commodityCode '0102' (cattle, CATTLE_CODE in services/commodities/rules.js); the rename stopped part-way through the concept's vocabulary.",
+      "fix": "Must: the local is named for what it now holds, in the vocabulary rules.js uses for 0102. One way: rename cowLine to cattleLine.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 4,
+      "line": 129,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The same beforeAll (configureRecords, configureSession, buildDispatch) and beforeEach(store.clear) block is copied into six describe blocks (lines 129, 154, 374, 416, 455, 507, 534), and the GET /hub test re-finds the GET handler and rebuilds what renderHub already does.",
+      "fix": "Must: the set-up is written once and every hub test uses it. One way: wrap the handler describes in one outer describe holding a single beforeAll/beforeEach, and have the GET /hub test call renderHub().",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

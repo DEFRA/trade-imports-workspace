@@ -1,0 +1,57 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/index.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests cover the new code-keyed rules but over-claim in several titles, test search.js from the wrong file, carry a rationale comment and add new names for codes the repo already names.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Code 01061900 now has five names across the repo: OTHER_MAMMALS here (line 22), OTHER_LIVE_MAMMALS_CODE and PER_SPECIES_CODE in rules.js, OTHER_MAMMALS_CODE in features/commodities/fit/search.fit.spec.js, CATS_CODE in model/obligations/evaluator.test.js and CAT_CODE in notification-mapper.test.js. CATTLE/HORSES here also differ from CATTLE_CODE/HORSES_CODE in rules.js and the other tests. This file adds a new name for values the repo already names.",
+      "fix": "Must: each commodity code the tests use has one name across rules.js and every test, with the same name in each. One way: export the named codes from rules.js (HORSES_CODE, CATTLE_CODE, OTHER_LIVE_MAMMALS_CODE) and import them here and in the other tests instead of declaring local constants.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 25,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "describe('#search') (lines 25-65) tests search() from ./search.js, not index.js, and only its stub path. It sits in index.test.js while search.js has no test file of its own. Its real-mode half is in real-mode.test.js, and stub.test.js already tests the same grouping and paging through searchCommodities. One function's tests are spread over three files, none of them named for it.",
+      "fix": "Must: search()'s tests live in search.test.js next to search.js, and index.test.js tests only index.js. One way: move the four #search cases (and the real-mode #search cases from real-mode.test.js) into search.test.js, keeping only cases that stub.test.js does not already prove.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 99,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment on lines 99-101 ('The per-identifier allowlists the obligation gates read are derived from the same per-code lists, so a code's identifiers and its gates are one edit, not two that can disagree.') describes the obligation gates and rules.js (other modules) and gives design rationale. This PR reworded it. House rules: a comment describes only the lines below it, rationale goes in docs/, and a stale comment is deleted, not reworded.",
+      "fix": "Must: no comment above the describe; the test titles say what is proved, and any rationale lives in sets/live-animals/docs/services.md. One way: delete the three lines and, if needed, add the derivation note to services.md where rules.js is described."
+    },
+    {
+      "id": 4,
+      "line": 128,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should find every permanent-address species MDM holds under an identified code' says MDM, but codesOf reads COMMODITY_GROUPS from ./stub.js (the local fixture), never MDM or reference-data. The loop also passes without checking anything for a permanent-address species missing from the fixture; only Felis catus gets a positive check (line 139). codesOf (lines 129-132) also repeats the 'which codes list this Latin name in the stub' lookup that species-check.js's listedInStub already does.",
+      "fix": "Must: the title names the stub catalogue it reads, and every permanentAddressSpecies() entry gets a positive assertion of the code(s) the stub lists it under, so a missing species fails the test. One way: retitle to 'Should list every permanent-address species in the stub catalogue under an identified code', assert expect(codesOf(latinName)).not.toHaveLength(0) or an exact code list per species, and reuse one shared lookup with species-check.js.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 5,
+      "line": 158,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Titles claim more than their assertions check. Line 158 'Should give every other code its one type' checks only OTHER_MAMMALS -> '2'. Line 68 'Should hold for code 01061900 and for no other' checks two other codes. Line 112 'Should list only codes that carry the <identifier>' proves 'none other' with an absence check, not.toContain(OSTRICHES) (line 116), where an exact list is possible. The house rule calls for an exact positive assertion instead.",
+      "fix": "Must: each title states only what its assertions prove, and each allowlist test asserts the exact list of codes it holds. One way: assert typeIdFor on HORSES and OSTRICHES too, or retitle to name the code checked; replace not.toContain(OSTRICHES) with expect([...allowlist()].sort()).toEqual(<expected codes>) per row of derivations.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

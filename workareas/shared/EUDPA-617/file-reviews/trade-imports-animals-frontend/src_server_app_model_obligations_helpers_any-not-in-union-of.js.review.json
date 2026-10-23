@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/model/obligations/helpers/any-not-in-union-of.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The helper is correct for the cph gate, but it copies notInUnionOf's union derivation with a different blank rule and renames its lists parameter.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 14,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 14-19 copy notInUnionOf's union derivation (not-in-union-of.js lines 27-32: deriveUnion over 'typeof x === function ? x() : x'), so 'resolve the lists, then take their union' now lives in two places. The complement rule also differs between the twins: anyNotInUnionOf skips blank values (line 18, isBlankValue) but notInUnionOf (line 38) counts a blank as outside the union. So one rule, 'value is outside the union', has two homes that disagree.",
+      "fix": "Must: one function owns resolving and unioning the lists and the 'outside the union' predicate, and both notInUnionOf and anyNotInUnionOf call it, so they treat a blank value the same way. One way: export a resolveUnion(unionOfAllowlists) and an isOutsideUnion(value, union) from internals/derive-union.js and use them in both helpers. If notInUnionOf should keep counting blanks, document that difference in docs/obligation-model.md."
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The parameter unionOfLists (line 7) names the same input that its sibling notInUnionOf calls unionOfAllowlists (not-in-union-of.js line 23). That is one concept with two names. Neither name fits: the argument holds the lists (or a getter for them), and the union is derived from it at line 16.",
+      "fix": "Must: both complement helpers name this parameter with one word that says it holds the lists, not the union. One way: rename it allowlists (or exemptLists) in both any-not-in-union-of.js and not-in-union-of.js.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

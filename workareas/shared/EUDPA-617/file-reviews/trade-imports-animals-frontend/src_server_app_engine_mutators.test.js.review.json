@@ -1,0 +1,49 @@
+{
+  "file": "src/server/app/engine/mutators.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:07Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The move to commodityCode and speciesLatinName is functionally sound (0102 is in UNWEANED_CODES and 01061900 carries a passport), but one fixture still stores a label as a code, the species constants are copied across many test files, and the comments and one test title need fixing.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 40,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "GOATS_COMMODITY = '010420 - Goats' is a display label, yet the diff now stores it under commodityCode (lines 79, 84, 92, 103, 110, 115) beside real CN codes '0102', '0101' and '01061900'. The key no longer predicts the value, and the rename to code-keyed lines stops part-way through the fixture vocabulary.",
+      "fix": "Must: every commodityCode value in this file is a CN code, and the constant holding it is named for the code it holds. One way: replace GOATS_COMMODITY with a GOATS_CODE = '010420' (or inline the code as the other lines do) and use it at every call site.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 18-19 declare FELIS_CATUS and BOS_TAURUS locally; the same constants are re-declared in about 18 other test files in this PR (contract.test.js:48-49, store-ops.test.js:19-21, bridge/collection-complete.test.js:7, bridge/fulfilments/fulfilments.test.js:8, flow/status.test.js:23, flow/task-rows.test.js:26, notification-mapper.test.js:14-15, services/commodities/stub.test.js:9, and the commodities feature tests and fit specs). Test set-up used by more than one test belongs in the shared helper.",
+      "fix": "Must: one shared test fixture owns the species Latin names (and the CN codes) the unit tests use, and no test file re-declares them. One way: export BOS_TAURUS, FELIS_CATUS and the commodity codes from test/fixtures (or engine/test-support.js), import them here, and delete the local copies in every file.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 21,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules and some are untrue. The header block (lines 21-30) narrates the evaluator, collectionCapAt and purge internals, and lines 27-28 claim an empty appended entry survives in storage while the test at lines 144-161 asserts it is not persisted. Line 157 is a truncated half-sentence ('...so this'). Lines 166-167 (edited by this diff) restate the containsUnweanedAnimals gating rule from the obligations module; lines 146, 175 and 221 explain the test body or the merge mechanism rather than the lines below.",
+      "fix": "Must: the file carries no comment that describes another module, restates rationale, or is untrue; what a test proves is said by its describe/it titles and names. One way: delete lines 21-30, 146, 157, 166-167, 175 and 221, moving any rationale worth keeping to the engine docs.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 4,
+      "line": 145,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should accept the loss of a leaf-less unit the canonical evaluator cannot express' does not say what the assertions prove: appendEntryAt returns index 0 and animalIdentifiers is absent from the stored line afterwards. A reader has to decode 'leaf-less unit' and 'canonical evaluator' to know what fails.",
+      "fix": "Must: the title states the observable outcome the two assertions check. One way: 'Should return index 0 and store no identifiers when appending an empty identifier entry'.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

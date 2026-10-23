@@ -1,0 +1,21 @@
+{
+  "file": "tests/ins/e2e/features/aggregated-notification.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:24Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The aggregated commodity expectation was re-baselined from a name to a CN code on unchanged set-up, which the INS dashboard would show to traders and the ticket does not ask for.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 57,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Absorbed behaviour change: the expected aggregated commodity changed from commodityCodes.cow ('Cow') to '0102' at lines 57 and 78 on the same journey set-up, so the INS read model now holds a CN code where it held a commodity name. The INS dashboard renders this field straight into its Commodity column (trade-imports-ins-frontend features/dashboard/view-model/list.js line 74, stub row 'Cattle'; read from the live clone at main fee6874, not in this PR set), so traders would see '0102'. The ticket does not ask for the dashboard or read model to change.",
+      "fix": "Must: the aggregated commodity value is the one the INS dashboard is meant to show for a cattle notification, agreed on the ticket, and the test asserts that value; a change to a code is only kept if the dashboard copy and its stub are changed with it in the same PR set. One way: have the frontend send the commodity description or common name as commodity.name (see the outbox finding) and assert draftDoc.commodity and submittedDoc.commodity against that named constant."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Endpoints accept unvalidated input: a missing species-check body returns 200 with nothing missing, and non-numeric page/size or malformed JSON surface as 500 instead of 400.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "The controller accepts its input unchecked, so a bad request is answered as success or as a server fault: (a) line 36 @RequestBody(required = false) with no @Valid means a POST /commodities/species-check with no body, or with lines missing code/latinName, returns 200; an empty body gives {\"missing\":[]}, which tells the frontend every species is still listed; (b) lines 27-28 page/size have no @Min/@Max, so page=-1 or size=500 are silently clamped by the service and echoed back as different values; (c) a non-numeric page/size (MethodArgumentTypeMismatchException) or malformed JSON (HttpMessageNotReadableException) are RuntimeExceptions, so GlobalExceptionHandler.handleException answers 500 'unexpected error' and logs at ERROR instead of 400.",
+      "fix": "Must: invalid input to both endpoints is refused with a 400 ProblemDetail (missing body, null lines, a line without code or latinName, page < 0, size outside 1..100, non-numeric page/size, malformed JSON), and only a well-formed request reaches the services. One way: make the body required with @Valid, add @NotNull/@NotBlank to SpeciesCheckRequest.lines and CommodityLine components, annotate the class @Validated with @Min(0) page and @Min(1) @Max(100) size, and add 400 handlers for MethodArgumentTypeMismatchException, HttpMessageNotReadableException and ConstraintViolationException in GlobalExceptionHandler; drop the service-side clamping and null-body fallbacks it replaces.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 26,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "The search query parameter is named 'search' (line 26, value = \"search\"), where the REST guide names the default search parameter 'q' (and MDM's own /search takes 'q'). The Java parameter is 'searchTerm', so one concept carries three names across frontend URL, controller and MDM call.",
+      "fix": "Must: the default search parameter on GET /commodities follows the REST guide's name for it, the same in the frontend client (client.js fetchCommodities), the stub repo and the reference-data controller. One way: rename to @RequestParam(value = \"q\", required = false) String q and update the frontend client and trade-imports-stub in the same branch.",
+      "best_practice": "rest-api/rest-api.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

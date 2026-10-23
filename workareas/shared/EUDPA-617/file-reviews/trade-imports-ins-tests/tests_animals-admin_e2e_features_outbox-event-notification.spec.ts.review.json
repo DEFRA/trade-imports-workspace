@@ -1,0 +1,29 @@
+{
+  "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:17Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The trade line expectation was re-baselined to send the CN code as PIMS description and commonName, contradicting the ticket's agreed line fields, and several comments still describe other tests and codelist history.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 95,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Absorbed behaviour change: the expected trade line description and commonName changed from 'Cow' to the CN code '0102' (commodityLines.cattle.commodityCode) while the journey still picks cattle, so the test now locks in a GBN-AG event that sends PIMS the code as both description and commonName. The ticket's agreed decisions (comment of 14 Oct, decision 3) say each line saves and sends PIMS the CN code, Latin name, common name and commodity description; the frontend mapper (mapper-a/commodity.js commodityFromLinesA, name: lines[0].commodityCode) now fills commodity.name with the code.",
+      "fix": "Must: the outbox assertions state the description and commonName the ticket agreed PIMS receives for a cattle line (the MDM commodity description and common name), and the frontend sends those values; if the team instead decides the code is the right value, that decision is recorded on the ticket and in the behaviour spec before this expectation is kept. One way: add description and commonName to CommodityLine for cattle from the reference-data stub row, assert line.description toEqual([commodityLines.cattle.description]) and line.commonName toBe(commodityLines.cattle.commonName), and fix commodityFromLinesA to carry them."
+    },
+    {
+      "id": 2,
+      "line": 136,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments left after this PR stripped the others describe things other than the lines below them or carry rationale: line 136 ('The country is the subdivision's parent; the subdivision is the 106 entry, named by its MDM list'), line 145 ('The journey answers the region of origin code under the parent country's prefix' describes the journey flow), line 162 ('the same input the persistence round-trip proves lands as 3 January' describes another test), line 175 ('veterinary certificate, copied into the GBN-AG list from UNTDID 1001' is codelist provenance).",
+      "fix": "Must: no comment in the file describes another test, the journey, MDM or codelist history; anything a reader needs is said by a name. One way: delete all four comments and name the literals instead (for example const VETERINARY_CERTIFICATE_TYPE_CODE = '853', const SUBDIVISION_FUNCTION_TYPE_CODE = '106'), as the PR already did for the other comments in this file."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

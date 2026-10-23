@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/model/obligations/helpers/internals/build-any-candidate-gate.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "This second gate factory repeats buildGate's metadata stamping with a different admits signature, and the internals docs do not mention it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "buildAnyCandidateGate is a second gate factory beside internals/build-gate.js, and it repeats that factory's metadata stamping: gateType, obligationId and the Object.defineProperty getter for 'values' (lines 17-26 copy build-gate.js lines 54-63). Its admits callback also takes a different shape, (candidate, list), where buildGate's takes (value) and closes over currentValues. And the docs were not updated for it: obligations/README.md line 185 still lists build-gate, run-gate and derive-union as the only internals, and the header of helper-internals.js (line 4) still names anyAllowListed as the caller of readGate.",
+      "fix": "Must: one function stamps gate metadata (gateType, obligationId, lazy values) for both factories. admits has one signature across both factories. README.md and helper-internals.js name buildAnyCandidateGate where they list the internals and their callers. One way: extract a stampGateMetadata(gate, { gateType, gateObligation, currentValues, ...extra }) used by both buildGate and buildAnyCandidateGate, pass admits as (value) => ... closing over currentValues as buildGate does, and update the README line and the helper-internals.js header."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

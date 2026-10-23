@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-corpus.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:14Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The corpus moves to valid commodityCode and Latin-name pairs from the stub, but it never sets the new commonName field, so the round-trip characterisation tests cannot catch it being lost.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR adds the commonName line obligation (lines.js, id c8824345) and commit-selection.js saves it on every line MDM gives a common name (the stub gives Bos taurus 'Cattle or Cow'), but no corpus line carries commonName. fulfilment-codec.test.js 'Should losslessly round-trip the $name evaluator map' and the golden-equivalence gates iterate this corpus, so dropping commonName in assembleFulfilments, the codec or from-fulfilment.js would leave every characterisation test green. The lines also do not match what reference data returns, which the ticket's stub AC asks for.",
+      "fix": "Must: at least one corpus line is a line the search page can save, including commonName, so the round-trip and golden tests fail if commonName is lost. One way: give commodityLine() a commonName default ('Cattle or Cow' for Bos taurus, the stub's value for Bison bison) and regenerate characterisation-oracles.json.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

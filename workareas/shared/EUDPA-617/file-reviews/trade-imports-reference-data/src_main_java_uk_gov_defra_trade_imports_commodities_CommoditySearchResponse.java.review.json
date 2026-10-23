@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchResponse.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "total/page/size count MDM rows rather than the species returned, so they disagree with the frontend stub's meaning of total.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "total, page and size describe MDM's result rows, not the species and groups this response carries. CommoditySearchService sets total = MDM totalElements, counted before germinal codes are left out and before duplicate species are merged; one COMMODITY row expands to all its species. Evidence: mdm-product-search-0102-response.json has totalElements 1 and the response lists 15 species; the cattle fixture has totalElements 2 and the response lists 1 species after 05111000 is dropped. The frontend stub (services/commodities/stub.js line 56) sets total = number of matching species, so the stub and the real service disagree on what total means, against the AC that stubbed data matches the reference-data response, and against the ticket decision that 'the response carries the total number of matches, so paging can be added later'.",
+      "fix": "Must: total, page and size on CommoditySearchResponse mean one thing (the count and paging of species matches the response lists), and the reference-data service and the frontend stub both compute them that way. One way: count the species the service keeps after germinal filtering and de-duplication and page over those, or, if MDM row paging stays, rename the fields to say they count MDM rows and change the frontend stub to match.",
+      "best_practice": "rest-api/rest-api.md"
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "The new public API contract (CommoditySearchResponse and the CommodityGroup, CommoditySpecies, CommodityLine, SpeciesCheckRequest/Response records it uses, and the CommoditiesController endpoints) carries no @Schema descriptions or requiredMode, and no @Tag/@Operation, although springdoc is on the pom. The OpenAPI guide makes @Schema(description) and explicit requiredMode non-negotiable on every public DTO.",
+      "fix": "Must: the generated OpenAPI document describes both commodity endpoints and every field of their request and response records, with required fields marked REQUIRED and commonName marked nullable. One way: add @Tag/@Operation to CommoditiesController and @Schema(description, requiredMode, example) to each record component.",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

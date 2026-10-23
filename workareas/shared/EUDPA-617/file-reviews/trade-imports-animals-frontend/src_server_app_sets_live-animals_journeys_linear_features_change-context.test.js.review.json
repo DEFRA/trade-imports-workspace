@@ -1,0 +1,56 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Field renames are correct, but the search-save test now seeds the line it is meant to prove gets committed, and the file keeps a local copy of driveHandler and literal copies of FELIS_CATUS_ROW.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 106,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should carry the context from the search save into the consignment details page' now seeds commodityLines with the exact 01061900|Felis catus line the payload selects (lines 110-115), so expect(after.commodityLines).toHaveLength(1) passes even if the search save commits nothing: the assertion checks a value the set-up wrote",
+      "fix": "Must: the search save is the only thing that can put the line in the answers, and the test asserts the committed line exactly. One way: drop the commodityLines seed, pass driveHandler's flowOnly with the shown search rows (searchRowsShownEarlier(FELIS_CATUS_ROW) as search.controller.test.js does), and assert after.commodityLines matches [expect.objectContaining(FELIS_CATUS_ROW)]",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 24,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The local drive helper (lines 24-42) copies the body of driveHandler from engine/test-support.js, which already takes payload, query, seed and params and also supports flowOnly; 'Should carry the context on the details page Add-another affordance' (125-133) hand-rolls the same store.create/seedAnswers/stubH sequence again",
+      "fix": "Must: every handler test in the file drives through the shared driveHandler, and no local copy of its body remains. One way: delete drive, import driveHandler, and use driveHandler(getHandler, { seed: lineSeed, query: change }) for the GET test",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 51,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The Felis catus row is written out as literals ('01061900' / 'Felis catus' in lineSeed at 51-52, the seed at 112 and the payload key '01061900|Felis catus' at 115) although commodities/search/test-support.js already exports FELIS_CATUS_ROW and the selection module exports lineKey",
+      "fix": "Must: the test row comes from the shared test support and the payload key is built by the same function production uses. One way: spread FELIS_CATUS_ROW into lineSeed and the seed, and build the payload as lineKey(FELIS_CATUS_ROW)",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 4,
+      "line": 59,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Comments at 59-60 ('The line's animal count is save-blocking...') and 140-142 ('The seed holds one line, so this removal empties the notification...') explain rules of other modules and the reason for the set-up rather than the lines below",
+      "fix": "Must: no rationale comments in the test; names carry the intent. One way: delete both comments and let names say it, for example savableLineCountPayload and a title such as 'Should carry the context to the commodity question when removing the last line'"
+    },
+    {
+      "id": 5,
+      "line": 106,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "beforeAll(configure) and beforeEach(store.clear) are repeated in each of the three describe blocks (70-71, 103-104, 219-220)",
+      "fix": "Must: the file's set-up is declared once. One way: move both hooks to the top level of the file"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

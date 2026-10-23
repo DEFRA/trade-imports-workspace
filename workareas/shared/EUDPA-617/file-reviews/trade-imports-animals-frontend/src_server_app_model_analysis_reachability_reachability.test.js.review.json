@@ -1,0 +1,45 @@
+{
+  "file": "src/server/app/model/analysis/reachability/reachability.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new anyNotInUnionOf witness test is exact and can fail, but the rename stops part-way, manifestRecords is copied inline, the retitled cph test over-claims, and comments and titles carry history and stale claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 234,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The PR's rename of obl/o to obligation stops part-way: the ids become 'code-obligation', 'bool-obligation' and 'group-obligation' but the variables stay codeObl, boolObl and groupObl (234-235, 258, 410); purposeInInternalMarketObl, transitedCountriesObl and numberOfPackagesObl (570, 584, 597) keep the abbreviation; rc, mand and opt (730, 737, 745) are abbreviations for regionOfOriginCode and the mandatory/optional decisions.",
+      "fix": "Must: every name in the file for an obligation or decision uses the full word, matching the renamed ids. One way: codeObligation, booleanObligation, groupObligation, purposeInInternalMarket, transitedCountries, numberOfPackages, regionOfOriginCode, mandatoryDecision and optionalDecision."
+    },
+    {
+      "id": 2,
+      "line": 803,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The graph-level backwards-compat test builds its records inline (803-811) with a copy of manifestRecords() (68-77); the PR reformatted both copies line for line.",
+      "fix": "Must: one helper builds the manifest's { id, dependsOn } records and every test calls it. One way: replace lines 803-811 with const result = proveReachability(manifestRecords())."
+    },
+    {
+      "id": 3,
+      "line": 610,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The retitled test 'Should open the closure with a scalar witness for cph (anyNotInUnionOf)' claims more than it asserts: it injects a record-shaped value { line1: witness.value } (617), not a scalar, and nothing asserts cph's gate type, so the test passes unchanged if cph goes back to anyAllowListed.",
+      "fix": "Must: the title states only what the assertions prove, and if the gate type is part of the claim an assertion pins it. One way: assert expect(cph.applyTo.metadata.gateType).toBe('anyNotInUnionOf') and drop 'scalar' from the title (for example 'Should open the cph closure with a not-in-union witness')."
+    },
+    {
+      "id": 4,
+      "line": 677,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Comments and titles carry history, counts and stale claims: 85-86 'one of the 19 always-in-scope obligations'; 205 'post-Phase-2'; 543-544 'a non-total branchedGate we newly annotated'; 648-652 lists the synthesisable helpers without anyNotInUnionOf, which this PR makes cph use; 677-691 calls the four accompanyingDocument siblings total-branch migrated sites, contradicting 749-762 (no applyTo); titles 'migration fidelity — 9 sites round-trip' (694), 'every migrated site now uses a meta-first helper' (766), 'graph-level backwards compat' (797) and '(backwards compatible)' (631) narrate a migration; 'real V4 manifest' (157, 630) is a version name.",
+      "fix": "Must: comments and titles state how the code is now, with no counts, phases, migration narrative or version names, and none contradicts another test. One way: delete the history comments, fix the helper list, and retitle, e.g. 'meta-first gate sites round-trip', 'Should use a meta-first gateType for every listed site', '#proveReachability — real manifest'."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

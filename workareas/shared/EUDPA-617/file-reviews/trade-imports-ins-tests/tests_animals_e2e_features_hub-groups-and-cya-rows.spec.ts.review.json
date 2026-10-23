@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Species-card assertions correctly match the frontend's 'code — Latin name' title and take the common name from reference-data, but the spec body gains an if/throw conditional and keeps a rationale comment about a locator.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 53,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Lines 53-55 put an if/throw guard in the spec body to check that reference-data gives the cattle line a common name; the Playwright guide bans conditionals in a spec ('Keep specs flat').",
+      "fix": "Must: the spec body has no conditional; a missing common name still fails the test with a clear message. One way: move the non-null check into the reference-data client (for example a findCommonName(line) that throws when the species has none), or replace the if with expect(commonName, '...').toBeTruthy().",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 13,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment on lines 13-14 ('The commodity-total labels are h3s too, so the section headings are read off their own class...') describes other parts of the UI and gives the rationale for a locator choice; house rules put rationale in docs, and a comment describes only its own lines.",
+      "fix": "Must: no comment explains the locator choice; the locator says what it selects by itself. One way: delete the comment, and if the heading list needs scoping, scope it to the task-list region or a named page-object accessor (for example overview.sectionHeadings) instead of the class.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

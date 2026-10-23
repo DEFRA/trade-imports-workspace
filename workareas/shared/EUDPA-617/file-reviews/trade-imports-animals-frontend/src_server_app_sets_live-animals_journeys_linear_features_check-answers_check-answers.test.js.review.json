@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new species-refusal tests fail without the change and the code-keyed seeds are consistent, but the new constant and titles over-claim about MDM, commodity codes are unnamed literals, and the file's comments break the house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1441,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "SPECIES_MDM_DOES_NOT_LIST (line 1441) and the titles on lines 1452 and 1465 ('a species MDM no longer lists') claim something about MDM, but the oracle these tests run against is the frontend stub COMMODITY_GROUPS (services/commodities/stub.js via species-check.js listedInStub); 'Bos spp.' is the genus+spp. form MDM is expected to use, so the claim may be false of MDM itself. The concept also has a different name in each file (unlisted, no longer offered, AgainstMdm, MDM does not list).",
+      "fix": "Must: the constant and both titles state what the set-up proves: a species the reference data does not list under its code, in the same concept word as linesWithUnlistedSpecies and speciesCardErrors. One way: SPECIES_NOT_LISTED_UNDER_CODE, and titles such as 'Should refuse Continue on a draft holding a species not listed under its code, naming it'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 704,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The bare code '01063300' stands in for 'a commodity off the package-count and identifier lists' on lines 704, 747, 769, 921 and 1359, with nothing saying it is ostriches or why it was chosen; '0101' (line 739, 1357) and '01061900' (1358) likewise. The same code is already named OSTRICHES_CODE / OSTRICHES in evaluator.test.js:114 and services/commodities/index.test.js:23, and the file names its other fixture values (CATTLE_CARD_TITLE).",
+      "fix": "Must: each commodity code the tests rely on is a named constant saying what it is, defined once and reused by every test that needs it. One way: const OSTRICHES_CODE = '01063300', HORSES_CODE = '0101', OTHER_MAMMALS_CODE = '01061900' near CATTLE_CARD_TITLE, or exported from a shared fixture the other tests already use.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 1335,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe production modules and hold rationale or history instead of the lines below: 1335-1337 (rewritten by this PR) describes the obligation gates and says they 'compare the stored code directly', narrating the removed name normalisation; 337-339 names a release ('design release 1'); 1594-1597, 1628-1631, 1664-1668, 1691-1693, 1717, 1788-1789 and 1801-1804 describe decorateCard, REVIEW_CARDS, port-of-entry and the read path; 131-133, 160-161, 287-288, 772-774, 866-868, 882-885, 914-916, 1019-1022, 1170-1171 are rationale for page behaviour.",
+      "fix": "Must: no comment in the file names a release, narrates history, or describes code other than the lines directly below it; rationale lives in docs/ or the behaviour spec, and what a block proves is said by its describe/it titles. One way: delete each comment, folding any claim the test makes into its title (e.g. the matrix describe already says 'model metadata per code').",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

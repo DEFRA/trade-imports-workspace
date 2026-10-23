@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:11Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the obsolete matcher tests is right, but a module constant is now used by one test and the isSearchable title over-claims what it asserts.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "BOS_TAURUS sits at module scope but, after this PR deleted the matchesWords tests, only one test reads it (normaliseQuery, line 9).",
+      "fix": "Must: the 'Bos taurus' literal lives in the one test that uses it. One way: write expect(normaliseQuery('  Bos taurus ')).toBe('Bos taurus') and delete the module constant.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 16,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should hold results back until three characters are entered' claims results are withheld, but the assertions only prove isSearchable returns false for 'Bo' and '  Bo  ' and true for 'Bos' (plus the constant's value); nothing here checks results. Whether results are held back is proved, if anywhere, in search.controller.test.js.",
+      "fix": "Must: the title states what the assertions prove: a query counts as searchable only once it has three characters after trimming. One way: retitle to 'Should treat a query as searchable only from three trimmed characters'."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

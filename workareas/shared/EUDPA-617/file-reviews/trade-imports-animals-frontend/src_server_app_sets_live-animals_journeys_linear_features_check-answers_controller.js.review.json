@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The species check is wired correctly for drafts, but its gating is split between the controller flag and refusal.js under a mispredicting name, the refusal is not logged, and existing comments break the house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 156,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "checksSpeciesAgainstMdm (lines 156-159) is true for a refused amend, but speciesCardErrors (refusal.js:27) returns {} for any status but DRAFT, so no check runs; the draft-only rule lives in refusal.js and the refused-only rule here, two homes deciding when species are checked. The name also uses a fourth word for one concept (AgainstMdm here, linesWithUnlistedSpecies in species-check.js, speciesNoLongerOffered in copy, SPECIES_MDM_DOES_NOT_LIST in the test), and this module calls reference-data, not MDM.",
+      "fix": "Must: one place decides when a draft's species are checked, and the flag (if kept) is named for what it is true for in every state, using the same concept word as speciesCardErrors and linesWithUnlistedSpecies. One way: drop the flag and pass the refused state to speciesCardErrors (like documentScanCardErrors' includePending), letting it own both the draft and the refused rule.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 156,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "A draft refused because reference-data no longer lists a stored species (speciesErrors, lines 156-159 and isReviewRefused) logs nothing, here or in refusal.js / species-check.js. Another service refusing an answer this one accepted is a decision support must see: during an incident they cannot tell which journey, code or Latin name was refused, or that MDM data changed under saved drafts.",
+      "fix": "Must: each refusal for an unlisted species logs once at warn with the journey id and every refused code and Latin name. One way: log in speciesCardErrors when unlisted is non-empty, using request.logger passed in or the module logger, with { journeyId, unlisted }.",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 3,
+      "line": 39,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments break the house rules: the JSDoc block on lines 39-51 is a doc comment on a non-exported constant, describes reviewErrorSummary and the page's focus behaviour rather than the line below it, and holds rationale; lines 169-172 explain why the maps are spread in this order (rationale), now over four maps including the new speciesErrors.",
+      "fix": "Must: no comment in the file holds rationale or describes code other than the lines directly below it, and no doc comment sits on an internal helper. One way: move the precedence and party-key rationale to the live-animals docs/ or the behaviour spec, name the precedence in code (e.g. a helper such as incompleteOverridesInvalid), and delete both comments.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

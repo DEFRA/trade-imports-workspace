@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/model/analysis/coverage.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The anyNotInUnionOf sample correctly keeps the coverage gate whole, but comments and a failure message name a nonexistent analysis/reachability.js and a synthesiseWitness switch the PR removed, and the file keeps the abbreviations the sibling test just renamed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 294,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments and a failure message point at code that is not there. Lines 22, 159, 164 and the assertion message at 294 send the reader to 'analysis/reachability.js', which does not exist (the sets live in reachability/witness/kinds.js), so a failing invariant #4 tells the developer to edit the wrong file. Lines 4, 25-28, 42-43, 177-187 and 198-211 say the case labels live in synthesiseWitness's top-level switch and that 'any new helper type belongs in the top-level switch of synthesiseWitness'; after this PR's synthesise.js refactor synthesiseWitness has no switch and list types go in LIST_GATE_TYPES plus synthesiseListGateWitness. Line 14 ('a sixth helper') and line 40 ('Add a new helper notInUnionOf', which already exists) are counts and history.",
+      "fix": "Must: every comment and assertion message in coverage.test.js names files and functions that exist and describes how dispatch works now, with no counts or history. One way: point the message at reachability/witness/kinds.js, cut the file header and section banners to what each test asserts, and drop the 'sixth helper' and notInUnionOf examples."
+    },
+    {
+      "id": 2,
+      "line": 68,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "This PR renames the obligation vocabulary in the sibling reachability.test.js (obl -> obligation, o -> obligation, e -> error, f -> answers, 'code-obl' -> 'code-obligation') but leaves the same names here: gateObl and 'gate-obl' (68), (f) (100), (t) (169, 228, 235), (m) (205), [, exp] (258), (s) (321, 338), w (327, 344). One concept, two vocabularies across the two analysis test files.",
+      "fix": "Must: coverage.test.js uses the same full-word names as reachability.test.js for obligations, answers, gate types, matches, samples and witnesses. One way: rename gateObl to gateObligation (id 'gate-obligation'), f to answers, t to gateType, m to match, exp to helperExport, s to sample and w to witness."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

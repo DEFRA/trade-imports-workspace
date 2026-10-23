@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Reading code and name from the saved line is correct, but a comment describes callers and the blank-code fallback lost its only test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment above countText describes the callers (a saved line versus a re-render) and what the summary shows, which is rationale about other code, not the line below; countText already says it turns the value into text",
+      "fix": "Must: no comment above countText; any rationale lives in docs/ or the behaviour spec. One way: delete lines 3-5."
+    },
+    {
+      "id": 2,
+      "line": 10,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "code: entry.commodityCode ?? '' keeps a blank-code fallback, but the PR deleted the test that proved it ('Should leave the code blank for a commodity the catalogue holds no code for'); no test now fails if the ?? '' is removed, and under the new model a line always carries its commodityCode, so the branch may be unreachable",
+      "fix": "Must: either a test proves a line with no commodityCode gets a blank code, or the fallback is removed because no line can lack a commodityCode. One way: drop ?? '' and read entry.commodityCode directly."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

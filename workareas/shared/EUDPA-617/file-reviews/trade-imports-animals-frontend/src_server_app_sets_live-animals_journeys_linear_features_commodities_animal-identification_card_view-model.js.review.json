@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Keying by commodityCode and Latin name works, but the card title copies the check-answers title format, the Latin name is read two ways in buildCard, and a rationale comment remains.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "cardTitleOf (lines 17-21) re-implements the line title format '<code> — <Latin name>' that speciesCardTitle in check-answers/view-model/cards/consignment/species/species-card-title.js already owns (const commodityCode = (entry.commodityCode ?? '').trim() ... return speciesLatinName ? `${commodityCode} — ${speciesLatinName}` : commodityCode). The two differ only in the empty-code fallback, so one display rule now has two homes and the identification card and check-answers card can drift",
+      "fix": "Must: one function owns the '<code> — <Latin name>' line title, and both the identification card and the check-answers species card call it, each keeping its own empty-code fallback if it needs one. One way: extract the format into a shared commodity-line helper beside species-name.js and have cardTitleOf and speciesCardTitle call it"
+    },
+    {
+      "id": 2,
+      "line": 104,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "buildCard reads the Latin name two ways in one function: line 104 takes species = speciesLatinNameOf(entry) (defaulted to ''), then lines 107-108 pass the raw entry.speciesLatinName to permanentAddressApplies and identifierColumns. forms.js line 49 does the same. A reader has to check both paths behave alike for a missing name",
+      "fix": "Must: buildCard reads the line's Latin name once and every rule in the function uses that one value. One way: pass species to permanentAddressApplies and identifierColumns on lines 107-108"
+    },
+    {
+      "id": 3,
+      "line": 38,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines 38-40 hold a rationale comment ('The row is keyed by the animal, not by its place in the list: on a page holding four commodity lines \"Animal 1\" heads the first row of every one of them ...'). It explains why, which belongs in docs or the behaviour spec, and the name animalLabelOf plus its two copy keys already say what it does",
+      "fix": "Must: no rationale comment above animalLabelOf. One way: delete the comment; if the row-label rule is not in the identification-details spec, add it there",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

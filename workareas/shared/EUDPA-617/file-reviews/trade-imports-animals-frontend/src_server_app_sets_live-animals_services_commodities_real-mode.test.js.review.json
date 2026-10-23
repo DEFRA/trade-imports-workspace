@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/real-mode.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mocks correctly at the fetch boundary and asserts the request and 503 contract, but copies run-mode set-up again and groups three modules' tests under a mode name.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The set-up that saves STUB_MODE, runs vi.resetModules() and restores the mode in afterEach (lines 6, 29-42) is a fresh copy of set-up already pasted into eight other tests (services/run-mode.test.js, address-book/address-book.test.js, auth/controller.test.js, and the contact, origin, port-of-entry, party-picker and frozen-parties feature tests). This PR adds another copy instead of a shared helper.",
+      "fix": "Must: one shared test helper owns switching run mode for a test and putting it back; this file uses it rather than a local copy. One way: add e.g. useRunMode() to src/server/common/test-helpers/ that registers the beforeEach/afterEach pair, use it here, and move the other copies to it in the same change or a follow-up item.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 44,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "real-mode.test.js is named for a mode, not a module: it tests client.js (#fetchCommodities, lines 44-75), species-check.js (#linesWithUnlistedSpecies, 77-109) and search.js (#search, 111-141). Each of those already has (species-check.test.js) or needs a test file of its own, so one function's stub and real behaviour sit in different files. The house convention is a unit test file next to the source it tests.",
+      "fix": "Must: each source module's tests, stub and real mode, are in its own *.test.js next to it (client.test.js, species-check.test.js, search.test.js), and real-mode.test.js is gone. One way: move each describe block into the matching file, with the shared fetch-mock helpers in a small test-support module if more than one file needs them.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

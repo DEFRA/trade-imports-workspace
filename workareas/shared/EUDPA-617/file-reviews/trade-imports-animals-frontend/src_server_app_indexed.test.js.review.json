@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/indexed.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename from commoditySelection to commodityCode/speciesLatinName is correct, but the new complete-line fixture is copied across three test files and stores speciesLatinName in a shape production never writes, and two test titles over-claim.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 29,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "completeCommodityLine (line 29) is the third copy of the same complete 0102/Bos taurus commodity line fixture: bridge/collection-complete.test.js:27 (completeLine) and engine/evaluate/collection-view.test.js:7 (completeLine) define it again, so the next change to the line shape has to be made in three places",
+      "fix": "Must: one shared test helper owns the complete (and partial) commodity line fixture, and every test that needs it imports it; the local copies are deleted. One way: export completeCommodityLine and partialCommodityLine from a commodities test-support module (for example beside features/commodities/search/test-support.js) and import it in indexed.test.js, collection-complete.test.js and collection-view.test.js"
+    },
+    {
+      "id": 2,
+      "line": 32,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "completeCommodityLine stores speciesLatinName as an array (['Bos taurus']), but production stores a string: commit-selection.js seedLine copies speciesLatinName from the search row, which rows.js sets to species.latinName. The completeness tests at lines 64 and 181 therefore prove readiness for a line shape the app never writes, against the ticket AC that frontend stub data matches the reference-data response",
+      "fix": "Must: the commodity line fixture has the shape seedLine writes (speciesLatinName a single Latin-name string, commodityType from typeIdFor). One way: speciesLatinName: 'Bos taurus', or build the line with seedLine(BOS_TAURUS_ROW) plus the page answers"
+    },
+    {
+      "id": 3,
+      "line": 43,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles claim more than their assertions prove. Line 43 'Should enumerate sub-obligations at every depth via walkObligations' asserts only depth 0 (commodityLines) and depth 1 (commodityLines.commodityCode, .numberOfAnimalsQuantity); the depth-2 animalIdentifiers obligations are not asserted. Line 143 '... as OPTIONAL (not Completed, does not count)' asserts only toBe(OPTIONAL); nothing checks the section does not count towards readiness",
+      "fix": "Must: each title states exactly what its assertions prove. One way: add an assertion for a depth-2 path (for example commodityLines.animalIdentifiers.animalIdentifierEarTag) or retitle to 'Should enumerate commodity line sub-obligations via walkObligations'; drop '(not Completed, does not count)' from line 143's title or add a readyForCheckYourAnswers assertion that proves it"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

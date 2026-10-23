@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests now check inputs and outputs with no spies, but they re-declare species rows that the shared test support already exports, and they reuse the production linesOf name for a different helper.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test re-declares species rows the feature's shared test support already exports: DOMESTIC_CAT, CATTLE_OR_COW and the tuples ['0102','Bos taurus','Cattle or Cow'], ['0102','Bison bison','Bisons Spp'], ['01061900','Felis catus','Domestic Cat'], ['01061900','Canis familiaris','Dog'] (lines 4-5, 23-25, 43, 60-62) are field-for-field the BOS_TAURUS_ROW, BISON_BISON_ROW, FELIS_CATUS_ROW and CANIS_FAMILIARIS_ROW exports of commodities/search/test-support.js.",
+      "fix": "Must: the species rows used here come from the shared commodities test support, with no local copy of their codes, Latin names or common names. One way: import the *_ROW constants from ../../search/test-support.js, build lines from them (index + entry: row), and assert names via row.commonName; add an ostrich row there if a non-individual second code is needed.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 9,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The test helper linesOf(...triples) (line 9) shares its name with the production linesOf(answers, evaluation) in ../lines.js, which the code under test sits beside, but takes different input (code/Latin/common tuples) and builds index+entry pairs directly. One name, two concepts in one feature folder; a reader of this test predicts the engine collection view.",
+      "fix": "Must: the test helper's name says it builds indexed line entries from species rows and does not reuse the production linesOf name. One way: rename it to indexedLines(...rows)."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

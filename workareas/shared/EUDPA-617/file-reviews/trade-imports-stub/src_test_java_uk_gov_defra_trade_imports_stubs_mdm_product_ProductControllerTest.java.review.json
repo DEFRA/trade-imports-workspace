@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/product/ProductControllerTest.java",
+  "repo": "trade-imports-stub",
+  "commit": "60be5df2892b87d7c2bdc5628eec2802d0373670",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Titles match their assertions and each test can fail, but the multi-page species lookup has no test and the MockMvc set-up is copied from the sibling MDM controller tests.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 85,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test reads a saved page after page 0. ProductController.getCommoditySpecies keeps one body per page and answers pages.get(page) (line 97-98), and the fixture saves two pages for 01061900 (100 + 20 species), which reference-data's SpeciesCheckService pages through. Every species test asks for page 0, an unknown code, or a page past the last one, so replacing 'pages.has(page)' with 'page == 0' leaves every test green.",
+      "fix": "Must: a test fails if the stub stops answering a saved page other than page 0. One way: getCommoditySpecies_shouldAnswerTheSavedSecondPage_forACodeWithTwoSavedPages, asking 01061900 page=1 size=100 and asserting content.length() == 20, page == 1 and totalElements == 120.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Test set-up copied a third time: the @WebMvcTest @Import list (LatencyConfig, StubLatencies, StubFaults, GlobalExceptionHandler, FileUtils) at lines 19-21, KEY_HEADER and ANY_KEY at lines 24-25, and the trace-header literals 'x-ms-middleware-request-id' / 'stub-trace-id' (lines 37, 89, 120) repeat CountriesControllerTest:24-30 and PortsOfEntryControllerTest:26. House rule: set-up used by two tests goes in the shared helper.",
+      "fix": "Must: the MDM controller tests share one home for the MockMvc slice imports, the subscription-key header and the expected trace header, and ProductControllerTest uses it instead of local copies. One way: a meta-annotation (e.g. @MdmStubWebMvcTest) carrying the @Import list, plus a small MdmStubTestRequests helper with the header constants, adopted by all three MDM controller tests."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

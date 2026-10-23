@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/services/persistence/records/real/real.integration.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commodity line moves to commodityCode and speciesLatinName, but the fixture keeps an array species value no production writer stores, and the file carries option ids and session words in its comment and title.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 69,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The round-trip fixture sets speciesLatinName: ['Bos taurus'] (an array, carried over from the multi-select speciesSelection it replaced), but every production writer stores one Latin name string per line (seedLine, lineRow in the commodities feature; one line = CN code + Latin name). The test round-trips and projects a shape the journey never writes, so species-entry.js would send value: ['Bos taurus'] and the test still passes; it does not prove the real line shape survives the backend.",
+      "fix": "Must: the integration fixture's commodity line has the shape production writes, with speciesLatinName a single string. One way: speciesLatinName: 'Bos taurus'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 14,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The header comment (lines 14-18) and the describe title at line 85 use 'option-e', a design-option id, and 'the matching backend worktree', a session word; neither tells a reader what the test runs against now. The comment at line 89 ('Reachability probe — any HTTP response confirms the stack is up.') decodes code a named helper could state.",
+      "fix": "Must: no option ids or session words in comments or test titles in this file, and no comment that a name could replace. One way: title the describe 'real records adapter against a running backend', cut the header to the run command (or move it to the repo's docs), and extract the probe into a named helper such as assertBackendReachable()."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

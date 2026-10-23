@@ -1,0 +1,30 @@
+{
+  "file": "fit/live-animals-journey.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:12Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new species driver ticks the first box with a matching Latin name, so which CN code it picks depends on reference-data's result order while callers assert 0102; the file's comments also describe the UI, callers and other specs.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 237,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "tickFirstExactSpeciesMatch ticks .first() of every checkbox labelled with the Latin name, so when a species sits under several CN codes (Bos taurus is under 0102 and 01061900 in commodities.json; search.njk labels each box by Latin name only, grouped in reference-data's order) the driver picks whichever code reference-data lists first. Callers assume 0102: search.fit.spec.js asserts '0102: Bos taurus' and 'leaves the same species under another code unticked' after selectSpecies, and answerWhatYouAreImporting feeds the happy-path line (commodityCode 0102) into the packages and ear-tag pages. A reorder from reference-data or MDM silently ticks 01061900 and those specs fail far from the cause.",
+      "fix": "Must: the species driver ticks the box for a named CN code and Latin name pair, so the row it picks never depends on result order. One way: selectSpecies takes [{ commodityCode, latinName }] (or 'code|latin' keys) and ticks page.getByRole('group', { name: commodityCode }).getByRole('checkbox', { name: latinName, exact: true }), the same scoping search.fit.spec.js already uses; drop .first() and the tickFirstExactSpeciesMatch helper.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 230,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe things other than the lines below them: 230-231 ('The commodity page lists nothing until it is searched... search, then tick the result') describes the page and selectSpecies, not searchCommodities beneath it; 16 ('under the one name every spec imports') describes callers and counts; 139-143 and 437-440 point at choosePort/addTransitCountry in arrival-transit.fit.spec.js; 111-113 explains why formatDisplayDate is not used; 170-172 cites the service-navigation spec; 203-204, 167-168, 294-298, 452-454 and 541-545 describe page or macro behaviour and rationale. House rule: a comment describes only the lines directly below it, never the UI, other modules or tests; rationale belongs in docs/.",
+      "fix": "Must: every comment left in the file states only what the lines directly beneath it do, and rationale about the page, other specs or other modules lives in the set's docs/ or nowhere. One way: delete 230-231 (searchCommodities and selectSpecies already read as search-then-tick), delete the cross-file 'Mirrors' pointers and the caller/count wording on BASE, and move the formatDisplayDate and entry-guard rationale into src/server/app/sets/live-animals/docs/."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

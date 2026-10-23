@@ -1,0 +1,58 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The specs follow the code-keyed lines and MDM common names correctly, but the new caption assertion cannot fail, two titles claim more than their assertions prove, and design-rationale comments and copied set-up remain.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 81,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The diff locates the table with getByRole('table', { name: copy.consignmentDetails.table.caption }), and the next line asserts the same table toContainText(copy.consignmentDetails.table.caption). That assertion checks a value the locator already needed to find the table, so it cannot fail on its own. If the caption were wrong, the locator would find nothing.",
+      "fix": "Must: each assertion in 'renders grouped species quantities and collection table' can fail when the page renders something else. One way: delete the caption toContainText line, since the role-and-name locator already proves the caption names the table",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 131,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'lists a commodity on code 01061900 as a species row whose remove drops that species alone' never removes anything. It only asserts that the Remove buttons carry the value attributes 'remove:0' and 'remove-species:1', which is the form's internal action encoding. The title claims a behaviour (the remove drops that species alone) that the assertions do not prove. 'removes one species row without changing another quantity' is the test that proves it.",
+      "fix": "Must: the title states only what the assertions prove, or the assertions prove what the title states. One way: retitle it to what it checks, e.g. 'gives the 0102 row a commodity remove and the 01061900 row a species remove', or click Remove Domestic Cat and assert that only the cat line goes",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 275,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'adds another commodity while preserving an existing quantity' now adds Canis familiaris, which sits on 01061900, the code Felis catus is already on. So no new commodity is added: a second species joins an existing code. Because lines sort by code then Latin name, the dog lands between the cow and the cat. The diff re-baselined the positional assertions (SECOND '' and THIRD '2'), and nothing in the test says which species each input belongs to, so a reader cannot see that the cat's 2 moved with it.",
+      "fix": "Must: the title says what the test now does, and each count assertion names the species it belongs to. One way: retitle it to something like 'adds another species while preserving existing quantities', and read each Number of animals input inside the section headed by its species (Bos taurus 25, Canis familiaris blank, Felis catus 2) instead of by index",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 4,
+      "line": 251,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe the design and the page instead of the lines under them, and one counts. Lines 96-98 (the design gives the count no hint), 110-113 (why the type steps down), 251-252 ('The cat line is the only one left and its saved count travelled with it, so the right group was dropped', which is a count and a restatement of the assertion) and 267-268 (re-entering bounces back). The diff deleted three sibling comments of the same kind but kept these.",
+      "fix": "Must: no comment in the file describes the design, the UI or a test's reasoning, and none uses counts such as 'the only one'. One way: delete the four comments, and put any rationale the spec lacks into openspec commodity-details",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 5,
+      "line": 32,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "openDetails (32-45) is the same route that identification.fit.spec.js addLines scripts: startNotification, answerCountryOfOrigin, click 'What are you importing?', selectSpecies, Save and continue, wait for Overview, open Commodity details. The fixture constants are copied across the commodity specs too: CATTLE_OR_COW ('Cattle or Cow', also in identification), BOS_TAURUS, 'Felis catus' (inline here, a constant in the sibling specs) and SAVE_AND_CONTINUE.",
+      "fix": "Must: one helper in fit/live-animals-journey.js takes a notification to the Commodity details page with chosen species, both specs call it with their local copies deleted, and the shared fixture species and common names live in one place. One way: promote openCommodityDetails(page, species) beside selectSpecies, and export the species constants from the journey helper",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

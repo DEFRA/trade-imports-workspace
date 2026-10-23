@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/obligations/index.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Manifest wiring of speciesLatinName/commonName is correct; the header comment is stale and describes other modules, and an unreachable back-ref loop remains.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The header JSDoc (lines 1-56) is wrong and describes other modules: it lists the gate helpers 'in helpers.js' (no such file; they live in model/obligations/helpers/, and this PR edits line 11 to add anyNotInUnionOf to that list), points at '../obligations/' for the model (that resolves to this folder, not model/obligations), names the 'V4' Confluence page, describes KNOWN_UNWIRED in coverage.test.js and says branchedGate is 'unused on the manifest today'. Lines 46-49 also still say commodities/species option lists are 'stubbed in test fixtures', while this PR sources them from reference-data. Lines 242-249 and 260-263 narrate a loop's history and rationale.",
+      "fix": "Must: the file carries no comment that describes helpers, tests or other modules, no release or spec-version names, and no rationale; rationale lives in docs/ or the model README. One way: delete the header block and the container back-ref commentary, moving anything still true about the helper choice convention into src/server/app/model/obligations/README.md.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 267,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The container back-ref loop (lines 250-277, attachContainerBackRef plus the for-loop) has nothing to act on: no live-animals obligation declares requires.allOrNothingOfIds (grep finds the key only in this file), and its own comment says it is 'retained as a general primitive for any future' carrier. It is unreachable code kept for a hypothetical.",
+      "fix": "Must: the manifest builds only what the current obligations make reachable. One way: delete attachContainerBackRef and the loop; reintroduce them with the first allOrNothingOfIds carrier."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

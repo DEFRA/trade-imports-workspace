@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckResponse.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct record, but 'missing' names the same concept the service and frontend call 'unlisted', and the public DTO has no OpenAPI schema.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One concept, several names: the response field is 'missing' (line 7), while SpeciesCheckService decides it with isUnlisted, and the twin frontend reads it through linesWithUnlistedSpecies and an 'unlisted' local (check-answers/refusal.js lines 12, 30) and shows speciesNoLongerOffered. A line that arrives with no code is also returned as 'missing', which the word does not cover.",
+      "fix": "Must: the lines the check refuses carry one name from this response field through SpeciesCheckService to the frontend client and refusal.js, and that name covers both cases it returns (a Latin name not listed under its code, and a line with no code or Latin name). One way: name the field unlisted and keep linesWithUnlistedSpecies in the frontend, renaming the service's local and the test assertions in the same change."
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "SpeciesCheckResponse is the public response body of POST /commodities/species-check and carries no @Schema description or requiredMode, though springdoc is on the classpath (pom.xml) and the OpenAPI guide requires both on every public DTO; the field is never null (List.copyOf, line 10) and should be marked required.",
+      "fix": "Must: the record and its field carry @Schema descriptions, with requiredMode = REQUIRED on the list. One way: @Schema(description = \"Lines whose species MDM does not list under their code\", requiredMode = Schema.RequiredMode.REQUIRED).",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

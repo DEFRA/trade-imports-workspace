@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Set-up migration keeps every expected status and adds the Latin name where the permanent-address rule needs it, but species constants and cattle-line fixtures are copied across test files and several titles narrate history or over-claim.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 25,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The PR declares species constants locally (EQUUS_CABALUS and BOS_TAURUS at lines 25-26 here, BOS_TAURUS at status.test.js:23) and the same 'Bos taurus' / 'Felis catus' / 'Equus cabalus' constants are redeclared in about 20 test files (contract.test.js:48-49, store-ops.test.js:19-21, collection-complete.test.js:7, fulfilments.test.js:8, mutators.test.js:18-19, notification-mapper.test.js:14-15, identification.fit.spec.js:19-21, ...); the complete cattle line {commodityCode '0102', speciesLatinName BOS_TAURUS, commodityType '16', numberOfPackages, numberOfAnimalsQuantity} is copied across task-rows.test.js (160-245, 423-429) and status.test.js (133-140, 297-304, 378-383); 'Felis catus' is still a raw literal at line 291 and status.test.js:336",
+      "fix": "Must: one shared test helper owns the species names and the canonical commodity-line fixtures the flow tests use, and the local copies are deleted. One way: export CATTLE/HORSE/CAT line builders and the Latin-name constants from a shared live-animals test-support module (next to the commodities stub fixtures) and import them in task-rows.test.js, status.test.js and the other files",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 509,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Test titles narrate history: describe at line 414 'admits exactly the journeys the section roll-up did', it.each at line 509 'agree with the retired section roll-up', and line 539 'gated on the row roll-up exactly as before'",
+      "fix": "Must: titles state the current behaviour with no before/after narration. One way: 'the row roll-up and the section roll-up admit the same journeys', 'Should agree with the section roll-up for %s', 'Should gate the review section on the row roll-up'"
+    },
+    {
+      "id": 3,
+      "line": 341,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should be marked conditional so the hub drops it while it is Not applicable' claims hub behaviour, but the only assertion is taskRowById('animalIdentification').conditional === true",
+      "fix": "Must: the title claims no more than the assertion proves, or the test asserts the hub drop. One way: retitle to 'Should mark the animal-identification row conditional', and prove the hub drop in the hub view-model test"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

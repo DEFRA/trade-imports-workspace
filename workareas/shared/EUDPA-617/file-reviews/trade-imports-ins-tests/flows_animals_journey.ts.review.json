@@ -1,0 +1,30 @@
+{
+  "file": "flows/animals/journey.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Moving to searchAndCheckSpecies is correct, but the new addCommodityLine copies answerCommodity and its name hides that it resets every line's count.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 128,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new addCommodityLine (lines 128-139) copies answerCommodity (115-126) step for step: open 'What are you importing?', searchAndCheckSpecies, Save and continue, wait for the overview, open 'Commodity details', wait for its heading, fill counts, save, wait for the overview. Only the count fill differs. toConsignmentDetails (294-300) repeats the first six steps again. One route through the commodity section now has three homes in the same flow, so the next change to the page (as this PR made, selectSpecies to searchAndCheckSpecies) has to be made three times",
+      "fix": "Must: the AnimalsJourney flow holds one sequence for 'pick these lines, save, open Commodity details', and answerCommodity, addCommodityLine and toConsignmentDetails all call it. One way: extract a private chooseCommodityLinesAndOpenDetails(lines) helper ending on the consignment-details heading, and have each method call it before its own count fill or return",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 128,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "addCommodityLine(referenceNumber, line) predicts 'tick one more species on the commodity page'. The body also opens Commodity details and calls fillEveryAnimalCount('1'), which overwrites the animal count of every line already on the notification, then saves. cph-scope.spec.ts and additional-details-scope.spec.ts call it twice in a row, so the second call silently resets the first line's count. The name hides that change",
+      "fix": "Must: the method's name says it both adds the line and answers Commodity details with a count of one for every line, or the method only adds the line and the count answer is a separate named step. One way: rename to addCommodityLineAndCountOnePerLine, or split into addCommodityLine plus answerEveryAnimalCount(count)"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

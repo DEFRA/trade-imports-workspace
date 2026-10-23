@@ -1,0 +1,40 @@
+{
+  "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "MDM commodity-line migration is correct against the frontend rules (ostrich 01063300 carries no identifiers), but the add-a-line steps are copied three times beside the promoted helper, one title claims dogs it never tests, and one absence check could be positive.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "All three tests (lines 13-22, 63-72, 90-99) inline the add-a-commodity-line sequence ('What are you importing?' -> searchAndCheckSpecies -> save -> 'Commodity details' -> count -> save) that this PR promoted to AnimalsJourney.addCommodityLine; the promoted helper hardcodes one line and a count of 1, so the copies here (count 2, and two lines at once) were left behind. Guide: promoting a helper deletes the local copies.",
+      "fix": "Must: these tests reach the identification task through one journey-flow method that takes the lines and the animal count, with no inline copy of the steps. One way: extend addCommodityLine to accept several lines and an { animalCount } option, and call it from each test.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 6,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs' claims dogs, but the test only adds a Felis catus line; no dog line is exercised (frontend PERMANENT_ADDRESS_SPECIES in services/commodities/rules.js also covers ferrets, so the list is incomplete as well as unproven).",
+      "fix": "Must: the title states only what the assertions prove: a domestic-cat line's unit form shows passport, tattoo and permanent address, hides ear tag and horse name, and refuses a partial address. One way: retitle to 'a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 78,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Line 78 proves the ostrich line gets no panel with an absence check (heading 'Enter details for Struthio' toHaveCount(0)); a panel titled any other way for the ostrich line would pass it. House rules: prove absence with an exact positive assertion where one is possible.",
+      "fix": "Must: the test asserts the exact set of identification panels the page renders, so an extra panel for the ostrich line fails it. One way: assert the page's level-2 'Enter details for ...' headings toHaveText with a one-item list holding the cattle line's 'Enter details for Bos taurus' heading (via a page-object accessor such as animalIdentification.panelHeadings).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

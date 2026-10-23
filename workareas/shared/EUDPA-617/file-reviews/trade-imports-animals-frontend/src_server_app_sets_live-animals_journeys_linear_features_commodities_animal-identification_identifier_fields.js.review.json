@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The switch to code and Latin-name gates is correct, but the new species parameter is vaguely named, PERMANENT_ADDRESS has literal copies in check-answers, and a single-use literal sits at module scope.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "permanentAddressApplies(species) names its parameter 'species', but every caller passes entry.speciesLatinName (card/view-model.js:107, form/forms.js:49) and the obligation gate reads speciesLatinName; under the old model 'species' held a species id, so the name no longer says which species value it takes",
+      "fix": "Must: the parameter is named for what it holds, the species Latin name, matching speciesLatinName used by the entry and the obligation gate. One way: rename to speciesLatinName.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 20,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "PERMANENT_ADDRESS is now exported from fields.js as the permanent-address identifier id, yet check-answers/view-model/cards/consignment/species/identifier-columns.js:20-21 (changed in this PR) and identifier-cell.js:4 still spell 'permanentAddress' as a literal; the obligation manifest also names it (obligations/sections/commodities/identifiers.js:166)",
+      "fix": "Must: one constant owns the permanent-address identifier id and every reader of it (identification table, check-answers columns and cell) uses that owner. One way: import PERMANENT_ADDRESS (or the obligation's name) in identifier-columns.js and identifier-cell.js in place of the literal."
+    },
+    {
+      "id": 3,
+      "line": 13,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "IDENTIFIER_MAX_LENGTH = 58 is a literal held at module scope but used only by identifierChecksFor (line 30); the house rule puts a literal used by one function inside that function",
+      "fix": "Must: the 58-character limit lives inside identifierChecksFor, or is exported because another module or a test reads it. One way: move the constant into the identifierChecksFor body."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

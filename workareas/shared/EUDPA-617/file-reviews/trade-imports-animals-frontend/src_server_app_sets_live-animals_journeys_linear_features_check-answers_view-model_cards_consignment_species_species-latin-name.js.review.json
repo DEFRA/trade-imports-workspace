@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-latin-name.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:11Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct accessor, but it is one of three new species-display helpers in this PR and lives in check-answers while the commodities feature imports it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "This PR adds three helpers for the text shown for a line's species: speciesLatinNameOf here (speciesLatinName ?? ''), speciesName in features/commodities/species-name.js (commonName ?? speciesLatinName) and speciesLabelFor in commodities/search/view-model/labels.js (identity). species-card-rows.js:12 also inlines entry.commonName ?? ''. The commodities feature's card/view-model.js:13 imports this one from deep inside check-answers/view-model/cards. The ?? '' adds nothing on the rows, because row() in rows/summary-row.js already renders a blank value as the not-applicable cell.",
+      "fix": "Must: one module owns how a commodity line's species is shown (the Latin name, and the common name where a page shows it), and every page imports it from a home that both features would look in. One way: keep features/commodities/species-name.js as the owner, export a speciesLatinNameOf-equivalent from it, delete species-latin-name.js and speciesLabelFor, and pass entry.speciesLatinName / entry.commonName straight to row() in species-card-rows.js.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Commodity-line migration is correct, but the spec keeps an inline copy of the add-a-line steps the PR promoted to the journey flow and keeps four comments narrating UI behaviour.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 38,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The PR deleted most narrating comments in this spec but kept four that narrate UI behaviour the assertions already state: lines 38-39 ('the in-card button finishes the line...'), 50-53 ('Count-drop guard... the records are never silently trimmed'), 69 ('Remove frees a slot...') and 76 ('With one record left the drop no longer applies...'). House rules: a comment never describes the UI; rationale goes in docs or the behaviour spec.",
+      "fix": "Must: the spec carries no comments narrating page behaviour; the test title and assertions state it. One way: delete the four comments; if a step needs naming, use test.step('count drop below the record count is blocked', ...) instead.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 14,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 14-22 walk 'What are you importing?' -> searchAndCheckSpecies -> save -> 'Commodity details' -> count -> save inline. This PR promoted the same sequence to AnimalsJourney.addCommodityLine (flows/animals/journey.ts) but hardcoded a count of 1, so this spec (count 2) and animal-identifiers-conditional.spec.ts (three copies) keep local copies of it. Guide: a sequence used by two specs becomes a journey method and the local copies are deleted in the same change.",
+      "fix": "Must: one journey-flow method adds commodity lines with a given animal count, and this spec reaches its identification task through it with no inline copy of the steps. One way: give addCommodityLine an options object ({ animalCount }) or a variant taking several lines, and call it here with animalCount: 2.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

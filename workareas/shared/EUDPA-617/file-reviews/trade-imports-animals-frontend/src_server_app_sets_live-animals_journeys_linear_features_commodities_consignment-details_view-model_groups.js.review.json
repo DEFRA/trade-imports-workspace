@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Grouping by code is correct, but the species label is now read straight from the field even though three label functions already exist.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The species label is read from entry.speciesLatinName directly here (speciesText, line 6) and in validation/count-drop.js:24, while the same feature already has owners for how a species is labelled: speciesLabelFor in search/view-model/labels.js, speciesLatinNameOf in check-answers/.../species-latin-name.js (falls back to ''), and speciesName in commodities/species-name.js. The PR replaced commodities.speciesLabel with raw field reads, so the species-block heading and the count-drop error no longer go through any label function and will drift from the search page if the label rule changes.",
+      "fix": "Must: the Latin-name species label shown on the consignment-details page (block heading and count-drop error) comes from the same function the search page and check-answers use. One way: call speciesLatinNameOf(entry) (or move speciesLabelFor beside speciesName in commodities/ and use it) in groupLine and countDropIssueFor."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

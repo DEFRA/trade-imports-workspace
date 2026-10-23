@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/bridge/scope.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The diff only renames commoditySelection to commodityCode in comments and the result matches the code, but the edited comment copies the ENFORCED_AT_CONTINUE list and drifts with it, and other comments in the file break the house comment rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 29,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment this PR edits (lines 29-34) copies the ENFORCED_AT_CONTINUE list from bridge/obligation-source.js:38 ('countryOfOrigin', 'commodityCode') and describes its caller flow/gates.js. It went stale on the commoditySelection->commodityCode rename and had to be hand-edited here, which shows it is a second home for that list. It also names anyInstanceAnswered but sits above collectInstanceValues.",
+      "fix": "Must: no comment in scope.js restates the ENFORCED_AT_CONTINUE members or describes callers; the prerequisite list lives only in obligation-source.js. One way: delete lines 29-34 (the stale-comment rule says delete, not reword); if the exactness argument is needed, move it to src/server/app/docs/scope-and-wipe.md.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 135,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Other comments in scope.js break the house comment rules: lines 135-139 sit above no code and describe another module (bridge/obligation-source.js) and the rationale for the flow-only layer; lines 1-18, 126-132 and 151-170 describe consumers ('the controllers and hub', makeScope, the readiness seam each set's gateway configures) and declaration rationale; scopeFrom (line 171) is an internal helper that carries JSDoc; lines 65, 81 and 88 repeat what groupNodeKey, leafFulfilmentIndexKeys and leafScalarKey already say.",
+      "fix": "Must: every comment left in scope.js describes only the lines directly below it, JSDoc appears only on the exported rawInScope and makeScopeFromEvaluation contracts, and the rationale (why flow-only obligations are layered on, why declaration is absent) lives in src/server/app/docs/. One way: delete the orphan block at 135-139 and the JSDoc on scopeFrom, cut the module header and the export JSDoc down to their contracts, and move the rationale to docs/scope-and-wipe.md.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

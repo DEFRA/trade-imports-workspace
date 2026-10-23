@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/call-reference-data.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Works correctly but adds a fourth copy of the reference-data 503 mapping and its name hides the stub/real switch.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The 'reference data failed, so throw Boom.serverUnavailable(\"Reference data unavailable\", { dataset, cause })' rule now has four homes: call-reference-data.js:13, services/ports/index.js:24 and services/countries/index.js:49 and :144. This PR adds the fourth copy, inside the live-animals set, while the shared reference-data module (services/reference-data/request.js, also touched by this PR) holds none of it.",
+      "fix": "Must: one function owns how a reference-data failure becomes a 503 Boom tagged with its dataset; commodities, ports and countries all call it. One way: export referenceDataUnavailable(dataset, err) (or a stub-or-real wrapper taking the dataset) from services/reference-data/request.js and use it in all four places, deleting the local copies.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 6,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "callReferenceData({ stubCall, realCall }) mispredicts: the name says it calls reference data, but in stub mode it never does (line 7-8 returns stubCall()), and in real mode it also turns any failure into a 503 Boom tagged dataset 'commodities'. Neither the stub/real switch nor the 503 mapping is in the name.",
+      "fix": "Must: the name says the function chooses the stub or reference data by run mode and reports a reference-data failure as commodities unavailable. One way: rename to e.g. fromStubOrReferenceData / commodityLookup, or fold the rename into the shared owner from the duplication item with the dataset as an argument.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 4,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "const DATASET = 'commodities' sits at module scope but is used by one function (line 14). House rule: a literal used by one function lives in that function.",
+      "fix": "Must: the dataset literal lives inside the one function that uses it, or becomes an argument if the helper is shared. One way: inline dataset: 'commodities' in the Boom data."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

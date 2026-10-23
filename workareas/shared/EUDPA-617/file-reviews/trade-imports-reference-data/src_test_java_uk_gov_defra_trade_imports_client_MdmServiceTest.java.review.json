@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New tests cover the three MDM product calls, but the null-content branch is untested and the edited tests keep banned Given/When/Then comments, one of which claims an unasserted warning.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 231,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new pageOrEmpty branch for a body present with null content (MdmService line 88, body.content() == null) has no test: searchProducts_returnsEmptyPage_whenMdmBodyIsNull (231) and getCommoditySpecies_returnsEmptyPage_whenMdmBodyIsNull (310) only pass ResponseEntity.ok(null). Deleting the content() == null check leaves every test green, and CommoditySearchService then throws an NPE on productPage.content().stream().",
+      "fix": "Must: a test fails when the null-content check is removed, for at least one of the page-returning methods. One way: add searchProducts_returnsEmptyPage_whenMdmContentIsNull returning ResponseEntity.ok(new MdmProductPage<>(null, 0, 100, 5L, 1)) and asserting an empty content and zero total.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 193,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Given/When/Then comments remain on the getCountries tests the diff edited (lines 103, 113, 116, 123, 133, 140, 143, 146, 152, 162, 165, 171, 184, 187, 193, 196, 199, 323, 338, 341), which the unit-test guide bans; the new tests in the same file use blank lines instead, so the file now mixes two layouts. Line 133 ('missing trace header is logged as a warning') also claims a warning that no assertion checks.",
+      "fix": "Must: no // Given, // When, // Then comments in the file; set-up, action and assertions are separated by blank lines, and no comment claims behaviour the assertions do not prove. One way: delete the comments and keep the blank-line layout the new tests already use.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one-line switch to commodityCode is correct, but the silent skip-the-page redirect it now drives has no log line and the file carries rationale comments.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 79,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "noIdentifiersTarget (lines 79-82, used at 86-88 and 95-97) redirects past the page with no log line. identifiedLines (line 36) now decides this by looking up the stored MDM commodityCode in the hard-coded COMMODITY_IDENTIFIERS table, so a code that does not match exactly (for example the '010619' vs '01061900' form raised in the ticket comments) silently skips identification and support cannot tell why a notification has no identifiers",
+      "fix": "Must: the skip-the-page branch logs once, at info, with the journey id and the commodity codes on the lines it found nothing to identify on. One way: log inside noIdentifiersTarget when it returns a target, passing { journeyId, commodityCodes }",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 2,
+      "line": 47,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Rationale comments in code: lines 47-49 explain why the recap shows the whole consignment ('hiding it invites the trader to add the commodity a second time'), and lines 76-78 explain why the page does not exist and describe its callers ('The guard sits on both handlers'). House rule: rationale goes in docs or the behaviour spec, and a comment never describes callers",
+      "fix": "Must: no rationale or caller-describing comments in the controller; the names say what the code does. One way: delete both comments, rename allLines to e.g. everyCommodityLine if the distinction needs saying, and move the rationale to the identification-details behaviour spec if it is not already there",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/lib/validate/validate.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename to commodityCode is behaviour-neutral, but the edited test duplicates the empty-domain test above it and carries a caller-describing comment, and a describe title over-claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 211,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test this PR edits (line 211) is a copy of the one at line 196: same title 'Should reject every value when the domain is empty', same requiredOneOf call with an empty list, same two assertions (an in-list-looking value and ''), only the field name, message and sample value differ. Removing the empty-domain guard in requiredOneOf turns both red together, so the second adds nothing, and the rename to commodityCode carries journey vocabulary into the generic validator library's tests.",
+      "fix": "Must: one test in #requiredOneOf proves that an empty domain refuses every value, with a unique title and no commodity-specific field, message or constant (COMMODITY_REQUIRED_MESSAGE goes if unused). One way: delete the test at lines 211-226 and COMMODITY_REQUIRED_MESSAGE, keeping the itemSelector version at line 196."
+    },
+    {
+      "id": 2,
+      "line": 212,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines 212-213 ('A service-backed list that failed to prime arrives empty. The rule must still refuse, rather than degrading to \"any non-empty string\".') describe callers and service priming outside the lines below, and carry rationale in code; the test title already states the behaviour.",
+      "fix": "Must: no comment above the empty-domain test; any rationale about unprimed service lists lives in the repo's docs/ or the behaviour spec. One way: delete the comment along with the duplicate test it sits in."
+    },
+    {
+      "id": 3,
+      "line": 48,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "describe title '#requiredText — the sole save-blocking primitive' claims requiredText is the only save-blocking validator, but the same file tests requiredExactDigits, requiredOneOf, requiredIntegerInRange, requiredMaxText, requiredEmail, requiredDateText, requiredDateTextInRange and requiredTime as save-blocking; 'sole' is also a count the house rules ban. Line 104 '(the mandate split)' is likewise jargon the assertions do not explain.",
+      "fix": "Must: the describe titles at lines 48 and 104 state only what their tests prove, with no count and no unexplained jargon. One way: '#requiredText — save-blocking non-blank text' and 'optional validators accept a blank value'."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

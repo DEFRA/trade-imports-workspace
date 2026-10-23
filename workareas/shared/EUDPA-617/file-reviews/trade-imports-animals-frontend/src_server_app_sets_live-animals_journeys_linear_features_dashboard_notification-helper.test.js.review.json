@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The re-baselined commodity case tests a nameForCode lookup that no production caller uses any more, and the file is full of rationale comments.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 74,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Lines 74-78 test formatCommodity's nameForCode lookup ('0101' -> 'Horses'), but after this PR no production caller passes nameForCode: row/index.js was its only caller and now calls formatCommodity(journey.commodity). The test keeps an unreachable parameter alive. The values were also re-baselined ('Cow'->'Cattle', 'Horse'->'Horses') to names no catalogue in the repo holds any more.",
+      "fix": "Must: the helper test exercises only inputs production passes, so nameForCode is either removed from formatCommodity along with this case or has a real caller. One way: drop the nameForCode parameter from notification-helper.js, replace lines 74-78 with formatCommodity({ commodityCode: '0102' }) -> '0102', and keep the name and null cases."
+    },
+    {
+      "id": 2,
+      "line": 16,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "JSDoc blocks on internal test constants (lines 16-19, 23-27, 31, 34) and inline comments (87-88, 93-95, 103-106) carry rationale ('on purpose', 'Do not tidy it', 'the zone the service is deployed in'). Some also describe other tests ('See calendar.test.js', 'The west-of-UTC block above'). Doc comments are for exported APIs only, and rationale belongs in docs/.",
+      "fix": "Must: the file has no comments that explain why a zone or value was chosen or that describe other tests; constant names and test titles carry the intent. One way: rename to e.g. ZONE_WEST_OF_UTC_GUARDING_MOMENTS and ZONE_EAST_OF_UTC_GUARDING_DATE_ONLY_VALUES, split the zone test into two titled tests, and move the zone rationale to the repo's docs/."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

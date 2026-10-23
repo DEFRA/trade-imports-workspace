@@ -1,0 +1,45 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/rules.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Rules re-keyed by code correctly, but the Game species never matches MDM's spelling, the permanent-address rule ignores the agreed code, the multi-type rule has two homes and the package-count list carries unreachable germinal codes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 82,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "GAME_SPECIES holds 'Bos spp.', but the catalogue lists the species under 0102 as 'Bos sp.' (fixtures/commodities.json:59), so typeFor never returns Game for any species a trader can pick and every 0102 line is sent to PIMS as Domestic. The ticket's decisions (14 Oct, item 8) say a Latin-name spelling change by MDM stops the rules matching and 'the rules must be updated to match'; docs/services.md records the mismatch instead of following it.",
+      "fix": "Must: the Game rule on 0102 matches a Latin name the catalogue offers under that code, or the Domestic/Game split is confirmed with product as out of use and removed. One way: key GAME_SPECIES on 'Bos sp.' (MDM's spelling), update the index.test.js typeIdFor case, and drop the services.md line that says no 0102 species is Game today."
+    },
+    {
+      "id": 2,
+      "line": 86,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Which codes have more than one type is written twice: typeFor tests code !== MULTI_TYPE_CODE (line 87), while typesFor reads TYPES_BY_CODE (line 84/93). Adding a second multi-type code to TYPES_BY_CODE would make typesFor offer Domestic/Game while typeFor still returns SINGLE_TYPE ('2'), and typeTextForId would then find no text for the stored id.",
+      "fix": "Must: one structure owns the types of each code, and both typeFor and typesFor derive from it. One way: hold the types per code with their species rule in TYPES_BY_CODE (e.g. { [CATTLE_CODE]: { types: [DOMESTIC, GAME], typeOf: (latinName) => ... } }) and have typeFor read it, deleting MULTI_TYPE_CODE."
+    },
+    {
+      "id": 3,
+      "line": 61,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "PACKAGE_COUNT_CODES lists '05111000' and '05119985' (lines 61-62), germinal codes that the live-animal catalogue does not hold (absent from fixtures/commodities.json) and that the picker excludes by isGerminal (ticket decision 14 Oct, item 6). docs/services.md says the list 'holds the codes of the design's package-count list that MDM's live-animal data holds', so the code contradicts its own doc and carries entries no line can reach.",
+      "fix": "Must: PACKAGE_COUNT_CODES holds only codes the live-animals journey can select, matching docs/services.md. One way: delete '05111000' and '05119985' and update the expected package-count list in obligations/whitelists.test.js; the germinal journey adds its own list when it is built."
+    },
+    {
+      "id": 4,
+      "line": 65,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "PERMANENT_ADDRESS_SPECIES gates the permanent-address question on Latin name alone (applied via allowListed(speciesLatinName, ...) in obligations/sections/commodities/identifiers.js:169), but the ticket's agreed rule (Amir 14 Oct decision 5, confirmed by Monica 15 Oct) is 01061900 + Latin name. The 30 Sept MDM run found the same species returned under many codes (Bos taurus under 23), so a Felis catus/Canis familiaris line under any other code would be made to answer a mandatory permanent address, and under a code with no identification panel it could not be answered at all.",
+      "fix": "Must: the permanent-address question applies only to the agreed code + Latin name pairs (01061900 with Felis catus, Canis familiaris / Canis lupus familiaris, Mustela putorius furo). One way: hold the rule as code + Latin name pairs in rules.js and gate the obligation on both the line's commodityCode and speciesLatinName; update services.md, which currently says the rule gates on the species, not the code."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

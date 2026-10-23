@@ -1,0 +1,47 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:16Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commoditySelection-to-commodityCode migration is correct (01061900 is CPH-exempt and passport-capable, 0102 puts CPH in scope), but the file keeps a local copy of driveHandler, duplicated fixtures and opaque code literals decoded by a comment.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "drivePost (lines 26-44) copies the body of driveHandler from engine/test-support.js, which this same file already imports (line 12) and uses in the amend-endings describe",
+      "fix": "Must: every handler test in the file drives through the shared driveHandler, and no local copy remains. One way: delete drivePost and call driveHandler with the same options",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 251,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "reasonPrerequisites and internalMarketPayload are declared twice with identical values (77-84 and 251-258), and the beforeAll/beforeEach set-up is copied into both describe blocks (47-52, 244-249)",
+      "fix": "Must: each fixture and the set-up are declared once for the file. One way: lift both constants and the hooks to file scope"
+    },
+    {
+      "id": 3,
+      "line": 221,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Seeds use bare commodity codes ('01061900' at 79, 160, 183, 253; '0102' at 221), and the comment at 219 ('The CPH obligation is anyItem-gated on a CPH-triggering commodity line') exists only to decode why '0102' puts CPH in scope; it also describes the obligations module rather than the lines below. The Felis catus line at 160-161 duplicates FELIS_CATUS_ROW from commodities/search/test-support.js",
+      "fix": "Must: each seed names the commodity it holds and, where it matters, that it puts CPH in scope, with no comment needed to decode it. One way: seed FELIS_CATUS_ROW / BOS_TAURUS_ROW from commodities/search/test-support.js (or a named CPH_LINE constant), and delete the comment at 219",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 4,
+      "line": 73,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Comment at 73-76 narrates the reason page's reveal, enforcedAt=continue prerequisites and which page comes next: rules of other modules and set-up rationale, not the lines below",
+      "fix": "Must: no comment describing other modules above the fixtures. One way: delete it; names such as additionalDetailsReachableSeed can carry the intent"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

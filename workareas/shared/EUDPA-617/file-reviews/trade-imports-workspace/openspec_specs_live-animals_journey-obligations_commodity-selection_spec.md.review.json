@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "f7d977cd529d089ca4abd13cd88d9d1cdcf14ed4",
+  "pr": 135,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:40Z",
+  "verdict": "RISKY",
+  "verdict_reason": "REQ-006 keys the permanent address on species alone against the ticket's code-plus-species decision, and REQ-002 adds pigs to the unweaned rule with no source and no scenario; the CPH exemption change matches the code and the existing exempt list.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 86,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-OB-COMMODITY-006 says 'The line's species decides, not its code'. The ticket's 14 Oct decision 5 keys the permanent-address question on '01061900 + Latin name', and the product owner's 15 Oct reply (Monica Rivera) keys it on code + species too. The frontend (rules.js PERMANENT_ADDRESS_SPECIES, gated on speciesLatinName only) follows the spec, not the decision. MDM lists one species under several live-animal codes (the ins-tests data has Bos taurus under 0102 and 01061900, and Struthio under 01063300 and 01063980), so a Felis catus or Canis familiaris row under any code other than 01061900 would be asked for a permanent address, which the agreed rule does not do.",
+      "fix": "Must: the spec states the permanent-address rule the ticket agreed (code 01061900 together with the domestic cat, dog or ferret species), and the frontend gate matches it; or the ticket records a decision to key on species alone. One way: reword REQ-006 to 'a line of code 01061900 whose species is ...', add a scenario for the same species under another code, and gate permanentAddress on both commodityCode and speciesLatinName."
+    },
+    {
+      "id": 2,
+      "line": 33,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "REQ-OB-COMMODITY-002 widens the unweaned-animals question from cattle to 'cattle or pig' (frontend UNWEANED_CODES = [0102, 0103]; the old list was ['Cow']). Neither the ticket AC nor its decisions add pigs: decision 4 says the commodity rules stay and only the hard-coded catalogue goes. No scenario states the pig half either. SCN-002-A names cattle only, so the new rule is backed by requirement text and a coverage note alone.",
+      "fix": "Must: the pig rule cites a design or product source on the ticket, and a scenario states it; or the rule stays cattle-only in both spec and code. One way: confirm 0103 with design in EUDPA-617, then add 'Adding a pig commodity brings the question into play' as SCN-OB-COMMODITY-002-C, linked to the check-answers 0103 row."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

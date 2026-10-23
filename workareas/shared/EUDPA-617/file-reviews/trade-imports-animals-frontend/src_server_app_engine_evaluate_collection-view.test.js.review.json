@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/engine/evaluate/collection-view.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Fixture rename to commodityCode/speciesLatinName is correct, but the line fixture uses an array species shape production never stores and is duplicated in collection-complete.test.js.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The completeLine fixture is not a line the app can store. Line 10 sets speciesLatinName: ['Bos taurus'] (an array carried over from the old speciesSelection id list), but seedLine in commit-selection.js and fixtures/happy-path.json store speciesLatinName as one string, and species-entry.js sends it to the backend as a scalar value/text. Line 13 also gives the cattle unit a permanentAddress, which the permanentAddress obligation only asks for on the PERMANENT_ADDRESS_SPECIES Latin names (cat, dog, ferret), so it is dead set-up that suggests cattle need it. The 'complete' assertions on lines 37 and 50 pass on a shape production never writes.",
+      "fix": "Must: completeLine has the shape seedLine writes (speciesLatinName a single string, commodityType from typeIdFor) and carries only answers the obligations ask for on a 0102 line. One way: set speciesLatinName: 'Bos taurus' and drop permanentAddress from the unit, or build the line with seedLine plus the answers the details pages add."
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The address, completeLine and incomplete line fixtures (lines 5-17) are copied in src/server/app/bridge/collection-complete.test.js (address, completeLine, partialLine at lines 13-37), and this PR edited both copies in step to move from commoditySelection/speciesSelection to commodityCode/speciesLatinName. Set-up used by two tests belongs in a shared helper; the next shape change has to be made twice again.",
+      "fix": "Must: one shared test helper owns the complete and incomplete commodity-line fixtures, and both collection-view.test.js and collection-complete.test.js import them with no local copies left. One way: export completeCommodityLine and incompleteCommodityLine from engine/test-support.js (or a commodity-line fixture module beside it) and import them in both tests."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

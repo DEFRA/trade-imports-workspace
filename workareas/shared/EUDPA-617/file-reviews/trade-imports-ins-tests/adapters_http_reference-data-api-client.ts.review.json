@@ -1,0 +1,30 @@
+{
+  "file": "adapters/http/reference-data-api-client.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Request path, page size and response shape match reference-data's /commodities endpoint and the frontend's SEARCH_PAGE_SIZE of 10, but two comments describe other modules and carry rationale that belongs in the README.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment above PICKER_PAGE_SIZE ('The page size the frontend's commodity search asks for, so a line found here is one the picker shows too') describes another module (the frontend's SEARCH_PAGE_SIZE in commodities/search/matching.js) and carries rationale; the constant is also a module-scope literal used only by findSpecies",
+      "fix": "Must: no comment above the page size; the value lives inside findSpecies under a name that says what it is without a comment, and the link to the frontend's page of 10 is stated in the README's 'Commodity lines in the animals specs' section, which already speaks of the search's first page of results. One way: move the constant into findSpecies (e.g. const firstPageSize = 10), delete the comment, and add 'the first page is the frontend's 10 results' to the README paragraph"
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The ReferenceDataApiClient JSDoc goes beyond the contract: 'the same rows the frontend's picker lists, so a spec can expect what MDM says about a species rather than a copy of it that goes stale' describes the frontend, MDM and the specs that call it, and is rationale for why specs use the client",
+      "fix": "Must: the class doc states only the contract of the exported client (it reads reference-data's commodity search), and the reason specs read species from reference-data rather than a copied constant lives in the README section on commodity lines. One way: cut the JSDoc to 'Direct HTTP access to reference-data's commodity search.' and move the 'rather than a copy that goes stale' sentence into README.md's 'Commodity lines in the animals specs' section",
+      "best_practice": "doc-comments/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

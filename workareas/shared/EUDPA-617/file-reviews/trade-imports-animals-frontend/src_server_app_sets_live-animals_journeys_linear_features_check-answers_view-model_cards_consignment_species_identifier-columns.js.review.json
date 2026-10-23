@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/identifier-columns.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename from commodity to commodityCode is correct, but the comment above it describes another page and gives rationale, and its name clashes with a different-rule identifierColumns in animal-identification.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment at lines 12-15 describes another page ('the order the identification page asked for them') and gives rationale ('this is a read-back of what was entered, not a list of what was asked for'). House rules: a comment describes only the lines below it, never other modules or the UI, and rationale goes in docs/ or the behaviour spec.",
+      "fix": "Must: no comment above identifierColumns; the name and body say what columns it returns. One way: delete the comment and, if the read-back rule is not already in the openspec check-answers spec, add it there.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 16,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "identifierColumns(units, commodityCode) here returns only the identifiers some unit has filled in, plus permanent address when a unit carries one. A function with the same name, identifierColumns(commodityCode, species) in commodities/animal-identification/identifier/table.js:17, returns every identifier the commodity declares, plus permanent address when the species requires it. One name, two different rules, and this PR changed the signature of both.",
+      "fix": "Must: each function's name says which columns it returns, so a reader cannot mistake the filled-in read-back for the declared set. One way: rename this one filledIdentifierColumns (or similar) and update identifier-table.js.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

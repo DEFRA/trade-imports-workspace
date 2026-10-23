@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests mock only the Feign client and cover grouping, dedupe, germinals and limits, but two titles rest on strict stubbing rather than assertions and three source branches are untested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 160,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles claim what MDM was asked, but the assertions only check the empty response. search_trimsTheTermBeforeSearching (line 160) stubs an empty page and asserts total zero and no groups, which is also what a search that never reached MDM returns. search_asksMdmForAPageWithinItsLimits (line 150) asserts only the page and size echoed on the response. Both claims rest on Mockito strict stubbing throwing on an unmatched argument, not on anything the test asserts.",
+      "fix": "Must: each test's assertions alone prove its title: the trimmed term reached MDM, and MDM was asked for the clamped page and size. One way: have the stubbed MDM page carry a species row for the matched term and assert the group comes back, so an untrimmed or unclamped call would visibly return nothing; or retitle the clamp test to what it asserts (the response reports the clamped page and size).",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 181,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Three branches of CommoditySearchService have no test: a row whose resultType MDM sends as an unknown value (codeOf returns null, addRow drops it, lines 82-89), a species with no latin name (addSpecies line 103), and a page with null totalElements (search line 61). The helpers species() and commodityRow() always set a resultType, a speciesName and a total, so no test reaches them.",
+      "fix": "Must: each of these branches has a test that fails if the branch is removed. One way: add one test where MDM returns a row with resultType null and a commodity row holding a species with no speciesName beside a valid species row, asserting only the valid species is grouped, and one where the page's totalElements is null, asserting total is 0.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

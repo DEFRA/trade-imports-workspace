@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The group heading drops to a bare CN code against the design, and the template keeps a rationale comment.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The commodity group heading is now the bare CN code (<h2>{{ group.code }}</h2>, e.g. '0102'), where it was 'Cow (0102)' per design 01-14/15. A trader and a screen-reader user navigating by heading get a number with no words, and the table on the same page names the commodity ('Cattle or Cow'). Ticket comment 14 Oct decision 3 says each line saves the commodity description (added by reference-data), which would give this heading its text, but no line carries one.",
+      "fix": "Must: the group heading names the commodity in words beside its code, as the design source sets it (or the designer has ruled on the bare code, recorded in the spec). One way: carry the commodity description on the line from the search rows and render '{{ group.description }} ({{ group.code }})', with the fit spec heading assertion updated to match.",
+      "best_practice": "gds/accessibility.md"
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The block comment (lines 3-11) carries design rationale ('set at the page-heading size on purpose ... the design steps the type down ... Without a size on the labels they read at the same weight') and calls the h2 'the commodity heading' though it now renders only a code. Rationale belongs in docs or the behaviour spec, not in code, and the diff rewrote this comment rather than removing it.",
+      "fix": "Must: the template carries no rationale comment; the heading-size reasoning lives in the repo docs or the openspec scenario that already asserts the step-down. One way: delete the comment and, if the reasoning is not already recorded, add one line to the feature's openspec scenario."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals/e2e/pages/commodities.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "1cee8e85cee54a10b8c81d608c2a4c3f003447da",
+  "pr": 45,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Grouping test pins a hard-coded copy of MDM's still-dirty search rows, so it breaks on MDM data clean-up rather than on a page defect.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "expectedSearches (lines 7-59) hard-codes a copy of MDM's current search rows, including the data the ticket records as MDM issues awaiting clean-up (Elephas maximus under 0102, 'Equus cabalus' and 'Eq cabalus*asinus' under 0101, Bos taurus under 01061900). The spec has no environment gate, and playwright.config.ts now points CDP runs at the deployed reference-data, so the grouping test goes red as soon as MDM cleans the data or the stub's saved responses are refreshed, though the page is still correct. The PR's own ReferenceDataApiClient exists so specs 'expect what MDM says about a species rather than a copy of it that goes stale'; this spec does not use it.",
+      "fix": "Must: the grouping test proves the page shows reference-data's groups and species, in order, for a code query and a common-name query, without restating MDM's current rows in the spec. One way: add a ReferenceDataApiClient method that returns the groups for a query (same page size as the picker), have the test call it via the referenceDataApi fixture for each query, and assert each group's checkbox names equal the returned latinNames, in order",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

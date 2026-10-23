@@ -1,0 +1,39 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:19Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The ITs exercise the real MDM paths and would fail without the germinal filter, paging and species check, but one title over-claims grouping, a path constant hides its code, and the species helper is used by only one test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 24,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "SPECIES_PATH holds /mdm-service/mdm/trade/product/commodities/0102/species, the species path of one commodity code only, but the name reads as the species endpoint in general; the 0102 fixture it is stubbed with (line 37) and the checkSpecies test that relies on code 0102 depend on that hidden code",
+      "fix": "Must: the constant's name says it is the species path for commodity 0102. One way: rename to SPECIES_OF_0102_PATH (or build it from a speciesPathOf(code) helper)"
+    },
+    {
+      "id": 2,
+      "line": 59,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "searchCommodities_groupsMdmsSpeciesRowsUnderTheirCodes claims rows are grouped under their (plural) codes, but the dog fixture has two species rows that share one code (01061900), so the assertion only proves same-code rows form one group; code that put every row into a single group would still pass. No IT has two surviving codes (the cattle test filters 05111000 out). The title also misspells MDM's as Mdms",
+      "fix": "Must: the test title states exactly what its assertions prove, and if grouping by code is claimed, the fixture has rows under at least two kept codes and the assertion shows two groups. One way: add a 01061900/0102 mixed fixture and assert two CommodityGroups, or retitle to searchCommodities_shouldListSpeciesRowsThatShareACodeInOneGroup",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 3,
+      "line": 100,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The species(latinName, commonName) helper is declared between tests (line 100) and used only by listsTheSpeciesOfACommodityFoundByCode; leavesOutTheCodesMdmFlagsAsGerminal (line 49) and groupsMdmsSpeciesRowsUnderTheirCodes (lines 68-70) still build CommoditySpecies.builder()...build() inline, so one construction has two homes in the same class",
+      "fix": "Must: every test in the class builds expected CommoditySpecies through the one helper, and private helpers sit after the tests. One way: replace the inline builders at lines 49, 68 and 70 with species(...) and move species() down beside stubSearch()",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

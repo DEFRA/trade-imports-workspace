@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Fixtures correctly move to commodityCode/speciesLatinName and assertions track the mapper, but a mis-named commodity constant, out-of-scope comments and a history-worded title with absence checks need fixing.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 19,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "CAT_CODE = '01061900' (and catComplement at lines 206 and 237) names the 'other live mammals' commodity by one species; rules.js calls the same code OTHER_LIVE_MAMMALS_CODE and services/commodities/index.test.js calls it OTHER_MAMMALS, so one code now has three names across the repo",
+      "fix": "Must: the constant and the complement local name the commodity the code stands for, using the name the repo already gives 0106 1900. One way: rename CAT_CODE to OTHER_LIVE_MAMMALS_CODE and catComplement to otherMammalsComplement",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules, tools and rationale rather than the lines below: JSDoc on the internal address helper points at answerForInlineParty in addresses/party-inline.js (lines 5-6); 'The identification page stores the ISO code so persistence carries it through' (lines 113-114); two comments explaining the file's max-lines-per-function lint ceiling (lines 351-352, 444-448); the GBN-AG TradeCountry rationale (lines 506-507)",
+      "fix": "Must: every comment left in the file describes only the lines directly below it, no doc comment sits on an internal test helper, and rationale lives in docs or the behaviour spec. One way: delete these comments; move the GBN-AG ISO-country rationale to the set's docs if it is not already there"
+    },
+    {
+      "id": 3,
+      "line": 323,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Test 'Should omit the obligations with no home and map the newly homed ones' (line 323) narrates history ('newly homed'; the answersWithGaps comment at lines 75-79 says 'those it now maps', and the describe at line 171 says 'current ... (as-is)'), and proves the absences with in-checks ('purpose' in notification, 'regionCode' in origin, 'commodityCode'/'name' in commodityComplement[0]) where an exact positive assertion on the notification and the complement is possible",
+      "fix": "Must: titles and comments state what the mapper does now with no before/after words, and the omissions are proved by exact positive assertions on the emitted objects. One way: retitle to 'Should map region, internal-market purpose, destination, exit and transport details and leave out purpose, declaration and documents', drop 'newly'/'now'/'as-is', and replace the in-checks with toEqual on notification.origin and on commodityComplement[0] plus an exact key list for the notification"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

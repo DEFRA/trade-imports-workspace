@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckRequest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct record, but the null-lines rule is split between the record and the service, and the public DTO has no OpenAPI schema.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The rule 'no lines means nothing to check' has two homes: the compact constructor (line 10) keeps a null lines list as null, so SpeciesCheckService.check (line 24) has to test request.lines() == null again. SpeciesCheckResponse's constructor already shows the other choice and always holds a list.",
+      "fix": "Must: SpeciesCheckRequest.lines() never returns null, and SpeciesCheckService no longer checks it for null. One way: lines = lines == null ? List.of() : List.copyOf(lines); then check() reads request == null ? List.of() : request.lines()."
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "SpeciesCheckRequest is the public request body of POST /commodities/species-check and carries no @Schema description or requiredMode, though springdoc is on the classpath (pom.xml) and the OpenAPI guide requires both on every public DTO.",
+      "fix": "Must: the record and its lines field carry @Schema descriptions, with lines' requiredMode stated. One way: @Schema(description = \"Commodity lines whose species to check against MDM\") on the record and on lines.",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

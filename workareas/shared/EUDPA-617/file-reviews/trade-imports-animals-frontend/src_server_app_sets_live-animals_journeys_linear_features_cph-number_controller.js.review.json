@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:59Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The code-keyed CPH check is correct, but it keeps a second copy of the cph obligation's applicability rule beside the obligation itself.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 28,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "hasNonExemptCode/isCphApplicable (lines 28-33) restate the CPH applicability rule that the cph obligation already owns in obligations/sections/commodities/aggregates.js (applyTo: anyNotInUnionOf(commodityCode, cphExemptCommodityCodes, ...)). The rewrite keeps two homes for one rule, and they already differ in detail: Boolean(line?.commodityCode) here vs isBlankValue in the gate. The addresses hub decides whether to show the CPH row from this copy, while state.get already returns the evaluated scope (hub/controller.js reads scope.inScope).",
+      "fix": "Must: one owner decides whether CPH applies. The addresses hub's CPH row follows the cph obligation's scope, and no hand-written copy of the exemption rule remains in the cph-number controller. One way: have addresses/controller.js read the countyParishHoldingCph scope from state.get and delete hasNonExemptCode and isCphApplicable."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

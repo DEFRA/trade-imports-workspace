@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "permanentAddress keys on species alone rather than the agreed 01061900 + Latin name, its reason code still says Commodity, and comments describe other modules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 164,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "permanentAddress is gated on speciesLatinName alone (allowListed(speciesLatinName, permanentAddressSpecies, ...)), while the ticket's 14 Oct decision 5 and the design reply of 15 Oct key the question on 01061900 + Latin name. MDM returns the same species under several codes (30 Sept finding 2: Bos taurus under 23 codes), so a Felis catus, Canis familiaris or Mustela putorius furo row under any other live-animal code would be asked for a permanent address. The whitelists test 'for the genus Felis under 01061900' sets the code but the gate never reads it, so nothing proves the code half of the rule.",
+      "fix": "Must: permanentAddress is in scope only for a line whose commodity code is 01061900 and whose Latin name is on the permanent-address list, and a test proves a listed species under another code is not asked. One way: key PERMANENT_ADDRESS_SPECIES by code (e.g. { '01061900': [...] }) and gate on both values with a code-and-species predicate, or confirm with design that species alone is the rule and record that in the behaviour spec."
+    },
+    {
+      "id": 2,
+      "line": 46,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The permanent-address rule now keys on species (line 169, and the explanation on line 48 says 'species'), but its reason code is still 'obligation.permanentAddress.applicable.becausePermanentAddressCommodity'. The rename to species stopped part-way through the concept's vocabulary.",
+      "fix": "Must: the reason code names what the rule is keyed on, matching the explanation. One way: rename it to 'obligation.permanentAddress.applicable.becausePermanentAddressSpecies' and update evaluator.test.js line 141 and any fixture that pins it."
+    },
+    {
+      "id": 3,
+      "line": 63,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules and carry rationale: lines 63-86 cite the 'V4 spec (Confluence page 6497338582)' and describe groupInvariantErrors in state-queries.js, checkAnyOfIds and bridge/status/completeness/invariants.js; lines 102-108 describe the evaluator's pre-purge enumeration and the commodities service (the latter edited by this PR); lines 128-131 describe the reachability dependency graph.",
+      "fix": "Must: each comment in identifiers.js describes only the lines directly below it, with no spec-version names and no rationale; rationale lives in docs/ or the model README. One way: delete those blocks, keeping at most the per-id labels in requires.anyOfIds.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

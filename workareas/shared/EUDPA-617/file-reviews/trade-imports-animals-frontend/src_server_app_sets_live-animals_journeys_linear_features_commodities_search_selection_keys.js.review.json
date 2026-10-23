@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/keys.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The filter-dedupe-sort logic is correct and covered by the controller tests, but the key format is parsed here apart from where line-key.js builds it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The line key format (commodity code, '|', species Latin name) has two homes: line-key.js:4 builds it and keys.js:1-4 codeAndLatinNameOf parses it with its own '|' literal, so a change to the format in one file silently breaks the other (sorting in byCodeThenName and the selected summary in view-model/selected-summary.js).",
+      "fix": "Must: one module owns the line key format, both building a key and reading its code and Latin name back, and the '|' separator is written once. One way: move codeAndLatinNameOf into line-key.js beside lineKey, sharing a module-level separator constant, and import it from there in keys.js and selected-summary.js."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

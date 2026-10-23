@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/bridge/collection-complete.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The fixture moves to commodityCode and speciesLatinName correctly, but the divergence comments are now untrue, one title credits the code instead of the species gate, and the file holds tests for other modules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 94,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments at lines 9-11 and 94-96 call the 0102/Bos taurus unit test a 'known structural divergence, pinned (not repaired)'. permanentAddress is now gated on speciesLatinName via PERMANENT_ADDRESS_SPECIES (identifiers.js:169, rules.js:65), and Bos taurus is not on that list, so reading the unit complete is the rule working, not a divergence. The diff made these comments untrue. Lines 90 and 114-116 also describe other modules (the evaluator and the store), which the house rules forbid.",
+      "fix": "Must: no comment in the file calls correct behaviour a divergence, and no comment describes the evaluator, the store or another module. Any rationale that is still true lives in docs/ or the behaviour spec. One way: delete the comments at lines 9-11, 90, 94-96 and 114-116, and let the test titles carry the claims."
+    },
+    {
+      "id": 2,
+      "line": 98,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should read a 0102 unit without permanentAddress as complete' credits the commodity code, but the permanentAddress gate is now keyed on speciesLatinName (allowListed(speciesLatinName, permanentAddressSpecies, ...) in identifiers.js:169). The outcome depends on Bos taurus not being in PERMANENT_ADDRESS_SPECIES. A 0102 line with a listed species would need the address, so the title claims more than the assertion proves.",
+      "fix": "Must: the title names what decides the outcome, which is a species that is not on the permanent-address list. One way: rename it to 'Should read a Bos taurus unit without permanentAddress as complete'."
+    },
+    {
+      "id": 3,
+      "line": 77,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Two tests in collection-complete.test.js do not test collection-complete.js. 'Should keep entries / index / path in positional storage' (lines 77-92) sits under describe('#entryComplete') but only calls collectionView, which already has engine/evaluate/collection-view.test.js. The describe at lines 163-173 tests collectionCapAt from engine/evaluate/cardinality.js. A reader looking for either module's tests will not find them here, and the #entryComplete heading over-claims for the first.",
+      "fix": "Must: each test sits in the test file of the module it exercises, under a describe that names that module. One way: move the collectionView test into collection-view.test.js and the collectionCapAt test into cardinality's test file, keeping their 'Should ...' titles."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

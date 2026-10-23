@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The allowlist and drift tests track the code-keyed rules correctly; the Felis test over-claims, comments carry rationale, and the file name is not the concept's name.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 238,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The new test 'Should not put permanentAddress in scope for the genus Felis under 01061900' sets commodityCode to '01061900', but the permanentAddress gate reads only speciesLatinName, so the code in the set-up and the 'under 01061900' in the title claim a condition the assertion does not depend on. Removing the commodityCode line leaves it green.",
+      "fix": "Must: the title states only what the assertions prove, and the set-up holds only inputs the gate reads, or the gate does read the code and a companion test proves a listed species under another code is not asked. One way: retitle to 'Should not put permanentAddress in scope for the genus Felis' and drop the code, or pair it with the code-and-species fix raised on identifiers.js.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments carry rationale and describe other modules: the file-header block (lines 1-14) explains why the tests exist; the section banners describe the gate helpers and the commodities service (lines 53-58, 83-89, 133-137, 160-171); the anti-drift banner (lines 250-262) narrates why the equality check matters and gives an edit procedure for services/commodities/rules.js.",
+      "fix": "Must: comments in the test file describe only the lines below them, with no rationale or procedures for other files; describe titles say what each block proves. One way: delete the banners, and put the 'change rules.js and EXPECTED together' procedure in the repo's docs.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 1,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The file is named whitelists.test.js while every name inside it, the helpers (allowListed, anyAllowListed) and the service call the concept an allowlist; one concept carries two names. Also VALUE_ON_NO_ALLOWLIST ('Unicorn') is used as the control for the CPH exemptions list, which is not an allowlist, so in 'Should put cph in scope for a code on no list at all' the constant's name and the title describe it differently.",
+      "fix": "Must: the file and its constants use one name for the concept, the one the helpers use. One way: rename the file to allowlists.test.js and the constant to UNLISTED_VALUE (or similar) that fits both allowlists and the exemptions list."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

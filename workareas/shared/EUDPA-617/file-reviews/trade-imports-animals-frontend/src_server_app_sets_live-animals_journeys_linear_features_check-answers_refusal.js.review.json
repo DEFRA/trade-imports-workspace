@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The draft-only MDM species check is correct and wired into isReviewRefused, but the refusal leaves no log naming the species, the array normaliser is duplicated, and the existing JSDoc holds rationale.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 30,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "speciesCardErrors refuses a draft because reference data (MDM) no longer lists a saved species, and nothing logs which species and codes caused it. The declaration controller only logs the generic DECLARATION_REFUSAL.reviewRefused, so support cannot tell an MDM withdrawal from an incomplete card during an incident.",
+      "fix": "Must: a submit refused for unlisted species logs once at warn with the journey id and each unlisted code and Latin name. One way: in speciesCardErrors, when unlisted is non-empty, log { journeyId: journey.journeyId, unlisted } at warn before returning the error (thread a logger in, or return the unlisted list so isReviewRefused can log it with request.logger).",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "chosenSpecies (line 18) re-writes the [value ?? []].flat() normaliser that check-answers already owns as toArray in view-model/rows/value-text.js:10 (used by view-model/applicability.js for the same answers.commodityLines). documentScanStatuses (line 43) sits beside it with a third copy.",
+      "fix": "Must: one function owns normalising an answer to an array, and refusal.js calls it. One way: import toArray from './view-model/rows/value-text.js' and use toArray(answers.commodityLines) and toArray(answers.documents)."
+    },
+    {
+      "id": 3,
+      "line": 53,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The JSDoc on documentScanCardErrors carries rationale ('A REJECTED scan is permanent... a PENDING one is transient') and describes the caller's situation ('when the trader has just been refused for it') rather than the includePending contract.",
+      "fix": "Must: the doc comment states only the exported contract (what it returns for REJECTED and for PENDING with includePending true/false); the rationale lives in the repo docs or the behaviour spec. One way: '@param {{includePending?: boolean}} options - include an error for a PENDING scan (default true). @returns the documents card error: someRejected for any REJECTED scan, else someStillScanning for a PENDING one when includePending, else {}'.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

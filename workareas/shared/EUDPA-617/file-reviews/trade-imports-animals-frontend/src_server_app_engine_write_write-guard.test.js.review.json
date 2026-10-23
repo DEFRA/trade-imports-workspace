@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/engine/write/write-guard.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The fixture switch from commoditySelection to commodityCode is correct (commoditySelection no longer exists in src), but the file carries an out-of-place rationale comment, an over-claiming test title with an absence check, and a describe title naming a non-existent file.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 11,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The block comment at lines 11-14 describes other modules and rationale (bridge/obligation-source.js as the recognition surface, submitJourney checking stored trees, the evaluator ignoring unknown keys, what ships at finalise) rather than the lines below it; house rules forbid describing other modules and keep rationale out of code.",
+      "fix": "Must: the file carries no comment describing other modules or the guard's rationale; the test titles say what is proved and any rationale lives in the repo docs or the behaviour spec. One way: delete lines 11-14 and, if the rationale is worth keeping, move it to the engine docs."
+    },
+    {
+      "id": 2,
+      "line": 57,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should not project an unknown historic UUID into page answers at submit' claims nothing is projected into page answers, but the assertions (lines 67-68) only check result.ok and that status is not DRAFT; nothing inspects page answers or the submitted payload. The status check is an absence check (.not.toBe(DRAFT)) where an exact positive (SUBMITTED, exported from records.js) is possible, and 'historic' is history wording.",
+      "fix": "Must: the title states exactly what the assertions prove, and the status assertion is an exact positive value. One way: retitle to 'Should submit a journey whose stored fulfilment carries an unrecognised key' and assert status toBe(SUBMITTED), or add an assertion that the unknown key is absent from the projected answers if that is the claim."
+    },
+    {
+      "id": 3,
+      "line": 19,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The describe title '#write.js — answer-key guard' names a file that does not exist; engine/write/ holds index.js, commit.js and submit.js, and the tests exercise commit, appendEntryAt and submitJourney from index.js.",
+      "fix": "Must: the describe title names what is under test as it exists now. One way: rename to 'engine write — answer-key guard' or '#commit, #appendEntryAt and #submitJourney — answer-key guard'."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

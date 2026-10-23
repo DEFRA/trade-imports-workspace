@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new commonName read reaches no payload field and no test, and two names (legacyAnimalCount, u) do not say what they hold.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 40,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The diff adds commonName to every joined line (line 40) and to commodityObligations (line 62), but the only consumer of these lines, mapper-a (commodity.js, species-entry.js), never reads line.commonName, and no test fixture in notification-mapper.test.js sets one. The read is unreachable from any output and untested. See the commodity.js finding on where the common name should go.",
+      "fix": "Must: every field the line join reads reaches the mapped payload and a test proves it, or the join does not read it. One way: once the commodity-name decision is made, either map line.commonName in speciesEntryFromLine with a mapper test asserting it, or remove commonName from lineFrom and commodityObligations."
+    },
+    {
+      "id": 2,
+      "line": 13,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "legacyAnimalCount (line 13) does not predict its value: it returns the count as text for the backend's string field, and 'legacy' is a history word. The callback parameter u (line 47) holds a unit fulfilment index and its name says nothing.",
+      "fix": "Must: each name says what it holds or returns, with no history word. One way: rename legacyAnimalCount to animalCountText and u to unitIndex.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

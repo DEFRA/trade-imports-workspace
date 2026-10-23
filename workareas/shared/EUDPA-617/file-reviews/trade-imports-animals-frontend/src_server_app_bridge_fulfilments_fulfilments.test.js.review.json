@@ -1,0 +1,46 @@
+{
+  "file": "src/server/app/bridge/fulfilments/fulfilments.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commodity vocabulary rename is correct, but the fixtures keep a speciesLatinName array shape that production never stores, pair horse code 0101 with a bison species, and two titles over-claim 'every'",
+  "todos": [
+    {
+      "id": 1,
+      "line": 85,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "speciesLatinName is fed as an array ([BOS_TAURUS]) at lines 85, 318 and 325, but as a scalar string at lines 223, 236, 241, 277 and 282; production stores one Latin name per line as a string (seedLine in features/commodities/search/actions/commit-selection.js, and happy-path.json has \"speciesLatinName\": \"Bos taurus\"). The array shape is carried over from the old speciesSelection multi-select, so the round-trip and pass-through tests prove a shape the pages never write",
+      "fix": "Must: every speciesLatinName value in this file has the shape the commodities pages store (a single Latin-name string per line). One way: replace [BOS_TAURUS] with BOS_TAURUS at lines 85, 318 and 325 and update the expectation at 325 to { line0: BOS_TAURUS }"
+    },
+    {
+      "id": 2,
+      "line": 222,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Fixture data is incoherent: line 1 pairs commodity code '0101' (horses, HORSES_CODE in services/commodities/rules.js) with species 'Bison bison', which fixtures/commodities.json lists under '0102' (cattle), and its ear tags are still named 'horse-1'/'horse-2' (lines 222-227, 239-245; also 'Bison bison' on a line with no code at 277/282). A reader learning the bridge from this test learns a commodity/species pairing the service would refuse",
+      "fix": "Must: each commodity line in these fixtures pairs a code with a species that code holds in fixtures/commodities.json, and identifier values do not name a different animal. One way: keep line1 as '0102' with BISON_BISON and rename the ear tags 'bison-1'/'bison-2', or use a horse Latin name (e.g. Equus caballus) for the '0101' line"
+    },
+    {
+      "id": 3,
+      "line": 107,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Titles over-claim 'every': 'Should round-trip every commodity code exactly' (line 107) now loops four hand-picked codes ('0102', '0101', '01063300', '01061900') out of the many in fixtures/commodities.json - the old list was the whole picker vocabulary, so the rename made the title untrue; 'Should leave every other field untouched' (line 312) asserts five named fields",
+      "fix": "Must: each title states what its assertions prove and no more. One way: 'Should round-trip a commodity code of any length exactly' (or loop the codes from the commodities fixture to keep 'every'), and 'Should store purpose, certification, transport, transited countries and species as given'"
+    },
+    {
+      "id": 4,
+      "line": 288,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Banner and inline comments carry rationale and describe other modules, against the house comment rules: lines 288-291 ('the manifest's gates compare the same values the pages store. The animal count is the one coercion' - describes the manifest and pages, and counts), 336-341 ('Both model the same nested topology ... (like commodityLines)'), 406-409, 175-176 ('The evaluator infers group instances from descendant storage ... a known blind spot'), 141-142 and 437-438; the line 288-291 banner sits directly over the commodity tests this PR edits",
+      "fix": "Must: no comment in the file explains rationale or describes code outside the lines beneath it; what the tests prove is said by describe and it titles. One way: delete these comments, fold any needed meaning into the describe/it titles (e.g. 'Should not represent an empty collection' without '(documented)'), and move the evaluator blind-spot rationale to the repo docs or behaviour spec",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductPage.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Generic page wrapper is correct but carries three fields no caller reads.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MdmProductPage declares page (l.9), size (l.10) and totalPages (l.12), but CommoditySearchService and SpeciesCheckService read only content() and totalElements(); MdmService's empty-page fallback also sets only those two. Breaks 'Build only what this change makes reachable'.",
+      "fix": "Must: MdmProductPage holds only content and totalElements until a caller reads more. One way: delete page, size and totalPages, and the .page(0)/.size(100) builder calls in CommoditySearchServiceTest."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

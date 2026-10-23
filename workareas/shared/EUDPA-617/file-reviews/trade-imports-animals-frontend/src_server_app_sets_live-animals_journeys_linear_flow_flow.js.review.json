@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The flow-only key change is correct, but it repeats the SHOWN_SEARCH_ROWS literal, leaves the flow doc stale, and the file keeps a rationale comment.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 23,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "FLOW_ONLY_KEYS spells the session key as the literal 'commoditySearchRows', while features/commodities/search/selection/rows.js:4 already names the same key as SHOWN_SEARCH_ROWS and every read and write of it goes through that constant. Two homes for one key: renaming it in rows.js leaves flow.js listing a key nothing writes, and the search rows stop being flow-only and start being treated as answers.",
+      "fix": "Must: the search-rows session key is spelled in one place, and FLOW_ONLY_KEYS uses that owner. One way: import SHOWN_SEARCH_ROWS from '../features/commodities/search/selection/rows.js' (flow.js already imports from features/) and list it in FLOW_ONLY_KEYS."
+    },
+    {
+      "id": 2,
+      "line": 23,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The diff adds 'commoditySearchRows' to FLOW_ONLY_KEYS, but sets/live-animals/docs/journey-flow-and-gates.md:18 still says 'FLOW_ONLY_KEYS contains declaration. That value uses the session's flow-only store'. The flow doc now describes only one of the two keys, and the PR does not touch that doc (services.md:66-68 was updated, the flow doc was not).",
+      "fix": "Must: journey-flow-and-gates.md states every key FLOW_ONLY_KEYS holds, or points at the constant without listing its members. One way: reword line 18 to say FLOW_ONLY_KEYS holds declaration and commoditySearchRows, both kept in the session's flow-only store and never sent to the backend."
+    },
+    {
+      "id": 3,
+      "line": 56,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment on the transport section ('One transporter step: the list. Adding a transporter that is not on it is a detour off that page, not a leg of the journey.') is rationale, and it describes the add spokes, which are other pages that are not in the lines below it. House rules: rationale goes in docs/, and a comment describes only the lines below it.",
+      "fix": "Must: flow.js has no comment that explains why the add spokes are off the sections; the reason lives in the flow doc. One way: delete lines 56-57 and, if journey-flow-and-gates.md does not already say it, add one sentence there saying the add-transporter pages are detours off the transporter list and belong to no section."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

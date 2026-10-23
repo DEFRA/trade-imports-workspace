@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The module no longer matches anything, its page-size constant lives away from its one user, and that ten-result cap truncates searches without telling the trader.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The module is named matching.js but after this PR it holds no matching: matchesWords and matchesCode moved to services/commodities/stub.js, leaving query normalisation (normaliseQuery), the minimum query length (MIN_SEARCH_LENGTH, isSearchable) and the result page size (SEARCH_PAGE_SIZE). The name predicts functions that decide whether text matches a query.",
+      "fix": "Must: the module's name says what it now holds: the rules for when and how a search query is sent. One way: rename it to search-query.js (and matching.test.js to search-query.test.js) and update the import in search.controller.js."
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "SEARCH_PAGE_SIZE is a literal read by one function, searchFor in search.controller.js:33, yet it is exported from a different module at module scope; nothing else imports it and no test in matching.test.js uses it.",
+      "fix": "Must: the page-size literal lives in the one function that uses it (or at module scope in search.controller.js only if a test there imports it). One way: inline '{ size: 10 }' in searchFor, or move the constant into search.controller.js and delete it from matching.js."
+    },
+    {
+      "id": 3,
+      "line": 3,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "SEARCH_PAGE_SIZE = 10 caps every search at ten species with no paging and no sign more exist: the response's total is never read (no 'total' anywhere under commodities/search), so a code search such as '0102' (search.controller.test.js:104 asserts exactly 10) or 01061900 (1,234 species in MDM per the ticket's 30 Sept comment) leaves the eleventh species onward unreachable by code, and the trader is not told to narrow the search. The ticket's 15 Oct comment records the page size as 100 with total returned so paging can follow, and lists 'more results or ask the trader to refine' as an open design question.",
+      "fix": "Must: when a search matches more species than the page shows, the trader can tell and has a way to reach the rest (more results or a prompt to refine), and the page size matches the agreed figure or the ticket records why it differs. One way: pass total through commodityGroups to the view and render a 'Showing 10 of N, refine your search' inset when total > size, and raise the design question on the ticket for the final behaviour."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:22Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Seed data correctly moves to commodity code plus Latin name matching the stub fixture, but the fish-line variant now seeds ostriches under a Fish id and the JSDoc still uses the retired commodity-name gate vocabulary.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 128,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The 'fish-line' variant now seeds commodity 01063300 'Struthio' (ostriches), yet its id (line 128) and comments (lines 79-83, 126-127) still say Fish; flow-reachability.test.js:156-162 looks it up by the same 'fish-line' id and calls it fish in its comment",
+      "fix": "Must: the variant id and every comment that names it describe the commodity it seeds (a commodity code with no identifiers), in seeds.js and in flow-reachability.test.js. One way: rename the id to 'unidentified-line' (or 'ostrich-line'), update the find() in flow-reachability.test.js and its title/comment, and reword the JSDoc and inline comment to say the code carries no identifier list",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 75,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The seedVariants JSDoc (lines 74-77) still describes the gates in the retired commodity-name vocabulary: 'single Cow line', 'Horse-gated horseName', 'Cat/Dog-gated permanentAddress'. After this PR horseName is gated on code 0101 and permanentAddress on the species list in rules.js PERMANENT_ADDRESS_SPECIES (Felis catus, Canis familiaris, Canis lupus familiaris, Mustela putorius furo), which includes ferrets the comment omits",
+      "fix": "Must: the JSDoc names the gates by what now opens them (the commodity code, or code plus Latin name), or says nothing about them. One way: trim it to state what seedVariants returns, and let the per-variant one-line comments name the code or species each variant seeds"
+    },
+    {
+      "id": 3,
+      "line": 83,
+      "severity": "Minor",
+      "category": "history",
+      "issue": "The seedVariants JSDoc names a release ('the corpus's only design-release-1 consignment', line 83); house rules ban release names in code and comments",
+      "fix": "Must: no release name in the comment. One way: delete 'design-release-1' and say 'the corpus's only consignment with no identification panel'"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/contract.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The contract tests are correctly re-keyed to commodity code plus Latin name and still pin the committed line shape, but the species constants are copied across 16 test files instead of living in a shared helper.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 48,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 48-49 declare FELIS_CATUS = 'Felis catus' and BOS_TAURUS = 'Bos taurus' locally; the same species constants are declared again in 15 other test files this PR touches (store-ops.test.js, bridge/collection-complete.test.js, bridge/fulfilments/fulfilments.test.js, consignment-details.controller.test.js, fit/search.fit.spec.js, fit/consignment-details.fit.spec.js, fit/identification.fit.spec.js, selected-commodities.test.js, matching.test.js, copy.test.js, flow/task-rows.test.js, flow/status.test.js, services/commodities/stub.test.js, engine/mutators.test.js, notification-mapper.test.js). The search-row shape { commodityCode, speciesLatinName, commonName } for cattle and domestic cat (lines 226-240) is test set-up copied the same way.",
+      "fix": "Must: the test species (code, Latin name, common name for cattle and domestic cat) are declared once in a shared test helper and every test file imports them; no local copies remain. One way: export BOS_TAURUS, FELIS_CATUS and cattle/cat search-row builders from engine/test-support.js (or a commodities test fixture module beside services/commodities/fixtures) and replace the per-file declarations here and in the other 15 files.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/docs/obligation-model.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:31:59Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Doc-only change; helper guidance is mostly accurate but puts live-animals CPH and commodity-line rules in the set-neutral L2 guide and overstates what every helper export returns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 54,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The generic L2 model guide, which opens by saying the model holds no journey knowledge and points to the live-animals set guide for set specifics, now explains helpers through live-animals rules: 'The CPH question is asked unless every commodity line's code is exempt; a line with no code yet is ignored' (lines 54-56) and 'a consignment carrying more than one identified commodity line' (lines 61-62). The live-animals guide (sets/live-animals/docs/obligation-model.md) has no mention of CPH, anyNotInUnionOf or moreThanOne, so the set rule lives only in the wrong layer.",
+      "fix": "Must: the L2 guide describes anyNotInUnionOf and moreThanOne in set-neutral terms (blank candidates are skipped; more than one admitted entry), and the CPH-exemption and multi-line rules are written in the live-animals set guide. One way: move those two sentences to sets/live-animals/docs/obligation-model.md and replace them here with a neutral statement of the blank-value and >1-entry semantics."
+    },
+    {
+      "id": 2,
+      "line": 37,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "'Each helper returns applyTo(...) ... and carries a .metadata property' is untrue for part of the exported surface in helpers/index.js: present() returns a predicate with no metadata (present.js: 'Returns a predicate, not an applyTo'), obligationMetadata is an introspection function, and moreThanOne carries combinator rather than gateType. present is also missing from the 'Which helper to pick' list, though it is the predicate branchedGate is meant to compose.",
+      "fix": "Must: the guide's statement about what helpers return is true for every export it covers, and present is listed with its role (a predicate for branchedGate, not an applyTo). One way: say 'each gate helper' and add a bullet for present beside branchedGate."
+    },
+    {
+      "id": 3,
+      "line": 59,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The moreThanOne bullet sits in a 'Which helper to pick' list for applyTo gates but omits where it goes: its own JSDoc says 'It belongs on a group's requires, never on an obligation's applyTo', and its only production use is floorAppliesToParent in sets/live-animals/obligations/sections/commodities/identifiers.js:96. A reader following the guide could wrap an applyTo with it.",
+      "fix": "Must: the guide says moreThanOne is used on a group's requires (for example floorAppliesToParent) and never as an obligation's applyTo. One way: add that clause to the bullet."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

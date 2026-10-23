@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The search specs are rewritten correctly against the new MDM-shaped stub (the fixture counts check out), but one absence assertion cannot fail, the 01061900 constant gets a second name, and the route to the search page is still copied across specs.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 221,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'saves pairs found under different queries, in canonical order' ends with expect(panel).not.toContainText('Canis familiaris'), an absence check on a species the test never searched for or ticked. No production line turns it red, and the heading(3) count plus the two positive group assertions above already pin what the panel holds.",
+      "fix": "Must: every assertion in the test can fail when the selection panel shows the wrong species, and none checks for a value the test never introduced. One way: delete the not.toContainText line, or replace it with an exact assertion on the panel's group lines, e.g. toHaveText on its list items ['0102: Bison bison, Bos taurus', '01061900: Felis catus']",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 16,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The diff names code 01061900 OTHER_MAMMALS_CODE, but services/commodities/rules.js already names it OTHER_LIVE_MAMMALS_CODE. Two names for one code, while the CATTLE_CODE beside it matches rules.js exactly.",
+      "fix": "Must: code 01061900 has one name across the repo, in source and in specs. One way: rename the spec constant to OTHER_LIVE_MAMMALS_CODE (or export the code constants from rules.js and import them here)"
+    },
+    {
+      "id": 3,
+      "line": 22,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "openSelection (22-29) and reopenSelection (36-41) script the route to the commodity search: startNotification, answerCountryOfOrigin, click 'What are you importing?', wait for the search heading. consignment-details.fit.spec.js openDetails and identification.fit.spec.js addLines repeat the same steps, and fit/live-animals-journey.js unlockSections repeats them too. The species constants are copied the same way: BOS_TAURUS, FELIS_CATUS and SAVE_AND_CONTINUE are declared again in all three commodity specs.",
+      "fix": "Must: one helper in fit/live-animals-journey.js owns the route to the commodity search page, and every spec that needs it calls that helper with the local copies deleted. Shared fixture species names live in one place. One way: add an exported openCommoditySearch(page) (the start, origin, link click and heading wait) to live-animals-journey.js, call it from all three specs and unlockSections, and move the shared species and button constants beside it",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/services/persistence/records/stub/marshal/list-item.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Switching the stub row to the line's commodity code is correct and covered by the dashboard controller test, but the stub and real twin adapters now return the row's commodity in different shapes, and a history comment remains.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The stub dashboard row now carries the first line's code as commodity: { commodityCode }, while its twin real/marshal/list-item.js passes the backend's commodity through as { name: '0102' } (real.amend-list.test.js:110). One row field, two shapes across the twin adapters; only formatCommodity's six-key fallback chain (dashboard/notification-helper.js:73-79) hides the difference, so a consumer reading commodity.name gets a code in real mode and undefined in stub mode.",
+      "fix": "Must: the stub and real records adapters return the dashboard row's commodity in one shape, under a key that says it holds a code. One way: have real/marshal/list-item.js map notification.commodity.name to { commodityCode } as the stub now does, update real.amend-list.test.js's expected rows, then trim formatCommodity's fallback chain to the keys rows actually carry."
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comment at lines 19-20 ('The rest of this row uses null for absent, so the helper's undefined is mapped across rather than changing the shape the stub has always sent.') narrates history ('has always sent'), describes the rest of the row and the helper rather than the lines below, and carries rationale that belongs in docs.",
+      "fix": "Must: no comment above the arrivalDate/consignorName/consigneeName lines; the ?? null on each line already states the contract. One way: delete lines 19-20."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

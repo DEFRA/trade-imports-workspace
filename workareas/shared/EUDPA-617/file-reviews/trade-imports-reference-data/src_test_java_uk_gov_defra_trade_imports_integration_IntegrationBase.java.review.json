@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/integration/IntegrationBase.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new stubTradeAuthToken and stubMdmGet helpers correctly replace the copied stub bodies with no local copies left, but the file keeps a doc comment and section comments on internal helpers and declares two loggers.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 105,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The Javadoc on package-private usingStub() (lines 105-110) is a doc comment on an internal test helper, and the section comments '// Service API urls' (line 71) and '// Oauth Server container config' (line 76) label blocks that extracted methods could name. The house rules allow doc comments only on an exported public API",
+      "fix": "Must: IntegrationBase carries no doc comment on its package-private or protected helpers and no section-label comments. One way: delete the Javadoc and the two comments, and extract registerMockedServiceUrls(registry) and registerOAuthProperties(registry) if the grouping is worth naming",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 41,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The class declares two loggers: Lombok @Slf4j (line 41, its log field never used) and a hand-written LOGGER = LoggerFactory.getLogger(IntegrationBase.class) (line 46, used at line 115)",
+      "fix": "Must: IntegrationBase has one logger. One way: drop the LOGGER field and the Logger/LoggerFactory imports and use the @Slf4j log in usingStub()"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

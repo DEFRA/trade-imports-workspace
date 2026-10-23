@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/bridge/applicability.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:32:14Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Complement gate support in gateAdmits admits blank values that the runtime anyNotInUnionOf gate rejects, which can show the CPH row on Check your answers when CPH is out of scope; plus a module-scope constant and a JSDoc param that is now inaccurate.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "gateAdmits now treats anyNotInUnionOf as a plain complement, so a blank value (undefined/empty) is admitted, but the runtime anyNotInUnionOf gate rejects blanks (any-not-in-union-of.js: admits = !isBlankValue(candidate) && !union.includes(candidate)). cph switched to anyNotInUnionOf in this PR, so cphApplies (check-answers/view-model/applicability.js:31) returns true for any commodity line with no commodityCode (for example a draft saved with only the removed commoditySelection field), and the CPH row appears on Check your answers while runtime scope says CPH is not in scope. No test covers a blank value on a complement gate.",
+      "fix": "Must: gateAdmits gives the same answer as the gate's own admits for every value, including a blank one, and a test proves a blank value is not admitted by an anyNotInUnionOf gate. One way: have each list helper expose its admits rule on metadata (or reuse isBlankValue here for anyNotInUnionOf) so the static check and the runtime closure share one rule instead of restating it."
+    },
+    {
+      "id": 2,
+      "line": 3,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "COMPLEMENT_GATE_TYPES is declared at module scope but only gateAdmits (line 15) reads it; the house rule puts a literal used by one function inside that function.",
+      "fix": "Must: the complement gate-type set lives inside gateAdmits (or in the obligation helpers that own the gate types, if the first finding's fix moves the rule there), not at module scope of applicability.js. One way: move the Set into gateAdmits."
+    },
+    {
+      "id": 3,
+      "line": 10,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The gateAdmits JSDoc says value is 'the stored value of the gate obligation', but appliesForGateValue passes a value before any record exists (fields.js passes the picked commodity code and species), so the contract describes only one caller's case.",
+      "fix": "Must: the @param describes what any caller may pass, the value tested against the gate's list. One way: '@param {*} value - the value to test against the gate's list.'"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

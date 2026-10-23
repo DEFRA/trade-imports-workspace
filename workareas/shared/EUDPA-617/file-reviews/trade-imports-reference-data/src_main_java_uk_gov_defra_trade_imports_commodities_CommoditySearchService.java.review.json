@@ -1,0 +1,38 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Search grouping, germinal exclusion and limits are correct against the ticket decisions, but three outcome-changing drops are silent and the null-total rule is written twice.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 103,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "Three branches drop MDM data from the search response with no log line: addSpecies (line 103) stops adding species once SpeciesLimit is reached, and skips species with a null latinName; addRow (line 89) drops rows whose resultType is unknown (codeOf returns null, since MdmProductSearchResult reads unknown enum values as null). Support cannot tell why a species MDM returned is missing from the picker. The germinal exclusion at line 46 shows the house pattern: it logs the term and the codes left out.",
+      "fix": "Must: each branch that leaves MDM rows or species out of the response logs once per search, with the search term and the codes (or a count) left out. One way: count species skipped by the limit and rows with no code while grouping, and log one line after the stream in search() when either count is non-zero, beside the germinal log.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 61,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'an MDM page with no totalElements counts as zero' is written twice: CommoditySearchService.search line 61 (productPage.totalElements() == null ? 0 : ...) and SpeciesCheckService.speciesOf line 47 (speciesPage.totalElements() == null ? 0 : ...). MdmService.pageOrEmpty already owns normalising an empty MDM page (totalElements 0L) but leaves a null totalElements on a non-null body to every caller.",
+      "fix": "Must: one place decides what a missing MDM totalElements means, and both services read the normalised value. One way: have MdmService.pageOrEmpty (or a method on MdmProductPage) return a page whose totalElements is never null, and drop the null checks in both services."
+    },
+    {
+      "id": 3,
+      "line": 27,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "MINIMUM_SEARCH_LENGTH (line 27) and MAXIMUM_PAGE_SIZE (line 28) are package-private class constants, but only search() reads them and no test imports them (grep finds no other use). House rule: a literal used by one function lives in that function.",
+      "fix": "Must: each limit sits where its only reader is, or is shared because a second reader (such as the test) uses it. One way: either move both into search() as locals, or make CommoditySearchServiceTest use them (for example the clamp test asserting size == MAXIMUM_PAGE_SIZE) so the package-private scope is earned."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

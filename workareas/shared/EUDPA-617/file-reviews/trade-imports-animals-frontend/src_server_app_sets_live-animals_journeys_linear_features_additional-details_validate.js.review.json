@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Switching to commodityCode is correct and matches the obligation, but the unweaned predicate is a third copy of a rule the obligation already owns, and the comments describe other modules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The unweaned rule now has three homes, each re-pointed to commodityCode separately in this PR: validate.js:18-21 unweanedApplies (hand-rolled asArray + unweanedCommodityCodes().includes(line.commodityCode)), the containsUnweanedAnimals obligation in obligations/sections/commodities/aggregates.js:43 (anyAllowListed(commodityCode, unweanedCommodityCodes)), and a second function also called unweanedApplies in check-answers/view-model/applicability.js:28 that reads the obligation through appliesForGateValue. asArray (validate.js:14) also copies toArray from check-answers/view-model/rows/value-text.js. This PR had to change the key in more than one place, which shows the risk",
+      "fix": "Must: one function owns whether a set of stored commodity lines asks the unweaned question, built on the containsUnweanedAnimals obligation, and additional-details validation and check-answers both call it. One way: have validate.js import the applicability unweanedApplies (or a shared helper over appliesForGateValue('containsUnweanedAnimals', line.commodityCode)), and delete the local asArray and the local predicate"
+    },
+    {
+      "id": 2,
+      "line": 16,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Comments describe other modules and carry rationale: lines 16-17 ('the stored reading has answers in hand but not scope. Same predicate the controller uses via scope.has(...)') describe the caller and the controller, not the lines below; lines 23-25 ('One rule, two audiences ... The unweaned rule takes no swap — its yes / no values are not a catalogue that changes') explain callers and a design choice about another constant",
+      "fix": "Must: no comment in validate.js describes callers, the controller or rationale; any rationale that still matters lives in the repo's docs/ or the behaviour spec. One way: delete both comments and let the names (unweanedApplies, certifiedField(stored)) carry the meaning, renaming the stored parameter if it does not"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmCommodity.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct mapping of MDM /commodities, but four of its six fields are unread by any production code.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MdmCommodity declares description (l.10), isSelectable (l.12), speciesCount (l.13) and species/scientificNames (l.14), but nothing in src/main reads them: CommoditySearchService only calls code() and isGerminal(). Breaks 'Build only what this change makes reachable'; Spring Boot's ObjectMapper ignores unknown JSON properties, so the fields are not needed to deserialise.",
+      "fix": "Must: MdmCommodity holds only the fields production code reads (code, isGerminal) and gains others in the change that first reads them. One way: delete description, isSelectable, speciesCount and species, and the builder calls in MdmServiceTest/CommoditySearchServiceTest that set them."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

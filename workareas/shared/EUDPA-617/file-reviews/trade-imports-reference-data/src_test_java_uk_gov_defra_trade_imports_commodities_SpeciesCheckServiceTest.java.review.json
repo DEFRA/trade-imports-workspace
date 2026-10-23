@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests mock only MdmClient and prove matching, caching per code and paging, but the empty-page stop and null total are untested and one title over-claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 54,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Two stop conditions of SpeciesCheckService.speciesOf have no test: the empty-page stop (speciesPage.content().isEmpty(), service line 48) and the missing total (totalElements() == null, line 47). Every paging test sets a total that ends the loop on its own, so deleting the empty-page guard leaves the suite green; that guard is what stops repeated MDM calls when MDM's total is larger than the species it actually returns.",
+      "fix": "Must: a test fails if the empty-page stop is removed, and a test pins what happens when MDM sends no total. One way: a test where page 0 has species with total 300 and page 1 is empty, asserting a species from page 0 is listed and that page 2 is never requested (an unstubbed page would throw under strict stubs); and a test with a page whose totalElements is null."
+    },
+    {
+      "id": 2,
+      "line": 68,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "check_returnsEveryLine_forACodeMdmHasNoSpeciesFor (line 68) claims every line is returned, but the request holds one line (line 71), so the assertion proves only that a single line comes back.",
+      "fix": "Must: the title states what the assertions prove. One way: send two lines under 030111 with different Latin names and assert both come back, or retitle to check_returnsTheLine_forACodeMdmHasNoSpeciesFor."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

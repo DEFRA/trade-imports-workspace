@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests cover the new search-row lifecycle well, but two titles still use the old 'pair' wording with an old-format key, and one title over-claims what it proves.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 382,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rename from commodity/species-id pairs to code + Latin name stopped part-way. The PR retitled 'one line per chosen pair' to 'one line per chosen species', but line 271 ('Should require at least one chosen pair and create nothing') and line 382 ('Should ignore unknown pairs and deduplicate chosen pairs') still say 'pair', and the unknown key at line 385 is 'Wolf|999', the old commodity-name|species-id format, not a code|Latin-name key the page could plausibly receive.",
+      "fix": "Must: every test title in the file names the chosen thing as a species (code and Latin name), and the unknown key in the dedupe test is a well-formed code|Latin-name key the page was never shown. One way: retitle to 'Should require at least one chosen species and create nothing' and 'Should ignore unknown species and deduplicate chosen species', and replace 'Wolf|999' with something like '0102|Canis lupus'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 173,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should remember the rows it showed and the rows already chosen until the page saves' claims two things the assertions don't prove and leaves out one they do. 'Until the page saves' is never exercised here (the next test proves the forgetting). The test also asserts that BISON_BISON_ROW, shown earlier but not chosen, is dropped from the stored rows, which the title does not say.",
+      "fix": "Must: the title says what the assertion proves: after a search the stored rows are this search's results plus the rows already chosen, and an earlier result that was not chosen is dropped. One way: 'Should store this search's rows and the chosen rows, dropping earlier rows not chosen'.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The gate assertions still hold after the rename, but the ready fixture stores speciesLatinName as an array production never writes, copies the shared complete-notification set-up, and some titles carry rule ids and history.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 157,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "allAnswerSectionsReady stores speciesLatinName: ['Bos taurus'], an array. Production stores a string (commit-selection.js seedLine, happy-path.json:11, line key code|latinName). The array is left over from renaming the array-valued speciesSelection. The review-gate test therefore proves readiness on a line shape the app cannot produce. Same defect as dispatch.test.js:34.",
+      "fix": "Must: the commodity line in this fixture has the shape production stores, with speciesLatinName as a string. One way: change line 157 to speciesLatinName: 'Bos taurus', or take the line from the shared fixture (see the duplication item)."
+    },
+    {
+      "id": 2,
+      "line": 145,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "allAnswerSectionsReady (lines 145-207, plus the unitedKingdom constant at line 13) is a near-copy of dispatch.test.js completeAnswers and of the shared flow/fixtures/happy-path.json that opening-run.test.js already reads. This PR had to make the same commodity-line edit in both inline copies.",
+      "fix": "Must: the complete-notification seed lives in one shared place that gates.test.js uses with no local copy. One way: build the seed from ./fixtures/happy-path.json values (dropping declaration if the no-deadlock test needs it unanswered) and delete the inline object and the unitedKingdom constant."
+    },
+    {
+      "id": 3,
+      "line": 127,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Test titles carry history and rule ids. Line 127: '... unaffected by RULE 1 (backwards-compat)' ('backwards-compat' is history). Lines 84 and 138: describe titles keyed by the ids 'RULE 1' and 'RULE 2'. Line 127 also claims something about 'an obligation without enforcedAt', but the assertions only show that addresses, transport and contact open with no documents answered.",
+      "fix": "Must: every title in the file says what its assertions prove in present-tense behaviour words, with no rule ids and no history. One way: 'Should open addresses, transport and contact before any document is answered'; describe titles such as '#sectionGatePasses — sections open in mandate order' and '#sectionGatePasses — the review opens on submit-readiness'."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

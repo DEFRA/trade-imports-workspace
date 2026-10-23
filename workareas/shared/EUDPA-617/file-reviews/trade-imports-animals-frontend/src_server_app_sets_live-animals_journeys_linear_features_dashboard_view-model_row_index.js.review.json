@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The dashboard Commodity cell now shows a bare CN code that no AC or spec records, and the change leaves formatCommodity's name lookup with no caller.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The dashboard card's Commodity cell now shows a bare CN code (for example '0102') where it used to show a commodity name. toRow drops the commodityNameFor lookup. The stub list item carries { commodityCode }, and the real list item carries the backend commodity.name, which mapper-a now sets to lines[0].commodityCode, so formatCommodity falls back to the code. No AC in EUDPA-617 asks for this. REQ-DASH-003 says only 'its commodity', no spec or ins-tests change in the PR set records it, and the ticket's open question on commodity names (genus + spp. / description per the 15 Oct comments) is unresolved.",
+      "fix": "Must: the card's Commodity cell shows the value the design source sets for a commodity (for example the description or Latin name saved on the line), or showing the CN code is agreed and recorded in REQ-DASH-003 and the ticket. One way: carry the line's saved commodity description into the list item and render it, falling back to the code only when none is saved."
+    },
+    {
+      "id": 2,
+      "line": 13,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Dropping commodities.commodityNameFor here removes formatCommodity's only caller that passes nameForCode (notification-helper.js line 81). The parameter and its two lookup branches are now unreachable, and only notification-helper.test.js still exercises them. Build only what the change makes reachable.",
+      "fix": "Must: formatCommodity has no parameter or branch that no production caller reaches. One way: remove nameForCode from formatCommodity in notification-helper.js and drop its test case in the same change."
+    },
+    {
+      "id": 3,
+      "line": 17,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The comment on line 17 ('arrival is a day the user chose; created and submitted are moments.') explains the names formatDisplayCalendarDate and formatDisplayMoment, which already say it. A comment that decodes a name should be deleted.",
+      "fix": "Must: no comment above the arrival/created/submitted fields; the formatter names carry the distinction. One way: delete line 17."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

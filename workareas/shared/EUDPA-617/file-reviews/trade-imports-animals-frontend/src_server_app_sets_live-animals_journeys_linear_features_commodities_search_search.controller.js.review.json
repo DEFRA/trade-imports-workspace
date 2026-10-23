@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Search-backed flow and session-row bookkeeping are correct, but unknown choices are dropped without a log line and a rationale comment explains a variable name.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 47,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The two-line comment above errorField ('The error belongs on the control the trader must fix: the tick boxes when results are listed, the search box when there is nothing yet to tick.') is rationale that decodes the variable name. House rule: rationale goes in docs/ or the behaviour spec, and a comment that explains a name means the name is wrong.",
+      "fix": "Must: render() carries no rationale comment, and the name of the field the error is keyed to says on its own which control the trader must fix. One way: rename errorField to something like fieldToFix (or extract fieldTraderMustFix(groups)) and delete the comment; the behaviour spec already states which control gets the error.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 101,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "post() now drops every ticked or carried key that is not in knownRowsByKey (the session's stored search rows plus the saved lines) and logs nothing. When the session's stored rows are missing (yar entry expired or lost between the search and Continue), the trader's ticks vanish: Continue is refused with 'Select a commodity', or Save and return to overview saves without them. Support cannot tell during an incident why a chosen species was not saved.",
+      "fix": "Must: when the payload names keys that are not in knownRowsByKey, the controller logs once at warn with the journey id and the dropped keys; a payload whose keys are all known logs nothing. One way: compute the dropped keys next to mergedKeysFromPayload in post() and call request.logger.warn({ journeyId, droppedKeys }, 'Commodity choices not in the stored search rows were dropped').",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

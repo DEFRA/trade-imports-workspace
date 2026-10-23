@@ -1,0 +1,49 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:36:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The identifier and summary specs match the code-keyed rules and the new fixture, but the rewritten addLines pairs counts with page positions rather than species, and the file still carries history, rationale comments and set-up copied from the consignment-details spec.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 51,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "addLines(page, speciesNames, counts) pairs counts[i] with the i-th species the caller lists, but fills #numberOfAnimalsQuantity-i, the i-th line on the page, and the page sorts lines by code. Line 371 calls openIdentification(page, [BOS_TAURUS, EQUUS_CABALUS], ['2', '3']). Horse (0101) renders first, so the horse gets 2 and the cattle 3, the reverse of what the call reads as. Line 508 reorders its arguments to [EQUUS_CABALUS, BOS_TAURUS], ['3', '2'] to get round the same trap. The signature says one thing and the helper does another.",
+      "fix": "Must: a count the caller gives for a species lands on that species' line, whatever order the species are listed in. One way: take [[species, count], ...] and fill the Number of animals input inside the section headed by that species, or have the helper put the species in the page's code order before pairing them with counts",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 543,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The comment above 'offers Add another commodity while there are commodities to identify' narrates past behaviour: 'The route back to the commodity question used to appear only when there was nothing to identify, so it vanished as the page became usable.' That is history in code.",
+      "fix": "Must: the file has no comment describing how the page used to behave. One way: delete the two-line comment, since the test title already says what is true now",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 322,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe the page, the design or the law instead of the lines under them, or explain a name. Lines 49-50 (save-blocking count), 113-114 (in-card button on the last animal), 121-122 (shared Save and continue), 126-127 (row keyed by species), 136 (summary named by caption), 322-324 (why the address warning exists), 343-344, 366-367 (miscounting trader), 408-410 (hub leaves the task off), 453-454, 570-571 (microchip heads a cat's identifiers) and 738-739 ('Microchipping is how a dog is identified in law').",
+      "fix": "Must: no comment in the file describes the UI, the design rationale or the law, and none decodes a helper name. Any rationale worth keeping lives in the behaviour spec. One way: delete these comments, rename any helper that needed one (e.g. submitFinish), and move the dog-microchip and address-warning reasons into openspec identification-details if they are not there already",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 4,
+      "line": 36,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "addLines (36-56) repeats the set-up in consignment-details.fit.spec.js openDetails: startNotification, answerCountryOfOrigin, click 'What are you importing?', selectSpecies, Save and continue, wait for Overview, open Commodity details. The diff rewrote addLines but left the copy in place. The fixture constants are copied across the commodity specs as well: BOS_TAURUS, FELIS_CATUS, CATTLE_OR_COW ('Cattle or Cow' is also declared in consignment-details) and SAVE_AND_CONTINUE.",
+      "fix": "Must: one helper in fit/live-animals-journey.js takes a notification from start to the Commodity details page with chosen species, both specs call it with their local copies deleted, and the shared fixture species names live in one place. One way: promote an openCommodityDetails(page, species) helper beside selectSpecies, have openDetails and addLines call it, and export the species and common-name constants from the journey helper",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/main/resources/responses/mdmProductSpeciesResponses.json",
+  "repo": "trade-imports-stub",
+  "commit": "60be5df2892b87d7c2bdc5628eec2802d0373670",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Saved pages are well formed and cover the E2E lines, but three codes the saved searches offer have no species saved, so those lines are refused at check answers on the stack.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The species file saves only 0101, 0102, 01061900 and 01063300, but the saved searches offer selectable rows under three more live-animal codes: 'ca' returns 01063200 (Cacatua, Pionites and four more) and 01064100 (Bombus canariensis), and 'cat' returns 01063980 (Catreus). The commodities file itself gives these codes speciesCount 84, 4 and 52. On the docker-compose stack, a trader who picks one of those rows is refused at check answers: SpeciesCheckService gets an empty page for the code, reports the line missing, and refusal.js shows 'species no longer offered'. Real MDM lists those species, so the stub contradicts its own search answers.",
+      "fix": "Must: every live-animal code that a saved search response offers as a selectable row has its species pages saved, so a line picked from a saved search passes the species check on the stack. One way: capture /commodities/{code}/species?dataset=gbnag&size=100 from TST for 01063200, 01063980 and 01064100 and add them; or drop the 'ca' and 'cat' search entries' rows for codes you choose not to save, and say so in the README."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "f7d977cd529d089ca4abd13cd88d9d1cdcf14ed4",
+  "pr": 135,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:14Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The new ten-species cap goes against the ticket's agreed 100-result page and makes SCN-003-A untrue for species past the tenth; the rest of the search, grouping and germinal scenarios match the ticket and the code.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 147,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-011 caps one search at ten species (frontend SEARCH_PAGE_SIZE = 10), but the ticket's 15 Oct decision is 'one page of up to 100 results for now', and what to do past the cap is still an open design question there. The spec settles it as 'reached by a narrower search', though the page gives no sign that results were cut off. It also breaks SCN-COMMODITY-SELECT-003-A (line 35): searching '0102' lists 10 of its 15 species (the ins-tests expectedSearches list leaves out Bison bison, which the frontend fit 'saves pairs' test reaches by name), so searching by common or Latin name does not always offer the same species as searching by code.",
+      "fix": "Must: the result cap in the spec and the code matches the cap the ticket agreed (100), or the ticket records the change to ten with the designer's answer on what happens past the cap; and SCN-COMMODITY-SELECT-003-A is true for every species under the cap. One way: ask in EUDPA-617 which cap applies, then align REQ-011, SEARCH_PAGE_SIZE and the 003-A wording with the answer, plus a 'refine your search' message if the cap stays."
+    },
+    {
+      "id": 2,
+      "line": 32,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "REQ-COMMODITY-SELECT-003 names the supplier and its field in requirement text: '(MDM's live-animal species)' and '(MDM's `isGerminal`)'. openspec/config.yaml says requirements use product words only where the user sees them and never name mechanisms. The trader sees neither MDM nor isGerminal, and SCN-003-B already states the behaviour as 'codes the reference data flags as germinal'.",
+      "fix": "Must: REQ-COMMODITY-SELECT-003 states the behaviour in the words a user observes, with no supplier name or field name. One way: drop both parentheticals and keep 'a commodity code the reference data flags as germinal'. The MDM field mapping already lives in docs/repos/trade-imports-reference-data.md."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

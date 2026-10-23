@@ -1,0 +1,29 @@
+{
+  "file": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "f7d977cd529d089ca4abd13cd88d9d1cdcf14ed4",
+  "pr": 135,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Every linked test exists at the pinned refs (frontend 89ae5d4, ins-tests 1cee8e8, reference-data PR 36), but two fit links on SCN-003-A claim full strength while proving only the common-name half.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 48,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "SCN-COMMODITY-SELECT-003-A says searching by common name offers the same species as searching by that code. Two of its fit links are marked strength 'full', but neither test searches by code: 'finds a species by its common name' (line 48, searches 'ferret' only) and 'finds cattle by their common name' (line 50, searches 'cattle' only). Each proves the common-name half alone. Only the e2e link searches both 'cattle' and '0102'.",
+      "fix": "Must: a link marked full on SCN-COMMODITY-SELECT-003-A asserts the same species under both a common-name search and a code search; links that prove one half are partial. One way: mark lines 48 and 50 partial with a note saying 'common-name half only', and keep the e2e link as the full witness."
+    },
+    {
+      "id": 2,
+      "line": 84,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "SCN-COMMODITY-SELECT-004-B: the e2e link's note says it asserts one code's group per search and 'never two codes on one render', and is marked partial. But tests/animals/e2e/pages/commodities.spec.ts (ins-tests 1cee8e8) expectedSearches asserts two groups on one render for 'cattle' (0102 and 01061900), 'horse' (0101 and 01061900) and 'ostrich' (01063300 and 01063980). The note is wrong and the strength is understated.",
+      "fix": "Must: the note and strength say what the e2e test asserts: two commodity-code groups on one render. One way: rewrite the note to name the cattle, horse and ostrich searches, and mark it full once a red probe has been seen."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

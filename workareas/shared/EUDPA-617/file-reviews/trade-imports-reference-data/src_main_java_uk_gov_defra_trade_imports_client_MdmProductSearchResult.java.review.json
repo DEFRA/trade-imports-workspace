@@ -1,0 +1,29 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductSearchResult.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Deserialises both MDM search row types correctly, but carries unread fields that duplicate MdmCommodity and names the Latin name differently from the rest of the service.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 14,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MdmProductSearchResult declares description (l.14), isGerminal (l.15), isSelectable (l.16) and speciesCount (l.17), but CommoditySearchService never reads them (germinal status comes from a separate getCommodities call). The commodity-row half of the record (code, description, isGerminal, isSelectable, speciesCount, @JsonProperty(\"scientificNames\") species) is also a second copy of MdmCommodity's component list, so the MDM commodity shape now has two homes.",
+      "fix": "Must: the search-result record holds only the fields production code reads (resultType, speciesName, commonName, commodityCnCode, code, species), and the MDM commodity-row shape is declared once. One way: delete the four unread components; if the commodity fields grow again, have the record reuse MdmCommodity (e.g. @JsonUnwrapped) rather than repeat its components."
+    },
+    {
+      "id": 2,
+      "line": 11,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The species' Latin name has three names along one path: speciesName here (l.11) and in MdmSpecies, scientificNames for the list (l.19), and latinName in CommoditySpecies/CommodityLine and the /commodities API. CommoditySearchService.addRow translates speciesName to latinName by hand. Breaks 'One concept, one name, from request header to repository'.",
+      "fix": "Must: the Java name for the species' Latin name is latinName from the MDM DTOs through to the API response, with the MDM wire names kept only in @JsonProperty. One way: rename the component to latinName with @JsonProperty(\"speciesName\"), matching the change in MdmSpecies."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

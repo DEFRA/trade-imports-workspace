@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/model/obligations/helpers/helpers.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new anyNotInUnionOf tests would fail without the change, but a comment the PR made untrue, other stale or history comments, and vague 'handle' titles remain.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 112,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "This PR makes the comment at lines 112-114 untrue: 'The live-animals manifest carries no complement gate today'. sets/live-animals/obligations/sections/commodities/aggregates.js line 20 now gates cph with anyNotInUnionOf, which is a complement gate. Other comments and titles in the file also break the house rules on comments. Some describe other modules or give rationale: lines 19-20, 102-111, 385-391, 447-462. Some carry history: 'the new schema key' (line 386 and the title at line 395), 'The migration sites' (line 460), 'The original inline check' (line 735). One is untrue: lines 154-157 say the union is 'not a re-computation on each call', but metadata.values is a getter that runs deriveUnion again on every read. One describes the manifest: line 174, 'Real manifest: PASSPORT + TATTOO share ...'.",
+      "fix": "Must: helpers.test.js has no comment that is untrue, describes another module, gives rationale or tells history, and no test title uses 'new'. One way: delete the banner rationale blocks and the inline comments listed, move any rationale worth keeping into src/server/app/docs/obligation-model.md, and retitle line 395 to say what it asserts, for example 'Should surface an explicit dependsOn verbatim'."
+    },
+    {
+      "id": 2,
+      "line": 280,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The new test 'Should handle unindexed stored values (not just maps)' (line 280) copies the title of the anyAllowListed test at line 244. 'Handle' does not say what the assertions prove: a bare stored value outside the union gives whenTrue, and one inside gives whenFalse. Line 436, 'Should handle obligations with no applyTo', has the same problem.",
+      "fix": "Must: each of these titles says the decision its assertions check. One way: 'Should return whenTrue for a single stored value outside the union and whenFalse for one inside it' (line 280), with the matching wording at lines 244 and 436.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

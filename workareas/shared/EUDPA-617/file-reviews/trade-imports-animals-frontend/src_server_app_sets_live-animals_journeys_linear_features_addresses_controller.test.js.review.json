@@ -1,0 +1,80 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Code migrations to commodityCode are correct against the CPH exemption list, but the file has opaque code literals, a spy assertion on an own module, a dead try/finally, copied set-up and an over-claiming title.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 53,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Seeds use bare commodity codes ('01061900' at 53, '0102' at 62, 76, 206) to stand for 'no CPH-triggering line' and 'a CPH-triggering line'; nothing in the test says which code is CPH-exempt, so a reader cannot check the titles against the set-up",
+      "fix": "Must: each seed names the commodity it holds and which side of the CPH exemption it sits on. One way: seed the named rows already in commodities/search/test-support.js (FELIS_CATUS_ROW for an exempt line, BOS_TAURUS_ROW for a CPH line) or named constants such as CPH_EXEMPT_LINE / CPH_LINE",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 141,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should never consult the address book to name a row' spies on this repo's own services/address-book module and asserts expect(partySpy).not.toHaveBeenCalled(): a spy assertion on an internal module, not the observable outcome",
+      "fix": "Must: the test proves the row name comes from the copy through what the page shows, with no spy on an own module. One way: seed a placeOfOrigin copy whose name differs from what the address book holds for that party and assert the row's value.text is the copy's name, mocking only at the network boundary if needed",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 169,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "'Should render the name held on the copy once submitted' wraps its body in try { ... } finally { /* no spy */ }: an empty finally left over from a removed spy, with a comment describing what is absent",
+      "fix": "Must: the test body has no try/finally and no comment about a spy that is not there. One way: drop the try/finally and the comment, and drive it through driveHandler like its siblings if the submit step can be expressed there"
+    },
+    {
+      "id": 4,
+      "line": 44,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The same beforeAll (configureRecords, configureSession, buildDispatch) and beforeEach(store.clear) block is copied into all five describe blocks (lines 44-49, 87-92, 151-156, 182-187, 249-254)",
+      "fix": "Must: the set-up is written once for the file. One way: a single top-level beforeAll/beforeEach, or a shared configure function as change-context.test.js uses",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 5,
+      "line": 74,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should render the stored (slash-stripped) CPH value with a Change link when answered' claims slash-stripping, but the seed stores '123456789' with no slashes, so the assertion cannot prove any stripping",
+      "fix": "Must: the title states only what the assertions prove, or the set-up includes a value the stripping would change. One way: retitle to 'Should render the stored CPH value with a Change link when answered', or seed a slashed value and assert the stripped text"
+    },
+    {
+      "id": 6,
+      "line": 31,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "cphRowOf repeats rowTitled (line 40) with the CPH title hard-coded as the literal 'County parish holding (CPH) number' instead of the feature copy",
+      "fix": "Must: one row-finder, keyed by the copy the page renders. One way: delete cphRowOf and call rowTitled(rows, copy.hub.cph.title) with copy imported from ./copy/copy.en.js"
+    },
+    {
+      "id": 7,
+      "line": 189,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Comment above 'Should carry change context into every party link' narrates check your answers, the picker and the save at the far end: it describes other pages and the reason, not the lines below",
+      "fix": "Must: no comment describing other modules or rationale above the test. One way: delete it; the title already states the claim, and the rationale belongs in the set's docs or the behaviour spec"
+    },
+    {
+      "id": 8,
+      "line": 265,
+      "severity": "Minor",
+      "category": "test-readability",
+      "issue": "'Should follow the ordinary flow when continuing without change context' asserts redirect not.toBe(check your answers) immediately before an exact toBe(hubPath); the absence check adds nothing",
+      "fix": "Must: the test holds only the exact positive assertion. One way: delete the not.toBe assertion"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

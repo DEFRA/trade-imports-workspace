@@ -1,0 +1,57 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Fixtures move cleanly to MDM-shaped lines, but nothing pins the species-keyed permanent address, matrix titles collide, line fixtures are copied from shared test support, and comments/titles carry rationale and history.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 702,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR moves the permanent-address rule from the commodity name to the Latin name (permanentAddressApplies(entry.speciesLatinName) in card/view-model.js:107 and form/forms.js:49), but every 01061900 line in the file (felisCatusLine, MATRIX rows at 716-727) is a permanent-address species. No test has a 01061900 line for another species (one of the many other mammals MDM lists under that code) asserting showAddress false and no Permanent address column, so gating the address on the code instead of the species would leave every test green",
+      "fix": "Must: a test fails if the permanent address is gated on commodity code instead of Latin name. One way: add a MATRIX row for 01061900 with a non-listed species (e.g. 'Oryctolagus cuniculus') expecting the microchip/passport/tattoo fields and showAddress false, and assert its identifierColumns has no 'Permanent address'",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 730,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Titles no longer say what drives the result. The it.each title 'Should render the identifier fields for $commodityCode' (line 730) yields two identical titles for the Felis catus and Canis familiaris rows, and neither names the showAddress assertion. Line 414 'Should give the permanent address its own column where the commodity requires one' and the describe at 682 '... model metadata per commodity code' credit the commodity, while the address is now decided by the species",
+      "fix": "Must: every matrix case has a unique title naming the code, the species and the address outcome it asserts, and the address tests say the species decides it. One way: title the matrix 'Should render $fieldIds for $commodityCode $speciesLatinName, permanent address $showAddress' and retitle line 414 '... where the species requires one'",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 40,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The commodity-line fixtures rewritten in this PR restate data already shared in commodities/search/test-support.js: felisCatusLine (40-47) and bosTaurusLine (49-56) repeat FELIS_CATUS_ROW and BOS_TAURUS_ROW field for field, CATTLE_OR_COW (24) repeats BOS_TAURUS_ROW.commonName (and is declared again in selected-rows.test.js, selected-commodities.test.js and two fit specs), and the local speciesLine builder (686-691) is a fifth copy of the same line shape",
+      "fix": "Must: the commodity-line fixtures this file uses come from one shared test helper, and this file has no local copy of their row data. One way: import FELIS_CATUS_ROW, BOS_TAURUS_ROW and CANIS_FAMILIARIS_ROW from ../search/test-support.js (adding horse and ostrich rows there), build lines with one shared lineOf(row, extra) helper, and drop CATTLE_OR_COW and speciesLine",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 4,
+      "line": 676,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe production code and other tests rather than the lines below: 676-681 (rewritten in this PR) narrates how the render reads '.metadata.values' and points at 'the suite below'; 766-769 describes consignment-details' error; 802-805, 520-521, 478-479, 651-652, 195-196, 223-224, 254-255, 303-304 and 323-324 are rationale for the test that follows. House rule: a comment describes only its own lines, rationale goes in docs or the spec",
+      "fix": "Must: no comment in the test file explains production behaviour, other suites or rationale; test titles carry the claim. One way: delete these comments, folding any claim worth keeping into the test title",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 5,
+      "line": 504,
+      "severity": "Major",
+      "category": "history",
+      "issue": "History in code: the title at 504 'Should block a partial permanent address exactly as the retired entry page did' and the comment at 287-290 'The link to the commodity question used to live only in the no-commodities branch of the template' narrate past behaviour",
+      "fix": "Must: the title and comments state current behaviour only. One way: retitle 504 'Should refuse a permanent address with address line 1 blank and save nothing', and delete the 287-290 comment"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

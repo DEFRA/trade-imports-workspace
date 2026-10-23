@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/docs/add-a-collection.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The commoditySelection rename is correct, but two other recipe snippets still name a removed constant and a moved, re-signatured seedLine call.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 135,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The recipe's commodity snippets point at code this PR renamed or removed, and the PR updated only the commoditySelection lines next to them. Line 135 uses PACKAGE_COUNT_COMMODITIES, which no longer exists: lines.js now calls allowListed(commodityCode, packageCountCommodityCodes, null, ...). Lines 247-258 say the search page.js reconciles 'one line per selected species' with selected.map(seedLine). That call is now in search/actions/commit-selection.js. It reads rows.map(seedLine), where seedLine takes a search row ({ commodityCode, speciesLatinName, commonName }), and it then calls clearStoredSearchRows.",
+      "fix": "Must: every identifier, file path and call in the recipe's commodity snippets matches the code at this commit, so a developer copying the recipe gets code that resolves. One way: change line 135 to packageCountCommodityCodes. Point the batch-split section at search/actions/commit-selection.js and show rows.map(seedLine), described as one line per selected search row (code plus Latin name)."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

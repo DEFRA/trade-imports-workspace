@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditiesControllerTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:40:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Titles match assertions and the tests mock only MdmClient, but the capturing metrics writer set-up is another copy of set-up already repeated across the metrics tests.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 39,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "setUp builds a capturing LookupMetrics as new LookupMetrics(new EmfMetricWriter(true, \"trade-imports-reference-data\", () -> new MetricsLogger(metricsEnvironment))), copying LookupMetricsTest:13-15. The same capturing-writer construction is also repeated in EmfMetricWriterTest, CacheMetricsTest and DependencyAvailabilityMetricsTest, so this adds another copy of set-up shared between tests",
+      "fix": "Must: one shared test helper (for example beside CapturingEmfEnvironment in the metrics test package) builds an enabled EmfMetricWriter over a CapturingEmfEnvironment, and CommoditiesControllerTest and LookupMetricsTest call it with no local copies. One way: a static CapturingEmfEnvironment.writer() or a CapturingMetrics test fixture returning the writer and its captured documents",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

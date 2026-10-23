@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-rows.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Rows read the stored code, common name and Latin name correctly, but the package-count rule it gates on has two packagesApply homes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Whether a commodity code takes a number of packages has two homes, both changed in this PR: packagesApply in check-answers/view-model/applicability.js:34 (appliesForGateValue('numberOfPackages', code), used here) and packagesApply in commodities/consignment-details/fields.js:13 (commodities.packageCountCommodityCodes().includes(code)). Same name, two sources of truth, so the consignment-details page can ask for packages that check your answers then hides, or the other way round.",
+      "fix": "Must: one function decides whether a commodity code takes a package count, and both the consignment-details page and the check-answers species card call it. One way: keep the obligation-gate version (appliesForGateValue) and have consignment-details/fields.js import it, deleting its own packagesApply.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

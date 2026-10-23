@@ -1,0 +1,46 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/product/ProductController.java",
+  "repo": "trade-imports-stub",
+  "commit": "60be5df2892b87d7c2bdc5628eec2802d0373670",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Endpoints behave as the README and tests describe, but the stub-only empty-answer branches log nothing and the APIM header name and empty search-page shape each have more than one home.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 76,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The stub's own fallbacks answer silently: an unsaved search term gets an empty page (line 76-77), an unknown species code or a page past the saved ones gets an empty page (line 97-101), and unknown codes on /commodities are dropped (line 53). None of these exist in real MDM, and nothing logs them, so someone debugging the docker-compose stack cannot tell 'MDM found nothing' from 'the stub has no saved answer for this term or code'.",
+      "fix": "Must: each branch where the stub answers from no saved fixture logs once at the point of decision, with the term or code and the endpoint, so a developer can see the stub had nothing saved. One way: log.info(\"No saved MDM product search for q '{}'; answering an empty page\", query) in the saved == null branch, and the same for an unknown species code and for each commodity code left out.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 26,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "OCP_APIM_SUBSCRIPTION_KEY = \"Ocp-Apim-Subscription-Key\" is now declared a third time (CountriesController:20, PortsOfEntryController:18, ProductController:26) in the same PR that extracts MdmStubResponses as the shared home for MDM-through-APIM response details. The APIM header name is one MDM-wide value with three owners.",
+      "fix": "Must: the APIM subscription-key header name is declared once for the mdm stubs and every MDM controller uses that one constant. One way: move it to a public constant on MdmStubResponses (or a sibling MdmApim holder in the mdm package) and reference it from all three controllers' @RequestHeader."
+    },
+    {
+      "id": 3,
+      "line": 77,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The shape of an empty search page is assembled in two places: line 77 'emptyPage(page, size, 0).put(\"totalPages\", 0)' and line 81-82 'emptyPage(page, size, total).put(\"totalPages\", ...)'. emptyPage builds the species-page shape (no totalPages), and each search branch bolts totalPages on by hand, so the rule 'a search page carries totalPages' has two homes.",
+      "fix": "Must: one function owns the empty search-page shape (including totalPages), and both search branches call it. One way: add emptySearchPage(page, size, totalElements, totalPages) that calls emptyPage and puts totalPages, and use it at lines 77 and 81."
+    },
+    {
+      "id": 4,
+      "line": 31,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MINIMUM_QUERY_LENGTH (line 31) is used only by search() (lines 67-70) but sits at class scope. House rule: a literal used by one function lives in that function; module scope is for shared values and module set-up (the fixture paths at lines 27-30 are set-up and may stay).",
+      "fix": "Must: the minimum query length lives in search(), the one method that uses it. One way: declare it as a local final int at the top of search()."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/services/reference-data/request.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:33:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct extraction of the shared reference-data fetch, but it bypasses the convict config key, logs each failure twice and sends no trace header.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "request.js:5-6 reads process.env.TRADE_IMPORTS_REFERENCE_DATA_URL directly at module load with its own 'http://localhost:8086' default, beside the convict key tradeImportsReferenceDataApi.baseUrl (src/config/config.js:402-408) that declares the same env var and default and that nothing reads; services/address-book/client.js:9 reads its base URL through config.get('tradeImportsAddressBookApi.baseUrl'), and services/_capture/capture.js:5-6 keeps a third copy of the env read. The new one-owner helper extends the env-var path instead of the config mechanism.",
+      "fix": "Must: the reference-data base URL has one owner, the convict key tradeImportsReferenceDataApi.baseUrl, and every reference-data URL (this helper and _capture/capture.js) is built from it. One way: const baseUrl = () => config.get('tradeImportsReferenceDataApi.baseUrl'), as address-book/client.js does; have capture.js call referenceDataUrl(); give the config key format: 'url'.",
+      "best_practice": "node/hapi.md"
+    },
+    {
+      "id": 2,
+      "line": 30,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "requestReferenceData logs every failure at error (line 30) and rethrows; every caller (countries/index.js ensureLoaded, ports/index.js ensureLoaded, live-animals commodities/call-reference-data.js) wraps it in Boom.serverUnavailable with { dataset, cause: err }, and catchAll (common/helpers/errors.js:33-40) logs that same cause at error again as 'Request failed'. One failure leaves two error lines; the helper's line uses a module logger (createLogger) so it carries no request traceId, and the catchAll line has no url.",
+      "fix": "Must: each reference-data failure is logged once, at one level, with the url, the dataset and the status, and with the request's trace id. One way: drop the try/catch logging here and put url on the thrown error (or in the Boom data) so catchAll's single line carries it; or keep this line and stop the second one.",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 3,
+      "line": 13,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "fetchJson sends only Content-Type (line 13) and replaces any headers the caller passes in init, so no reference-data call carries the x-cdp-request-id trace header. Commodity search and species-check now call reference-data per page request through this helper, and support cannot tie a reference-data log line to the frontend request during an incident. services/address-book/client.js:11,40-44 already sends [tracingHeader]: getTraceId() ?? ''.",
+      "fix": "Must: every request to reference-data carries the trace header, and the header set is built in one place shared with the address-book client rather than copied. One way: extract the tracingHeader/getTraceId header builder from address-book/client.js into a shared helper and merge it with init.headers here.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

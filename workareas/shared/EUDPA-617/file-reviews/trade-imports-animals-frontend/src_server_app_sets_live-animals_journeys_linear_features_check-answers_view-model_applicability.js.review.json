@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Moving the gates to commodityCode matches the manifest's code-keyed gates, but the package-count rule now has two owners and an untrue counting comment remains.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The package-count rule has two packagesApply functions, both rewritten in this PR, by two different routes: applicability.js:34 reads the numberOfPackages manifest gate (appliesForGateValue), while commodities/consignment-details/fields.js:13 reads commodities.packageCountCommodityCodes() directly. The review page and the consignment-details page can drift if the gate changes (e.g. to code + Latin name).",
+      "fix": "Must: one function owns whether a line asks for a package count, and both the review rows and the consignment-details page call it. One way: keep the manifest-gate version here (or move it into a shared commodities helper) and have fields.js import it instead of defining its own."
+    },
+    {
+      "id": 2,
+      "line": 15,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment at lines 15-17 says 'The three answers' but four functions follow (destinationCountryApplies, exitDateApplies, portOfExitApplies, transitedCountriesApplies), it carries a count, and it explains rationale and the review UI rather than the lines below.",
+      "fix": "Must: no comment above these scope-check functions; their names already say what each checks. One way: delete lines 15-17; if the rationale is needed, record it in the behaviour spec."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The renamed keys are right, but the inline complete-notification fixture stores speciesLatinName as an array production never writes and copies set-up that gates.test.js and happy-path.json already hold.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "completeAnswers stores speciesLatinName: ['Bos taurus'], an array. The app never writes that shape: commit-selection.js seedLine stores speciesLatinName as a string, line keys are code|latinName, and flow/fixtures/happy-path.json:11 holds 'Bos taurus'. The array is left over from renaming the array-valued speciesSelection one field at a time. The same array shape is in gates.test.js:157.",
+      "fix": "Must: every commodity line in this test's fixtures has the shape production stores, with speciesLatinName as a string. One way: change line 34 to speciesLatinName: 'Bos taurus', or take the line from the shared fixture (see the duplication item)."
+    },
+    {
+      "id": 2,
+      "line": 22,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "completeAnswers (lines 20-88, including the unitedKingdom constant) is a whole notification written out inline. gates.test.js:145-207 holds a near-identical copy (allAnswerSectionsReady), and flow/fixtures/happy-path.json already holds the shared complete notification that opening-run.test.js reads. This PR had to edit the same commodity line in both inline copies, which is the cost of copied set-up.",
+      "fix": "Must: the complete-notification seed for the flow tests lives in one shared place, and dispatch.test.js and gates.test.js both use it with no local copy. One way: read the values from ./fixtures/happy-path.json (as opening-run.test.js does), or export a completeAnswers helper beside it, and delete the inline object and the unitedKingdom constant here."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

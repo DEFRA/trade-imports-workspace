@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/stub.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:37:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Search logic matches the reference-data response shape, but the stub adds a second fixture loader and a hand-assembled fixture beside the _capture mechanism built to stop stub drift.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "stub.js adds a second JSON fixture loader (HERE + readFileSync + JSON.parse, lines 5-9) and a hand-assembled fixtures/commodities.json beside the existing services/_capture mechanism, whose fixtures.js 'load' and capture.js exist so 'stub data and the captured real data cannot drift' (countries/ports stubs seed from it). Nothing re-captures the commodity data from reference-data, so the AC 'data stubbed in the frontend should match the response from the reference data service' is held only by a dated note in docs/services.md.",
+      "fix": "Must: the commodity stub data is produced and loaded by the one capture mechanism the countries and ports stubs use, so re-running the capture refreshes it from reference-data and there is one fixture loader. One way: add a commodities target to services/_capture/capture.js (searching reference-data and grouping as the stub needs), move the JSON under _capture/fixtures/, export it from _capture/fixtures.js and import it in stub.js in place of the local readFileSync."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

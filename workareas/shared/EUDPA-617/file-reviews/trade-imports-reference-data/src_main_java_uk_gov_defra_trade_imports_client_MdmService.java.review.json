@@ -1,0 +1,56 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:38:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New MDM product calls work, but a missing MDM body silently becomes an empty answer (germinals leak, species checks fail), and the fallback helper's name, log lines and duplication need tidying.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 86,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "pageOrEmpty names its fallback in the suffix ('OrEmpty'), which the house names rule bans (no …OrNull / …OrNotFound style suffixes); the method returns the MDM page, or an empty page when MDM sent none.",
+      "fix": "Must: the helper's name says what it returns (the MDM page to use) without naming the fallback, and both callers use the new name. One way: rename to pageFrom(body, requestName, requestedFor) or productPageOf(...).",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 71,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "A 200 with no body from MDM is turned into an ordinary empty answer (lines 61, 71-76, 83, 88-91), so callers cannot tell 'MDM sent nothing' from 'MDM found nothing'. Concrete failures: getCommodities returning [] makes CommoditySearchService.germinalCodesAmong find no germinals, so germinal codes appear in the live-animals picker (breaks the 14 Oct decision that the picker excludes germinals); getCommoditySpecies returning an empty page makes SpeciesCheckService.speciesOf report every line on that code as missing, so the trader is told to re-choose species MDM still holds; searchProducts returns zero results instead of the 503 the 15 Oct decision sets for MDM being unusable.",
+      "fix": "Must: a missing MDM body on the commodity, species and search calls is a failure the caller sees (an exception mapped to a 5xx, or a result type that says 'no answer'), not an empty result; genuine empty results from MDM still come back empty. One way: throw a dedicated MdmUnavailableException (or reuse the existing upstream-failure exception) from the null-body branch for these three methods and let the controller advice map it to 503."
+    },
+    {
+      "id": 3,
+      "line": 89,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "pageOrEmpty logs 'MDM returned a null body' for two different cases: a null body and a body whose content is null (line 88). Support reading the line during an incident would look for an empty MDM response when MDM actually sent a body in a shape we do not read (for example a renamed 'content' field).",
+      "fix": "Must: the warn line says which of the two cases happened, with the request name and the value searched for. One way: split the condition and log 'MDM returned no body for {} request for {}' and 'MDM returned a {} page with no content for {}' separately.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 4,
+      "line": 102,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "logTraceId (lines 102-110), which all three new methods call, logs 'MDM trace id for this call is: {}' and 'No MDM trace id returned' with no endpoint or request value. One commodity search now makes two MDM calls (search, then commodities) and a species check makes one per page, so support cannot tell which trace id belongs to which call when raising an issue with MDM.",
+      "fix": "Must: every trace-id log line names the MDM call and the value it was made for (search term, codes or code and page). One way: pass the request name and requestedFor into logTraceId, e.g. log.info(\"MDM trace id for {} request for {} is {}\", requestName, requestedFor, traceId).",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 5,
+      "line": 71,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The 'null body: warn and return an empty list' rule now has three inline copies (getPortsOfEntry lines 30-34, getCountries lines 46-50, getCommodities lines 71-76) beside a fourth, extracted copy for pages (pageOrEmpty lines 86-93). The change extracted the page version but copied the list version again.",
+      "fix": "Must: one helper owns how a missing MDM body is handled, and every MDM call in the class goes through it (lists and pages alike). One way: a generic private <T> T bodyOf(ResponseEntity<T> response, T whenMissing, String requestName, Object requestedFor) used by all five methods, which also gives finding #2's change a single place to land."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

@@ -1,0 +1,45 @@
+{
+  "file": "docs/repos/trade-imports-reference-data.md",
+  "repo": "trade-imports-workspace",
+  "commit": "f7d977cd529d089ca4abd13cd88d9d1cdcf14ed4",
+  "pr": 135,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:42:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new commodity sections match the code apart from one unsupported search claim (Aurochs), and the Purpose and Owns lines are now untrue for the uncached, unsorted commodity endpoints.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The 'MDM commodity search behaviour' section says \"cat\" finds Bos taurus through its second common name, \"Aurochs\". The saved stub response it cites says otherwise: Bos taurus has commonNames [\"Cattle or Cow\", \"Aurochs\"], and \"cat\" is a word-start match on \"Cattle\", not on \"Aurochs\". Bibos spp., which has only the name \"Cattle\", comes back for \"cat\" too. So the evidence does not support the claim that every common name is searched, and the AC asks for search behaviour to be documented correctly.",
+      "fix": "Must: every claim in the search behaviour section is backed by a saved response or a recorded TST run, and the common-name bullet shows a search that only a second common name can match (or drops the claim). One way: run a term such as \"aur\" against TST, save it in mdmProductSearchResponses.json, and cite it; otherwise delete the sentence about the second name."
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines the change makes untrue now that the page covers commodities: line 7 (Purpose) says the service 'caches it in memory and returns a simplified, sorted view', but line 15 and CommoditySearchService say commodity search and species check are not cached and come back in MDM's order; line 13 says MDM payloads are adapted only to Country and PortOfEntry, but CommodityGroup, CommoditySpecies, CommoditySearchResponse and SpeciesCheckResponse are adapted too; line 18 says every MDM call sends system=GBNAG, but MdmService.searchProducts, getCommodities and getCommoditySpecies send dataset=gbnag and no system.",
+      "fix": "Must: Purpose and Owns describe both kinds of data accurately: countries and ports cached and sorted, commodity search and species check uncached and in MDM's order, with every response shape and the dataset=gbnag parameter named. One way: reword line 7 to say countries and ports are cached and sorted, add the commodity shapes to line 13, and add 'and dataset=gbnag on product calls' to line 18."
+    },
+    {
+      "id": 3,
+      "line": 59,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Two descriptions do not match the code. Line 59: reference-data 'asks GET /mdm/trade/product/commodities for each code on the page' reads as one call per code, but MdmService.getCommodities sends a single request with every code comma-separated. Line 16: species check 'returns the lines whose species MDM no longer lists under that code', but SpeciesCheckService.isUnlisted also returns any line with no code or no Latin name, without calling MDM.",
+      "fix": "Must: line 59 says one commodities request carries every code on the page, and line 16 says lines with no code or no Latin name also come back as missing. One way: 'asks GET /mdm/trade/product/commodities once, with every code on the page' and add 'a line with no code or no Latin name is returned too'."
+    },
+    {
+      "id": 4,
+      "line": 66,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Line 66, 'These gaps were found during EUDPA-617 and need to go back to the MDM team', is a to-do in a reference page that describes the service as it is. It does not say who sends them or where the feedback is recorded, and it becomes untrue as soon as the feedback is sent. The ticket's AC asks for the gaps to be fed back, which this line does not show.",
+      "fix": "Must: the page states the observed behaviour only, and the feedback to MDM is recorded where it can be tracked (the ticket or the MDM follow-ups in the workarea), linked from the page if needed. One way: replace the line with a link to where the MDM feedback is recorded, such as the Jira comment or the Slack thread."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

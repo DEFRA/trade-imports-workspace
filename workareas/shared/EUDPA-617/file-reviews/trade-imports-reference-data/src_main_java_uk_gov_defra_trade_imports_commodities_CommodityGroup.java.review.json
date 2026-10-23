@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:43Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Simple response record; only a Minor gap on defensive copying and null guards compared with its siblings.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "CommodityGroup takes the service's mutable ArrayList as species without a defensive copy (CommoditySearchService line 58 passes the speciesByCode map value straight in), while its sibling records CommoditySearchResponse, SpeciesCheckRequest and SpeciesCheckResponse all copy their lists with List.copyOf. A public record crossing the API boundary also has no null guard on code or species.",
+      "fix": "Must: CommodityGroup is immutable like its sibling records, holding its own unmodifiable copy of species, and rejects a null code or species list. One way: add a compact constructor with Objects.requireNonNull(code, \"code\") and species = List.copyOf(species).",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

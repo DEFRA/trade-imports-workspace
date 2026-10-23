@@ -1,0 +1,55 @@
+{
+  "file": "src/server/app/model/obligations/evaluator.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:34:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Code-to-CN-code fixture migration is correct, but permanentAddress negative tests no longer exercise the species gate, the speciesLatinName round-trip pins an array shape the journey never writes, and titles/names keep stale CPH, cow and V4 vocabulary.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 966,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "permanentAddress is now gated on speciesLatinName, but 'is out of scope for a 0102 line' (966) and 'purges a stored permanentAddress on a non-cats/dogs line' (973) store no speciesLatinName at all, so they pass for any commodity code; the titles claim the code decides. The describe title (936, 'gatedBy for cats/dogs') and the section comment (933, 'commodity-gated') also still describe a commodity gate.",
+      "fix": "Must: every permanentAddress test that claims out of scope or purge names the species that puts it there and stores that species, and the describe title and section comment name the species gate. One way: store speciesLatinName 'Bos taurus' on the 0102 line (or 'Oryctolagus cuniculus' on a 01061900 line, which proves code alone does not decide), retitle e.g. 'is out of scope for Bos taurus', and rename the describe to 'permanentAddress (gated on species Latin name)'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 512,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'speciesLatinName stores an array of Latin names per line' (512-526) pins an array value per line, but this PR removed the 'Multi-select; array' contract from lines.js: the journey stores one Latin name string per line (seedLine in search/actions/commit-selection.js, line key code|latinName), and the permanentAddress gate compares with includes(value), so an array never matches - the test at 944 in this same file stores a string. 'Struthio' is also a genus, not a species Latin name.",
+      "fix": "Must: the round-trip test stores and asserts the shape the journey writes - one species Latin name string per line - and its title says so. One way: store { [LINE_OSTRICHES]: 'Struthio camelus', [LINE_CATTLE]: 'Bos taurus' } and retitle 'speciesLatinName stores one Latin name per line'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 635,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The cph titles at 635, 645, 659 and 667 still say 'CPH-required commodity' / 'required commodity', but the rule (cphReason at 103, changed in this PR) is an exemption list: CPH applies to any code that is not CPH-exempt. There is no 'CPH-required' list for a reader to look up.",
+      "fix": "Must: the cph test titles use the exemption vocabulary the rule uses. One way: 'is out of scope when every line is CPH-exempt', 'is mandatory in-scope when at least one line is not CPH-exempt', 'keeps a stored cph value when a line is not CPH-exempt', 'purges a stored cph value when every line is CPH-exempt'."
+    },
+    {
+      "id": 4,
+      "line": 609,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Line-id constants are now named for a commodity (LINE_CATTLE, LINE_CATS, LINE_HORSES, LINE_OSTRICHES, LINE_UNKNOWN) but are reused with other codes: LINE_CATS holds HORSES_CODE at 609 ('supports two lines sharing the same matching commodity'), and LINE_UNKNOWN holds CATTLE_CODE at 847 ('is in scope across two 0102 lines'). The rename also stopped part-way: 'cow line' survives in the describe title at 680 and 'a Cow line' in the comment at 892.",
+      "fix": "Must: each line-id name predicts the commodity stored on it wherever it is used, and the cattle concept has one name across titles and comments. One way: add LINE_SECOND_HORSES / LINE_SECOND_CATTLE (or neutral LINE_A / LINE_B) for the two-same-commodity tests, and change 'cow line' / 'Cow line' to 'cattle line' (or '0102 line')."
+    },
+    {
+      "id": 5,
+      "line": 164,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Version and history markers in test titles and comments: every describe title is prefixed 'V4' / 'V4 smoke' (164, 185, 211 ... 1187); comments say 'the V4 Standard Address Block' (148), 'Reason constants for the migrated applyTo + helpers obligations' (120) and 'containsUnweanedAnimals is NOT in this list any more - audit #11 gated it ...' (186-189).",
+      "fix": "Must: no test title or comment in the file carries a version label, audit id or before/after narration. One way: drop the 'V4 — ' prefix from the describe titles, delete the 'migrated' and 'audit #11 / any more' comments, and drop 'V4' from the address comment."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/services/persistence/records/notification-mapper/mapper-a/commodity.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "commodity.name now sends a CN code that the backend forwards as PIMS commonName and the INS commodity column, against the recorded decision to send the common name; plus a misplaced comment and Mapper-B-era names.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "commodity.name now carries the first line's CN code ('0102') instead of a commodity name. The backend copies commodity.name into the GBN-AG TradeLineItem.commonName and description (animals-backend TradeLineItem.java:36-38, 49-51), and ins-backend shows that commonName as the notification's commodity (NotificationUpsertService.java:57-60). So PIMS gets commonName '0102' and the INS dashboard shows a code. The ticket's 14 Oct decision 3 says the line's common name is what goes to PIMS, yet the commonName each line now carries (from-fulfilment.js:40) reaches no payload field: species-entry.js:30-31 sends the Latin name as both value and text, and no PR in the set gives the backend a home for it.",
+      "fix": "Must: what the payload sends as commodity name (and so as PIMS commonName and the INS commodity column) is a value the product decision names, and the line's common name either reaches the backend or is not read from fulfilment. One way: confirm with the ticket owner whether PIMS commonName should be the species common name; if so, raise the backend/ins-backend change in this PR set and map line.commonName in speciesEntryFromLine; if the CN code is the agreed value, record that in the live-animals services doc and drop the unused commonName read."
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment at lines 8-12 sits above typeTextForLine but describes baseComplementFromGroup and commodityFromLinesA ('One complement per commodity group'), and describes another module ('the skeleton computes them via a lodash sum'). A comment may describe only the lines directly below it and never another module.",
+      "fix": "Must: no comment in the file describes code other than the lines directly below it or another module; what it says is carried by names. One way: delete the comment; if the number-vs-string totals rule needs recording, put it in the repo docs.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "baseComplementFromGroup (line 18) and commodityFromLinesA (line 28) name a layering that no longer exists: 'base' and the 'A' suffix predict a Mapper B variant that extends them, but notification-mapper/ holds only mapper-a and nothing else calls them. baseComplementFromGroup and typeTextForLine are also exported with no caller outside this file.",
+      "fix": "Must: each name says what the function returns with no reference to a variant that does not exist, and only functions used outside the module are exported. One way: rename to complementFromGroup and commodityFromLines, and drop the export on complementFromGroup and typeTextForLine.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

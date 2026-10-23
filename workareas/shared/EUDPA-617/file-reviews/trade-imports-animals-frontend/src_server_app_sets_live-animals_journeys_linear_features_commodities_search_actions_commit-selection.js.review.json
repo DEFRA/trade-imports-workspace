@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/actions/commit-selection.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "89ae5d4b5c27fa5031f68413f262a5826e455367",
+  "pr": 422,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:35:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The row-based seedLine and clearing of stored search rows are correct, but the add-a-collection recipe still shows the old keys-based call and the no-common-name branch is untested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 36,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "commitSelection now takes chosen search rows (rows.map(seedLine)) instead of keys, and this PR edits add-a-collection.md, yet the recipe's batch-split snippet (add-a-collection.md:257) still shows 'selected.map(seedLine)' and says the reconcile lives in search.controller.js, where it no longer is (it is in actions/commit-selection.js).",
+      "fix": "Must: the add-a-collection.md batch-split section shows the reconcile as it is now: seedLine mapped over the chosen search rows, in actions/commit-selection.js. One way: change the snippet to 'rows.map(seedLine)', point the link at actions/commit-selection.js, and say each row carries commodityCode, speciesLatinName and commonName from the shown search results."
+    },
+    {
+      "id": 2,
+      "line": 12,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "seedLine leaves commonName off the line when the row has none ('...(commonName ? { commonName } : {})'), the case MDM's missing common names produce, but every row in search/test-support.js has a commonName and the controller tests compare with toEqual (which treats an undefined key as absent), so deleting the conditional or always writing commonName keeps every test green.",
+      "fix": "Must: a test fails if a chosen row with no common name saves a line carrying a commonName key (undefined, null or empty). One way: add a search.controller.test.js case that commits a stored row without commonName and asserts Object.keys(line) (or toStrictEqual) on the saved line; or drop the conditional and always copy commonName if the persistence layer is shown not to care."
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:43Z"
+}

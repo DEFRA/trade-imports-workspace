@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySpecies.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "c8a8ee28147e1082d4b98fb0969b49496f46b9ec",
+  "pr": 36,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-23T09:39:44Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Simple response record; only a Minor gap on its null contract for latinName and commonName.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "CommoditySpecies is a public record on the API response with no null contract: latinName is always set by CommoditySearchService (rows without one are skipped) but is not guarded, and commonName can legitimately be null (the ticket notes MDM has missing common names) but is not marked @Nullable. The modern-java records rule asks for requireNonNull on guaranteed components and @Nullable on optional ones.",
+      "fix": "Must: CommoditySpecies states which components may be null: latinName is rejected when null, commonName is declared nullable. One way: a compact constructor with Objects.requireNonNull(latinName, \"latinName\") and @Nullable on commonName.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-10-23T09:43:45Z"
+}

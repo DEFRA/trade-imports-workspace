@@ -145,7 +145,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
               "strength": "partial",
               "notes": "proves save and list presence by name only, not field-level persistence"
             },
@@ -453,7 +453,15 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "test": "saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
               "strength": "full",
               "notes": ""
             }
@@ -757,20 +765,44 @@
           "coverage": "full",
           "tests": [
             {
-              "type": "fit",
+              "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "renders addresses in a table with Name, Address and Country columns",
-              "strength": "full",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "renders the results count, column headings, and each address's View link and country label",
+              "strength": "partial",
               "notes": ""
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "renders the results count, column headings, each address row and the Add link",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
               "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "renders addresses in a table with Name, Address, Country and Action columns",
+              "strength": "partial",
               "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the intro and the Add a new address button",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "shows the intro and Add a new address, with the Search field hidden until Filter addresses is opened",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
             }
           ]
         },
@@ -801,6 +833,108 @@
               "test": "Dashboard and Address book links are visible and navigate correctly",
               "strength": "full",
               "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-D",
+          "name": "A name of more than one word shows on two lines",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows the name on two lines and every stored address line on its own line",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give the first word then the rest, single-spaced, for a name of several words",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give one line for a one-word name",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the name on two lines and the address on one line per stored line",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a multi-word name shows its first word then the rest on two lines, and a one-word name on one line",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-E",
+          "name": "Each stored address line shows on its own line",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows the name on two lines and every stored address line on its own line",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give address line 1, address line 2, town or city, county and postcode in that order",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should leave out blank and missing lines",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the name on two lines and the address on one line per stored line",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "each stored address line shows on its own line, each but the last ending in a comma, with blank lines left out",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
             }
           ]
         }
@@ -838,29 +972,45 @@
     },
     {
       "id": "REQ-INS-ADDR-014",
-      "name": "An empty address book invites the user to add the first address",
+      "name": "An empty address book shows no rows and invites the user to add the first address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-014-A",
-          "name": "No addresses shows an empty-state message and an add action",
+          "name": "No addresses shows an empty table and an add action",
           "coverage": "full",
           "tests": [
             {
-              "type": "fit",
+              "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows an empty-state message and an option to add one",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows Showing 0 of 0 and the table headings with no rows when the book is empty",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "shows empty state when org has no addresses",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give Showing 0 of 0 for a page with no results",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows Showing 0 of 0 and the table headings with no rows",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
+              "test": "confirming removes the address and confirms it on the address book",
+              "strength": "partial",
+              "notes": "the list left after the last delete; not red-probed"
             }
           ]
         }
@@ -2332,6 +2482,222 @@
               "test": "GET renders the add address details form with Back and cancel linking to the address book",
               "strength": "partial",
               "notes": "the heading and the Back link to the address book"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-028",
+      "name": "The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-028-A",
+          "name": "The filter disclosure is collapsed on load and opens and closes",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "keeps the Search field hidden until Filter addresses is opened, and hides it again when closed",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens and closes the disclosure",
+              "strength": "partial",
+              "notes": "JavaScript off; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "shows the intro and Add a new address, with the Search field hidden until Filter addresses is opened",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "Filter addresses opens to show the Search field",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-B",
+          "name": "The search field is labelled Search, with a placeholder, no hint and an icon-only button",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "holds the Search label, the input and one icon-only submit button inside the disclosure",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should word the list intro, filter disclosure, search field, search button and empty results line",
+              "strength": "partial",
+              "notes": "pins the English copy; the probe changed the results line, not these keys"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the Search field with its placeholder and no hint",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-C",
+          "name": "Submitting a search lists the matches",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lists the match under the filter with its View link as the only link there",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "searches by the term when submitted with the Search button",
+              "strength": "partial",
+              "notes": "lands on the search URL; the stub does not filter by term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "searches by the term when submitted with Enter in the Search field",
+              "strength": "partial",
+              "notes": "lands on the search URL; the stub does not filter by term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "searches by the term when submitted with the Search button and JavaScript is off",
+              "strength": "partial",
+              "notes": "lands on the search URL; the stub does not filter by term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "searches by the term when submitted with Enter in the Search field and JavaScript is off",
+              "strength": "partial",
+              "notes": "lands on the search URL; the stub does not filter by term"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with the Search button lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with Enter in the Search field lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-D",
+          "name": "A search matching nothing shows an empty table",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows Showing 0 of 0, the table headings, no rows and no links under the filter when a search matches nothing",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search matching nothing shows Showing 0 of 0, the column headers, no rows and no links",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-029",
+      "name": "The success banner after an add, edit or delete stays until the user leaves or reloads the page",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-029-A",
+          "name": "The banner is still shown ten seconds later",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-029-B",
+          "name": "Reloading the list shows no banner",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
             }
           ]
         }

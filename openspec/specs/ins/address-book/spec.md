@@ -196,14 +196,29 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 ### Requirement: The address book list shows each address's key details, with a way to view, and a way to add one
 **ID**: REQ-INS-ADDR-012
-The system MUST list each address's name, full postal address and country, MUST offer a way to open that address's own details, and MUST offer a way to add a new address, reachable from the service's navigation.
+The system MUST head the list 'Address book' with the intro 'Manage your addresses for use across all your import notifications', then offer a way to add a new address, then the filter (REQ-INS-ADDR-028). It MUST list each address's name, stored postal address lines and country, MUST offer a way to open that address's own details, and MUST make the list reachable from the service's navigation.
 
 #### Scenario: The list renders each address's details, with columns and an add action
 **ID**: SCN-INS-ADDR-012-A
 - **GIVEN** the user has addresses in their address book
 - **WHEN** they view the address book
-- **THEN** each address is listed with its name, full postal address and country
-- **AND** an action to add a new address is offered
+- **THEN** the intro reads 'Manage your addresses for use across all your import notifications'
+- **AND** an action to add a new address is offered directly under the intro
+- **AND** each address is listed with its name, address and country under the columns Name, Address, Country and Action
+
+#### Scenario: A name of more than one word shows on two lines
+**ID**: SCN-INS-ADDR-012-D
+- **GIVEN** the address book holds an address named 'Green valley farm' and another named 'Hollin'
+- **WHEN** the user views the address book
+- **THEN** the first name shows 'Green' on one line and 'valley farm' on the next
+- **AND** the second name shows 'Hollin' on one line
+
+#### Scenario: Each stored address line shows on its own line
+**ID**: SCN-INS-ADDR-012-E
+- **GIVEN** an address holds address line 1, address line 2, town or city, county and postcode, and another holds only address line 1, town or city and postcode
+- **WHEN** the user views the address book
+- **THEN** the first address shows its five lines in that order, each on its own line and each but the last ending in a comma
+- **AND** the second address shows its three lines, with the blank lines left out
 
 #### Scenario: Selecting an address from the list opens its own details page
 **ID**: SCN-INS-ADDR-012-B
@@ -229,15 +244,17 @@ The system MUST page the address book list once it holds more than twenty-five a
 - **WHEN** they move to the next page
 - **THEN** the remaining addresses are shown, with the range and total updated to match
 
-### Requirement: An empty address book invites the user to add the first address
+### Requirement: An empty address book shows no rows and invites the user to add the first address
 **ID**: REQ-INS-ADDR-014
-The system MUST show a message explaining the address book is empty, and MUST offer a way to add an address, when an organisation has none.
+The system MUST show 'Showing 0 of 0' and the table with its column headers and no rows, and MUST offer a way to add an address, when an organisation has none.
 
-#### Scenario: No addresses shows an empty-state message and an add action
+#### Scenario: No addresses shows an empty table and an add action
 **ID**: SCN-INS-ADDR-014-A
 - **GIVEN** an organisation has no addresses
 - **WHEN** the user views the address book
-- **THEN** a message explains there are no addresses yet, and an action to add one is offered
+- **THEN** the list reads 'Showing 0 of 0'
+- **AND** the table shows the column headers Name, Address, Country and Action with no rows
+- **AND** an action to add one is offered
 
 ### Requirement: Viewing an address lists its Standard Address Block against its labels, leaving out blank optional fields, and offers to edit or delete it
 **ID**: REQ-INS-ADDR-015
@@ -532,3 +549,58 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 - **THEN** the add form opens, headed 'Add address details'
 - **WHEN** they select Back
 - **THEN** they return to the address book list
+
+### Requirement: The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'
+**ID**: REQ-INS-ADDR-028
+The system MUST hold the address book search in a 'Filter addresses' disclosure, collapsed when the list loads, with a field labelled 'Search' and an icon-only button named 'Search'. The button, or Enter in the field, MUST submit the search and list the matches, with or without JavaScript.
+
+#### Scenario: The filter disclosure is collapsed on load and opens and closes
+**ID**: SCN-INS-ADDR-028-A
+- **GIVEN** the user is viewing the address book
+- **WHEN** the page loads
+- **THEN** the 'Filter addresses' disclosure is collapsed and the Search field is hidden
+- **WHEN** the user opens the disclosure
+- **THEN** the Search field is shown
+- **WHEN** the user closes the disclosure
+- **THEN** the Search field is hidden again
+- **AND** this works with JavaScript switched off
+
+#### Scenario: The search field is labelled Search, with a placeholder, no hint and an icon-only button
+**ID**: SCN-INS-ADDR-028-B
+- **GIVEN** the user has opened the 'Filter addresses' disclosure
+- **WHEN** they look at the search controls
+- **THEN** the field is labelled 'Search' and shows the placeholder 'Search by name, address or country'
+- **AND** the field has no hint
+- **AND** the only button is named 'Search' and shows an icon with no visible text
+
+#### Scenario: Submitting a search lists the matches
+**ID**: SCN-INS-ADDR-028-C
+- **GIVEN** the address book holds one address that matches the search term
+- **WHEN** the user enters the term and presses the Search button, or presses Enter in the field
+- **THEN** the list reads 'Showing 1-1 of 1' and shows that address
+- **AND** the only link below the filter is that address's View link
+- **AND** this works with JavaScript switched off
+
+#### Scenario: A search matching nothing shows an empty table
+**ID**: SCN-INS-ADDR-028-D
+- **GIVEN** no address matches the search term
+- **WHEN** the user submits the search
+- **THEN** the list reads 'Showing 0 of 0'
+- **AND** the table shows the column headers Name, Address, Country and Action with no rows
+- **AND** no link is offered below the filter
+
+### Requirement: The success banner after an add, edit or delete stays until the user leaves or reloads the page
+**ID**: REQ-INS-ADDR-029
+The system MUST keep the 'Success' banner shown on the address book after an add, edit or delete until the user leaves the page or reloads it, and MUST NOT hide it after a delay.
+
+#### Scenario: The banner is still shown ten seconds later
+**ID**: SCN-INS-ADDR-029-A
+- **GIVEN** the user has just saved an address and landed on the address book
+- **WHEN** ten seconds pass
+- **THEN** the 'Success' banner is still shown
+
+#### Scenario: Reloading the list shows no banner
+**ID**: SCN-INS-ADDR-029-B
+- **GIVEN** the address book is showing the 'Success' banner after a save
+- **WHEN** the user reloads the page
+- **THEN** no 'Success' banner is shown

@@ -596,6 +596,10 @@ A page that uploads a file must work with JavaScript turned off. The exemplar CD
 - **Initiate on the server.** The route calls cdp-uploader's initiate endpoint and sets the form's `uploadUrl` to the frontend's own domain. In the exemplar: `src/routes/document-upload.js`.
 - **Poll status without JavaScript.** A processing page refreshes itself with `<meta http-equiv="refresh">` and a check-status route until the scan finishes. In the exemplar: `src/views/document-upload/processing.njk`.
 - **Size limit.** CDP's managed nginx adds a `location /upload-and-scan` to every service, with `client_max_body_size 2304M` (about 2.25 GB), proxied straight to cdp-uploader. So `browser → your-service/upload-and-scan` is not held to the roughly 10 MB limit on normal routes, and needs no platform request. Source: `DEFRA/cdp-nginx-upstreams`, `src/templates/server.conf.tpl`.
+- **The stack reproduces it locally.** `docker/stack/config/nginx/animals-frontend.conf`
+  is the workspace's own copy of that sidecar, mounted by the
+  `animals-frontend-nginx` service, so the cap and the bypass behave locally as
+  they do on CDP. See `docker/stack/AGENTS.md`.
 
 ---
 

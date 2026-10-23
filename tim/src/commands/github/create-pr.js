@@ -3,7 +3,7 @@ import { createGithubClient } from '../../clients/github-client.js'
 import { TimError } from '../../errors.js'
 import { resolveGithubToken } from '../auth.js'
 import { makeRunAction } from '../_run-action.js'
-import { readPrBody, repoNameSchema } from './shared.js'
+import { readPrText, repoNameSchema } from './shared.js'
 
 const requiredText = (message) =>
   z.string({ error: message }).trim().min(1, message)
@@ -44,7 +44,7 @@ export const parseCreatePrArgs = (input) => {
  */
 export const runCreatePr = async (input) => {
   const { repo, head, base, title, bodyFile, draft } = parseCreatePrArgs(input)
-  const body = await readPrBody(bodyFile)
+  const body = await readPrText(bodyFile)
   const client = createGithubClient({ token: await resolveGithubToken() })
   return client.openPr(repo, { head, base, title, body, draft })
 }

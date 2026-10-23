@@ -182,7 +182,7 @@ const parseRepoFullName = (htmlUrl) => {
  * @param {string} [opts.token]
  * @param {string} [opts.org]
  * @returns {object} client with whoami / findPrsForTicket / getPr / getPrDiff
- *   / listWorkflowRuns / openPr / rewritePrText / listChecks / getRunLog / rerun / getRunStatus
+ *   / listWorkflowRuns / openPr / rewritePrText / closePr / listChecks / getRunLog / rerun / getRunStatus
  *   / getPrMergeState / commitsBehindBase / allowedMergeMethods / mergePr
  *   / deleteBranch methods
  * @throws {TimError} AUTH when no token is provided
@@ -452,6 +452,32 @@ export const createGithubClient = ({
           number: data.number,
           url: data.html_url,
           title: data.title
+        }
+      }),
+
+    closePr: (repo, number, { comment } = {}) =>
+      wrap(`closePr(${repo}, ${number})`, async () => {
+        if (comment !== undefined) {
+          await octokit.issues.createComment({
+            owner: org,
+            repo,
+            issue_number: number,
+            body: comment
+          })
+        }
+        const { data } = await octokit.pulls.update({
+          owner: org,
+          repo,
+          pull_number: number,
+          state: 'closed'
+        })
+        return {
+          repo,
+          number: data.number,
+          url: data.html_url,
+          title: data.title,
+          state: data.state,
+          commented: comment !== undefined
         }
       }),
 

@@ -3,7 +3,7 @@ import { createGithubClient } from '../../clients/github-client.js'
 import { TimError } from '../../errors.js'
 import { resolveGithubToken } from '../auth.js'
 import { makeRunAction } from '../_run-action.js'
-import { readPrBody, repoNameSchema } from './shared.js'
+import { prNumberSchema, readPrText, repoNameSchema } from './shared.js'
 
 const NOTHING_TO_CHANGE =
   'Give a new title with --title, a new description with --body-file, or both.'
@@ -11,10 +11,7 @@ const NOTHING_TO_CHANGE =
 const argsSchema = z
   .object({
     repo: repoNameSchema,
-    number: z.coerce
-      .number({ error: 'Give the PR number, such as 145.' })
-      .int('Give the PR number, such as 145.')
-      .positive('Give the PR number, such as 145.'),
+    number: prNumberSchema,
     title: z.string().trim().min(1, 'The title cannot be blank.').optional(),
     bodyFile: z.string().trim().min(1).optional()
   })
@@ -48,7 +45,7 @@ export const parseEditPrArgs = (input) => {
  */
 export const runEditPr = async (input) => {
   const { repo, number, title, bodyFile } = parseEditPrArgs(input)
-  const body = bodyFile === undefined ? undefined : await readPrBody(bodyFile)
+  const body = bodyFile === undefined ? undefined : await readPrText(bodyFile)
   const client = createGithubClient({ token: await resolveGithubToken() })
   return client.rewritePrText(repo, number, { title, body })
 }

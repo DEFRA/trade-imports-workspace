@@ -420,8 +420,14 @@ code and should not re-litigate these.
     `report-status` updates the check. Verified on one repo before the other two.
 - **`npm test` does not run FIT**, and `coverage.json` cites FIT specs as its
   witnesses. CI runs FIT, so the pipeline is the gate, but a local green means
-  less than it looks. FIT locally:
-  `PORT=3050 npm run test:fit -- --project=features` (~3m for `features`).
+  less than it looks. FIT locally: **`PORT=3050 npm run test:fit`** (~7m, 629
+  tests), which runs the `features` *and* `journeys` projects as CI's
+  `test:fit:ci` does. **Do not run `--project=features` alone** — the recipe
+  this file used to give missed #58 breaking an anchored URL assertion in
+  `fit/journey-smoke.fit.spec.js`, a `journeys` spec, and CI found it instead.
+  Note also that FIT is its own CI job: the `Run Pull Request Checks` check
+  passing does **not** mean FIT passed, and the run's own conclusion is the
+  only thing that covers both.
 
 ## Deliberately not done, with reasons
 
@@ -503,7 +509,8 @@ diagnosing a red E2E backwards:
 
 1. `git -C <repo> rev-list --left-right --count origin/main...HEAD` in all five
    repos. Anything behind gets `main` merged in first.
-2. The frontend's `npm test` and `PORT=3050 npm run test:fit -- --project=features`.
+2. The frontend's `npm test` and `PORT=3050 npm run test:fit` — the whole FIT
+   suite, both projects, not `--project=features`.
 3. The two Sonar gates by hand (see above), while the pre-push hook is dead.
 4. Let the push's own E2E cascade run. Do not dispatch it.
 

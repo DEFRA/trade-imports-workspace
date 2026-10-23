@@ -159,11 +159,16 @@ of the one export the client uses. Verify by adding the import and building.
 
 ## Standing hazards for whoever picks this up
 
-- **`npm test` does not run FIT**, but FIT runs locally:
-  `PORT=3050 npm run test:fit -- --project=features` (~3m for the whole
-  `features` project). Anything touching `services/cdp-uploader/stub.js`,
-  `services/document-uploads/stub.js`, `upload-config.js`, copy strings or the
-  documents template should run it.
+- **`npm test` does not run FIT, and `--project=features` is only half of
+  it.** Run `PORT=3050 npm run test:fit` (~7m, 629 tests): it covers both the
+  `features` and `journeys` projects, which is what CI's `test:fit:ci` runs.
+  The `--project=features` recipe this file used to give cost a red CI run.
+  #58's `uploadSession` query parameter broke an anchored URL assertion in
+  `fit/journey-smoke.fit.spec.js`, which lives in `journeys`, so a local
+  features-only run passed while CI failed. Anything touching
+  `services/cdp-uploader/stub.js`, `services/document-uploads/stub.js`,
+  `upload-config.js`, copy strings, the documents template **or the page's
+  query parameters** should run the whole suite.
 - **The frontend is cross-repo coupled to `ins-tests` by behaviour, not only by
   strings.** Three times on this ticket: the `'Save and add another'` rename,
   the per-reason scan tag breaking `documents-scan-lifecycle.spec.ts`, and

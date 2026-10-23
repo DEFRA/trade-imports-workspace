@@ -22,11 +22,11 @@ Rows, in build order:
 | inc-214 | Identification details | nothing | |
 | inc-216 | Check your answers: no red bar on a missing answer | nothing | |
 | inc-219 | CPH number | nothing | |
-| inc-221 | Final tidy | inc-214, inc-216, inc-217, inc-219 here; inc-213, inc-223, inc-218 on laptop A | `origin/main`, in all three repos |
+| inc-221 | Final tidy | inc-214, inc-216, inc-217, inc-219 here; inc-213, inc-223, inc-218 on laptop A | laptop A's branch `origin/feat/EUDPA-720-design-release-2-1-design-snagging`, in all three repos (frontend, plantsfrontend, tests); nothing is merged to main yet |
 
 - inc-217 goes first because it touches all three repos, so one merge brings laptop A's work into each.
-- inc-221 waits until laptop A's three rows are done. Its `origin/main` merge means it builds on Sam's merged snagging
-  work, so check Sam has merged laptop A's pull requests before it builds.
+- inc-221 waits until laptop A's three rows are done. It merges laptop A's branch
+  `origin/feat/EUDPA-720-design-release-2-1-design-snagging` into all three repos, so it builds on laptop A's finished work. Nothing is merged to main yet.
 - inc-221's last note names a patch to apply. It is in laptop A's workarea:
   `../design-snagging/leftovers/2026-10-22-plants-party-edit.patch`.
 
@@ -56,7 +56,7 @@ Build the Design Release 2.1 design snagging B rows end to end, on one branch, a
    - Timeouts: yesterday laptop B timed out in the animals FIT suite (900 seconds) and in an ins-tests pagination spec. If either comes back, tell Sam: don't raise a timeout yourself.
    - After each landed row, commit and push this backlog.json on feat/NO_JIRA-design-release-2-1-snagging-b, then merge feat/NO_JIRA-design-release-2-1 into it, so both laptops see each other's state.
    - After each landed row, retake that row's "screens to retake" screenshots and compare them with workareas/shared/design-release-2-1/snagging/screens/prototype/. Report mismatches; don't fix by hand.
-   - Before inc-221 builds, check laptop A's inc-213, inc-223 and inc-218 are done and Sam has merged laptop A's PRs (#421, #113, #42). inc-221 merges origin/main into all three repos, so it builds on Sam's merged work. If Sam hasn't merged yet, stop before inc-221 and tell him.
+   - Before inc-221 builds, check laptop A's inc-213, inc-223 and inc-218 are done and pushed to `origin/feat/EUDPA-720-design-release-2-1-design-snagging`. inc-221 merges that branch into all three repos (frontend, plantsfrontend, tests); nothing is merged to main yet. If laptop A's rows are not pushed, stop before inc-221 and tell Sam.
 
 3. Hand back
    - Once the loop drains, commit and push this backlog.json and any openspec changes on feat/NO_JIRA-design-release-2-1-snagging-b, then merge that branch into feat/NO_JIRA-design-release-2-1 and push.

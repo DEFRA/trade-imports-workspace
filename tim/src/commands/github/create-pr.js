@@ -1,10 +1,9 @@
-import { readFile } from 'node:fs/promises'
 import { z } from 'zod'
 import { createGithubClient } from '../../clients/github-client.js'
 import { TimError } from '../../errors.js'
 import { resolveGithubToken } from '../auth.js'
 import { makeRunAction } from '../_run-action.js'
-import { repoNameSchema } from './shared.js'
+import { readPrBody, repoNameSchema } from './shared.js'
 
 const requiredText = (message) =>
   z.string({ error: message }).trim().min(1, message)
@@ -35,18 +34,6 @@ export const parseCreatePrArgs = (input) => {
   return result.data
 }
 
-const readBody = async (bodyFile) => {
-  try {
-    return await readFile(bodyFile, 'utf8')
-  } catch (error) {
-    throw new TimError(
-      'USAGE',
-      `Can't read the PR description file ${bodyFile}. Check the path and try again.`,
-      error
-    )
-  }
-}
-
 /**
  * `tim github create-pr`'s full behaviour: opens a PR from `head` into
  * `base`, or returns the PR already open for `head` and changes nothing.
@@ -57,7 +44,7 @@ const readBody = async (bodyFile) => {
  */
 export const runCreatePr = async (input) => {
   const { repo, head, base, title, bodyFile, draft } = parseCreatePrArgs(input)
-  const body = await readBody(bodyFile)
+  const body = await readPrBody(bodyFile)
   const client = createGithubClient({ token: await resolveGithubToken() })
   return client.openPr(repo, { head, base, title, body, draft })
 }

@@ -8,7 +8,7 @@ Asks for the County Parish Holding number the consignment's commodities call for
 
 ### Requirement: The page asks for the CPH number as three labelled, sized boxes, starting empty
 **ID**: REQ-CPH-001
-The system MUST ask the user for the CPH number as three separate boxes — county (2 digits), parish (3 digits), holding number (4 digits) — each visibly labelled and sized to its digit count, grouped under one legend and hint describing the whole number, and MUST leave every box empty when the page is first opened.
+The system MUST ask the user for the CPH number as three separate boxes — county (2 digits), parish (3 digits), holding number (4 digits) — each visibly labelled and sized to its digit count, grouped under one legend and hint describing the whole number, and MUST leave every box empty when the page is first opened. The sizing shows the shape of the number and MUST NOT limit how many characters a box accepts.
 
 #### Scenario: The page presents three labelled, sized boxes with nothing entered
 **ID**: SCN-CPH-001-A
@@ -52,7 +52,7 @@ The system MUST refuse to save the CPH number page when every box is left empty,
 
 ### Requirement: Each box is validated on its own length and digits, and every wrong box is named at once
 **ID**: REQ-CPH-004
-The system MUST reject a box that is not exactly its required number of digits, and separately reject one containing a non-digit character, each with an error naming that specific box, MUST preserve every box's typed value, and MUST report every box that is wrong at the same time rather than one at a time. The error MUST mark the group as a whole rather than each box individually.
+Except where REQ-CPH-008 splits a whole number typed into the county box, the system MUST reject a box that is not exactly its required number of digits, and separately reject one containing a non-digit character, each with an error naming that specific box, MUST preserve every box's typed value, and MUST report every box that is wrong at the same time rather than one at a time. The error MUST mark the group as a whole rather than each box individually.
 
 #### Scenario: A box of the wrong length is named, keeping every value typed
 **ID**: SCN-CPH-004-A
@@ -87,6 +87,52 @@ The system MUST reject a box that is not exactly its required number of digits, 
 - **WHEN** the error is shown
 - **THEN** one error message is attached to the group as a whole
 - **AND** every box in the group is styled to show it is in error
+
+#### Scenario: A county box that does not hold nine digits is named per box, keeping what was typed
+**ID**: SCN-CPH-004-F
+- **GIVEN** the county box holds something other than nine digits once spaces and slashes are removed, such as 1234, and the parish and holding boxes are empty
+- **WHEN** the user saves and continues
+- **THEN** an error names each box that is wrong or missing
+- **AND** every box still shows what was typed
+
+### Requirement: A whole CPH number entered in the county box is kept and saved
+**ID**: REQ-CPH-008
+The system MUST keep every character typed or pasted into a box, and when the county box holds a whole CPH number of nine digits, written bare or with spaces or slashes, and the parish and holding boxes are empty, MUST save it as the nine digits in the same way as a number entered across the three boxes. This MUST work with JavaScript off.
+
+#### Scenario: Typing all nine digits straight through keeps every digit
+**ID**: SCN-CPH-008-A
+- **GIVEN** the user is on the CPH number page
+- **WHEN** they type 123456789 straight through into the county box
+- **THEN** the county box shows all nine digits
+
+#### Scenario: A whole number in the county box is saved as nine digits
+**ID**: SCN-CPH-008-B
+- **GIVEN** the county box holds 123456789, 12/345/6789 or 12 345 6789 and the parish and holding boxes are empty
+- **WHEN** the user saves and continues
+- **THEN** the number is saved as 123456789
+- **AND** the consignment addresses page shows 123456789 in its CPH section
+
+#### Scenario: Pasting the whole number saves it the same as typing it
+**ID**: SCN-CPH-008-C
+- **GIVEN** the user pastes 12/345/6789 into the county box
+- **WHEN** they save and continue
+- **THEN** the number is saved as 123456789
+
+### Requirement: Focus is never moved between the boxes automatically
+**ID**: REQ-CPH-009
+The system MUST NOT move focus from one CPH box to another while the user types, pastes or presses Backspace, with JavaScript on or off.
+
+#### Scenario: Filling a box leaves focus in it
+**ID**: SCN-CPH-009-A
+- **GIVEN** the user is on the CPH number page
+- **WHEN** they fill the county box
+- **THEN** focus stays in the county box
+
+#### Scenario: Backspace in an empty box leaves focus in it
+**ID**: SCN-CPH-009-B
+- **GIVEN** the user is on the CPH number page with the parish box empty and focused
+- **WHEN** they press Backspace
+- **THEN** focus stays in the parish box
 
 ### Requirement: Help explaining what a CPH number is stays collapsed until opened
 **ID**: REQ-CPH-005

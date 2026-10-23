@@ -178,6 +178,8 @@ const WORKSPACE_ANSWER = {
   tilde: '~/ws',
   canonical: true,
   startedAt: '20261001T090000Z',
+  machineConfig: null,
+  workers: {},
   summary: 'resolved'
 }
 
@@ -858,6 +860,30 @@ describe('increment-build-loop', () => {
     )
   })
 
+  test('tells the workspace agent to copy this machine’s worker counts from tim', async () => {
+    const run = await runJsonStringArgs()
+
+    expect(run.agents[0].prompt).toContain(
+      'Then run `tim build workers --workspace <the candidate path you used> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
+    )
+  })
+
+  test('stops before any increment when the workspace agent relays a worker count that is not a whole number', async () => {
+    const run = await runLoop(scriptPath, {
+      args: BASE_ARGS,
+      answers: [
+        {
+          ...WORKSPACE_ANSWER,
+          workers: { 'trade-imports-animals-frontend/fit': 'three' }
+        }
+      ]
+    })
+
+    expect(run.error.message).toContain(
+      'the workspace agent relayed this machine\'s worker counts in the wrong shape — got {"trade-imports-animals-frontend/fit":"three"}'
+    )
+  })
+
   describe('the build stages', () => {
     const PREFLIGHT_ANSWER = { ok: true, summary: '1' }
     const WORK_BRANCH = 'feat/EUDPA-900-fixture'
@@ -868,6 +894,54 @@ describe('increment-build-loop', () => {
         args: BASE_ARGS,
         answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, START_ANSWER, ...answers]
       })
+
+    const guardedPrompts = (run) =>
+      run.agents
+        .map(({ prompt }) => prompt)
+        .filter((prompt) => prompt.includes('GUARD RAILS'))
+
+    test('gives every guarded stage this machine’s worker count for each FIT and E2E rung it names', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          {
+            ...WORKSPACE_ANSWER,
+            machineConfig: '/ws/config/machine.json',
+            workers: {
+              'trade-imports-animals-frontend/fit': 3,
+              'trade-imports-ins-tests/e2e': 2
+            }
+          },
+          PREFLIGHT_ANSWER,
+          START_ANSWER,
+          null
+        ]
+      })
+      const prompts = guardedPrompts(run)
+
+      expect({
+        guarded: prompts.length > 0,
+        everyNamesCounts: prompts.every(
+          (prompt) =>
+            prompt.includes(
+              '    trade-imports-animals-frontend fit: `--workers=3`\n    trade-imports-ins-tests e2e: `--workers=2`'
+            ) &&
+            prompt.includes(
+              "Run one FIT or E2E command at a time: never two repos' suites at once."
+            )
+        )
+      }).toEqual({ guarded: true, everyNamesCounts: true })
+    })
+
+    test('names no worker counts when the machine has no settings file', async () => {
+      const run = await runFrom(null)
+
+      expect(
+        guardedPrompts(run).some((prompt) =>
+          prompt.includes("THIS MACHINE'S TEST WORKERS")
+        )
+      ).toBe(false)
+    })
 
     const runFromWithArgs = (argsOverride, ...answers) =>
       runLoop(scriptPath, {
@@ -1926,7 +2000,7 @@ describe('increment-build-loop', () => {
           ).replace(/\s+/g, ' ')
 
           expect(prompt).toContain(
-            'a FIT test runs as `npm --prefix ~/ws/<repoPath> run test:fit:ci -- <spec file>`, never `test:fit`.'
+            "a FIT test runs as `npm --prefix ~/ws/<repoPath> run test:fit:ci -- <spec file>`, never `test:fit`, with this machine's `--workers` count from GUARD RAILS after the spec file."
           )
         })
 

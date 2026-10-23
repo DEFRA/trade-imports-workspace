@@ -8,13 +8,19 @@ The last step before a notification is submitted, asking the user to confirm the
 
 ### Requirement: The page asks the user to confirm the declaration, having told them what they are agreeing to
 **ID**: REQ-DECLARATION-001
-The system MUST present the declaration's statements before asking the user to confirm it — that they are contactable in the UK, that they are responsible for the accuracy of the information given, what they are accountable for, that they are authorised to act, and that they are legally acting on behalf of who they represent — MUST show the date of declaration, and MUST offer a confirmation to agree to and a continue action.
+The system MUST present the declaration's statements before asking the user to confirm it — that they are contactable in the UK, that they are responsible for the accuracy of the information given, what they are accountable for, that they are authorised to act, and that they are legally acting on behalf of who they represent — MUST show the date of declaration in bold, and MUST offer a confirmation to agree to and a continue action.
 
 #### Scenario: The page presents the declaration's statements, the date, and its confirmation
 **ID**: SCN-DECLARATION-001-A
 - **GIVEN** the user has reached the declaration page
 - **WHEN** the page loads
 - **THEN** it presents the declaration's statements and the date of declaration, offering a confirmation to agree to and a continue action
+
+#### Scenario: The date of declaration is shown in bold
+**ID**: SCN-DECLARATION-001-B
+- **GIVEN** the user has reached the declaration page
+- **WHEN** the page loads
+- **THEN** the date after "Date of declaration:" is bold
 
 ### Requirement: Continuing without confirming the declaration is rejected, focusing the confirmation
 **ID**: REQ-DECLARATION-002

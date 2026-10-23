@@ -599,7 +599,7 @@
       ],
       "dependsOn": [],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -644,12 +644,29 @@
         "req-1137",
         "req-1147"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the address book search uses an icon-only button and a placeholder with no hint. The prototype sets both: app/views/address-book.html:64-76 (prototype-dr2-1-source-p15-011) has placeholder=\"Search by name, address or country\", and :77-79 (p15-012) has <button class=\"app-address-book-page__search-button\" type=\"button\" aria-label=\"Search\">. The code copies them in trade-imports-ins-frontend src/server/app/features/address-book/list/list.njk:29-35 (an inline SVG magnifier passed as button html at :51-53) and :47-49 (placeholder: copy.list.search.placeholder). The workspace GDS guide docs/best-practices/gds/components.md:70 \"Stay in the GOV.UK toolbox\" says \"If it is not in GOV.UK Frontend, do not build it\", and GOV.UK Frontend has neither an icon-only search button nor a placeholder pattern (https://design-system.service.gov.uk/components/text-input/ says not to use placeholder text in place of a label or hint). Options: (a) keep the icon-only button and the placeholder as designed and record them as a deliberate exception; (b) use a govukButton with the visible text \"Search\" and move the placeholder text into a hint. Raised by inc-063 review findings 19 and 20.",
+        "For the designer: the magnifier icon on the search button is hand-drawn inline SVG in trade-imports-ins-frontend src/server/app/features/address-book/list/list.njk:29-35 (circle cx=8, path M13 13l6 6). The acceptance criteria set only an icon-only button whose accessible name is \"Search\", and the prototype app/views/address-book.html:77-79 (prototype-dr2-1-source-p15-012) styles the button with the custom class app-address-book-page__search-button. GOV.UK Frontend ships no search icon (docs/best-practices/gds/components.md:70 \"Stay in the GOV.UK toolbox\"). Options: (a) keep the inline SVG magnifier as it is; (b) use the icon asset the prototype uses, shipped as a shared static icon rather than inline markup. Raised by inc-063 review finding 20.",
+        "Twin fix: trade-imports-performance-tests src/lib/background-volume.js needs addressCountFrom to read \"Showing 0 of 0\" as 0 (ADDRESS_LABEL at :10 is /^Showing \\d+-\\d+ of (\\d+)$/ and does not match it, so an empty book returns undefined), the blank-label branch at :41-43 deleted, and the JSDoc at :24-33 rewritten to say the list always shows a results line. This increment does not build in that repo; inc-202 lists perftests. Raised by inc-063 review finding 28."
+      ],
       "notes": [
         "Combines three thin slices on the same list page and template: the heading area and search control (req-1112, 1114, 1115, 1116, 1117, 1118, 1133), the table cells (req-1136, 1137) and the empty state and banner (req-1132, 1147). Built apart they would repeat the same list template, copy file, fit spec and E2E page object for little gain. c-171 settled that the empty and no-match messages, the Clear search link and the timed banner go; Sam's 9 October afternoon ruling (ruling-sam-2026-10-09-pm-p1-094 to p1-096) confirms the disclosure is the GOV.UK details component, the icon button is a real submit button of a GET form, and the INS frontend's success-banner hiding script is removed (WCAG 2.2.1). The Type select joins the 'Filter addresses' disclosure in the Type-filter row; until then the disclosure holds the search field alone. Filtering as the user types is not built in this programme: it waits on design question 5 in the waiting-on-design theme (req-2039), so here the search submits as a GET form only. Each new English string gets a Welsh machine draft as it is added; req-1186's completeness check is the Welsh row. The client entry file that loads the banner script is shared with other client scripts. Kept the existing row's id.",
         "Ticket 4 (list), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "58b6ed3 6351f4f 299aa69c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/65",
+          "repo": "DEFRA/trade-imports-ins-frontend",
+          "number": 65
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/53",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 53
+        }
+      ]
     },
     {
       "id": "inc-069",

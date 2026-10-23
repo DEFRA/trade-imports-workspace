@@ -280,13 +280,13 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
 - **GIVEN** the user is adding an address
 - **WHEN** they leave the name, postcode, country and phone number blank and save
-- **THEN** the summary and each field show 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
+- **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
 #### Scenario: Clearing name, postcode and phone on edit with no country chosen shows the same messages, and nothing is saved
 **ID**: SCN-INS-ADDR-018-B
@@ -305,7 +305,7 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 **ID**: SCN-INS-ADDR-018-D
 - **GIVEN** a service creates an address with the name, postcode, country and phone number blank
 - **WHEN** the request is made
-- **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
+- **THEN** it is refused with a validation error giving 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
 
 ### Requirement: The address form groups its fields under 'Address' and 'Contact details'

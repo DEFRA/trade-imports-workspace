@@ -9,7 +9,7 @@ Each folder holds `description.txt` — the Jira description field, verbatim —
 
 ## The tickets
 
-Five themes have their filled-in tickets (design snagging's final tidy row is still in progress). Every one is `In Dev` and hangs
+Five themes have their filled-in tickets. Every one is `In Dev` and hangs
 off epic **EUDPA-328**.
 
 ### Journey foundation — 74 scenarios, 19 files
@@ -42,15 +42,15 @@ off epic **EUDPA-328**.
 | `origin-page-animals/` | [EUDPA-695](https://eaflood.atlassian.net/browse/EUDPA-695) | Live animals journey | 3 | 14 | 3 |
 | `origin-page-plants/` | [EUDPA-704](https://eaflood.atlassian.net/browse/EUDPA-704) | High-risk plants journey | 1 | 2 | 1 |
 
-### Design snagging — 100 scenarios, 26 files
+### Design snagging — 102 scenarios, 26 files
 
 | Folder | Jira | Domain | Rows | Scenarios | Spec files |
 |---|---|---|---|---|---|
-| `design-snagging-animals/` | [EUDPA-720](https://eaflood.atlassian.net/browse/EUDPA-720) | Live animals journey | 21 | 72 | 14 |
-| `design-snagging-plants/` | [EUDPA-730](https://eaflood.atlassian.net/browse/EUDPA-730) | High-risk plants journey | 12 | 28 | 12 |
+| `design-snagging-animals/` | [EUDPA-720](https://eaflood.atlassian.net/browse/EUDPA-720) | Live animals journey | 21 | 73 | 14 |
+| `design-snagging-plants/` | [EUDPA-730](https://eaflood.atlassian.net/browse/EUDPA-730) | High-risk plants journey | 12 | 29 | 12 |
 | `design-snagging-common/` | [EUDPA-729](https://eaflood.atlassian.net/browse/EUDPA-729) | Common to both frontends | 7 | (summary) | (summary) |
 
-72 + 28 = 100 scenarios and 14 + 12 = 26 files. The common ticket is not a
+73 + 29 = 102 scenarios and 14 + 12 = 26 files. The common ticket is not a
 domain: it summarises the search boxes, date pickers and Back links both
 frontends share, with representative scenarios from both, all already counted
 in the two domain tickets. It goes beyond this skill's one-ticket-per-domain
@@ -61,7 +61,7 @@ updated in place, and its folder was renamed from `design-snagging-stub/`.
 
 The row counts include the second build's five rows from
 `themes/design-snagging-b/backlog.json` (inc-214, inc-216, inc-217, inc-219,
-and the final tidy inc-221, still in progress), which `derived.json` does not
+and the final tidy inc-221), which `derived.json` does not
 read. Merged-into rows are listed with that state; the dropped row inc-222 is
 left out. The work is on draft PRs, not merged.
 

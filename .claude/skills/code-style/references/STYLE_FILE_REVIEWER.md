@@ -151,12 +151,17 @@ comment and every name is in scope, changed or not:
 decision. Drop a finding only when the code shows it is factually
 wrong.
 
-Copy, layout or a component that a design source sets (the
-prototype, a design release, the ticket's acceptance criteria) and a
-guide such as the GDS style guide disagrees with is a `design`
-finding, at WARN. Add it only when you can name both: the design
-source and the guide rule go in `--issue`, and the question for the
-designer goes in `--fix`. It is never fixed in code.
+Copy, layout or a component is a `design` finding, at WARN, when its
+design source (the prototype, a design release, the ticket's
+acceptance criteria) is disagreed with by a guide such as the GDS
+style guide, sets two different things for one element, or does not
+show the case the code had to handle. Read the design source before
+you add one: the ticket names it, and a programme workarea's
+`sources.json` gives a prototype's location and commit. `--issue`
+quotes the design source at file:line (a permalink at that commit for
+a public repo), the code at file:line, and the guide rule with a link
+when a guide disagrees. `--fix` is the question for the designer,
+with the options it leaves. It is never fixed in code.
 
 ### 3b. REFRESH mode — check old violations and new changes
 

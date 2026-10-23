@@ -167,7 +167,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 - **GIVEN** the user opens the delete confirmation for an address
 - **WHEN** the page is shown
 - **THEN** the page is headed 'Delete this address?', shows one 'Address' row holding the name, address lines 1 and 2, town or city, county, postcode and country, one per line, with no email or phone
-- **AND** it says 'Confirm that you want to delete this address.' and 'This action cannot be undone.', with a way back to its details
+- **AND** it says 'Confirm that you want to delete this address.' and 'Deletions are permanent and you cannot undo this.', with a way back to its details
 
 #### Scenario: Following No, cancel leaves the address untouched
 **ID**: SCN-INS-ADDR-011-B
@@ -280,13 +280,13 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
 - **GIVEN** the user is adding an address
 - **WHEN** they leave the name, postcode, country and phone number blank and save
-- **THEN** the summary and each field show 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
+- **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
 #### Scenario: Clearing name, postcode and phone on edit with no country chosen shows the same messages, and nothing is saved
 **ID**: SCN-INS-ADDR-018-B
@@ -305,7 +305,7 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 **ID**: SCN-INS-ADDR-018-D
 - **GIVEN** a service creates an address with the name, postcode, country and phone number blank
 - **WHEN** the request is made
-- **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
+- **THEN** it is refused with a validation error giving 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
 
 ### Requirement: The address form groups its fields under 'Address' and 'Contact details'
@@ -330,7 +330,7 @@ The system MUST group the address fields under 'Address' and Email address and P
 **ID**: SCN-INS-ADDR-021-F
 - **GIVEN** the user opens the edit form
 - **WHEN** the page is shown
-- **THEN** the fields read 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number', in that order
+- **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number', in that order
 - **AND** they sit at the add form's widths
 - **AND** nothing else is asked
 
@@ -507,23 +507,23 @@ The system MUST show the edit form's Country select with no blank option and the
 - **THEN** the Country select opens on a blank option
 - **AND** no country is selected
 
-### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select one' and is opened directly from the address book
+### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' and is opened directly from the address book
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation' (the edit form keeps 'Name or organisation name'), keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select one', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
 - **GIVEN** the user opens the add form
 - **WHEN** the page is shown
 - **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)' and 'Postcode or Zip code', in that order
-- **AND** the edit form still labels the name 'Name or organisation name'
+- **AND** the edit form labels the name 'Name or organisation' too
 
-#### Scenario: The add form opens the Country select on Select one
+#### Scenario: The add form opens the Country select on Select a country
 **ID**: SCN-INS-ADDR-027-B
 - **GIVEN** the user opens the add form
 - **WHEN** the page is shown
 - **THEN** no country is selected
-- **AND** the Country select's blank first option reads 'Select one'
+- **AND** the Country select's blank first option reads 'Select a country'
 
 #### Scenario: Add a new address opens the add form, with a Back link to the address book
 **ID**: SCN-INS-ADDR-027-C

@@ -34,9 +34,9 @@ The system MUST offer the country of origin as a searchable field that filters t
 
 ### Requirement: The country field offers the origin countries and territories the service accepts, and submits a code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder and the origin countries and territories the service accepts (for example the Canary Islands), MUST submit the chosen country's or territory's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.
+The system MUST offer select text and the origin countries and territories the service accepts (for example the Canary Islands), MUST submit the chosen country's or territory's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.
 
-#### Scenario: The country list holds a placeholder, the accepted origin countries and their territories
+#### Scenario: The country list holds select text, the accepted origin countries and their territories
 **ID**: SCN-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
@@ -59,7 +59,7 @@ The system MUST offer a placeholder and the origin countries and territories the
 **ID**: SCN-ORIGIN-003-D
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as "<territory> (<country>)", in alphabetical order of the name shown
+- **THEN** besides the select text it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as "<territory> (<country>)", in alphabetical order of the name shown
 
 ### Requirement: The country field offers its whole list on focus, before anything is typed
 **ID**: REQ-ORIGIN-004

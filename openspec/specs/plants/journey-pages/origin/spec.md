@@ -39,11 +39,11 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
 
-### Requirement: The country field offers a placeholder and every origin country the service primes, and submits a country code
+### Requirement: The country field offers select text and every origin country the service primes, and submits a country code
 **ID**: REQ-PLANTS-ORIGIN-003
-The system MUST offer a placeholder inviting the user to select a country ahead of every origin country and territory the service primes (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text typed into the search field, taking those countries, their territories and their names from the reference data service's SPS origin block, listed by name.
+The system MUST offer select text inviting the user to select a country ahead of every origin country and territory the service primes (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text typed into the search field, taking those countries, their territories and their names from the reference data service's SPS origin block, listed by name.
 
-#### Scenario: The country list holds a placeholder ahead of the primed origin countries
+#### Scenario: The country list holds select text ahead of the primed origin countries
 **ID**: SCN-PLANTS-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
@@ -59,7 +59,7 @@ The system MUST offer a placeholder inviting the user to select a country ahead 
 **ID**: SCN-PLANTS-ORIGIN-003-C
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** besides the placeholder it holds exactly the countries and territories the reference data service serves for the SPS origin block, by their served names, in alphabetical order
+- **THEN** besides the select text it holds exactly the countries and territories the reference data service serves for the SPS origin block, by their served names, in alphabetical order
 
 ### Requirement: A search matching no country says so
 **ID**: REQ-PLANTS-ORIGIN-004

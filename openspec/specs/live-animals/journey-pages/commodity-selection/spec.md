@@ -29,7 +29,7 @@ The system MUST list no species for a search of fewer than three characters, so 
 
 ### Requirement: A search can match a commodity's code or a species' common or scientific name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST search the commodity reference data (MDM's live-animal species) against a commodity's code and against a species' common name as well as its scientific name, MUST leave out every species under a commodity code the reference data flags as germinal (MDM's `isGerminal`), with no other filter on the code, and MUST offer each species by its scientific name alone, as the reference data spells it.
+The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its scientific name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its scientific name alone, as the reference data spells it.
 
 #### Scenario: Searching by common name finds the same species as searching by code
 **ID**: SCN-COMMODITY-SELECT-003-A
@@ -143,12 +143,12 @@ The system MUST require every notification to carry at least one commodity line,
 - **WHEN** the user tries to submit it
 - **THEN** the submission is refused, and the missing commodity line is reported
 
-### Requirement: One search lists no more than ten species
+### Requirement: One search lists no more than a hundred species
 **ID**: REQ-COMMODITY-SELECT-011
-The system MUST list no more than ten species for one search, so a broad term does not fill the page; a species beyond the first ten is reached by a narrower search.
+The system MUST list no more than a hundred species for one search.
 
-#### Scenario: A search matching more than ten species lists ten
+#### Scenario: A search matching more than a hundred species lists a hundred
 **ID**: SCN-COMMODITY-SELECT-011-A
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a commodity code holding more than ten species
-- **THEN** ten species are listed
+- **WHEN** they search for a commodity code holding more than a hundred species
+- **THEN** a hundred species are listed

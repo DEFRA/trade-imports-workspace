@@ -83,7 +83,7 @@ The system MUST NOT ask for any identifier — typed or free-text — for an ani
 
 ### Requirement: A commodity that requires a permanent address asks for one per animal
 **ID**: REQ-OB-COMMODITY-006
-The system MUST ask for a permanent address for each animal on a line whose commodity requires one, as a mandatory answer, and MUST NOT ask for it otherwise. The line's species decides, not its code: the domestic cat, the domestic dog and the ferret require one, and the other species sharing their code, the genus Felis among them, do not.
+The system MUST ask for a permanent address for each animal on a line whose commodity requires one, as a mandatory answer, and MUST NOT ask for it otherwise. A line requires one only when its commodity code is 01061900 and its species is the domestic cat (Felis catus), the domestic dog (Canis familiaris, Canis lupus familiaris) or the ferret (Mustela putorius furo). The other species sharing that code, the genus Felis among them, do not, and nor does a listed species under any other code.
 
 #### Scenario: A commodity requiring a permanent address asks for one for each animal
 **ID**: SCN-OB-COMMODITY-006-A
@@ -94,6 +94,12 @@ The system MUST ask for a permanent address for each animal on a line whose comm
 #### Scenario: Another species under the same code is not asked for one
 **ID**: SCN-OB-COMMODITY-006-B
 - **GIVEN** the user is entering identification details for an animal on a line of the genus Felis
+- **WHEN** the identification details are shown
+- **THEN** no permanent address is asked for
+
+#### Scenario: A listed species under another code is not asked for one
+**ID**: SCN-OB-COMMODITY-006-C
+- **GIVEN** the user is entering identification details for an animal on a line of Felis catus under a code other than 01061900
 - **WHEN** the identification details are shown
 - **THEN** no permanent address is asked for
 

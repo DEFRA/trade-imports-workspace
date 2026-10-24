@@ -4,18 +4,18 @@
 
 ## Purpose
 
-REST microservice that serves reference data (countries, ports of entry and live-animal commodities) to the Trade Imports frontends. It fetches the data from MDM (Master Data Management), caches it in memory and returns a simplified, sorted view. Per ADR 0002 it is a shared service for several reference-data domains until one grows large enough to be extracted.
+REST microservice that serves reference data (countries, ports of entry and live-animal commodities) to the Trade Imports frontends. It fetches the data from MDM (Master Data Management). Countries and ports of entry are cached in memory and returned as a simplified, sorted view; commodity search and the species check are not cached and come back in MDM's order. Per ADR 0002 it is a shared service for several reference-data domains until one grows large enough to be extracted.
 
 ## Responsibilities
 
 **Owns**
 - The public read API: `GET /countries` (optional `blocks` query parameter) and `GET /ports-of-entry`, both returned sorted by name.
-- Adaptation of MDM payloads to the service's own `Country` and `PortOfEntry` shapes.
+- Adaptation of MDM payloads to the service's own `Country`, `PortOfEntry`, `CommodityGroup`, `CommoditySpecies`, `CommoditySearchResponse` and `SpeciesCheckResponse` shapes.
 - Business rules applied to MDM countries: GB (`effectiveAlpha2`) is removed, and when `blocks` is given only countries whose block of that name has `includeCountry` true are kept.
 - Commodity search, `GET /commodities?search=&page=&size=` (size capped at 100): passes the term to MDM's product search over the `gbnag` dataset, leaves out every code MDM's commodities endpoint flags `isGerminal: true` (there is no CN chapter filter), and groups the species by code with at most `size` species in all. A term under two characters returns nothing without calling MDM. Not cached.
-- Species check, `POST /commodities/species-check`: given draft lines of code and Latin name, returns the lines whose species MDM no longer lists under that code. Not cached.
+- Species check, `POST /commodities/species-check`: given draft lines of code and Latin name, returns the lines whose species MDM no longer lists under that code; a line with no code or no Latin name is returned too, without calling MDM. Not cached.
 - Caching of MDM responses (Caffeine caches `MDM_COUNTRIES_CACHE` and `MDM_POE_CACHE`, TTL `CACHE_MDM_TTL_MINUTES`, default 60; empty results are not cached).
-- MDM authentication: obtains and refreshes a client-credentials bearer token before MDM calls, and sends the subscription key and `system=GBNAG`.
+- MDM authentication: obtains and refreshes a client-credentials bearer token before MDM calls, and sends the subscription key and `system=GBNAG` on geo and port calls, and `dataset=gbnag` (no `system`) on product calls.
 
 **Does not own**
 - The source of truth for the data: that is MDM. This service holds no reference data of its own; MongoDB is configured but no repository is used in `src/main`.
@@ -43,7 +43,7 @@ MDM's product search is an early-access API built on ITAHC data from TRACES. Wha
 
 **What a search matches**
 
-- **Common name**: "cattle" finds Bos taurus, Bos, Bibos spp., Bos sp. and Novibos spp. under 0102. It searches every common name a species has, not only the first: "cat" finds Bos taurus through its second name, "Aurochs".
+- **Common name**: "cattle" finds Bos taurus, Bos, Bibos spp., Bos sp. and Novibos spp. under 0102.
 - **Commodity code**: "0102" returns one commodity row holding all 15 of its species; "010" returns 45 rows. A code search is a prefix match.
 - **Latin name**: "Bos taurus" finds Bos taurus under each code it sits under.
 - **Commodity description**: "ostrich" returns the 01063300 commodity row ("Ostriches; emus") as well as the Struthio species, so Rhea, Emu and Cassowaries come back too.
@@ -56,14 +56,14 @@ MDM's product search is an early-access API built on ITAHC data from TRACES. Wha
 
 **What comes back**
 
-- Germinal codes: the `gbnag` dataset lists species under germinal codes too, such as 05111000 (bovine semen) and 05119985. A search for "cattle" returns Bos taurus under both. Species rows carry no germinal flag, so reference-data asks `GET /mdm/trade/product/commodities` for each code on the page and drops the codes it flags `isGerminal: true`. A page can then hold fewer species than `size`, and `total` still counts the dropped rows.
+- Germinal codes: the `gbnag` dataset lists species under germinal codes too, such as 05111000 (bovine semen) and 05119985. A search for "cattle" returns Bos taurus under both. Species rows carry no germinal flag, so reference-data asks `GET /mdm/trade/product/commodities` once, with every code on the page, and drops the codes it flags `isGerminal: true`. A page can then hold fewer species than `size`, and `total` still counts the dropped rows.
 - MDM does not yet set `isGerminal` on these codes in TST, so 05111000, 05119985 and other germinal codes still show in search results until MDM populates the flag. `trade-imports-stub` flags them, so the stack shows the filter working.
 - MDM has proposed replacing `isGerminal` with a `germinal` object, present only on germinal codes. Reference-data checks the flag in one method, `CommoditySearchService.isGerminal`, so that change touches only its body (`germinal != null`).
 - The same species under several live-animal codes: Bos taurus is under 0102 and 01061900. Each is a separate choice.
 - Some species have no common name (Catagonus, Equus cabalus*asinus) and some carry placeholder ones ("Animals" for Poephagus spp., "Pig-deer?" for Babyrousa).
 - Results come back in MDM's order, with no sort option. Species and commodity rows are mixed on one page, and a commodity row counts as one result however many species it holds.
 
-These gaps were found during EUDPA-617 and need to go back to the MDM team.
+The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-617 ticket.
 
 ## Stack
 

@@ -107,7 +107,7 @@ which changes the notification only, not the address-book record. The animals fr
 address management and back again (the handshake, journey type `gbn-ag` only).
 
 **Reference data.** Frontends call reference-data for countries and ports of
-entry. reference-data calls MDM, which locally is `trade-imports-stub`. The
+entry, and the animals frontend also for commodity search and species checks. reference-data calls MDM, which locally is `trade-imports-stub`. The
 animals backend does not use it.
 
 **Sign-in.** The four UIs use Defra ID OIDC, or `trade-imports-defra-id-stub`

@@ -297,6 +297,81 @@ describe('runGate — unit and FIT rungs', () => {
     ])
   })
 
+  describe('when a repo’s installed dependencies differ from its lockfile', () => {
+    const lockUndiciIn = (folder) => {
+      const dir = join(root, 'repos', folder)
+      const manifest = JSON.parse(
+        readFileSync(join(dir, 'package.json'), 'utf8')
+      )
+      writeFileSync(
+        join(dir, 'package.json'),
+        JSON.stringify({ ...manifest, devDependencies: { undici: '8.12.3' } })
+      )
+      writeFileSync(
+        join(dir, 'package-lock.json'),
+        JSON.stringify({
+          lockfileVersion: 3,
+          packages: { 'node_modules/undici': { version: '8.12.3' } }
+        })
+      )
+    }
+
+    const withNpmCiExiting = async (env, exitCode) => {
+      const { stdout: realNpm } = await execa('which', ['npm'])
+      writeExecutable(
+        join(root, 'fake-bin', 'npm'),
+        `if [ "$1" = ci ]; then echo ci >> '${join(root, 'npm-ci-calls')}'; exit ${exitCode}; fi\nexec '${realNpm}' "$@"`
+      )
+      return env
+    }
+
+    test('runs npm ci before the repo’s rungs, then runs them, and reports the install', async () => {
+      const env = await withNpmCiExiting(workspaceWith(unitOnly()), 0)
+      lockUndiciIn('frontend')
+
+      const outcome = await gate(env, { phase: 'unit' })
+
+      expect({
+        rungs: outcomeOf(outcome.rungs),
+        dependencies: outcome.dependencies,
+        ciCalls: readFileSync(join(root, 'npm-ci-calls'), 'utf8')
+      }).toEqual({
+        rungs: ['frontend:format:pass', 'frontend:unit:pass'],
+        dependencies: [
+          {
+            repo: 'frontend',
+            path: join(root, 'repos', 'frontend'),
+            stale: 'undici missing (locked 8.12.3)',
+            installed: true,
+            reason: null
+          }
+        ],
+        ciCalls: 'ci\n'
+      })
+    })
+
+    test('fails the repo’s rungs with the reason when npm ci fails, without running them', async () => {
+      const env = await withNpmCiExiting(workspaceWith(unitOnly()), 5)
+      lockUndiciIn('frontend')
+      const installLog = join(
+        defaultLogsDir(root, WORKAREA),
+        'gate-frontend-install.log'
+      )
+
+      const outcome = await gate(env, { phase: 'unit' })
+
+      expect(
+        outcome.rungs.map(({ name, ok, reason }) => ({ name, ok, reason }))
+      ).toEqual(
+        ['format', 'unit'].map((name) => ({
+          name,
+          ok: false,
+          reason: `npm ci exited 5 in frontend. Read ${installLog}.`
+        }))
+      )
+    })
+  })
+
   test('fails a FIT rung whose port is held, naming the holder, without running it', async () => {
     const server = createServer()
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))

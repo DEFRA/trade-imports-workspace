@@ -175,7 +175,7 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 
 ### Bad and good
 
-**A silent retry.** `backendFetch` in the animals frontend retries a backend connection that never opened, and says nothing. When the stack is slow, support cannot tell that every page is paying for a retry.
+**A silent retry.** A client that retries a backend connection that never opened, and says nothing, hides the cost. When the stack is slow, support cannot tell that every page is paying for a retry. `backendFetch` in both frontends logs the retry as below.
 
 ```js
 // Bad

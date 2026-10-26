@@ -89,9 +89,9 @@ The system MUST keep every species the user has chosen, whichever search brought
 - **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
-### Requirement: The back link returns to the origin of the import in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, and to Overview when the page was opened from its Overview task.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, to commodity details or identification details when that page opened it, and to Overview when the page was opened from its Overview task.
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A
@@ -104,6 +104,12 @@ The system MUST return the user to the origin of the import page when they follo
 - **GIVEN** the user is in the opening sequence and has saved origin of the import
 - **WHEN** they follow the back link from what are you importing
 - **THEN** the origin of the import page is shown
+
+#### Scenario: Opened from commodity details, the back link opens commodity details
+**ID**: SCN-COMMODITY-SELECT-007-C
+- **GIVEN** the user opened what are you importing from the Add another commodity link on commodity details
+- **WHEN** they follow the back link
+- **THEN** commodity details is shown
 
 ### Requirement: The tally counts what has been chosen and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
@@ -179,3 +185,43 @@ Outside an amendment the system MUST end the commodity selection page with "Save
 - **GIVEN** the user is in the opening sequence on what are you importing
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: Saving returns the user to the page that opened the question, else goes on
+**ID**: REQ-COMMODITY-SELECT-013
+The system MUST return the user to commodity details or identification details after a save on what are you importing when that page opened it, keeping any change context. Otherwise a save MUST go to the next step of the opening sequence, a save from a Change link on the review MUST go to commodity details, and save and return to overview MUST go to Overview.
+
+#### Scenario: Opened from commodity details, saving returns there
+**ID**: SCN-COMMODITY-SELECT-013-A
+- **GIVEN** the user opened what are you importing from the Add another commodity link on commodity details
+- **WHEN** they choose a further species and save and continue
+- **THEN** commodity details is shown
+
+#### Scenario: Opened from identification details, saving returns there
+**ID**: SCN-COMMODITY-SELECT-013-B
+- **GIVEN** the user opened what are you importing from identification details
+- **WHEN** they save and continue
+- **THEN** identification details is shown
+
+#### Scenario: In the opening sequence, saving opens the reason for import
+**ID**: SCN-COMMODITY-SELECT-013-C
+- **GIVEN** the user is in the opening sequence on what are you importing
+- **WHEN** they save and continue
+- **THEN** the reason for import page is shown
+
+#### Scenario: Opened from a review Change link, saving opens commodity details
+**ID**: SCN-COMMODITY-SELECT-013-D
+- **GIVEN** the user opened what are you importing from a Change link on the review
+- **WHEN** they save and continue
+- **THEN** commodity details is shown
+
+#### Scenario: Opened from commodity details under a review Change, saving returns there keeping the change context
+**ID**: SCN-COMMODITY-SELECT-013-E
+- **GIVEN** the user opened what are you importing from commodity details, reached from a Change link on the review
+- **WHEN** they save and continue
+- **THEN** commodity details is shown, still carrying the change context
+
+#### Scenario: A return value naming a page that does not open the question is ignored
+**ID**: SCN-COMMODITY-SELECT-013-F
+- **GIVEN** the user opened what are you importing with a return value that names a page other than commodity details or identification details
+- **WHEN** they save and continue
+- **THEN** the save goes where a save with no return value goes

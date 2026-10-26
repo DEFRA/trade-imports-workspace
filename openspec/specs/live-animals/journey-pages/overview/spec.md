@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The task list a user works a notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview".
+The task list a user works a notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview". While a template is being created the page is the template's task list, specified by live-animals/notification-templates (REQ-TEMPLATES-008 to REQ-TEMPLATES-011).
 
 ## Requirements
 

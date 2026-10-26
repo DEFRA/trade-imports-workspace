@@ -63,6 +63,87 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-DASH-004",
+      "name": "The dashboard always offers Create new, opening the notification type question",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-DASH-004-A",
+          "name": "Starting from a dashboard that lists notifications asks what is being imported",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "offers Create new under the heading, opening the type question with nothing selected and Germinal products second", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "starting a new notification from the INS home asks what you are importing, and Back leaves no notification behind", "strength": "partial", "notes": "label, destination, aria-current and Back; option state and order not asserted" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "offers Create new under the heading and above the search when notifications are listed", "strength": "partial", "notes": "label, destination and placement; no click" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-004-B",
+          "name": "Starting from an empty dashboard asks the same question",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "offers Create new under the heading, opening the type question with nothing selected and Germinal products second", "strength": "partial", "notes": "empty-state wording asserted in controller.test.js; the fit stub always lists notifications" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "empty aggregated store shows an empty state and still offers Create new (AC6)", "strength": "partial", "notes": "label and destination in the empty state; no click" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-004-C",
+          "name": "Create new is still offered after a search that matches nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "still offers Create new after a search that matches nothing, and it opens the type question", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "the INS home offers Create new rather than Start a new notification, before and after a search that matches nothing, and it opens the unselected type question", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "no matching notification shows \"No notifications found\" (AC5)", "strength": "partial", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-004-D",
+          "name": "Create new is still offered when the notifications cannot be loaded",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "still offers Create new and Use template when the notifications cannot be loaded", "strength": "full", "notes": "searching the stub's unavailable reference fails the notifications call; Create new asserted below the heading and above the search" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-DASH-005",
+      "name": "The dashboard always offers Use template, opening Manage templates",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-DASH-005-A",
+          "name": "Use template is offered beside Create new in every state of the dashboard",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/use-template.spec.ts", "test": "the INS home offers Use template beside Create new, before and after a search that matches nothing", "strength": "partial", "notes": "listed and no-match states; the stack always lists notifications" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "offers Use template beside Create new, linking to Manage templates in the live animals service", "strength": "partial", "notes": "listed state" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "still offers Use template after a search that matches nothing", "strength": "partial", "notes": "no-match state" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "offers Use template beside Create new, as a secondary button to Manage templates, when notifications are listed", "strength": "partial", "notes": "placement beside Create new; empty, no-match, match and error states asserted in the sibling tests" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "empty aggregated store shows an empty state and still offers Create new (AC6)", "strength": "partial", "notes": "empty state" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-005-B",
+          "name": "Following Use template opens Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/use-template.spec.ts", "test": "following Use template opens the animals frontend’s Manage templates", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "offers Use template beside Create new, linking to Manage templates in the live animals service", "strength": "partial", "notes": "href only; the animals frontend is not running under FIT" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-005-C",
+          "name": "Use template is still offered when the notifications cannot be loaded",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "still offers Create new and Use template when the notifications cannot be loaded", "strength": "full", "notes": "Use template on the same row, right of Create new, linking to Manage templates" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "shows the recoverable-error banner when the backend call fails", "strength": "partial", "notes": "500 from the INS backend stubbed; asserts the banner and the secondary Use template button, not its placement beside Create new" }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status.
+The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status, where a new notification starts, and the way into the trader's notification templates.
 
 ## Requirements
 
@@ -48,3 +48,56 @@ The system MUST let the user search the dashboard by complete notification refer
 - **GIVEN** the user searches for a reference number that matches no notification
 - **WHEN** the search runs
 - **THEN** a "No notifications found" message is shown
+
+### Requirement: The dashboard always offers Create new, opening the notification type question
+**ID**: REQ-INS-DASH-004
+The system MUST offer a "Create new" button under the dashboard heading, above the reference search and the notifications list, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing), or the notifications could not be loaded, and MUST NOT offer "Start a new notification". Choosing "Create new" MUST open the "What are you importing?" question (`ins/notification-type`) with no option selected, before any notification exists.
+
+#### Scenario: Starting from a dashboard that lists notifications asks what is being imported
+**ID**: SCN-INS-DASH-004-A
+- **GIVEN** notifications are listed on the dashboard
+- **WHEN** the user chooses "Create new"
+- **THEN** the question "What are you importing?" is shown
+- **AND** no option is selected and the second option is Germinal products (semen, ova, embryos)
+
+#### Scenario: Starting from an empty dashboard asks the same question
+**ID**: SCN-INS-DASH-004-B
+- **GIVEN** the organisation has no notifications
+- **WHEN** the dashboard is shown
+- **THEN** "Create new" is still offered
+- **AND** choosing it shows the question "What are you importing?"
+
+#### Scenario: Create new is still offered after a search that matches nothing
+**ID**: SCN-INS-DASH-004-C
+- **GIVEN** the user searches for a reference number that matches no notification
+- **WHEN** the "No notifications found" message is shown
+- **THEN** "Create new" is still offered
+- **AND** choosing it shows the question "What are you importing?"
+
+#### Scenario: Create new is still offered when the notifications cannot be loaded
+**ID**: SCN-INS-DASH-004-D
+- **GIVEN** the notifications list cannot be loaded
+- **WHEN** the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
+- **THEN** "Create new" is still offered under the dashboard heading
+
+### Requirement: The dashboard always offers Use template, opening Manage templates
+**ID**: REQ-INS-DASH-005
+The system MUST offer a secondary "Use template" button beside "Create new", under the dashboard heading, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing), or the notifications could not be loaded. Following "Use template" MUST open the page headed "Manage templates" in the live animals service (`live-animals/notification-templates`).
+
+#### Scenario: Use template is offered beside Create new in every state of the dashboard
+**ID**: SCN-INS-DASH-005-A
+- **GIVEN** the user is signed in
+- **WHEN** the dashboard is shown with notifications, with none, or after a search that matches nothing
+- **THEN** "Use template" is offered beside "Create new"
+
+#### Scenario: Following Use template opens Manage templates
+**ID**: SCN-INS-DASH-005-B
+- **GIVEN** the user is signed in and on the dashboard
+- **WHEN** they follow "Use template"
+- **THEN** the page headed "Manage templates" is shown
+
+#### Scenario: Use template is still offered when the notifications cannot be loaded
+**ID**: SCN-INS-DASH-005-C
+- **GIVEN** the notifications list cannot be loaded
+- **WHEN** the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
+- **THEN** "Use template" is still offered beside "Create new"

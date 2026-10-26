@@ -172,7 +172,7 @@ The system MUST show the inset "You must submit a separate notification for ever
 
 ### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
 **ID**: REQ-COMMODITY-SELECT-012
-Outside an amendment the system MUST end the commodity selection page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+Outside an amendment, and while a template is being created, the system MUST end the commodity selection page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview. While a saved template's section is changed, it MUST end as live-animals/notification-templates REQ-TEMPLATES-028 specifies; REQ-TEMPLATES-012 says where Save and continue leads while a template is being created.
 
 #### Scenario: The opening sequence offers all three controls
 **ID**: SCN-COMMODITY-SELECT-012-A

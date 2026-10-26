@@ -1,0 +1,93 @@
+{
+  "capability": "plants/service-navigation",
+  "areaCode": "PLANTS-NAV",
+  "specFile": "openspec/specs/plants/service-navigation/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-NAV-001",
+      "name": "The navigation offers five items in a fixed order",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-NAV-001-A",
+          "name": "The navigation lists its five items on the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should offer the five Design release 2.1 items on a signed-in page", "strength": "partial", "notes": "renders the layout template, not the running page" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/templates-navigation.spec.ts", "test": "offers Dashboard, Templates, Address book, Manage account and Log out, in that order, on the plants dashboard", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-NAV-001-B",
+          "name": "A visitor who is not signed in is offered no navigation items",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should carry the service name and no items when there is no user", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-NAV-002",
+      "name": "The Templates item opens Manage templates in the live animals service",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-NAV-002-A",
+          "name": "Following Templates opens Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/templates-navigation.spec.ts", "test": "opens the animals frontend’s Manage templates from the Templates item", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should strip a trailing slash from the configured animals base URL", "strength": "partial", "notes": "pins the link target built from config, not the page it opens" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-NAV-003",
+      "name": "The navigation marks Dashboard as current on the dashboard and inside a notification, and never Templates",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-NAV-003-A",
+          "name": "Dashboard is marked current on the dashboard and Templates is not",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/templates-navigation.spec.ts", "test": "marks Dashboard, and not Templates, as current on the plants dashboard", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-NAV-003-B",
+          "name": "Dashboard stays marked current inside a notification",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should mark the dashboard item active inside the notifications section", "strength": "partial", "notes": "renders the layout with the dashboard active, not a running notification page" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-NAV-004",
+      "name": "The Dashboard and Address book items lead to the plants dashboard and the INS address book",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-NAV-004-A",
+          "name": "Following Dashboard from inside a notification opens the plants dashboard",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should point the dashboard link and the service name at the set’s own base", "strength": "partial", "notes": "pins the Dashboard href in the rendered layout; no fit or E2E test follows it from inside a notification" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-NAV-004-B",
+          "name": "Following Address book opens the INS address book",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should offer the five Design release 2.1 items on a signed-in page", "strength": "partial", "notes": "pins the Address book href to the injected URL; no fit or E2E test follows it to the INS address book" }
+          ]
+        }
+      ]
+    }
+  ]
+}

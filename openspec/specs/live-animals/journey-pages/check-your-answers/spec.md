@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While a template is being created the page is the template review, titled "Review your template", specified by live-animals/notification-templates (REQ-TEMPLATES-013 to REQ-TEMPLATES-018).
 
 ## Requirements
 

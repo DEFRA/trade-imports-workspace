@@ -1,0 +1,480 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "Part 4, dashboard and smoke. Read in full: dashboard/dashboard.fit.spec.js (6 tests) and fit/smoke.fit.spec.js (1 test), and all 7 trace zips the part names. tim's Playwright (1.62.1) refuses these traces (TraceVersionError, confirmed again on this run), so each trace was read from its unzipped contents in this part's working folder (t1..t7), with jq over the browser trace (1-trace.trace: every call, every frame snapshot), the network log (1-trace.network) and the test step log (test.trace). Trace map: t1 = dashboard-dashboard.fit-da-7c8cd (spec :23, AC1/AC2 statuses and columns), t2 = da-62c16 (spec :54, axe), t3 = da-44f5e (spec :61, submitted link to notification-view), t4 = da-2eeb5 (spec :74, draft link to journey hub), t5 = da-21d7c (spec :87, search by reference), t6 = da-7e579 (spec :106, No notifications found), t7 = smoke.fit-a-trader-signs-i-62e11 (smoke.fit.spec.js:13). Pages, in journey order: stub sign-in (/auth/stub-sign-in?organisationId=..., a 302 with no page of its own) -> Dashboard (/, title 'Dashboard | Import notification service') in three states: the default list (t1-t4, t7, call@259/call@13), search results (t5 call@295, ?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-000001) and no results (t6 call@265, referenceNumber=GBN-AG-26-999999). The smoke trace then walks the address book: list (/address-book) -> add (/address-book/add) -> list with success banner -> view (/address-book/<id>) -> delete (/address-book/<id>/delete) -> list with deleted banner, then axe; those pages are claimed here only as the signed-in journey, since parts 1 to 3 own their detail. The dashboard itself is always present after sign-in; the search-results and no-results states appear only after a search.",
+  "claims": [
+    {
+      "id": "trace-ins-fit-p4-001",
+      "statement": "Signing in (in the fit stack, through the stub sign-in route with an organisation id) redirects the trader straight to the dashboard at the service root.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) 1-trace.network: GET /auth/stub-sign-in?organisationId=stub-org-1",
+      "quote": "GET http://localhost:3002/auth/stub-sign-in?organisationId=stub-org-1 302 -> http://localhost:3002/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-002",
+      "statement": "The traces never show the real Defra ID sign-in pages: every trace signs in through the stub route that sets the organisation id directly, so the real sign-in journey (Defra ID redirect, organisation choice, return) is not evidenced here.",
+      "kind": "integration",
+      "ref": "all 7 traces, first goto call (e.g. t7 call@11)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-003",
+      "statement": "The dashboard page's title is 'Dashboard | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 after snapshot, TITLE",
+      "quote": "Dashboard | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-004",
+      "statement": "The dashboard's main heading is 'Dashboard', an extra-large GOV.UK heading.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@261 (expect heading 'Dashboard'); call@259 snapshot H1.govuk-heading-xl",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-005",
+      "statement": "The dashboard has no caption, intro paragraph or button to start a new notification: under the heading come only the search form, the sort form, the results count and the table.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, MAIN",
+      "quote": "Dashboard ... Search by notification reference ... Sort by ... Showing 1-3 of 3",
+      "confidence": "inferred",
+      "note": "Read from the whole rendered main element: nothing else is in it. Whether a start-notification entry point belongs here is for the reconciler."
+    },
+    {
+      "id": "trace-ins-fit-p4-006",
+      "statement": "The header carries a GOV.UK service navigation whose service name is 'Import notification service', linking to the service root.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, SECTION.govuk-service-navigation",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-007",
+      "statement": "The service navigation's first item is 'Dashboard', linking to /, and is marked as the current item (aria-current, active modifier) while the trader is on the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, LI.govuk-service-navigation__item--active",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-008",
+      "statement": "The service navigation's second item is 'Address book', linking to /address-book.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-009",
+      "statement": "The service navigation's third item is 'Manage account', whose link goes nowhere yet (href '#'), so the account-management destination is not built.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Manage account",
+      "confidence": "verbatim",
+      "note": "The href is a literal '#' placeholder."
+    },
+    {
+      "id": "trace-ins-fit-p4-010",
+      "statement": "The service navigation's fourth item is 'Log out', linking to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-011",
+      "statement": "No trace follows 'Log out', so what signing out does and where it lands is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 7 traces: no click on 'Log out'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-012",
+      "statement": "Every page shows an Alpha phase banner inviting feedback by email to APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, .govuk-phase-banner",
+      "quote": "Alpha ... This is a new service. Help us improve it and give your feedback by email.",
+      "confidence": "verbatim",
+      "note": "The feedback link is a mailto:APHAServiceDesk@apha.gov.uk link."
+    },
+    {
+      "id": "trace-ins-fit-p4-013",
+      "statement": "The dashboard has a search field labelled 'Search by notification reference' (a search-type text input named referenceNumber, two-thirds width).",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@291 fill by label; t1 call@259 snapshot LABEL for=referenceNumber",
+      "quote": "Search by notification reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-014",
+      "statement": "The search field is submitted with a primary button labelled 'Search'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@293 click button 'Search'",
+      "quote": "Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-015",
+      "statement": "Search is a plain GET form to the dashboard that also carries the current sort, so a search lands on /?sort=arrivalDate%2Cdesc&referenceNumber=<value>.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 frameUrl; call@259 snapshot FORM method=get action=/ with hidden sort",
+      "quote": "http://localhost:3002/?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-016",
+      "statement": "The dashboard has a 'Sort by' select with four options: 'Arrival date (newest first)', 'Arrival date (oldest first)', 'Last updated (newest first)' and 'Last updated (oldest first)'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, SELECT#sort",
+      "quote": "Sort by: Arrival date (newest first) | Arrival date (oldest first) | Last updated (newest first) | Last updated (oldest first)",
+      "confidence": "verbatim",
+      "note": "Option values: arrivalDate,desc / arrivalDate,asc / lastUpdated,desc / lastUpdated,asc."
+    },
+    {
+      "id": "trace-ins-fit-p4-017",
+      "statement": "The default sort is 'Arrival date (newest first)'.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, OPTION selected",
+      "quote": "Arrival date (newest first)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-018",
+      "statement": "The sort is applied with a separate secondary button labelled 'Update sort', in its own GET form that carries the current search reference, so sorting works without JavaScript and keeps the search.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, second FORM with hidden referenceNumber and BUTTON.govuk-button--secondary",
+      "quote": "Update sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-019",
+      "statement": "No trace changes the sort, so the order under the other three sort options is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 6 dashboard traces: no selectOption on 'Sort by'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-020",
+      "statement": "Above the table, a results count reads 'Showing 1-3 of 3' for the default list.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, P[data-testid=dashboard-results-label]",
+      "quote": "Showing 1-3 of 3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-021",
+      "statement": "The notifications are shown in a GOV.UK table with a visually hidden caption 'Notifications'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TABLE.govuk-table CAPTION",
+      "quote": "Notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-022",
+      "statement": "The table's columns are 'Reference number', 'Status', 'Origin country', 'Commodity', 'Arrival date' and a final action column whose header 'Action' is visually hidden.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, THEAD",
+      "quote": "Reference number | Status | Origin country | Commodity | Arrival date | Action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-023",
+      "statement": "Each row's reference number is the notification's GBN-AG reference, such as GBN-AG-26-000001.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@263 to call@267 (expect cells GBN-AG-26-000001/2/3)",
+      "quote": "GBN-AG-26-000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-024",
+      "statement": "Notifications of every status appear together in the one list: the stub data's DRAFT, SUBMITTED and AMEND notifications all show.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@269, call@271, call@273",
+      "quote": "SUBMITTED / DRAFT / AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-025",
+      "statement": "The status is shown as the raw upper-case status code in a plain table cell ('DRAFT', 'SUBMITTED', 'AMEND'), not as a GOV.UK tag and not as plain-English words.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TD.govuk-table__cell under Status",
+      "quote": "DRAFT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-026",
+      "statement": "Only DRAFT, SUBMITTED and AMEND statuses are in the stub data, so how any other status (for example cancelled, rejected or validated) renders on the dashboard is not evidenced.",
+      "kind": "data",
+      "ref": "all 6 dashboard traces: table rows",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-027",
+      "statement": "A soft-deleted notification (stub GBN-AG-26-000004) never appears on the dashboard.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@275 (expect cell GBN-AG-26-000004 to have count 0)",
+      "quote": "GBN-AG-26-000004 to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-028",
+      "statement": "The 'Origin country' column shows the country of origin by name, such as Ireland, France or Germany.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY",
+      "quote": "Ireland / France / Germany",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-029",
+      "statement": "The 'Commodity' column shows the commodity name ('Cattle' on the submitted notification) and is left blank on the draft and amend notifications in the stub data.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY Commodity cells",
+      "quote": "Cattle",
+      "confidence": "verbatim",
+      "note": "Blank cells render as an empty td, with no placeholder text."
+    },
+    {
+      "id": "trace-ins-fit-p4-030",
+      "statement": "The 'Arrival date' column shows the date as day, short month and year, such as '12 Sep 2026'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY Arrival date cells",
+      "quote": "12 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-031",
+      "statement": "Under the default sort the rows run newest arrival date first: 12 Sep 2026, then 10 Sep 2026, then 8 Sep 2026.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY row order",
+      "quote": "GBN-AG-26-000002 ... 12 Sep 2026; GBN-AG-26-000001 ... 10 Sep 2026; GBN-AG-26-000003 ... 8 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-032",
+      "statement": "Each row ends with a 'View' link whose accessible name adds the reference in visually hidden text ('View GBN-AG-26-000001').",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 link /View.*GBN-AG-26-000001/; t1 call@259 snapshot A.govuk-link",
+      "quote": "View<span class=\"govuk-visually-hidden\"> GBN-AG-26-000001</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-033",
+      "statement": "A submitted notification's 'View' link opens the read-only notification-view page of the live-animals journey: /live-animals/notifications/<reference>/notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 expect href",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-034",
+      "statement": "A draft notification's 'View' link opens the live-animals journey hub for that notification (/live-animals/notifications/<reference>), not notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-2eeb5 (t4) call@249 expect href",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000002",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-035",
+      "statement": "An AMEND notification's 'View' link also opens the journey hub (/live-animals/notifications/<reference>), like a draft, rather than notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, GBN-AG-26-000003 row link",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000003",
+      "confidence": "verbatim",
+      "note": "Rendered in the DOM; no test asserts it."
+    },
+    {
+      "id": "trace-ins-fit-p4-036",
+      "statement": "The dashboard's 'View' links leave the INS front door for the separate live-animals frontend, on a different origin, through absolute URLs (INS on :3002, live animals on :3000 in the fit stack).",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot frameUrl vs link hrefs",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-037",
+      "statement": "Searching by a complete reference number shows only the matching notification, with the count 'Showing 1-1 of 1'.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295, call@297; call@295 snapshot results label",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-038",
+      "statement": "After a search, the search field keeps the reference the trader entered.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, INPUT#referenceNumber value",
+      "quote": "value=\"GBN-AG-26-000001\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-039",
+      "statement": "After a search, a 'Clear search' link back to the unfiltered dashboard (/) appears under the results count.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, A[data-testid=dashboard-clear-search]",
+      "quote": "Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-040",
+      "statement": "A search that matches no notification shows the message 'No notifications found'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7e579 (t6) call@265; call@265 snapshot P[data-testid=dashboard-no-results]",
+      "quote": "No notifications found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-041",
+      "statement": "In the no-results state the sort form, the results count and the table are not shown; the search form stays, keeping the entered reference, and a 'Clear search' link to / follows the message.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7e579 (t6) call@265 snapshot, MAIN",
+      "quote": "No notifications found ... Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-042",
+      "statement": "Only an exact, complete reference is searched; whether a partial reference, different letter case or surrounding spaces match is not evidenced.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@291 and dashboard-dashboard.fit-da-7e579 (t6) call@261",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-043",
+      "statement": "No trace submits an empty search, so what an empty or malformed reference does is not evidenced.",
+      "kind": "rule",
+      "ref": "all 6 dashboard traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-044",
+      "statement": "The dashboard only ever shows three notifications in these traces, so its page size and pagination are not evidenced, although the 'Showing 1-3 of 3' count implies the list is paged.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, results label",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-045",
+      "statement": "No trace shows a trader with no notifications at all, so the dashboard's empty state (as opposed to a search with no results) is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 7 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-046",
+      "statement": "A trader signed in as a freshly generated organisation (the smoke trace's stub-org-smoke-<uuid>) sees the same three notifications as stub-org-1, so in this stack the dashboard list is not scoped to the signed-in organisation, or the stub returns the same notifications for every organisation.",
+      "kind": "rule",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@11 organisationId and call@13 snapshot TBODY",
+      "quote": "Showing 1-3 of 3",
+      "confidence": "inferred",
+      "note": "Inferred from the identical rows under two different organisation ids. The traces cannot tell a stub that ignores the organisation from a real lack of scoping."
+    },
+    {
+      "id": "trace-ins-fit-p4-047",
+      "statement": "The browser makes no data calls for the dashboard: the network log shows only the page GET and static assets, so the notification list is fetched server-side and the backend it reads from is not visible in the traces.",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) 1-trace.network",
+      "quote": "GET http://localhost:3002/ 200",
+      "confidence": "gap",
+      "note": "The read model behind the list (expected to be the INS backend's aggregate) is not observable from the browser."
+    },
+    {
+      "id": "trace-ins-fit-p4-048",
+      "statement": "The dashboard has no serious or critical axe accessibility violations against the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rule tags.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-62c16 (t2) call@237 to call@255 (axe run, test passed)",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-049",
+      "statement": "The dashboard is built entirely from GOV.UK Frontend components and classes: service navigation, phase banner, text input, select, button (primary and secondary), table and links, with spacing overrides only; no custom component appears in main.",
+      "kind": "constraint",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, class list of MAIN and header",
+      "quote": "govuk-heading-xl, govuk-form-group, govuk-label, govuk-input govuk-!-width-two-thirds, govuk-button, govuk-select, govuk-button--secondary, govuk-body, govuk-table",
+      "confidence": "verbatim",
+      "note": "The header also carries one custom class, app-header, alongside govuk-header."
+    },
+    {
+      "id": "trace-ins-fit-p4-050",
+      "statement": "From the dashboard the trader reaches the address book by the 'Address book' service navigation link, landing on /address-book with the heading 'Address book' and the title 'Address book | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@17, call@19, call@21",
+      "quote": "Address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-051",
+      "statement": "From the address book list, 'Add a new address' (a link styled as a button) opens /address-book/add, titled 'Add address details | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@23, call@25; call@23 snapshot TITLE",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-052",
+      "statement": "Saving a valid address with 'Save and continue' posts the form and returns the trader to the address book list, which shows a success banner '<name> added to your address book' and the new entry.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@45 to call@49; 1-trace.network POST /address-book/add 302 -> /address-book",
+      "quote": "Highland Livestock Ltd added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-053",
+      "statement": "The entry's 'View <name>' link opens the address at /address-book/<id>, headed with the name and titled '<name> | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@51, call@53; call@51 snapshot TITLE",
+      "quote": "Highland Livestock Ltd | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-054",
+      "statement": "On the address, 'Delete' opens a confirmation page at /address-book/<id>/delete, titled 'Delete address | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@55, call@57; call@55 snapshot TITLE",
+      "quote": "Delete address | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-055",
+      "statement": "Confirming with 'Yes, delete this address' posts the deletion and returns the trader to the address book list, with a success banner '<name> deleted from your address book' and the entry gone.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@59 to call@65; 1-trace.network POST /address-book/<id>/delete 302 -> /address-book",
+      "quote": "Highland Livestock Ltd deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-056",
+      "statement": "A freshly generated organisation's address book already holds an entry 'Stub Farm 1' (1 Stub Way, Stubton, ST1 1UB) before the trader adds anything, so the address book stub seeds or shares that entry across organisations.",
+      "kind": "data",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@47 and call@61 after snapshots, TBODY",
+      "quote": "Stub Farm 1 | 1 Stub Way, Stubton, ST1 1UB | United Kingdom",
+      "confidence": "inferred",
+      "note": "Inferred from the list after add showing 'Showing 1-2 of 2' for an organisation id generated for this run."
+    },
+    {
+      "id": "trace-ins-fit-p4-057",
+      "statement": "The address book list, after the add-view-delete run, has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@67 to call@85 (axe run, test passed)",
+      "quote": "address book after the smoke run",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-058",
+      "statement": "No trace follows a dashboard 'View' link into the live-animals journey, so the pages it lands on (notification-view, journey hub) are not evidenced by this source.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 and dashboard-dashboard.fit-da-2eeb5 (t4) call@249 assert href only",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

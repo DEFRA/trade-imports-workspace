@@ -1,0 +1,138 @@
+h3. Background
+
+Design Release 2.1 reworks the "Where is this consignment coming from?" page of a live animals notification — the country of origin, the region of origin code, and the trader's own internal reference.
+
+Three things change. The country list now includes territories as well as countries, each named with its parent country, so a consignment from the Canary Islands can say so rather than only "Spain". The region of origin code is capped at five characters as it is typed, carries its country's code as a fixed prefix, and is cleared when the trader says a code is no longer required. And the page's hints are reworded: the country question loses its hint entirely, the region question points the trader at the health certificate, and the internal reference invites a reference without stating a character limit.
+
+The page also now only counts as complete once the region question has been answered one way or the other.
+
+This ticket covers the *live animals journey only*. The same increment changed the country field on the high-risk plants origin page, which has its own ticket under the same epic. The work is not yet merged.
+
+h3. What changes for the user
+
+h4. The country of origin can be a territory
+
+The country list holds territories alongside countries, each reading "<territory> (<country>)", and sorts alphabetically by the name shown — so "Canary Islands (Spain)" sits among the C entries rather than under S. A chosen territory keeps its own code, and the region code field then carries its parent country's prefix. This works with or without JavaScript.
+
+h4. The country question has no hint
+
+With JavaScript the field is a search box showing "Search for a country"; without it, an ordinary list beginning "Select a country". Either way there is no hint text under the question.
+
+h4. The region of origin code is capped, prefixed and cleared
+
+Typing stops at five characters, and the box offers no autocomplete or spellcheck. The code shows with its country's code as a fixed prefix. Changing the answer to say no region code is required clears the code, and the review then reads "Not applicable". The region question's hint tells the trader to check the health certificate and that the code can be added later.
+
+h4. Nothing is saved until a country is chosen
+
+A region code typed without a country is not saved — but it does stay on the page when the save is refused for another reason, so the trader does not lose it.
+
+h4. The task is complete only once the region question is answered
+
+"Where is this consignment coming from?" reads Complete when a country is saved and the trader has either said no code is required, or said one is and given it. A country saved with the region question unanswered leaves the task incomplete.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 11 scenarios carry the change's core behaviour. The live animals specification gained *14 scenarios across 3 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+
+h4. Territories in the country list
+
+h5. A territory is named with its country, with or without JavaScript
+
+* *GIVEN* the user is on the origin of the import page, with or without JavaScript
+* *WHEN* the country list is read
+* *THEN* each territory reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+h5. The list is sorted by the name shown
+
+* *GIVEN* the user is on the origin of the import page
+* *WHEN* the country list is read in full
+* *THEN* it is in alphabetical order of the names shown, so "Canary Islands (Spain)" sits among the C entries
+
+h5. A chosen territory keeps its code and is shown back with its country's prefix
+
+* *GIVEN* the user chose "Canary Islands (Spain)", answered that a region code is required, typed a code and saved
+* *WHEN* they return to the origin of the import page
+* *THEN* the country field shows "Canary Islands (Spain)", the notification keeps the territory's code, and the region code field carries Spain's code, ES, as its fixed prefix
+
+h4. How the questions read
+
+h5. With JavaScript, the empty search box shows "Search for a country" and no hint
+
+* *GIVEN* the user has reached the origin of the import page with JavaScript available and no country chosen
+* *WHEN* the page loads
+* *THEN* the country field, labelled "Country of origin", shows the placeholder "Search for a country"
+* *AND* no hint text is shown for the country question
+
+h5. Without JavaScript, the country list begins with "Select a country" and no hint
+
+* *GIVEN* the user has reached the origin of the import page without JavaScript
+* *WHEN* the page loads
+* *THEN* the country list, labelled "Country of origin", begins with its blank "Select a country" entry
+* *AND* no hint text is shown for the country question
+
+h5. The region question's hint names the health certificate
+
+* *GIVEN* the user is on the origin of the import page
+* *WHEN* the page loads
+* *THEN* the region of origin code question's hint reads "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now."
+
+h5. The internal reference hint invites a reference without stating the limit
+
+* *GIVEN* the user is on the origin of the import page
+* *WHEN* the page loads
+* *THEN* the internal reference field's hint reads "Enter any internal reference you want to use to identify this consignment, or leave blank."
+* *AND* no hint states the 58-character limit
+
+h4. The region of origin code
+
+h5. Typing stops at five characters
+
+* *GIVEN* the user has answered that a region code is required
+* *WHEN* they type seven characters into the region code box
+* *THEN* the box holds only the first five
+* *AND* the box offers no autocomplete and no spellcheck
+
+h5. The code is cleared when the answer changes to No
+
+* *GIVEN* the user has chosen France, answered that a region code is required, given the code 75 and saved
+* *WHEN* they change the answer so that no region code is required and save
+* *THEN* the review page shows "Not applicable" for the region of origin code
+* *AND* choosing Yes again on the origin page shows an empty region code box
+
+h5. No code is saved until a country is chosen
+
+* *GIVEN* the user has chosen no country, answered that a region code is required and typed a code
+* *WHEN* they save and continue
+* *THEN* the review page shows no region of origin code
+* *WHEN* they return, choose France, type the code again and save and continue
+* *THEN* the review page shows the code with France's prefix
+
+h5. The typed code stays on the page when the save is refused for another answer
+
+* *GIVEN* the user has chosen no country, answered that a region code is required and typed a code
+* *WHEN* they save and continue with another answer the page refuses
+* *THEN* the page shows the error and the region code box still holds the code typed
+
+h4. When the task is complete
+
+The specification covers three cases on Overview: a country saved with the region question unanswered does not read Complete; a country saved with "no region code required" does; and a country saved with a region code required and given does.
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-009|Country of origin: no hint and a "Search for a country" placeholder|Done|
+|inc-010|Region of origin code, internal reference hint and when the origin task is complete|Done|
+|inc-175|Country of origin list labels territories with their parent country|Done|
+
+All three are built.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 14 scenarios across these 3 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|10|
+|[Overview|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/overview/spec.md]|3|
+|[Origin of import obligations|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-obligations/origin-of-import/spec.md]|1|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

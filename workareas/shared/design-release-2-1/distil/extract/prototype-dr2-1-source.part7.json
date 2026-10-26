@@ -1,0 +1,948 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 7, Transporter. Read in full at commit 04a073b (the checkout's HEAD): the four DR2.1 views app/views/design-release-2.1/transporter.html (183 lines), transporter-add.html (95), transporter-add-private.html (63) and transporter-add-commercial.html (67); the root partials app/views/partials/transporter-add-private-fields.html (112), transporter-add-commercial-fields.html (236) and transporter-authorisation-banner.html (21); app/data/transporters.js (8 seeded transporters) and app/data/transporter-types.js (2 types); app/routes.js lines 3289-3842 (transporter search and results, the transporter page render, session sync, type validation, the private and commercial form defaults, parsing, validation, object builders, success message, address-book mapping, save and cancel redirect, and the private and commercial render functions) and lines 12664-12858 (GET /transport-details, GET /transporter, GET and POST /transporter/add, GET and POST /transporter/add/private, GET and POST /transporter/add/commercial, POST /transporter). Also glanced, for context only and not claimed beyond what these pages show: partials/design-release-2.1/journey-form-actions.html (the transporter page's buttons) and routes.js buildAddressBookCountryItems at line 10412 (the private country list). Pages covered: Transporter details (/transporter, reached also by /transport-details), Choose a transporter type (/transporter/add), Add a private transporter (/transporter/add/private) and Add a commercial transporter (/transporter/add/commercial), each under /design-release-2.1 through the version mount. Claims follow page order: the transporter page (caption, heading, intro, authorisation guidance, search, add button, results table and its eight seeded rows, selection, buttons, what is saved and where it goes), then the type page, then the private form, then the commercial form (including the DR2.1 address lookup), then save, success message, cancel, and the address-book entry made when the add flow starts from the address book. The transporter page has no validation of its own: a missing selection continues without an error, recorded as an inferred claim and a gap.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p7-001",
+      "statement": "GET /transport-details redirects to the transporter page at /transporter.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12664-12666",
+      "quote": "router.get('/transport-details', (req, res) => {\n  return res.redirect('/transporter')\n})",
+      "confidence": "verbatim",
+      "note": "Under /design-release-2.1 the version mount prefixes the redirect with the journey path."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-002",
+      "statement": "The transporter page is served at GET /transporter and ensures the notification has a prototype notification reference before rendering.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12668-12674",
+      "quote": "router.get('/transporter', (req, res) => {\n  ensurePrototypeNotificationReference(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-003",
+      "statement": "The transporter page accepts a search query in the URL (?search=) and pre-filters the transporter list by it, trimming whitespace.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12671-12673",
+      "quote": "searchQuery: (req.query.search || '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-004",
+      "statement": "The transporter page's back link goes to the previous journey page, falling back to the notification hub (overview).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3342",
+      "quote": "backLink: getJourneyBackLink(req, '/notification-hub'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-005",
+      "statement": "The transporter page shows the notification status block (notification reference and status) above the heading.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:29; app/routes.js:3344",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-006",
+      "statement": "The transporter page has the caption 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:41",
+      "quote": "<p class=\"app-transporter-page__caption\">Transport and arrival</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-007",
+      "statement": "The transporter page's heading and page name are 'Transporter details'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:9,42",
+      "quote": "<h1 class=\"app-transporter-page__heading\">Transporter details</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-008",
+      "statement": "The transporter page's intro reads 'This is the person or company responsible for transporting the consignment.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:43-45",
+      "quote": "This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-009",
+      "statement": "The transporter page shows authorisation guidance: the transporter must hold a valid transporter authorisation issued by DAERA or APHA in the UK if they are transporting live vertebrate animals in, to, from or through GB, travelling over 65 km, or transporting as part of an economic (commercial) activity.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:48-56",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:\n      </p>\n      <ul class=\"govuk-list govuk-list--bullet app-transporter-page__guidance-list\">\n        <li>transporting any live vertebrate animals in, to, from or through Great Britain (GB)</li>\n        <li>travelling on journeys of over 65 km</li>\n        <li>transporting as part of an economic (commercial) activity</li>",
+      "confidence": "verbatim",
+      "note": "On the DR2.1 transporter page this guidance is inline text, not the 'Important' notification banner partial; the banner partial is used on the commercial add page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-010",
+      "statement": "The transporter page links to GOV.UK animal welfare in transport guidance, opening in a new tab, with the text 'Find out how to transport animals in connection with an economic activity (opens in a new tab)'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:57-59",
+      "quote": "rel=\"noreferrer noopener\" target=\"_blank\">Find out how to transport animals in connection with an economic activity (opens in a new tab)</a>",
+      "confidence": "verbatim",
+      "note": "The href is https://www.gov.uk/guidance/animal-welfare-in-transport with a tracking query string and the anchor #transporting-animals-in-connection-with-an-economic-activity."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-011",
+      "statement": "The transporter page states 'Documents issued by DAERA are valid for use in GB.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:60",
+      "quote": "Documents issued by DAERA are valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-012",
+      "statement": "The transporter page states 'Documents issued in any EU member state are not valid for use in GB.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:61",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-013",
+      "statement": "The transporter page form posts to /design-release-2.1/transporter.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:64",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/transporter\" novalidate class=\"app-transporter-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-014",
+      "statement": "The transporter page shows a 'There is a problem' error summary when errors are set.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:66-71",
+      "quote": "titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-015",
+      "statement": "The transporter page has a sub-heading 'Select a transporter' above the search and results.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:73",
+      "quote": "<h2 class=\"app-transporter-page__results-heading\">Select a transporter</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-016",
+      "statement": "The transporter page has a search field labelled 'Search' with the hint 'Name, address or approval number', with autocomplete off and holding the current search query.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transporter.html:77-92",
+      "quote": "Search\n          </label>\n          <div id=\"transporter-search-hint\" class=\"govuk-hint app-transporter-page__search-hint\">\n            Name, address or approval number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-017",
+      "statement": "The search box has an icon button (accessible name 'Search') that does not submit the form, and the search is wired to a client-side module that filters the listed rows by each row's search text.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:76,93-95,134",
+      "quote": "<button class=\"app-transporter-page__search-button\" type=\"button\" aria-label=\"Search\">",
+      "confidence": "inferred",
+      "note": "Inferred from data-module=\"app-transporter-search\", type=\"button\" and data-search-text on each row; the client-side script is in app/assets, outside this source's scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-018",
+      "statement": "Transporter search matches, case-insensitively, any part of the transporter's name, address, approval number, type or status, although the hint names only name, address and approval number.",
+      "kind": "rule",
+      "ref": "app/routes.js:3293-3301,3315-3320",
+      "quote": "return [\n    transporter.name,\n    transporter.address,\n    transporter.approvalNumber,\n    transporter.type,\n    transporter.status\n  ].join(' ').toLowerCase()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-019",
+      "statement": "An empty search shows every transporter.",
+      "kind": "rule",
+      "ref": "app/routes.js:3316-3320",
+      "quote": "const filtered = query\n    ? allTransporters.filter((transporter) => formatTransporterForSearch(transporter).includes(query))\n    : allTransporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-020",
+      "statement": "The transporter page has a secondary 'Add a transporter' button linking to /design-release-2.1/transporter/add.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:99-103",
+      "quote": "text: \"Add a transporter\",\n          href: \"/design-release-2.1/transporter/add\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-021",
+      "statement": "Transporters are listed in a table with columns Name, Address, Approval number, Type and Status, plus a select column and an action column whose headers are visually hidden ('Select', 'Action').",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transporter.html:116-130",
+      "quote": "<th scope=\"col\" class=\"govuk-table__header app-transporter-table__header\">Name</th>\n                <th scope=\"col\" class=\"govuk-table__header app-transporter-table__header\">Address</th>\n                <th scope=\"col\" class=\"govuk-table__header app-transporter-table__header\">Approval number</th>\n                <th scope=\"col\" class=\"govuk-table__header app-transporter-table__header\">Type</th>\n                <th scope=\"col\" class=\"govuk-table__header app-transporter-table__header\">Status</th>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-022",
+      "statement": "The table sits in a fieldset whose legend 'Select a transporter' is visually hidden.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:107-108",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">Select a transporter</legend>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-023",
+      "statement": "Each transporter row has a radio button (field transporterId) to select it, with the visually hidden label 'Select <transporter name>'; only one transporter can be selected.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transporter.html:136-148",
+      "quote": "name=\"transporterId\"\n                          type=\"radio\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-024",
+      "statement": "The previously selected transporter is pre-selected when the transporter page is shown again.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3346-3348; app/views/design-release-2.1/transporter.html:144",
+      "quote": "selectedTransporterId: locals.selectedTransporterId != null\n      ? locals.selectedTransporterId\n      : sessionData.transporterId || '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-025",
+      "statement": "Each row's status shows as a tag: green for Approved, a 'new' tag style for New.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transporter.html:156-158; app/data/transporters.js",
+      "quote": "<strong class=\"govuk-tag {{ transporter.statusTagClass }} app-transporter-table__tag\">{{ transporter.status }}</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-026",
+      "statement": "Each row has a 'View details' link to the transporter's address-book view page, carrying a return path back to /transporter.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:159-161; app/routes.js:3326",
+      "quote": "viewHref: buildAddressViewHref(transporter.id, '/transporter')",
+      "confidence": "verbatim",
+      "note": "buildAddressViewHref (routes.js:9312) belongs to the address book part; the default base is /address-book."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-027",
+      "statement": "Transporters added during the session are listed before the seeded transporters, newest first.",
+      "kind": "rule",
+      "ref": "app/routes.js:3307-3313,3725",
+      "quote": "return [...getSessionTransporters(sessionData), ...transporters]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-028",
+      "statement": "Seeded transporter: Yusen Logistics (Romania) SRL, Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania, approval number RO/BUCHAREST/T1/00092010, Commercial, Approved, telephone +40 31 229 2700.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:2-11",
+      "quote": "name: 'Yusen Logistics (Romania) SRL',\n    address: 'Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania',\n    approvalNumber: 'RO/BUCHAREST/T1/00092010',\n    type: 'Commercial',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-029",
+      "statement": "Seeded transporter: Roadtrain Ltd, The Roadtrain Complex, Bluebell Industrial Estate, Dublin 12, D12 P046, Republic of Ireland, approval number IE/DUBLIN/T1/00092011, Commercial, Approved.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:12-20",
+      "quote": "name: 'Roadtrain Ltd',\n    address: 'The Roadtrain Complex, Bluebell Industrial Estate, Dublin 12, D12 P046, Republic of Ireland',\n    approvalNumber: 'IE/DUBLIN/T1/00092011',\n    type: 'Commercial',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-030",
+      "statement": "Seeded transporter: Aberdeen Livestock Ltd, 15 Union Street, Aberdeen, AB11 5BN, approval number UK/ABERDEEN/T1/00092001, Private, Approved.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:21-29",
+      "quote": "name: 'Aberdeen Livestock Ltd',\n    address: '15 Union Street, Aberdeen, AB11 5BN',\n    approvalNumber: 'UK/ABERDEEN/T1/00092001',\n    type: 'Private',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-031",
+      "statement": "Seeded transporter: Danish Meat Export ApS, Vesterbrogade 12, 1620 Copenhagen, approval number DK/COPENHAGEN/T1/00081002, Commercial, Approved.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:30-38",
+      "quote": "name: 'Danish Meat Export ApS',\n    address: 'Vesterbrogade 12, 1620 Copenhagen',\n    approvalNumber: 'DK/COPENHAGEN/T1/00081002',\n    type: 'Commercial',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-032",
+      "statement": "Seeded transporter: Portuguese Livestock Lda, Rua Augusta 250, 1100-053 Lisbon, approval number PT/LISBON/T1/00071003, Commercial, Approved.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:39-47",
+      "quote": "name: 'Portuguese Livestock Lda',\n    address: 'Rua Augusta 250, 1100-053 Lisbon',\n    approvalNumber: 'PT/LISBON/T1/00071003',\n    type: 'Commercial',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-033",
+      "statement": "Seeded transporter: Romanian Agri Exports SRL, Bulevardul Unirii 22, 03083 Bucharest, approval number RO/BUCHAREST/T1/00061004, Private, New.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:48-56",
+      "quote": "name: 'Romanian Agri Exports SRL',\n    address: 'Bulevardul Unirii 22, 03083 Bucharest',\n    approvalNumber: 'RO/BUCHAREST/T1/00061004',\n    type: 'Private',\n    status: 'New',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-034",
+      "statement": "Seeded transporter: Slovak Farm Export, Obchodná 2, 811 06 Bratislava, approval number SK/BRATISLAVA/T1/00051005, Private, Approved.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:57-65",
+      "quote": "name: 'Slovak Farm Export',\n    address: 'Obchodná 2, 811 06 Bratislava',\n    approvalNumber: 'SK/BRATISLAVA/T1/00051005',\n    type: 'Private',\n    status: 'Approved',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-035",
+      "statement": "Seeded transporter: Finnish Livestock Oy, Mannerheimintie 10, 00100 Helsinki, approval number FI/HELSINKI/T1/00041006, Private, New.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:66-74",
+      "quote": "name: 'Finnish Livestock Oy',\n    address: 'Mannerheimintie 10, 00100 Helsinki',\n    approvalNumber: 'FI/HELSINKI/T1/00041006',\n    type: 'Private',\n    status: 'New',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-036",
+      "statement": "The transporter page can show a transporter-selection error message above the table, but no handler sets one: posting the page with no transporter selected continues to the next journey page without an error.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:110-114; app/routes.js:12839-12847",
+      "quote": "if (!transporter) {\n    req.session.data.errorList = null\n    req.session.data.errors = null\n\n    return res.redirect(getSectionContinueRedirect(\n      req,\n      getNextJourneyPath('/transporter', req.session.data)\n    ))\n  }",
+      "confidence": "inferred",
+      "note": "The template checks data.errors.transporterId, but nothing in routes.js lines 12664-12858 or 3289-3842 sets it. Transporter selection is therefore optional on this page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-037",
+      "statement": "The prototype gives no wording for an error when no transporter is selected on the transporter page.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:110-114; app/routes.js:12820-12857",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the transporter view and POST /transporter handler; the error slot exists with no message defined anywhere in this slice."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-038",
+      "statement": "Continuing from the transporter page with a transporter selected saves the selected transporter's id, name, address, approval number, type and status to the notification.",
+      "kind": "data",
+      "ref": "app/routes.js:3356-3365,12849-12851",
+      "quote": "sessionData.transporterId = transporter.id\n  sessionData.transporter = {\n    name: transporter.name,\n    address: transporter.address,\n    approvalNumber: transporter.approvalNumber,\n    type: transporter.type,\n    status: transporter.status\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-039",
+      "statement": "After saving, the transporter page continues to the next page in the journey after /transporter (or the section's continue destination).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12853-12856",
+      "quote": "return res.redirect(getSectionContinueRedirect(\n    req,\n    getNextJourneyPath('/transporter', req.session.data)\n  ))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-040",
+      "statement": "Using a soft-save action on the transporter page (such as 'Save and return to overview') saves the selected transporter if one is chosen and returns to the notification hub (or the save destination for that action).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12828-12837",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    if (transporter) {\n      syncTransporterSession(req.session.data, transporter)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-041",
+      "statement": "The transporter details step counts as complete when a transporter with a name has been saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:3289-3291",
+      "quote": "return Boolean(sessionData.transporter && sessionData.transporter.name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-042",
+      "statement": "By default the transporter page shows a 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link to the notification hub.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:169-176; app/views/partials/design-release-2.1/journey-form-actions.html",
+      "quote": "{% set continueText = options.continueText if options.continueText else 'Save and continue' %}\n{% set hubText = options.hubText if options.hubText else 'Save and return to overview' %}\n{% set cancelText = options.cancelText if options.cancelText else 'Cancel and return to overview' %}",
+      "confidence": "verbatim",
+      "note": "The shared journey-form-actions partial is the shell part's; claimed here only for what the transporter page shows."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-043",
+      "statement": "When the notification is being amended, the transporter page shows 'Save and return' (to review), a secondary 'Save and continue', and a 'Save and return to overview' link-style button.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html (isAmend branch)",
+      "quote": "{% elif isAmend %}\n      {{ govukButton({\n        text: \"Save and return\",\n        name: \"action\",\n        value: \"review\"\n      }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-044",
+      "statement": "When the transporter page is edited from a template review, it shows a single 'Save and return' button and a 'Cancel' link back to the template.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html (isTemplateReview branch); app/routes.js:3335",
+      "quote": "{% if isTemplateReview %}\n      {{ govukButton({\n        text: \"Save and return\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-045",
+      "statement": "After a new transporter is added from the journey, the transporter page shows a one-time 'Success' notification banner with the success message, which is cleared once shown.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:31-38; app/routes.js:3334-3339",
+      "quote": "if (successMessage) {\n    delete sessionData.transporterSuccessMessage\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-046",
+      "statement": "The success message is '<name> transporter added', where the transporter name is shown with only its first letter capitalised and the rest lower-cased (so 'ACME Haulage' shows as 'Acme haulage transporter added').",
+      "kind": "copy",
+      "ref": "app/routes.js:3665-3673",
+      "quote": "return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1).toLowerCase()} transporter added`",
+      "confidence": "verbatim",
+      "note": "The lower-casing of the rest of the name looks unintentional (it mangles proper nouns and 'Ltd'); recorded as the prototype does it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-047",
+      "statement": "If the new transporter has no name, the success message is 'Transporter added'.",
+      "kind": "copy",
+      "ref": "app/routes.js:3668-3670",
+      "quote": "return 'Transporter added'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-048",
+      "statement": "The 'Choose a transporter type' page is served at GET /transporter/add.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12676-12680",
+      "quote": "router.get('/transporter/add', (req, res) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-049",
+      "statement": "The transporter type page has the caption 'Add a new transporter' and the heading and page name 'Choose a transporter type'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add.html:9,31-32",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p>\n          <h1 class=\"app-transporter-add-page__heading\">Choose a transporter type</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-050",
+      "statement": "The transporter type page shows the warning 'Check the transporter list before adding new transporters to avoid duplicates.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add.html:35-38",
+      "quote": "text: \"Check the transporter list before adding new transporters to avoid duplicates.\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-051",
+      "statement": "The transporter type page's back link goes to the transporter page, or to the address book's add page when adding a transporter from the address book.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3380-3387",
+      "quote": "backLink: fromAddressBook\n      ? `${addressBookBasePath}/add`\n      : `${journeyBasePath}/transporter`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-052",
+      "statement": "The transporter type page posts to <journey base>/transporter/add, so /design-release-2.1/transporter/add under DR2.1.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3388; app/views/design-release-2.1/transporter-add.html:47",
+      "quote": "formAction: `${journeyBasePath}/transporter/add`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-053",
+      "statement": "The transporter type question is a radio group (field transporterType) whose legend 'Choose a transporter type' is visually hidden.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transporter-add.html:49-81",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">Choose a transporter type</legend>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-054",
+      "statement": "The first transporter type option is 'Private transporter' (value private), with no hint.",
+      "kind": "data",
+      "ref": "app/data/transporter-types.js:2-5",
+      "quote": "value: 'private',\n    text: 'Private transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-055",
+      "statement": "The second transporter type option is 'Commercial' (value commercial), with the hint 'This can only be a commercial transporter from Northern Ireland.'",
+      "kind": "data",
+      "ref": "app/data/transporter-types.js:6-10",
+      "quote": "value: 'commercial',\n    text: 'Commercial',\n    hint: 'This can only be a commercial transporter from Northern Ireland.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-056",
+      "statement": "The transporter type page remembers the type chosen earlier and pre-selects it.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3390-3392",
+      "quote": "selectedTransporterType: locals.selectedTransporterType != null\n      ? locals.selectedTransporterType\n      : sessionData.transporterAddType || '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-057",
+      "statement": "A transporter type must be chosen: if none (or an unknown value) is sent, the page shows the error 'Select a transporter type' in the summary, linking to the first option, and beside the radios.",
+      "kind": "rule",
+      "ref": "app/routes.js:3398-3415,12685-12694",
+      "quote": "transporterType: {\n          text: 'Select a transporter type'\n        }\n      },\n      errorList: [{\n        text: 'Select a transporter type',\n        href: '#transporter-type-private'\n      }],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-058",
+      "statement": "The transporter type page has a 'Continue' button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add.html:85-88",
+      "quote": "text: \"Continue\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-059",
+      "statement": "Choosing 'Private transporter' saves the chosen type and goes to the add private transporter page (/transporter/add/private).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12698-12702",
+      "quote": "if (validation.value === 'private') {\n    return res.redirect('/transporter/add/private')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-060",
+      "statement": "Choosing 'Commercial' saves the chosen type and goes to the add commercial transporter page (/transporter/add/commercial).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12704-12706",
+      "quote": "if (validation.value === 'commercial') {\n    return res.redirect('/transporter/add/commercial')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-061",
+      "statement": "The private and commercial add pages can only be reached after choosing that type: opening or posting either one without the matching chosen type redirects to the transporter type page.",
+      "kind": "rule",
+      "ref": "app/routes.js:3424-3431,12714,12724,12767,12777",
+      "quote": "if (req.session.data.transporterAddType === expectedType) {\n    return false\n  }\n\n  res.redirect('/transporter/add')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-062",
+      "statement": "The add private transporter page has the caption 'Add a new transporter' and the heading and page name 'Add a private transporter'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add-private.html:8,30-31",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p>\n          <h1 class=\"app-transporter-add-page__heading\">Add a private transporter</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-063",
+      "statement": "The add private transporter page's back link goes to the transporter type page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3781",
+      "quote": "backLink: '/transporter/add',",
+      "confidence": "verbatim",
+      "note": "No journey base path is added here in routes.js; whether the version mount prefixes it under /design-release-2.1 is the shell part's concern."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-064",
+      "statement": "The add private transporter page does not show the notification status block (unlike the transporter page and the commercial add page).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter-add-private.html:24-62",
+      "quote": "<div class=\"app-transporter-add-page__header\">\n          <p class=\"app-transporter-add-page__caption\">Add a new transporter</p>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the partials/notification-status.html include, which transporter-add-commercial.html:29 has."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-065",
+      "statement": "The private transporter form posts to /design-release-2.1/transporter/add/private and shows a 'There is a problem' error summary when it has errors.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter-add-private.html:34-41",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/transporter/add/private\" novalidate class=\"app-transporter-add-private-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-066",
+      "statement": "Private transporter field 'Name or organisation name' (transporterPrivateName) is required; when blank the error is 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:5-14; app/routes.js:3471-3473",
+      "quote": "addError('transporterPrivateName', 'Enter a name or organisation name', '#transporter-private-name')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-067",
+      "statement": "Private transporter field 'Address line 1' (transporterPrivateAddressLine1) is required; when blank the error is 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:16-25; app/routes.js:3475-3477",
+      "quote": "addError('transporterPrivateAddressLine1', 'Enter address line 1', '#transporter-private-address-line-1')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-068",
+      "statement": "Private transporter field 'Address line 2 (optional)' (transporterPrivateAddressLine2) is optional and has no validation.",
+      "kind": "data",
+      "ref": "app/views/partials/transporter-add-private-fields.html:27-36; app/routes.js:3462-3500",
+      "quote": "text: \"Address line 2 (optional)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-069",
+      "statement": "Private transporter field 'Town or city' (transporterPrivateTownOrCity) is required; when blank the error is 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:38-47; app/routes.js:3479-3481",
+      "quote": "addError('transporterPrivateTownOrCity', 'Enter a town or city', '#transporter-private-town-or-city')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-070",
+      "statement": "Private transporter field 'County (optional)' (transporterPrivateCounty) is optional and has no validation.",
+      "kind": "data",
+      "ref": "app/views/partials/transporter-add-private-fields.html:49-58",
+      "quote": "text: \"County (optional)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-071",
+      "statement": "Private transporter field 'Postcode or Zip code' (transporterPrivatePostcode) is required; when blank the error is 'Enter a postcode or Zip code'. Its format is not checked.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:60-69; app/routes.js:3483-3485",
+      "quote": "addError('transporterPrivatePostcode', 'Enter a postcode or Zip code', '#transporter-private-postcode')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-072",
+      "statement": "Private transporter field 'Country' (transporterPrivateCountry) is a dropdown, defaulting to United Kingdom, listing United Kingdom and the prototype's country list in alphabetical order.",
+      "kind": "data",
+      "ref": "app/views/partials/transporter-add-private-fields.html:71-83; app/routes.js:3441,3783,10412-10423",
+      "quote": "country: 'United Kingdom',",
+      "confidence": "verbatim",
+      "note": "The country list (countryOptions) is defined outside this slice."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-073",
+      "statement": "Private transporter country is required; when blank the error is 'Select a country'.",
+      "kind": "rule",
+      "ref": "app/routes.js:3487-3489",
+      "quote": "addError('transporterPrivateCountry', 'Select a country', '#transporter-private-country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-074",
+      "statement": "The private transporter form has a sub-heading 'Enter contact details' above the email and phone fields.",
+      "kind": "copy",
+      "ref": "app/views/partials/transporter-add-private-fields.html:85",
+      "quote": "<h2 class=\"app-transporter-add-private-fields__section-heading\">Enter contact details</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-075",
+      "statement": "Private transporter field 'Email address' (transporterPrivateEmail) is required; when blank the error is 'Enter an email address'. Its format is not checked.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:87-96; app/routes.js:3491-3493",
+      "quote": "addError('transporterPrivateEmail', 'Enter an email address', '#transporter-private-email')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-076",
+      "statement": "Private transporter field 'Phone number' (transporterPrivatePhone) has the hint 'For international numbers include the country code' and is required; when blank the error is 'Enter a phone number'. Its format is not checked.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-private-fields.html:98-110; app/routes.js:3495-3497",
+      "quote": "text: \"For international numbers include the country code\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-077",
+      "statement": "The prototype has no format validation messages for the transporter email address, phone number or postcode.",
+      "kind": "rule",
+      "ref": "app/routes.js:3462-3500,3592-3650",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Both validators check only that each required field is present. Looked in validateTransporterPrivateForm and validateTransporterCommercialForm."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-078",
+      "statement": "All private and commercial transporter inputs are trimmed of surrounding whitespace before validation and saving.",
+      "kind": "rule",
+      "ref": "app/routes.js:3448-3460,3556-3590",
+      "quote": "name: (body.transporterPrivateName || '').trim(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-079",
+      "statement": "When the private or commercial form has errors, the page is shown again with every error listed in field order in the summary and beside each field, and the entered values kept.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12741-12749,12794-12805",
+      "quote": "req.session.data.transporterPrivateForm = validation.value\n\n    return renderTransporterAddPrivatePage(req, res, {\n      formValues: validation.value\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-080",
+      "statement": "Values entered on an invalid private or commercial form are kept in the session and shown again if the user later returns to that page, until the form is saved or cancelled.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3433-3446,3540-3554,12753,12809",
+      "quote": "...(sessionData.transporterPrivateForm || {})",
+      "confidence": "inferred",
+      "note": "Inferred: the form defaults read the stored form, which is cleared only on success or cancel."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-081",
+      "statement": "Both add pages have a primary 'Save and continue' button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add-private.html:45-48; app/views/design-release-2.1/transporter-add-commercial.html:49-52",
+      "quote": "text: \"Save and continue\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-082",
+      "statement": "Both add pages have a secondary cancel button reading 'Cancel and return to dashboard', or 'Cancel and return to address book' when the add was started from the address book.",
+      "kind": "copy",
+      "ref": "app/routes.js:3784-3786,3824-3826; app/views/design-release-2.1/transporter-add-private.html:50-55",
+      "quote": "cancelButtonText: fromAddressBook\n      ? 'Cancel and return to address book'\n      : 'Cancel and return to dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-083",
+      "statement": "Cancelling an add page skips validation, discards the entered values, the chosen type and the address-book flag, and goes to the dashboard (/) or, when started from the address book, to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3761-3773,12731-12737,12784-12790",
+      "quote": "if (fromAddressBook) {\n    return `${addressBookBasePath}?category=transporter`\n  }\n\n  return '/'",
+      "confidence": "verbatim",
+      "note": "From the journey, cancel goes to the dashboard rather than back to the transporter page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-084",
+      "statement": "A saved private transporter is recorded with type Private, status New, approval number 'Not applicable', and an address made of the entered address lines, town, county, postcode and country joined by commas (blanks left out).",
+      "kind": "data",
+      "ref": "app/routes.js:3502-3511,3527-3538",
+      "quote": "approvalNumber: 'Not applicable',\n    type: 'Private',\n    status: 'New',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-085",
+      "statement": "A saved transporter also keeps its separate details: name or organisation, address line 1, address line 2, town or city, county, postcode, country, email and phone.",
+      "kind": "data",
+      "ref": "app/routes.js:3513-3525",
+      "quote": "nameOrOrganisation: form.name,\n    addressLine1: form.addressLine1,\n    addressLine2: form.addressLine2,\n    townOrCity: form.townOrCity,\n    county: form.county,\n    postcode: form.postcode,\n    country: form.country,\n    email: form.email,\n    phone: form.phone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-086",
+      "statement": "The add commercial transporter page has the caption 'Add a new transporter' and the heading and page name 'Add a commercial transporter'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add-commercial.html:8,32-33",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p>\n          <h1 class=\"app-transporter-add-page__heading\">Add a commercial transporter</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-087",
+      "statement": "The add commercial transporter page shows the notification status block above its heading.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter-add-commercial.html:29; app/routes.js:3818",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-088",
+      "statement": "The add commercial transporter page's back link goes to the transporter type page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3817",
+      "quote": "backLink: '/transporter/add',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-089",
+      "statement": "The add commercial transporter page shows an 'Important' notification banner headed 'Help with transporter authorisation', repeating the DAERA or APHA authorisation guidance, the economic-activity guidance link (opens in a new tab) and the DAERA and EU document validity statements.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add-commercial.html:43; app/views/partials/transporter-authorisation-banner.html:3-20",
+      "quote": "titleText: \"Important\",\n  classes: \"app-transporter-authorisation-banner\",\n  html: '\n    <h2 class=\"govuk-notification-banner__heading\">Help with transporter authorisation</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-090",
+      "statement": "The commercial transporter form posts to /design-release-2.1/transporter/add/commercial and shows a 'There is a problem' error summary when it has errors.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter-add-commercial.html:36-45",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/transporter/add/commercial\" novalidate class=\"app-transporter-add-commercial-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-091",
+      "statement": "Commercial transporter field 'Transporter authorisation number' (transporterCommercialAuthorisationNumber) is first on the form and required; when blank the error is 'Enter a transporter authorisation number'. Its format is not checked.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:8-17; app/routes.js:3601-3607",
+      "quote": "'Enter a transporter authorisation number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-092",
+      "statement": "Commercial transporter field 'Name or organisation name' (transporterCommercialName) is required; when blank the error is 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:19-28; app/routes.js:3609-3611",
+      "quote": "addError('transporterCommercialName', 'Enter a name or organisation name', '#transporter-commercial-name')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-093",
+      "statement": "Under DR2.1 the commercial transporter page offers an address search labelled 'Search for an address' with the placeholder 'Start typing...', which searches the Northern Ireland lookup addresses.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3794-3796,3827-3831; app/views/partials/transporter-add-commercial-fields.html:30-71",
+      "quote": "lookupAddressesJson: JSON.stringify(\n      showAddressLookup\n        ? addressBookLookupAddresses.northernIrelandAddresses\n        : addressBookLookupAddresses.addresses\n    ),",
+      "confidence": "verbatim",
+      "note": "showAddressLookup is true when isDesignRelease2Version is set, which DR2.1 also sets. The lookup address list itself lives in an address-book data file outside this slice."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-094",
+      "statement": "The address search results are announced as 'Address search results' and the search button has the accessible name 'Search'.",
+      "kind": "copy",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:72-86",
+      "quote": "aria-label=\"Address search results\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-095",
+      "statement": "Choosing a looked-up address fills the commercial transporter's name, address line 1, address line 2, town or city, county and postcode from that address wherever the user left the field blank.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3556-3582; app/views/partials/transporter-add-commercial-fields.html:35",
+      "quote": "name: (body.transporterCommercialName || '').trim() ||\n      (lookupManualAddress && lookupManualAddress.nameOrOrganisation) ||\n      '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-096",
+      "statement": "The commercial transporter page has an 'Enter address manually' link-style button that reveals the manual address fields.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:105-122",
+      "quote": "Enter address manually",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-097",
+      "statement": "With the address lookup on, the manual address fields and the contact details section start hidden, and are shown when an address has been looked up, when address line 1 already has a value, when an address field has an error, or after any failed save.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3797-3814,12799-12804; app/views/partials/transporter-add-commercial-fields.html:126-129,204-207",
+      "quote": "const showManualAddress = locals.showManualAddress != null\n    ? locals.showManualAddress\n    : (\n      !showAddressLookup ||\n      hasAddressErrors ||\n      Boolean(locals.selectedLookupAddressId) ||\n      Boolean(formValues.addressLine1)\n    )",
+      "confidence": "verbatim",
+      "note": "The contact details section is also revealed client-side once an address is chosen (data-reveal-with-address)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-098",
+      "statement": "The address search field can show an address lookup error, but no handler sets one, so the prototype defines no wording for it.",
+      "kind": "copy",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:46-51; app/routes.js:3592-3650",
+      "quote": "",
+      "confidence": "gap",
+      "note": "validateTransporterCommercialForm never adds an addressLookup error; looked in routes.js 3289-3842 and 12664-12858."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-099",
+      "statement": "Commercial transporter field 'Address line 1' (transporterCommercialAddressLine1) is required; when blank the error is 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:130-139; app/routes.js:3613-3619",
+      "quote": "'transporterCommercialAddressLine1',\n      'Enter address line 1',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-100",
+      "statement": "Commercial transporter field 'Address line 2 (optional)' (transporterCommercialAddressLine2) is optional and has no validation.",
+      "kind": "data",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:141-150",
+      "quote": "text: \"Address line 2 (optional)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-101",
+      "statement": "Commercial transporter field 'Town or city' (transporterCommercialTownOrCity) is required; when blank the error is 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:152-161; app/routes.js:3621-3627",
+      "quote": "'transporterCommercialTownOrCity',\n      'Enter a town or city',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-102",
+      "statement": "Commercial transporter field 'County (optional)' (transporterCommercialCounty) is optional and has no validation.",
+      "kind": "data",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:163-172",
+      "quote": "text: \"County (optional)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-103",
+      "statement": "Commercial transporter field 'Postcode or Zip code' (transporterCommercialPostcode) is required; when blank the error is 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:174-183; app/routes.js:3629-3635",
+      "quote": "'transporterCommercialPostcode',\n      'Enter a postcode or Zip code',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-104",
+      "statement": "A commercial transporter's country is always Northern Ireland: the 'Country' dropdown shows only Northern Ireland and is disabled, a hidden field sends the value, and the server sets it regardless of what is posted.",
+      "kind": "rule",
+      "ref": "app/routes.js:3368-3376,3552,3583; app/views/partials/transporter-add-commercial-fields.html:185-201",
+      "quote": "const COMMERCIAL_TRANSPORTER_COUNTRY = 'Northern Ireland'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-105",
+      "statement": "The commercial validator has a 'Select a country' error for a missing country, which cannot fire because the country is always set to Northern Ireland.",
+      "kind": "rule",
+      "ref": "app/routes.js:3637-3639",
+      "quote": "addError('transporterCommercialCountry', 'Select a country', '#transporter-commercial-country')",
+      "confidence": "inferred",
+      "note": "Inferred from parseTransporterCommercialFormBody always setting country to COMMERCIAL_TRANSPORTER_COUNTRY."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-106",
+      "statement": "The commercial transporter form has an 'Enter contact details' section with 'Email address' (required, error 'Enter an email address') and 'Phone number' (hint 'For international numbers include the country code', required, error 'Enter a phone number').",
+      "kind": "rule",
+      "ref": "app/views/partials/transporter-add-commercial-fields.html:204-234; app/routes.js:3641-3647",
+      "quote": "addError('transporterCommercialEmail', 'Enter an email address', '#transporter-commercial-email')\n  }\n\n  if (!form.phone) {\n    addError('transporterCommercialPhone', 'Enter a phone number', '#transporter-commercial-phone')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-107",
+      "statement": "A saved commercial transporter is recorded with type Commercial, status New, the entered authorisation number as its approval number, and an address joined from its address lines, town, county, postcode and Northern Ireland.",
+      "kind": "data",
+      "ref": "app/routes.js:3652-3663",
+      "quote": "approvalNumber: form.authorisationNumber,\n    type: 'Commercial',\n    status: 'New',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-108",
+      "statement": "Saving a new private or commercial transporter adds it to the top of the session's transporter list and makes it the notification's selected transporter.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3720-3726",
+      "quote": "sessionData.addedTransporters.unshift(transporter)\n  syncTransporterSession(sessionData, transporter)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-109",
+      "statement": "When the add was started from the journey, saving returns to the transporter page with the success banner, and the new transporter is not added to the address book.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3734-3758",
+      "quote": "sessionData.transporterSuccessMessage = formatTransporterSuccessMessage(transporter.name)\n\n  return {\n    redirectTo: '/transporter'\n  }",
+      "confidence": "inferred",
+      "note": "Inferred: only the fromAddressBook branch writes to addressBookAddedAddresses. A transporter added in the journey appears in the transporter list only, not as an address-book entry."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-110",
+      "statement": "When the add was started from the address book, saving adds the new transporter to the address book as a transporter entry (with its type label Private or Commercial, address, approval number, country, and contact details) at the top of the list.",
+      "kind": "integration",
+      "ref": "app/routes.js:3675-3718,3734-3743",
+      "quote": "sessionData.addressBookAddedAddresses.unshift(\n      mapAddedTransporterToAddressBookEntry(transporter, addressBookPath)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-111",
+      "statement": "When the add was started from the address book, saving shows the address book's success message, clears the address-book flag and the chosen type, and goes to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3744-3751",
+      "quote": "sessionData.addressBookSuccessMessage = formatAddressBookSuccessMessage(transporter.name)\n    sessionData.addressBookAddingTransporter = null\n    sessionData.transporterAddType = null\n    sessionData.transporterSuccessMessage = null\n\n    return {\n      redirectTo: `${addressBookPath}?category=transporter`\n    }",
+      "confidence": "verbatim",
+      "note": "The address book success message wording (formatAddressBookSuccessMessage, routes.js:9651) belongs to the address book part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-112",
+      "statement": "A transporter's address-book entry is searchable by its name, type label, address, approval number and country, and links to its view page in the address book.",
+      "kind": "data",
+      "ref": "app/routes.js:3709-3716",
+      "quote": "searchText: [\n      transporter.name,\n      typeLabel,\n      transporter.address,\n      transporter.approvalNumber,\n      details.country\n    ].filter(Boolean).join(' ').toLowerCase(),\n    viewHref: `${addressBookPath}/${transporter.id}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-113",
+      "statement": "New transporters get an id of the form added-transporter-<timestamp>.",
+      "kind": "data",
+      "ref": "app/routes.js:3529,3654",
+      "quote": "id: `added-transporter-${Date.now()}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-114",
+      "statement": "All four transporter pages show the 'Alpha' phase banner with 'This is a new service. Help us improve it and give your feedback by email.' and a 'Back' link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:11-23; transporter-add.html:11-23; transporter-add-private.html:10-22; transporter-add-commercial.html:10-22",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p7-115",
+      "statement": "The prototype does not say what a user sees when a transporter's status is New (not yet approved) beyond the tag, nor whether selecting an unapproved transporter is allowed or warned about.",
+      "kind": "rule",
+      "ref": "app/views/design-release-2.1/transporter.html; app/routes.js:12820-12857",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Selection of any listed transporter, New or Approved, is accepted without a check."
+    }
+  ]
+}

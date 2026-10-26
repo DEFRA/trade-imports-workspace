@@ -1,0 +1,1012 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 6, Accessibility and security. Read in full: tests/animals/a11y (README.md and 10 specs, 13 tests: journey initial load 1, after input 1, with errors 1, conditional pages 2, dashboard views 3 of which pagination is skipped without a second page, dashboard viewports 1, view states 1, lifecycle states 1, address edit 1, sign-in 1); fixtures/a11y.ts and utils/a11y-utils.ts (the WCAG 2.2 AA standard, axe tags, scan viewports, exclusions mechanism, failure and artefact rules, timeout); tests/animals/security (8 frontend specs, 9 tests: auth, change context, conditional pages, dashboard parameters, documents, draft validation error, lifecycle x2, submitted journey); tests/animals/security/backend/notification-submission.spec.ts (1 test); tests/ins/security/address-book (2 specs, 2 tests: auth and address book lifecycle); fixtures/security.ts (backend API client routed through the ZAP proxy); docs/security.md (ZAP DAST profiles, lanes, scanned and unscanned services, gating). tests/ins/a11y holds only .gitkeep, recorded as a gap. Claims run: a11y standard and suite rules, then each a11y spec's pages and states in spec order, then the security suite's rules from docs/security.md, then each security spec's flow. Security claims are stated in general terms only.",
+  "claims": [
+    {
+      "id": "repo-tests-p6-001",
+      "statement": "The accessibility suite holds every scanned page to WCAG 2.2 AA, and every a11y describe block is titled with that standard.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:11-14; tests/animals/a11y/*.spec.ts describe title",
+      "quote": "export const WCAG_STANDARD = {\n  name: 'WCAG 2.2 AA',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-002",
+      "statement": "Every scan runs axe with the five WCAG tags needed for AA: wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa, unless a test passes its own tags.",
+      "kind": "rule",
+      "ref": "fixtures/a11y.ts:13 and :73",
+      "quote": "tags: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-003",
+      "statement": "A passing accessibility scan is not full WCAG 2.2 AA conformance: axe automates only part of the standard, and of the new 2.2 criteria only 2.5.8 Target Size.",
+      "kind": "constraint",
+      "ref": "fixtures/a11y.ts:5-10",
+      "quote": "axe only automates part of the standard (only 2.5.8 Target\n * Size among the new 2.2 criteria), so a pass isn't full conformance.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-004",
+      "statement": "Without the WCAG tags axe would run its default ruleset, which omits the target-size rule, so the tags are what bring target size into the scan.",
+      "kind": "rule",
+      "ref": "utils/a11y-utils.ts:50",
+      "quote": "Without tags axe runs its own default ruleset, which omits target-size",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-005",
+      "statement": "Any accessibility violation on any scanned page fails the test, with one combined error naming each failing page path and each violation's severity, rule id, description, node count, help link and first target.",
+      "kind": "rule",
+      "ref": "fixtures/a11y.ts:90-92; utils/a11y-utils.ts:66-88",
+      "quote": "const header = `Accessibility violations found on ${failed.length} page${failed.length === 1 ? '' : 's'}:\\n\\n`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-006",
+      "statement": "Each scan that finds violations attaches a JSON artefact to the test report, named after the page path.",
+      "kind": "behaviour",
+      "ref": "fixtures/a11y.ts:80-88",
+      "quote": "await testInfo.attach(`accessibility-violations: ${path}`, {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-007",
+      "statement": "An accessibility test that never runs a scan fails, so every a11y test must scan at least one page.",
+      "kind": "rule",
+      "ref": "fixtures/a11y.ts:77-78",
+      "quote": "if (results.length === 0) throw new Error('No accessibility scans were run. Call runA11yScan() at least once.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-008",
+      "statement": "Accessibility tests are given a five-minute timeout because they click through several pages and scan each.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:55-57, :66",
+      "quote": "const A11Y_SCAN_TIMEOUT_MS = 5 * 60 * 1000;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-009",
+      "statement": "Each scan waits for the page's DOM to be ready and then, best effort, for the network to go idle, never blocking indefinitely on the second wait.",
+      "kind": "behaviour",
+      "ref": "utils/a11y-utils.ts:40-48",
+      "quote": "// Best effort: allow extra settling, but never block indefinitely.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-010",
+      "statement": "Scans run in axe's non-legacy mode by default, so content inside cross-origin iframes is tested; a scan may opt into legacy mode if axe's window-open hangs, at the cost of not testing cross-origin iframes.",
+      "kind": "constraint",
+      "ref": "utils/a11y-utils.ts:11-21",
+      "quote": "setLegacyMode() skips that mechanism entirely, at the cost of not\n   * testing cross-origin iframes. Set to `true` for scans that hit the hang.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-011",
+      "statement": "A scan can be narrowed by including or excluding page parts and by disabling named rules; the suite uses only exclusions, each justified as an upstream or not-owned defect.",
+      "kind": "rule",
+      "ref": "utils/a11y-utils.ts:6-10, :54-56",
+      "quote": "if (exclude !== undefined) builder = builder.exclude([exclude].flat());",
+      "confidence": "inferred",
+      "note": "No spec in the slice passes include or disableRules; every exclude carries a comment blaming govuk-frontend or the sign-in stub."
+    },
+    {
+      "id": "repo-tests-p6-012",
+      "statement": "Responsive checks re-scan at a narrow portrait viewport of 320 by 568 CSS pixels, the WCAG 1.4.10 Reflow width and govuk-frontend's smallest breakpoint.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:22-32",
+      "quote": "320 CSS px is the WCAG 1.4.10 Reflow width (a 1280px desktop at 400% zoom)\n   * and govuk-frontend's smallest breakpoint",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-013",
+      "statement": "Responsive checks also re-scan at a narrow landscape viewport of 568 by 320 CSS pixels, covering WCAG 1.3.4 Orientation and the 256 CSS pixel height threshold of 1.4.10 Reflow.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:34-43",
+      "quote": "a portrait-only scan misses layout that breaks on rotation (WCAG 1.3.4\n   * Orientation) and the other half of 1.4.10 Reflow",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-014",
+      "statement": "After a viewport change the suite waits one animation frame before scanning, so viewport listeners and resize handlers have run.",
+      "kind": "behaviour",
+      "ref": "fixtures/a11y.ts:46-53",
+      "quote": "waiting one rAF reliably lets them settle first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-015",
+      "statement": "Scans of the origin page exclude the region-of-origin-code radio, because govuk-frontend's conditional-reveal radios set aria-expanded on the input, which axe's aria-allowed-attr rule rejects; the suite treats this as an upstream disagreement, not a service defect.",
+      "kind": "constraint",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:3-6",
+      "quote": "govuk-frontend's conditional-reveal radios set aria-expanded on the radio input\n// (radios.mjs), which axe's aria-allowed-attr rule rejects — an upstream\n// disagreement, not a service defect.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-016",
+      "statement": "Scans of the import reason page exclude the reason radios that open a conditional reveal, for the same govuk-frontend aria-expanded reason.",
+      "kind": "constraint",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:8-10",
+      "quote": "const conditionalReasonRadios = 'input[name=\"reasonForImport\"][aria-controls]';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-017",
+      "statement": "On the import reason page, four of the five reasons open a conditional reveal.",
+      "kind": "data",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:8-9",
+      "quote": "where four of the five\n// reasons open a conditional reveal, so four radios carry aria-expanded.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-018",
+      "statement": "The sign-in error scan excludes the sign-in stub's error-summary list, which fails axe's list-structure rule, because the stub is not code the team owns.",
+      "kind": "constraint",
+      "ref": "tests/animals/a11y/sign-in.spec.ts:7-9",
+      "quote": "The sign-in stub's own error-summary list fails axe's list-structure rule —\n// stub code we don't own (docs/security.md), not a defect in this service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-019",
+      "statement": "The a11y suite scans selected states, not every reachable state: a state is skipped when reaching it needs disproportionate setup, such as seeding a real external queue for one rarely used dialog.",
+      "kind": "constraint",
+      "ref": "tests/animals/a11y/README.md:7",
+      "quote": "Not every reachable state is worth a dedicated scan — weigh the state's value against the test infrastructure it needs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-020",
+      "statement": "Every animals accessibility test is tagged @a11y.",
+      "kind": "constraint",
+      "ref": "tests/animals/a11y/*.spec.ts test.describe tag",
+      "quote": "test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-021",
+      "statement": "A test proves each notification journey page has no WCAG 2.2 AA violations on initial load, walking from the dashboard through every journey page to the declaration.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:17 'each notification journey page has no accessibility violations on initial load'",
+      "quote": "test('each notification journey page has no accessibility violations on initial load'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-022",
+      "statement": "The notification dashboard is scanned on initial load, and its create new notification button opens the origin of import page.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:22-30",
+      "quote": "await animalsPages.dashboard.btnCreateNewNotification.click();\n      await animalsPages.originOfImport.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-023",
+      "statement": "The origin of import page is scanned empty on initial load.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:26-30 step 'Origin of import'",
+      "quote": "await runA11yScan({ exclude: conditionalRadioInput });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-024",
+      "statement": "An entry guard holds a new notification on the origin page until origin is answered, so the overview (task list) is reachable only after origin has been saved.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:32-41 step 'Overview'",
+      "quote": "The entry guard holds the journey on origin until it is answered, so the\n    // overview is only reachable once origin has been saved.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-025",
+      "statement": "The overview page is scanned once origin is saved.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:34-41",
+      "quote": "await animalsPages.overview.open(journeyId);\n      await animalsPages.overview.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-026",
+      "statement": "The overview task 'What are you importing?' opens commodity selection; choosing the species Bos taurus and saving leads to the commodity details page, which is scanned before the number of animals (1) and number of packages (5) are filled and saved back to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:43-58 steps 'Commodity selection', 'Commodity details'",
+      "quote": "await animalsPages.overview.task('What are you importing?').click();\n      await animalsPages.commoditySelection.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-027",
+      "statement": "The overview task 'Identification details' opens the animal identification page, which is scanned empty, then takes an ear tag and saves back to the overview.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:60-67 step 'Animal identification'",
+      "quote": "await animalsPages.overview.task('Identification details').click();\n      await animalsPages.animalIdentification.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-028",
+      "statement": "The overview task 'Main reason for import' opens the import reason page, which is scanned empty; choosing reason Internal market and purpose Breeding and saving leads to the additional details page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:69-76 step 'Import reason'",
+      "quote": "await animalsPages.importReason.reason('Internal market').check();\n      await animalsPages.importReason.purpose('Breeding').check();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-029",
+      "statement": "The additional details page is scanned empty; it asks what the animals are certified for (option Slaughter) and whether the consignment contains unweaned animals (Yes or No), and saving returns to the overview.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:78-85 step 'Additional details'",
+      "quote": "await animalsPages.additionalDetails.certifiedFor('Slaughter').check();\n      await animalsPages.additionalDetails.containsUnweanedAnimals('No').check();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-030",
+      "statement": "The overview task 'Upload documents' opens the accompanying documents page, which is scanned empty.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:87-93 step 'Upload documents'",
+      "quote": "await animalsPages.overview.task('Upload documents').click();\n      await animalsPages.accompanyingDocuments.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-031",
+      "statement": "The overview task 'Roles and addresses' opens the consignment addresses page, which is scanned with no parties added.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:95-99 step 'Consignment addresses'",
+      "quote": "await animalsPages.overview.task('Roles and addresses').click();\n      await animalsPages.addresses.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-032",
+      "statement": "The consignment addresses page lists five parties to add: Consignor or exporter, Place of destination, Place of origin, Consignee and Importer; each opens a selection page that picks one address and saves back to the addresses page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:101-128",
+      "quote": "await animalsPages.addresses.addParty('Place of destination').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-033",
+      "statement": "The consignor or exporter selection page is scanned on initial load.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:101-108 step 'Consignor or exporter selection'",
+      "quote": "await animalsPages.addresses.addParty('Consignor or exporter').click();\n      await animalsPages.consignorSelection.heading.waitFor();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-034",
+      "statement": "Continuing from the consignment addresses page once all parties are added leads to the CPH number page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:127-131",
+      "quote": "await animalsPages.addresses.continueButton.click();\n    });\n\n    await test.step('CPH number', async () => {\n      await animalsPages.cphNumber.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-035",
+      "statement": "The CPH number page is scanned empty, and saving a CPH number returns to the overview.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:130-136 step 'CPH number'",
+      "quote": "await animalsPages.cphNumber.fillCphNumber();\n      await animalsPages.cphNumber.saveAndContinue.click();\n      await animalsPages.overview.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-036",
+      "statement": "The overview task 'Arrival details' opens the arrival details page, which is scanned empty; saving it leads to the transited countries page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:138-147",
+      "quote": "await animalsPages.overview.task('Arrival details').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-037",
+      "statement": "The transited countries page is scanned empty; adding France and saving leads to the transporter list page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:146-154",
+      "quote": "await animalsPages.transitedCountries.addCountry('France');\n      await animalsPages.transitedCountries.saveAndContinue.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-038",
+      "statement": "The transporter list page is scanned, and its add transporter action opens the transporter type page, which is scanned before any choice.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:153-161 steps 'Transporter list', 'Transporter type'",
+      "quote": "await animalsPages.transporter.addTransporter.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-039",
+      "statement": "Choosing transporter type Commercial opens the add commercial transporter page, which is scanned empty and then filled with approval number, name, address line 1, town or city, postal or zip code, email address and telephone number, and saved back to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:159-180 step 'Add commercial transporter'",
+      "quote": "approvalNumber: 'NI/TA/2026/0041',\n        name: 'Lough Neagh Livestock Haulage Ltd',\n        addressLine1: '4 Shore Road',\n        townOrCity: 'Antrim',\n        postalOrZipCode: 'BT41 4LB',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-040",
+      "statement": "The overview task 'Contact address for this consignment' opens the contact address page, which is scanned before an address (such as Animal and Plant Health Agency) is chosen and saved.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:182-189 step 'Contact address'",
+      "quote": "await animalsPages.overview.task('Contact address for this consignment').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-041",
+      "statement": "The overview's review and submit button opens the review your notification page (notification view), which is scanned; its continue button leads to the declaration page, which is scanned on initial load.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:191-201 steps 'Review your notification', 'Declaration'",
+      "quote": "await animalsPages.overview.reviewAndSubmitButton.click();\n      await animalsPages.notificationView.heading.waitFor();\n      await runA11yScan();\n      await animalsPages.notificationView.continueButton.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-042",
+      "statement": "A test proves each notification journey page has no WCAG 2.2 AA violations after user input, scanning each page with its answers filled before saving.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:18 'each notification journey page has no accessibility violations after user input'",
+      "quote": "test('each notification journey page has no accessibility violations after user input'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-043",
+      "statement": "The origin of import page, reached from the overview task 'Where is this consignment coming from?', is scanned with a region code required (Yes) and an internal reference filled.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:24-30 step 'Origin of import'",
+      "quote": "await animalsPages.overview.task('Where is this consignment coming from?').click();\n      await animalsJourney.fillOriginOfImport({ requiresRegionCode: 'Yes', internalReference: 'Imports456GB' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-044",
+      "statement": "Commodity selection, commodity details, animal identification, import reason and additional details are each scanned with their answers filled.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:32-71",
+      "quote": "await animalsPages.commoditySelection.selectSpecies(['Bos taurus']);\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-045",
+      "statement": "The accompanying documents page is scanned with a document's reference, issue date and a PDF file filled.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:73-80 step 'Upload documents'",
+      "quote": "await animalsPages.accompanyingDocuments.fillDocument('InternalReference123', '03/01/2026', fileUploadPaths.safeFile1kbPdf);\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-046",
+      "statement": "The consignor or exporter selection page is scanned with an address selected, and the consignment addresses page is scanned again with all five parties added.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:82-114 steps 'Consignor or exporter selection', 'Consignment addresses with all parties added'",
+      "quote": "await test.step('Consignment addresses with all parties added', async () => {\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-047",
+      "statement": "The CPH number and arrival details pages are each scanned with their answers filled.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:116-130",
+      "quote": "await animalsJourney.fillArrivalDetails();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-048",
+      "statement": "The transited countries page is scanned with a country (France) added.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:132-137 step 'Transited countries with a country added'",
+      "quote": "await test.step('Transited countries with a country added', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-049",
+      "statement": "The transporter list page offers existing transporters to pick, such as García Livestock Transport SL, and is scanned with one checked.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:139-144 step 'Transporter list'",
+      "quote": "await animalsPages.transporter.transporter('García Livestock Transport SL').check();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-050",
+      "statement": "The transporter type page is scanned with Commercial chosen, and the add commercial transporter page is scanned fully filled.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:146-167",
+      "quote": "await animalsPages.transporterAdd.transporterType('Commercial').check();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-051",
+      "statement": "The contact address page is scanned with an address chosen, and the review your notification page is scanned for a complete notification.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:169-183",
+      "quote": "await animalsPages.contactAddress.address('Animal and Plant Health Agency').check();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-052",
+      "statement": "The declaration page has a confirmation checkbox and is scanned with it checked; continuing submits the notification.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:185-190 step 'Declaration'",
+      "quote": "await animalsPages.declaration.confirmation.check();\n      await runA11yScan();\n      await animalsPages.declaration.continueButton.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-053",
+      "statement": "After the declaration the user lands on a page headed 'Import notification submitted', which is scanned.",
+      "kind": "copy",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:192-195 step 'Notification submitted'",
+      "quote": "await pages.page.getByRole('heading', { name: 'Import notification submitted' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-054",
+      "statement": "A test proves each journey page with validation has no WCAG 2.2 AA violations while its error summary is shown.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:12 'each notification journey page with validation has no accessibility violations when errors are shown'",
+      "quote": "test('each notification journey page with validation has no accessibility violations when errors are shown'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-055",
+      "statement": "Validation errors are shown in an error summary headed 'There is a problem'.",
+      "kind": "copy",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:18",
+      "quote": "const errorSummaryHeading = pages.page.getByRole('heading', { name: 'There is a problem' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-056",
+      "statement": "On the origin of import page, with no country of origin and region code required set to Yes but no code given, saving shows the error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:20-27 step 'Origin of import with validation errors'",
+      "quote": "await expect(animalsPages.originOfImport.countryOfOrigin).toHaveValue('');\n      await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();\n      await animalsPages.originOfImport.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-057",
+      "statement": "Saving the CPH number page empty shows the error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:38-41 step 'CPH number with validation errors'",
+      "quote": "await animalsPages.cphNumber.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-058",
+      "statement": "Saving the arrival details page empty shows the error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:47-52 step 'Arrival details with validation errors'",
+      "quote": "await animalsPages.arrivalDetails.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-059",
+      "statement": "Pressing add country on the transited countries page with no country chosen shows the error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:57-61 step 'Transited countries with validation errors'",
+      "quote": "await animalsPages.transitedCountries.addCountryButton.click();\n      await expect(errorSummaryHeading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-060",
+      "statement": "Continuing from the declaration page without confirming shows the error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:93-97 step 'Declaration with validation errors'",
+      "quote": "await animalsPages.declaration.continueButton.click();\n      await expect(errorSummaryHeading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-061",
+      "statement": "Only five pages have their error state scanned (origin, CPH number, arrival details, transited countries, declaration); error states of the other validated pages, such as commodity details, animal identification, import reason, transporter forms and contact address, are not scanned.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The address edit page's error state is scanned separately (notification-address-edit.spec.ts)."
+    },
+    {
+      "id": "repo-tests-p6-062",
+      "statement": "A test proves the reason-gated import reason reveals and the private transporter pages have no WCAG 2.2 AA violations.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:20 'the reason-gated and private transporter pages have no accessibility violations'",
+      "quote": "test('the reason-gated and private transporter pages have no accessibility violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-063",
+      "statement": "Choosing reason Transit on the import reason page reveals a port of exit and a destination country, and the page is scanned with both chosen; saving leads to additional details.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:29-39 step 'Import reason: Transit'",
+      "quote": "await animalsPages.importReason.reason('Transit').check();\n      await animalsPages.importReason.transitPortOfExit.selectOption({ index: 2 });\n      await animalsPages.importReason.transitDestinationCountry.selectOption('FR');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-064",
+      "statement": "Choosing reason Temporary admission horses reveals an exit date and a port of exit, and the page is scanned with both filled.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:41-51 step 'Import reason: Temporary admission of horses'",
+      "quote": "await animalsPages.importReason.reason('Temporary admission horses').check();\n      await animalsPages.importReason.temporaryAdmissionExitDate.fill(getRelativeAppDateText({ monthOffset: 2 }));\n      await animalsPages.importReason.temporaryAdmissionPortOfExit.selectOption({ index: 2 });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-065",
+      "statement": "Choosing transporter type Private is scanned, and saving opens the private transporter page, scanned filled with name, address line 1, town or city, postal or zip code, country, telephone number and email address.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:4-12, :53-63 step 'Private transporter'",
+      "quote": "await animalsPages.transporterAdd.transporterType('Private').check();\n      await runA11yScan();\n      await animalsPages.transporterAdd.saveAndContinue.click();\n      await animalsPages.privateTransporter.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-066",
+      "statement": "A test proves the approved commercial transporter register page has no WCAG 2.2 AA violations.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:66 'the approved commercial transporter register has no accessibility violations'",
+      "quote": "test('the approved commercial transporter register has no accessibility violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-067",
+      "statement": "No page links to the approved commercial transporter register any more, because the add route's commercial choice now opens the add commercial transporter form; the test reaches the register directly.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-conditional-pages.spec.ts:68-70",
+      "quote": "Nothing links here now that the add route's commercial arm is the\n    // add-commercial form (see journey.ts), so no other page reaches it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-068",
+      "statement": "A test proves the notification dashboard has no WCAG 2.2 AA violations in its default populated view and when sorted by date created, newest to oldest.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:9 'the notification dashboard has no accessibility violations in its default and sorted views'",
+      "quote": "await animalsPages.dashboard.sortBy(sortByValues.dateCreatedNewestToOldest);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-069",
+      "statement": "A test proves the notification dashboard has no WCAG 2.2 AA violations when a reference search matches a submitted notification and when it matches nothing (results label shown).",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:24 'the notification dashboard has no accessibility violations when searched'",
+      "quote": "await animalsPages.dashboard.searchForReference(noMatchReferenceNumber);\n      await animalsPages.dashboard.resultsLabel.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-070",
+      "statement": "Notification references take the form GBN-AG-26-XXXXXX, as the no-match search reference shows.",
+      "kind": "data",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:30",
+      "quote": "const noMatchReferenceNumber = 'GBN-AG-26-ZZZZZZ';",
+      "confidence": "inferred",
+      "note": "Inferred from the shape of the test's made-up reference."
+    },
+    {
+      "id": "repo-tests-p6-071",
+      "statement": "A test proves the notification dashboard's next page has no WCAG 2.2 AA violations, but it is skipped when the dashboard has only one page of notifications.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:47-61 'the notification dashboard has no accessibility violations when paginated'",
+      "quote": "'Requires more than one page of notifications (seeded in compose; CDP environments normally have sufficient data).',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-072",
+      "statement": "A test proves the notification dashboard has no WCAG 2.2 AA violations at the default viewport, at narrow portrait (320 by 568) and at narrow landscape (568 by 320).",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts:8 'the notification dashboard has no accessibility violations across viewports'",
+      "quote": "await page.setViewportSize(scanViewports.narrowPortrait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-073",
+      "statement": "Only the notification dashboard is scanned at narrow viewports; no journey page, review page or address page has a reflow or orientation scan.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts; fixtures/a11y.ts:16-21",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p6-074",
+      "statement": "A test proves the check your answers (review your notification) page has no WCAG 2.2 AA violations for a draft notification resumed in the UI.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-view-states.spec.ts:6, :12-16 step 'Review your notification (draft)'",
+      "quote": "await test.step('Review your notification (draft)', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-075",
+      "statement": "A submitted notification's review page is read-only and shows a Delete button; that state is scanned.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-view-states.spec.ts:20-24 step 'Review your notification (submitted, read-only)'",
+      "quote": "await pages.page.getByRole('button', { name: 'Delete' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-076",
+      "statement": "The submission confirmation page lives at the live-animals base path /notifications/{reference}/confirmation, is headed 'Import notification submitted', and is scanned when opened directly for a submitted notification.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-view-states.spec.ts:26-30 step 'Import notification submitted (confirmation)'",
+      "quote": "await animalsPages.notificationView.navigateToFrontend(`${SET_BASES.liveAnimals}/notifications/${submittedReference}/confirmation`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-077",
+      "statement": "A test proves the 'Cancel this amendment?' and 'Delete this notification?' confirmation pages have no WCAG 2.2 AA violations.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:4 'the cancel-amendment and delete confirmation pages have no accessibility violations'",
+      "quote": "await test.step('Cancel this amendment?', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-078",
+      "statement": "For a submitted notification, Amend on the dashboard opens the overview; the notification view then offers cancel amendment, which opens the cancel-amendment confirmation page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:16-22",
+      "quote": "await animalsPages.dashboard.amend(journeyId).click();\n      await animalsPages.overview.heading.waitFor();\n      await animalsPages.notificationView.open(journeyId);\n      await animalsPages.notificationView.cancelAmendment.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-079",
+      "statement": "Confirming the cancel amendment returns the user to the notification view with ?cancelled=1 in the URL.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:24-26",
+      "quote": "// ?cancelled=1 rather than the view's heading, which the error page also has.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-080",
+      "statement": "The notification view's heading is shared by an error page, so the heading alone does not prove a successful cancel.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:24",
+      "quote": "rather than the view's heading, which the error page also has.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-081",
+      "statement": "Delete on a dashboard notification opens a page headed 'Delete this notification?', which is scanned.",
+      "kind": "copy",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:29-35 step 'Delete this notification?'",
+      "quote": "await animalsPages.dashboard.delete(journeyId).click();\n      await pages.page.getByRole('heading', { name: 'Delete this notification?' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-082",
+      "statement": "A test proves the copied-address edit page and the contact page with a current contact have no WCAG 2.2 AA violations.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:4 'the copied-address edit page and the contact page with a current contact have no accessibility violations'",
+      "quote": "test('the copied-address edit page and the contact page with a current contact have no accessibility violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-083",
+      "statement": "For a notification ready to submit, the consignment addresses page shows Change and Edit details on every role, and is scanned in that state.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:11-14",
+      "quote": "await test.step('Consignment addresses with Change and Edit details on every role', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-084",
+      "statement": "Edit details on the Consignor or exporter role opens an edit address details page filled with the copied address, which is scanned.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:16-20 step 'Edit address details, filled with the copy'",
+      "quote": "await animalsPages.addresses.editPartyDetails('Consignor or exporter').click();\n      await animalsPages.consignorEdit.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-085",
+      "statement": "On the edit address details page, saving changes with an empty name and an invalid email address shows an error summary; that error state is scanned.",
+      "kind": "rule",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:22-27 step 'Edit address details with validation errors'",
+      "quote": "await animalsPages.consignorEdit.fill({ name: '', email: 'not-an-email' });\n      await animalsPages.consignorEdit.saveChanges.click();\n      await expect(animalsPages.consignorEdit.errorSummary).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-086",
+      "statement": "The contact address page shows the notification's current contact when one is set, and is scanned in that state.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:29-33 step 'Contact address with the current contact shown'",
+      "quote": "await animalsPages.contactAddress.currentContact.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-087",
+      "statement": "A test proves the sign-in page has no WCAG 2.2 AA violations on initial load and after a failed sign-in shows an error summary, starting unauthenticated from the dashboard.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/sign-in.spec.ts:12 'the sign-in page has no accessibility violations on initial load and with an error'",
+      "quote": "await pages.signIn.signIn({ userId: 'invalid' });\n      await pages.signIn.errorSummary.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-088",
+      "statement": "No accessibility run covers INS: tests/ins/a11y holds only a placeholder, so the INS dashboard, sign-in and address book pages (list, add, view, edit, delete) have no WCAG 2.2 AA scan.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/.gitkeep (only file in the folder)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p6-089",
+      "statement": "No accessibility scan covers the dashboard's copy action, the amending state of the overview, or the accompanying documents page once a file has uploaded and been checked.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/ (all 10 specs)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked across every a11y spec; the README allows skipping states with disproportionate setup, but these are not named as skipped."
+    },
+    {
+      "id": "repo-tests-p6-090",
+      "statement": "Security testing is a dynamic scan (DAST) through an OWASP ZAP proxy, with Playwright driving real authenticated journeys through it rather than ZAP crawling.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:3",
+      "quote": "A DAST (Dynamic Application Security Testing) scan using [OWASP ZAP](https://www.zaproxy.org/) as a proxy. Playwright drives real authenticated journeys through it rather than letting ZAP crawl",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-091",
+      "statement": "Security coverage is traffic-driven: a route no spec drives is invisible to the scan, so the active corpus is curated by hand to drive every route worth attacking.",
+      "kind": "constraint",
+      "ref": "docs/security.md:5",
+      "quote": "Coverage is therefore **traffic-driven**: a route no spec drives is invisible to the scan. That is why the `@active` corpus is curated by hand rather than generated.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-092",
+      "statement": "The passive security profile runs the e2e suite (excluding @active) through ZAP without attacking; the active profile runs only the @active suite and attacks, and is for docker-compose only.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:7-14 'Profiles'",
+      "quote": "| `security`        | The e2e suite, excluding `@active` | No — passive only | Cheap, run broadly              |\n| `security:active` | The `@active` suite only           | Yes               | Deliberate; docker-compose only |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-093",
+      "statement": "The active scan is refused on CDP environments, because the @active suite deletes notifications, documents and queue messages and the scan replays them with fuzzed payloads.",
+      "kind": "constraint",
+      "ref": "docs/security.md:26",
+      "quote": "**`security:active` is refused on CDP.** The `@active` suite deletes notifications, documents and DLQ messages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-094",
+      "statement": "The GitHub Action active scan is manual dispatch only, its nightly schedule disabled; its report is published password-protected and reports older than seven days are pruned.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:28",
+      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-095",
+      "statement": "The security scan covers five services: the animals frontend, the animals admin, the INS frontend, the animals backend and the address book API.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:49-57 'What gets scanned'",
+      "quote": "| `trade-imports-address-book`     | 8089       | `address-book` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-096",
+      "statement": "The active corpus is written against the three frontends; the backend and address book APIs are scanned through the seeding and assertion calls the specs make, which pass through the proxy.",
+      "kind": "integration",
+      "ref": "docs/security.md:59",
+      "quote": "The `@active` corpus is written against the three frontends. The two APIs are scanned all the same",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-097",
+      "statement": "Health checks, static assets and the Java actuator endpoints are excluded from the security scan.",
+      "kind": "constraint",
+      "ref": "docs/security.md:61",
+      "quote": "Diagnostics are excluded rather than scanned",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-098",
+      "statement": "The Defra ID sign-in stub is observed but never attacked, while the service's own sign-in and OIDC callback handlers, including the redirect parameter, are in scope.",
+      "kind": "constraint",
+      "ref": "docs/security.md:67",
+      "quote": "Our own `/auth/sign-in` and `/auth/sign-in-oidc` handlers **are** in scope — the OIDC callback and its `redirect` parameter outlive the stub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-099",
+      "statement": "The CDP uploader and the INS backend are not scanned: uploads are forwarded server-side by the frontend, and the INS backend has no HTTP surface, only a queue that DAST cannot reach.",
+      "kind": "constraint",
+      "ref": "docs/security.md:63-69",
+      "quote": "An SQS consumer with no HTTP controllers. Its risk boundary is the queue, which DAST cannot reach",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-100",
+      "statement": "A security run fails on any FAIL-rated alert; an unlisted alert is FAIL when High risk and WARN otherwise.",
+      "kind": "rule",
+      "ref": "docs/security.md:75",
+      "quote": "anything unlisted defaults to FAIL if High risk and WARN otherwise.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-101",
+      "statement": "A security run fails if any context's scan hits its 60-minute cap, because a truncated scan reporting no findings is a false clean.",
+      "kind": "rule",
+      "ref": "docs/security.md:76",
+      "quote": "A scan that finishes at the ceiling was cut short, and an incomplete scan reporting no findings is a false clean.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-102",
+      "statement": "An active security run fails if a declared service context received no traffic; a per-domain run gates only that domain's contexts and is labelled as scoped.",
+      "kind": "rule",
+      "ref": "docs/security.md:77",
+      "quote": "**A context with no traffic.** Declared but undriven means its activeScan job scanned nothing and reported clean. Active profile only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-103",
+      "statement": "Plants has no security specs yet; security profiles run per domain for animals, animals-admin and ins only.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:35",
+      "quote": "Plants has no security specs yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-104",
+      "statement": "Every security spec test in the slice is tagged @active, so it runs only in the active profile.",
+      "kind": "constraint",
+      "ref": "tests/animals/security/*.spec.ts, tests/ins/security/address-book/*.spec.ts describe tags",
+      "quote": "{ tag: '@active' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-105",
+      "statement": "The animals frontend's sign-in round trip is driven through the scan: an unauthenticated visit to the dashboard goes to sign-in, a bad user id shows an error summary, a valid sign-in lands on the dashboard, and the sign-out link reaches the signed-out page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-auth.spec.ts:8 'routes the sign-in redirect round trip through the ZAP proxy'",
+      "quote": "await pages.signIn.signIn();\n    await expect(pages.page).toHaveURL(animalsPages.dashboard.expectedUrl);\n    await expect(animalsPages.dashboard.heading).toBeVisible();\n\n    await animalsPages.dashboard.linkSignOut.click();\n    await expect(pages.signOut.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-106",
+      "statement": "On the review page, the 'Change import details' link opens the origin page in change mode (?change=1), and saving a changed country of origin returns to the review page; this flow is driven through the scan.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-change-context.spec.ts:4 'routes the change-context query parameter through the ZAP proxy'",
+      "quote": "await animalsPages.notificationView.changeLink('Change import details').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-107",
+      "statement": "The change-mode parameter is how the review page reaches pages already covered elsewhere, and no other spec sends it.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-change-context.spec.ts:6-7",
+      "quote": "?change=1 is how Check Your Answers reaches pages already scanned\n    // elsewhere in this suite — no other spec sends this parameter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-108",
+      "statement": "The import reason reveals for Transit and Temporary admission horses, and the private transporter form saved back to the overview, are driven through the scan because the submission journey never sends them.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-conditional-pages.spec.ts:15 'routes the reason-gated and transporter-gated pages through the ZAP proxy'",
+      "quote": "Two reveal payloads the submission journey never sends, because its\n    // answers put them out of scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-109",
+      "statement": "Saving the private transporter form returns the user to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-conditional-pages.spec.ts:50-53",
+      "quote": "await animalsPages.privateTransporter.saveAndContinue.click();\n    await expect(animalsPages.overview.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-110",
+      "statement": "The dashboard's server-side search, sort and paging are driven through the scan: searching by reference shows that notification's card, then a page number, sort by date created oldest to newest and the last page are requested.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-dashboard-params.spec.ts:5 'routes the dashboard query parameters through the ZAP proxy'",
+      "quote": "the dashboard's\n    // server-side search, sort and paging are unattackable until a request\n    // carrying each one reaches the proxy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-111",
+      "statement": "Uploading a document (reference, issue date, PDF) with save and add another adds a document row, which shows 'Check completed' once the virus scan clears, and the uploaded file can then be viewed; this flow is driven through the scan.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-documents.spec.ts:6 'routes a document upload through the ZAP proxy'",
+      "quote": "await expect(row).toContainText('Check completed', { timeout: fileUploadTimeouts.virusScanComplete });\n    await animalsPages.accompanyingDocuments.viewFile(1).click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-112",
+      "statement": "Document upload is the journey's richest input surface and the only page whose routes carry a second, nested upload id, with an upload status route polled while the scan runs and a file-download route once it clears.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-documents.spec.ts:10-12, :20-21",
+      "quote": "File upload is the richest input surface the wizard has, and the only\n    // page whose routes carry a second, nested id",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-113",
+      "statement": "On a fresh draft, choosing a country of origin and saying a region code is required without giving one shows an error summary; this validation error is driven through the scan.",
+      "kind": "rule",
+      "ref": "tests/animals/security/frontend-draft-validation-error.spec.ts:4 'routes a draft validation error through the ZAP proxy'",
+      "quote": "await animalsPages.originOfImport.selectCountry('France');\n    await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();\n    await animalsPages.originOfImport.saveAndContinue.click();\n    await expect(animalsPages.originOfImport.errorSummary).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-114",
+      "statement": "Country of origin alone no longer blocks saving the origin page (a change made for DR1 parity); the region code is the field still enforced on save.",
+      "kind": "rule",
+      "ref": "tests/animals/security/frontend-draft-validation-error.spec.ts:7-11",
+      "quote": "(Country of origin alone\n    // no longer blocks the save — see origin/controller.js's oneOf swap for\n    // parity-dr1 — so this is the field still enforced on submit.)",
+      "confidence": "verbatim",
+      "note": "The comment says 'enforced on submit' while the test exercises a save; recorded as written."
+    },
+    {
+      "id": "repo-tests-p6-115",
+      "statement": "On a fresh notification, the origin section is a linear first step: a valid origin save advances straight to commodity selection rather than returning to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-draft-validation-error.spec.ts:20-24",
+      "quote": "a valid save here advances straight to the next\n    // step rather than returning to Overview.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-116",
+      "statement": "Amending a submitted notification shows 'Amending' in the overview's journey strip, and copying a notification opens a new overview; both actions are driven through the scan.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-lifecycle.spec.ts:4 'routes the post-submission actions through the ZAP proxy'",
+      "quote": "await expect(animalsPages.overview.journeyStrip).toContainText('Amending');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-117",
+      "statement": "Cancelling an amendment returns the notification view's journey strip to 'Submitted', and the notification can then be deleted; both actions are driven through the scan.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-lifecycle.spec.ts:21 'routes cancelling an amendment and deleting through the ZAP proxy'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-118",
+      "statement": "A full notification submission is driven through the scan and ends on the 'Import notification submitted' page at the live-animals /notifications/{id}/confirmation URL.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-notification-journey.spec.ts:6 'routes a submitted notification journey through the ZAP proxy'",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'Import notification submitted' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-119",
+      "statement": "Creating a draft notification through the animals backend API and submitting it by reference returns status SUBMITTED; these API calls are routed through the scan.",
+      "kind": "integration",
+      "ref": "tests/animals/security/backend/notification-submission.spec.ts:4 'routes a submitted notification through the ZAP proxy'; fixtures/security.ts:10-17",
+      "quote": "const submitted = await proxiedNotificationApi.submitNotification(draft.referenceNumber);\n\n    expect(submitted.status).toBe('SUBMITTED');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-120",
+      "statement": "The INS frontend's sign-in round trip is driven through the scan: an unauthenticated visit to add an address goes to sign-in, a bad user id shows an error summary, a valid sign-in lands on the address book add page, and INS renders a sign-out link that reaches the signed-out page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/security/address-book/address-book-auth.spec.ts:8 'routes the sign-in redirect round trip through the ZAP proxy'",
+      "quote": "// No other spec proves INS renders a sign-out link",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-121",
+      "statement": "The INS address book's whole record lifecycle is driven through the scan: the list page, adding an address (name, address line 1, town or city, postcode, country, phone, email) that then appears in the list, viewing it under its name, editing it, and deleting it after confirmation so it leaves the list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:13 'routes the address book through the ZAP proxy'",
+      "quote": "await insPages.addressBookDelete.confirm();\n    await expect(insPages.addressBookList.row(name)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-122",
+      "statement": "Each address book record's view, edit and delete pages sit under the address's own id.",
+      "kind": "data",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:20-22",
+      "quote": "add, edit and delete are\n    // the write surface, and each is an /address-book/{addressId} route",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-123",
+      "statement": "The address book add page accepts journey hand-off parameters (journey type, notification id, fulfilment id and a handshake token); with an unrecognised journey type it shows 'Page not found'.",
+      "kind": "rule",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:45-51",
+      "quote": "await expect(pages.page.getByText('Page not found')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-124",
+      "statement": "The accepted path of the address book hand-off (a real, valid handshake token) is not driven through the security scan, so it is never attacked; only the rejected-guard path is.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:45-47",
+      "quote": "Only the rejected-guard path is provable here —\n    // extend to a real accepted token if seeding one becomes possible.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p6-125",
+      "statement": "No security spec in the slice visibly drives the INS dashboard or the animals journey's copied-address edit page, so those routes are invisible to the traffic-driven active scan.",
+      "kind": "non-functional",
+      "ref": "tests/animals/security/, tests/ins/security/ (all specs); docs/security.md:5",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Inferred from walking every security spec; the passive profile may still observe these routes via the e2e suite."
+    }
+  ]
+}

@@ -1,0 +1,671 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 10, Upload documents. Read in full at commit 04a073b (the checkout's HEAD): app/views/design-release-2.1/upload-documents.html (253 lines: phase banner and back link, notification-status partial, caption and heading, intro copy, a bulleted list of other documents, a details component with a consignment/documents-needed table and a GOV.UK link, then one form holding the error summary, a 'File upload' card with four fields (document reference input, document type select, date of issue MOJ date picker, attachment file drop zone with a requirements list), a 'Save and add another' button, the uploaded-documents table with status tags and Remove buttons, and the shared journey-form-actions partial); app/routes.js 10871-11104 (document type option lookup and labels, select items, uploaded documents list and display statuses, body parsing, validateUploadDocument, add, mark virus check passed, remove, form-state reset, trySavePendingUploadDocument, return query, renderUploadDocumentsPage); app/routes.js 12182-12285 (GET /upload-documents, POST /upload-documents/virus-check/:documentId, POST /upload-documents with remove, add-another, hub/review soft save, continue and fallback branches). To claim every document type and the file limit, also read app/routes.js 10840-10870 (the option constants, MAX_UPLOADED_DOCUMENTS and VIRUS_CHECK_DELAY_MS, which sit just before this part's range), and to say where each action leads, read the helpers it calls: app/routes.js 1500-1602 (journey steps around /upload-documents, getNextJourneyPath, isJourneySoftSaveAction, getJourneySaveRedirect, getSectionContinueRedirect) and 8949-8951 (isDesignRelease21TemplateCreate), plus app/views/partials/design-release-2.1/journey-form-actions.html for the bottom buttons. Those are claimed only as they bear on this page; their own parts own them. The client-side virus-check script in app/assets/ is out of scope and was not read. Covered: the page's route, back link, caption, heading, all copy, every field with its label, hint and options (13 document types), the uploaded-documents table with its two statuses and the Remove action, all five validation messages, the virus-check endpoint, and where remove, add-another, save and return to overview, save and return, save and continue and the fallback each lead. Stops at review.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p10-001",
+      "statement": "The upload documents page is served at /upload-documents; under Design Release 2.1 it is reached at /design-release-2.1/upload-documents because the version mount copies every root route under that prefix.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12182",
+      "quote": "router.get('/upload-documents', (req, res) => {",
+      "confidence": "inferred",
+      "note": "The /design-release-2.1 prefix comes from app/lib/version-mount.js, which another part reads."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-002",
+      "statement": "In the linear journey the upload documents page comes after the transporter page and before roles and addresses.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1517-1525",
+      "quote": "steps.push('/transporter')\n\n  if (!isDesignRelease21TemplateCreate(sessionData)) {\n    steps.push('/upload-documents')\n  }\n\n  steps.push(\n    '/roles-and-addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-003",
+      "statement": "When the user is creating a template in Design Release 2.1, the upload documents page is left out of the journey steps.",
+      "kind": "rule",
+      "ref": "app/routes.js:1519-1521",
+      "quote": "if (!isDesignRelease21TemplateCreate(sessionData)) {\n    steps.push('/upload-documents')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-004",
+      "statement": "Opening the upload documents page while creating a template in Design Release 2.1 redirects to the notification hub instead of showing the page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12185-12187",
+      "quote": "if (isDesignRelease21TemplateCreate(req.session.data)) {\n    return res.redirect('/notification-hub')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-005",
+      "statement": "Submitting the upload documents form while creating a template in Design Release 2.1 redirects to the notification hub without saving anything.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12207-12209",
+      "quote": "if (isDesignRelease21TemplateCreate(req.session.data)) {\n    return res.redirect('/notification-hub')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-006",
+      "statement": "Opening the upload documents page ensures the notification has a reference, and the page shows the notification reference, falling back to the prototype's default reference.",
+      "kind": "data",
+      "ref": "app/routes.js:12183, 11096",
+      "quote": "notificationReference: sessionData.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-007",
+      "statement": "Opening the upload documents page clears any earlier errors and any half-entered document reference, type, date of issue and attachment, so the form always opens empty.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12189, 11036-11044",
+      "quote": "sessionData.errorList = null\n  sessionData.errors = null\n  delete sessionData.documentReference\n  delete sessionData.documentType\n  delete sessionData.dateOfIssue\n  delete sessionData.attachmentFileName\n  delete sessionData.attachment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-008",
+      "statement": "The page shows the Alpha phase banner with a feedback-by-email link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:14-19",
+      "quote": "text: \"Alpha\"\n    },\n    html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-009",
+      "statement": "The page has a Back link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:21-24",
+      "quote": "text: \"Back\",\n    href: backLink",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-010",
+      "statement": "The Back link goes to the review page when the user came from review or is amending the notification, and otherwise to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11089, 11093",
+      "quote": "const fromReview = isFromReview(req) || isAmendingNotification(sessionData)\n...\n    backLink: fromReview ? '/review-notification' : '/notification-hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-011",
+      "statement": "The page shows the notification status block above the heading.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:31",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "verbatim",
+      "note": "The notification-status partial's own content is claimed by the shell part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-012",
+      "statement": "The page caption is 'Documents'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:34",
+      "quote": "<p class=\"app-upload-documents-page__caption\">Documents</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-013",
+      "statement": "The page heading is 'Upload documents', which is also the page name.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:11, 35",
+      "quote": "<h1 class=\"app-upload-documents-page__heading\">Upload documents</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-014",
+      "statement": "The intro tells the user they must attach an ITAHC if the consignment requires one and can add it later if they do not have it now.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:39",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-015",
+      "statement": "The intro tells the user all documents should be uploaded before the consignment arrives at the UK port.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:39",
+      "quote": "All documents should be uploaded before the consignment arrives at the UK port.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-016",
+      "statement": "The intro tells the user documents must be in English and every page must be uploaded.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:39",
+      "quote": "Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-017",
+      "statement": "The page lists other documents the user may need to attach: import licences or authorisations, and commercial documents or invoices.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:43-48",
+      "quote": "Other documents you may need to attach include:</p>\n\n      <ul class=\"app-upload-documents-page__list govuk-list govuk-list--bullet\">\n        <li>import licences or authorisations</li>\n        <li>commercial documents or invoices</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-018",
+      "statement": "A details component titled 'Check which additional documents you must upload' holds a table with the columns 'Consignment' and 'Documents needed'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:52, 59-60",
+      "quote": "summaryText: \"Check which additional documents you must upload\",\n...\n<th scope=\"col\" class=\"govuk-table__header\">Consignment</th>\n                <th scope=\"col\" class=\"govuk-table__header\">Documents needed</th>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-019",
+      "statement": "The additional documents table says animals that do not need a health certificate need the exporter's declaration that they are fit to travel.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:65-66",
+      "quote": "<td class=\"govuk-table__cell\">Animals that do not need a health certificate</td>\n                <td class=\"govuk-table__cell\">Exporter&#39;s declaration that they are fit to travel</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-020",
+      "statement": "The additional documents table says livestock transiting bluetongue restricted territories need Bluetongue declaration GBHC172.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:69-70",
+      "quote": "<td class=\"govuk-table__cell\">Livestock transiting bluetongue restricted territories</td>\n                <td class=\"govuk-table__cell\">Bluetongue declaration GBHC172</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-021",
+      "statement": "The additional documents table says rodents imported for research purposes need an RM39 licence and supplementary health certificate.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:73-74",
+      "quote": "<td class=\"govuk-table__cell\">Rodents imported for research purposes</td>\n                <td class=\"govuk-table__cell\">RM39 licence and supplementary health certificate</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-022",
+      "statement": "The details component ends with a 'Check the documents you need' link to the GOV.UK import of products, animals, food and feed system guidance, opening in a new tab.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:79",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system?_gl=1*agkmy1*_ga*OTk4MzczMjM2LjE3ODI3Mzg0NDQ.*_ga_YM5VR1KENG*czE3ODQwMjAwNDEkbzMwJGcxJHQxNzg0MDIwMDQ4JGo1MyRsMCRoMA..\" target=\"_blank\" rel=\"noopener noreferrer\">Check the documents you need</a> on GOV.UK (opens in a new tab).",
+      "confidence": "verbatim",
+      "note": "The href carries Google Analytics _gl tracking parameters; the real target is https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-023",
+      "statement": "The form posts to /upload-documents under the journey's base path, adding ?from=review or ?from=hub and a matching hidden 'from' field when the user came from review or the hub.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:84-89",
+      "quote": "action=\"{{ (journeyBasePath + '/upload-documents') if journeyBasePath else '/upload-documents' }}{% if fromReview %}?from=review{% elif fromHub %}?from=hub{% endif %}\" novalidate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-024",
+      "statement": "When there are errors, an error summary titled 'There is a problem' appears inside the form, above the file upload card.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:90-95",
+      "quote": "titleText: \"There is a problem\",\n          errorList: data.errorList",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-025",
+      "statement": "The fields sit in a card headed 'File upload'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:99",
+      "quote": "<h2 class=\"app-upload-documents-card__heading\" id=\"file-upload-heading\">File upload</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-026",
+      "statement": "The first field is a text input labelled 'Document reference', with no hint.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/upload-documents.html:104-117",
+      "quote": "id: \"document-reference\",\n              name: \"documentReference\",\n              value: formValues.documentReference or \"\",\n              label: {\n                text: \"Document reference\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-027",
+      "statement": "The second field is a select labelled 'Document type', with no hint.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/upload-documents.html:121-134",
+      "quote": "id: \"document-type\",\n              name: \"documentType\",\n              label: {\n                text: \"Document type\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-028",
+      "statement": "The document type select starts with a blank 'Select one' option, selected when no type has been chosen.",
+      "kind": "copy",
+      "ref": "app/routes.js:10900-10904",
+      "quote": "value: '',\n      text: 'Select one',\n      selected: !selectedValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-029",
+      "statement": "In the design release, the first document type option is 'Intra Trade Animal Health Certificate (ITAHC)', value itahc.",
+      "kind": "data",
+      "ref": "app/routes.js:10858-10861",
+      "quote": "{ value: 'itahc', text: 'Intra Trade Animal Health Certificate (ITAHC)' },",
+      "confidence": "verbatim",
+      "note": "The testing version swaps this for 'Health certificate' (value health-certificate); testing is out of scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-030",
+      "statement": "After ITAHC, the document type options are, in order: Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other.",
+      "kind": "data",
+      "ref": "app/routes.js:10843-10856",
+      "quote": "{ value: 'veterinary-health-certificate', text: 'Veterinary health certificate' },\n  { value: 'air-waybill', text: 'Air waybill' },\n  { value: 'import-permit', text: 'Import permit' },\n  { value: 'letter-of-authority-directive-2008-61-ec', text: 'Letter of authority (Directive 2008/61/EC)' },\n  { value: 'commercial-invoice', text: 'Commercial invoice' },\n  { value: 'sea-waybill', text: 'Sea waybill' },\n  { value: 'rail-waybill', text: 'Rail waybill' },\n  { value: 'bill-of-lading', text: 'Bill of lading' },\n  { value: 'catch-certificate', text: 'Catch certificate' },\n  { value: 'laboratory-sampling-results-for-aflatoxin-reg-2019-1793', text: 'Laboratory sampling results for aflatoxin (Reg 2019/1793)' },\n  { value: 'journey-log', text: 'Journey log' },\n  { value: 'other', text: 'Other' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-031",
+      "statement": "Choosing 'Other' as the document type asks for no further description of the document.",
+      "kind": "rule",
+      "ref": "app/routes.js:10855, app/views/design-release-2.1/upload-documents.html:120-135",
+      "quote": "{ value: 'other', text: 'Other' }",
+      "confidence": "gap",
+      "note": "The page has no conditional 'other' text field and the validation has no rule for one; looked in the view and validateUploadDocument."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-032",
+      "statement": "The third field is a date picker labelled 'Date of issue' with the hint 'For example, 27/3/2026'.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/upload-documents.html:139-155",
+      "quote": "id: \"date-of-issue\",\n                name: \"dateOfIssue\",\n                value: formValues.dateOfIssue or \"\",\n                label: {\n                  text: \"Date of issue\",\n...\n                  text: \"For example, 27/3/2026\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-033",
+      "statement": "The date of issue field is a Ministry of Justice date picker component, not the GOV.UK three-box date input.",
+      "kind": "constraint",
+      "ref": "app/views/design-release-2.1/upload-documents.html:9, 139",
+      "quote": "{% from \"moj/components/date-picker/macro.njk\" import mojDatePicker %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-034",
+      "statement": "The date of issue has no rule about being in the past or relative to the arrival date; it only has to be a real date.",
+      "kind": "rule",
+      "ref": "app/routes.js:10975-10987",
+      "quote": "",
+      "confidence": "gap",
+      "note": "validateUploadDocument checks only presence and parseArrivalDisplayDate; no future-date or range rule exists."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-035",
+      "statement": "The fourth field is labelled 'Attachment' with the hint 'Your file must be:'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:160-168",
+      "quote": "<label class=\"govuk-label app-upload-documents-card__label\" for=\"attachment\">\n              Attachment\n            </label>\n...\n            <div class=\"govuk-hint app-upload-documents-card__hint\">Your file must be:</div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-036",
+      "statement": "The attachment hint says files must be smaller than 50MB.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:171",
+      "quote": "<li>files that are smaller than 50MB</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-037",
+      "statement": "The attachment hint says the allowed file types are PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:172",
+      "quote": "<li>PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-038",
+      "statement": "The attachment hint says up to a maximum of 15 files can be uploaded.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:173",
+      "quote": "<li>up to a maximum of 15 files</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-039",
+      "statement": "The attachment hint says ZIP files are not allowed for security reasons.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:174",
+      "quote": "<li>ZIP files are not allowed for security reasons</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-040",
+      "statement": "The prototype does not enforce the 50MB size limit, the allowed file types or the ZIP ban on the server: no validation checks them.",
+      "kind": "rule",
+      "ref": "app/routes.js:10944-10998",
+      "quote": "",
+      "confidence": "gap",
+      "note": "validateUploadDocument checks only the file count, reference, type, date and that a file name is present. No error message exists for a too-large file, a wrong type or a ZIP."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-041",
+      "statement": "The attachment is a drop zone showing the chosen file name, or 'No file chosen', with a 'Choose file' control and the text 'or drop file'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:177-183",
+      "quote": "aria-live=\"polite\">{{ formValues.attachmentFileName or \"No file chosen\" }}</div>\n              <div class=\"app-upload-documents-card__dropzone-actions\">\n                <label class=\"app-upload-documents-card__choose-file\" for=\"attachment\">Choose file</label>\n                <span class=\"app-upload-documents-card__drop-text\">or drop file</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-042",
+      "statement": "The file status line in the drop zone is announced to screen readers as it changes.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/upload-documents.html:178",
+      "quote": "<div class=\"app-upload-documents-card__dropzone-status\" aria-live=\"polite\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-043",
+      "statement": "The prototype does not upload the file itself: the server records only the chosen file name, sent in a hidden attachmentFileName field.",
+      "kind": "constraint",
+      "ref": "app/views/design-release-2.1/upload-documents.html:183-184, app/routes.js:10940",
+      "quote": "<input type=\"hidden\" name=\"attachmentFileName\" value=\"{{ formValues.attachmentFileName or '' }}\">",
+      "confidence": "inferred",
+      "note": "The form has no multipart encoding and the handlers read only body.attachmentFileName; the drop-zone script that fills the hidden field is client-side and out of scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-044",
+      "statement": "On a validation error the page keeps what the user typed in document reference, document type, date of issue and the attachment file name.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12231-12233, 11097, app/views/design-release-2.1/upload-documents.html:107, 142, 178",
+      "quote": "return renderUploadDocumentsPage(req, res, {\n        formValues: values\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-045",
+      "statement": "Each field shows its own error message beside it, and the attachment field and drop zone take an error style when the attachment is in error.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:116, 133, 154, 159-167, 177",
+      "quote": "<p id=\"attachment-error\" class=\"govuk-error-message\">\n                <span class=\"govuk-visually-hidden\">Error:</span> {{ data.errors.attachment.text }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-046",
+      "statement": "A 'Save and add another' button below the fields saves the document entered and returns to the same page.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:188-193, app/routes.js:12224-12240",
+      "quote": "text: \"Save and add another\",\n            name: \"action\",\n            value: \"add-another\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-047",
+      "statement": "Saving and adding another keeps the ?from=review or ?from=hub return context; amending a notification always counts as coming from review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11069-11079, 12239",
+      "quote": "if (isFromReview(req) || isAmendingNotification(req.session.data)) {\n    return '?from=review'\n  }\n\n  if (isFromHub(req)) {\n    return '?from=hub'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-048",
+      "statement": "Save and add another validates every field; when all pass, the document is added to the list and the form is cleared.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12225-12239",
+      "quote": "resetUploadDocumentFormState(req.session.data)\n    addUploadedDocument(req.session.data, values)\n\n    return res.redirect(`/upload-documents${returnQuery}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-049",
+      "statement": "A blank document reference shows the error 'Enter a document reference', linked to the reference field. Leading and trailing spaces are trimmed first.",
+      "kind": "rule",
+      "ref": "app/routes.js:10937, 10959-10965",
+      "quote": "errors.documentReference = { text: 'Enter a document reference' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-050",
+      "statement": "No document type, or a value not in the list, shows the error 'Select a document type', linked to the type field.",
+      "kind": "rule",
+      "ref": "app/routes.js:10967-10973",
+      "quote": "if (!values.documentType || !getDocumentTypeValues(sessionData).includes(values.documentType)) {\n    errors.documentType = { text: 'Select a document type' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-051",
+      "statement": "A blank date of issue shows the error 'Enter a date of issue', linked to the date field.",
+      "kind": "rule",
+      "ref": "app/routes.js:10975-10980",
+      "quote": "errors.dateOfIssue = { text: 'Enter a date of issue' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-052",
+      "statement": "A date of issue that cannot be read as a real date shows the error 'Enter a real date', linked to the date field.",
+      "kind": "rule",
+      "ref": "app/routes.js:10981-10987",
+      "quote": "} else if (!parseArrivalDisplayDate(values.dateOfIssue)) {\n    errors.dateOfIssue = { text: 'Enter a real date' }",
+      "confidence": "verbatim",
+      "note": "The date is parsed with the same parser as the arrival date picker (parseArrivalDisplayDate), which another part reads."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-053",
+      "statement": "No chosen file shows the error 'Upload a document', linked to the attachment field.",
+      "kind": "rule",
+      "ref": "app/routes.js:10989-10995",
+      "quote": "if (!values.attachmentFileName) {\n    errors.attachment = { text: 'Upload a document' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-054",
+      "statement": "Errors for the reference, type, date and attachment are reported together, in that order, in the error summary.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10959-10997",
+      "quote": "errorList.push({\n      text: 'Enter a document reference',\n      href: '#document-reference'\n    })",
+      "confidence": "inferred",
+      "note": "Each check pushes to errorList in sequence without returning early, so all failures show at once."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-055",
+      "statement": "A notification can hold at most 15 documents.",
+      "kind": "rule",
+      "ref": "app/routes.js:10868",
+      "quote": "const MAX_UPLOADED_DOCUMENTS = 15",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-056",
+      "statement": "Saving a document when 15 are already listed shows only the error 'You can upload a maximum of 15 files', linked to the attachment field, and checks nothing else.",
+      "kind": "rule",
+      "ref": "app/routes.js:10949-10957",
+      "quote": "if (uploadedCount >= MAX_UPLOADED_DOCUMENTS) {\n    errors.attachment = { text: `You can upload a maximum of ${MAX_UPLOADED_DOCUMENTS} files` }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-057",
+      "statement": "Each saved document records its reference, type, type label, date of issue, file name, a virus status of 'uploading' and when it was added.",
+      "kind": "data",
+      "ref": "app/routes.js:11003-11012",
+      "quote": "documentReference: values.documentReference,\n    documentType: values.documentType,\n    documentTypeLabel: getDocumentTypeLabel(values.documentType, sessionData),\n    dateOfIssue: values.dateOfIssue,\n    fileName: values.attachmentFileName,\n    virusStatus: 'uploading',\n    addedAt: Date.now()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-058",
+      "statement": "Saved documents are kept in the notification's session data as a list of uploaded documents.",
+      "kind": "data",
+      "ref": "app/routes.js:10912-10918",
+      "quote": "if (!Array.isArray(sessionData.uploadedDocuments)) {\n    sessionData.uploadedDocuments = []\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-059",
+      "statement": "The date of issue is stored as the text the user entered, not as a normalised date.",
+      "kind": "data",
+      "ref": "app/routes.js:10939, 11008",
+      "quote": "dateOfIssue: values.dateOfIssue,",
+      "confidence": "inferred",
+      "note": "parseArrivalDisplayDate is used only to validate; the trimmed raw string is saved and shown in the table."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-060",
+      "statement": "When at least one document is saved, a table lists them below the 'Save and add another' button with the columns Document reference, Document type, Date of issue, Status and a visually hidden 'Action' column.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:195-213",
+      "quote": "<th scope=\"col\" class=\"govuk-table__header\">Document reference</th>\n                    <th scope=\"col\" class=\"govuk-table__header\">Document type</th>\n                    <th scope=\"col\" class=\"govuk-table__header\">Date of issue</th>\n                    <th scope=\"col\" class=\"govuk-table__header\">Status</th>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-061",
+      "statement": "With no saved documents, no table is shown.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:195",
+      "quote": "{% if uploadedDocuments.length %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-062",
+      "statement": "Each row shows the document reference, the document type's display label and the date of issue as entered.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/upload-documents.html:219-221",
+      "quote": "<td class=\"govuk-table__cell\">{{ document.documentReference }}</td>\n                      <td class=\"govuk-table__cell\">{{ document.documentTypeLabel }}</td>\n                      <td class=\"govuk-table__cell\">{{ document.dateOfIssue }}</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-063",
+      "statement": "A document of type itahc is labelled 'Intra Trade Animal Health Certificate (ITAHC)' and one of type health-certificate is labelled 'Health certificate'; an unknown type shows its raw value.",
+      "kind": "rule",
+      "ref": "app/routes.js:10881-10896",
+      "quote": "if (documentType === 'itahc') {\n    return isTestingSessionData(sessionData)\n      ? 'Health certificate'\n      : 'Intra Trade Animal Health Certificate (ITAHC)'\n  }\n\n  if (documentType === 'health-certificate') {\n    return 'Health certificate'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-064",
+      "statement": "A newly saved document's status shows as a blue 'Scanning for virus' tag.",
+      "kind": "copy",
+      "ref": "app/routes.js:10924-10927",
+      "quote": "text: document.virusStatus === 'passed' ? 'Check completed' : 'Scanning for virus',\n      class: document.virusStatus === 'passed' ? 'govuk-tag--green' : 'govuk-tag--blue'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-065",
+      "statement": "Once its virus check has passed, a document's status shows as a green 'Check completed' tag.",
+      "kind": "copy",
+      "ref": "app/routes.js:10925-10926",
+      "quote": "text: document.virusStatus === 'passed' ? 'Check completed' : 'Scanning for virus',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-066",
+      "statement": "The status cell carries visually hidden text 'Virus check status for' followed by the document reference.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/upload-documents.html:223",
+      "quote": "<span class=\"govuk-visually-hidden\">Virus check status for {{ document.documentReference }}</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-067",
+      "statement": "The virus check has only two outcomes, scanning and passed; there is no failed or infected status and no message for a file that fails the check.",
+      "kind": "rule",
+      "ref": "app/routes.js:10924-10927, 11015-11023",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Statuses are 'uploading' and 'passed' only; looked in getUploadedDocumentsForDisplay and markUploadedDocumentVirusCheckPassed."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-068",
+      "statement": "A POST to /upload-documents/virus-check/{documentId} marks that document's virus check as passed if it is still scanning, and answers with JSON giving its virus status, or null if no such document exists.",
+      "kind": "integration",
+      "ref": "app/routes.js:12194-12202, 11015-11023",
+      "quote": "if (document && document.virusStatus === 'uploading') {\n    document.virusStatus = 'passed'\n  }\n...\n  return res.json({\n    virusStatus: document ? document.virusStatus : null\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-069",
+      "statement": "The virus check is simulated: the page asks the server to mark each scanning document as passed after a 2.5 second delay, so the tag changes from 'Scanning for virus' to 'Check completed' without a real scan.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10869, app/views/design-release-2.1/upload-documents.html:226-227",
+      "quote": "const VIRUS_CHECK_DELAY_MS = 2500",
+      "confidence": "inferred",
+      "note": "The server constant is unused in routes.js; the status tag carries data-virus-status and data-document-id for a client script (app/assets/javascripts/upload-documents-virus-check.js, out of scope, not read) that calls the virus-check endpoint. The rendered traces cover the client behaviour."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-070",
+      "statement": "Each row has a 'Remove' link-styled button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:231-236",
+      "quote": "type=\"submit\"\n                          name=\"action\"\n                          value=\"remove:{{ document.id }}\"\n                          class=\"govuk-link app-upload-documents-table__remove-button\"\n                        >Remove</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-071",
+      "statement": "Remove deletes that document straight away, with no confirmation page, clears the form and reloads the upload documents page keeping the review or hub return context.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12215-12222",
+      "quote": "if (action.startsWith('remove:')) {\n    const documentId = action.slice('remove:'.length)\n\n    removeUploadedDocument(req.session.data, documentId)\n    resetUploadDocumentFormState(req.session.data)\n\n    return res.redirect(`/upload-documents${returnQuery}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-072",
+      "statement": "Removing a document discards anything typed in the form fields at the time.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12218-12221",
+      "quote": "resetUploadDocumentFormState(req.session.data)",
+      "confidence": "inferred",
+      "note": "Remove is a submit inside the same form, but the handler redirects without saving the pending values."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-073",
+      "statement": "Removing a document that no longer exists does nothing and still reloads the page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11025-11034",
+      "quote": "if (removeIndex === -1) {\n    return\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-074",
+      "statement": "The page ends with the shared journey buttons: by default 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:247-248, app/views/partials/design-release-2.1/journey-form-actions.html",
+      "quote": "{% set journeyFormActionOptions = {} %}\n      {% include \"partials/design-release-2.1/journey-form-actions.html\" %}",
+      "confidence": "verbatim",
+      "note": "The partial's amend and template-review variants are claimed by the shell part; this page passes no options."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-075",
+      "statement": "Uploading documents is optional: Save and continue with the document type left blank moves on without any error.",
+      "kind": "rule",
+      "ref": "app/routes.js:12260-12262, 11046-11051",
+      "quote": "// Soft validation: uploads are optional, but once a document type is chosen\n    // all document fields must be completed before continuing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-076",
+      "statement": "If a valid document type is chosen when the user presses Save and continue, every document field is validated and, if all pass, the document is saved before moving on.",
+      "kind": "rule",
+      "ref": "app/routes.js:11046-11067, 12262-12273",
+      "quote": "if (!getDocumentTypeValues(sessionData).includes(values.documentType)) {\n    return { saved: false, values }\n  }\n\n  const validation = validateUploadDocument(values, sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-077",
+      "statement": "A reference, date or file entered with no document type chosen is silently discarded on Save and continue or Save and return to overview.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11049-11051",
+      "quote": "if (!getDocumentTypeValues(sessionData).includes(values.documentType)) {\n    return { saved: false, values }\n  }",
+      "confidence": "inferred",
+      "note": "Validation only runs once a type is chosen; without one the handler resets the form and redirects."
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-078",
+      "statement": "Save and continue goes to the next journey step, roles and addresses, unless the user came from the hub (back to the hub), from review (back to review) or from a template review (save and return to that template).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12275-12278, 1588-1602",
+      "quote": "return res.redirect(getSectionContinueRedirect(\n      req,\n      getNextJourneyPath('/upload-documents', req.session.data)\n    ))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-079",
+      "statement": "Save and return to overview, and Save and return when amending, apply the same optional-upload validation, save the draft notification, and go to the hub or review respectively.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12242-12257, 1564-1586",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    const pendingSave = trySavePendingUploadDocument(req.session.data, req.body)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-080",
+      "statement": "Any other submission clears the form and goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12281-12283",
+      "quote": "resetUploadDocumentFormState(req.session.data)\n\n  return res.redirect('/notification-hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p10-081",
+      "statement": "On this page only Save and return to overview and Save and return (amend) explicitly save the draft notification; Save and add another, Remove and Save and continue do not call the draft save.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12224-12240, 1573-1575",
+      "quote": "if (sessionData) {\n    persistDraftNotification(sessionData)\n  }",
+      "confidence": "inferred",
+      "note": "persistDraftNotification is called in getJourneySaveRedirect, used only by the hub/review branch; the add-another and remove branches redirect without it. Whether continue persists depends on getSectionContinueRedirect, which does not call it."
+    }
+  ]
+}

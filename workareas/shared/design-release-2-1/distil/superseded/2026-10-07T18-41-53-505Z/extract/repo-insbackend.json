@@ -1,0 +1,367 @@
+{
+  "source": "repo:insbackend",
+  "structure": "Repo repos/trade-imports-ins-backend: a Java 25 / Spring Boot service on port 8090 that consumes notification lifecycle events from an SQS FIFO queue, upserts one flattened AggregatedNotification per aggregate id into the MongoDB 'notifications' collection, and serves a read-only GET /notifications list to the INS dashboard. In scope (the read model behind the dashboard: fields, statuses, filters, sort, search): src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/ (AggregatedNotification, AggregatedNotificationController, AggregatedNotificationQueryService, AggregatedNotificationSort, AggregatedNotificationPageResponse, AggregatedNotificationRepository, NotificationUpsertService, NotificationSqsListener, NotificationErrorHandler, OutboxEventType), src/main/resources/application.yml (page size, Mongo and security config), exceptions/GlobalExceptionHandler, the controller integration test AggregatedNotificationControllerIT, and docs/repos/trade-imports-ins-backend.md in the workspace. Left out: addresslookup/ (a dev/local-only EUDPA-390 spike, not the read model), metrics, TLS, proxy, logging and AWS configuration. No rulings ledger or spec folder exists in the repo (looked for decisions*, spec, CLAUDE.md, AGENTS.md at depth 2). The repo has no write API, no search other than exact reference number, no status filter, no organisation scoping and no authentication. The README is still the CDP template text.",
+  "scopeHash": "2abaf340f0d332bdacc0db05a16313532b9950ed03d4745a62207f428a62e56c",
+  "claims": [
+    {
+      "id": "repo-insbackend-001",
+      "statement": "The read model stores one document per notification in a MongoDB collection called 'notifications', keyed by the aggregate id.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:12-21",
+      "quote": "@Document(collection = \"notifications\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-002",
+      "statement": "Each read-model record holds only these fields: aggregateId, aggregateVersion, referenceNumber, status, originCountry, commodity, arrivalDate and lastUpdated. It holds no organisation, importer, consignor, consignee, notification type, species, transporter or address fields.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:19-31",
+      "quote": "private String referenceNumber;\n    private String status;\n    private String originCountry;\n    private String commodity;\n    private Instant arrivalDate;\n    private Instant lastUpdated;",
+      "confidence": "verbatim",
+      "note": "The statement's negative half (no other fields) is read from the full class; it has exactly the eight fields named."
+    },
+    {
+      "id": "repo-insbackend-003",
+      "statement": "arrivalDate and lastUpdated are stored as instants (UTC date-times), not as plain dates.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:30-31",
+      "quote": "private Instant arrivalDate;\n    private Instant lastUpdated;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-004",
+      "statement": "The status is stored as free text exactly as received in the event; the service does not define an enumeration of statuses. The only status values seen in the repo's tests are DRAFT, SUBMITTED and DELETED, and the only status the service itself treats specially is DELETED.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:27; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:19",
+      "quote": "private String status;",
+      "confidence": "inferred",
+      "note": "Inferred from status being a String with no validation and from DELETED_STATUS being the only literal in the query service; DRAFT and SUBMITTED are seen only as notificationStatusCode values in test event bodies."
+    },
+    {
+      "id": "repo-insbackend-005",
+      "statement": "The record is indexed on reference number, and a compound index on status then arrival date descending then last updated descending supports the list query.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:13,25-26",
+      "quote": "@CompoundIndex(name = \"status_sort_fields\", def = \"{'status': 1, 'arrivalDate': -1, 'lastUpdated': -1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-006",
+      "statement": "The dashboard reads notifications through one read-only endpoint, GET /notifications. There is no create, update, delete or single-notification endpoint in this service.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:18-42",
+      "quote": "@Tag(name = \"Notification API\", description = \"Read-only query operations over the cross-journey aggregated notification store\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-007",
+      "statement": "The list endpoint takes three optional inputs: page (1-based, default 1), sort and referenceNumber. It has no filter by status, origin country, commodity, date range or organisation, and no free-text search.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:36-39",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber)",
+      "confidence": "verbatim",
+      "note": "The statement's list of absent filters is read from the full controller signature and the query service."
+    },
+    {
+      "id": "repo-insbackend-008",
+      "statement": "A page number below 1 is rejected as a validation error with a 400 response.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:37; src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:68-96",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page",
+      "confidence": "inferred",
+      "note": "The 400 follows from @Validated on the controller plus the ConstraintViolationException handler that returns HttpStatus.BAD_REQUEST with 'Validation failed for one or more fields'."
+    },
+    {
+      "id": "repo-insbackend-009",
+      "statement": "The list is paged at a fixed server-side page size of 25, set by configuration (NOTIFICATION_LIST_PAGE_SIZE); the caller cannot choose the page size.",
+      "kind": "rule",
+      "ref": "src/main/resources/application.yml:150-153",
+      "quote": "page-size: ${NOTIFICATION_LIST_PAGE_SIZE:25}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-010",
+      "statement": "The list response is an object with content (the notifications), page (1-based), size, numberOfElements, totalElements and totalPages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:10-16",
+      "quote": "List<AggregatedNotification> content,\n    int page,\n    int size,\n    int numberOfElements,\n    long totalElements,\n    int totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-011",
+      "statement": "Each item in the list response is the stored read-model record serialised directly, with no separate payload shape.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:7-9",
+      "quote": "{@link AggregatedNotification} is serialized directly — it\n * is already the read-model shape the dashboard needs, with no separate payload to strip.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-012",
+      "statement": "Notifications whose status is DELETED never appear in the list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:19,49",
+      "quote": "repository.findAllByStatusNot(DELETED_STATUS, pageable)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-013",
+      "statement": "A notification with no status at all (null) is still listed, because the exclusion is 'status not DELETED'; the service does not default a missing status.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:87; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java:10",
+      "quote": "if (status != null) update.set(\"status\", status);",
+      "confidence": "inferred",
+      "note": "Inferred from the upsert only setting status when present and the repository method being findAllByStatusNot; Mongo's $ne matches documents where the field is absent."
+    },
+    {
+      "id": "repo-insbackend-014",
+      "statement": "The default list order is arrival date, newest first. The caller can sort by arrivalDate or lastUpdated, ascending or descending, with a sort value such as 'arrivalDate,asc'.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:30-31",
+      "quote": "Optional sort: arrivalDate,desc (default), arrivalDate,asc, lastUpdated,desc, lastUpdated,asc.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-015",
+      "statement": "A sort value that is blank, is not exactly two comma-separated parts, or names any field other than arrivalDate or lastUpdated is silently replaced by the default (arrival date, descending) rather than rejected. A direction other than 'asc' (any case) is treated as descending.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:17-37",
+      "quote": "if (parts.length != 2) {\n            return defaultSort();\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-016",
+      "statement": "The service cannot sort by status, reference number, origin country or commodity; only arrival date and last-updated date are sortable.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:32-36",
+      "quote": "case ARRIVAL_DATE_FIELD -> Sort.by(sortDirection, ARRIVAL_DATE_FIELD);\n            case LAST_UPDATED_FIELD -> Sort.by(sortDirection, LAST_UPDATED_FIELD);\n            default -> defaultSort();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-017",
+      "statement": "Passing referenceNumber returns the notification whose reference exactly equals the (whitespace-trimmed) value; a blank value is treated as absent. The match is case-sensitive exact equality, not a partial or prefix search.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:34-38",
+      "quote": "String trimmedReference = StringUtils.trimToNull(referenceNumber);\n        if (trimmedReference != null) {\n            log.debug(\"Fetching notification by reference {} for dashboard\", trimmedReference);\n            Optional<AggregatedNotification> match =\n                repository.findByReferenceNumberAndStatusNot(trimmedReference, DELETED_STATUS);",
+      "confidence": "verbatim",
+      "note": "Case-sensitivity is inferred from the derived Mongo query method (exact equality) and the controller description 'exact match against a complete notification reference'."
+    },
+    {
+      "id": "repo-insbackend-018",
+      "statement": "A reference-number search with no match returns a normal 200 response with empty content, not a 404.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:82",
+      "quote": "void findAll_referenceNumber_noMatch_returnsEmptyContent_not404()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-019",
+      "statement": "A reference-number search for a DELETED notification returns empty content, the same as for no match.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:94",
+      "quote": "void findAll_referenceNumber_matchingDeletedNotification_isExcluded()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-020",
+      "statement": "A reference-number search always reports page 1 of 1 with at most one result, whatever page was requested, so page and totalPages stay consistent with the single result.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:39-41",
+      "quote": "// Always report the singleton match as page 1 of 1, regardless of the requested page,\n            // so page/totalPages stay consistent with the single-result content.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-021",
+      "statement": "A page number beyond the last page of an unfiltered list returns an empty content array rather than an error.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:31,49-50",
+      "quote": "Page<AggregatedNotification> result = repository.findAllByStatusNot(DELETED_STATUS, pageable);",
+      "confidence": "inferred",
+      "note": "Inferred from Spring Data paging semantics: no code rejects an out-of-range page, only page below 1 is validated."
+    },
+    {
+      "id": "repo-insbackend-022",
+      "statement": "The list is not scoped to an organisation or user: every caller sees every non-deleted notification. The stored record has no organisation id and the endpoint takes no identity.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:36-41; docs/repos/trade-imports-ins-backend.md (Does not own)",
+      "quote": "Organisation scoping: the stored model has no organisation id and the list is unscoped (ins-frontend notes this is deferred to a later ticket).",
+      "confidence": "verbatim",
+      "note": "Quote is from the workspace docs page for this repo; the code facts (no organisation field, no identity parameter) are in AggregatedNotification.java and the controller."
+    },
+    {
+      "id": "repo-insbackend-023",
+      "statement": "The service has no authentication: Spring's default security auto-configurations are explicitly excluded, so no security filter chain is created and every endpoint is open at the application level.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:13-26",
+      "quote": "With these excluded no\n  # SecurityFilterChain bean is created at all, so the servlet stack stays exactly as it was.",
+      "confidence": "verbatim",
+      "note": "Recorded in general terms as a constraint on what the prototype can assume; whether network policy protects the service is unclear from this repo."
+    },
+    {
+      "id": "repo-insbackend-024",
+      "statement": "The read model is filled by consuming notification events from an SQS FIFO queue, with the FIFO message group id carrying the aggregate id and a JSON body; the dashboard data is derived from those events, not entered here.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java:34-50",
+      "quote": "@SqsListener(\"${aws.sqs.notification.queue-url}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-025",
+      "statement": "The service accepts eight event types, identified by the wire values uk.gov.defra.imports.notification.NotificationCreated, NotificationEdited, NotificationSubmitted, NotificationSubmissionAmended, NotificationAmendmentRequested, NotificationAmendmentCancelled, NotificationDeleted and NotificationSubmissionDeleted.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/OutboxEventType.java:7-14",
+      "quote": "NOTIFICATION_SUBMISSION_DELETED(\"uk.gov.defra.imports.notification.NotificationSubmissionDeleted\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-026",
+      "statement": "An event with an unrecognised event type is dead-lettered (treated as non-retryable and discarded with an error log) rather than silently acknowledged, so the store does not diverge unnoticed.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java:59-66",
+      "quote": "// An unrecognised type means the store is about to diverge — dead-letter with context\n            // rather than silently acknowledge.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-027",
+      "statement": "A message with a missing group id, an empty body, a body that is not valid JSON, a missing or blank aggregateId, a missing or negative aggregateVersion, or an unparseable date is classed non-retryable and is discarded without updating the read model.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java:44-57; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:26-31,56-76; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandler.java:37-38",
+      "quote": "throw new SqsNonRetryableException(\"Missing or negative aggregateVersion in event body for aggregateId=\" + aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-028",
+      "statement": "A transient failure (an error classed retryable) is left on the queue for retry; it is counted and re-thrown rather than discarded.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandler.java:30-35",
+      "quote": "if (classified instanceof SqsRetryableException retryableException) {\n            retryCounter.increment();\n            log.warn(\"Retryable error, message left for retry: {}\", classified.getMessage());\n            throw retryableException;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-029",
+      "statement": "The reference number shown on the dashboard comes from the event's exchangedDocument.identifier.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:37",
+      "quote": "String referenceNumber = textOrNull(exchangedDocument.path(\"identifier\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-030",
+      "statement": "The status comes from the event's exchangedDocument.notificationStatusCode.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:38",
+      "quote": "String status = textOrNull(exchangedDocument.path(\"notificationStatusCode\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-031",
+      "statement": "The origin country is taken from specifiedConsignment.originCountry.code.value, so the read model holds the country code as the event carries it, not a country name.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:41-42",
+      "quote": "specifiedConsignment.path(\"originCountry\").path(\"code\").path(\"value\"));",
+      "confidence": "inferred",
+      "note": "Code-versus-name is inferred from the path ending in code.value; the integration test seeds origin country 'GB'."
+    },
+    {
+      "id": "repo-insbackend-032",
+      "statement": "The arrival date is taken from the first main-carriage transport movement's first arrival event's scheduledOccurrenceDateTime, so it is the scheduled arrival, and only the first movement and first arrival event are read.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:44-48",
+      "quote": ".path(\"mainCarriageLogisticsTransportMovement\").path(0)\n                .path(\"arrivalEvent\").path(0)\n                .path(\"scheduledOccurrenceDateTime\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-033",
+      "statement": "The commodity shown on the dashboard is the common name of only the first trade line item of the first consignment item; a notification with several commodities or species shows just the first, and no count or list of others is stored.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:50-54",
+      "quote": ".path(\"includedConsignmentItem\").path(0)\n                .path(\"includedTradeLineItem\").path(0)\n                .path(\"commonName\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-034",
+      "statement": "The last-updated date is taken from the event's exchangedDocument.issueDateTime; when the event has none, the time the event was processed is used instead.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:39,56-66",
+      "quote": "} else {\n            lastUpdated = Instant.now();\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-035",
+      "statement": "An event that lacks a reference number, status, origin country, arrival date or commodity does not blank the stored value: each of those fields is only overwritten when the new event carries it. lastUpdated and aggregateVersion are always set.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:81-90",
+      "quote": "if (referenceNumber != null) update.set(\"referenceNumber\", referenceNumber);\n        if (status != null) update.set(\"status\", status);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-036",
+      "statement": "An event is applied only when its aggregateVersion is higher than the stored version, in one atomic upsert, so redelivered or out-of-order events leave the highest version in place. The first event for a new aggregate id creates the record.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:78-96",
+      "quote": "Query query = Query.query(\n            Criteria.where(\"_id\").is(aggregateId)\n                .and(AGGREGATE_VERSION).lt(incomingVersion));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-037",
+      "statement": "A notification becomes status DELETED, and so disappears from the dashboard list, only when a later event for it carries a notificationStatusCode of DELETED; the event type alone does not change status. A NotificationDeleted or NotificationSubmissionDeleted event is stored the same way as any other event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java:59-69; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:38,87",
+      "quote": "upsertService.upsert(parsedBody);",
+      "confidence": "inferred",
+      "note": "Inferred: the listener only validates eventType and then calls the same upsert for every type, and the only source of status is notificationStatusCode in the body."
+    },
+    {
+      "id": "repo-insbackend-038",
+      "statement": "The read model holds nothing about amendments: there is no field for amendment status, amendment requested, or an amended-from marker, so the dashboard cannot show an amendment state from this service beyond whatever string arrives in the status.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:17-32",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in AggregatedNotification.java and NotificationUpsertService.java for any amendment, template, copy or draft-name field and found none, although the service accepts AmendmentRequested and AmendmentCancelled events."
+    },
+    {
+      "id": "repo-insbackend-039",
+      "statement": "The read model has no notion of templates, so a templates list or a template-versus-notification split on the dashboard has nothing to read from this service.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched the whole notification package and OutboxEventType for 'template'; no template event type, field or endpoint exists."
+    },
+    {
+      "id": "repo-insbackend-040",
+      "statement": "The service offers no count of notifications by status, and no status filter on the list, so a tabbed or status-filtered dashboard would need new query support here.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:28-42",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The only controller in the notification package is AggregatedNotificationController with one GET; no aggregate or count query exists in the repository interface either."
+    },
+    {
+      "id": "repo-insbackend-041",
+      "statement": "Errors from the list endpoint use RFC 7807 problem responses: a validation failure is a 400 titled 'Validation Error' with a field-by-field errors map, and an unexpected failure is a 500 with the generic message 'An unexpected error occurred. Please try again later.'.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:68-96,151-173",
+      "quote": "\"An unexpected error occurred. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-042",
+      "statement": "The list reads from the MongoDB secondary by default (read preference 'secondary', overridable), so a notification just written by the event consumer may not appear on the dashboard immediately.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:35",
+      "quote": "read-preference: ${MONGO_READ_PREFERENCE:secondary}",
+      "confidence": "inferred",
+      "note": "Staleness is inferred from the secondary read preference; no test measures it."
+    },
+    {
+      "id": "repo-insbackend-043",
+      "statement": "Events reach the queue through an SNS FIFO topic named trade_imports_animals_eu_notifications.fifo, subscribed to the queue trade_imports_animals_eu_notifications_ins_backend.fifo with raw message delivery. The publisher is not named in this repo.",
+      "kind": "integration",
+      "ref": "floci/setup-ins-backend-pipeline.sh:14-15,38-42",
+      "quote": "TOPIC_NAME=\"trade_imports_animals_eu_notifications.fifo\"",
+      "confidence": "verbatim",
+      "note": "docs/repos/trade-imports-ins-backend.md says the publisher is most likely trade-imports-animals-backend but is unclear from this repo alone; the event body schema is not defined in this repo."
+    }
+  ]
+}

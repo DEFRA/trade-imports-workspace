@@ -1,0 +1,409 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "repos/trade-imports-ins-frontend (INS front door, Node/Hapi/Nunjucks/GOV.UK Frontend 6.2.0, port 3002), read in place. In scope: src/server/app/features/index.js (route registry: dashboard + five address-book routes), features/dashboard (controller.js, template.njk, copy/copy.en.js, view-model/list.js, dashboard.fit.spec.js), features/address-book (list/add/view/edit/delete controllers and .njk, fields.js, copy/copy.en.js, view-model/list.js, address-countries.js, success-banner.js, stored-address.js, handshake-context.js, journey-registry.js, fit/*.fit.spec.js), shared layout and copy (shared/layout.njk, copy.en.js, paths.js), services/ins-backend/client.js and services/address-book/client.js (the outbound API shape). docs/repos/trade-imports-ins-frontend.md read for context. No decisions or rulings ledger exists in the repo (looked for decisions*, spec/ at repo root and depth 2; none found). Left out: features/address-lookup-spike (a dev-only spike, not a registered route), auth, health, common helpers, Welsh copy (copy.cy.js), stub clients, session/Redis config. Facts below are current observable behaviour, with file and line as provenance. Fit specs are recorded as what is proven in that repo, not exhaustively per test.",
+  "scopeHash": "e0f79dbce4f14a47640db22bef29252c0faa09883eda87bb6a5c28455271a296",
+  "claims": [
+    {
+      "id": "repo-insfrontend-001",
+      "statement": "The service registers exactly six page routes: the dashboard at '/', and the address book at '/address-book', '/address-book/add', '/address-book/{id}', '/address-book/{id}/edit' and '/address-book/{id}/delete'. There is no route for templates, saved notifications, notification copy or notification delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/index.js:8-15; src/server/app/shared/paths.js:1-9",
+      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...addressBookList.routes,\n  ...addressBookAdd.routes,\n  ...addressBookView.routes,\n  ...addressBookEdit.routes,\n  ...addressBookDelete.routes\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-002",
+      "statement": "The dashboard page heading is 'Dashboard' and the page title is 'Dashboard | Import notification service'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:2; src/server/app/shared/layout.njk:18",
+      "quote": "title: 'Dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-003",
+      "statement": "The dashboard shows a table captioned 'Notifications' (caption visually hidden) with columns Reference number, Status, Origin country, Commodity, Arrival date and a visually hidden Action column. Each row shows the reference number, the raw status string, the origin country name, the commodity and the arrival date, plus a 'View' link.",
+      "kind": "data",
+      "ref": "src/server/app/features/dashboard/template.njk:71-83; src/server/app/features/dashboard/controller.js:51-59",
+      "quote": "reference: 'Reference number',\n    status: 'Status',\n    origin: 'Origin country',\n    commodity: 'Commodity',\n    arrival: 'Arrival date',\n    action: 'Action',\n    view: 'View'",
+      "confidence": "verbatim",
+      "note": "src/server/app/features/dashboard/copy/copy.en.js:21-28"
+    },
+    {
+      "id": "repo-insfrontend-004",
+      "statement": "The dashboard status column prints the status value from ins-backend as plain text, with no tag, colour or friendly label mapping.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:54",
+      "quote": "{ text: notification.status },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-005",
+      "statement": "The dashboard 'View' link carries a visually hidden suffix with the notification's reference number so each link is distinguishable to assistive technology.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:48-49",
+      "quote": "<a class=\"govuk-link\" href=\"${notification.href}\">${copy.table.view}<span class=\"govuk-visually-hidden\"> ${escapeHtml(notification.referenceNumber)}</span></a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-006",
+      "statement": "A dashboard row's link goes to the animals frontend live-animals set: a SUBMITTED notification links to '<live-animals set base>/notifications/<ref>/notification-view'; any other status links to '<live-animals set base>/notifications/<ref>'.",
+      "kind": "integration",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:89-95",
+      "quote": "return status === 'SUBMITTED'\n    ? `${setUrl}/notifications/${encodedReference}/notification-view`\n    : `${setUrl}/notifications/${encodedReference}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-007",
+      "statement": "The dashboard formats the arrival date as 'd MMM yyyy' (for example 5 Oct 2026), and shows an empty cell when the date is missing or invalid.",
+      "kind": "data",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:7,18-24",
+      "quote": "const LIST_DATE_FORMAT = 'd MMM yyyy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-008",
+      "statement": "The dashboard shows the origin country as its name, looked up from the reference-data countries list by code; when no name is found it falls back to the raw code, and to empty text when absent. The commodity is shown as a single string, empty when absent.",
+      "kind": "data",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:104-118",
+      "quote": "originCountry:\n      countryNames[notification.originCountry] ??\n      notification.originCountry ??\n      '',\n    commodity: notification.commodity ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-009",
+      "statement": "The dashboard offers a search box labelled 'Search by notification reference' with a 'Search' button. Search matches by notification reference only; there is no search by commodity, country, status or date.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:11-27; src/server/app/features/dashboard/copy/copy.en.js:3-8",
+      "quote": "label: 'Search by notification reference',\n    button: 'Search',\n    clear: 'Clear search',\n    noResults: 'No notifications found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-010",
+      "statement": "A dashboard search that matches nothing shows 'No notifications found' and a 'Clear search' link back to the unfiltered list. A search with results shows a 'Clear search' link above the table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:53-69",
+      "quote": "<p class=\"govuk-body\" data-testid=\"dashboard-no-results\">{{ copy.search.noResults }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-011",
+      "statement": "With no notifications and no search term the dashboard shows 'There are no notifications yet.' and a 'Start a new notification' button linking to the live-animals set base URL on the animals frontend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:47-52; src/server/app/features/dashboard/copy/copy.en.js:30-33; src/server/app/features/dashboard/view-model/list.js:97-99",
+      "quote": "empty: {\n    text: 'There are no notifications yet.',\n    startButton: 'Start a new notification'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-012",
+      "statement": "The 'Start a new notification' button appears only in the empty state. A dashboard that has notifications has no start-new-notification button or link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:47-88",
+      "quote": "{% if isEmpty %}\n    <p class=\"govuk-body\" data-testid=\"dashboard-empty\">{{ copy.empty.text }}</p>\n    {{ govukButton({\n      text: copy.empty.startButton,\n      href: startNewNotificationHref\n    }) }}",
+      "confidence": "inferred",
+      "note": "Inferred from the template: startNewNotificationHref is rendered only inside the isEmpty branch."
+    },
+    {
+      "id": "repo-insfrontend-013",
+      "statement": "The dashboard offers a 'Sort by' select with four options: 'Arrival date (newest first)' (default), 'Arrival date (oldest first)', 'Last updated (newest first)' and 'Last updated (oldest first)', applied with an 'Update sort' secondary button. The select is shown only when the table has rows.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:9-14; src/server/app/features/dashboard/template.njk:29-45",
+      "quote": "{ value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },\n  { value: 'arrivalDate,asc', copyKey: 'arrivalOldest' },\n  { value: 'lastUpdated,desc', copyKey: 'updatedNewest' },\n  { value: 'lastUpdated,asc', copyKey: 'updatedOldest' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-014",
+      "statement": "An unrecognised 'sort' query value is replaced by the default 'arrivalDate,desc'; a non-numeric or below-1 'page' value is treated as page 1.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/controller.js:24-30",
+      "quote": "const parseSort = (querySort) =>\n  SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-015",
+      "statement": "The dashboard shows a results label 'Showing <from>-<to> of <total>' above the table when there is at least one result, and GOV.UK pagination (previous, next and numbered links) when there is more than one page. Page links keep the search term and a non-default sort in the query string.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:19; src/server/app/features/dashboard/view-model/list.js:26-87",
+      "quote": "results: (from, to, total) => `Showing ${from}-${to} of ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-016",
+      "statement": "The dashboard has no status filter, no filter by commodity, country or date, and no tabs or grouping of notifications by status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk (whole file); src/server/app/services/ins-backend/client.js:14-35",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in dashboard/template.njk, dashboard/controller.js and the ins-backend client: the only request parameters are page, sort and referenceNumber. The scope expects the dashboard to be compared with Design Release 2.1; this records what the real dashboard lacks, not what DR2.1 requires."
+    },
+    {
+      "id": "repo-insfrontend-017",
+      "statement": "The dashboard offers no per-notification actions other than 'View': no copy, delete, amend, cancel or create-template action appears on any row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:71-83",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in dashboard/template.njk, controller.js and view-model/list.js: the only link per row is viewLink. The copy, delete and cancel-amend features sit in the animals frontend, outside this source."
+    },
+    {
+      "id": "repo-insfrontend-018",
+      "statement": "The dashboard lists every aggregated notification for all users: ins-backend is called with no organisation header, so the list is not scoped to the signed-in user's organisation.",
+      "kind": "constraint",
+      "ref": "src/server/app/services/ins-backend/client.js:9-35; docs/repos/trade-imports-ins-frontend.md (Does not own)",
+      "quote": "const headers = () => ({\n  'Content-Type': 'application/json',\n  [tracingHeader]: getTraceId() ?? ''\n})",
+      "confidence": "inferred",
+      "note": "Inferred from the headers sent: only Content-Type and the tracing id. The workspace doc records this as deliberate per a code comment. Stated in general terms only."
+    },
+    {
+      "id": "repo-insfrontend-019",
+      "statement": "If loading the dashboard fails with a non-HTTP error, the page renders with an empty table and a 'There is a problem' notification banner ('Sorry, there is a problem with the service. Try again in a few minutes.') and status 500; HTTP-style errors are passed on to the error page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:113-126; src/server/app/shared/copy.en.js:33-36",
+      "quote": "recoverableError: {\n    title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Try again in a few minutes.'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-020",
+      "statement": "The dashboard content uses the full-width 'display' column surface class, as does the address book list; other address-book pages use the two-thirds column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:75; src/server/app/features/address-book/list/list.controller.js:63; src/server/app/shared/layout.njk:73",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "inferred",
+      "note": "kit.surfaceClass maps a surface name to a column class; the mapping itself is in shared/kit.js:17, not quoted here. The layout default is govuk-grid-column-two-thirds."
+    },
+    {
+      "id": "repo-insfrontend-021",
+      "statement": "The layout shows an 'Alpha' grey phase banner reading 'This is a new service. Help us improve it and give your feedback by email.', where the feedback link is a mailto to the APHA service desk.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:6-10; src/server/app/shared/layout.njk:9,61-65",
+      "quote": "phaseBanner: {\n      tag: 'Alpha',\n      bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-022",
+      "statement": "The service name is 'Import notification service'. A signed-in user sees service navigation with 'Dashboard', 'Address book', 'Manage account' and 'Log out'; the active section is highlighted for Dashboard and Address book. 'Manage account' links to '#' and 'Log out' to '/auth/sign-out'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:3,11-17; src/server/app/shared/layout.njk:10-11,28-58",
+      "quote": "serviceNavigation: {\n      menuButton: 'Menu',\n      dashboard: 'Dashboard',\n      addressBook: 'Address book',\n      manageAccount: 'Manage account',\n      logOut: 'Log out'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-023",
+      "statement": "The layout footer has three links: Privacy (gov.uk privacy notice), Cookies (gov.uk cookies) and Accessibility statement (gov.uk accessibility statement). The header links to https://www.gov.uk/.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:20-26,92-111; src/server/app/shared/copy.en.js:18-22",
+      "quote": "footer: {\n      privacy: 'Privacy',\n      cookies: 'Cookies',\n      accessibility: 'Accessibility statement'\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-024",
+      "statement": "The layout can show a journey strip (a status tag and a reference number) above page content when a page supplies one. No INS page supplies it today.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:81-86",
+      "quote": "{% if journeyStrip %}\n        <div class=\"app-journey-strip govuk-!-margin-bottom-4\">\n          {{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}",
+      "confidence": "inferred",
+      "note": "Inferred that no INS page supplies it: no controller in features/ passes journeyStrip (searched the dashboard and address-book controllers read above)."
+    },
+    {
+      "id": "repo-insfrontend-025",
+      "statement": "Error summaries have the title 'There is a problem' and validation error pages have the page title prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:4,30-32; src/server/app/shared/layout.njk:18",
+      "quote": "errorSummary: {\n    title: 'There is a problem'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-026",
+      "statement": "The address book list page is titled 'Address book' with the intro 'Manage addresses used across import and export services.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:3-4",
+      "quote": "title: 'Address book',\n    intro: 'Manage addresses used across import and export services.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-027",
+      "statement": "The address book list has a search box labelled 'Search addresses' with the hint 'Search by name, town or city, postcode or country' and a 'Search' button, plus an 'Add a new address' button. The table columns are Name, Address (address line 1, town or city and postcode joined by commas), Country and a hidden Action column with a 'View' link.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:5-21; src/server/app/features/address-book/view-model/list.js:59-71",
+      "quote": "search: {\n      label: 'Search addresses',\n      hint: 'Search by name, town or city, postcode or country',\n      button: 'Search',\n      clear: 'Clear search'\n    },\n    add: 'Add a new address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-028",
+      "statement": "The address book search sends the term as 'q'; when the whole trimmed term equals a country name (case-insensitive) it also sends the matching country code, so searching by country name works. A 'countryCode' query parameter is also honoured directly.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:77-83; src/server/app/features/address-book/address-countries.js:40-51",
+      "quote": "const countryCode =\n      request.query.countryCode?.trim() ||\n      resolveCountryCodeFromSearchTerm(q, countries)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-029",
+      "statement": "An address book with no addresses and no search shows 'You have no addresses yet.' A search with no match shows 'No addresses match \"<term>\".' and a 'Clear search' link. Results show 'Showing <from>-<to> of <total>' and pagination, with a 'Clear search' link while searching.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:49-82; src/server/app/features/address-book/copy/copy.en.js:12-14",
+      "quote": "empty: 'You have no addresses yet.',\n    noMatchPrefix: 'No addresses match',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-030",
+      "statement": "The address record has these fields: name, address line 1, address line 2 (optional), town or city, county (optional), postcode, country, phone number and email address. There is no field for an address type, usage or label, and no default or favourite flag.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/fields.js:12-22",
+      "quote": "export const FIELD_RULES = {\n  name: { maxLength: 255, required: true },\n  addressLine1: { maxLength: 255, required: true },\n  addressLine2: { maxLength: 255, required: false },\n  townOrCity: { maxLength: 100, required: true },\n  county: { maxLength: 100, required: false },\n  postcode: { maxLength: 12, required: true },\n  countryCode: { required: true },\n  phone: { maxLength: 20, required: true },\n  email: { maxLength: 254, required: true, email: true }\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-031",
+      "statement": "The add and edit forms label the fields 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Phone number' and 'Email address'. The phone field carries the hint 'For international numbers include the country code'. They are grouped under the headings 'Enter address details' and 'Enter contact details'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:29-45; src/server/app/features/address-book/add/add.njk:20,83,94-104",
+      "quote": "addressHeading: 'Enter address details',\n    contactHeading: 'Enter contact details',\n    fields: {\n      name: 'Name or organisation name',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-032",
+      "statement": "The country field is a select with a first option 'Select a country', then United Kingdom first, then every other reference-data country. If the reference-data countries list is empty or unavailable, the form fails with a service-unavailable error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/address-countries.js:5-30; src/server/app/features/address-book/copy/copy.en.js:44",
+      "quote": "const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-033",
+      "statement": "Address form validation: name, address line 1, town or city, postcode, country, phone and email are required; maximum lengths are 255 (name, lines 1 and 2), 100 (town or city, county), 12 (postcode), 20 (phone) and 254 (email); email must be in a valid format; country must be one of the reference-data country codes. Postcode and phone have no format check, only presence and length.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:45-60",
+      "quote": "requiredTextRule('name'),\n    requiredTextRule('addressLine1'),\n    optionalTextRule('addressLine2'),\n    requiredTextRule('townOrCity'),\n    optionalTextRule('county'),\n    requiredTextRule('postcode'),\n    requiredOneOf('countryCode', countryCodes, errors.countryCode.required),\n    requiredTextRule('phone'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-034",
+      "statement": "Address form error messages: 'Enter a name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode', 'Enter a country', 'Enter a telephone number', 'Enter an email address' and 'Enter an email address in the correct format'. Over-length messages read '<Field> must be <max> characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:69-104",
+      "quote": "name: {\n      required: 'Enter a name',\n      maxLength: (max) => `Name must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-035",
+      "statement": "A rejected address form is re-shown with status 400, an error summary at the top, an inline message on each failing field and the user's typed values preserved. Validation failures returned by the address-book API are mapped back onto the same fields.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:98-125; src/server/app/features/address-book/add/add.njk:7",
+      "quote": "if (errors) {\n      return buildView(h, {\n        formValues,\n        countryItems: countryItemsOf(countries),\n        errors,\n        handshake\n      }).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-036",
+      "statement": "Adding an address titled 'Add address details' has a 'Save and continue' button and a secondary 'Cancel and return to address book' button. After a successful save outside a journey handshake the user is sent to the address book with a success banner 'Success: <name> added to your address book'. Cancel returns to the address book without creating anything.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:23-28,46-51; src/server/app/features/address-book/add/add.controller.js:110-114,140-142",
+      "quote": "added: (name) => `${name} added to your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-037",
+      "statement": "The address view page is headed with the address name and shows a summary list with Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County, Postcode or Zip code, Country (as its name), Email address and Phone number, then an 'Edit' button and a warning 'Delete' button. The Back link returns to the address book. A deleted or unknown address returns 404.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:20-45,50-73; src/server/app/features/address-book/stored-address.js:6-12",
+      "quote": "{ key: { text: copy.form.fields.email }, value: { text: address.email } },\n  { key: { text: copy.form.fields.phone }, value: { text: address.phone } }",
+      "confidence": "verbatim",
+      "note": "The summary-list labels reuse the form labels, so 'Address line 2 (optional)' shows as a row label; County uses its own label 'County'."
+    },
+    {
+      "id": "repo-insfrontend-038",
+      "statement": "Editing an address ('Edit address details') prefills every field from the stored address, with 'Save changes' and secondary 'Cancel' buttons and a Back link to the address view. A save returns to the address book with the banner 'Success: <name> updated in your address book'; cancel returns to the address book without saving; a rejected save keeps the user's edits.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/edit/edit.controller.js:62-106; src/server/app/features/address-book/copy/copy.en.js:52-56",
+      "quote": "updated: (name) => `${name} updated in your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-039",
+      "statement": "Deleting an address shows a confirmation page 'Delete address' reading 'Are you sure you want to delete <name> from your address book?' with a warning 'Yes, delete this address' button and a secondary 'Cancel' button. Confirming returns to the address book with the banner 'Success: <name> deleted from your address book'; cancel returns to the address view with nothing deleted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:20-55; src/server/app/features/address-book/delete/delete.njk:5-25; src/server/app/features/address-book/copy/copy.en.js:62-68",
+      "quote": "confirmPrefix: 'Are you sure you want to delete',\n    confirmSuffix: 'from your address book?',\n    confirm: 'Yes, delete this address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-040",
+      "statement": "The success banner is held in the session and shown once, on the next address book list view, then discarded.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/success-banner.js:1-6",
+      "quote": "export const takeSuccessBanner = (request) => request.yar.get(SESSION_KEY, true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-041",
+      "statement": "Every address-book page reads the organisation id from the signed-in session and every address-book API call is made under that organisation's path with the Trade-Imports-Organisation-Id header, so a user sees and changes only their own organisation's addresses. A session without an organisation id is refused.",
+      "kind": "constraint",
+      "ref": "src/server/app/services/address-book/client.js:7-27; src/server/app/features/address-book/list/list.controller.js:71",
+      "quote": "const addressesUrl = (orgId, addressId) => {\n  if (!orgId) {\n    throw new Error(\n      'Cannot reach the address book without an organisation: the signed-in session carries none'\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-042",
+      "statement": "The address book API is called with these operations: list (page, q, countryCode), create (POST), get, update (PUT) and delete (DELETE), all under /organisation/{orgId}/addresses. A 400 response is treated as a validation failure and shown on the form.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:45-106",
+      "quote": "const url = new URL(addressesUrl(orgId))\n  url.searchParams.set('page', String(page))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-043",
+      "statement": "The journey handshake: opening the address book add page with the query parameters journey-type, notification-id, fulfilment-id and handshake-token stores them in the session. If only some of the four are present the request is rejected with 400 'Incomplete journey handshake'; an unknown journey type returns 404. If none are present any stored handshake is cleared.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/handshake-context.js:17-41,90-98",
+      "quote": "if (!journeyType || !notificationId || !fulfilmentId || !handshakeToken) {\n    throw Boom.badRequest('Incomplete journey handshake')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-044",
+      "statement": "The only known journey type is 'gbn-ag'. Its return URL is the animals frontend live-animals set base plus '/notifications/<notification-id>/address-return?fulfilment-id=<fulfilment-id>', with 'handshake-token' and, after a save, 'addressId' added as query parameters.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/journey-registry.js:4-17,30-54",
+      "quote": "const RETURN_PATH_TEMPLATE =\n  '/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-045",
+      "statement": "Within a handshake the add-address page carries the four handshake values as hidden fields; its cancel button reads 'Cancel and return to address page' and returns to the animals frontend; a successful save redirects to the animals frontend with the new address id and shows no success banner in the INS.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:61-69,110-114; src/server/app/features/address-book/add/add.njk:13-18,108-112; src/server/app/features/address-book/copy/copy.en.js:50",
+      "quote": "cancelToJourney: 'Cancel and return to address page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-046",
+      "statement": "Only the add-address page takes part in the handshake. The address book list, view, edit and delete pages do not read it, and there is no 'choose an existing address' page in the INS: choosing an address for a notification is not offered here.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/index.js:8-15; src/server/app/features/address-book/add/add.controller.js:71-72",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in features/address-book list, view, edit and delete controllers and the route registry for any handshake use or selection page and found none. Only add.controller.js calls syncHandshakeContext/resolveHandshakeContext."
+    },
+    {
+      "id": "repo-insfrontend-047",
+      "statement": "The INS fit specs prove the dashboard: it lists notifications of every status with identifying detail, passes axe with no serious or critical violations, links a submitted notification to the read-only notification-view page and a draft back to the journey hub, finds a notification by complete reference, and shows 'No notifications found' for no match.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:22-106 (tests at lines 23, 54, 61, 74, 87, 106)",
+      "quote": "test('no matching notification shows \"No notifications found\" (AC5)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-048",
+      "statement": "The INS fit specs prove the address book: navigation between Dashboard and Address book; the list table and 25-per-page pagination; the empty state; adding (every field, hints, country options, empty and over-length validation per field, malformed email, save with confirmation banner, cancel); viewing every field against its label with Edit and Delete and a Back link; editing (prefill, rejected save keeps edits, malformed email, save banner, cancel); deleting (confirmation naming the address, cancel, confirm); each with an axe check.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:13,32,65,86,100; add.fit.spec.js:22,59,81,103,136,161; view.fit.spec.js:13,29,58,80; edit.fit.spec.js:36,59,82,113,134; delete.fit.spec.js:15,33,53",
+      "quote": "test('paginates when there are more than 25 addresses'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-049",
+      "statement": "The INS has no notification templates, no saved-template list and no 'create from template' entry point on the dashboard or in the address book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/index.js:8-15",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched the whole of src/server/app/features (grep for template-related routes and copy) and the route registry: no template feature exists. The goal names templates as part of DR2.1, and the repo scope expects dashboard and address book only."
+    }
+  ]
+}

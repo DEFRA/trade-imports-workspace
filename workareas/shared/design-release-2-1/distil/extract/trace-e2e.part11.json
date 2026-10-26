@@ -1,0 +1,823 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 11 mined all 13 trace zips its read names, from six spec files in the tests repo's animals project, and read each spec in full: pages/transporter.spec.ts (4: renders the page controls [aca24]; lists both a commercial and a private transporter [1026d]; leaves every transporter unchecked on load [a1501]; accepts a transporter picked from the list [effbe]), pages/transporter-add.spec.ts (3: renders the page controls [0e072]; leaves the transporter type unchecked on load [eaf7d]; accepts a valid transporter type [640c4]), pages/transporter-selection.spec.ts (3: renders the page controls [b3f84]; leaves the transporter unchecked on load [1d694]; accepts a valid transporter [78ca8]), features/commercial-transporter-scope.spec.ts (1 [94ca6]), features/commercial-transporter-submission.spec.ts (1 [2bb3b]) and features/private-transporter-scope.spec.ts (1 [d4e42]). All 13 passed. The bundled trace viewer refuses these zips (TraceVersionError: recorded by a newer Playwright), so each zip was unzipped into this part's work folder and read with jq: N-trace.trace for the before/after actions and the frame-snapshot DOM rendered back to HTML, N-trace.network for the requests with their form bodies and redirect locations. Refs name the trace by its folder hash fragment and the call id. Every UI-driven test builds a fresh draft through the UI (origin, commodity, arrival details, one transit country) and reaches the transporter list from the transit countries page's Save and continue; the submission test seeds everything up to arrival details through the frontend's own form posts and resumes at transit countries. Pages in this slice, in the order a user meets them: (1) Transporter details, the transporter list at /live-animals/notifications/{ref}/transporters (caption Transport and arrival; guidance paragraphs and bullets on transporter authorisation; a Search field and button; a Select a transporter table of small radios with Name, Address, Approval number, Type and Status columns; Add a transporter; Save and continue, Save and return to overview, Cancel and return to overview). It always appears, reached from the overview task Transport details and after transit countries. Its rows mix commercial and private entries and also carry any transporter the trader hand-added, tagged New. (2) Choose a transporter type at /transporters/add (caption Add a new transporter), reached only by Add a transporter: a warning to search first, then Private transporter and Commercial radios. (3) Add commercial transporter at /transporters/add/commercial, shown only when the type is Commercial: a help notification banner, the authorisation number, name and address fields, a Country select fixed to Northern Ireland, and contact details. (4) Add private transporter at /transporters/add/private, shown only when the type is Private: name, address, a 32-country Country select and contact details. A partial fill shows a six-error summary. (5) Search for an approved commercial transporter at /transporters/select, reached here only by direct URL. It lists the 2 approved commercial transporters as radios with address and approval-number hints. (6) The overview's Transport details task status (To do or Complete) and (7) the end-to-end submission through the review page's Transport details summary card, the declaration and the Import notification submitted panel. What is conditional: the commercial page (type Commercial), the private page (type Private), the wipe of the other type's keyed-in record when the type changes, the checked state of a list row (the saved choice), and the New tag (hand-added rows). Network logs show only browser-to-frontend traffic, plus the address-book lookups the seeding helper makes. No backend or reference-data call is visible from the browser.",
+  "claims": [
+    {
+      "id": "trace-e2e-p11-001",
+      "statement": "The transporter list page sits at /live-animals/notifications/{reference}/transporters, and a trader reaches it from the transit countries page's Save and continue.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@469 to call@471",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-AGR42S/transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-002",
+      "statement": "The overview's Transport and arrival section has a task named Transport details that links to the transporter list.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@405 (overview snapshot, section 3. Transport and arrival)",
+      "quote": "<A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-AGR42S/transporters\" aria-describedby=\"transport-and-arrival-2-status\">Transport details</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-003",
+      "statement": "On a new draft the Transport details task shows the status To do, in a blue tag.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@405 (overview snapshot)",
+      "quote": "To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-004",
+      "statement": "The transporter list page heading is Transporter details, under the caption Transport and arrival.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<SPAN class=\"govuk-caption-l\">Transport and arrival</SPAN> <H1 class=\"govuk-heading-l\">Transporter details</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-005",
+      "statement": "The transporter list page explains who the transporter is.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-006",
+      "statement": "The transporter list page tells the trader when a transporter must hold a valid UK transporter authorisation, as three bullet conditions.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are: transporting any live vertebrate animals in, to, from or through Great Britain (GB) | travelling on journeys of over 65 km | transporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-007",
+      "statement": "The transporter list page links to GOV.UK guidance on transporting animals for an economic activity, which opens in a new tab.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<A href=\"https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity\" class=\"govuk-link\" rel=\"noreferrer noopener\" target=\"_blank\">Find out how to transport animals in connection with an economic activity (opens in a new tab)</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-008",
+      "statement": "The transporter list page says that DAERA documents are valid in GB and that EU member state documents are not.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "Documents issued by DAERA are valid for use in GB. Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-009",
+      "statement": "The transporter list page has an optional free-text Search field labelled Search, with the hint Name, address or approval number.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"search\">Search</LABEL> <DIV id=\"search-hint\" class=\"govuk-hint\">Name, address or approval number</DIV> <INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"search\" name=\"search\" type=\"text\" value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-010",
+      "statement": "A secondary Search button submits the same form with action=search, so the search runs on the server and not as client-side filtering.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<BUTTON type=\"submit\" value=\"search\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Search</BUTTON>",
+      "confidence": "inferred",
+      "note": "No trace in this part types a search term, so what the search matches and how results or no results render is not shown."
+    },
+    {
+      "id": "trace-e2e-p11-011",
+      "statement": "The transporter choice is a fieldset with the legend Select a transporter, laid out as a table with the columns Name, Address, Approval number, Type and Status, and a visually hidden Select column for the radios.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "Select a transporter | <SPAN class=\"govuk-visually-hidden\">Select</SPAN> | Name | Address | Approval number | Type | Status",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-012",
+      "statement": "Each list row has one small radio named transporter, whose accessible name is Select followed by the transporter's name, held only in visually hidden text.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@471; trace effbe action call@1426",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"transporter\" name=\"transporter\" type=\"radio\" value=\"garcia-livestock-transport\"> <SPAN class=\"govuk-visually-hidden\">Select García Livestock Transport SL</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-013",
+      "statement": "On a fresh draft the transporter list shows six pre-existing transporters: García Livestock Transport SL and J & G Campbell LTD (Commercial, Approved), Aberdeen Livestock Ltd and Slovak Farm Export (Private, Approved), and Romanian Agri Exports SRL and Finnish Livestock Oy (Private, New).",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@471; trace 2bb3b action call@366",
+      "quote": "García Livestock Transport SL | ES-T2-45001294 | Commercial | Approved; J & G Campbell LTD | UK/BURY/T2/00104115 | Commercial | Approved; Aberdeen Livestock Ltd | Private | Approved; Romanian Agri Exports SRL | Private | New; Slovak Farm Export | Private | Approved; Finnish Livestock Oy | Private | New",
+      "confidence": "verbatim",
+      "note": "These are stack test data, not real reference data. The list's source is not visible from the browser."
+    },
+    {
+      "id": "trace-e2e-p11-014",
+      "statement": "The transporter list shows commercial and private transporters together, and the Type column names which one each row is.",
+      "kind": "behaviour",
+      "ref": "trace 1026d action call@1362 and call@1364; trace 94ca6 action call@471",
+      "quote": "<TD class=\"govuk-table__cell\">Commercial</TD> ... <TD class=\"govuk-table__cell\">Private</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-015",
+      "statement": "Private transporter rows show an empty Approval number cell. Only commercial rows carry an approval number.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@471 (Aberdeen Livestock Ltd row)",
+      "quote": "<TD class=\"govuk-table__cell\">12 Harbour Road, Aberdeen, Aberdeenshire, AB11 5DQ, United Kingdom</TD> <TD class=\"govuk-table__cell\"></TD> <TD class=\"govuk-table__cell\">Private</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-016",
+      "statement": "The Status column shows a green Approved tag or a magenta New tag.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Approved</STRONG> ... <STRONG class=\"govuk-tag govuk-tag--magenta\">New</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-017",
+      "statement": "The list's Address column shows a transporter's address as one comma-separated line, ending with the country.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "Rue de la Loi 200, 1040 Brussels, Belgium",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-018",
+      "statement": "On a first visit no transporter on the list is selected.",
+      "kind": "behaviour",
+      "ref": "trace a1501 action call@1301 and call@1303; trace 94ca6 action call@471",
+      "quote": "await expect(animalsPages.transporter.transporter('García Livestock Transport SL')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-019",
+      "statement": "The transporter list has a secondary Add a transporter button, styled as a button but built as a link to /transporters/add.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@471; trace aca24 action call@1226",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-AGR42S/transporters/add\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Add a transporter</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-020",
+      "statement": "The transporter list page ends with Save and continue (action=save), Save and return to overview (exit=hub) and a Cancel and return to overview link back to the overview.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<BUTTON type=\"submit\" value=\"save\" name=\"action\" class=\"govuk-button\">Save and continue</BUTTON> <BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview</BUTTON> <A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-AGR42S\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-021",
+      "statement": "The transporter list page's Back link goes to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-AGR42S\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-022",
+      "statement": "Picking a transporter from the list and pressing Save and continue posts the row's id as transporter with action=save, and goes straight to the overview with no error.",
+      "kind": "behaviour",
+      "ref": "trace effbe action call@1426 to call@1432; trace effbe request POST /transporters (302)",
+      "quote": "{\"name\":\"transporter\",\"value\":\"garcia-livestock-transport\"},{\"name\":\"action\",\"value\":\"save\"} -> Location /live-animals/notifications/GBN-AG-26-PY5SMF",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-023",
+      "statement": "Once a transporter is picked from the list, the overview marks the Transport details task Complete.",
+      "kind": "behaviour",
+      "ref": "trace effbe action call@1432 (overview snapshot)",
+      "quote": "Transport details ... <STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-024",
+      "statement": "Every page in the transporter flow shows a journey strip above the caption, with a blue Draft tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@471, call@475, call@481, call@615",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"><STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-AGR42S</SPAN></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-025",
+      "statement": "The transporter list puts small GOV.UK radios inside the cells of a GOV.UK table: a one-of-many choice laid out as a table. Each row has its own govuk-radios group sharing one name, which is not a standard design-system pattern. A plain Radios component with hints, as the selection page uses, is the in-toolbox alternative.",
+      "kind": "constraint",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "<TABLE class=\"govuk-table\"> ... <TD class=\"govuk-table__cell\"><DIV class=\"govuk-form-group\"><DIV class=\"govuk-radios govuk-radios--small\" data-module=\"govuk-radios\">",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p11-026",
+      "statement": "The transporter flow's pages use govuk-* classes throughout, apart from the app-journey-strip wrapper (plus app-header and app-task-list outside main).",
+      "kind": "constraint",
+      "ref": "trace 94ca6 action call@471, call@475, call@481, call@615",
+      "quote": "app-journey-strip",
+      "confidence": "inferred",
+      "note": "Read from the rendered class attributes in the snapshots, not from a class-dump eval."
+    },
+    {
+      "id": "trace-e2e-p11-027",
+      "statement": "Every form in the transporter flow carries a hidden concurrencyToken that rises with each save, which suggests optimistic concurrency on the notification.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 requests POST /transporters/add (concurrencyToken 5) and POST /transporters/add/commercial (concurrencyToken 6)",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"5\">",
+      "confidence": "inferred",
+      "note": "The forms also carry a CSRF crumb, whose value is left out here."
+    },
+    {
+      "id": "trace-e2e-p11-028",
+      "statement": "The transporter type question is reached only through the list's Add a transporter button, at /transporters/add.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@473 to call@475; spec transporter-add.spec.ts",
+      "quote": "// The type question is asked only of a trader who could not find their\n// transporter on the list, so it is reached through \"Add a transporter\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-029",
+      "statement": "The transporter type page heading is Choose a transporter type, under the caption Add a new transporter.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@475; trace 0e072 action call@1186",
+      "quote": "<SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN> <H1 class=\"govuk-heading-l\">Choose a transporter type</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-030",
+      "statement": "The transporter type page shows a GOV.UK warning telling the trader to search for the transporter before adding it.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@475",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Warning</SPAN> Before you add this transporter, please ensure you have already searched for it first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-031",
+      "statement": "The transporter type radios sit in a fieldset whose legend, What type of transporter will move the animals?, is visually hidden. The page h1 is the visible question.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@475",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-visually-hidden\">What type of transporter will move the animals?</LEGEND>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-032",
+      "statement": "The transporterType question offers two options, in this order: Private transporter (value Private) and Commercial (value Commercial).",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@475; trace 0e072 action call@1188 and call@1190",
+      "quote": "<INPUT ... name=\"transporterType\" type=\"radio\" value=\"Private\"> Private transporter ... <INPUT ... name=\"transporterType\" type=\"radio\" value=\"Commercial\"> Commercial",
+      "confidence": "verbatim",
+      "note": "The spec calls the option 'Private', but the rendered label is 'Private transporter'. The test locator matches by substring."
+    },
+    {
+      "id": "trace-e2e-p11-033",
+      "statement": "The Commercial option has a hint saying a commercial transporter can only be from Northern Ireland.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@475",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-034",
+      "statement": "On a first visit neither transporter type is selected.",
+      "kind": "behaviour",
+      "ref": "trace eaf7d action call@1214; trace 94ca6 action call@475",
+      "quote": "await expect(animalsPages.transporterAdd.transporterType('Commercial')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-035",
+      "statement": "The transporter type page has only a Save and continue button, with no Save and return to overview and no Cancel link. Its Back link goes to the transporter list.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@475",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-AGR42S/transporters\" class=\"govuk-back-link\">Back</A> ... <BUTTON type=\"submit\" class=\"govuk-button\">Save and continue</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-036",
+      "statement": "Saving the type Commercial shows no error and redirects to the Add commercial transporter page at /transporters/add/commercial.",
+      "kind": "rule",
+      "ref": "trace 640c4 action call@1243 to call@1249; trace 94ca6 request POST /transporters/add (302)",
+      "quote": "{\"name\":\"transporterType\",\"value\":\"Commercial\"} -> Location /live-animals/notifications/GBN-AG-26-AGR42S/transporters/add/commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-037",
+      "statement": "Saving the type Private redirects to the Add private transporter page at /transporters/add/private.",
+      "kind": "rule",
+      "ref": "trace 94ca6 action call@611 to call@615; trace 94ca6 request POST /transporters/add (302, concurrencyToken 13)",
+      "quote": "{\"name\":\"transporterType\",\"value\":\"Private\"} -> Location /live-animals/notifications/GBN-AG-26-AGR42S/transporters/add/private",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-038",
+      "statement": "The chosen transporter type is saved: on a return visit the type page shows the last saved type checked.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@549 (Commercial checked) and call@667 (Private checked)",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"transporterType-2\" name=\"transporterType\" type=\"radio\" value=\"Commercial\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-039",
+      "statement": "The Add commercial transporter page heading is Add commercial transporter, under the caption Add a new transporter. Its Back link goes to the transporter type page.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@481",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-AGR42S/transporters/add\" class=\"govuk-back-link\">Back</A> ... <SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN> <H1 class=\"govuk-heading-l\">Add commercial transporter</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-040",
+      "statement": "The Add commercial transporter page shows a GOV.UK notification banner titled Help with transporter authorisation. It repeats the list page's authorisation guidance, guidance link and DAERA/EU validity paragraphs.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@481",
+      "quote": "<H2 class=\"govuk-notification-banner__title\" id=\"govuk-notification-banner-title\">Help with transporter authorisation</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-041",
+      "statement": "The commercial transporter form asks for a Transporter authorisation number (field approvalNumber, text input, no hint).",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@481 and call@485",
+      "quote": "<LABEL class=\"govuk-label\" for=\"approvalNumber\">Transporter authorisation number</LABEL> <INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"approvalNumber\" name=\"approvalNumber\" type=\"text\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-042",
+      "statement": "The commercial transporter form asks for Name or organisation name (field nameOrOrganisationName, autocomplete name).",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@481 and call@487",
+      "quote": "<LABEL class=\"govuk-label\" for=\"nameOrOrganisationName\">Name or organisation name</LABEL>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-043",
+      "statement": "The commercial transporter form's address fields are Address line 1, Address line 2 (optional), Town or city, County (optional) and Postcode or zip code (lower-case zip), with address autocomplete attributes.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@481",
+      "quote": "Address line 1 | Address line 2 (optional) | Town or city | County (optional) | Postcode or zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-044",
+      "statement": "On the commercial transporter form the Country is fixed to Northern Ireland: a disabled select with Northern Ireland as its only option, plus a hidden input that posts country=Northern Ireland.",
+      "kind": "rule",
+      "ref": "trace 94ca6 action call@483; trace 94ca6 request POST /transporters/add/commercial",
+      "quote": "<SELECT class=\"govuk-select\" id=\"country\" name=\"country\" disabled=\"\"><OPTION value=\"Northern Ireland\" selected=\"\">Northern Ireland</OPTION></SELECT> <INPUT type=\"hidden\" name=\"country\" value=\"Northern Ireland\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-045",
+      "statement": "Both the commercial and private transporter forms have a sub-heading Enter contact details above the email and phone fields.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@481 and call@615",
+      "quote": "<H2 class=\"govuk-heading-m\">Enter contact details</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-046",
+      "statement": "Both transporter forms ask for an Email address (type email, autocomplete email).",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@481 and call@615",
+      "quote": "<LABEL class=\"govuk-label\" for=\"emailAddress\">Email address</LABEL> <INPUT class=\"govuk-input\" id=\"emailAddress\" name=\"emailAddress\" type=\"email\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-047",
+      "statement": "Both transporter forms ask for a Phone number (type tel), with a hint to include the country code for international numbers.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@481 and call@615",
+      "quote": "<LABEL class=\"govuk-label\" for=\"telephoneNumber\">Phone number</LABEL> <DIV id=\"telephoneNumber-hint\" class=\"govuk-hint\">For international numbers include the country code</DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-048",
+      "statement": "The commercial and private transporter forms each have only a Save and continue button, with no Save and return to overview and no Cancel link.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@481 and call@615",
+      "quote": "<DIV class=\"govuk-button-group\"><BUTTON type=\"submit\" class=\"govuk-button\">Save and continue</BUTTON></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-049",
+      "statement": "Saving a completed commercial transporter form posts every field, the fixed country included, and redirects straight to the overview, not back to the transporter list.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@499 to call@501; trace 94ca6 request POST /transporters/add/commercial (302)",
+      "quote": "approvalNumber=NI/TA/2026/0041, nameOrOrganisationName=Lough Neagh Livestock Haulage Ltd, addressLine1=4 Shore Road, addressLine2=, townOrCity=Antrim, county=, postalOrZipCode=BT41 4LB, country=Northern Ireland, emailAddress=ops@loughneagh.example, telephoneNumber=+44 28 9446 1200 -> Location /live-animals/notifications/GBN-AG-26-AGR42S",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-050",
+      "statement": "Once a hand-added commercial transporter is saved, the overview marks the Transport details task Complete.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@501 (overview snapshot); trace 2bb3b action call@394",
+      "quote": "Transport details ... <STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-051",
+      "statement": "A saved commercial transporter persists: on a return visit its fields come back filled in, the contact details included.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@555 to call@559",
+      "quote": "value=\"Lough Neagh Livestock Haulage Ltd\" ... value=\"ops@loughneagh.example\" ... value=\"+44 28 9446 1200\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-052",
+      "statement": "A hand-added transporter joins the transporter list as the first row, with a generated id, Type taken from the form, a magenta New status tag and its radio checked as the current choice.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@545 (list snapshot); trace d4e42 action call@691",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"transporter\" name=\"transporter\" type=\"radio\" value=\"ac720420-fb1b-4648-b4f0-c7bcc76b004b\" checked=\"\"> ... Lough Neagh Livestock Haulage Ltd | 4 Shore Road, Antrim, BT41 4LB, Northern Ireland | NI/TA/2026/0041 | Commercial | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-053",
+      "statement": "After the type changes away from Commercial, the hand-added commercial transporter is still listed but no longer checked.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@663 (list snapshot)",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"transporter\" name=\"transporter\" type=\"radio\" value=\"ac720420-fb1b-4648-b4f0-c7bcc76b004b\"> ... Select Lough Neagh Livestock Haulage Ltd",
+      "confidence": "verbatim",
+      "note": "So 'wiped' means the notification's commercial answer is cleared. The hand-added row itself stays on the list."
+    },
+    {
+      "id": "trace-e2e-p11-054",
+      "statement": "A commercial transporter is owed only while the type is Commercial: choosing Private walks to the private details page, and the add-commercial form is no longer asked.",
+      "kind": "rule",
+      "ref": "trace 94ca6 action call@611 to call@615",
+      "quote": "// Private transporter: the add-commercial form is no longer owed — choosing\n// the private type walks on to the private details page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-055",
+      "statement": "Changing the type from Commercial to Private and saving wipes the saved commercial transporter: back on Commercial, the form renders empty.",
+      "kind": "rule",
+      "ref": "trace 94ca6 action call@673 to call@677",
+      "quote": "expect internal:label=\"Transporter authorisation number\"i [{\"string\":\"\"}]; expect internal:label=\"Name or organisation name\"i [{\"string\":\"\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-056",
+      "statement": "Saving the Add private transporter page blank, with no field filled, raises no error and returns to the overview, where Transport details goes back to To do.",
+      "kind": "rule",
+      "ref": "trace 94ca6 action call@617 to call@619; trace 94ca6 request POST /transporters/add/private (302 to overview)",
+      "quote": "Transport details ... <STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-057",
+      "statement": "Saving the Add commercial transporter page blank raises no error and returns to the overview, where Transport details goes back to To do.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@763 to call@765 (overview snapshot)",
+      "quote": "// a blank save\n    // there returns to the hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-058",
+      "statement": "The Add private transporter page heading is Add private transporter, under the caption Add a new transporter, with an intro paragraph. Its Back link goes to the transporter type page.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@615",
+      "quote": "<SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN> <H1 class=\"govuk-heading-l\">Add private transporter</H1> <P class=\"govuk-body\">Enter the name and address of the private transporter moving the animals.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-059",
+      "statement": "The private transporter form has no authorisation number field. It asks for Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code (capital Z), Country, Email address and Phone number.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@615",
+      "quote": "Name or organisation name | Address line 1 | Address line 2 (optional) | Town or city | County (optional) | Postcode or Zip code | Country | Email address | Phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-060",
+      "statement": "The postcode label is capitalised differently on the two forms: Postcode or zip code on the commercial form and Postcode or Zip code on the private form.",
+      "kind": "copy",
+      "ref": "trace 94ca6 action call@481 and call@615",
+      "quote": "Postcode or zip code / Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-061",
+      "statement": "The private transporter's Country is a select with a Select a country placeholder, a disabled divider, United Kingdom first and then 31 European countries in alphabetical order: 32 countries in all.",
+      "kind": "data",
+      "ref": "trace 94ca6 action call@615",
+      "quote": "Select a country | ────────── | United Kingdom | Austria | Belgium | Bulgaria | Croatia | Cyprus | Czechia | Denmark | Estonia | Finland | France | Germany | Greece | Hungary | Iceland | Ireland | Italy | Latvia | Liechtenstein | Lithuania | Luxembourg | Malta | Netherlands (the) | Norway | Poland | Portugal | Romania | Slovakia | Slovenia | Spain | Sweden | Switzerland",
+      "confidence": "verbatim",
+      "note": "The list appears to be the UK plus EU/EEA/Swiss countries. Its source (hard-coded or reference data) is not visible in the trace."
+    },
+    {
+      "id": "trace-e2e-p11-062",
+      "statement": "A partial fill of the private transporter form (name only) blocks the save. The page re-renders with a There is a problem error summary listing every missing mandatory field, and keeps the value already entered.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@625 to call@631",
+      "quote": "There is a problem ... value=\"Jean Dupont\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-063",
+      "statement": "When the private transporter's details are partly filled, a missing address line 1 shows the error Enter address line 1.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#addressLine1\">Enter address line 1</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-064",
+      "statement": "When the private transporter's details are partly filled, a missing town or city shows the error Enter a town or city.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#townOrCity\">Enter a town or city</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-065",
+      "statement": "When the private transporter's details are partly filled, a missing postcode shows the error Enter a postcode or Zip code.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#postalOrZipCode\">Enter a postcode or Zip code</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-066",
+      "statement": "When the private transporter's details are partly filled, a missing country shows the error Select a country.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#country\">Select a country</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-067",
+      "statement": "When the private transporter's details are partly filled, a missing email address shows the error Enter an email address, so the email is mandatory.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#emailAddress\">Enter an email address</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-068",
+      "statement": "When the private transporter's details are partly filled, a missing phone number shows the error Enter a phone number, so the phone number is mandatory.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<A href=\"#telephoneNumber\">Enter a phone number</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-069",
+      "statement": "Address line 2 and County raise no error when blank in a partial fill, which confirms they are optional.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@629 (no error on addressLine2 or county form groups)",
+      "quote": "<DIV class=\"govuk-form-group\"><LABEL class=\"govuk-label\" for=\"addressLine2\">Address line 2 (optional)</LABEL>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-070",
+      "statement": "Each private-transporter field error is repeated inline above its input, with a visually hidden Error: prefix, and the input gets the error modifier class.",
+      "kind": "copy",
+      "ref": "trace d4e42 action call@629",
+      "quote": "<P id=\"addressLine1-error\" class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter address line 1</P> <INPUT class=\"govuk-input govuk-input--error\" id=\"addressLine1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-071",
+      "statement": "The private transporter's mandatory fields apply only once any part of the record is provided: a fully blank save passes, but a partial fill is blocked.",
+      "kind": "rule",
+      "ref": "spec private-transporter-scope.spec.ts; trace d4e42 action call@627 to call@629; trace 94ca6 action call@617 to call@619",
+      "quote": "// A PARTIAL fill blocks the\n    // save — the fieldGroup's mandates apply once the record is provided —\n    // naming the missing mandatory fields.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-072",
+      "statement": "Completing the private transporter's mandatory fields saves the record and returns to the overview, where Transport details is Complete.",
+      "kind": "behaviour",
+      "ref": "trace d4e42 action call@633 to call@647 (overview snapshot)",
+      "quote": "Transport details ... <STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-073",
+      "statement": "A saved private transporter persists: on a return visit the name and country come back filled in.",
+      "kind": "behaviour",
+      "ref": "trace d4e42 action call@701 to call@705",
+      "quote": "expect internal:label=\"Name or organisation name\"i [{\"string\":\"Jean Dupont\"}]; expect internal:label=\"Country\"i [{\"string\":\"France\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-074",
+      "statement": "A hand-added private transporter joins the transporter list as the first row: Type Private, an empty approval number, a New tag and its radio checked.",
+      "kind": "behaviour",
+      "ref": "trace d4e42 action call@691 (list snapshot)",
+      "quote": "Jean Dupont | 12 Rue des Fermes, Amiens, 80000, France |  | Private | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-075",
+      "statement": "Keyed-in private details are owed only while the type is Private: choosing Commercial walks to the add-commercial form instead.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@757 to call@761",
+      "quote": "// Commercial transporter: the private details page is no longer owed —\n    // saving the type walks to the add-commercial form instead",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-076",
+      "statement": "Changing the type from Private to Commercial and saving wipes the saved private details: back on Private, the form renders empty.",
+      "kind": "rule",
+      "ref": "trace d4e42 action call@819 to call@823",
+      "quote": "expect internal:label=\"Name or organisation name\"i [{\"string\":\"\"}]; expect internal:label=\"Country\"i [{\"string\":\"\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-077",
+      "statement": "After the type changes away from Private, the hand-added private transporter is still listed but no longer checked.",
+      "kind": "behaviour",
+      "ref": "trace d4e42 action call@809 (list snapshot)",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"transporter\" name=\"transporter\" type=\"radio\" value=\"b505f9a6-d6db-4333-81f8-04d787cfa545\"> ... Select Jean Dupont",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-078",
+      "statement": "The approved commercial transporter selection page sits at /transporters/select. Nothing in the journey links to it, so it is reached here only by direct URL, after the type has been answered Commercial.",
+      "kind": "behaviour",
+      "ref": "trace b3f84 action call@1230; spec transporter-selection.spec.ts",
+      "quote": "// The approved commercial register. Nothing links to it now that the add\n// route's commercial arm is the add-commercial form and the transporter list\n// carries the register's rows itself, so the journey helper reaches it by its\n// own URL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-079",
+      "statement": "The selection page heading is Search for an approved commercial transporter, used as the fieldset legend, under the caption Add a new transporter. Its Back link goes to the transporter type page.",
+      "kind": "copy",
+      "ref": "trace b3f84 action call@1234",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-C95J75/transporters/add\" class=\"govuk-back-link\">Back</A> ... <SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN> ... <H1 class=\"govuk-fieldset__heading\">Search for an approved commercial transporter</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-080",
+      "statement": "The selection page hint says that choosing a transporter copies their name, address and approval number into the notification.",
+      "kind": "copy",
+      "ref": "trace b3f84 action call@1234",
+      "quote": "Selecting a transporter copies their name, address and approval number into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-081",
+      "statement": "The selection page offers a commercialTransporter radio per approved commercial transporter, labelled with the name, with the address and approval number as the item hint. Only the two commercial entries appear: García Livestock Transport SL and J & G Campbell LTD.",
+      "kind": "data",
+      "ref": "trace b3f84 action call@1236",
+      "quote": "García Livestock Transport SL — 43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland — approval number ES-T2-45001294 | J & G Campbell LTD — Rue de la Loi 200, 1040 Brussels, Belgium — approval number UK/BURY/T2/00104115",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-082",
+      "statement": "On a first visit no transporter on the selection page is selected.",
+      "kind": "behaviour",
+      "ref": "trace 1d694 action call@1303",
+      "quote": "await expect(animalsPages.transporterSelection.transporter('García Livestock Transport SL')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-083",
+      "statement": "The selection page has only a Save and continue button.",
+      "kind": "copy",
+      "ref": "trace b3f84 action call@1238",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\">Save and continue</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-084",
+      "statement": "Choosing an approved commercial transporter on the selection page and saving posts commercialTransporter with its id. It shows no error and redirects to the overview.",
+      "kind": "behaviour",
+      "ref": "trace 78ca8 action call@1099 to call@1103; trace 78ca8 request POST /transporters/select (302)",
+      "quote": "{\"name\":\"commercialTransporter\",\"value\":\"garcia-livestock-transport\"} -> Location /live-animals/notifications/GBN-AG-26-CCG60Y",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-085",
+      "statement": "A trader can submit a notification using a hand-added commercial transporter. From transit countries they go: Add a transporter, Commercial, fill the form, the overview, the contact address, Review and submit, Continue, the declaration, Continue, and land on Import notification submitted.",
+      "kind": "behaviour",
+      "ref": "trace 2bb3b action call@364 to call@416",
+      "quote": "Import notification submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-086",
+      "statement": "The review page's Transport and arrival section shows a Transport details summary card with a Change link back to the transporter list (?change=1).",
+      "kind": "behaviour",
+      "ref": "trace 2bb3b action call@406 (notification-view snapshot)",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-904TK1/transporters?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> transport details (Transport details)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-087",
+      "statement": "For a hand-added commercial transporter the review card shows Name, Address (lines, town and postcode on separate lines), Country, Approval number and Type.",
+      "kind": "data",
+      "ref": "trace 2bb3b action call@406",
+      "quote": "Name: Lough Neagh Livestock Haulage Ltd | Address: 4 Shore Road<BR>Antrim<BR>BT41 4LB | Country: Northern Ireland | Approval number: NI/TA/2026/0041 | Type: Commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-088",
+      "statement": "The review card does not show the transporter's email address or phone number, although the commercial form collects both.",
+      "kind": "data",
+      "ref": "trace 2bb3b action call@406 (Transport details card has five rows)",
+      "quote": "<DT class=\"govuk-summary-list__key\">Type</DT> <DD class=\"govuk-summary-list__value\">Commercial</DD>",
+      "confidence": "inferred",
+      "note": "Inferred from the card's five rows. Whether the contact details are stored and sent onward is not visible."
+    },
+    {
+      "id": "trace-e2e-p11-089",
+      "statement": "The submission confirmation is a GOV.UK confirmation panel headed Import notification submitted, showing the reference number.",
+      "kind": "copy",
+      "ref": "trace 2bb3b action call@416",
+      "quote": "<H1 class=\"govuk-panel__title\">Import notification submitted</H1> <DIV class=\"govuk-panel__body\">Your reference number<BR><STRONG>GBN-AG-26-904TK1</STRONG></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-090",
+      "statement": "The confirmation page has a Transporting the consignment section telling the trader to tell the transporter that the consignment must go directly to the place of destination, and saying the animals may need inspection and must then stay for the certificate's time or 48 hours.",
+      "kind": "copy",
+      "ref": "trace 2bb3b action call@416",
+      "quote": "Transporting the consignment | Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain. | The animals or consignment may need to be inspected. | If so, the animals must stay at the place of destination for either: the time stated on the health certificate | 48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p11-091",
+      "statement": "Every transporter page talks only to the animals frontend, with form posts and redirects. No call to a backend, reference-data or transporter-register service is visible from the browser, so where the list and register rows come from is not shown.",
+      "kind": "integration",
+      "ref": "trace 94ca6 requests; trace 2bb3b requests",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-AGR42S/transporters 200",
+      "confidence": "gap",
+      "note": "The source of the transporter register (the approved commercial list and the private rows) needs another source: the frontend or backend repo."
+    },
+    {
+      "id": "trace-e2e-p11-092",
+      "statement": "No trace enters a term in the transporter list's Search field, so the search's matching, results and no-results states are not shown.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-093",
+      "statement": "No trace presses Save and continue on the transporter list with no transporter selected, so whether a selection is mandatory, and its error message, are not shown.",
+      "kind": "rule",
+      "ref": "spec transporter.spec.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-094",
+      "statement": "No trace submits the transporter type page with no type chosen, so its validation message is not shown.",
+      "kind": "rule",
+      "ref": "spec transporter-add.spec.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-095",
+      "statement": "No trace partly fills the commercial transporter form, so its field-level validation messages (authorisation number, name, address, email, phone) are not shown.",
+      "kind": "rule",
+      "ref": "spec commercial-transporter-scope.spec.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-096",
+      "statement": "No trace submits the selection page with nothing chosen, so its validation message is not shown.",
+      "kind": "rule",
+      "ref": "spec transporter-selection.spec.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-097",
+      "statement": "No trace checks the format of the email address, phone number or authorisation number (for example an invalid email), so any format rules are not shown.",
+      "kind": "rule",
+      "ref": "traces 94ca6, d4e42, 2bb3b",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-098",
+      "statement": "No trace presses the list's Save and return to overview button or Cancel and return to overview link, so their behaviour is not shown.",
+      "kind": "behaviour",
+      "ref": "trace 94ca6 action call@471",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-099",
+      "statement": "No trace shows the review card for a private transporter or for one picked from the list or register, so how those render on review and submission is not shown.",
+      "kind": "data",
+      "ref": "trace 2bb3b action call@406",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-100",
+      "statement": "No trace follows the review card's Change link (?change=1), so where saving returns to after a change is not shown.",
+      "kind": "behaviour",
+      "ref": "trace 2bb3b action call@406",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p11-101",
+      "statement": "No trace shows whether picking an existing row from the list affects a saved hand-added record, or how a list pick and a type answer interact.",
+      "kind": "rule",
+      "ref": "traces effbe, 94ca6, d4e42",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

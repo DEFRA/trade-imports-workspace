@@ -1,0 +1,793 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 1, the address record and its validation. Read in full: address/Address.java (the persisted entity, 80 lines), address/AddressRequest.java (the create/update body with its Bean Validation constraints and messages, 108 lines), address/AddressStatus.java (ACTIVE, DELETED), address/OperatorResponse.java (the wire response with its null guards), address/OperatorMapper.java (entity to response and request to entity mapping), address/AddressExpiryIndex.java (the non-prod TTL index), configuration/AddressTtlConfig.java and configuration/MongoConfig.java, src/main/resources/application.yml (Mongo and address-book.ttl keys; CDP, AWS, logging, actuator and springdoc keys are out of this part's scope and only noted), compose/mongo/10-init.js (an empty template comment, no seed data), the README sections MongoDB, Soft delete (tombstones), Address expiry (non-prod only) and Indexes, and the AddressRequest and OperatorResponse schemas in docs/openapi/operators.yml. Tests read in full: AddressRequestValidationTest (the field-table validation matrix: 7 blank-field cases, 8 over-length cases, 1 malformed email, stray type and role, 8 at-max cases, countryCode presence-only and phone free-text), OperatorMapperTest (8 tests), OperatorResponseTest (11 guarded-null cases plus optional nulls), AddressExpiryIndexTest (6 tests), AddressTtlConfigTest (11 tests), AddressExpiryIT (3 tests) and OperatorIndexIT (1 test). Claims run in this order: the record's shape and rulings (cv-011, cv-016, cv-044), each request field's required flag, length limit and error message, the type and role rejection, server-assigned fields being ignored, the response shape and the deleted flag, update replace semantics, the status values, persistence (database, collection, the one compound index, auditing), then the non-prod expiry rule and its config keys, and what each test proves. The expireAt stamping on create is coded in OperatorService (part 2); it is claimed here from the README and AddressExpiryIT, which sit in this part's read.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p1-001",
+      "statement": "An address-book entry is untyped and owned by an organisation: it has no type or role, and no operator-type categorisation.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18",
+      "quote": "An untyped, organisation-owned address-book entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-002",
+      "statement": "An address is one flat set of fields (the Standard Address Block), with no nested address object.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18-19",
+      "quote": "The field set is flat — the Standard Address Block is one flat form, so there is no nested {@code Address} value object.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-003",
+      "statement": "The stored address holds these fields: id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, status, createdAt, modifiedAt, expireAt and version.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:44-79",
+      "quote": "private String id; private String name; private String addressLine1; private String addressLine2; private String townOrCity; private String county; private String postcode; private String countryCode; private String phone; private String email; private String organisationId; private AddressStatus status; @CreatedDate private Instant createdAt; @LastModifiedDate private Instant modifiedAt; private Instant expireAt; @Version private Long version;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-004",
+      "statement": "Ruling cv-011: countryCode is stored as an ISO 3166-1 alpha-2 code exactly as supplied; the service never converts it to or from a country display name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:21-22",
+      "quote": "{@code countryCode} is stored as an ISO 3166-1 alpha-2 code (cv-011), exactly as supplied — the service does not convert it to or from a display name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-005",
+      "statement": "createdAt is set automatically when an address is first saved, and modifiedAt is updated automatically on every write, including an update and a soft delete.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:24-25, 70-74; configuration/MongoConfig.java:31",
+      "quote": "{@code modifiedAt} is bumped by auditing on every write (PUT and soft delete)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-006",
+      "statement": "modifiedAt is for audit only: nothing in the service reads it to drive any other behaviour.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:24-25",
+      "quote": "but is <strong>audit only</strong>: nothing reads it to refresh anything.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-007",
+      "statement": "Each stored address carries a version number used for optimistic locking, which is never returned to callers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:78-79; address/OperatorMapper.java:22",
+      "quote": "@Version private Long version;",
+      "confidence": "inferred",
+      "note": "Optimistic locking is inferred from Spring Data's @Version annotation; the mapper ignores version when building the response. How a version conflict surfaces to a caller is not in this part."
+    },
+    {
+      "id": "repo-addressbook-p1-008",
+      "statement": "The stored entity is never sent to callers directly: a separate response object defines what the API returns.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:31",
+      "quote": "The entity is never serialised onto the wire — the response records own the wire contract.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-009",
+      "statement": "The same request body is used both to create an address and to replace one, and its JSON field names are camelCase.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:11-12, 34",
+      "quote": "Create/update request body. The wire is camelCase (global {@code JacksonConfig}), so every field serialises under its Java name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-010",
+      "statement": "name is required; a blank name is rejected with the message \"Enter a name\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:36",
+      "quote": "@NotBlank(message = \"Enter a name\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-011",
+      "statement": "name may be at most 255 characters; a longer one is rejected with the message \"Name must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:37",
+      "quote": "@Size(min = 1, max = 255, message = \"Name must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-012",
+      "statement": "name is described as the display name for the address, with the example \"Highland Livestock Ltd\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:38-43",
+      "quote": "description = \"Display name for the address\", ... example = \"Highland Livestock Ltd\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-013",
+      "statement": "addressLine1 is required; a blank one is rejected with the message \"Enter address line 1\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:45",
+      "quote": "@NotBlank(message = \"Enter address line 1\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-014",
+      "statement": "addressLine1 may be at most 255 characters; a longer one is rejected with the message \"Address line 1 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:46",
+      "quote": "@Size(min = 1, max = 255, message = \"Address line 1 must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-015",
+      "statement": "addressLine1 is described as the first line of the postal address, with the example \"14 Drover's Way\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:47-52",
+      "quote": "description = \"First line of the postal address\", ... example = \"14 Drover's Way\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-016",
+      "statement": "addressLine2 is optional and may be at most 255 characters; a longer one is rejected with the message \"Address line 2 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:54-56",
+      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\") @Schema(description = \"Second line of the postal address\", maxLength = 255) String addressLine2,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-017",
+      "statement": "townOrCity is required; a blank one is rejected with the message \"Enter a town or city\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:57",
+      "quote": "@NotBlank(message = \"Enter a town or city\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-018",
+      "statement": "townOrCity may be at most 100 characters; a longer one is rejected with the message \"Town or city must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:58",
+      "quote": "@Size(min = 1, max = 100, message = \"Town or city must be 100 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-019",
+      "statement": "townOrCity is described as \"Town or city\", with the example \"Inverness\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:59-64",
+      "quote": "description = \"Town or city\", ... example = \"Inverness\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-020",
+      "statement": "county is optional, described as \"County or region\", and may be at most 100 characters; a longer one is rejected with the message \"County must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:66-68",
+      "quote": "@Size(max = 100, message = \"County must be 100 characters or less\") @Schema(description = \"County or region\", maxLength = 100) String county,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-021",
+      "statement": "postcode is required; a blank one is rejected with the message \"Enter a postcode\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:69",
+      "quote": "@NotBlank(message = \"Enter a postcode\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-022",
+      "statement": "postcode may be at most 12 characters; a longer one is rejected with the message \"Postcode must be 12 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:70",
+      "quote": "@Size(min = 1, max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-023",
+      "statement": "postcode is described as \"Postal or ZIP code\", with the example \"IV2 3JH\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:71-76",
+      "quote": "description = \"Postal or ZIP code\", ... example = \"IV2 3JH\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-024",
+      "statement": "postcode has no format check: any non-blank value of up to 12 characters is accepted, whatever the country.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:69-77",
+      "quote": "@NotBlank(message = \"Enter a postcode\") @Size(min = 1, max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "inferred",
+      "note": "Inferred from the field carrying only @NotBlank and @Size; no @Pattern or country-dependent rule exists."
+    },
+    {
+      "id": "repo-addressbook-p1-025",
+      "statement": "countryCode is required; a blank one is rejected with the message \"Enter a country\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:78",
+      "quote": "@NotBlank(message = \"Enter a country\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-026",
+      "statement": "Ruling cv-011: countryCode is checked for presence only, with no length limit, no list of allowed values and no ISO pattern check, and is stored exactly as given.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:30-31",
+      "quote": "{@code countryCode} is validated for presence only ({@code @NotBlank}, cv-011): it is stored exactly as given with no length, list, or ISO pattern check.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-027",
+      "statement": "In the request schema, countryCode is described as \"Country code (stored as-given, cv-011)\" with the example \"GB\"; in the response schema it is described as an ISO 3166-1 alpha-2 country code.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:79-82; address/OperatorResponse.java:38-42",
+      "quote": "description = \"Country code (stored as-given, cv-011)\" ... description = \"ISO 3166-1 alpha-2 country code (cv-011)\"",
+      "confidence": "verbatim",
+      "note": "The response describes the value as ISO alpha-2, but the request accepts any non-blank string, so a non-ISO value supplied on create would be returned as given. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p1-028",
+      "statement": "phone (the telephone number) is required; a blank one is rejected with the message \"Enter a telephone number\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:84",
+      "quote": "@NotBlank(message = \"Enter a telephone number\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-029",
+      "statement": "phone may be at most 20 characters; a longer one is rejected with the message \"Telephone number must be 20 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:85",
+      "quote": "@Size(min = 1, max = 20, message = \"Telephone number must be 20 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-030",
+      "statement": "phone is described as \"Contact telephone number\", with the example \"+44 1463 234567\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:86-91",
+      "quote": "description = \"Contact telephone number\", ... example = \"+44 1463 234567\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-031",
+      "statement": "Ruling cv-044 (as cited by the validation test): phone has no format check, so free text such as \"call the office\" is accepted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:204-210",
+      "quote": "// cv-044: phone keeps @NotBlank/@Size only — no format check. AddressRequest request = validRequest().phone(\"call the office\").build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-032",
+      "statement": "email is required; a blank one is rejected with the message \"Enter an email address\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:93",
+      "quote": "@NotBlank(message = \"Enter an email address\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-033",
+      "statement": "email must be in a valid email format; a malformed one is rejected with the message \"Enter an email address in the correct format\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:94",
+      "quote": "@Email(message = \"Enter an email address in the correct format\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-034",
+      "statement": "email may be at most 254 characters; a longer one is rejected with the message \"Email address must be 254 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:95",
+      "quote": "@Size(min = 1, max = 254, message = \"Email address must be 254 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-035",
+      "statement": "email is described as \"Contact email address\", with the example \"exports@highlandlivestock.example.com\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:96-101",
+      "quote": "description = \"Contact email address\", ... example = \"exports@highlandlivestock.example.com\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-036",
+      "statement": "Every field's validation error is collected into one errors map keyed by field name, rather than stopping at the first failing field.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:26-28",
+      "quote": "its non-null enforcement is Bean Validation's job, which must collect every field's error into the {@code errors} map rather than fail fast on the first null.",
+      "confidence": "verbatim",
+      "note": "The errors map's wire shape (the validation problem response) belongs to part 2."
+    },
+    {
+      "id": "repo-addressbook-p1-037",
+      "statement": "Ruling cv-044: the address book is untyped and unroled, so a request that supplies a type gets a per-field 400 error on type with the message \"type is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:19-25, 103-105",
+      "quote": "{@code type} and {@code role} are the one exception (cv-044): the address book is untyped and unroled ... A supplied value binds and fails {@code @Null}, landing in the same Bean-Validation {@code errors} map keyed {@code type} / {@code role} — a per-field 400, not a silent drop and not a deserialization failure. ... @Null(message = \"type is not a supported field\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-038",
+      "statement": "Ruling cv-044: a request that supplies a role gets a per-field 400 error on role with the message \"role is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:106-108",
+      "quote": "@Null(message = \"role is not a supported field\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-039",
+      "statement": "type and role are hidden from the published API request schema and are never saved onto the address.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:20-25, 104, 107; address/OperatorMapper.java:31, 45",
+      "quote": "present for Bean Validation and absent from the generated OpenAPI request schema. ... They are never mapped onto the entity.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-040",
+      "statement": "Server-assigned fields supplied in a create or update body (id, organisationId, deleted, status and the timestamps) are silently ignored, not rejected: a body that echoes a previous read is accepted.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:14-17",
+      "quote": "Server-assigned fields ({@code id}, {@code organisationId}, {@code deleted}, timestamps) are not components here, so they are ignored if supplied — Spring Boot leaves {@code fail-on-unknown-properties} off (Zalando default): a body echoing a read-only field from a prior GET is accepted and the field dropped, never a 400.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-041",
+      "statement": "Any other unknown field in a create or update body is also ignored rather than rejected.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:15-16",
+      "quote": "Spring Boot leaves {@code fail-on-unknown-properties} off",
+      "confidence": "inferred",
+      "note": "Follows from unknown-property failure being off globally; only type and role are modelled to be rejected."
+    },
+    {
+      "id": "repo-addressbook-p1-042",
+      "statement": "The service, not the caller, sets an address's id, organisationId, status and timestamps on create and update.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:26-39",
+      "quote": "Server-owned fields ({@code id}, {@code organisationId}, {@code status}, timestamps) are set by the service on create/update, not here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-043",
+      "statement": "An update is a full replace of the client-supplied fields: an optional field (addressLine2 or county) left out of the update body is cleared on the stored address.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:41-53; src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:207-256",
+      "quote": "Applies a full replace of client-supplied fields onto an existing entity. ... void updateEntity_replacesAllMutableFieldsAndClearsOmittedOptionals()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-044",
+      "statement": "An update keeps the address's id, organisationId, status, createdAt and version as they were.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:250-255",
+      "quote": "assertThat(existing.getId()).isEqualTo(\"665f1c2ab3e4d51a2c9d0e77\"); assertThat(existing.getOrganisationId()).isEqualTo(\"ORG-001\"); assertThat(existing.getStatus()).isEqualTo(AddressStatus.ACTIVE); assertThat(existing.getCreatedAt()).isEqualTo(Instant.parse(\"2026-07-01T09:00:00Z\"));",
+      "confidence": "verbatim",
+      "note": "The mapper test leaves modifiedAt unchanged; modifiedAt is then bumped by auditing on save (claim repo-addressbook-p1-005)."
+    },
+    {
+      "id": "repo-addressbook-p1-045",
+      "statement": "An address returned by the API has these fields: id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:22-64; docs/openapi/operators.yml:347-395",
+      "quote": "String id, ... String name, ... String addressLine1, ... String addressLine2, ... String townOrCity, ... String county, ... String postcode, ... String countryCode, ... String phone, ... String email, ... String organisationId, ... boolean deleted, ... Instant createdAt, ... Instant modifiedAt",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-046",
+      "statement": "Every returned field is always present except addressLine2 and county, which are optional.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:16-18; docs/openapi/operators.yml:396-408",
+      "quote": "{@code addressLine2} and {@code county} are genuinely optional and left unguarded.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-047",
+      "statement": "The response never returns status, version or expireAt.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:22",
+      "quote": "@BeanMapping(ignoreUnmappedSourceProperties = {\"status\", \"version\", \"expireAt\"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-048",
+      "statement": "Ruling cv-016: a soft-deleted address is shown to callers as a deleted boolean (true when its status is DELETED, false when ACTIVE), never as the internal status value.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:13-14, 51-54; address/OperatorMapper.java:23",
+      "quote": "The soft-delete tombstone is exposed as a derived {@code deleted} boolean (cv-016), never the internal status enum. ... @Mapping(target = \"deleted\", expression = \"java(address.getStatus() == AddressStatus.DELETED)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-049",
+      "statement": "If a stored address is missing a required field, building its response fails loudly with a server error rather than returning a partial record.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:16-17, 66-78",
+      "quote": "Server-constructed and always-present fields are null-guarded in the compact constructor (service-boundary rule): a null here is a server bug and fails loud, not a malformed wire value.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-050",
+      "statement": "The returned id is an opaque identifier, shown with the example \"665f1c2ab3e4d51a2c9d0e77\".",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:23-27",
+      "quote": "description = \"Opaque address identifier\", ... example = \"665f1c2ab3e4d51a2c9d0e77\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-051",
+      "statement": "organisationId in the response is the organisation that owns the address.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:47-50",
+      "quote": "description = \"Organisation that owns this address\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-052",
+      "statement": "createdAt and modifiedAt are returned as UTC ISO 8601 date-time strings, not epoch numbers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:55-64; src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:154-163",
+      "quote": "description = \"Creation timestamp (UTC)\", ... format = \"date-time\" ... void response_serialisesInstantFieldsAsIso8601NotEpochMillis()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-053",
+      "statement": "The response is described as \"An address in the caller's organisation-scoped address book\", and the request as \"Create or replace an address in the caller's address book\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:21; address/AddressRequest.java:34",
+      "quote": "@Schema(description = \"An address in the caller's organisation-scoped address book\") ... @Schema(description = \"Create or replace an address in the caller's address book\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-054",
+      "statement": "The response carries no operator-type, transporter-category, approval-number or CRN field.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:148-151",
+      "quote": "assertThat(json.has(\"operatorType\")).isFalse(); assertThat(json.has(\"transporterCategory\")).isFalse(); assertThat(json.has(\"approvalNumber\")).isFalse(); assertThat(json.has(\"crn\")).isFalse();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-055",
+      "statement": "In the published API schema, the request's required fields are name, addressLine1, townOrCity, postcode, countryCode, phone and email; addressLine2 and county are optional.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:339-346",
+      "quote": "required: - addressLine1 - countryCode - email - name - phone - postcode - townOrCity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-056",
+      "statement": "The published API schema does not mark email with an email format; the email format check exists only in the service's validation.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:333-338",
+      "quote": "email: type: string description: Contact email address example: exports@highlandlivestock.example.com maxLength: 254 minLength: 1",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of `format: email` in the generated schema while AddressRequest.java:94 carries @Email."
+    },
+    {
+      "id": "repo-addressbook-p1-057",
+      "statement": "An address has one of two statuses: ACTIVE or DELETED.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java:8-11",
+      "quote": "public enum AddressStatus { ACTIVE, DELETED }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-058",
+      "statement": "Ruling cv-016: a DELETED address is a soft-delete tombstone; it is left out of lists but can still be read by id, so a caller can tell \"deleted\" (200 with deleted true) from \"unknown\" (404).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java:3-6",
+      "quote": "Soft-delete tombstone status (cv-016). {@code DELETED} addresses are excluded from lists but remain readable by id so a consumer can distinguish \"deleted\" (200 + DELETED) from \"unknown\" (404).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-059",
+      "statement": "A soft delete keeps the record in the database, flips its status to DELETED and updates modifiedAt; only a 200 with deleted true means the user deleted the address.",
+      "kind": "behaviour",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "the document stays in MongoDB, its internal `status` flips to `DELETED`, and `modifiedAt` is bumped. The tombstone remains fetchable by id with `deleted: true` on the wire. ... Only a **200** response with `deleted: true` means the user deleted this address.",
+      "confidence": "verbatim",
+      "note": "The DELETE endpoint itself, its 204 and idempotency belong to part 2."
+    },
+    {
+      "id": "repo-addressbook-p1-060",
+      "statement": "In prod, addresses and their tombstones are kept indefinitely, at roughly 1 KB each.",
+      "kind": "non-functional",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "In prod, addresses and tombstones are retained indefinitely (~1 KB each).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-061",
+      "statement": "Addresses are stored in MongoDB, in the collection \"addresses\" of the database \"trade-imports-address-book\" (overridable with MONGO_DATABASE).",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:33; src/main/resources/application.yml:11; README.md: MongoDB",
+      "quote": "**Database:** `trade-imports-address-book` (override with `MONGO_DATABASE`) **Collection:** `addresses`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-062",
+      "statement": "The addresses collection has one compound index, org_status_created, on organisationId ascending, status ascending and createdAt descending, which serves every production read: organisation-scoped, active only, newest first.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:27-36",
+      "quote": "The single compound index {@code org_status_created} serves every production read: org-scoped, status-bounded (ACTIVE), newest-first. ... @CompoundIndex(name = \"org_status_created\", def = \"{'organisationId': 1, 'status': 1, 'createdAt': -1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-063",
+      "statement": "Indexes are created automatically at service start-up, so the org_status_created index exists from when the collection is empty.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:12; address/Address.java:28-29",
+      "quote": "auto-index-creation: true ... It is built now while the collection is empty so it is never a later migration or index build on a populated collection.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-064",
+      "statement": "Address books are expected to be small (one user's book, tens to hundreds of rows), so a bounded scan is acceptable, and any further index must be justified against real collection size.",
+      "kind": "non-functional",
+      "ref": "README.md: Indexes",
+      "quote": "Datasets are one user's address book today (tens to hundreds of rows), so a bounded scan is acceptable. Reassess any future index against real collection size before adding it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-065",
+      "statement": "Mongo reads default to primaryPreferred and writes to majority write concern, both overridable by environment variable.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:13-14",
+      "quote": "read-preference: ${MONGO_READ_PREFERENCE:primaryPreferred} write-concern: ${MONGO_WRITE_CONCERN:majority}",
+      "confidence": "verbatim",
+      "note": "MongoConfig.java's class comment says the read preference is \"secondary (configurable)\", while application.yml defaults it to primaryPreferred. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p1-066",
+      "statement": "The service connects to Mongo with TLS enabled, using the CDP trust store, and authenticates in CDP with AWS IAM through the connection string.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MongoConfig.java:22-28, 66-70; src/main/resources/application.yml:20-21",
+      "quote": "Configures MongoDB connection with: - AWS IAM authentication (via connection string authMechanism=MONGODB-AWS) - Custom SSL/TLS certificates from TRUSTSTORE_* environment variables",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-067",
+      "statement": "The Mongo connection pool defaults to a minimum of 10 and maximum of 100 connections, a 2000 ms maximum wait and a 60000 ms maximum idle time, each overridable by environment variable.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:15-19",
+      "quote": "min-size: ${MONGO_POOL_MIN_SIZE:10} max-size: ${MONGO_POOL_MAX_SIZE:100} max-wait-time-ms: ${MONGO_POOL_MAX_WAIT_TIME_MS:2000} max-connection-idle-time-ms: ${MONGO_POOL_MAX_IDLE_TIME_MS:60000}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-068",
+      "statement": "The local Mongo init script seeds no address data: it holds only an example comment.",
+      "kind": "constraint",
+      "ref": "compose/mongo/10-init.js:1-6",
+      "quote": "// This can be used for inserting local test data when mongo starts up",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-069",
+      "statement": "Outside prod, addresses are removed automatically a set number of days after they are created, so test data does not build up.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only)",
+      "quote": "Outside prod, addresses are removed automatically a set number of days after they are created, so test data does not build up.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-070",
+      "statement": "ADDRESS_TTL_DAYS (config key address-book.ttl.days, unset by default) sets how many days after creation an address expires; when set, each new address gets an internal expireAt that is not returned to callers.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:29-31; README.md: Address expiry (non-prod only)",
+      "quote": "| `ADDRESS_TTL_DAYS` | unset | Days after creation an address expires. When set, each new address gets an internal `expireAt` (not returned on the wire). Updates and deletes keep the original `expireAt`. Must be positive. |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-071",
+      "statement": "Updating or deleting an address keeps its original expireAt, so an edit does not extend its life outside prod.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only); address/OperatorMapper.java:52",
+      "quote": "Updates and deletes keep the original `expireAt`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-072",
+      "statement": "ADDRESS_TTL_DAYS must be a positive number: zero or a negative value stops the service from starting.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:26-28, 35; src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java:107-131",
+      "quote": "Must be positive when set, so a misconfiguration fails at startup rather than stamping an already-elapsed {@code expireAt}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-073",
+      "statement": "ADDRESS_TTL_EXPIRY_ENABLED (config key address-book.ttl.expiry.enabled, false by default) creates the address_expire_at_ttl Mongo TTL index at start-up when true, after which Mongo removes addresses, active and tombstoned alike, once their expireAt has passed.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:33-34; address/AddressExpiryIndex.java:15-49; README.md: Address expiry (non-prod only)",
+      "quote": "| `ADDRESS_TTL_EXPIRY_ENABLED` | `false` | When `true`, the `address_expire_at_ttl` MongoDB TTL index is created at startup and MongoDB removes documents once `expireAt` has passed — active addresses and tombstones alike. |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-074",
+      "statement": "The TTL index is on expireAt ascending and expires each address at exactly its expireAt time (zero seconds after).",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:44-47",
+      "quote": "new Index().on(\"expireAt\", Sort.Direction.ASC).expire(Duration.ZERO).named(INDEX_NAME)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-075",
+      "statement": "Prod is protected from address expiry by two independent safeguards: expireAt is only set when ADDRESS_TTL_DAYS is configured and ENVIRONMENT is not prod, and the TTL index is only created when ADDRESS_TTL_EXPIRY_ENABLED is true and ENVIRONMENT is not prod.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only); configuration/AddressTtlConfig.java:11-21",
+      "quote": "- `expireAt` is only set when `ADDRESS_TTL_DAYS` is configured **and** `ENVIRONMENT` is not `prod`. - The TTL index is only created when `ADDRESS_TTL_EXPIRY_ENABLED=true` **and** `ENVIRONMENT` is not `prod`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-076",
+      "statement": "If expiry is enabled in prod, the service logs a warning and refuses to create the TTL index.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:40-43",
+      "quote": "log.warn(\"Address expiry is enabled in prod; refusing to create the TTL index\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-077",
+      "statement": "The environment counts as prod when ENVIRONMENT (config key address-book.ttl.environment, default \"local\") is \"prod\" in any letter case, ignoring surrounding whitespace.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:29-31, 38-40; src/main/resources/application.yml:32",
+      "quote": "return environment != null && \"prod\".equalsIgnoreCase(environment.strip()); ... environment: ${ENVIRONMENT:local}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-078",
+      "statement": "ENVIRONMENT must not be blank: the service fails to start if it is missing or blank, rather than treating it as non-prod.",
+      "kind": "constraint",
+      "ref": "README.md: Address expiry (non-prod only); configuration/AddressTtlConfig.java:30-31; AddressTtlConfigTest.java:52-76",
+      "quote": "`ENVIRONMENT` must not be blank — the service fails to start if it is.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-079",
+      "statement": "The expiry defaults in configuration are the prod-safe values (no days, expiry disabled); non-prod environments opt in.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:26-28",
+      "quote": "Defaults here are the prod-safe values: days unset (no expireAt stamped) and expiry disabled (no TTL index). Non-prod environments opt in via ADDRESS_TTL_DAYS and ADDRESS_TTL_EXPIRY_ENABLED.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-080",
+      "statement": "Addresses created before expiry was switched on have no expireAt and are never removed by the TTL index.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:22-23",
+      "quote": "Mongo's TTL monitor skips documents with no date in {@code expireAt}, so addresses created before expiry was switched on are never removed by it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-081",
+      "statement": "Switching expiry off again does not drop a TTL index that already exists.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:25",
+      "quote": "Switching the flag back off does not drop an index that already exists.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-082",
+      "statement": "Outside prod, a 404 for an address can also mean it has expired, not only that it is unknown or belongs to another organisation.",
+      "kind": "behaviour",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "A **404** means unknown id or an id outside the caller's organisation — it is **not** a deletion signal. Outside prod it can also mean the address has expired (see below).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-083",
+      "statement": "The validation test proves every mandatory field (name, addressLine1, townOrCity, postcode, countryCode, phone, email) gives its declared error message when blank, and a fully populated request has no errors.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:72-102, 163-175",
+      "quote": "Pins the Bean Validation contract of the create/update body against the Standard Address Block field table: every mandatory field, every max-length, and the email format leg.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-084",
+      "statement": "The validation test proves every length limit at its boundary: each field is accepted at its maximum (255, 255, 255, 100, 100, 12, 20, 254) and rejected one character over with its declared message.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:103-143, 177-195",
+      "quote": "Arguments.of(\"postcode at max\", validRequest().postcode(repeat(12)).build()), ... Arguments.of(\"over-length postcode\", validRequest().postcode(repeat(13)).build(), \"postcode\", \"Postcode must be 12 characters or less\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-085",
+      "statement": "The validation test proves a malformed email (\"not-an-email\") is rejected, a stray type (\"IMPORTER\") or role (\"consignor\") is rejected on that field, a 50-character countryCode is accepted, and a free-text phone is accepted.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:145-160, 197-210",
+      "quote": "void countryCodeIsPresenceOnlyAndAcceptsAnyNonBlankValueRegardlessOfLength() ... void phoneIsNotFormatValidatedSoAFreeStringIsAccepted()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-086",
+      "statement": "The validation test cites ruling cv-001: request and response field names on the wire are camelCase, matching the Java property names.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:28-29; OperatorMapperTest.java:127-136",
+      "quote": "the wire keys are identical (camelCase, cv-001) and asserted end-to-end through the real handler in {@code OperatorCrudIT}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-087",
+      "statement": "The mapper test proves a response copies every stored field, derives deleted from status, returns no status field, leaves addressLine2 and county empty when absent, and fails loudly when a required field such as phone is missing.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:52-152",
+      "quote": "void toResponse_copiesEveryFieldFromTheEntityAndDerivesDeletedFalseForAnActiveRow() ... void toResponse_derivesDeletedTrueForATombstone() ... void toResponse_failsLoudWhenARequiredFieldIsNull()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-088",
+      "statement": "The mapper test proves a request body carrying id, organisationId, status, deleted, createdAt and modifiedAt is read with those fields dropped: none reach the new address.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:165-205",
+      "quote": "void request_deserialisesFromCamelCaseAndMapsOntoAnEntityIgnoringServerFields()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-089",
+      "statement": "The response test proves each of the 11 always-present response fields (id, name, addressLine1, townOrCity, postcode, countryCode, phone, email, organisationId, createdAt, modifiedAt) rejects a missing value, while addressLine2 and county may be empty.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponseTest.java:61-105",
+      "quote": "void compactConstructor_rejectsNullOnGuardedFields(String fieldName, Runnable buildResponse) ... void compactConstructor_allowsNullOptionalFields()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-090",
+      "statement": "The expiry index test proves the TTL index exists only when expiry is explicitly enabled, is named address_expire_at_ttl on expireAt with zero seconds' expiry outside prod, and is not created in prod even when enabled.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndexTest.java:36-118",
+      "quote": "void bean_isAbsentWhenExpiryIsNotConfigured() ... void createIndex_outsideProdCreatesATtlIndexThatExpiresAtExpireAt() ... void createIndex_inProdCreatesNothingEvenWhenExpiryIsEnabled()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-091",
+      "statement": "The TTL config test proves prod is recognised in any case and with surrounding whitespace, a missing or blank environment stops start-up, days is unset when not configured or empty, and zero or negative days stops start-up.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java:24-131",
+      "quote": "void isProd_isTrueOnlyForTheProdEnvironmentInAnyCase() ... void binding_rejectsABlankEnvironment() ... void binding_rejectsZeroDaysSoNothingIsStampedAlreadyExpired()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-092",
+      "statement": "The expiry integration test proves, against a real Mongo, that with 7 days configured a newly created address gets an expireAt seven days ahead that is not in the create response.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java:71-105",
+      "quote": "void post_givesTheNewAddressAnExpireAtSevenDaysAhead() ... .andExpect(jsonPath(\"$.expireAt\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-093",
+      "statement": "The expiry integration test proves Mongo removes expired addresses, both active and tombstoned, while leaving undated and not-yet-expired ones in place.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java:107-130",
+      "quote": "void expiredAddresses_areRemovedByMongoWhileUndatedAndUnexpiredOnesStay()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-094",
+      "statement": "The index integration test proves the addresses collection has exactly two indexes (_id_ and org_status_created) with the expected key order, and that the production list query uses org_status_created with no collection scan.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorIndexIT.java:28-69",
+      "quote": "assertThat(indexNames).containsExactlyInAnyOrder(\"_id_\", \"org_status_created\"); ... assertThat(winningPlan.toJson()).doesNotContain(\"COLLSCAN\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-095",
+      "statement": "Addresses were previously keyed by CRN and type; that index has been replaced by the organisation-keyed one, so addresses are no longer owned per CRN.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorIndexIT.java:20-22",
+      "quote": "Re-keyed org-for-crn: the old {@code crn_status_type_created} index is gone and the org-scoped, status-bounded, newest-first {@code org_status_created} index serves every production read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-096",
+      "statement": "The address record has no field for a fax number, a contact name separate from the display name, or any per-usage marker (such as consignor, consignee, importer or place of destination); the slice shows no way to record what an address is used for.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:44-79; address/AddressRequest.java:35-108",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every field of Address, AddressRequest and OperatorResponse. cv-044 rules type and role out deliberately; whether Design Release 2.1 expects usages or extra contact fields is for the reconciler."
+    },
+    {
+      "id": "repo-addressbook-p1-097",
+      "statement": "The record holds no country display name and no list of valid country codes; turning countryCode into a country name is left entirely to the caller.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:21-22; address/AddressRequest.java:30-31",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Follows cv-011; the slice is silent on where the display name comes from (cv-048, in part 3, says the frontend resolves the country filter)."
+    }
+  ]
+}

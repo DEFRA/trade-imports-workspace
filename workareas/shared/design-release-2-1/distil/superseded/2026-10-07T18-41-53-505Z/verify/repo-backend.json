@@ -1,0 +1,307 @@
+{
+  "source": "repo:backend",
+  "extractHash": "56cd695d8e4132077a38c341afb0a6c9208a78f5940a9df218f00ebe76bfa6fc",
+  "verdicts": [
+    {
+      "id": "repo-backend-001",
+      "holds": true,
+      "reason": "NotificationService.saveNotification line 87 branches on blank reference number into create or update; controller POST /notifications confirmed."
+    },
+    {
+      "id": "repo-backend-002",
+      "holds": true,
+      "reason": "createNotification sets created=Instant.now() and status DRAFT (line 452-453); client-set values are overwritten."
+    },
+    {
+      "id": "repo-backend-003",
+      "holds": true,
+      "reason": "REFERENCE_NUMBER_PATTERN at ReferenceNumberGenerator.java:20; CROCKFORD_BASE32 alphabet excludes I, L, O, U; length 6."
+    },
+    {
+      "id": "repo-backend-004",
+      "holds": true,
+      "reason": "Loop of MAX_REF_RETRIES=3 attempts catching DuplicateKeyException then IllegalStateException (lines 456-473). Three attempts in total."
+    },
+    {
+      "id": "repo-backend-005",
+      "holds": true,
+      "reason": "@Pattern on every path-variable referenceNumber in NotificationController under @Validated; ConstraintViolationException handler returns 400."
+    },
+    {
+      "id": "repo-backend-006",
+      "holds": true,
+      "reason": "All sixteen fields present in NotificationBase (exitDate is a LocalDate at the end, not in the quote but present in the file)."
+    },
+    {
+      "id": "repo-backend-007",
+      "holds": true,
+      "reason": "Origin.java has exactly those five String fields."
+    },
+    {
+      "id": "repo-backend-008",
+      "holds": true,
+      "reason": "Commodity has name and commodityComplement list; CommodityComplement has the four stated fields."
+    },
+    {
+      "id": "repo-backend-009",
+      "holds": true,
+      "reason": "Species.java fields match the quote."
+    },
+    {
+      "id": "repo-backend-010",
+      "holds": true,
+      "reason": "AnimalIdentifier fields microchip, passport, tattoo, earTag, horseName, permanentAddress (ConsignmentParty); javadoc says every unit, not just the first."
+    },
+    {
+      "id": "repo-backend-011",
+      "holds": true,
+      "reason": "ConsignmentParty has name, email, phone, address; used for all six party fields in NotificationBase."
+    },
+    {
+      "id": "repo-backend-012",
+      "holds": true,
+      "reason": "Javadoc at ConsignmentParty.java:12 says exactly this."
+    },
+    {
+      "id": "repo-backend-013",
+      "holds": true,
+      "reason": "Address.java fields as quoted; javadoc lines 13-14 name the removed addressLine3, city and free-text country and cite cv-011 for the ISO alpha-2 code."
+    },
+    {
+      "id": "repo-backend-014",
+      "holds": true,
+      "reason": "Transport.java fields match the quote."
+    },
+    {
+      "id": "repo-backend-015",
+      "holds": true,
+      "reason": "MeansOfTransport enum: AIRPLANE, RAILWAY, ROAD_VEHICLE, VESSEL."
+    },
+    {
+      "id": "repo-backend-016",
+      "holds": true,
+      "reason": "Transporter.java fields match."
+    },
+    {
+      "id": "repo-backend-017",
+      "holds": true,
+      "reason": "AdditionalDetails has certifiedFor and unweanedAnimals as Strings."
+    },
+    {
+      "id": "repo-backend-018",
+      "holds": true,
+      "reason": "NotificationBase javadoc line 45 states the LocalDate/YYYY-MM-DD/string-in-Mongo rule; exitDate and arrivalDate are LocalDate, created is Instant. Document date of issue is a LocalDate in DocumentUploadRequest."
+    },
+    {
+      "id": "repo-backend-019",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.handleUnreadableRequestBody returns 400 titled Malformed Request with that detail text."
+    },
+    {
+      "id": "repo-backend-020",
+      "holds": true,
+      "reason": "Only @Valid @NotNull on SaveNotificationDto.notification; grep of @NotNull/@Size/@Pattern across src/main finds no constraints on any notification content type. Inference is sound."
+    },
+    {
+      "id": "repo-backend-021",
+      "holds": true,
+      "reason": "NotificationAggregate.java:66 javadoc quoted; fulfilments is List<Document>; the rehydrate endpoint exists."
+    },
+    {
+      "id": "repo-backend-022",
+      "holds": true,
+      "reason": "replace() lines 106-109 and updateNotification both require DRAFT or AMEND and throw BadRequestException otherwise. Quote is from the PUT path; POST-with-reference throws 'Cannot save notification with status' with the same rule."
+    },
+    {
+      "id": "repo-backend-023",
+      "holds": true,
+      "reason": "Both replace and update throw BadRequest when concurrencyToken is null; OptimisticLockingFailureException handler returns 409 titled Stale Concurrency Token."
+    },
+    {
+      "id": "repo-backend-024",
+      "holds": true,
+      "reason": "submitNotification accepts DRAFT or AMEND only; writeWithOutbox sets submittedAt for submission events; no completeness check in the method."
+    },
+    {
+      "id": "repo-backend-025",
+      "holds": true,
+      "reason": "amendNotification requires SUBMITTED, deep-clones the content and fulfilments into preAmend fields, moves to AMEND."
+    },
+    {
+      "id": "repo-backend-026",
+      "holds": true,
+      "reason": "cancelAmendNotification lines 243-275: requires AMEND and a snapshot, restores both, nulls snapshots, status SUBMITTED, comment says submittedAt is not reset."
+    },
+    {
+      "id": "repo-backend-027",
+      "holds": true,
+      "reason": "writeWithOutbox lines 284-292: snapshots cleared when a submission event fires from AMEND; submittedAt reset to now for submission events."
+    },
+    {
+      "id": "repo-backend-028",
+      "holds": true,
+      "reason": "copyNotification lines 121-146: DRAFT, SUBMITTED, AMEND only (400); a moved-on token throws OptimisticLockingFailureException which maps to 409."
+    },
+    {
+      "id": "repo-backend-029",
+      "holds": true,
+      "reason": "NotificationCopyMapper retains origin (country, subdivision, requiresRegion, regionOfOrigin), commodity name and type, reasonForImport, certifiedFor, five parties, cph, purpose, destination country, portOfExit and fulfilments."
+    },
+    {
+      "id": "repo-backend-030",
+      "holds": true,
+      "reason": "Mapper omits transport, consignment, exitDate, origin internalReference, unweanedAnimals; complements keep only typeOfCommodity."
+    },
+    {
+      "id": "repo-backend-031",
+      "holds": true,
+      "reason": "Copy calls createNotification which generates a new reference number and writes a Created event; no link to the source is stored. Inference sound."
+    },
+    {
+      "id": "repo-backend-032",
+      "holds": true,
+      "reason": "softDeleteNotification: DELETED returns unchanged (idempotent comment), DRAFT/SUBMITTED/AMEND allowed, Deleted vs SubmissionDeleted by prior status."
+    },
+    {
+      "id": "repo-backend-033",
+      "holds": true,
+      "reason": "Soft delete only changes status; findAll restricts to DRAFT, SUBMITTED, AMEND so DELETED rows are excluded. Inference sound."
+    },
+    {
+      "id": "repo-backend-034",
+      "holds": true,
+      "reason": "Controller DELETE /notifications returns 400 on empty list and requires trace and User-Id headers; AdminSecretFilter guards it; service 404s on any missing reference, cascades to documents, writes audit on failure and success. Quote is in the service at line 393 (ref line loose)."
+    },
+    {
+      "id": "repo-backend-035",
+      "holds": true,
+      "reason": "stampExpiry skips when days null or prod; deleteExpired and the sweeper (enabled flag default false in application.yml, prod-safe) hard-delete with documents."
+    },
+    {
+      "id": "repo-backend-036",
+      "holds": true,
+      "reason": "Gap holds: grep -rli template across src/main only hits infrastructure and upload classes (HTTP/Mongo templates), none a notification template; no template status, endpoint or entity."
+    },
+    {
+      "id": "repo-backend-037",
+      "holds": true,
+      "reason": "GET /notifications is paged from 1 (@Min(1)), page size 25 in application.yml, NotificationView exposes exactly those fields. Cited quote is the controller sort description, so ref is loose, but the statement is right."
+    },
+    {
+      "id": "repo-backend-038",
+      "holds": true,
+      "reason": "NotificationSort.toSort: arrivalDate and createdAt with asc or any other direction as desc; null, blank, malformed or unknown field fall to arrivalDate desc. Note an unrecognised direction word falls to desc rather than default, which does not contradict the claim."
+    },
+    {
+      "id": "repo-backend-039",
+      "holds": true,
+      "reason": "findAll trims the reference and does an exact match among dashboard statuses, empty page otherwise; the controller takes no other filter parameter."
+    },
+    {
+      "id": "repo-backend-040",
+      "holds": true,
+      "reason": "NotificationFulfilmentsView has those getters and the controller maps 404 via NotFoundException."
+    },
+    {
+      "id": "repo-backend-041",
+      "holds": true,
+      "reason": "Gap holds: NotificationAggregate has no owner, user or organisation field; findAll takes no caller identity and lists all DRAFT, SUBMITTED, AMEND rows."
+    },
+    {
+      "id": "repo-backend-042",
+      "holds": true,
+      "reason": "writeWithOutbox appends an event in the same write; OutboxPublishService.publishToSns uses aggregateId as group and eventId as de-duplication id."
+    },
+    {
+      "id": "repo-backend-043",
+      "holds": true,
+      "reason": "OutboxEventType has the eight types with prefix uk.gov.defra.imports.notification. and schema URLs in DEFRA/trade-imports-schemas."
+    },
+    {
+      "id": "repo-backend-044",
+      "holds": true,
+      "reason": "Event selection matches createNotification, updateNotification/replace (Edited), submitNotification, amend, cancelAmend and softDelete code."
+    },
+    {
+      "id": "repo-backend-045",
+      "holds": true,
+      "reason": "NO_VERSION_ID_EVENTS = Created, Edited, Deleted; computeVersionId returns count+1 for submission events, else the count."
+    },
+    {
+      "id": "repo-backend-046",
+      "holds": true,
+      "reason": "Actor.java has the six fields; OutboxService builds statusChanges with date and actor on each status change; actor is optional (resolveActor may return null)."
+    },
+    {
+      "id": "repo-backend-047",
+      "holds": true,
+      "reason": "GbnAgEventData.MODEL_VALUE is defra/certificate-internal/1; ExchangedDocument carries identifier, traderAssignedId, status code, versionId, issueDateTime from updated, and references only COMPLETE documents."
+    },
+    {
+      "id": "repo-backend-048",
+      "holds": true,
+      "reason": "SpecifiedConsignment record maps the parties, carrier, origin country, unloading base port, CPH as final destination, movements, transit countries, unweaned flag and items as stated."
+    },
+    {
+      "id": "repo-backend-049",
+      "holds": true,
+      "reason": "SpecifiedConsignment: null when additionalDetails or unweanedAnimals is null, otherwise Boolean.valueOf. Note any non-'true' string publishes false."
+    },
+    {
+      "id": "repo-backend-050",
+      "holds": true,
+      "reason": "GET outbox-events and POST replay exist; replay requires User-Id header and the filter requires the admin secret for POST replay; controller description says read-only."
+    },
+    {
+      "id": "repo-backend-051",
+      "holds": true,
+      "reason": "AdminSecretFilter applies only to DELETE /notifications* and POST /notifications/*/replay and returns 401 on missing or wrong secret. Other endpoints are unfiltered at this service, though Swagger text lists 401 on some."
+    },
+    {
+      "id": "repo-backend-052",
+      "holds": true,
+      "reason": "DocumentUploadRequest constraints as stated; DocumentType has exactly 14 values as listed."
+    },
+    {
+      "id": "repo-backend-053",
+      "holds": true,
+      "reason": "DocumentService: pending session via cdp-uploader, proxyFileToUploader, scan callback resolveScanStatus is fail-closed (COMPLETE only when rejected count is 0)."
+    },
+    {
+      "id": "repo-backend-054",
+      "holds": true,
+      "reason": "application.yml cdp.uploader max-file-size 52428800 and the mime list (pdf, word, jpeg, png, excel); DocumentService line 66 permits multiple PENDING documents; download of a rejected file throws NotFound. The 50 MB and mime values are env-overridable defaults."
+    },
+    {
+      "id": "repo-backend-055",
+      "holds": true,
+      "reason": "DocumentController.java:157 security note says the callback is unauthenticated; the document endpoints take only an id or reference with no owner check."
+    },
+    {
+      "id": "repo-backend-056",
+      "holds": true,
+      "reason": "GlobalExceptionHandler produces ProblemDetail with title, detail, type, traceId and errors map for validation; 400, 404, 409, 413, 502 and 500 handlers all present."
+    },
+    {
+      "id": "repo-backend-057",
+      "holds": true,
+      "reason": "Gap holds: the handler returns bean-validation default messages keyed by field, and no user-facing per-field messages are authored in the backend. The conclusion about the frontend is a reasonable inference."
+    },
+    {
+      "id": "repo-backend-058",
+      "holds": true,
+      "reason": "Gap holds: find for decisions* files in the repo returns nothing; cv-011 appears only in Address.java javadoc."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-backend-037-m1",
+      "statement": "A separate admin listing, GET /notifications/reference-numbers, returns pages of reference numbers only (from page 0, 50 per page, newest created first) without loading full documents.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:186",
+      "quote": "Returns a paginated list of notification reference numbers without loading full documents",
+      "confidence": "verbatim",
+      "note": "Page size 50 is notification.admin.page-size in application.yml; the service sorts by created descending and does not filter by status, so it includes DELETED notifications. The filter does not guard it, though Swagger lists 401."
+    }
+  ]
+}

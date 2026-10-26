@@ -1,0 +1,926 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 5, Address lookup spike (dev only). Read in full: the spike feature folder src/server/app/features/address-lookup-spike/ (controller.js, template.njk, detect-search-mode.js, map-to-address-fields.js, is-dev-or-local.js, copy/copy.en.js, copy/copy.cy.js) and the address lookup service src/server/app/services/address-lookup/ (client.js, index.js, stub.js). For context only, read the lines that register the spike in src/server/app/routes.js, the pageRoutes/base/SURFACES helpers in src/server/app/shared/kit.js, src/server/common/services/mode.js (stub mode), the spike section of src/server/app/docs/features.md and the registration tests in src/server/router.test.js. The slice is one temporary page, /address-lookup-spike (EUDPA-390), registered only when the CDP environment is dev or local. It has one search box that decides between a postcode search and a free-text search, a results list with a 'Use this address' button per result, a 'Where the time went' timings table, three warning states, and a mapped view that shows how a chosen result would fill the address book's fields, with the gaps the lookup cannot fill. Behind it the lookup client calls the INS backend's /address-lookup endpoint, or, in stub mode, an in-memory stub returning three fixed addresses. Claims cover the page's registration and route, every element of the page in render order, the search-mode rules, the mapping rules and gaps, the client and stub, and every English and Welsh copy key (40 keys each).",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p5-001",
+      "statement": "The address lookup spike page is served at /address-lookup-spike, answering both GET (the empty search page) and POST (a search, or a chosen result).",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:18, :131",
+      "quote": "const PAGE_PATH = '/address-lookup-spike'\n...\nexport const routes = kit.pageRoutes(PAGE_PATH, { get, post })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-002",
+      "statement": "The spike page needs a signed-in session, like the service's other pages: its routes use the shared session auth option.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:8, :65-68",
+      "quote": "export const routeOptions = { auth: 'session' }\n...\nexport const pageRoutes = (path, { get, post }, options = routeOptions) => [",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-003",
+      "statement": "The spike page is registered only when the CDP environment is dev or local.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-lookup-spike/is-dev-or-local.js:3-4; src/server/app/routes.js:9-12",
+      "quote": "['dev', 'local'].includes(config.get('cdpEnvironment'))\n...\nisDevOrLocalEnvironment()\n          ? [...allRoutes, ...addressLookupSpike.routes]\n          : allRoutes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-004",
+      "statement": "In every other environment (test, perf-test, ext-test, prod, infra-dev, management) /address-lookup-spike does not exist and returns not found.",
+      "kind": "constraint",
+      "ref": "src/server/router.test.js:73-95 'the spike page is not registered when cdpEnvironment is %s'",
+      "quote": "'the spike page is not registered when cdpEnvironment is %s'\n...\nexpect(statusCode).toBe(statusCodes.notFound)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-005",
+      "statement": "The spike is temporary and self-contained: removing it means deleting its folder and its one line in routes.js, and no permanent feature depends on it.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/features.md:146-155 'The temporary address-lookup-spike feature'",
+      "quote": "`address-lookup-spike/` is EUDPA-390's dev/local-only spike page, kept\nself-contained so that removing it means deleting the folder and its\none line in [`routes.js`](../routes.js) — no permanent feature depends\non it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-006",
+      "statement": "Nothing in the service links to the spike page: a user reaches it only by typing its URL. No template or controller other than the spike's own refers to /address-lookup-spike.",
+      "kind": "behaviour",
+      "ref": "grep -rn address-lookup-spike over src/: only the spike's own files, routes.js, router.test.js and docs/",
+      "quote": "const PAGE_PATH = '/address-lookup-spike'",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-insfrontend-p5-007",
+      "statement": "Nothing the spike page does is saved: choosing a result only shows how it would map onto the address book's fields.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:20; copy/copy.en.js:3",
+      "quote": "Nothing here is saved. The rules are a proposal for the real build to argue with.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-008",
+      "statement": "The spike page's browser title and its h1 heading are both 'Address lookup spike'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:24-26; copy/copy.en.js:2 title",
+      "quote": "title: 'Address lookup spike',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-009",
+      "statement": "Below the h1 the page shows the caption 'EUDPA-390 — dev/local only, temporary. Nothing is saved.' (the caption sits after the heading, not above it).",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:83-84; copy/copy.en.js:3 caption",
+      "quote": "caption: 'EUDPA-390 — dev/local only, temporary. Nothing is saved.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-010",
+      "statement": "The spike page uses the full-width display column rather than the two-thirds form column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:25; src/server/app/shared/kit.js:12-15",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),\n...\ndisplay: 'govuk-grid-column-full'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-011",
+      "statement": "The spike page has no back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:24",
+      "quote": "...kit.base(copy.title, { recoverableError }),",
+      "confidence": "inferred",
+      "note": "kit.base takes an optional backLink; the spike never passes one."
+    },
+    {
+      "id": "repo-insfrontend-p5-012",
+      "statement": "The page has one text input, 'term', labelled 'Postcode or address'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:88-95; copy/copy.en.js:5 form.label",
+      "quote": "label: 'Postcode or address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-013",
+      "statement": "The search input's hint reads 'A UK postcode is searched as a postcode. Anything else is searched as free text.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:6 form.hint",
+      "quote": "hint: 'A UK postcode is searched as a postcode. Anything else is searched as free text.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-014",
+      "statement": "The search form's button reads 'Search'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:96; copy/copy.en.js:7 form.button",
+      "quote": "button: 'Search'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-015",
+      "statement": "After a search, or after choosing a result, the search input is filled again with the term that was searched.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:93; controller.js:104, :115, :124, :127",
+      "quote": "value: term,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-016",
+      "statement": "Searching with an empty term, or one of only spaces, shows the error 'Enter a postcode or an address to search for' and runs no lookup.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:119-121; copy/copy.en.js:9 errors.termRequired",
+      "quote": "if (!term?.trim()) {\n    return buildView(h, { termError: copy.errors.termRequired })\n  }\n...\nerrors: { termRequired: 'Enter a postcode or an address to search for' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-017",
+      "statement": "The empty-term error is shown only as an inline error on the input: the spike page renders no error summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:94",
+      "quote": "errorMessage: { text: termError } if termError",
+      "confidence": "inferred",
+      "note": "The template has no govukErrorSummary and the controller passes no errors list to the layout."
+    },
+    {
+      "id": "repo-insfrontend-p5-018",
+      "statement": "The page decides the search mode itself from what was typed: a term that looks like a full UK postcode is searched as a postcode, and anything else is searched as free text. The user is never asked to pick a mode.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:2-6, :13, :32-40",
+      "quote": "const UK_POSTCODE = /^[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d[A-Z]{2}$/i\n...\n  if (UK_POSTCODE.test(term)) {\n    return { mode: 'POSTCODE', term: normalisePostcode(term) }\n  }\n\n  return { mode: 'FIND', term }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-019",
+      "statement": "A postcode is matched case-insensitively, with or without a space between its halves.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:13",
+      "quote": "/^[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d[A-Z]{2}$/i",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-020",
+      "statement": "A postcode term is normalised before searching: spaces removed, upper-cased, and one space put before the last three characters (so 'sw1a1aa' searches as 'SW1A 1AA').",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:17-26",
+      "quote": "Upper case with a single space before the final three characters, which is how the\n * lookup returns postcodes and how it expects to be asked. Lets \"sw1a1aa\" find\n * something rather than silently returning nothing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-021",
+      "statement": "A partial postcode such as 'SW1A' on its own, and the special postcode GIR 0AA, are not treated as postcodes: they are searched as free text.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:8-11",
+      "quote": "It does\n * not accept the GIR 0AA special case, or a partial postcode such as \"SW1A\" on its own,\n * both of which fall through to `find` — which is arguably where a partial belongs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-022",
+      "statement": "A free-text term is searched as typed, with only leading and trailing spaces trimmed.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:29-33",
+      "quote": "the term\n *   to search with — normalised when it is a postcode, otherwise just trimmed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-023",
+      "statement": "After a search, a results heading reads 'Searched' followed by the query sent, shown as code: 'postcode=<term>' for a postcode search or 'find=<term>' for a free-text search.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:22-24; copy/copy.en.js:18 search.searched",
+      "quote": "{{ copy.search.searched }} <code>{{ \"postcode=\" if search.mode == \"POSTCODE\" else \"find=\" }}{{ search.term }}</code>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-024",
+      "statement": "After a postcode search the page explains 'That looked like a UK postcode, so it was searched as one.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:26-27; copy/copy.en.js:19 search.modePostcode",
+      "quote": "modePostcode: 'That looked like a UK postcode, so it was searched as one.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-025",
+      "statement": "After a free-text search the page explains 'That did not look like a UK postcode, so it was searched as free text.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:28-29; copy/copy.en.js:20-21 search.modeFind",
+      "quote": "'That did not look like a UK postcode, so it was searched as free text.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-026",
+      "statement": "Each search shows an outcome tag: a green 'Results' tag when the lookup's outcome is RESULTS, a grey 'No results' tag when it is NO_RESULTS, and a red 'Failed' tag for any other outcome.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:11-19, :33; copy/copy.en.js:29 outcome",
+      "quote": "outcome: { results: 'Results', noResults: 'No results', failed: 'Failed' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-027",
+      "statement": "When the lookup's outcome is FAILED, the page shows a warning 'Failed: <reason>' with the failure reason the lookup returned, and lists no results.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:53-57; copy/copy.en.js:24 search.failed",
+      "quote": "failed: (reason) => `Failed: ${reason}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-028",
+      "statement": "When the lookup returns results, the page says how many came back out of how many matched: '<returned> of <total> returned.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:59; copy/copy.en.js:22 search.returned",
+      "quote": "returned: (returned, total) => `${returned} of ${total} returned.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-029",
+      "statement": "Each result is listed with its whole formatted address line (as the lookup returns it, including town and postcode).",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:60-62",
+      "quote": "<p class=\"govuk-body govuk-!-margin-bottom-1\">{{ row.addressLine }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-030",
+      "statement": "Under each result's address the page shows its match score, match description and UPRN: 'Match <match> (<description>) · UPRN <uprn>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:63-65; copy/copy.en.js:25-26 search.matchLine",
+      "quote": "matchLine: (match, description, uprn) =>\n      `Match ${match} (${description}) · UPRN ${uprn}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-031",
+      "statement": "Each result has its own secondary button 'Use this address', which posts back to the page with the search term and that whole result.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:66-74; copy/copy.en.js:27 search.useAddress",
+      "quote": "<input type=\"hidden\" name=\"chosen\" value=\"{{ search.response.results[row.index] | dump }}\" />\n...\nuseAddress: 'Use this address'",
+      "confidence": "verbatim",
+      "note": "The chosen result travels in a hidden form field as JSON, so the mapped view shows what the browser sent back, not a fresh lookup."
+    },
+    {
+      "id": "repo-insfrontend-p5-032",
+      "statement": "When a search did not fail but returned no results, the page says 'Nothing returned.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:77-78; copy/copy.en.js:23 search.nothingReturned",
+      "quote": "nothingReturned: 'Nothing returned.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-033",
+      "statement": "When the backend returns timings with a search, the page shows a 'Where the time went' section; with no timings the section is not shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:35-36; controller.js:41-44; copy/copy.en.js:31 timings.heading",
+      "quote": "if (!backendTimings) {\n    return null\n  }\n...\nheading: 'Where the time went',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-034",
+      "statement": "When the backend says its access token came from cache, the timings section says 'The cached access token was reused, so neither token hop ran.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:38-39; copy/copy.en.js:32 timings.cached",
+      "quote": "cached: 'The cached access token was reused, so neither token hop ran.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-035",
+      "statement": "When the token was not from cache, the timings section says 'No usable token was cached, so this search paid for both token hops.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:40-41; copy/copy.en.js:33-34 timings.minted",
+      "quote": "'No usable token was cached, so this search paid for both token hops.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-036",
+      "statement": "The timings table has two columns, 'Hop' and a right-aligned numeric 'Time', with each time shown in milliseconds as '<n>ms'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:44-47; controller.js:63-66; copy/copy.en.js:35-37",
+      "quote": "hop: 'Hop',\n    time: 'Time',\n    milliseconds: (ms) => `${ms}ms`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-037",
+      "statement": "The timings table's rows are, in order: the AWS STS hop and the Entra hop (each only when the backend reports it), then the address lookup gateway, everything the backend did, and this page's own round trip including the call to the backend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:46-59",
+      "quote": "if (stsMs != null) {\n    hops.push([copy.timings.hops.sts, stsMs])\n  }\n  if (entraMs != null) {\n    hops.push([copy.timings.hops.entra, entraMs])\n  }\n  hops.push(\n    [copy.timings.hops.gateway, lookupMs],\n    [copy.timings.hops.backend, totalMs],\n    [copy.timings.hops.page, roundTripMs]\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-038",
+      "statement": "The page's own round-trip time is measured by the frontend from just before the lookup call to just after it returns.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:72-78",
+      "quote": "const startedAt = Date.now()\n...\nconst roundTripMs = Date.now() - startedAt",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-039",
+      "statement": "The STS hop is labelled 'AWS STS, minting the assertion'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:41 timings.hops.sts",
+      "quote": "sts: 'AWS STS, minting the assertion',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-040",
+      "statement": "The Entra hop is labelled 'Entra, exchanging it for an access token'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:42 timings.hops.entra",
+      "quote": "entra: 'Entra, exchanging it for an access token',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-041",
+      "statement": "The gateway hop is labelled 'The address lookup gateway'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:43 timings.hops.gateway",
+      "quote": "gateway: 'The address lookup gateway',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-042",
+      "statement": "The backend total row is labelled 'Everything the backend did'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:44 timings.hops.backend",
+      "quote": "backend: 'Everything the backend did',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-043",
+      "statement": "The page round-trip row is labelled 'This page, including the call to the backend'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:45 timings.hops.page",
+      "quote": "page: 'This page, including the call to the backend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-044",
+      "statement": "When the request has a trace ID, the timings section ends with 'Trace ID <id> — for the full picture in OpenSearch.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:48-50; copy/copy.en.js:38-39 timings.traceIdLabel, timings.traceIdSuffix",
+      "quote": "traceIdLabel: 'Trace ID',\n    traceIdSuffix: '— for the full picture in OpenSearch.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-045",
+      "statement": "When the lookup request itself fails (the backend cannot be reached or answers with an error status), the page keeps the term and shows the warning 'The address lookup request failed before the backend could answer.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:123-128; template.njk:99-104; copy/copy.en.js:12-13 warnings.network; services/address-lookup/client.js:24",
+      "quote": "network:\n      'The address lookup request failed before the backend could answer.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-046",
+      "statement": "The spike's warnings use 'Warning' as the warning icon's fallback text.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:11 warnings.iconFallbackText",
+      "quote": "iconFallbackText: 'Warning',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-047",
+      "statement": "A failed lookup request, and a chosen result that cannot be read, are each logged as an error with the request's trace ID.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:111-114, :126",
+      "quote": "'Address lookup spike could not read the chosen address'\n...\nlogger.error({ err, traceId }, 'Address lookup spike request failed')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-048",
+      "statement": "When the chosen result posted back cannot be read as an address object, the page keeps the term and shows the warning 'The chosen address could not be read. Search again and pick a result.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:96-116; template.njk:106-111; copy/copy.en.js:14-15 warnings.chosen",
+      "quote": "chosen:\n      'The chosen address could not be read. Search again and pick a result.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-049",
+      "statement": "Choosing a result shows a section headed \"Mapped onto the address book's fields\", in place of the results list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/controller.js:96-109; template.njk:117-118; copy/copy.en.js:49 mapped.heading",
+      "quote": "heading: \"Mapped onto the address book's fields\",",
+      "confidence": "verbatim",
+      "note": "The chosen-result POST renders without a search, so the results list is not shown alongside the mapping."
+    },
+    {
+      "id": "repo-insfrontend-p5-050",
+      "statement": "The mapped section is a summary list with six rows, in order: 'Address line 1', 'Address line 2', 'Town or city', 'County', 'Postcode' and 'Country'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:120-129; copy/copy.en.js:50-55",
+      "quote": "addressLine1: 'Address line 1',\n    addressLine2: 'Address line 2',\n    townOrCity: 'Town or city',\n    county: 'County',\n    postcode: 'Postcode',\n    country: 'Country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-051",
+      "statement": "A mapped field with no value is shown as an em dash.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:122-127",
+      "quote": "value: { text: addressFields.addressLine1 or \"—\" }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-052",
+      "statement": "The mapping targets the address book's own fields: address line 1 and 2, town or city, county, postcode and country code.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:1-4",
+      "quote": "map one lookup result onto the address book's own fields\n * (`address-book/address-schema.js` — address line 1 and 2, town or city, county,\n * postcode, country code).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-053",
+      "statement": "To build the address lines, the result's premises are its sub-building name then building name, joined by ', ', and its street is its building number then street, joined by a space.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:35-45",
+      "quote": "Premises first, then the street. Sub-building before building name because that is\n * the order they read in (\"Unit 1, Downing House\"), and a number binds to its street\n * (\"1 Downing Street\") rather than standing alone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-054",
+      "statement": "When a result has both premises and a street, address line 1 is the premises and address line 2 is the street followed by the locality, joined by ', '.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:48-53",
+      "quote": "if (premises && street) {\n    return {\n      addressLine1: premises,\n      addressLine2: joinPresent([street, locality], ', ')\n    }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-055",
+      "statement": "When a result has only premises or only a street, that becomes address line 1 and the locality becomes address line 2.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:55-58",
+      "quote": "const only = premises || street\n  if (only) {\n    return { addressLine1: only, addressLine2: locality }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-056",
+      "statement": "When a result has no name, number or street, address line 1 falls back to the whole formatted address line, and address line 2 is the locality.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:60-63",
+      "quote": "Nothing to compose from. The formatted line is a poor substitute — it carries the\n  // town and postcode too — but an empty line 1 would fail the form's own validation,\n  // so show it and let the page flag it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-057",
+      "statement": "The result's town fills 'Town or city' and its postcode fills 'Postcode'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:98-100",
+      "quote": "townOrCity: address.town ?? '',\n      county: '',\n      postcode: address.postcode ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-058",
+      "statement": "County and country are always left empty by the mapping, because the lookup returns no county and only a free-text country name.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:13-15, :99, :101",
+      "quote": "2. The lookup has no county at all.\n * 3. `country` is free text and upper case (\"ENGLAND\"), where the form wants an ISO\n *    code chosen from reference data.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-059",
+      "statement": "The lookup's formatted address line includes the postcode, so it is not used as address line 1 except as a last resort.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:17-18",
+      "quote": "`addressLine` is the whole formatted address including the postcode, so it cannot\n * stand in for line 1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-060",
+      "statement": "Below the mapped fields, an inset headed 'What the lookup could not fill:' lists, as bullets, each gap a real implementation would still have to resolve for the chosen address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:131-139; copy/copy.en.js:56 mapped.gapsIntro",
+      "quote": "gapsIntro: 'What the lookup could not fill:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-061",
+      "statement": "When the chosen result has no sub-building name, building name, building number or street, the gaps list says 'No name, number or street — address line 1 fell back to the whole formatted address.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:74-88",
+      "quote": "'No name, number or street — address line 1 fell back to the whole formatted address.'",
+      "confidence": "verbatim",
+      "note": "This and the other gap messages are hard-coded English in map-to-address-fields.js, not in the copy files, so they are not translated into Welsh."
+    },
+    {
+      "id": "repo-insfrontend-p5-062",
+      "statement": "When the chosen result has no town, the gaps list says 'No town returned, and town or city is required.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:89-91",
+      "quote": "gaps.push('No town returned, and town or city is required.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-063",
+      "statement": "The gaps list always says 'The lookup returns no county field at all.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:25, :92",
+      "quote": "county: 'The lookup returns no county field at all.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-064",
+      "statement": "The gaps list always says the lookup returns a free-text country name rather than an ISO code, and that mapping it to the reference-data list is a separate decision.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:26-28, :92",
+      "quote": "'The lookup returns a country name in free text (\"ENGLAND\"), not an ISO code. ' +\n    'Mapping it to the reference-data list is a separate decision.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-065",
+      "statement": "Mapping a lookup country name to a country code from reference data is an open decision, not yet made.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:26-28",
+      "quote": "Mapping it to the reference-data list is a separate decision.",
+      "confidence": "gap",
+      "note": "Recorded as a gap: the spike names the decision and leaves it open."
+    },
+    {
+      "id": "repo-insfrontend-p5-066",
+      "statement": "Below the gaps, a details component 'The raw result this came from' shows the chosen result as indented JSON.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-lookup-spike/template.njk:141-144; controller.js:108; copy/copy.en.js:57 mapped.raw",
+      "quote": "raw: 'The raw result this came from'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-067",
+      "statement": "The lookup client calls the INS backend's GET /address-lookup endpoint, passing the search as a query parameter: postcode=<postcode> for a postcode search or find=<term> for a free-text search.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-lookup/client.js:6-8, :15-30",
+      "quote": "const LOOKUP_PATH = '/address-lookup'\n...\nexport const lookupByPostcode = (postcode) => get({ postcode })\nexport const lookupByFind = (find) => get({ find })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-068",
+      "statement": "The lookup client can also call /address-lookup with no query parameters, for the backend's default postcode; the spike page does not use this call.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-lookup/client.js:28; controller.js:3-6",
+      "quote": "export const lookupDefaultPostcode = () => get({})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-069",
+      "statement": "Each lookup request carries the request's trace ID in the configured tracing header, so the backend's work can be followed in the logs.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-lookup/client.js:7, :10-13",
+      "quote": "'Content-Type': 'application/json',\n  [tracingHeader]: getTraceId() ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-070",
+      "statement": "A lookup response with an error status is treated as a failed request.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-lookup/client.js:24",
+      "quote": "await throwOnError(response)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-071",
+      "statement": "A lookup response carries an outcome (RESULTS, NO_RESULTS or FAILED), the results, the total and returned result counts, a failure reason, and optionally the backend's timings (STS, Entra, lookup and total milliseconds, and whether the token was cached).",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:52-59; controller.js:46; template.njk:11-17, :38, :53, :59",
+      "quote": "outcome: 'RESULTS',\n  query: { mode, term },\n  results: RESULTS,\n  totalResults: RESULTS.length,\n  returnedResults: RESULTS.length,\n  failureReason: null",
+      "confidence": "inferred",
+      "note": "Shape read from the stub's response and the fields the controller and template read; the timings shape comes from the controller destructuring { stsMs, entraMs, lookupMs, totalMs, tokenSource }."
+    },
+    {
+      "id": "repo-insfrontend-p5-072",
+      "statement": "Each lookup result has a formatted address line, building number, building name, sub-building name, street, locality, town, postcode, country, UPRN, match score, match description and language.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:5-19",
+      "quote": "addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: null,\n    subBuildingName: 'BUCKINGHAM PALACE',\n    street: null,\n    locality: null,\n    town: 'LONDON',\n    postcode: 'SW1A 1AA',\n    country: 'ENGLAND',\n    uprn: '100023336901',\n    match: '1',\n    matchDescription: 'EXACT',\n    language: 'EN'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-073",
+      "statement": "When stub mode is on (STUB_MODE true) and the service is not running in production, lookups are answered by an in-memory stub instead of the INS backend.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-lookup/index.js:1-12; src/server/common/services/mode.js",
+      "quote": "isStubMode()\n    ? stub.lookupByPostcode(postcode)\n    : client.lookupByPostcode(postcode)\n...\nconfig.get('stubMode') && !config.get('isProduction')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-074",
+      "statement": "The stub returns the same three addresses as trade-imports-stub's address lookup simulator, with outcome RESULTS, whatever postcode or term is searched.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-lookup/stub.js:1, :52-65",
+      "quote": "Holds the same three addresses as trade-imports-stub's address lookup simulator.\n...\nexport const lookupByFind = async (find) => response('FIND', find)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-075",
+      "statement": "The stub's first address is BUCKINGHAM PALACE, LONDON, SW1A 1AA, with its name only in the sub-building name and no building name, number or street (UPRN 100023336901).",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:5-19",
+      "quote": "addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: null,\n    subBuildingName: 'BUCKINGHAM PALACE',\n    street: null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-076",
+      "statement": "The stub's second address is 1 DOWNING STREET, LONDON, SW1A 1AA, with building number 1 and street DOWNING STREET (UPRN 100023336902).",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:20-34",
+      "quote": "addressLine: '1 DOWNING STREET, LONDON, SW1A 1AA',\n    buildingNumber: '1',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-077",
+      "statement": "The stub's third address is UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA, with sub-building UNIT 1, building name DOWNING HOUSE and street DOWNING STREET (UPRN 100023336903).",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:35-49",
+      "quote": "addressLine: 'UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: 'DOWNING HOUSE',\n    subBuildingName: 'UNIT 1',\n    street: 'DOWNING STREET',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-078",
+      "statement": "All three stub addresses are in LONDON, SW1A 1AA, ENGLAND, with no locality, match 1 and match description EXACT.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:5-49",
+      "quote": "locality: null,\n    town: 'LONDON',\n    postcode: 'SW1A 1AA',\n    country: 'ENGLAND',\n    ...\n    match: '1',\n    matchDescription: 'EXACT',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-079",
+      "statement": "The stub's default postcode is SW1A 1AA.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-lookup/stub.js:2, :61-62",
+      "quote": "const DEFAULT_POSTCODE = 'SW1A 1AA'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-080",
+      "statement": "In stub mode the spike page shows no 'Where the time went' section, because the stub's responses carry no timings.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-lookup/stub.js:52-59; controller.js:42-44",
+      "quote": "if (!backendTimings) {\n    return null\n  }",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-insfrontend-p5-081",
+      "statement": "The spike's Welsh copy is a machine draft that no translator has reviewed, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-082",
+      "statement": "In Welsh, the page title and heading (title) is 'Sbeic chwilio am gyfeiriad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:3 title",
+      "quote": "title: 'Sbeic chwilio am gyfeiriad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-083",
+      "statement": "In Welsh, the caption is 'EUDPA-390 — datblygu/lleol yn unig, dros dro. Nid oes dim yn cael ei gadw.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:4-5 caption",
+      "quote": "'EUDPA-390 — datblygu/lleol yn unig, dros dro. Nid oes dim yn cael ei gadw.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-084",
+      "statement": "In Welsh, the search field label (form.label) is 'Cod post neu gyfeiriad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:7 form.label",
+      "quote": "label: 'Cod post neu gyfeiriad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-085",
+      "statement": "In Welsh, the search field hint (form.hint) is 'Caiff cod post yn y DU ei chwilio fel cod post. Caiff unrhyw beth arall ei chwilio fel testun rhydd.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:8 form.hint",
+      "quote": "hint: 'Caiff cod post yn y DU ei chwilio fel cod post. Caiff unrhyw beth arall ei chwilio fel testun rhydd.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-086",
+      "statement": "In Welsh, the search button (form.button) is 'Chwilio'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:9 form.button",
+      "quote": "button: 'Chwilio'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-087",
+      "statement": "In Welsh, the empty-term error (errors.termRequired) is 'Rhowch god post neu gyfeiriad i chwilio amdano'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:11 errors.termRequired",
+      "quote": "errors: { termRequired: 'Rhowch god post neu gyfeiriad i chwilio amdano' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-088",
+      "statement": "In Welsh, the warning icon fallback text (warnings.iconFallbackText) is 'Rhybudd'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:13 warnings.iconFallbackText",
+      "quote": "iconFallbackText: 'Rhybudd',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-089",
+      "statement": "In Welsh, the failed-request warning (warnings.network) is 'Methodd y cais i chwilio am gyfeiriad cyn i’r ôl-wasanaeth allu ateb.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:14-15 warnings.network",
+      "quote": "'Methodd y cais i chwilio am gyfeiriad cyn i’r ôl-wasanaeth allu ateb.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-090",
+      "statement": "In Welsh, the unreadable-choice warning (warnings.chosen) is 'Nid oedd modd darllen y cyfeiriad a ddewiswyd. Chwiliwch eto a dewiswch ganlyniad.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:16-17 warnings.chosen",
+      "quote": "'Nid oedd modd darllen y cyfeiriad a ddewiswyd. Chwiliwch eto a dewiswch ganlyniad.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-091",
+      "statement": "In Welsh, the results heading prefix (search.searched) is 'Wedi chwilio'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:20 search.searched",
+      "quote": "searched: 'Wedi chwilio',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-092",
+      "statement": "In Welsh, the postcode-mode explanation (search.modePostcode) is 'Roedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel un.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:21-22 search.modePostcode",
+      "quote": "'Roedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel un.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-093",
+      "statement": "In Welsh, the free-text-mode explanation (search.modeFind) is 'Nid oedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel testun rhydd.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:23-24 search.modeFind",
+      "quote": "'Nid oedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel testun rhydd.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-094",
+      "statement": "In Welsh, the result count (search.returned) is '<returned> o <total> wedi’u dychwelyd.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:25 search.returned",
+      "quote": "returned: (returned, total) => `${returned} o ${total} wedi’u dychwelyd.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-095",
+      "statement": "In Welsh, the no-results line (search.nothingReturned) is 'Ni ddychwelwyd dim.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:26 search.nothingReturned",
+      "quote": "nothingReturned: 'Ni ddychwelwyd dim.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-096",
+      "statement": "In Welsh, the failed-outcome warning (search.failed) is 'Wedi methu: <reason>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:27 search.failed",
+      "quote": "failed: (reason) => `Wedi methu: ${reason}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-097",
+      "statement": "In Welsh, the match line (search.matchLine) is 'Cyfatebiaeth <match> (<description>) · UPRN <uprn>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:28-29 search.matchLine",
+      "quote": "`Cyfatebiaeth ${match} (${description}) · UPRN ${uprn}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-098",
+      "statement": "In Welsh, the choose button (search.useAddress) is 'Defnyddio’r cyfeiriad hwn'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:30 search.useAddress",
+      "quote": "useAddress: 'Defnyddio’r cyfeiriad hwn'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-099",
+      "statement": "In Welsh, the outcome tags (outcome.results, outcome.noResults, outcome.failed) are 'Canlyniadau', 'Dim canlyniadau' and 'Wedi methu'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:32-36 outcome",
+      "quote": "results: 'Canlyniadau',\n    noResults: 'Dim canlyniadau',\n    failed: 'Wedi methu'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-100",
+      "statement": "In Welsh, the timings heading (timings.heading) is 'Ble aeth yr amser'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:38 timings.heading",
+      "quote": "heading: 'Ble aeth yr amser',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-101",
+      "statement": "In Welsh, the cached-token line (timings.cached) is 'Cafodd y tocyn mynediad a gadwyd ei ailddefnyddio, felly ni redodd yr un o’r camau tocyn.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:39-40 timings.cached",
+      "quote": "'Cafodd y tocyn mynediad a gadwyd ei ailddefnyddio, felly ni redodd yr un o’r camau tocyn.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-102",
+      "statement": "In Welsh, the minted-token line (timings.minted) is 'Nid oedd tocyn defnyddiadwy wedi’i gadw, felly talodd y chwiliad hwn am y ddau gam tocyn.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:41-42 timings.minted",
+      "quote": "'Nid oedd tocyn defnyddiadwy wedi’i gadw, felly talodd y chwiliad hwn am y ddau gam tocyn.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-103",
+      "statement": "In Welsh, the timings table headers (timings.hop, timings.time) are 'Cam' and 'Amser', and the milliseconds format (timings.milliseconds) is unchanged as '<n>ms'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:43-45 timings.hop, timings.time, timings.milliseconds",
+      "quote": "hop: 'Cam',\n    time: 'Amser',\n    milliseconds: (ms) => `${ms}ms`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-104",
+      "statement": "In Welsh, the trace ID line (timings.traceIdLabel, timings.traceIdSuffix) is 'ID olrhain <id> — am y darlun llawn yn OpenSearch.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:46-47 timings.traceIdLabel, timings.traceIdSuffix",
+      "quote": "traceIdLabel: 'ID olrhain',\n    traceIdSuffix: '— am y darlun llawn yn OpenSearch.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-105",
+      "statement": "In Welsh, the STS hop (timings.hops.sts) is 'AWS STS, yn bathu’r haeriad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:49 timings.hops.sts",
+      "quote": "sts: 'AWS STS, yn bathu’r haeriad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-106",
+      "statement": "In Welsh, the Entra hop (timings.hops.entra) is 'Entra, yn ei gyfnewid am docyn mynediad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:50 timings.hops.entra",
+      "quote": "entra: 'Entra, yn ei gyfnewid am docyn mynediad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-107",
+      "statement": "In Welsh, the gateway hop (timings.hops.gateway) is 'Y porth chwilio am gyfeiriadau'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:51 timings.hops.gateway",
+      "quote": "gateway: 'Y porth chwilio am gyfeiriadau',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-108",
+      "statement": "In Welsh, the backend total row (timings.hops.backend) is 'Popeth a wnaeth yr ôl-wasanaeth'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:52 timings.hops.backend",
+      "quote": "backend: 'Popeth a wnaeth yr ôl-wasanaeth',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-109",
+      "statement": "In Welsh, the page round-trip row (timings.hops.page) is 'Y dudalen hon, gan gynnwys yr alwad i’r ôl-wasanaeth'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:53 timings.hops.page",
+      "quote": "page: 'Y dudalen hon, gan gynnwys yr alwad i’r ôl-wasanaeth'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-110",
+      "statement": "In Welsh, the mapped section heading (mapped.heading) is 'Wedi’i fapio i feysydd y llyfr cyfeiriadau'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:57 mapped.heading",
+      "quote": "heading: 'Wedi’i fapio i feysydd y llyfr cyfeiriadau',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-111",
+      "statement": "In Welsh, the mapped field labels (mapped.addressLine1, addressLine2, townOrCity, county, postcode, country) are 'Llinell 1 y cyfeiriad', 'Llinell 2 y cyfeiriad', 'Tref neu ddinas', 'Sir', 'Cod post' and 'Gwlad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:58-63 mapped",
+      "quote": "addressLine1: 'Llinell 1 y cyfeiriad',\n    addressLine2: 'Llinell 2 y cyfeiriad',\n    townOrCity: 'Tref neu ddinas',\n    county: 'Sir',\n    postcode: 'Cod post',\n    country: 'Gwlad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-112",
+      "statement": "In Welsh, the gaps intro (mapped.gapsIntro) is 'Yr hyn na allai’r chwiliad ei lenwi:'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:64 mapped.gapsIntro",
+      "quote": "gapsIntro: 'Yr hyn na allai’r chwiliad ei lenwi:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-113",
+      "statement": "In Welsh, the raw-result details summary (mapped.raw) is 'Y canlyniad crai y daeth hwn ohono'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:65 mapped.raw",
+      "quote": "raw: 'Y canlyniad crai y daeth hwn ohono'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-114",
+      "statement": "The address lookup is a spike, not a live feature: no real address book page offers a postcode or address lookup today, and how the real build would use one is still to be decided.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:6-8, :20; copy/copy.en.js:3",
+      "quote": "This is the spike's real question. The lookup does not return anything shaped like\n * our form, so the mapping has to be invented",
+      "confidence": "inferred",
+      "note": "Inferred from the spike's own framing ('a proposal for the real build to argue with') and from grep showing only the spike calls lookupByPostcode/lookupByFind."
+    }
+  ]
+}

@@ -1,0 +1,529 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 24, Document drop zone and guidance. Read in full: drop-zone.fit.spec.js (6 tests) and guidance.fit.spec.js (4 tests), and all 10 trace zips the partition names. The Playwright trace CLI tim installs refused every zip (TraceVersionError: the traces were recorded by a newer Playwright), so each trace was read from its already-extracted contents in this part's working folder (t01..t10, matched to the zips by the title in each 1-trace.trace), rendering DOM snapshots with a jq renderer (html.jq) and reading test.trace steps and 1-trace.network requests with jq. Trace short names used in refs: T1 drop-zone e323e (offers a drop zone), T2 drop-zone c8d9b (no file chosen live region), T3 drop-zone b6ba8 (dropped file), T4 drop-zone a3b58 (single input named file), T5 drop-zone 53b15 (failed attachment on the zone), T6 drop-zone 1b9b1 (drop zone axe), T7 guidance b120e (what to attach, above the form), T8 guidance 33e3d (closed expander), T9 guidance 390b7 (GOV.UK link new tab), T10 guidance 3bec6 (expanded guidance axe). Every trace signs in, starts a notification, unlocks sections by walking Origin of the import, What are you importing?, Commodity details and the Overview (other parts' pages), then follows the Overview link 'Upload documents' to one page: /live-animals/notifications/{reference}/accompanying-documents, title 'Upload documents - Import notification service - GOV.UK', caption 'Documents', h1 'Upload documents'. Page skeleton in order: back link to the notification overview; Draft tag and notification reference strip; empty JS error-summary container; caption and heading; guidance paragraph and 'Other documents you may need' bullet list; a govuk-details expander holding a two-column table and a GOV.UK link; a multipart form (data-max-file-size 10000000) containing a 'File upload' summary card with Document reference, Document type, Date of issue (MOJ date picker) and Attachment (govuk-file-upload drop zone) fields, a 'Save and add another' button and 'You have not added any documents yet.'; then Save and continue, Save and return to overview and Cancel and return to overview. States seen: enhanced empty drop zone (T1, T4, T9, T10), chosen file named (T2, T6), dropped file named (T3), details open (T8 end, T9, T10), server-rendered pre-enhancement markup (T7 and T8 last snapshots), and the error state after an empty 'Save and add another' (T5: POST returns 400, title gains 'Error: ', four-item error summary). Conditional: the expander table is hidden until opened; error messages only after a failed submit. Not covered here: the other fields' own behaviour beyond the copy they show, an uploaded document list, scan statuses, and every file validation other than 'no file'.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p24-001",
+      "statement": "The trader reaches the document upload page from the notification Overview by following the 'Upload documents' link, once the earlier sections have been completed.",
+      "kind": "behaviour",
+      "ref": "drop-zone.fit.spec.js openDocuments; guidance.fit.spec.js openDocuments; every trace T1-T10 test.trace click before the documents page",
+      "quote": "Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-002",
+      "statement": "The document upload page lives at /live-animals/notifications/{notification reference}/accompanying-documents.",
+      "kind": "behaviour",
+      "ref": "T1 snapshot call@2119 frame URL",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-H0914K/accompanying-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-003",
+      "statement": "The page's browser title is 'Upload documents - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "T5 1-trace.trace TITLE element before the failed submit",
+      "quote": "Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-004",
+      "statement": "The page shows the caption 'Documents' above the heading 'Upload documents'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 main: span.govuk-caption-l and h1.govuk-heading-l",
+      "quote": "Documents / Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-005",
+      "statement": "A 'Back' link above the page returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "T1 snapshot call@2119 a.govuk-back-link",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-H0914K\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-006",
+      "statement": "The top of the page shows a blue 'Draft' tag beside the notification reference in bold.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 div.app-journey-strip",
+      "quote": "Draft ... GBN-AG-26-H0914K",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a non-govuk class wrapping a govuk-tag--blue and a bold govuk-body span; it is shared page chrome, not part of the documents feature."
+    },
+    {
+      "id": "trace-animals-fit-p24-007",
+      "statement": "The page opens with guidance telling the trader they must attach an ITAHC if the consignment needs one, can add it later, should upload everything before the consignment arrives at the UK port, and must upload all pages in English.",
+      "kind": "copy",
+      "ref": "T7 snapshot call@2221 main first p.govuk-body; guidance.fit.spec.js:33",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-008",
+      "statement": "The guidance lists other documents the trader may need to attach: import licences or authorisations, and commercial documents or invoices.",
+      "kind": "copy",
+      "ref": "T7 snapshot call@2221 main p.govuk-body and ul.govuk-list--bullet; guidance.fit.spec.js:33 otherDocuments loop",
+      "quote": "Other documents you may need to attach include: import licences or authorisations; commercial documents or invoices",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-009",
+      "statement": "The 'what to attach' guidance sits outside the upload form and before it on the page, so the trader reads it without scrolling past the upload panel.",
+      "kind": "rule",
+      "ref": "guidance.fit.spec.js:40-47 assertions; T7 snapshot call@2221 order of p.govuk-body then form[data-max-file-size]",
+      "quote": "The guidance introduces the form, so it must sit outside it. ...and before it: the trader reads what to attach without scrolling past the upload panel (design release 1).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-010",
+      "statement": "Below the guidance is a closed GOV.UK details expander whose summary reads 'Check which additional documents you must upload'.",
+      "kind": "copy",
+      "ref": "T8 snapshot (start state, per spec assertion) and T1 snapshot call@2119 details.govuk-details summary",
+      "quote": "Check which additional documents you must upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-011",
+      "statement": "The additional-documents table is hidden while the expander is closed and becomes visible when the trader opens it.",
+      "kind": "behaviour",
+      "ref": "guidance.fit.spec.js:50-62; T1 snapshot call@2119 details without open; T8 snapshot call@2989 details open=\"\"",
+      "quote": "<DETAILS class=\"govuk-details\" open=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-012",
+      "statement": "The table inside the expander has a visually hidden caption 'Additional documents by type of consignment' that names it for assistive technology.",
+      "kind": "copy",
+      "ref": "T8 snapshot call@2989 table caption.govuk-visually-hidden",
+      "quote": "Additional documents by type of consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-013",
+      "statement": "The table has two column headings: 'Consignment' and 'Documents needed'.",
+      "kind": "copy",
+      "ref": "T8 snapshot call@2989 thead th",
+      "quote": "Consignment | Documents needed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-014",
+      "statement": "Animals that do not need a health certificate need an exporter's declaration that they are fit to travel.",
+      "kind": "rule",
+      "ref": "T8 snapshot call@2989 tbody row 1",
+      "quote": "Animals that do not need a health certificate | An exporter's declaration that they are fit to travel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-015",
+      "statement": "Livestock transiting bluetongue restricted territories need Bluetongue declaration GBHC172.",
+      "kind": "rule",
+      "ref": "T8 snapshot call@2989 tbody row 2",
+      "quote": "Livestock transiting bluetongue restricted territories | Bluetongue declaration GBHC172",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-016",
+      "statement": "Rodents imported for research purposes need an RM39 licence and a supplementary health certificate.",
+      "kind": "rule",
+      "ref": "T8 snapshot call@2989 tbody row 3",
+      "quote": "Rodents imported for research purposes | An RM39 licence and supplementary health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-017",
+      "statement": "Inside the expander, below the table, a link 'Check the documents you need on GOV.UK (opens in a new tab)' points to the GOV.UK import-of-products-animals-food-and-feed-system guidance.",
+      "kind": "copy",
+      "ref": "T9 snapshot call@2897 details p.govuk-body a.govuk-link; guidance.fit.spec.js:78",
+      "quote": "<A href=\"https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system\" class=\"govuk-link\" rel=\"noreferrer noopener\" target=\"_blank\">Check the documents you need on GOV.UK (opens in a new tab)</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-018",
+      "statement": "The GOV.UK guidance link opens in a new tab (target _blank) with rel 'noreferrer noopener', and its text says so.",
+      "kind": "rule",
+      "ref": "T9 snapshot call@2897 link attributes; guidance.fit.spec.js:81-83",
+      "quote": "rel=\"noreferrer noopener\" target=\"_blank\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-019",
+      "statement": "The page with the guidance expander open has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "T10 test 'expanded guidance has no serious or critical axe violations' (passed), snapshot call@2805 details open",
+      "quote": "expanded guidance has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-020",
+      "statement": "The upload form posts multipart/form-data and carries a client-side maximum file size of 10,000,000 bytes.",
+      "kind": "constraint",
+      "ref": "T1 snapshot call@2119 form attributes; T5 1-trace.network POST content-type",
+      "quote": "<FORM method=\"post\" enctype=\"multipart/form-data\" novalidate=\"\" data-max-file-size=\"10000000\" data-oversize-error=\"The selected file must be smaller than 10MB\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-021",
+      "statement": "The form carries the oversize error copy 'The selected file must be smaller than 10MB' for a file over the size limit.",
+      "kind": "rule",
+      "ref": "T1 snapshot call@2119 form data-oversize-error",
+      "quote": "The selected file must be smaller than 10MB",
+      "confidence": "inferred",
+      "note": "Inferred from the form attribute: no trace in this part chooses an oversized file, so the message was never seen rendered."
+    },
+    {
+      "id": "trace-animals-fit-p24-022",
+      "statement": "The upload fields sit in a summary card headed 'File upload'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 section.govuk-summary-card h2#file-upload-heading",
+      "quote": "File upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-023",
+      "statement": "The card asks for a 'Document reference' as a text input, with the hint 'For example, GBHC1234567890.'",
+      "kind": "data",
+      "ref": "T1 snapshot call@2119 input#accompanyingDocumentReference name accompanyingDocumentReference",
+      "quote": "Document reference / For example, GBHC1234567890.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-024",
+      "statement": "The card asks for a 'Document type' from a select list defaulting to 'Select one', with 14 types: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Health certificate, Journey log, Other.",
+      "kind": "data",
+      "ref": "T1 snapshot call@2119 select#accompanyingDocumentType options",
+      "quote": "Select one | Intra Trade Animal Health Certificate (ITAHC) | Veterinary health certificate | Air waybill | Import permit | Letter of authority (Directive 2008/61/EC) | Commercial invoice | Sea waybill | Rail waybill | Bill of lading | Catch certificate | Laboratory sampling results for aflatoxin (Reg 2019/1793) | Health certificate | Journey log | Other",
+      "confidence": "verbatim",
+      "note": "Option values: ITAHC, VETERINARY_HEALTH_CERTIFICATE, AIR_WAYBILL, IMPORT_PERMIT, LETTER_OF_AUTHORITY, COMMERCIAL_INVOICE, SEA_WAYBILL, RAIL_WAYBILL, BILL_OF_LADING, CATCH_CERTIFICATE, LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN, HEALTH_CERTIFICATE, JOURNEY_LOG, OTHER."
+    },
+    {
+      "id": "trace-animals-fit-p24-025",
+      "statement": "The card asks for a 'Date of issue' as a text input with the hint 'For example, 12/12/2025' and a 'Choose date' calendar button from the MOJ date picker.",
+      "kind": "data",
+      "ref": "T1 snapshot call@2119 div.moj-datepicker input#accompanyingDocumentDateOfIssue and button.moj-datepicker__toggle",
+      "quote": "Date of issue / For example, 12/12/2025 / Choose date",
+      "confidence": "verbatim",
+      "note": "moj-datepicker is a MOJ Pattern Library component, outside govuk-frontend. Its dialog offers Previous year, Previous month, Next month, Next year, Select and Close."
+    },
+    {
+      "id": "trace-animals-fit-p24-026",
+      "statement": "The file field is labelled 'Attachment'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 label#file-label for=file",
+      "quote": "Attachment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-027",
+      "statement": "The Attachment hint, under the bold lead 'Your file must be:', says the file must be smaller than 10MB.",
+      "kind": "rule",
+      "ref": "T1 snapshot call@2119 div#file-hint list item 1",
+      "quote": "Your file must be: smaller than 10MB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-028",
+      "statement": "The Attachment hint says the file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX.",
+      "kind": "rule",
+      "ref": "T1 snapshot call@2119 div#file-hint list item 2",
+      "quote": "a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-029",
+      "statement": "The Attachment hint says the trader can upload up to a maximum of 15 files.",
+      "kind": "rule",
+      "ref": "T1 snapshot call@2119 div#file-hint list item 3",
+      "quote": "up to a maximum of 15 files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-030",
+      "statement": "The Attachment hint says ZIP files are not allowed for security reasons.",
+      "kind": "rule",
+      "ref": "T1 snapshot call@2119 div#file-hint list item 4",
+      "quote": "ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-031",
+      "statement": "The file input restricts the browser's file chooser to .pdf, .doc, .docx, .jpeg, .jpg, .png, .xls and .xlsx.",
+      "kind": "constraint",
+      "ref": "T1 snapshot call@2119 input.govuk-file-upload accept",
+      "quote": "accept=\".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-032",
+      "statement": "With JavaScript on, the Attachment field is shown as a GOV.UK file upload drop zone: a wrapper the size of the field containing the service's own button.",
+      "kind": "behaviour",
+      "ref": "T1 snapshot call@2119 div.govuk-file-upload-wrapper data-module=govuk-file-upload data-govuk-file-upload-init; drop-zone.fit.spec.js:59",
+      "quote": "offers a drop zone with the service’s own choose-file button and drop instruction",
+      "confidence": "verbatim",
+      "note": "Standard govuk-frontend File upload component in its enhanced (drop zone) form; every class on it is govuk-*."
+    },
+    {
+      "id": "trace-animals-fit-p24-033",
+      "statement": "The drop zone button shows a secondary-style 'Choose file' pseudo-button followed by the instruction 'or drop file'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 button#file span.govuk-file-upload-button__pseudo-button and __instruction",
+      "quote": "Choose file or drop file",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-034",
+      "statement": "The drop zone's text is set by the service rather than left to govuk-frontend defaults: choose button 'Choose file', no file 'No file chosen', drop instruction 'or drop file', and screen reader announcements 'Entered drop zone' and 'Left drop zone'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 div.govuk-file-upload-wrapper data-i18n.* attributes",
+      "quote": "data-i18n.choose-files-button=\"Choose file\" data-i18n.no-file-chosen=\"No file chosen\" data-i18n.drop-instruction=\"or drop file\" data-i18n.entered-drop-zone=\"Entered drop zone\" data-i18n.left-drop-zone=\"Left drop zone\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-035",
+      "statement": "Until a file is chosen, the drop zone says 'No file chosen' in a polite live region.",
+      "kind": "behaviour",
+      "ref": "T2 test 'says no file is chosen, in a live region, until one is'; T1 snapshot call@2119 span.govuk-file-upload-button__status aria-live=polite",
+      "quote": "<SPAN class=\"govuk-body govuk-file-upload-button__status\" aria-live=\"polite\">No file chosen</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-036",
+      "statement": "When the trader chooses a file, the drop zone's status line changes from 'No file chosen' to the file's name, and the empty-state styling is removed.",
+      "kind": "behaviour",
+      "ref": "T2 snapshot call@2881 status span reads chosen-itahc.pdf; button class loses govuk-file-upload-button--empty",
+      "quote": "<BUTTON class=\"govuk-file-upload-button\" ...><SPAN class=\"govuk-body govuk-file-upload-button__status\" aria-live=\"polite\">chosen-itahc.pdf</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-037",
+      "statement": "A file dropped onto the drop zone is taken: the status line names the dropped file and the file reaches the form's file input, so it is what the form posts.",
+      "kind": "behaviour",
+      "ref": "T3 snapshot call@2795 status span reads dropped-itahc.pdf; drop-zone.fit.spec.js:81-91 polls input.files[0].name",
+      "quote": "The file has to reach the input, not just the status line — that is what the form posts.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-038",
+      "statement": "The enhancement leaves exactly one file input on the page, still named 'file', hidden behind the drop zone button.",
+      "kind": "constraint",
+      "ref": "T4 snapshot call@2707 single input.govuk-file-upload id=file-input name=file hidden; drop-zone.fit.spec.js:97-102",
+      "quote": "<INPUT class=\"govuk-file-upload\" id=\"file-input\" name=\"file\" type=\"file\" aria-describedby=\"file-hint\" accept=\".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\" hidden=\"hidden\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-039",
+      "statement": "Before JavaScript enhances it, the server renders the Attachment field as a plain visible file input with id 'file' and name 'file' and the same accept list, so the field works without JavaScript; enhancement moves the id 'file' to the drop zone button and renames the input 'file-input'.",
+      "kind": "behaviour",
+      "ref": "T7 last snapshot call@2221 and T8 last snapshot call@2989 (wrapper without data-govuk-file-upload-init) compared with T1 snapshot call@2119",
+      "quote": "<INPUT class=\"govuk-file-upload\" id=\"file\" name=\"file\" type=\"file\" aria-describedby=\"file-hint\" accept=\".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\"></INPUT>",
+      "confidence": "inferred",
+      "note": "Inferred from snapshots taken before the module initialised, not from a JavaScript-off run; the spec says the no-JS fallback is not exercised and is an open question on inc-137."
+    },
+    {
+      "id": "trace-animals-fit-p24-040",
+      "statement": "The drop zone button's accessible name is built from the 'Attachment' label, a visually hidden comma and the button's own text, and it is described by the file hint.",
+      "kind": "non-functional",
+      "ref": "T1 snapshot call@2119 button#file aria-labelledby and aria-describedby",
+      "quote": "aria-describedby=\"file-hint\" aria-labelledby=\"file-label file-comma file\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-041",
+      "statement": "The drop zone has an assertive, visually hidden announcements region for drop-zone enter and leave messages.",
+      "kind": "non-functional",
+      "ref": "T1 snapshot call@2119 span.govuk-file-upload-announcements",
+      "quote": "<SPAN class=\"govuk-file-upload-announcements govuk-visually-hidden\" aria-live=\"assertive\"></SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-042",
+      "statement": "The drop zone with a chosen file has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "T6 test 'the chosen-file drop zone has no serious or critical axe violations' (passed), snapshot call@2797 status chosen-itahc.pdf",
+      "quote": "the chosen-file drop zone has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-043",
+      "statement": "Below the fields, a secondary 'Save and add another' button submits the card with action 'add'.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 button name=action value=add",
+      "quote": "Save and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-044",
+      "statement": "When no document has been added, the card says 'You have not added any documents yet.'",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 p.govuk-body in summary card",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-045",
+      "statement": "The page ends with a 'Save and continue' primary button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link back to the notification overview.",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 div.govuk-button-group (action=continue, exit=hub, link)",
+      "quote": "Save and continue / Save and return to overview / Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-046",
+      "statement": "Pressing 'Save and add another' with every field blank posts the multipart form (crumb, concurrencyToken, accompanyingDocumentReference, accompanyingDocumentType, accompanyingDocumentDateOfIssue, file, action) and the server answers 400 by redisplaying the page in its error state.",
+      "kind": "behaviour",
+      "ref": "T5 1-trace.network POST /live-animals/notifications/GBN-AG-26-2MJAM2/accompanying-documents -> 400; multipart field names",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-2MJAM2/accompanying-documents -> 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-047",
+      "statement": "In the error state the page title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "T5 1-trace.trace last TITLE element",
+      "quote": "Error: Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-048",
+      "statement": "In the error state an error summary titled 'There is a problem' appears above the caption, listing one link per failing field.",
+      "kind": "rule",
+      "ref": "T5 snapshot call@2481 div.govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-049",
+      "statement": "A blank Document reference fails with 'Enter a document reference', shown in the summary and above the input.",
+      "kind": "rule",
+      "ref": "T5 snapshot call@2481 summary link #accompanyingDocumentReference and p#accompanyingDocumentReference-error",
+      "quote": "Enter a document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-050",
+      "statement": "No Document type chosen fails with 'Select a document type', shown in the summary and above the select.",
+      "kind": "rule",
+      "ref": "T5 snapshot call@2481 summary link #accompanyingDocumentType and p#accompanyingDocumentType-error",
+      "quote": "Select a document type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-051",
+      "statement": "A blank Date of issue fails with 'Enter a date of issue', shown in the summary and above the input.",
+      "kind": "rule",
+      "ref": "T5 snapshot call@2481 summary link #accompanyingDocumentDateOfIssue and p#accompanyingDocumentDateOfIssue-error",
+      "quote": "Enter a date of issue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-052",
+      "statement": "No file attached fails with 'Upload a document', shown in the summary (linking to #file) and as the inline error above the drop zone.",
+      "kind": "rule",
+      "ref": "T5 snapshot call@2481 summary link #file and p#file-error; drop-zone.fit.spec.js:107",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Upload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-053",
+      "statement": "The failed attachment is drawn on the drop zone itself: the Attachment form group takes the error state, so the drop zone gets the red error border, and the hidden input takes the error modifier.",
+      "kind": "behaviour",
+      "ref": "T5 snapshot call@2481 div.govuk-form-group--error containing div.govuk-file-upload-wrapper; input class govuk-file-upload--error; drop-zone.fit.spec.js:110-114",
+      "quote": "The red border is the form group's error state reaching the drop zone, so the failure is drawn on the control the trader has to go back to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-054",
+      "statement": "In the error state the drop zone button is described by both the hint and the error message, so a screen reader announces 'Upload a document' on the button.",
+      "kind": "non-functional",
+      "ref": "T5 snapshot call@2481 button#file aria-describedby; drop-zone.fit.spec.js:115 toHaveAccessibleDescription",
+      "quote": "aria-describedby=\"file-hint file-error\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-055",
+      "statement": "Because the enhanced drop zone button carries the id 'file', the error summary link '#file' leads to the drop zone button.",
+      "kind": "behaviour",
+      "ref": "T5 snapshot call@2481 summary href=#file and button id=file",
+      "quote": "<A href=\"#file\">Upload a document</A>",
+      "confidence": "inferred",
+      "note": "Inferred from matching ids; no trace clicks the summary link."
+    },
+    {
+      "id": "trace-animals-fit-p24-056",
+      "statement": "After a failed submit the fields stay empty: the drop zone again says 'No file chosen'.",
+      "kind": "behaviour",
+      "ref": "T5 snapshot call@2481 status span",
+      "quote": "No file chosen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p24-057",
+      "statement": "The page carries an empty client-side error summary container titled 'There is a problem' with the prefix 'Error:', ready for errors raised in the browser before a post, such as an oversized file.",
+      "kind": "behaviour",
+      "ref": "T1 snapshot call@2119 div#js-error-summary-container",
+      "quote": "<DIV id=\"js-error-summary-container\" data-error-summary-title=\"There is a problem\" data-error-prefix=\"Error:\">",
+      "confidence": "inferred",
+      "note": "Inferred purpose from the container's attributes and the form's data-oversize-error; no trace fills it."
+    },
+    {
+      "id": "trace-animals-fit-p24-058",
+      "statement": "The page carries a hidden polite live region with virus-scan status copy: COMPLETE 'Check completed' (green, announced 'Document scan complete: the file is safe to use'), REJECTED 'Virus found' (red, announced 'Document scan failed: a virus was found. Remove the file and try again.'), PENDING 'Scanning for virus' (blue) and UNKNOWN 'Unknown' (grey).",
+      "kind": "copy",
+      "ref": "T1 snapshot call@2119 div#js-scan-status-announcer data-scan-copy",
+      "quote": "{\"COMPLETE\":{\"text\":\"Check completed\",\"classes\":\"govuk-tag--green\",\"announcement\":\"Document scan complete: the file is safe to use\"},\"REJECTED\":{\"text\":\"Virus found\",\"classes\":\"govuk-tag--red\",\"announcement\":\"Document scan failed: a virus was found. Remove the file and try again.\"},\"PENDING\":{\"text\":\"Scanning for virus\",\"classes\":\"govuk-tag--blue\"},\"UNKNOWN\":{\"text\":\"Unknown\",\"classes\":\"govuk-tag--grey\"}}",
+      "confidence": "verbatim",
+      "note": "Its data-settled-href points back to the page with ?attempt=1. No trace in this part uploads a file, so no status is ever shown here."
+    },
+    {
+      "id": "trace-animals-fit-p24-059",
+      "statement": "The upload page uses only govuk-frontend components (details, table, summary card, input, select, file upload, button, error summary, tag) apart from the MOJ date picker and the shared app-journey-strip wrapper.",
+      "kind": "constraint",
+      "ref": "T1 snapshot call@2119 main classes",
+      "quote": "moj-datepicker / app-journey-strip",
+      "confidence": "inferred",
+      "note": "Read from the rendered classes across the main element; the drop zone itself is entirely govuk-file-upload."
+    },
+    {
+      "id": "trace-animals-fit-p24-060",
+      "statement": "No trace shows the oversized-file, wrong file type, ZIP file or more-than-15-files errors firing, either in the browser or from the server.",
+      "kind": "rule",
+      "ref": "all T1-T10; only T5 drives an error, and only for empty fields",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p24-061",
+      "statement": "No trace exercises the 'Entered drop zone' and 'Left drop zone' announcements or the drop zone's drag-over visual state; the drop test dispatches a drop event straight onto the button.",
+      "kind": "non-functional",
+      "ref": "T3; drop-zone.fit.spec.js:42-51 dropFile",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p24-062",
+      "statement": "No trace runs the page with JavaScript off, so the no-JS file upload fallback is not proven by a submit.",
+      "kind": "behaviour",
+      "ref": "drop-zone.fit.spec.js:94-96 comment",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec names this as an open question on inc-137."
+    },
+    {
+      "id": "trace-animals-fit-p24-063",
+      "statement": "No trace in this part submits a valid document, so what 'Save and add another', 'Save and continue' and 'Save and return to overview' do on success, the list of added documents, and the scan statuses are not shown here.",
+      "kind": "behaviour",
+      "ref": "all T1-T10",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p24-064",
+      "statement": "No trace drives the Date of issue date picker or shows validation for an invalid (rather than blank) document reference or date.",
+      "kind": "rule",
+      "ref": "all T1-T10",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

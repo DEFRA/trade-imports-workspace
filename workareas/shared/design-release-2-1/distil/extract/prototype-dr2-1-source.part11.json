@@ -1,0 +1,1524 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 11 read, in full, at commit 04a073b: the DR2.1 views review-notification.html, declaration.html, notification-submitted.html and delete-notification.html; the DR2.1 partials review-page-header.html, review-sections.html, review-summary-card.html, review-summary-row.html and delete-confirmation.html; and app/routes.js lines 4418-5776 (review value formatting, missing-field display, species and commodity sections, card error states, completeness, the review view model, read-only and cleared-error variants, DR2 commodity and document cards, review presentation, status-to-variant mapping, dashboard metadata, action-required warning, review page header), 5916-6194 (review page options and renderReviewNotificationPage, delete summary rows), 6267-6446 (delete page render, declaration date, validateDeclaration, conditional submission items, renderDeclarationPage, renderNotificationSubmittedPage) and 12046-12181 (GET/POST /review-notification, GET/POST /notifications/delete, GET/POST /declaration, GET /notification-submitted). Route handlers are written as root paths; app/lib/version-mount.js prefixes every redirect and rendered link with /design-release-2.1, so the claims give the bare path. Covered: the review page in its journey, draft (opened by reference), submitted, submission-complete and action-required variants, with its page header, import reference numbers, six numbered sections, every card and row with its label and change link, the missing-field display, every card error and the error summary; the POST from review and the completeness rule; the declaration page with every statement, the checkbox, its error and what submitting saves; the conditional items a submission carries; the notification-submitted page with every heading, panel, list and link; and the delete-notification page with its summary rows, question, buttons and POST. The journey variant's notification-status partial, the amend and cancel-amend modals and the copy-as-new and amend routes belong to other parts and are only referenced here.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p11-001",
+      "statement": "The review page is reached at GET /review-notification and reads two optional query parameters: submitted (the id of a submitted notification) and reference (a notification reference).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12046-12048",
+      "quote": "router.get('/review-notification', (req, res) => {\n  const submittedId = (req.query.submitted || '').trim()\n  const reference = (req.query.reference || '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-002",
+      "statement": "When the review page is opened with a submitted id that matches no submitted notification, the user is redirected to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12053-12055",
+      "quote": "if (submittedId && !submittedNotification) {\n    return res.redirect(isDr2 ? dashboardBackLink : '/')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-003",
+      "statement": "When the review page is opened with no submitted id and no reference, it shows the in-progress notification from the session in the 'journey' variant: editable, with change links, no page header, and a Back link to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5982-5989, 12080-12082",
+      "quote": "return {\n    sessionData: options.sessionData || req.session.data,\n    readOnly: false,\n    showActions: true,\n    reviewVariant: 'journey',\n    backLink: options.backLink || '/notification-hub',\n    pageHeader: null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-004",
+      "statement": "Opening the journey review page gives the in-progress notification a reference if it does not already have one.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12080",
+      "quote": "ensurePrototypeNotificationReference(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-005",
+      "statement": "Opened with a submitted id, the review page shows that submitted notification's saved snapshot read-only, with no change links, and its Back link goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5921-5947",
+      "quote": "return {\n      sessionData: submittedNotification.snapshot,\n      readOnly: true,\n      showActions: false,\n      reviewVariant,\n      backLink: dashboardBackLink,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-006",
+      "statement": "A submitted notification is shown in the 'action-required' variant when it still has conditional submission items outstanding, and in the 'submitted' variant when it has none.",
+      "kind": "rule",
+      "ref": "app/routes.js:5928-5929",
+      "quote": "const conditionalItems = getConditionalSubmissionItems(submittedNotification.snapshot)\n    const reviewVariant = conditionalItems.length ? 'action-required' : 'submitted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-007",
+      "statement": "Opened with a reference that matches no submitted, draft or dashboard notification, the review page redirects to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5950-5955",
+      "quote": "const metadata = getDashboardNotificationMetadata(req.session.data, reference)\n\n    if (!metadata) {\n      return { redirectTo: dashboardBackLink }\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-008",
+      "statement": "Opened with the reference of a draft or an action-required notification, the review page loads that notification's snapshot into the session as the notification being worked on.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5962-5964",
+      "quote": "if (isDraft || isActionRequired) {\n      loadDraftSnapshotIntoSession(req.session.data, snapshot)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-009",
+      "statement": "Opened by reference, the review page is editable with change links only for a draft; every other status is read-only with no change links, and the Back link goes to the dashboard.",
+      "kind": "rule",
+      "ref": "app/routes.js:5966-5971",
+      "quote": "readOnly: !isDraft,\n      showActions: isDraft,\n      reviewVariant,\n      backLink: dashboardBackLink,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-010",
+      "statement": "A notification's status text maps to a review variant: 'submitted' to submitted; 'submission complete', 'complete' or 'completed' to submission-complete; 'submitted action required' or 'action required' to action-required; anything else, including draft, new and in progress, to draft. The match ignores case and surrounding spaces.",
+      "kind": "rule",
+      "ref": "app/routes.js:5632-5652",
+      "quote": "if (normalised === 'submission complete' || normalised === 'complete' || normalised === 'completed') {\n    return 'submission-complete'\n  }\n\n  if (normalised === 'submitted action required' || normalised === 'action required') {\n    return 'action-required'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-011",
+      "statement": "Looked up by reference, a submitted notification's status is 'Submitted action required' when it has conditional submission items and 'Submitted' when it has none, and its date is the date it was submitted.",
+      "kind": "rule",
+      "ref": "app/routes.js:5661-5675",
+      "quote": "statusText: conditionalItems.length ? 'Submitted action required' : 'Submitted',\n      reviewVariant: conditionalItems.length ? 'action-required' : 'submitted',\n      dateSubmitted: formatDateForDashboard(submittedMatch.submittedAt),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-012",
+      "statement": "Looked up by reference, a saved draft notification shows its own status text, or 'Draft' when it has none, always in the draft variant, dated by when it was created.",
+      "kind": "rule",
+      "ref": "app/routes.js:5677-5689",
+      "quote": "statusText: draftMatch.statusText || 'Draft',\n      reviewVariant: 'draft',\n      dateCreated: formatDateForDashboard(draftMatch.createdAt),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-013",
+      "statement": "A reference that is neither a submitted nor a saved draft notification is looked up in the dashboard's static example notifications, which take their variant from their own reviewVariant or their status text.",
+      "kind": "data",
+      "ref": "app/routes.js:5691-5710",
+      "quote": "reviewVariant: staticNotification.reviewVariant || mapStatusTextToReviewVariant(staticNotification.statusText),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-014",
+      "statement": "Every path the review, declaration, submitted and delete handlers redirect to or link to is served under /design-release-2.1, because the version mount prefixes redirects and rendered links with the release's base path.",
+      "kind": "constraint",
+      "ref": "app/lib/version-mount.js:255-268, 289",
+      "quote": "res.redirect = function redirectWithVersionPrefix (statusOrUrl, maybeUrl) {",
+      "confidence": "inferred",
+      "note": "The handlers in app/routes.js are written as root paths such as '/declaration'; the version mount's prefixPath turns them into /design-release-2.1/declaration."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-015",
+      "statement": "The review page shows an 'Alpha' phase banner with the text 'This is a new service. Help us improve it and give your feedback by email.', where the feedback link goes nowhere (#).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:10-15",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-016",
+      "statement": "The review page has a 'Back' link whose destination depends on the variant: the notification hub in the journey, the dashboard when opened from it.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:17-20",
+      "quote": "{{ govukBackLink({\n    text: \"Back\",\n    href: backLink\n  }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-017",
+      "statement": "In the journey variant the review page heading is 'Review your notification'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6039-6043",
+      "quote": "(showAmendResubmitHeading ? 'Review before re-submitting' : 'Review your notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-018",
+      "statement": "In the journey variant, when the user is creating a template, the review page heading is 'Review your template'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6040-6041",
+      "quote": "? 'Review your template'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-019",
+      "statement": "In the journey variant, when the notification is being amended and the user has changed something, the review page heading is 'Review before re-submitting'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6025-6027, 6042",
+      "quote": "const showAmendResubmitHeading = isAmending && hasAmendChanges(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-020",
+      "statement": "The journey variant shows the notification status block at the top of the review page; every other variant shows the review page header instead.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:27-31",
+      "quote": "{% if reviewVariant == 'journey' %}\n      {% include \"partials/design-release-2.1/notification-status.html\" %}\n    {% elif pageHeader %}\n      {% include \"partials/design-release-2.1/review-page-header.html\" %}",
+      "confidence": "verbatim",
+      "note": "The notification-status partial's content is extracted by another part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-021",
+      "statement": "Outside the journey variant the review page has no 'Review your notification' heading; the notification reference is the page's main heading.",
+      "kind": "copy",
+      "ref": "app/routes.js:6039-6043; app/views/partials/design-release-2.1/review-page-header.html:4",
+      "quote": "<h1 class=\"app-dr2-review-page-header__reference\">{{ pageHeader.reference or notificationReference }}</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-022",
+      "statement": "The review page header shows a status tag reading 'Draft', 'Submitted', 'Submission complete' or 'Submitted action required' by variant, unless the notification carries its own status text, which is shown instead.",
+      "kind": "copy",
+      "ref": "app/routes.js:5737-5760; app/views/partials/design-release-2.1/review-page-header.html:6-8",
+      "quote": "'action-required': {\n      text: 'Submitted action required',\n      modifier: 'action-required'\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-023",
+      "statement": "The review page header shows 'Date created:' with the creation date for a draft, and 'Date submitted:' with the submission date for every other variant.",
+      "kind": "copy",
+      "ref": "app/routes.js:5761-5764; app/views/partials/design-release-2.1/review-page-header.html:35-38",
+      "quote": "dateLabel: reviewVariant === 'draft' ? 'Date created' : 'Date submitted',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-024",
+      "statement": "When the notification has no recorded created or submitted date, the review page header shows today's date, written as day, full month name and year (for example '7 October 2026').",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5762-5764, 6322-6329",
+      "quote": "return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-025",
+      "statement": "The review page header shows an 'Amend this notification' button only for submitted and action-required notifications; it opens the amend dialog rather than going to a page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5768; app/views/partials/design-release-2.1/review-page-header.html:11-15",
+      "quote": "showAmendButton: reviewVariant === 'action-required' || reviewVariant === 'submitted',",
+      "confidence": "verbatim",
+      "note": "The amend dialog itself is extracted by part 12."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-026",
+      "statement": "A draft or submission-complete notification's review page header has no 'Amend this notification' button.",
+      "kind": "rule",
+      "ref": "app/routes.js:5768",
+      "quote": "showAmendButton: reviewVariant === 'action-required' || reviewVariant === 'submitted',",
+      "confidence": "inferred",
+      "note": "Follows from the amend button being shown only for the action-required and submitted variants."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-027",
+      "statement": "The review page header always shows a 'Copy as new' button: a primary button when there is no amend button, a secondary button beside 'Amend this notification' when there is.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-page-header.html:16-22; app/routes.js:5769",
+      "quote": "{% if pageHeader.showAmendButton %}\n        <a class=\"govuk-button govuk-button--secondary\" href=\"{{ pageHeader.copyHref",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-028",
+      "statement": "The header's 'Copy as new' button goes to /notifications/copy-as-new carrying the same submitted id or reference the review page was opened with.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5935, 5975",
+      "quote": "copyHref: `/notifications/copy-as-new?submitted=${encodeURIComponent(submittedId)}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-029",
+      "statement": "The review page header always shows a red 'Delete' button that goes to /notifications/delete carrying the same submitted id or reference the review page was opened with.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5773, 5937, 5977; app/views/partials/design-release-2.1/review-page-header.html:23-25",
+      "quote": "<a class=\"govuk-button govuk-button--warning\" href=\"{{ pageHeader.deleteHref",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-030",
+      "statement": "For an action-required notification, the review page header shows a warning; when there are no outstanding items it reads 'You need to complete missing information before import'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5713-5716, 5765-5767",
+      "quote": "return 'You need to complete missing information before import'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-031",
+      "statement": "When an action-required notification is missing both animal identifiers and a document, the header warning reads 'You need to complete animal identifiers and upload a health certificate'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5718-5723",
+      "quote": "return 'You need to complete animal identifiers and upload a health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-032",
+      "statement": "When an action-required notification is missing only animal identifiers, the header warning reads 'You need to complete animal identifiers'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5725-5727",
+      "quote": "return 'You need to complete animal identifiers'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-033",
+      "statement": "When an action-required notification is missing only a document or certificate, the header warning reads 'You need to upload a health certificate'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5729-5731",
+      "quote": "return 'You need to upload a health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-034",
+      "statement": "The header warning decides what is missing by looking for the words 'identifier', 'document' or 'certificate' in the outstanding items, and otherwise shows the first outstanding item's own text.",
+      "kind": "rule",
+      "ref": "app/routes.js:5718-5733",
+      "quote": "const needsIdentifiers = conditionalItems.some((item) => item.includes('identifier'))\n  const needsDocuments = conditionalItems.some((item) => item.includes('document') || item.includes('certificate'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-035",
+      "statement": "Outside the journey variant, the review page shows an 'Import reference numbers' section.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:44-46",
+      "quote": "<h2 class=\"app-dr2-import-reference-section__title\" id=\"import-reference-numbers-heading\">Import reference numbers</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-036",
+      "statement": "The Import reference numbers section warns 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:48-52",
+      "quote": "text: \"You must use the correct reference and code on the customs declaration or your consignment will be delayed.\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-037",
+      "statement": "The Import reference numbers section shows a 'Notification reference' row with the notification's reference and a secondary 'Copy' button that copies the reference.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:55-59",
+      "quote": "<p class=\"app-dr2-import-reference-section__key\">Notification reference</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-038",
+      "statement": "The Import reference numbers section shows a 'Customs document code' row with the fixed value C640 and a secondary 'Copy' button that copies it.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/review-notification.html:61-65",
+      "quote": "<p class=\"app-dr2-import-reference-section__key\">Customs document code</p>\n            <p class=\"app-dr2-import-reference-section__value\">C640</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-039",
+      "statement": "The review page shows a GOV.UK error summary titled 'There is a problem' when there are review errors.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:33-38",
+      "quote": "titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-040",
+      "statement": "The review error summary is shown only for an editable notification that is not being amended or made into a template: the journey and draft variants. Read-only, action-required, amend and template reviews never show it.",
+      "kind": "rule",
+      "ref": "app/routes.js:6056-6061",
+      "quote": "errorList: readOnly || reviewVariant === 'action-required' || isAmending || isTemplateCreate\n        ? null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-041",
+      "statement": "When a notification is being amended or made into a template, the review page shows no card errors at all.",
+      "kind": "rule",
+      "ref": "app/routes.js:6028-6032",
+      "quote": ": isAmending || isTemplateCreate\n      ? clearReviewViewModelErrors(getReviewNotificationViewModel(sessionData))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-042",
+      "statement": "A read-only review shows no change links and no card errors.",
+      "kind": "rule",
+      "ref": "app/routes.js:5323-5335",
+      "quote": "return {\n      ...card,\n      changeHref: null,\n      hasError: false,\n      errorMessage: null\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-043",
+      "statement": "Each review error summary entry shows the card's error message and links to that card.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4947-4954",
+      "quote": ".map((card) => ({\n      text: card.errorMessage,\n      href: `#${card.id}`\n    }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-044",
+      "statement": "The review error summary lists errors in this order: origin of import, what are you importing, main import reason, commodity details, each species, additional details, arrival details, transport details, addresses, contact address. Transit countries and uploaded documents never appear in it.",
+      "kind": "rule",
+      "ref": "app/routes.js:5304-5315",
+      "quote": "viewModel.aboutConsignment.importDetailsCard,\n    viewModel.aboutConsignment.animalDetailsCard,\n    viewModel.aboutConsignment.importReasonCard,\n    viewModel.descriptionOfGoods.commodityDetailsCard,\n    ...viewModel.descriptionOfGoods.speciesSections,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-045",
+      "statement": "An incomplete review card's error message is 'Complete' followed by the card's title in lower case.",
+      "kind": "rule",
+      "ref": "app/routes.js:4896-4905",
+      "quote": "errorMessage: `Complete ${title.toLowerCase()}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-046",
+      "statement": "When the origin details are incomplete, the Origin of import card shows the error 'Complete origin of import'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5179",
+      "quote": "...reviewCardErrorState(hasOriginDetails(sessionData), 'Origin of import')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-047",
+      "statement": "When no commodity has been selected, the What are you importing? card shows the error 'Complete what are you importing?'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5186",
+      "quote": "...reviewCardErrorState(hasCommoditySelection(sessionData), 'What are you importing?')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-048",
+      "statement": "When the import reason is incomplete, the Main import reason card shows the error 'Complete main import reason'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5193",
+      "quote": "...reviewCardErrorState(hasImportReasonComplete(sessionData), 'Main import reason')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-049",
+      "statement": "When the consignment details are incomplete, the error summary shows 'Complete commodity details', linked to #review-commodity-details.",
+      "kind": "copy",
+      "ref": "app/routes.js:5197-5203",
+      "quote": "...reviewCardErrorState(hasConsignmentDetails(sessionData), 'Commodity details')",
+      "confidence": "inferred",
+      "note": "In DR2.1 the commodity details card is replaced by per-commodity cards that are always built with hasError false (app/routes.js:5421-5422), so this summary link has no card with that id to land on and no inline error is shown on the commodity cards. Recorded as seen, not resolved."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-050",
+      "statement": "When the additional animal details are incomplete, the Additional details card shows the error 'Complete additional details'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5212",
+      "quote": "...reviewCardErrorState(hasAdditionalAnimalDetailsComplete(sessionData), 'Additional details')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-051",
+      "statement": "When the arrival details are incomplete, the Arrival details card shows the error 'Complete arrival details'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5223",
+      "quote": "...reviewCardErrorState(hasArrivalDetailsComplete(sessionData), 'Arrival details')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-052",
+      "statement": "When the transport details are incomplete, the Transport details card shows the error 'Complete transport details'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5262",
+      "quote": "...reviewCardErrorState(hasTransportDetailsComplete(sessionData), 'Transport details')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-053",
+      "statement": "When the consignment addresses are incomplete, the Addresses card shows the error 'Complete roles and addresses', even though DR2.1 titles the card 'Addresses'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5272, 5568-5571",
+      "quote": "...reviewCardErrorState(hasConsignmentAddressesComplete(sessionData), 'Roles and addresses')",
+      "confidence": "inferred",
+      "note": "The message is built from the view model title before the DR2 presentation retitles the card."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-054",
+      "statement": "When there is no contact address, the Contact address card shows the error 'Complete contact address for this consignment'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5284",
+      "quote": "...reviewCardErrorState(hasContactAddress(sessionData), 'Contact address for this consignment')",
+      "confidence": "inferred",
+      "note": "Message text built by reviewCardErrorState at app/routes.js:4903; DR2.1 titles the card 'Contact address'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-055",
+      "statement": "Transit countries and uploaded documents are optional on the review page: their cards never show an error.",
+      "kind": "rule",
+      "ref": "app/routes.js:5233-5234, 5293-5294",
+      "quote": "// Documents are optional for submission.\n        ...reviewCardErrorState(true, 'Uploaded documents')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-056",
+      "statement": "Species errors are raised on review only when more than one species is selected and animal identifiers are required.",
+      "kind": "rule",
+      "ref": "app/routes.js:4879-4882, 1835-1837",
+      "quote": "if (!requiresAnimalIdentifiersForSubmit(sessionData)) {\n    return { hasError: false, errorMessage: null }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-057",
+      "statement": "When a species needing identifiers has no consignment count, the error reads 'Enter the number of animals for <species>' (or 'Enter the number of packages for <species>' for a germinal product), with the species name in lower case.",
+      "kind": "copy",
+      "ref": "app/routes.js:4861-4874",
+      "quote": "return isGerminalProduct\n      ? `Enter the number of packages for ${speciesName}`\n      : `Enter the number of animals for ${speciesName}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-058",
+      "statement": "When a species needing identifiers has a count but no identifier, the error reads 'Enter at least 1 animal identifier for <species>', with the species name in lower case.",
+      "kind": "copy",
+      "ref": "app/routes.js:4876",
+      "quote": "return `Enter at least 1 animal identifier for ${speciesName}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-059",
+      "statement": "Species errors link to an anchor named review-species-<n>, numbered among the species that have identifier fields; in DR2.1 no card on the page carries that id.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4758-4792",
+      "quote": "id: `review-species-${index + 1}`,",
+      "confidence": "inferred",
+      "note": "DR2.1 renders commodity cards (review-commodity-<key>), not species section cards, so the summary link has no target on the page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-060",
+      "statement": "A 'Complete identification details for <species>' review message exists in the code but is never shown, because nothing calls it.",
+      "kind": "copy",
+      "ref": "app/routes.js:4843-4859",
+      "quote": "return `Complete identification details for ${speciesName}`",
+      "confidence": "inferred",
+      "note": "grep finds getSpeciesReviewCardErrorMessage defined at 4843 and never called."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-061",
+      "statement": "A card with an error is outlined as an error card and shows its error message under the card title, prefixed for screen readers with 'Error:'.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-summary-card.html:3-14",
+      "quote": "<span class=\"govuk-visually-hidden\">Error:</span>\n      {{ card.errorMessage }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-062",
+      "statement": "Any review value that is empty is shown as 'Not applicable'.",
+      "kind": "rule",
+      "ref": "app/routes.js:4474-4480",
+      "quote": "if (value == null || (typeof value === 'string' && !value.trim())) {\n    return 'Not applicable'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-063",
+      "statement": "In a card with an error, each empty or 'Not applicable' row is shown as a missing field: the value is left blank and screen readers hear 'Missing'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4482-4503; app/views/partials/design-release-2.1/review-summary-row.html:17-22",
+      "quote": "{% if row.isMissing %}\n        <span class=\"govuk-visually-hidden\">Missing</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-064",
+      "statement": "The missing-field display is applied only in the journey and draft reviews that show errors; read-only, amend and template reviews show 'Not applicable' instead.",
+      "kind": "rule",
+      "ref": "app/routes.js:5300-5303, 6028-6032",
+      "quote": "const viewModel = applyMissingFieldDisplayToReviewViewModel(\n    getReviewNotificationViewModel(sessionData)\n  )",
+      "confidence": "inferred",
+      "note": "Only getReviewNotificationViewModelWithErrors applies it, and only the editable non-amend, non-template path uses that."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-065",
+      "statement": "An address value on the review page is shown with its name on one line and each address line on its own line.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-summary-row.html:1-12",
+      "quote": "{% if value.name %}\n      <p class=\"app-dr2-review-row__address-name\">{{ value.name }}</p>\n    {% endif %}\n    {% for line in value.lines %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-066",
+      "statement": "On an editable review, every card with a change destination shows a 'Change' link in its header.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5540-5554; app/views/partials/design-release-2.1/review-summary-card.html:18-24",
+      "quote": "headerAction: !readOnly && card.changeHref\n      ? {\n        type: 'change',\n        href: card.changeHref\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-067",
+      "statement": "Rows of the general review cards have no per-row Change link; only the Transit countries rows, the first row of each commodity species block and identification details show Change against rows.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:10-60; app/views/partials/design-release-2.1/review-summary-card.html:13",
+      "quote": "{% set rowActions = showRowActions if showRowActions != undefined else false %}",
+      "confidence": "inferred",
+      "note": "review-sections.html passes showRowActions true only to the arrival details card; commodity cards pass showActions to their rows."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-068",
+      "statement": "A card header action can be a 'Remove' link instead of 'Change'; no DR2.1 review card in this slice uses it.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-summary-card.html:19-20",
+      "quote": "<a class=\"app-dr2-review-card__header-link app-dr2-review-card__header-link--remove\" href=\"{{ card.headerAction.href }}\">Remove</a>",
+      "confidence": "inferred",
+      "note": "Every headerAction built in app/routes.js 5505-5554 has type 'change'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-069",
+      "statement": "The review page's first section is headed '1. About the consignment' and holds the Origin of import, What are you importing? and Main import reason cards.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:7-13",
+      "quote": "<h2 class=\"app-review-notification-page__section-heading\" id=\"review-section-about\">1. About the consignment</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-070",
+      "statement": "The Origin of import card shows 'Country of origin', 'Region of origin code' and 'Internal reference number', and its Change link goes to /origin-of-the-import.",
+      "kind": "data",
+      "ref": "app/routes.js:5005-5018, 5174-5180",
+      "quote": "key: 'Country of origin',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-071",
+      "statement": "The What are you importing? card shows 'Commodity code', 'Common name' and 'Species', and its Change link goes to /what-are-you-importing.",
+      "kind": "data",
+      "ref": "app/routes.js:5019-5032, 5181-5187",
+      "quote": "title: 'What are you importing?',\n        changeHref: '/what-are-you-importing',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-072",
+      "statement": "The What are you importing? card lists each selected commodity's code and name once, comma-separated, except 'other live mammals', where each species adds its own code and its own common name.",
+      "kind": "rule",
+      "ref": "app/routes.js:4675-4723",
+      "quote": "if (isOtherLiveMammalsCommodityCode(match.commodity)) {\n      codes.push(match.commodity.code)\n      return\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-073",
+      "statement": "The What are you importing? card's Species row lists every selected species in title case, comma-separated.",
+      "kind": "rule",
+      "ref": "app/routes.js:4725-4738",
+      "quote": "return toTitleCaseLabel(match.species.label || match.species.commonName)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-074",
+      "statement": "The Main import reason card shows a 'Main import reason' row, and its Change link goes to /reason-for-import.",
+      "kind": "data",
+      "ref": "app/routes.js:5034-5037, 5188-5194",
+      "quote": "key: 'Main import reason',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-075",
+      "statement": "When the import reason is 'Internal market', the Main import reason card adds a 'Purpose in the market' row.",
+      "kind": "rule",
+      "ref": "app/routes.js:5057-5062",
+      "quote": "if (sessionData.importReason === 'Internal market') {\n    importReasonRows.push({\n      key: 'Purpose in the market',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-076",
+      "statement": "When the import reason is 'Transhipment or onward travel', the Main import reason card adds a 'Destination country' row.",
+      "kind": "rule",
+      "ref": "app/routes.js:5064-5069",
+      "quote": "if (sessionData.importReason === 'Transhipment or onward travel') {\n    importReasonRows.push({\n      key: 'Destination country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-077",
+      "statement": "When the import reason is 'Transit', the Main import reason card adds 'Exit border control post' and 'Destination country' rows.",
+      "kind": "rule",
+      "ref": "app/routes.js:5071-5080",
+      "quote": "key: 'Exit border control post',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-078",
+      "statement": "When the import reason is 'Temporary admission horses', the Main import reason card adds 'Exit date' and 'Port of exit' rows.",
+      "kind": "rule",
+      "ref": "app/routes.js:5082-5091",
+      "quote": "if (sessionData.importReason === 'Temporary admission horses') {\n    importReasonRows.push({\n      key: 'Exit date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-079",
+      "statement": "The review page's second section is headed '2. Description of the goods' and holds one card per commodity, followed by the Additional details card when there is one.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:15-25",
+      "quote": "<h2 class=\"app-review-notification-page__section-heading\" id=\"review-section-goods\">2. Description of the goods</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-080",
+      "statement": "The review page groups the selected species into one card per commodity, titled '<commodity name> (<commodity code>)', and an editable card's header Change link goes to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5413-5425",
+      "quote": "title: `${entry.commodityName || entry.commonName} (${entry.commodityCode})`,\n        changeHref: readOnly ? null : '/consignment-details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-081",
+      "statement": "Inside a commodity card, each species has its own block headed with the species name in title case.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5452-5455; app/views/partials/design-release-2.1/review-summary-card.html:78-80",
+      "quote": "<h4 class=\"app-dr2-review-commodity-card__species-heading\">{{ speciesBlock.speciesLabel }}</h4>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-082",
+      "statement": "For live animals, a species block shows 'Number of animals', followed by the species' packaging fields when packaging applies.",
+      "kind": "data",
+      "ref": "app/routes.js:5438-5450",
+      "quote": ": [{\n        key: 'Number of animals',\n        value: formatReviewValueOrNa(entry.numberOfAnimals)\n      }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-083",
+      "statement": "For a germinal product, a species block shows 'Total gross weight' as '<n> kg' and 'Number of packages'.",
+      "kind": "data",
+      "ref": "app/routes.js:5427-5437",
+      "quote": "key: 'Total gross weight',\n          value: entry.netWeight ? `${entry.netWeight} kg` : formatReviewValueOrNa(entry.netWeight)",
+      "confidence": "verbatim",
+      "note": "The row is labelled gross weight but shows the stored net weight."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-084",
+      "statement": "On an editable review, only the first row of each species block has a Change link, going to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5478-5483; app/views/partials/design-release-2.1/review-summary-card.html:84-86",
+      "quote": "showChange: !readOnly && index === 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-085",
+      "statement": "When the germinal storage temperature question applies, a 'Temperature' row is added to the first species block of the first commodity card.",
+      "kind": "rule",
+      "ref": "app/routes.js:5491-5500",
+      "quote": "firstSpeciesBlock.rows.push({\n        key: 'Temperature',\n        value: formatReviewValueOrNa(sessionData.storageTemperature)\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-086",
+      "statement": "For live animals with saved identifiers, a species block shows an 'Identification details' table: the identifier field names as column headings and one row per animal with its label and values.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4769-4778, 5470-5475; app/views/partials/design-release-2.1/review-summary-card.html:104-125",
+      "quote": "<h5 class=\"app-dr2-review-commodity-card__identification-heading\">Identification details</h5>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-087",
+      "statement": "For a germinal product with identifier fields, a species block shows 'Identification details' as a list of each identifier field and its saved value, from the first saved entry.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4740-4756",
+      "quote": "details: fields.map((field) => ({\n      key: field.label,\n      value: formatReviewValueOrNa(saved[field.id])\n    })),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-088",
+      "statement": "On an editable review, Identification details has a Change link going to /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4754, 5474; app/views/partials/design-release-2.1/review-summary-card.html:95-97",
+      "quote": "changeHref: readOnly ? null : '/animal-identification-details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-089",
+      "statement": "A live-animal species with no saved identifiers shows no Identification details on review (outside the action-required variant).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5466-5476",
+      "quote": ": (speciesSection && speciesSection.animalTable\n          ? {",
+      "confidence": "inferred",
+      "note": "identification falls to null when there is no saved animal table."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-090",
+      "statement": "On an action-required notification, a species that needs identifiers but has none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier'.",
+      "kind": "copy",
+      "ref": "app/routes.js:5459-5464; app/views/partials/design-release-2.1/review-summary-card.html:128-135",
+      "quote": "errorMessage: 'Enter a minimum of 1 identifier'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-091",
+      "statement": "The Additional details card is shown only when it has a row to show.",
+      "kind": "rule",
+      "ref": "app/routes.js:5204-5214",
+      "quote": "additionalAnimalDetailsCard: additionalAnimalRows.length\n        ? {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-092",
+      "statement": "The Additional details card shows 'Certified for' when the certification purpose question applies or the consignment is germinal products only; for germinal products only it reads 'Germinal products'.",
+      "kind": "rule",
+      "ref": "app/routes.js:5041-5048",
+      "quote": "key: 'Certified for',\n      value: hasGerminalProductsOnly(sessionData)\n        ? 'Germinal products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-093",
+      "statement": "The Additional details card shows 'Includes unweaned animals' when the unweaned question applies.",
+      "kind": "rule",
+      "ref": "app/routes.js:5050-5055",
+      "quote": "key: 'Includes unweaned animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-094",
+      "statement": "The Additional details card has a Change link to /additional-animal-details only when that page is part of the journey; otherwise it has no Change link.",
+      "kind": "rule",
+      "ref": "app/routes.js:5208-5210",
+      "quote": "changeHref: requiresAdditionalAnimalDetailsPage(sessionData)\n            ? '/additional-animal-details'\n            : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-095",
+      "statement": "The review page's third section is headed '3. Transport and arrival' and holds the Arrival details and Transport details cards.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:27-32",
+      "quote": "<h2 class=\"app-review-notification-page__section-heading\" id=\"review-section-movement\">3. Transport and arrival</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-096",
+      "statement": "The Arrival details card shows 'Port of entry', 'Arrival date at destination', 'Means of transport to the port of entry', 'Transport identification' and 'Transport document reference', and its Change link goes to /arrival-details.",
+      "kind": "data",
+      "ref": "app/routes.js:5093-5121, 5218-5224",
+      "quote": "key: 'Means of transport to the port of entry',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-097",
+      "statement": "When the user is creating a template, the Arrival details card leaves out 'Arrival date at destination'.",
+      "kind": "rule",
+      "ref": "app/routes.js:5100-5105",
+      "quote": "if (!isDesignRelease21TemplateCreate(sessionData)) {\n    arrivalDetailsRows.push({\n      key: 'Arrival date at destination',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-098",
+      "statement": "The Arrival details card turns on row-level Change links, but only its Transit countries rows are marked to show one; its own arrival rows show no per-row Change link, only the header Change.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:30; app/views/partials/design-release-2.1/review-summary-row.html:15; app/routes.js:5586-5589",
+      "quote": "{% set showChange = showActions and row.showChange %}",
+      "confidence": "inferred",
+      "note": "review-sections.html passes showRowActions true for this card, but dr2ReviewRow also needs row.showChange, which is set only on the transit country rows."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-099",
+      "statement": "When transit countries apply, the Arrival details card has a 'Transit countries' subsection with the row 'Countries that the consignment will travel through', listing the countries comma-separated, with a Change link to /transit-countries on an editable review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5225-5235, 5580-5592",
+      "quote": "key: 'Countries that the consignment will travel through',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-100",
+      "statement": "The Transport details card shows 'Name', 'Address', 'Country', 'Approval number' and 'Type' for the transporter, and its Change link goes to /transporter.",
+      "kind": "data",
+      "ref": "app/routes.js:5236-5263",
+      "quote": "title: 'Transport details',\n        changeHref: '/transporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-101",
+      "statement": "The transporter's address is shown with each comma-separated part on its own line, or as a single line when it has one part.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4621-4639",
+      "quote": ".split(',')\n    .map((part) => part.trim())\n    .filter(Boolean)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-102",
+      "statement": "The transporter's Country is worked out from the approval number's prefix: UK/ United Kingdom, DK/ Denmark, PT/ Portugal, RO/ Romania, IE/ Republic of Ireland, SK/ Slovakia, FI/ Finland; any other prefix shows 'Not applicable'.",
+      "kind": "rule",
+      "ref": "app/routes.js:4641-4673",
+      "quote": "if (approvalNumber.startsWith('IE/')) {\n    return 'Republic of Ireland'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-103",
+      "statement": "The review page's fourth section is headed '4. Uploaded documents', and is left out when the user is creating a template.",
+      "kind": "rule",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:34-49; app/routes.js:5557, 5619-5620",
+      "quote": "<h2 class=\"app-review-notification-page__section-heading\" id=\"review-section-documents\">4. Uploaded documents</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-104",
+      "statement": "Each uploaded document gets its own card, titled 'Document <n>', showing 'Document reference', 'Document type', 'Date of issue' and 'Attachment' (the file name).",
+      "kind": "data",
+      "ref": "app/routes.js:5149-5169, 5529-5537",
+      "quote": "title: `Document ${index + 1}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-105",
+      "statement": "On an editable review, each document card has a header Change link going to /upload-documents?from=review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5291, 5505-5512",
+      "quote": "changeHref: '/upload-documents?from=review',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-106",
+      "statement": "When no documents are uploaded, the Uploaded documents section shows a single 'Document 1' card with 'Document reference' reading 'Not applicable'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5514-5527",
+      "quote": "title: 'Document 1',\n      headerAction,\n      changeHref: headerAction ? headerAction.href : null,\n      rows: [{\n        key: 'Document reference',\n        value: 'Not applicable'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-107",
+      "statement": "On an action-required notification with no uploaded documents, the Uploaded documents section shows the error 'Upload a valid health certificate' in place of any document cards.",
+      "kind": "copy",
+      "ref": "app/routes.js:5622-5627; app/views/partials/design-release-2.1/review-sections.html:38-42",
+      "quote": "? 'Upload a valid health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-108",
+      "statement": "The consignment addresses section is headed '5. Consignment addresses', or '4. Consignment addresses' when the documents section is left out.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:3-4, 51-55",
+      "quote": "{% set partiesSectionNumber = 4 if hideDocuments else 5 %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-109",
+      "statement": "The consignment addresses section holds one card titled 'Addresses', whose Change link goes to /roles-and-addresses.",
+      "kind": "data",
+      "ref": "app/routes.js:5266-5273, 5568-5571",
+      "quote": "title: 'Addresses'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-110",
+      "statement": "The Addresses card has one row per consignment address role, labelled with that role's heading: a CPH role shows its CPH number, any other role shows the chosen address.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5123-5139",
+      "quote": "if (section.isCph) {\n      return [{\n        key: section.heading,\n        value: formatReviewValueOrNa(sessionData[section.sessionCphKey])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-111",
+      "statement": "When the consignment has a permanent address role, the Addresses card adds a 'Permanent address' subsection instead of a plain row.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5141-5147; app/views/partials/design-release-2.1/review-summary-card.html:52-61",
+      "quote": "title: 'Permanent address',\n      rows: buildPermanentAddressReviewRows(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-112",
+      "statement": "The last section is headed '6. Contact address', or '5. Contact address' when the documents section is left out.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:5, 57-61",
+      "quote": "<h2 class=\"app-review-notification-page__section-heading\" id=\"review-section-contact-address\">{{ contactSectionNumber }}. Contact address</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-113",
+      "statement": "The contact address section holds one card titled 'Contact address' with a 'Contact address' row, and its Change link goes to /contact-address-for-consignment?from=review.",
+      "kind": "data",
+      "ref": "app/routes.js:5275-5286, 5572-5575",
+      "quote": "changeHref: '/contact-address-for-consignment?from=review',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-114",
+      "statement": "The contact address is shown with its first line as the name and each further line on its own line.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4596-4619",
+      "quote": "return {\n    isAddress: true,\n    name: lines[0],\n    lines: lines.slice(1)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-115",
+      "statement": "In the journey and draft variants, the review page ends with a form that posts to /design-release-2.1/review-notification with a 'Continue' button.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:72-77",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/review-notification\" novalidate class=\"app-review-notification-page__form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-116",
+      "statement": "When the user is creating a template, the review page's main button reads 'Save template' instead of 'Continue'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:76",
+      "quote": "text: \"Save template\" if data.isCreatingTemplate else \"Continue\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-117",
+      "statement": "When the notification is being amended, the review page shows a secondary 'Cancel amend' button beside Continue, which opens the cancel-amend dialog.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:78-82, 101-103",
+      "quote": "<button class=\"govuk-button govuk-button--secondary\" type=\"button\" data-modal-open=\"cancel-amend-modal\">\n            Cancel amend\n          </button>",
+      "confidence": "verbatim",
+      "note": "The dialog itself is extracted by part 12."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-118",
+      "statement": "In the journey variant the review page shows a red 'Delete' button beside Continue, going to /notifications/delete?reference=<the notification's reference>.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:83-89; app/routes.js:6048-6054",
+      "quote": ": `/notifications/delete?reference=${encodeURIComponent(sessionData.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE)}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-119",
+      "statement": "When the user is creating or editing a template, the journey review page's 'Delete' button goes to /templates/<template id>/delete, or to /templates/discard for a template not yet saved.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6049-6052",
+      "quote": "? `/templates/${sessionData.editingTemplateId || sessionData.templateId}/delete`\n          : '/templates/discard')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-120",
+      "statement": "On an action-required notification, the review page ends with a 'Continue' button linking to /design-release-2.1/notification-hub.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:92-95",
+      "quote": "<a class=\"govuk-button\" href=\"/design-release-2.1/notification-hub\">Continue</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-121",
+      "statement": "A submitted or submission-complete notification's review page has no buttons below the cards; its actions are the header buttons only.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:72-96",
+      "quote": "{% if reviewVariant == 'journey' or reviewVariant == 'draft' %}",
+      "confidence": "inferred",
+      "note": "Neither the journey/draft form nor the action-required Continue link renders for these variants."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-122",
+      "statement": "Continuing from review while creating a template saves the template instead of going on to the declaration.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12117-12122",
+      "quote": "if (isDesignRelease21TemplateCreate(req.session.data)) {\n    return handleSaveTemplateFromHub(req, res)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-123",
+      "statement": "Continuing from review with an incomplete notification shows the review page again, with its errors.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12124-12126",
+      "quote": "if (!hasNotificationComplete(req.session.data)) {\n    return renderReviewNotificationPage(req, res)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-124",
+      "statement": "Continuing from review with a complete notification goes to the declaration page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12128",
+      "quote": "return res.redirect('/declaration')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-125",
+      "statement": "A notification is complete enough to submit when it has origin details, a commodity selection, consignment details, complete additional animal details, an import reason, arrival details, transport details, consignment addresses, the minimum animal identifiers and a contact address.",
+      "kind": "rule",
+      "ref": "app/routes.js:4956-5000",
+      "quote": "function hasNotificationComplete (sessionData) {\n  return hasReviewNotificationComplete(sessionData) && hasContactAddress(sessionData)\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-126",
+      "statement": "Uploaded documents are optional for submitting a notification.",
+      "kind": "rule",
+      "ref": "app/routes.js:4989",
+      "quote": "// Documents remain optional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-127",
+      "statement": "Animal identifiers are optional for submitting a single-species notification; when more than one species is selected and identifiers are required, every species needs at least one complete identifier entry.",
+      "kind": "rule",
+      "ref": "app/routes.js:4989-4993, 1839-1848",
+      "quote": "// Documents remain optional. Animal identifiers are optional unless multiple\n  // species are selected, in which case at least one identifier is required per species.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-128",
+      "statement": "Transit countries are optional for submitting a notification.",
+      "kind": "rule",
+      "ref": "app/routes.js:5233",
+      "quote": "// Transit countries are optional for submission.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-129",
+      "statement": "The declaration page is at GET /declaration; when the user is creating a template it redirects to the review page instead.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12131-12139",
+      "quote": "if (isDesignRelease21TemplateCreate(req.session.data)) {\n    return res.redirect('/review-notification')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-130",
+      "statement": "The declaration page does not check that the notification is complete, so it can be opened directly before the review page's checks have passed.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12131-12166",
+      "quote": "return renderDeclarationPage(req, res)",
+      "confidence": "inferred",
+      "note": "Neither GET nor POST /declaration calls hasNotificationComplete; only POST /review-notification does."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-131",
+      "statement": "The declaration page shows the Alpha phase banner and a 'Back' link to the review page.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/declaration.html:13-25; app/routes.js:6424",
+      "quote": "backLink: '/review-notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-132",
+      "statement": "The declaration page heading is 'Declaration'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:36",
+      "quote": "<h1 class=\"app-declaration-page__title\">Declaration</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-133",
+      "statement": "The declaration's first statement is headed 'I am the contact for the authorities and located in the UK.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:41",
+      "quote": "I am the contact for the authorities and located in the UK.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-134",
+      "statement": "Under the first statement the declaration reads 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:42",
+      "quote": "I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-135",
+      "statement": "The declaration's second statement is headed 'I confirm I am responsible for this consignment.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:46",
+      "quote": "I confirm I am responsible for this consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-136",
+      "statement": "Under the second statement the declaration reads 'I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:' followed by the bullets 'cleared official checks at the border' and 'reached the Place of Destination as stated on the health certificate or notification'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:47-51",
+      "quote": "I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:</p>\n        <ul class=\"govuk-list govuk-list--bullet app-declaration-page__list\">\n          <li>cleared official checks at the border</li>\n          <li>reached the Place of Destination as stated on the health certificate or notification</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-137",
+      "statement": "The declaration's third statement is headed 'I confirm that I am accountable for:' followed by the bullets 'any payment for the official controls at the border', 'any arrangements to re-dispatch the consignment', 'any costs needed for quarantine or isolation of consignments' and 'any costs needed for destruction and disposal of consignments, when instructed by the authorities'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:55-61",
+      "quote": "<li>any payment for the official controls at the border</li>\n          <li>any arrangements to re-dispatch the consignment</li>\n          <li>any costs needed for quarantine or isolation of consignments</li>\n          <li>any costs needed for destruction and disposal of consignments, when instructed by the authorities</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-138",
+      "statement": "Under the third statement the declaration reads 'I am authorised as being accountable for these things if raising notifications on behalf of a third party.' and 'I can legally act on behalf of a third party in relation to the conditions of this declaration.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:62-63",
+      "quote": "I am authorised as being accountable for these things if raising notifications on behalf of a third party.</p>\n        <p class=\"app-declaration-page__section-text\">I can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-139",
+      "statement": "The declaration has one small checkbox, declarationConfirmed with value 'yes', labelled 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', inside a fieldset whose legend 'Declaration confirmation' is visible to screen readers only.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/declaration.html:66-84",
+      "quote": "text: \"I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-140",
+      "statement": "The declaration page shows 'Date of declaration:' followed by today's date in bold, written as day, full month name and year.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:86-88; app/routes.js:6426",
+      "quote": "Date of declaration: <strong class=\"app-declaration-page__date-value\">{{ declarationDate }}</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-141",
+      "statement": "The declaration page's button reads 'Continue' and posts the form to /design-release-2.1/declaration.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/declaration.html:38, 90-92",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/declaration\" novalidate class=\"app-declaration-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-142",
+      "statement": "Submitting the declaration without ticking the checkbox shows the error 'Confirm that you have reviewed and comply with this declaration' in the error summary 'There is a problem', linked to the checkbox, and against the checkbox.",
+      "kind": "copy",
+      "ref": "app/routes.js:6339-6357; app/views/design-release-2.1/declaration.html:29-34, 76",
+      "quote": "text: 'Confirm that you have reviewed and comply with this declaration',\n        href: '#declaration-confirmed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-143",
+      "statement": "The declaration checkbox is shown ticked again when the page is re-rendered, if it was ticked in the submission or earlier in the session.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6427-6428, 12154-12156",
+      "quote": "declarationConfirmed: isCheckboxChecked(locals.declarationConfirmed) ||\n      isCheckboxChecked(sessionData.declarationConfirmed),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-144",
+      "statement": "Posting the declaration while creating a template redirects to the review page without submitting.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12141-12146",
+      "quote": "if (isDesignRelease21TemplateCreate(req.session.data)) {\n    return res.redirect('/review-notification')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-145",
+      "statement": "A confirmed declaration records today's date as the declaration date, works out the notification's outstanding conditional items, saves it as a submitted notification and goes to the notification-submitted page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12159-12165",
+      "quote": "req.session.data.declarationConfirmedAt = formatDeclarationDate()\n  req.session.data.conditionalSubmissionItems = getConditionalSubmissionItems(req.session.data)\n  saveSubmittedNotification(req.session.data)\n\n  return res.redirect('/notification-submitted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-146",
+      "statement": "A notification with no uploaded document of type ITAHC (itahc or health-certificate) is submitted with the outstanding item 'upload the ITAHC and any other required documents'.",
+      "kind": "rule",
+      "ref": "app/routes.js:6363-6369, 6403-6405",
+      "quote": "items.push('upload the ITAHC and any other required documents')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-147",
+      "statement": "A notification whose animal identifiers are required but incomplete, and which still meets the submission minimum, is submitted with the outstanding item 'complete the animal identifier information in the notification'.",
+      "kind": "rule",
+      "ref": "app/routes.js:6407-6415",
+      "quote": "items.push('complete the animal identifier information in the notification')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-148",
+      "statement": "On the dashboard, a submitted notification with no ITAHC shows the error 'ITAHC is missing'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6371-6378",
+      "quote": "if (!hasAttachedItahc(sessionData)) {\n    return 'ITAHC is missing'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-149",
+      "statement": "On the dashboard, a submitted notification that has its ITAHC but incomplete required animal identifiers shows the error 'Information is missing'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6380-6385",
+      "quote": "return 'Information is missing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-150",
+      "statement": "An action-required dashboard notification shows its own error message when it has one; otherwise its message is worked out from its snapshot, falling back to 'ITAHC is missing'.",
+      "kind": "rule",
+      "ref": "app/routes.js:6390-6398",
+      "quote": "return getSubmittedNotificationDashboardErrorMessage(snapshot) || 'ITAHC is missing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-151",
+      "statement": "The notification-submitted page is at GET /notification-submitted; while creating a template it redirects to the review page, and before the declaration is confirmed it redirects to the declaration page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12168-12180",
+      "quote": "if (!hasDeclarationConfirmed(req.session.data)) {\n    return res.redirect('/declaration')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-152",
+      "statement": "The notification-submitted page shows the Alpha phase banner and has no Back link.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:11-18",
+      "quote": "{% block beforeContent %}\n  {{ govukPhaseBanner({",
+      "confidence": "inferred",
+      "note": "Its beforeContent block holds only the phase banner, unlike the review, declaration and delete pages."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-153",
+      "statement": "The notification-submitted page shows a green confirmation panel titled 'Import notification submitted' with 'Your reference number' and the notification reference in bold beneath it.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:22-27",
+      "quote": "<h1 class=\"govuk-panel__title\">Import notification submitted</h1>\n      <div class=\"govuk-panel__body\">\n        Your reference number<br><strong>{{ notificationReference }}</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-154",
+      "statement": "When the submitted notification still has outstanding items, the submitted page shows a 'Before the consignment is imported' section reading 'You still need to:' followed by a bullet for each outstanding item.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:29-39; app/routes.js:6434-6444",
+      "quote": "<h2 class=\"app-notification-submitted-page__section-heading\" id=\"submitted-incomplete-heading\">Before the consignment is imported</h2>\n        <p class=\"govuk-body\">You still need to:</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-155",
+      "statement": "The submitted page's outstanding items are those recorded at the declaration, or worked out afresh when none were recorded.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6436-6438",
+      "quote": "const beforeImportItems = Array.isArray(sessionData.conditionalSubmissionItems)\n    ? sessionData.conditionalSubmissionItems\n    : getConditionalSubmissionItems(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-156",
+      "statement": "The submitted page has a 'Transporting the consignment' section reading 'Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:41-43",
+      "quote": "Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-157",
+      "statement": "The Transporting the consignment section goes on: 'The animals or consignment may need to be inspected.' and 'If so, the animals must stay at the place of destination for either:' with the bullets 'the time stated on the health certificate' and '48 hours if no time is specified'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:44-49",
+      "quote": "<p class=\"govuk-body\">The animals or consignment may need to be inspected.</p>\n      <p class=\"govuk-body\">If so, the animals must stay at the place of destination for either:</p>\n      <ul class=\"govuk-list govuk-list--bullet app-notification-submitted-page__list\">\n        <li>the time stated on the health certificate</li>\n        <li>48 hours if no time is specified</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-158",
+      "statement": "The submitted page has a 'How to view or amend this notification' section reading 'You can view or change this notification from your dashboard.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:52-54",
+      "quote": "<h2 class=\"app-notification-submitted-page__section-heading\" id=\"submitted-amend-heading\">How to view or amend this notification</h2>\n      <p class=\"govuk-body\">You can view or change this notification from your dashboard.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-159",
+      "statement": "The submitted page has a 'Return to your dashboard' link to the dashboard (/design-release-2.1).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:8, 55-57",
+      "quote": "<a class=\"govuk-link\" href=\"{{ dashboardHref }}\">Return to your dashboard</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-160",
+      "statement": "The submitted page has a 'Create a new notification' link to /design-release-2.1/create-notification.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:9, 58-60",
+      "quote": "<a class=\"govuk-link\" href=\"{{ createNotificationHref }}\">Create a new notification</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-161",
+      "statement": "The submitted page's 'Getting help' section reads 'To get help with import notifications for live animals or germinal products, email importsriskmanagement@apha.gov.uk.', with the address as an email link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:63-68",
+      "quote": "To get help with import notifications for live animals or germinal products, email\n        <a class=\"govuk-link\" href=\"mailto:importsriskmanagement@apha.gov.uk\">importsriskmanagement@apha.gov.uk</a>.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-162",
+      "statement": "The Getting help section reads 'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:' with the bullets 'Telephone: 0330 041 6999' and 'Email: APHAServiceDesk@apha.gov.uk' (an email link).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:69-73",
+      "quote": "<p class=\"govuk-body\">Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:</p>\n      <ul class=\"govuk-list govuk-list--bullet app-notification-submitted-page__list\">\n        <li>Telephone: 0330 041 6999</li>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-163",
+      "statement": "The Getting help section gives the opening hours 'Monday to Friday, 8:30am to 5pm, except bank holidays'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:74",
+      "quote": "Monday to Friday, 8:30am to 5pm, except bank holidays",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-164",
+      "statement": "The Getting help section reads 'If you need help with your customs declaration, contact HMRC.', where 'contact HMRC' opens the GOV.UK HMRC customs, international trade and excise enquiries page in a new tab.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:75-78",
+      "quote": "If you need help with your customs declaration,\n        <a class=\"govuk-link\" href=\"https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries\" rel=\"noreferrer noopener\" target=\"_blank\">contact HMRC</a>.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-165",
+      "statement": "The Getting help section ends with a 'Find out about call charges' link to https://www.gov.uk/call-charges, opening in a new tab.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:79-81",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/call-charges\" rel=\"noreferrer noopener\" target=\"_blank\">Find out about call charges</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-166",
+      "statement": "The new-tab links on the submitted page do not tell the user they open in a new tab.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:77, 80",
+      "quote": "target=\"_blank\">contact HMRC</a>",
+      "confidence": "inferred",
+      "note": "Neither link text includes '(opens in new tab)'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-167",
+      "statement": "The delete-notification page is at GET /notifications/delete and needs a submitted id or a reference in the query; without one, or outside a design-release session, it redirects to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6283-6290, 12085-12087",
+      "quote": "if (!isDesignRelease2SessionData(req.session.data) || (!submittedId && !reference)) {\n    return res.redirect(dashboardBackLink)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-168",
+      "statement": "When the reference is the notification currently being worked on and is not yet saved anywhere, the delete page still opens, with its Back link and 'No, cancel' going to the review page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6294-6304",
+      "quote": "if (reference && sessionReference === reference) {\n      return res.render('delete-notification', buildDeleteNotificationViewLocals({\n        sessionData: req.session.data,\n        backLink: '/review-notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-169",
+      "statement": "When the submitted id or reference matches no notification and is not the one being worked on, the delete page redirects to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6294-6307",
+      "quote": "return res.redirect(reviewOptions.redirectTo)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-170",
+      "statement": "For a saved notification, the delete page's Back link and 'No, cancel' go back to that notification's view from the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6313-6319",
+      "quote": "backLink: buildDashboardNotificationViewHref(req.session.data, submittedId ? { submittedId } : { reference }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-171",
+      "statement": "The delete-notification page shows the Alpha phase banner and a 'Back' link.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/delete-notification.html:9-21",
+      "quote": "{{ govukBackLink({\n    text: \"Back\",\n    href: backLink\n  }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-172",
+      "statement": "The delete-notification page heading is 'Delete this notification?'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6271; app/views/partials/design-release-2.1/delete-confirmation.html:4",
+      "quote": "pageName: 'Delete this notification?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-173",
+      "statement": "The delete-notification page shows a summary list with the rows 'Reference number', 'Commodity', 'Number' and 'Origin'.",
+      "kind": "data",
+      "ref": "app/routes.js:6175-6193",
+      "quote": "buildDeleteSummaryRow('Reference number', options.reference || metadata.reference),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-174",
+      "statement": "The delete page's Commodity row lists each commodity's common name with its species' Latin names in brackets, comma-separated (for example 'Cattle (Bison bison, Bos taurus)'); for 'other live mammals' each species' common name is used.",
+      "kind": "rule",
+      "ref": "app/routes.js:6080-6131",
+      "quote": "return `${group.commonName} (${group.latinNames.join(', ')})`",
+      "confidence": "verbatim",
+      "note": "The example names are illustrative, not taken from the source."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-175",
+      "statement": "The delete page's Number row shows the total number of packages for a germinal-products-only notification, and otherwise the total number of animals.",
+      "kind": "rule",
+      "ref": "app/routes.js:6133-6155",
+      "quote": "if (hasGerminalProductsOnly(source)) {\n    const packages = getTotalPackageCount(source)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-176",
+      "statement": "The delete page's Origin row shows the country of origin.",
+      "kind": "data",
+      "ref": "app/routes.js:6157-6159, 6188-6191",
+      "quote": "return String(sessionData?.countryOfOrigin || '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-177",
+      "statement": "A delete page summary row with no value from the notification falls back to the dashboard's listing for it, and shows 'Not applicable' when that is empty too.",
+      "kind": "rule",
+      "ref": "app/routes.js:6076-6078, 6161-6193",
+      "quote": "getDeleteQuantityValue(sessionData) || metadata.numberOfAnimals || metadata.quantityValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-178",
+      "statement": "Below the summary the delete page reads 'Confirm that you want to delete this notification.' and 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:10-11",
+      "quote": "<p class=\"govuk-body\">{{ confirmText }}</p>\n<p class=\"govuk-body\">This action cannot be undone.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-179",
+      "statement": "The delete page has a red 'Yes, delete' button that posts to /notifications/delete with the same submitted id or reference.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:13-18; app/routes.js:6318",
+      "quote": "text: \"Yes, delete\",\n      classes: \"govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-180",
+      "statement": "Beside 'Yes, delete' the delete page has a 'No, cancel' link going to the same place as the Back link.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:20",
+      "quote": "<a class=\"govuk-link\" href=\"{{ backLink }}\">No, cancel</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-181",
+      "statement": "Confirming the delete removes the notification identified by the submitted id or reference.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12089-12104",
+      "quote": "deleteNotification(req.session.data, {\n    submittedId,\n    reference: reference || notificationReference\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-182",
+      "statement": "Deleting the notification currently being worked on also clears the in-progress journey from the session.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12096-12108",
+      "quote": "if (deletingCurrentJourney) {\n    resetNotificationJourneySession(req.session.data)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-183",
+      "statement": "After a delete, the user is returned to the dashboard with the success message '<reference> has been deleted', or 'Notification has been deleted' when the reference is not known.",
+      "kind": "copy",
+      "ref": "app/routes.js:12110-12114",
+      "quote": "req.session.data.dashboardSuccessMessage = notificationReference\n    ? `${notificationReference} has been deleted`\n    : 'Notification has been deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-184",
+      "statement": "The delete POST does not check that the notification exists or that the session is a design-release session before deleting and showing the success message.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12089-12115",
+      "quote": "router.post('/notifications/delete', (req, res) => {",
+      "confidence": "inferred",
+      "note": "Unlike GET, POST has no redirect for a missing or unknown id; it always sets the success message."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-185",
+      "statement": "The source says nothing about deleting a notification that has already been submitted beyond the same confirmation: no rule limits delete to drafts, and the review header offers Delete for every status.",
+      "kind": "rule",
+      "ref": "app/routes.js:5773; app/views/partials/design-release-2.1/review-page-header.html:23-25",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the review header, the delete GET/POST handlers and the delete partial for any status-based restriction or different wording for submitted notifications; found none."
+    },
+    {
+      "id": "prototype-dr2-1-source-p11-186",
+      "statement": "The 'Copy' buttons in the Import reference numbers section carry the text to copy, but the slice does not show what the user sees after copying (no confirmation message).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/review-notification.html:58, 64",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The copy behaviour is wired by front-end script outside this part's read list; no confirmation copy appears in the views read."
+    }
+  ]
+}

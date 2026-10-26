@@ -1,0 +1,494 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 4, organisation scoping and caller identity. Read in full: src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java (180 lines: the one identity header, its presence and format checks, the /organisation/ path test that decides which requests are checked, the path-orgId versus header comparison, the self-written problem+json rejections, the logging context and the trust-boundary Javadoc); src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java (368 lines, read for the class-level scoping, the authoriseOrg guard and the identity-header parameter on all five operations; per-endpoint behaviour left to parts 2 and 3); README.md section 'Security and trust boundary' (lines 83-109, plus the scoping sentence at the head of 'API overview', lines 113-115); src/test/java/.../filter/IdentityHeaderFilterTest.java (12 unit tests); src/test/java/.../integration/AddressScopingIT.java (7 integration tests). Covered: the single identity header the service reads (Trade-Imports-Organisation-Id) and every rejection when it is missing, blank or malformed; the exemption of every path outside /organisation/; the 404 for a path orgId that disagrees with the header, at both the filter and the controller guard; that the stored and queried organisation always comes from the header; cross-organisation isolation for list, read, create, update and delete; the no-existence-disclosure rule for 404s; the trust boundary in general terms; and what each of the 19 tests proves. Gaps recorded where the slice is silent: no user-level identity, no proof that a filter-level mismatch 404 matches an unknown-id 404 byte for byte, and no in-service enforcement of the upstream boundary.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p4-001",
+      "statement": "The service identifies the calling organisation from one HTTP request header, Trade-Imports-Organisation-Id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:65",
+      "quote": "public static final String ORGANISATION_ID_HEADER = \"Trade-Imports-Organisation-Id\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-002",
+      "statement": "Trade-Imports-Organisation-Id is the only tenant key for organisation-scoped reads and writes.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:26",
+      "quote": "{@code Trade-Imports-Organisation-Id} is the sole tenant key for org-scoped reads and writes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-003",
+      "statement": "The service reads no user-level identity (no user id, email or role header): scoping is by organisation only, so every caller from the same organisation sees and changes the same address book.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:121,189,242,310,360; IdentityHeaderFilter.java:92",
+      "quote": "@RequestHeader(IdentityHeaderFilter.ORGANISATION_ID_HEADER) String sessionOrg,",
+      "confidence": "inferred",
+      "note": "Inferred from a grep of src/main for getHeader and @RequestHeader: the only identity header read is the organisation header (RequestTracingFilter reads a trace header, which is not identity and belongs to another part)."
+    },
+    {
+      "id": "repo-addressbook-p4-004",
+      "statement": "The identity check applies to every request whose path starts with /organisation/.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:83-85,155-157",
+      "quote": "return !isOrganisationPath(organisationRequestPath(request));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-005",
+      "statement": "Every path outside /organisation/, such as the /health check, is exempt from the identity check and passes through without the header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:155-157; IdentityHeaderFilterTest.nonOrganisationPathsBypassTheFilterEntirely",
+      "quote": "return path != null && path.startsWith(\"/organisation/\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-006",
+      "statement": "A request to an /organisation/ path with no Trade-Imports-Organisation-Id header is rejected with HTTP 400 before any handler runs.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:92-96",
+      "quote": "reject(response, HttpStatus.BAD_REQUEST, BAD_REQUEST_TYPE, \"Bad Request\", \"Missing required header \" + ORGANISATION_ID_HEADER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-007",
+      "statement": "A Trade-Imports-Organisation-Id header that is present but blank or only whitespace is treated as missing and rejected with HTTP 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:93,176-178",
+      "quote": "return value == null || value.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-008",
+      "statement": "The missing-or-blank header rejection reads: title \"Bad Request\", detail \"Missing required header Trade-Imports-Organisation-Id\", type https://api.cdp.defra.cloud/problems/bad-request.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:69-70,94",
+      "quote": "\"Bad Request\", \"Missing required header \" + ORGANISATION_ID_HEADER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-009",
+      "statement": "An organisation id is well formed only when it is 1 to 64 characters of letters, digits, underscore or hyphen.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:72-73",
+      "quote": "Pattern.compile(\"^[A-Za-z0-9_-]{1,64}$\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-010",
+      "statement": "A Trade-Imports-Organisation-Id header that is present but not well formed (for example, containing spaces) is rejected with HTTP 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:97-104",
+      "quote": "if (!ORGANISATION_ID_VALUE.matcher(organisationId).matches()) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-011",
+      "statement": "The malformed-header rejection reads: title \"Bad Request\", detail \"Invalid Trade-Imports-Organisation-Id\", type https://api.cdp.defra.cloud/problems/bad-request.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:101-103",
+      "quote": "\"Bad Request\",\n          \"Invalid \" + ORGANISATION_ID_HEADER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-012",
+      "statement": "An identity-header rejection is an RFC 9457 problem with content type application/problem+json, carrying type, title, status and detail.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:169-173",
+      "quote": "Problem problem = new Problem(type, title, status.value(), detail, traceId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-013",
+      "statement": "An identity-header 400 carries no errors map: it is a platform rejection of the caller, not a field validation error a form could show against a field.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:33-34; IdentityHeaderFilterTest.java:78",
+      "quote": "a missing or blank identity header is a platform auth rejection — a 400 bad-request problem\n *       with NO {@code errors} map — not a body-field business validation error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-014",
+      "statement": "A missing identity header is a 400, never a 401 or 403.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:79",
+      "quote": "assertThat(response.getStatus()).isNotIn(401, 403);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-015",
+      "statement": "An identity-header rejection carries the request's trace id as traceId when one is present, and omits the field when there is none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:79,166,169; IdentityHeaderFilterTest.badRequestBodyCarriesTraceIdFromMdc",
+      "quote": "objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL).writer();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-016",
+      "statement": "Every address operation lives under /organisation/{orgId}/addresses, so every operation is scoped by the organisation in its path.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:44",
+      "quote": "@RequestMapping(\"/organisation/{orgId}/addresses\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-017",
+      "statement": "The path orgId is never trusted on its own: every operation authorises it against the caller's Trade-Imports-Organisation-Id header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:36-38",
+      "quote": "Every operation is path-scoped to an\n * {@code orgId} and authorised against the caller's trusted {@code Trade-Imports-Organisation-Id}\n * forwarded header (cv-010, cv-040): the path is never trusted alone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-018",
+      "statement": "A request whose path orgId differs from the Trade-Imports-Organisation-Id header is rejected with HTTP 404 by the identity filter, before any handler or store lookup runs.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:107-116",
+      "quote": "if (pathOrgId != null && !organisationId.equals(pathOrgId)) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-019",
+      "statement": "The path-versus-header comparison is an exact, case-sensitive match.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:108; OperatorController.java:65",
+      "quote": "!organisationId.equals(pathOrgId)",
+      "confidence": "inferred",
+      "note": "Inferred from String.equals: no test exercises a case-only difference."
+    },
+    {
+      "id": "repo-addressbook-p4-020",
+      "statement": "The path-mismatch rejection reads: title \"Resource Not Found\", detail \"Address not found\", type https://api.cdp.defra.cloud/problems/not-found.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:71,113-114",
+      "quote": "\"Resource Not Found\",\n          \"Address not found\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-021",
+      "statement": "A caller from another organisation always gets 404, never 403, so the API never discloses that another organisation's addresses exist.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:55-58",
+      "quote": "A\n   * mismatch throws {@link NotFoundException} &rarr; 404 (never 403): the API must not disclose that\n   * another organisation's addresses exist (cv-040).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-022",
+      "statement": "Each operation also checks the path orgId against the header inside the controller and answers a mismatch with 404 \"Address not found\", a second guard behind the filter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:64-68,129,191,244,313,362",
+      "quote": "if (!sessionOrg.equals(orgId)) {\n      throw new NotFoundException(\"Address not found\");",
+      "confidence": "verbatim",
+      "note": "Because the filter rejects a mismatch first, this guard is not reached on a normal request; it is defence in depth."
+    },
+    {
+      "id": "repo-addressbook-p4-023",
+      "statement": "The identity header is required on every operation: list, create, fetch, replace and soft delete.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:121,189,242,310,360; IdentityHeaderFilterTest.organisationIdIsRequiredOnEveryOperation",
+      "quote": "for (String method : new String[] {\"GET\", \"POST\", \"PUT\", \"DELETE\"}) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-024",
+      "statement": "Every operation reads and writes the store under the organisation from the identity header, not the path or body.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:131,193,248,315,364",
+      "quote": "return operatorService.list(sessionOrg, page, q, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-025",
+      "statement": "A created address's organisationId is stamped from the identity header, never taken from the request body.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:135-137; AddressScopingIT.organisationIdIsStampedOnCreateAndScopesReads",
+      "quote": "{@code organisationId} is stamped from the\n   * identity header, never from the body;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-026",
+      "statement": "An address id belonging to another organisation, used under the caller's own organisation path, is a 404 on fetch, replace and delete, because the organisation scope is applied in the store query.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:28-30,84-100",
+      "quote": "the scope is enforced in the query, so a cross-org id is a 404 byte-for-byte identical to an\n *       unknown id (no existence and no deletion leak);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-027",
+      "statement": "A 404 for another organisation's address is byte-for-byte identical to a 404 for an id that does not exist, and carries no instance field.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:207-234",
+      "quote": "// Identical problem — a 404 carries no existence and no deletion information.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-028",
+      "statement": "No test proves that the filter's path-mismatch 404 is identical to the 404 for an unknown id; the filter writes its own problem body while an in-scope miss goes through the shared exception handler.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:109-114; AddressScopingIT.java:207-234",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in IdentityHeaderFilterTest (checks only status and type for the mismatch) and AddressScopingIT (compares only an in-scope cross-org id with an unknown id)."
+    },
+    {
+      "id": "repo-addressbook-p4-029",
+      "statement": "The service has no authentication layer of its own: it does not validate JWTs or API keys, and treats the organisation header as already authenticated.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (line 85); IdentityHeaderFilter.java:33-35",
+      "quote": "This service has **no Spring Security layer** and does not validate JWTs or API keys.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-030",
+      "statement": "Separating one organisation's addresses from another's relies entirely on a trusted forwarded-header contract with the hop in front of the service.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (lines 85-86)",
+      "quote": "Tenant\nisolation relies entirely on a trusted-forwarded-header contract:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-031",
+      "statement": "Authenticating the caller through Defra ID (OIDC) is the job of the CDP ingress or the calling frontend (for example ins-frontend), not this service.",
+      "kind": "integration",
+      "ref": "README.md: Security and trust boundary, responsibility table row 1",
+      "quote": "| Authenticate the caller (Defra ID / OIDC) | CDP ingress or calling BFF (e.g. ins-frontend) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-032",
+      "statement": "The upstream hop must discard any organisation header the end user's client sends and set it from the verified session's organisation.",
+      "kind": "integration",
+      "ref": "README.md: Security and trust boundary, responsibility table rows 2-3",
+      "quote": "| Set `Trade-Imports-Organisation-Id` from the verified session | Same upstream hop |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-033",
+      "statement": "CDP network policy must stop callers reaching the service without going through the authenticated upstream hop.",
+      "kind": "non-functional",
+      "ref": "README.md: Security and trust boundary, responsibility table row 4 and line 105",
+      "quote": "**Production requirement:** callers must not reach this service without the upstream hop above.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-034",
+      "statement": "The organisation boundary depends on deployment controls outside the service; the service cannot enforce it alone if those controls are absent, and adding its own resource-server authentication was deferred.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (lines 105-109)",
+      "quote": "the service cannot defend itself against a trusted-network\nviolation without adding a resource server (deferred for this ticket).",
+      "confidence": "verbatim",
+      "note": "Security finding stated in general terms only, per the repo brief."
+    },
+    {
+      "id": "repo-addressbook-p4-035",
+      "statement": "Nothing in the repo proves the upstream boundary is in place: no test or config here shows header stripping or network policy, which the README places with other owners.",
+      "kind": "non-functional",
+      "ref": "README.md: Security and trust boundary; src/test (IdentityHeaderFilterTest, AddressScopingIT)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the part's tests and README; the upstream hop and network policy are owned elsewhere (ins-frontend, CDP)."
+    },
+    {
+      "id": "repo-addressbook-p4-036",
+      "statement": "While a request is processed, the caller's organisation id is added to the logging context as organisationId, and removed afterwards even if the request fails.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:118-123",
+      "quote": "MDC.put(MDC_ORGANISATION_ID, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-037",
+      "statement": "Each identity rejection is logged as a warning naming the reason and the trace id, with no address personal data.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:167; IdentityHeaderFilterTest.addsOnlyOrganisationIdToTheLoggingContext_noPiiFieldValues",
+      "quote": "log.warn(\"Rejected /organisation request: {} (trace: {})\", detail, traceId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-038",
+      "statement": "The identity filter runs near the very start of request handling, ahead of the application's own handlers.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:61",
+      "quote": "@Order(Ordered.HIGHEST_PRECEDENCE + 1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-039",
+      "statement": "The published API contract declares Trade-Imports-Organisation-Id as the security requirement for every address operation.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:46",
+      "quote": "@SecurityRequirement(name = \"Trade-Imports-Organisation-Id\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-040",
+      "statement": "The published API contract documents a 400 for a missing header and a 404 for a path orgId that does not match the caller's organisation header on the address operations.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:96-109,161-177,275-291,335-348",
+      "quote": "description = \"Path orgId does not match the caller's organisation header\",",
+      "confidence": "verbatim",
+      "note": "Fetch, replace and delete describe their 404 as 'Unknown id, or an id outside the caller's organisation scope'; fetch documents no 400 response at all, though the filter returns one."
+    },
+    {
+      "id": "repo-addressbook-p4-041",
+      "statement": "Test: a request with no organisation header gets a 400 bad-request problem with application/problem+json, a detail naming the header and no errors map, and is not passed on.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:57-80 missingOrganisationId_writesBadRequestProblemAndHaltsTheChain",
+      "quote": "void missingOrganisationId_writesBadRequestProblemAndHaltsTheChain() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-042",
+      "statement": "Test: the missing-header rejection works whether the path arrives as the servlet path or only as the request URI.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:82-96 missingOrganisationIdWithRequestUriOnly_writesBadRequestProblem",
+      "quote": "void missingOrganisationIdWithRequestUriOnly_writesBadRequestProblem() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-043",
+      "statement": "Test: a whitespace-only organisation header gets a 400 bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:98-114 blankOrganisationId_writesBadRequestProblem",
+      "quote": "request.addHeader(ORGANISATION_ID_HEADER, \"   \");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-044",
+      "statement": "Test: GET, POST, PUT and DELETE without the organisation header are each stopped with a 400 naming the header.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:116-136 organisationIdIsRequiredOnEveryOperation",
+      "quote": ".as(\"chain must halt for %s without the org-id header\", method)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-045",
+      "statement": "Test: a valid header matching the path lets the request through, with the organisation id in the logging context.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:138-153 validHeader_proceedsAndOrganisationIdLandsInMdcDuringTheChain",
+      "quote": "assertThat(chain.mdcDuringChain()).containsEntry(MDC_ORGANISATION_ID, \"org-42\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-046",
+      "statement": "Test: the 400 body carries the trace id of the request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:155-168 badRequestBodyCarriesTraceIdFromMdc",
+      "quote": "assertThat(parseBody(response)).containsEntry(\"traceId\", \"trace-abc-123\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-047",
+      "statement": "Test: /health is not checked for the identity header and gets no rejection body.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:170-183 nonOrganisationPathsBypassTheFilterEntirely",
+      "quote": "MockHttpServletRequest request = new MockHttpServletRequest(\"GET\", \"/health\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-048",
+      "statement": "Test: a header of org-b on an org-a path is stopped with a 404 not-found problem before the request is passed on.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:185-202 pathOrgMismatchReturns404BeforeTheChainRuns",
+      "quote": "void pathOrgMismatchReturns404BeforeTheChainRuns() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-049",
+      "statement": "Test: the organisation id is cleared from the logging context after a successful request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:204-217 mdcOrganisationIdIsRemovedAfterSuccessfulRequest",
+      "quote": "void mdcOrganisationIdIsRemovedAfterSuccessfulRequest() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-050",
+      "statement": "Test: the organisation id is cleared from the logging context when request handling throws.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:219-239 mdcOrganisationIdIsRemovedWhenTheChainThrows",
+      "quote": "void mdcOrganisationIdIsRemovedWhenTheChainThrows() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-051",
+      "statement": "Test: an organisation header containing spaces is rejected with 400.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:241-254 invalidOrganisationIdValueIsRejectedWith400",
+      "quote": "request.addHeader(ORGANISATION_ID_HEADER, \"not valid because of spaces\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-052",
+      "statement": "Test: rejection logging contains no address personal data such as a business name or email.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:256-283 addsOnlyOrganisationIdToTheLoggingContext_noPiiFieldValues",
+      "quote": "assertThat(event.getFormattedMessage()).doesNotContain(\"secret@example.com\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-053",
+      "statement": "Test: organisation B listing its own book does not see organisation A's address, gets 404 fetching, replacing or deleting A's id under its own path, and A's address stays live.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:73-108 orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsAddress",
+      "quote": "// org B gets 404 on GET / PUT / DELETE of A's id under B's own scope",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-054",
+      "statement": "Test: a caller whose header is organisation B is refused with 404 on list, fetch, replace, delete and create against organisation A's path; A's address stays ACTIVE and no new address is saved for A.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:110-149 forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404",
+      "quote": "// a create against another org's path is rejected and persists nothing new",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-055",
+      "statement": "Test: listing with no organisation header is a 400 application/problem+json bad-request with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:151-159 missingOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap",
+      "quote": "void missingOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-056",
+      "statement": "Test: listing with a blank organisation header is a 400 application/problem+json bad-request with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:161-169 blankOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap",
+      "quote": "void blankOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-057",
+      "statement": "Test: creating an address with no organisation header is a 400 with no errors map, and nothing is saved.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:171-184 missingOrgHeaderOnPostIsAPlatformAuthRejection400AndPersistsNothing",
+      "quote": "assertThat(activeAddressesFor(ORG_A)).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-058",
+      "statement": "Test: a created address is stored and returned with the caller's organisationId, and appears in that organisation's list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:186-205 organisationIdIsStampedOnCreateAndScopesReads",
+      "quote": "// organisationId is stamped from the trusted identity, never the body (cv-010)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-059",
+      "statement": "Test: organisation B's 404 for organisation A's live address equals its 404 for an unknown id, and neither has an instance field.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:207-234 a404ForAnotherOrgsLiveAddressIsByteIdenticalToA404ForAnUnknownId",
+      "quote": "assertThat(problemBody(crossOrg)).isEqualTo(problemBody(unknown));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-060",
+      "statement": "The scoping rules trace to two earlier rulings, cv-010 (the trusted forwarded-header identity contract) and cv-040 (authorise the session organisation against the path, 404 never 403).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:38,57; IdentityHeaderFilter.java:23-24",
+      "quote": "forwarded header (cv-010, cv-040): the path is never trusted alone.",
+      "confidence": "verbatim",
+      "note": "The ruling ids are cited in code comments; the ruling texts themselves are not in this part's files."
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 6, Origin: country type-ahead. Mined all 10 traces from origin.fit.spec.js: 'country of origin type-ahead' (5: bd485 on-focus list, 8a7ac case-insensitive filtering, 396be chosen country stays visible and submits its code, 52274 no-results message, 84b22 axe on the open list), 'country of origin type-ahead styles' (4: 2014a GOV.UK typography, 9bacc dropdown arrow paint order, 94eaa focus indicator, f489f error border), and 'country of origin without JavaScript' (1: 0141f native select submits and persists the code). The bundled trace CLI could not open these traces (TraceVersionError: recorded by Playwright 1.63.0, newer than the viewer tim installs), so each zip was unzipped into this part's work folder (part6/<hash>/) and read directly: browser calls and results from 1-trace.trace, test steps and assertion values from test.trace, the network log from 1-trace.network, server-rendered HTML and the application stylesheet from resources/. Refs give the trace's short hash and the call id (call@N, from 1-trace.trace) or step id (pw:api@N / expect@N, from test.trace). Every trace walks the same short path: stub sign-in (/auth/stub-sign-in?organisationId=stub-org-1), the dashboard /live-animals, the create-notification button (POST /live-animals/notifications, 302) and then the first journey page /live-animals/notifications/<GBN-AG-26-XXXXXX>/origin ('About the consignment' caption, 'Origin of the import' heading). Pages seen: Origin of the import (always; with JavaScript it carries the accessible-autocomplete type-ahead over the native select), its error state (f489f, POST 400 with an error summary), and What are you importing? (/commodities, reached after a successful save in 0141f). Only the country of origin field is in this slice; the region-of-origin and internal-reference fields appear here only as the page they sit on and are claimed lightly. Covered: the 40-country list on the select and in the open list, focus/click/type/select behaviour, filtering, the no-results row, the combobox ARIA wiring, the axe result on the open list, the asserted styles (font, size, arrow paint stack, focus outline, error border) with the stylesheet rules behind them, the out-of-list error, and the no-JavaScript save and re-display. Not reached, recorded as gaps: keyboard navigation of the list, Escape/blur behaviour, live-region announcement text, the type-ahead's handling of a previously saved value with JavaScript, the no-JavaScript error state, a narrow viewport, and the country reference-data call itself (server-side, never in the browser's network log).",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p6-001",
+      "statement": "The country of origin question renders server-side as a GOV.UK select labelled 'Country of origin' (medium label) with the hint 'Start typing to search for a country.', and is marked for enhancement into a type-ahead by data-module=\"app-accessible-autocomplete\".",
+      "kind": "behaviour",
+      "ref": "trace bd485 network GET /live-animals/notifications/GBN-AG-26-D2F0S1/origin, resources/bb0d0cfee3774bb010be1f042d688bd8a2edcaf5.html, main > form > first govuk-form-group",
+      "quote": "<label class=\"govuk-label govuk-label--m\" for=\"countryOfOrigin\">\n    Country of origin\n  </label>\n  <div id=\"countryOfOrigin-hint\" class=\"govuk-hint\">\n    Start typing to search for a country.\n  </div>\n  <select class=\"govuk-select\" id=\"countryOfOrigin\" name=\"countryOfOrigin\" aria-describedby=\"countryOfOrigin-hint\" data-module=\"app-accessible-autocomplete\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-002",
+      "statement": "The type-ahead is configured on the select's data attributes: minimum length 0, language en, show all values, no auto-select, no default value, and the no-results text 'No countries found'.",
+      "kind": "behaviour",
+      "ref": "trace bd485 resources/bb0d0cfee3774bb010be1f042d688bd8a2edcaf5.html, select#countryOfOrigin attributes",
+      "quote": "data-min-length=\"0\" data-language=\"en\" data-show-all-values=\"true\" data-auto-select=\"false\" data-default-value=\"\" data-no-results=\"No countries found\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-003",
+      "statement": "The country select offers a blank first option 'Select a country' followed by 40 countries, each submitted as a country or region code (for example FR for France, PT-20 for Azores, FR-LRE for Reunion).",
+      "kind": "data",
+      "ref": "trace bd485 resources/bb0d0cfee3774bb010be1f042d688bd8a2edcaf5.html, select#countryOfOrigin options",
+      "quote": "<option value=\"\">Select a country</option>\n    <option value=\"AT\">Austria</option>\n    <option value=\"PT-20\">Azores</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-004",
+      "statement": "The 40 countries, in the order shown, with their codes, are: Austria AT, Azores PT-20, Belgium BE, Bulgaria BG, Canary Islands ES-CN, Croatia HR, Cyprus CY, Czechia CZ, Denmark DK, Estonia EE, Finland FI, France FR, French Guiana FR-GF, Germany DE, Greece GR, Guadeloupe FR-GP, Hungary HU, Iceland IS, Ireland IE, Italy IT, Latvia LV, Liechtenstein LI, Lithuania LT, Luxembourg LU, Madeira PT-30, Malta MT, Martinique FR-MQ, Mayotte FR-YT, Netherlands (the) NL, Norway NO, Poland PL, Portugal PT, Reunion FR-LRE, Romania RO, Saint Martin (French part) FR-MF, Slovakia SK, Slovenia SI, Spain ES, Sweden SE, Switzerland CH. The list is EU/EEA/EFTA countries plus outermost regions, sorted alphabetically by name.",
+      "kind": "data",
+      "ref": "trace bd485 resources/bb0d0cfee3774bb010be1f042d688bd8a2edcaf5.html, select#countryOfOrigin options 2-41; same list in trace f489f resources/b0fb1bd68257651d3326bcf24c79ba92a23f2e52.html",
+      "quote": "<option value=\"NL\">Netherlands (the)</option>\n    <option value=\"NO\">Norway</option>",
+      "confidence": "verbatim",
+      "note": "Treat as reference data. The spec file names this list 'the captured MDM country options' (originPageCountryEntries from services/_capture/fixtures.js); the description of the set as EU/EEA/EFTA plus outermost regions is the extractor's reading of the names."
+    },
+    {
+      "id": "trace-animals-fit-p6-005",
+      "statement": "With JavaScript on, the native select is replaced by a text input with role combobox that takes over the id countryOfOrigin and has no name of its own, so the label 'Country of origin' names the combobox; the input has autocomplete off and aria-autocomplete list.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4165 (origin page after load), INPUT#countryOfOrigin",
+      "quote": "\"aria-describedby\":\"countryOfOrigin-hint countryOfOrigin__assistiveHint\",\"aria-expanded\":\"false\",\"aria-controls\":\"countryOfOrigin__listbox\",\"aria-autocomplete\":\"list\",\"autocomplete\":\"off\",\"class\":\"autocomplete__input autocomplete__input--show-all-values\",\"id\":\"countryOfOrigin\",\"name\":\"\",\"placeholder\":\"\",\"type\":\"text\",\"role\":\"combobox\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-006",
+      "statement": "With JavaScript on, the native select stays in the form, hidden (display: none), renamed to id countryOfOrigin-select but still named countryOfOrigin, so the form still submits the country code from it.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4165, SELECT#countryOfOrigin-select",
+      "quote": "[\"SELECT\",{\"class\":\"govuk-select\",\"id\":\"countryOfOrigin-select\",\"name\":\"countryOfOrigin\",\"aria-describedby\":\"\",\"data-module\":\"app-accessible-autocomplete\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-007",
+      "statement": "The enhanced field carries a hidden assistive hint, referenced from the combobox's aria-describedby alongside the visible hint, telling screen-reader users how to use the results.",
+      "kind": "copy",
+      "ref": "trace bd485 frame snapshot call@4165, SPAN#countryOfOrigin__assistiveHint",
+      "quote": "When autocomplete results are available use up and down arrows to review and enter to select.  Touch device users, explore by touch or with swipe gestures.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-008",
+      "statement": "The enhanced field includes two polite, atomic live regions (role status) in a visually hidden container, for announcing the result count to screen readers.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4165, DIV.autocomplete__status",
+      "quote": "[\"DIV\",{\"id\":\"countryOfOrigin__status--A\",\"role\":\"status\",\"aria-atomic\":\"true\",\"aria-live\":\"polite\"},\"\"],[\"DIV\",{\"id\":\"countryOfOrigin__status--B\",\"role\":\"status\",\"aria-atomic\":\"true\",\"aria-live\":\"polite\"},\"\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-009",
+      "statement": "The enhanced field shows a downward-pointing triangle dropdown arrow (an inline SVG, not focusable) at the right of the input, signalling that the whole list can be opened.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4165, svg.autocomplete__dropdown-arrow-down",
+      "quote": "[\"svg\",{\"version\":\"1.1\",\"xmlns\":\"http://www.w3.org/2000/svg\",\"class\":\"autocomplete__dropdown-arrow-down\",\"focusable\":\"false\"},[\"g\",{\"stroke\":\"none\",\"fill\":\"none\",\"fill-rule\":\"evenodd\"},[\"polygon\",{\"fill\":\"#000000\",\"points\":\"0 0 22 0 11 17\"}]]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-010",
+      "statement": "The results list is a listbox labelled by the country input, rendered inline below the input (it pushes the page down rather than overlaying it), and hidden until opened.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4165, UL#countryOfOrigin__listbox",
+      "quote": "[\"UL\",{\"aria-labelledby\":\"countryOfOrigin\",\"id\":\"countryOfOrigin__listbox\",\"role\":\"listbox\",\"class\":\"autocomplete__menu autocomplete__menu--inline autocomplete__menu--hidden\"},\"\"]",
+      "confidence": "verbatim",
+      "note": "Stylesheet rule: .autocomplete__menu--inline{position:relative}; the overlay variant is not used."
+    },
+    {
+      "id": "trace-animals-fit-p6-011",
+      "statement": "Clicking into the empty country box, without typing anything, opens the full list of all 40 countries, France among them.",
+      "kind": "behaviour",
+      "ref": "trace bd485 call@4169 (click input#countryOfOrigin), call@4171 (expect option France visible), call@4173 (expect option count 40)",
+      "quote": "[\"call@4173\",\"Frame\",\"expect\",{\"selector\":\"internal:role=option\",\"expression\":\"to.have.count\",\"expectedNumber\":40",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-012",
+      "statement": "The open full list shows the countries in the same alphabetical order as the select, from Austria (1 of 40) to Switzerland (40 of 40), and leaves out the 'Select a country' placeholder; each option carries its position and the set size (aria-posinset / aria-setsize 40).",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4169, LI.autocomplete__option 1-40",
+      "quote": "[\"1\",\"Austria\"],[\"2\",\"Azores\"],[\"3\",\"Belgium\"] ... [\"40\",\"Switzerland\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-013",
+      "statement": "Options in the open list alternate background shading: every second option has a light grey (#f3f2f1) background.",
+      "kind": "behaviour",
+      "ref": "trace bd485 frame snapshot call@4173, LI classes; stylesheet application.f6b50c7.min.css rule .autocomplete__option--odd",
+      "quote": ".autocomplete__option--odd{background-color:#f3f2f1}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-014",
+      "statement": "When opened, the combobox reports aria-expanded true and the listbox switches to visible.",
+      "kind": "behaviour",
+      "ref": "trace 8a7ac frame snapshot call@4115; trace 396be frame snapshot call@3781 (before)",
+      "quote": "\"__playwright_value_\":\"IRELAND\",\"aria-expanded\":\"true\",\"aria-controls\":\"countryOfOrigin__listbox\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-015",
+      "statement": "Moving focus into the country box programmatically, without a click, left the list closed (aria-expanded stayed false) while the input took its focused style; only a click (or typing) was seen to open the list.",
+      "kind": "behaviour",
+      "ref": "trace 94eaa call@4231 (focus input#countryOfOrigin) frame snapshot",
+      "quote": "{\"class\":\"autocomplete__input autocomplete__input--show-all-values autocomplete__input--focused\",\"aria-expanded\":\"false\"}",
+      "confidence": "verbatim",
+      "note": "The test titled 'offers the whole country list on focus, without typing' drives a click, not a focus; the trace does not show whether a keyboard Tab into the field opens the list."
+    },
+    {
+      "id": "trace-animals-fit-p6-016",
+      "statement": "Typing filters the list as the user types: 'fran' leaves exactly one option, France.",
+      "kind": "behaviour",
+      "ref": "trace 8a7ac call@4107 (fill 'fran'), call@4109 (option France visible), call@4111 (option count 1)",
+      "quote": "[\"call@4107\",\"fill\",\"input#countryOfOrigin\",\"fran\"] ... [\"call@4111\",\"expect\",\"internal:role=option\",1]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-017",
+      "statement": "Filtering ignores case: typing 'IRELAND' in capitals lists Ireland (one option).",
+      "kind": "rule",
+      "ref": "trace 8a7ac call@4113 (fill 'IRELAND'), frame snapshot call@4113 option text, call@4115 (option Ireland visible)",
+      "quote": "[\"call@4113\",[[\"1\",\"1\",\"Ireland\"]]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-018",
+      "statement": "Typing 'Fr' lists three countries, France, French Guiana and Saint Martin (French part), so a match is not limited to the start of the country name: 'Fr' also matches the start of the word 'French' inside 'Saint Martin (French part)'.",
+      "kind": "rule",
+      "ref": "trace 2014a pw:api@35 (fill 'Fr'), frame snapshot call@4143 options",
+      "quote": "[\"call@4143\",[[\"1\",\"3\",\"France\"],[\"2\",\"3\",\"French Guiana\"],[\"3\",\"3\",\"Saint Martin (French part)\"]]]",
+      "confidence": "verbatim",
+      "note": "The traces do not show whether a match must start a word or can fall mid-word: no query typed would tell the two apart."
+    },
+    {
+      "id": "trace-animals-fit-p6-019",
+      "statement": "Filtered options show the plain country name, with no highlighting of the typed letters seen in the option markup.",
+      "kind": "behaviour",
+      "ref": "trace 2014a frame snapshot call@4143, LI option text; trace 8a7ac frame snapshot call@4107",
+      "quote": "[\"1\",\"1\",\"France\"]",
+      "confidence": "inferred",
+      "note": "Inferred from the option text in the snapshot being the bare name with no child emphasis element."
+    },
+    {
+      "id": "trace-animals-fit-p6-020",
+      "statement": "When nothing matches what the user typed (for example 'zzzzzz'), the open list shows a single disabled row reading 'No countries found'.",
+      "kind": "copy",
+      "ref": "trace 52274 call@4201 (fill 'zzzzzz'), frame snapshot call@4201, call@4203 (expect text 'No countries found')",
+      "quote": "{\"class\":\"autocomplete__option autocomplete__option--no-results\",\"role\":\"option\",\"aria-disabled\":\"true\"}],[\"autocomplete__option autocomplete__option--no-results\",\"No countries found\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-021",
+      "statement": "The 'No countries found' row is greyed out: light grey background, secondary text colour and a not-allowed cursor.",
+      "kind": "behaviour",
+      "ref": "trace 52274 stylesheet application.f6b50c7.min.css rule .autocomplete__option--no-results",
+      "quote": ".autocomplete__option--no-results{background-color:#f3f2f1;color:#505a5f;cursor:not-allowed}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-022",
+      "statement": "Once the user types into the country box, the combobox stops referencing the hint, the assistive hint (and any error message) in aria-describedby: the attribute is absent from the input in the typed state.",
+      "kind": "behaviour",
+      "ref": "trace 52274 frame snapshot call@4201 (before vs after fill 'zzzzzz'); trace 8a7ac frame snapshot call@4115",
+      "quote": "{\"__playwright_value_\":\"zzzzzz\",\"__playwright_target__\":\"\",\"aria-expanded\":\"false\",\"aria-controls\":\"countryOfOrigin__listbox\",\"aria-autocomplete\":\"list\",\"autocomplete\":\"off\"",
+      "confidence": "verbatim",
+      "note": "Before the fill the same input carries aria-describedby=\"countryOfOrigin-hint countryOfOrigin__assistiveHint\". This is how the upstream accessible-autocomplete behaves; recorded as observed, not judged."
+    },
+    {
+      "id": "trace-animals-fit-p6-023",
+      "statement": "Choosing a country from the list leaves its name visible in the box (France) and closes the list (aria-expanded false, listbox hidden).",
+      "kind": "behaviour",
+      "ref": "trace 396be call@3777 (click), call@3779 (fill 'France'), call@3781 (click option France) frame snapshot after, call@3783 (expect input value 'France')",
+      "quote": "{\"__playwright_value_\":\"France\",\"aria-expanded\":\"false\",\"aria-controls\":\"countryOfOrigin__listbox\",\"aria-autocomplete\":\"list\",\"autocomplete\":\"off\",\"class\":\"autocomplete__input autocomplete__input--show-all-values autocomplete__input--focused\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-024",
+      "statement": "Choosing a country from the list selects its code in the hidden native select (France sets FR), which is the value the form submits.",
+      "kind": "data",
+      "ref": "trace 396be frame snapshot call@3781 after, OPTION value FR selected; call@3785 (expect select#countryOfOrigin-select value 'FR')",
+      "quote": "{\"__playwright_selected_\":\"true\",\"value\":\"FR\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-025",
+      "statement": "With the results list open (after typing 'fran'), an axe-core 4.13.0 scan against WCAG 2 A and AA tags reports no serious or critical violation in the type-ahead; its only finding is a critical aria-allowed-attr on the region-of-origin 'Yes' radio (aria-expanded=\"false\" on a radio input), which the test treats as a known GOV.UK conditional-reveal false positive.",
+      "kind": "non-functional",
+      "ref": "trace 84b22 test.trace expect@48 (axe violations dump), pw:api@35 fill 'fran'",
+      "quote": "\"id\": \"aria-allowed-attr\",\n    \"impact\": \"critical\" ... \"html\": \"<input class=\\\"govuk-radios__input\\\" id=\\\"regionOfOriginCodeRequirement\\\" name=\\\"regionOfOriginCodeRequirement\\\" type=\\\"radio\\\" value=\\\"yes\\\" aria-controls=\\\"conditional-regionOfOriginCodeRequirement\\\" aria-expanded=\\\"false\\\">\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-026",
+      "statement": "The type-ahead input and its options use the same font as a standard GOV.UK text input: \"GDS Transport\", arial, sans-serif.",
+      "kind": "non-functional",
+      "ref": "trace 2014a call@4147 (evaluate result), expect@38-40",
+      "quote": "{\"k\":\"inputFamily\",\"v\":{\"s\":\"\\\"GDS Transport\\\", arial, sans-serif\"}} ... {\"k\":\"optionFamily\",\"v\":{\"s\":\"\\\"GDS Transport\\\", arial, sans-serif\"}} ... {\"k\":\"referenceFamily\",\"v\":{\"s\":\"\\\"GDS Transport\\\", arial, sans-serif\"}}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-027",
+      "statement": "The type-ahead input and its options use the same font size as a standard GOV.UK text input: 19px at the 1280px desktop viewport.",
+      "kind": "non-functional",
+      "ref": "trace 2014a call@4147 (evaluate result), expect@41-42; viewport 1280x720 from context-options",
+      "quote": "{\"k\":\"inputSize\",\"v\":{\"s\":\"19px\"}},{\"k\":\"optionFamily\",\"v\":{\"s\":\"\\\"GDS Transport\\\", arial, sans-serif\"}},{\"k\":\"optionSize\",\"v\":{\"s\":\"19px\"}}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-028",
+      "statement": "The dropdown arrow is painted behind the input: the input is the topmost element at the arrow's centre (so clicking the arrow clicks the input), the arrow is still in the paint stack beneath it, the input reserves 35px of right padding for the arrow, and the wrapper sets z-index 0 so the arrow does not drop behind the page.",
+      "kind": "non-functional",
+      "ref": "trace 9bacc test.trace pw:api@35 (evaluate on .autocomplete__dropdown-arrow-down), expect@36 toEqual (passed); spec origin.fit.spec.js:425",
+      "quote": "expect(paintStack).toEqual({\n      arrowIsInStack: true,\n      inputIsTopHit: true,\n      inputPaddingRight: '35px',\n      wrapperZIndex: '0'\n    })",
+      "confidence": "verbatim",
+      "note": "The evaluate result is not recorded in the trace (element-handle evaluate); the values are the passed assertion's. Stylesheet rules: .autocomplete__dropdown-arrow-down{z-index:-1;...right:8px;width:24px;height:24px;top:10px}, .autocomplete__wrapper{position:relative;z-index:0}, .autocomplete__input{background-color:transparent;position:relative}, .autocomplete__input--show-all-values{padding:5px 35px 5px 5px;cursor:pointer}."
+    },
+    {
+      "id": "trace-animals-fit-p6-029",
+      "statement": "When the country box has focus it shows the standard GOV.UK focus indicator: a 3px outline in the GOV.UK focus colour (yellow, rgb(255, 221, 0)) plus an inset box shadow.",
+      "kind": "non-functional",
+      "ref": "trace 94eaa test.trace pw:api@35 (focus), expect@37 (outline colour rgb(255, 221, 0)), expect@38 (3px), expect@39 (box-shadow contains inset)",
+      "quote": ".autocomplete__input--focused{outline:3px solid #fd0;outline-offset:0;box-shadow:inset 0 0 0 2px}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-030",
+      "statement": "The country box and the open list have a 2px solid near-black (#0b0c0c) border, the list without a top border so it joins the input, and the list scrolls once it is taller than 342px.",
+      "kind": "non-functional",
+      "ref": "trace 2014a stylesheet application.f6b50c7.min.css rules .autocomplete__input and .autocomplete__menu",
+      "quote": ".autocomplete__menu{background-color:#fff;border:2px solid #0b0c0c;border-top:0;color:#0b0c0c;margin:0;max-height:342px;overflow-x:hidden;padding:0;width:100%;width:calc(100% - 4px)}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-031",
+      "statement": "Submitting a country code that is not in the list (the test injects 'XX' into the hidden select) is rejected: the page returns 400 and re-renders with the error summary 'There is a problem' and the link 'Select a country from the list' pointing at #countryOfOrigin.",
+      "kind": "rule",
+      "ref": "trace f489f network POST /live-animals/notifications/GBN-AG-26-GEHKZK/origin 400, resources/b0fb1bd68257651d3326bcf24c79ba92a23f2e52.html error summary",
+      "quote": "<h2 class=\"govuk-error-summary__title\">\n      There is a problem\n    </h2> ... <a href=\"#countryOfOrigin\">Select a country from the list</a>",
+      "confidence": "verbatim",
+      "note": "The POST carried countryOfOrigin=XX, regionOfOriginCodeRequirement=no, regionOfOriginCodeSuffix and internalReferenceNumber empty. The type-ahead itself never offers an out-of-list value; the test reaches this state by editing the hidden select."
+    },
+    {
+      "id": "trace-animals-fit-p6-032",
+      "statement": "The out-of-list country error also shows inline above the field as 'Error: Select a country from the list' (with 'Error:' visually hidden), puts the form group into its error state, and the browser title is prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace f489f resources/b0fb1bd68257651d3326bcf24c79ba92a23f2e52.html, p#countryOfOrigin-error and <title>",
+      "quote": "<p id=\"countryOfOrigin-error\" class=\"govuk-error-message\">\n    <span class=\"govuk-visually-hidden\">Error:</span> Select a country from the list\n  </p>",
+      "confidence": "verbatim",
+      "note": "Title: 'Error: Origin of the import - Import notification service - GOV.UK'."
+    },
+    {
+      "id": "trace-animals-fit-p6-033",
+      "statement": "After the out-of-list error, the country is left unanswered (no option selected and the type-ahead box empty) while the other answer on the page, 'No' to the region of origin code question, is kept.",
+      "kind": "behaviour",
+      "ref": "trace f489f resources/b0fb1bd68257651d3326bcf24c79ba92a23f2e52.html (no option selected; regionOfOriginCodeRequirement-2 checked); frame snapshot call@4183 combobox value",
+      "quote": "<input class=\"govuk-radios__input\" id=\"regionOfOriginCodeRequirement-2\" name=\"regionOfOriginCodeRequirement\" type=\"radio\" value=\"no\" checked>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-034",
+      "statement": "In the error state the enhanced country box references the error message in its aria-describedby, between the hint and the assistive hint.",
+      "kind": "behaviour",
+      "ref": "trace f489f frame snapshot call@4183, INPUT#countryOfOrigin",
+      "quote": "\"aria-describedby\":\"countryOfOrigin-hint countryOfOrigin-error countryOfOrigin__assistiveHint\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-035",
+      "statement": "In the error state the enhanced country box gets the standard GOV.UK error border: 2px in the error colour rgb(202, 53, 53), the same as a govuk-input--error and as the error message text.",
+      "kind": "non-functional",
+      "ref": "trace f489f test.trace pw:api@39 (evaluate), expect@40-42; stylesheet rule .govuk-form-group--error .autocomplete__input",
+      "quote": ".govuk-form-group--error .autocomplete__input{border-color:var(--govuk-error-colour,#ca3535);border-width:2px}",
+      "confidence": "verbatim",
+      "note": "The input's own class list does not change in the error state (autocomplete__input autocomplete__input--show-all-values); the border comes from the form group's govuk-form-group--error class."
+    },
+    {
+      "id": "trace-animals-fit-p6-036",
+      "statement": "Without JavaScript the application script is not loaded and the country question stays a plain GOV.UK select labelled 'Country of origin', from which the user picks a country directly.",
+      "kind": "behaviour",
+      "ref": "trace 0141f network log (no application.c4724bf.min.js request), call@3843 selectOption on internal:label=\"Country of origin\" value FR",
+      "quote": "[\"call@3843\",\"selectOption\",\"internal:label=\\\"Country of origin\\\"s\",[{\"valueOrLabel\":\"FR\"}]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-037",
+      "statement": "Without JavaScript, the hint still reads 'Start typing to search for a country.' although the control is a plain select with no typing search.",
+      "kind": "copy",
+      "ref": "trace 0141f resources/232fd8cebd025f473e8c72b5ac4bf31383ac67de.html (origin page served with JavaScript off)",
+      "quote": "Start typing to search for a country.",
+      "confidence": "inferred",
+      "note": "The page is server-rendered identically with or without JavaScript, so the hint text is the same in both; that it no longer fits the control is the extractor's reading."
+    },
+    {
+      "id": "trace-animals-fit-p6-038",
+      "statement": "Without JavaScript, choosing France and 'No' and pressing the first submit button (Save and continue) posts countryOfOrigin=FR and moves on to the 'What are you importing?' page (/commodities).",
+      "kind": "behaviour",
+      "ref": "trace 0141f network POST /live-animals/notifications/GBN-AG-26-Z5K5VA/origin 302, GET .../commodities resources/5a6cbb08ac82fd212cdc67035bdb40117408705e.html, call@3849",
+      "quote": "{\"name\":\"countryOfOrigin\",\"value\":\"FR\"},{\"name\":\"regionOfOriginCodeSuffix\",\"value\":\"\"},{\"name\":\"regionOfOriginCodeRequirement\",\"value\":\"no\"}",
+      "confidence": "verbatim",
+      "note": "Next page title: 'What are you importing? - Import notification service - GOV.UK', caption 'About the consignment'."
+    },
+    {
+      "id": "trace-animals-fit-p6-039",
+      "statement": "Returning to the origin page after saving shows the saved country selected (France) and the saved 'No' answer checked.",
+      "kind": "behaviour",
+      "ref": "trace 0141f call@3851 (goto origin), resources/96b470025df438ba7deaec9900c7c040037cf0b3.html, call@3853 (expect select#countryOfOrigin value FR)",
+      "quote": "<option value=\"FR\" selected>France</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-040",
+      "statement": "The origin page form posts as application/x-www-form-urlencoded and carries a hidden CSRF crumb and a hidden concurrencyToken (0 on a new notification) with every submission.",
+      "kind": "integration",
+      "ref": "trace f489f network POST /live-animals/notifications/GBN-AG-26-GEHKZK/origin request; trace 0141f same",
+      "quote": "{\"name\":\"crumb\",\"value\":\"[REDACTED]\"},{\"name\":\"concurrencyToken\",\"value\":\"0\"}",
+      "confidence": "verbatim",
+      "note": "The crumb value is a CSRF token and is redacted."
+    },
+    {
+      "id": "trace-animals-fit-p6-041",
+      "statement": "Every trace reaches the origin page by signing in through the stub, opening the dashboard and pressing its create button, which posts to /live-animals/notifications and redirects to a new notification's origin page, the reference in the form GBN-AG-26-XXXXXX.",
+      "kind": "behaviour",
+      "ref": "trace bd485 call@4159-4165 and network POST /live-animals/notifications 302 then GET /live-animals/notifications/GBN-AG-26-D2F0S1/origin",
+      "quote": "[\"call@4165\",\"Frame\",\"expect\",{\"expression\":\"to.have.url\",\"expectedText\":[{\"regexSource\":\"^https?:\\\\/\\\\/[^/]+\\\\/live-animals\\\\/notifications\\\\/[^/]+\\\\/origin$\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p6-042",
+      "statement": "The origin page shows the caption 'About the consignment', the heading 'Origin of the import', and a strip with a blue 'Draft' tag and the notification reference.",
+      "kind": "copy",
+      "ref": "trace bd485 resources/bb0d0cfee3774bb010be1f042d688bd8a2edcaf5.html, main top",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">\n  Draft\n</strong>\n\n          <span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-D2F0S1</span> ... <span class=\"govuk-caption-l\">About the consignment</span>\n  <h1 class=\"govuk-heading-l\">Origin of the import</h1>",
+      "confidence": "verbatim",
+      "note": "Context only; the origin page's other fields and buttons are another part's slice."
+    },
+    {
+      "id": "trace-animals-fit-p6-043",
+      "statement": "The type-ahead uses the third-party accessible-autocomplete component (autocomplete__* classes and its own stylesheet rules), which sits outside govuk-frontend; the service wraps it in its own module, app-accessible-autocomplete, and restyles it to match GOV.UK inputs.",
+      "kind": "constraint",
+      "ref": "trace bd485 frame snapshot call@4165 (autocomplete__wrapper, data-module app-accessible-autocomplete); stylesheet application.f6b50c7.min.css autocomplete__* rules",
+      "quote": "\"data-module\":\"app-accessible-autocomplete\"",
+      "confidence": "inferred",
+      "note": "Inferred from the non-govuk class names and the custom data-module name. accessible-autocomplete is the alphagov component GOV.UK services commonly use for this pattern; no govuk-frontend component replaces it."
+    },
+    {
+      "id": "trace-animals-fit-p6-044",
+      "statement": "The country list reaches the page server-side: no browser request for country data appears in any trace's network log, only the page HTML, stylesheet, script and crest.",
+      "kind": "integration",
+      "ref": "trace bd485 1-trace.network (all requests); same pattern in the other nine traces",
+      "quote": "GET\t200\thttp://localhost:3000/live-animals/notifications/GBN-AG-26-D2F0S1/origin",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any data call; the type-ahead filters the options already in the select."
+    },
+    {
+      "id": "trace-animals-fit-p6-045",
+      "statement": "The source the 40-country list is read from (the spec calls it MDM) is never seen: no trace shows the server's call for country reference data, its shape, or what happens if it fails.",
+      "kind": "integration",
+      "ref": "all 10 traces, network logs; spec origin.fit.spec.js test 'renders the captured MDM country options and feature copy' (outside this slice)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p6-046",
+      "statement": "Keyboard use of the list is not exercised: no trace presses the up or down arrow keys, Enter or Tab to review or choose a country, although the assistive hint promises arrow-key and Enter support.",
+      "kind": "behaviour",
+      "ref": "all 10 traces, action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p6-047",
+      "statement": "No trace shows what happens when the user types text and leaves the box without choosing an option (blur, Escape, or submitting a partial name): whether the text is cleared, kept, or matched.",
+      "kind": "behaviour",
+      "ref": "all 10 traces, action lists",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The type-ahead is configured with data-auto-select=\"false\", so a typed match is not chosen for the user."
+    },
+    {
+      "id": "trace-animals-fit-p6-048",
+      "statement": "The text announced through the live regions (for example how many results are available) is never captured: both status regions are empty in every snapshot taken.",
+      "kind": "copy",
+      "ref": "traces bd485, 8a7ac, 52274 frame snapshots, DIV#countryOfOrigin__status--A/B",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p6-049",
+      "statement": "No trace in this slice shows the type-ahead, with JavaScript on, opening on a notification that already has a saved country: whether the saved country's name appears in the box is not shown here.",
+      "kind": "behaviour",
+      "ref": "all 10 traces; only 0141f revisits a saved origin page, with JavaScript off",
+      "quote": "",
+      "confidence": "gap",
+      "note": "data-default-value is empty on a new notification; the saved-value case may be covered by another part's origin traces."
+    },
+    {
+      "id": "trace-animals-fit-p6-050",
+      "statement": "The error state without JavaScript (the plain select with an error) is not traced; only the enhanced input's error border is shown.",
+      "kind": "behaviour",
+      "ref": "trace 0141f (no-JS, happy path only); trace f489f (JS on)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The server HTML in f489f shows the select itself gets govuk-select--error, which would be what a no-JavaScript user sees, but no trace renders it with JavaScript off."
+    },
+    {
+      "id": "trace-animals-fit-p6-051",
+      "statement": "The type-ahead is only exercised at a 1280x720 desktop viewport; its look and the 16px small-screen font size the stylesheet defines below 641px are not shown on a narrow screen.",
+      "kind": "non-functional",
+      "ref": "all 10 traces, context-options viewport {width:1280,height:720}; stylesheet .autocomplete__hint,.autocomplete__input,.autocomplete__option{font-size:1rem}",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -1,0 +1,766 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 4 read in full e2e/journeys.fit.spec.js (391 lines) and the shared helper e2e/support/journey.js (270 lines). journeys.fit.spec.js has two describe blocks. 'notification journeys end to end' runs one test per entry of JOURNEYS (5 tests: cattle by air, poultry by rail, pet cats by air, horse by sea, germinal bovine semen), each driven by walk() (notification type or category, origin, what are you importing, main import reason, commodity details, optional identification details, optional additional details, arrival details, optional transit countries, transporter, upload documents, roles and addresses with optional CPH and permanent address, contact address) then reviewAndSubmit() (hub shows every task Complete, review your notification, declaration with its empty-submit error, notification submitted, the submitted notification viewed by reference). 'the notification hub' has 4 tests: a fresh notification lists every task as to do, a hub task link returns to the hub after saving, review with tasks missing lists each incomplete section, and the submitted page is guarded until the declaration is confirmed. journey.js supplies the mount (/design-release-2.1), the page actions every step calls (field names, ids, button values) and the shared assertions (error summary title, back link, heading, reference format); only what these 9 tests drive or assert is claimed here. Claims are ordered: shared walk steps, the hub after completion, review, declaration, submitted page, view after submit, one claim per journey's distinguishing route and review content, then the four hub tests, then gaps.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p4-001",
+      "statement": "Every Design Release 2.1 page is served under the /design-release-2.1 path prefix, a mirror of the root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-002",
+      "statement": "Going to /create-notification sends the user to the notification type page, where choosing a notification type (live-animals in these journeys) and continuing leads to the origin of the import page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:121-128 (startNotification); journeys.fit.spec.js:40",
+      "quote": "await page.goto(url('/create-notification'))\n  await expect(page).toHaveURL(urlFor('/notification-type'))\n  await page.locator(`input[name=\"notificationType\"][value=\"${type}\"]`).check()\n  await saveAndContinue(page)\n  await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-003",
+      "statement": "Going to /create-notification with a category query parameter (category=germinal-products) skips the notification type page and lands straight on the origin of the import page.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:37-42; JOURNEYS germinal-semen category, line 294",
+      "quote": "if (j.category) {\n      await page.goto(url(`/create-notification?category=${j.category}`))\n    } else {\n      await startNotification(page, j.type || 'live-animals')\n    }\n    await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-004",
+      "statement": "From the origin page onward, the journey pages show a draft strip carrying the notification reference, in the format GBN-, two capital letters, a hyphen, two digits, a hyphen, then capital letters and digits (for example GBN-XX-26-ABC123).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:60-65 (readReference); journeys.fit.spec.js:43",
+      "quote": "/** The draft strip (status tag + notification reference) on journey pages. */\n...\n  const match = text.match(/GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]+/)",
+      "confidence": "verbatim",
+      "note": "The example value in the statement is illustrative; the source gives only the regular expression. The walk reads the reference on the origin page and later asserts the same value on the review page, the submitted page and the view-by-reference page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-005",
+      "statement": "The origin of the import page asks for the country of origin through a type-and-pick autocomplete, whether a region of origin code is required (Yes or No), the region code suffix when Yes, and an optional internal reference, then continues to the what are you importing page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:130-136 (answerOrigin); journeys.fit.spec.js:44-48",
+      "quote": "await pickFromAutocomplete(page, 'country-of-origin', search, country)\n  await page.locator(`input[name=\"regionOfOriginRequired\"][value=\"${region}\"]`).check()\n  if (region === 'Yes') await page.locator('#region-of-origin-code-suffix').fill(code)\n  if (reference) await page.locator('#internal-reference').fill(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-006",
+      "statement": "A region of origin code is stored as the country's two-letter code followed by the entered suffix: France with suffix 75 appears on the review page as FR-75.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:227 and 235 (cattle-air origin and reviewContains)",
+      "quote": "origin: { search: 'Fran', country: 'France', region: 'Yes', code: '75', reference: 'CATTLE-2026-01' },\n...\n    reviewContains: ['FR-75', 'CATTLE-2026-01',",
+      "confidence": "inferred",
+      "note": "Inferred from the input (France, suffix 75) and the review text the test asserts (FR-75); the FR prefix is not typed by the user."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-007",
+      "statement": "The internal reference entered on the origin page is shown on the review page (CATTLE-2026-01).",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:227 and 235",
+      "quote": "reference: 'CATTLE-2026-01' },\n...\n    reviewContains: ['FR-75', 'CATTLE-2026-01',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-008",
+      "statement": "The what are you importing page has a commodity search: the user types, ticks one species checkbox per species, the chosen species are carried in a hidden selected-species value, and save and continue leads to the main import reason page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:88-101 (chooseSpecies); journeys.fit.spec.js:47-55",
+      "quote": "await page.locator(`#commodity-species-${speciesId}`).check()\n  await expect(page.locator('input.app-commodity-search__species-value')).toHaveValue(new RegExp(speciesId))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-009",
+      "statement": "The species the journeys pick from the commodity search are cattle (Bos taurus, code 0102), chicken (Gallus domesticus, 010511), cat (Felis catus, 01061900), horse (Equus cabalus, 0101) and cattle semen (Bos taurus, 05111000, shown as 'Cattle, Semen').",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:110-117 (SPECIES)",
+      "quote": "cattle: { search: 'cattle', id: 'cattle-bos-taurus', latin: 'Bos taurus', code: '0102', name: 'Cattle' },\n  chicken: { search: 'chicken', id: 'chicken-gallus-domesticus', latin: 'Gallus domesticus', code: '010511', name: 'Chicken' },\n  cat: { search: 'felis', id: 'cat-felis-catus', latin: 'Felis catus', code: '01061900', name: 'Cat' },\n  horse: { search: 'horse', id: 'horse-equus-caballus', latin: 'Equus cabalus', code: '0101', name: 'Horse' },\n  cattleSemen: { search: 'semen', id: 'cattle-semen-bos-taurus', latin: 'Bos taurus', code: '05111000', name: 'Cattle, Semen' }",
+      "confidence": "verbatim",
+      "note": "The latin and code values are test data; only the species id, the search term and (for semen) the name 'Cattle, Semen' are exercised by these tests. 'Equus cabalus' is spelt as in the source."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-010",
+      "statement": "The main import reason page offers the import reasons Internal market, Transit, Temporary admission horses and Re-entry as radio options, and save and continue from it leads to the commodity details page.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:53-59, 228, 243, 283, 354; e2e/support/journey.js:145-160",
+      "quote": "await page.locator(`input[name=\"importReason\"][value=\"${reason}\"]`).check()",
+      "confidence": "verbatim",
+      "note": "The four values are those the tests in this part select; the page may offer others."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-011",
+      "statement": "Choosing Internal market as the import reason asks for an internal market purpose; the journeys choose Breeding and 'Companion animal not for resale or rehoming'.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:147-149; journeys.fit.spec.js:228, 257, 298",
+      "quote": "if (reason === 'Internal market' && purpose) {\n    await page.locator(`input[name=\"internalMarketPurpose\"][value=\"${purpose}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-012",
+      "statement": "Choosing Transit as the import reason asks for the exit border control post (a select, 'Holyhead POE - GBHLY' in the journey) and the transit destination country (a select, 'Republic of Ireland' in the journey).",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:151-154; journeys.fit.spec.js:243",
+      "quote": "if (exitPort) await page.locator('#transit-exit-border-control-post').selectOption(exitPort)\n    if (transitCountry) await page.locator('#transit-destination-country').selectOption(transitCountry)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-013",
+      "statement": "Choosing Temporary admission horses as the import reason asks for an exit date (a date picker, 60 days from today in the journey) and a port of exit (a select, 'Holyhead POE - GBHLY' in the journey).",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:155-158; journeys.fit.spec.js:283",
+      "quote": "if (exitDate) await fillDate(page, '#temporary-admission-exit-date', exitDate)\n    if (exitPort) await page.locator('#temporary-admission-port-of-exit').selectOption(exitPort)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-014",
+      "statement": "Every DR2.1 date picker takes dates typed in d/m/yyyy format.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:10-15 (dateFromToday), 103-108 (fillDate)",
+      "quote": "/** d/m/yyyy, the format every DR2.1 date picker takes, `days` from today. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-015",
+      "statement": "For live animals the commodity details page asks for the number of animals of each chosen species.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:58-66",
+      "quote": "await page.locator(`input[name=\"numberOfAnimals[${s.id}]\"]`).fill(String(j.counts[s.id]))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-016",
+      "statement": "For germinal products the commodity details page asks, per species, for the net weight and the number of packages, and asks for a storage temperature with Frozen as one option.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:60-68",
+      "quote": "if (j.germinal) {\n        await page.locator(`input[name=\"netWeight[${s.id}]\"]`).fill('2.5')\n        await page.locator(`input[name=\"numberOfPackages[${s.id}]\"]`).fill('4')\n...\n    if (j.germinal) await page.locator('input[name=\"storageTemperature\"][value=\"Frozen\"]').check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-017",
+      "statement": "For species that need identifying (cattle, cat, horse, cattle semen), save and continue on commodity details leads to the animal identification details page; for chicken it leads straight to the additional animal details page.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:72-84; JOURNEYS identifiers, lines 229, 258, 284, 299 (none for poultry-rail)",
+      "quote": "if (j.identifiers) {\n    await test.step('identification details', async () => {\n      await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "inferred",
+      "note": "Inferred from which journey entries carry an identifiers step: the poultry-rail walk asserts /additional-animal-details straight after commodity details."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-018",
+      "statement": "Cattle identification asks, for each animal, for an ear tag and a passport number.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:229",
+      "quote": "identifiers: (page) => identifyAnimals(page, SPECIES.cattle.id, ['ear-tag', 'passport'], 2),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-019",
+      "statement": "Cat identification asks, for each animal, for a microchip number, a passport number and a tattoo.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:258",
+      "quote": "identifiers: (page) => identifyAnimals(page, SPECIES.cat.id, ['microchip', 'passport', 'tattoo'], 2),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-020",
+      "statement": "Horse identification asks, for each animal, for a microchip number, a passport number and the horse's name.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:284",
+      "quote": "identifiers: (page) => identifyAnimals(page, SPECIES.horse.id, ['microchip', 'passport', 'horse-name'], 1),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-021",
+      "statement": "Bovine semen identification asks for a donor ID, a collection date, a production date (both date pickers) and an identification number.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:299-306",
+      "quote": "await page.locator(`[name=\"identifiers[${id}][donor-id]\"]`).fill('BULL-007')\n      await fillDate(page, `[name=\"identifiers[${id}][collection-date]\"]`, '1/9/2026')\n      await fillDate(page, `[name=\"identifiers[${id}][production-date]\"]`, '2/9/2026')\n      await page.locator(`[name=\"identifiers[${id}][identification-number]\"]`).fill('NL-BULL-007')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-022",
+      "statement": "When a species has more than one animal, the identification page identifies one animal at a time: the user fills that animal's identifiers and presses a per-species save button, which reloads the page for the next animal, before save and continue.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:208-219 (identifyAnimals)",
+      "quote": "if (count > 1) {\n      await page.locator(`button[value=\"save:${speciesId}\"]`).click()\n      await page.waitForLoadState('load')\n    }",
+      "confidence": "inferred",
+      "note": "Inferred from the helper filling the same field names for each animal and pressing the save:<speciesId> button between them; the test does not assert what the page shows between saves."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-023",
+      "statement": "After identification (or commodity details for species not identified), live-animal journeys reach the additional animal details page, which asks for a certification purpose; the journeys choose Further keeping, Slaughter, Other and Registered equine animal.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:79-84, 230, 244, 259, 285; e2e/support/journey.js:169-173",
+      "quote": "if (purpose) await page.locator(`input[name=\"certificationPurpose\"][value=\"${purpose}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-024",
+      "statement": "For cattle, the additional animal details page also asks whether the consignment contains unweaned animals (answered No).",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:224 and 230; e2e/support/journey.js:171",
+      "quote": "title: 'cattle by air: identification, unweaned question, CPH number',\n...\n    additional: { purpose: 'Further keeping', unweaned: 'No' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-025",
+      "statement": "The germinal products journey has no additional details step: after identification it goes to arrival details, and its hub has no Additional details task.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:292-311 (germinal-semen has no additional; hubRows filters out 'Additional details')",
+      "quote": "hubRows: HUB_ROWS.filter((row) => row !== 'Additional details').concat('Identification details'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-026",
+      "statement": "The arrival details page asks for the arrival date at the port (a date picker), the port of entry (a type-and-pick autocomplete), the means of transport (a select), the transport identification and the transport document reference.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:175-182 (answerArrival); journeys.fit.spec.js:86-89",
+      "quote": "await fillDate(page, '#arrival-date-at-port', date)\n  if (port) await pickFromAutocomplete(page, 'port-of-entry', port.search, port.option)\n  await page.locator('#means-of-transport').selectOption(means)\n  await page.locator('#transport-identification').fill(transportId)\n  await page.locator('#transport-document-reference').fill(documentReference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-027",
+      "statement": "The means of transport select offers Air, Rail, Sea and Road, and the port of entry autocomplete offers Heathrow, Dover and Holyhead among its options.",
+      "kind": "data",
+      "ref": "e2e/journeys.fit.spec.js:231, 245, 286, 307",
+      "quote": "arrival: { means: 'Air', port: { search: 'Heathrow', option: 'Heathrow' } },\n...\n    arrival: { means: 'Rail', port: { search: 'Dover', option: 'Dover' }, transportId: 'EU-RAIL-77' },\n...\n    arrival: { means: 'Sea', port: { search: 'Holyhead', option: 'Holyhead' }, transportId: 'STENA ADVENTURER' },\n...\n    arrival: { means: 'Road', port: { search: 'Dover', option: 'Dover' }, transportId: 'NL-12-AB' },",
+      "confidence": "verbatim",
+      "note": "These are the values the journeys use; the lists may hold more."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-028",
+      "statement": "When the means of transport is Rail or Road, arrival details leads to a transit countries page; when it is Air or Sea, arrival details leads straight to the transporter page.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:91-101; JOURNEYS transit present for poultry-rail (line 246) and germinal-semen (line 308), absent for cattle-air, cat-air, horse-sea",
+      "quote": "if (j.transit) {\n    await test.step('transit countries', async () => {\n      await expect(page).toHaveURL(urlFor('/transit-countries'))",
+      "confidence": "inferred",
+      "note": "Inferred from the five walks: the two land journeys (Rail with Transit reason, Road with Internal market) visit /transit-countries, the three Air/Sea journeys assert /transporter straight after arrival. The tests do not say what triggers the page, so the trigger could be something other than the means of transport."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-029",
+      "statement": "The transit countries page lets the user add several transit countries one at a time through a type-and-pick autocomplete (Belgium then France in the poultry journey), then save and continue to the transporter page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:184-189 (answerTransitCountries); journeys.fit.spec.js:246, 98-100",
+      "quote": "for (const c of countries) {\n    await pickFromAutocomplete(page, 'transit-country-search', c.search, c.option)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-030",
+      "statement": "The type-and-pick autocompletes (country of origin, port of entry, transit country) show matching options as the user types each character, and picking a rendered option writes the hidden value the server reads.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:67-86 (pickFromAutocomplete)",
+      "quote": "* Bespoke type-and-pick autocompletes (country of origin, port of entry, transit\n * country). They render on each input event, so type per key, then click the\n * rendered option, which writes the hidden value the server reads.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-031",
+      "statement": "The transporter page asks the user to choose one transporter from a list of radio options; the journeys choose Aberdeen Livestock Ltd, Danish Meat Export ApS, Roadtrain Ltd and Portuguese Livestock Lda, and the chosen name appears on the review page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:191-194; journeys.fit.spec.js:232, 235, 247, 249, 287, 289, 309, 311",
+      "quote": "await page.locator(`input[name=\"transporterId\"][value=\"${transporterId}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-032",
+      "statement": "The upload documents page asks for a document type (ITAHC in the journeys), a document reference, a date of issue (a date picker) and a file attachment; uploading a PDF fills in the attachment's file name.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:196-206 (fillDocument); journeys.fit.spec.js:103-105",
+      "quote": "await page.locator('#document-type').selectOption(type)\n  await page.locator('#document-reference').fill(reference)\n  await fillDate(page, '#date-of-issue', issued)\n  if (file) {\n    await page.locator('#attachment').setInputFiles(file)\n    await expect(page.locator('input[name=\"attachmentFileName\"]')).toHaveValue(file.name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-033",
+      "statement": "On the upload documents page, the 'add another' action adds the entered document as a row in the uploaded documents table, before save and continue leads to the roles and addresses page.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:103-112",
+      "quote": "await clickAction(page, 'add-another')\n    await expect(page.locator('table.app-upload-documents-table tbody tr')).toHaveCount(1)\n    await saveAndContinue(page)\n  })\n\n  await test.step('consignment addresses', async () => {\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-034",
+      "statement": "Journey pages with an action button group submit with a button named action, whose value says what to do: continue (save and continue), hub (save and return to the overview), add-another, or save:<species> on the identification page.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:17-23; journeys.fit.spec.js:106, 214",
+      "quote": "await page.locator(`button[name=\"action\"][value=\"${value}\"]`).first().click()\n...\nconst saveAndContinue = (page) => clickAction(page, 'continue')\nconst saveAndReturnToOverview = (page) => clickAction(page, 'hub')",
+      "confidence": "verbatim",
+      "note": "save:<species> is matched by value only (button[value=\"save:...\"]), so its name is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-035",
+      "statement": "The roles and addresses page links to five address pages: place of origin, consignor or exporter, consignee, importer and place of destination; on each the user picks one address from radio options and save and continue returns to roles and addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:208-223 (CORE_ADDRESSES, chooseAddress); journeys.fit.spec.js:111-113",
+      "quote": "const CORE_ADDRESSES = {\n  'place-of-origin': ['placeOfOriginAddressId', 'green-valley-livestock-farm'],\n  'consignor-or-exporter': ['consignorAddressId', 'nordic-livestock-export'],\n  consignee: ['consigneeAddressId', 'northern-livestock-imports-consignee'],\n  importer: ['importerAddressId', 'britannia-trade-livestock'],\n  'place-of-destination': ['placeOfDestinationAddressId', 'riverside-holding-facility']\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-036",
+      "statement": "For cattle and for poultry, the roles and addresses page has an 'Add a CPH number' link to a page asking for the county, parish and holding parts of the CPH number; save and continue returns to roles and addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:114-118, 123, 233, 248; e2e/support/journey.js:225-229",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Add a CPH number' }).click()\n      await fillCph(page)\n      await saveAndContinue(page)",
+      "confidence": "verbatim",
+      "note": "The cat, horse and semen journeys do not add a CPH number; the tests do not show whether the link is absent for them."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-037",
+      "statement": "A CPH number entered as county 12, parish 345 and holding 6789 is shown on the review page as 12/345/6789.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:225-229; journeys.fit.spec.js:235",
+      "quote": "async function fillCph (page, { county = '12', parish = '345', holding = '6789' } = {}) {\n...\n    reviewContains: ['FR-75', 'CATTLE-2026-01', 'Bos Taurus', 'Breeding', 'Further keeping', '12/345/6789', 'Aberdeen Livestock Ltd']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-038",
+      "statement": "For cats, the roles and addresses page has an 'Add a permanent address' link to a page asking, for each animal, whether its permanent address is the same as the place of destination or a new address.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:119-122, 262-264",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Add a permanent address' }).click()\n...\n      await page.locator('input[name=\"permanentAddressChoice[cat-felis-catus:0]\"][value=\"same-as-pod\"]').check()\n      await page.locator('input[name=\"permanentAddressChoice[cat-felis-catus:1]\"][value=\"new-address\"]').check()",
+      "confidence": "verbatim",
+      "note": "'same-as-pod' read as same as the place of destination; the label text is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-039",
+      "statement": "Choosing a new permanent address for an animal reveals fields for name, address line 1, town or city, postcode, email and phone; save and continue returns to roles and addresses, and the address appears on the review page.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:265-275, 123",
+      "quote": "const p = 'permanentAddressDetails-cat-felis-catus-1'\n      await page.locator(`#${p}-name`).fill('Jo Bloggs')\n      await page.locator(`#${p}-address-line-1`).fill('4 High Street')\n      await page.locator(`#${p}-town-or-city`).fill('York')\n      await page.locator(`#${p}-postcode`).fill('YO1 7HH')\n      await page.locator(`#${p}-email`).fill('jo@example.com')\n      await page.locator(`#${p}-phone`).fill('01904 000000')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-040",
+      "statement": "Save and continue on roles and addresses leads to the contact address for this consignment page, where the user picks one contact address from radio options and saves.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:125-131; e2e/support/journey.js:231-234",
+      "quote": "await expect(page).toHaveURL(urlFor('/contact-address-for-consignment'))\n    await answerContactAddress(page)\n...\n  await page.locator(`input[name=\"contactAddressId\"][value=\"${id}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-041",
+      "statement": "The notification hub is at /notification-hub and its heading is Overview.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:138-139",
+      "quote": "await page.goto(url('/notification-hub'))\n    await expectHeading(page, 'Overview')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-042",
+      "statement": "The hub tasklist rows are: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Additional details, Arrival details, Transport details, Upload documents, Roles and addresses, and Contact address for this consignment; each row's name is a link.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:14-31",
+      "quote": "const HUB_ROWS = [\n  'Where is this consignment coming from?',\n  'What are you importing?',\n  'Main import reason',\n  'Commodity details',\n  'Additional details',\n  'Arrival details',\n  'Transport details',\n  'Upload documents',\n  'Roles and addresses',\n  'Contact address for this consignment'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-043",
+      "statement": "For species that need identifying (cattle, cat, horse, cattle semen), the hub also has an Identification details task.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:234, 274, 288, 310",
+      "quote": "hubRows: [...HUB_ROWS, 'Identification details'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-044",
+      "statement": "Once a journey is walked to the end, every hub task row shows the status Complete.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:137-144",
+      "quote": "for (const row of j.hubRows || HUB_ROWS) {\n      await expect(hubRow(page, row)).toContainText('Complete')\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-045",
+      "statement": "The hub's 'Review and submit' button goes to the review your notification page at /review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:147-148, 344",
+      "quote": "await page.locator('main').getByRole('button', { name: 'Review and submit' }).click()\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-046",
+      "statement": "The review page's title is 'Review your notification - Import notification service - GOV.UK' and its heading is 'Review your notification'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:149-150",
+      "quote": "await expect(page).toHaveTitle('Review your notification - Import notification service - GOV.UK')\n    await expectHeading(page, 'Review your notification')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-047",
+      "statement": "When every task is complete, the review page shows no error summary.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:151",
+      "quote": "await expect(page.locator('.govuk-error-summary')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-048",
+      "statement": "The review page has six sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Consignment addresses' and '6. Contact address'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:153-155",
+      "quote": "for (const section of ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Consignment addresses', '6. Contact address']) {",
+      "confidence": "verbatim",
+      "note": "The hub names sections 4 and 5 differently ('4. Documents', '5. Consignment parties'): see the fresh hub claim."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-049",
+      "statement": "The review page shows the notification's reference.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:156",
+      "quote": "await expect(main).toContainText(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-050",
+      "statement": "The review page shows a species' Latin name with each word capitalised: Bos Taurus for cattle and Felis Catus for cats.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:235, 275",
+      "quote": "reviewContains: ['FR-75', 'CATTLE-2026-01', 'Bos Taurus',\n...\n    reviewContains: ['Spain', 'Companion animal not for resale or rehoming', 'Felis Catus', '4 High Street']",
+      "confidence": "inferred",
+      "note": "Inferred from the review asserting 'Bos Taurus' and 'Felis Catus' while journey.js holds the Latin names as 'Bos taurus' and 'Felis catus'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-051",
+      "statement": "Continue on a complete review page leads to the declaration page at /declaration.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:161-163",
+      "quote": "await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/declaration'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-052",
+      "statement": "The declaration page's title is 'Declaration - Import notification service - GOV.UK' and its heading is 'Declaration'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:164-165",
+      "quote": "await expect(page).toHaveTitle('Declaration - Import notification service - GOV.UK')\n    await expectHeading(page, 'Declaration')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-053",
+      "statement": "The declaration page states 'I am the contact for the authorities and located in the UK.'",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:167",
+      "quote": "I am the contact for the authorities and located in the UK.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-054",
+      "statement": "The declaration page states 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:168",
+      "quote": "I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-055",
+      "statement": "The declaration page includes the commitment to 'any costs needed for destruction and disposal of consignments, when instructed by the authorities'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:169",
+      "quote": "any costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim",
+      "note": "The test asserts a fragment; the words leading into it are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-056",
+      "statement": "The declaration page has a confirmation checkbox (id declaration-confirmed) labelled 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:170, 179",
+      "quote": "await expect(page.getByLabel('I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.')).toBeVisible()\n...\n    await page.locator('#declaration-confirmed').check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-057",
+      "statement": "The declaration page shows a 'Date of declaration:' line.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:171",
+      "quote": "await expect(main).toContainText('Date of declaration:')",
+      "confidence": "verbatim",
+      "note": "The date value itself is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-058",
+      "statement": "The declaration page's back link goes to the review page (/design-release-2.1/review-notification).",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:172",
+      "quote": "await expectBackLink(page, url('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-059",
+      "statement": "Pressing Continue on the declaration page without ticking the confirmation shows an error summary titled 'There is a problem' with the single message 'Confirm that you have reviewed and comply with this declaration'.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:175-176; e2e/support/journey.js:38-44",
+      "quote": "await submitForm(page, 'Continue')\n    await expectErrorSummary(page, ['Confirm that you have reviewed and comply with this declaration'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-060",
+      "statement": "Ticking the declaration confirmation and pressing Continue submits the notification and leads to the notification submitted page at /notification-submitted.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:179-184",
+      "quote": "await page.locator('#declaration-confirmed').check()\n    await submitForm(page, 'Continue')\n  })\n\n  await test.step('notification submitted', async () => {\n    await expect(page).toHaveURL(urlFor('/notification-submitted'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-061",
+      "statement": "The notification submitted page's title is 'Import notification submitted - Import notification service - GOV.UK' and its heading is 'Import notification submitted'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:185-186",
+      "quote": "await expect(page).toHaveTitle('Import notification submitted - Import notification service - GOV.UK')\n    await expectHeading(page, 'Import notification submitted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-062",
+      "statement": "The notification submitted page shows 'Your reference number' with the same reference the draft strip showed from the origin page onward.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:43, 188-189",
+      "quote": "await expect(main).toContainText('Your reference number')\n    await expect(main).toContainText(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-063",
+      "statement": "The notification submitted page tells the user: 'Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.'",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:190",
+      "quote": "Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-064",
+      "statement": "The notification submitted page says 'You can view or change this notification from your dashboard.'",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:191",
+      "quote": "You can view or change this notification from your dashboard.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-065",
+      "statement": "The notification submitted page has a 'Return to your dashboard' link to the dashboard (/design-release-2.1) and a 'Create a new notification' link to /design-release-2.1/create-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:192-193",
+      "quote": "await expect(main.getByRole('link', { name: 'Return to your dashboard' })).toHaveAttribute('href', url())\n    await expect(main.getByRole('link', { name: 'Create a new notification' })).toHaveAttribute('href', url('/create-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-066",
+      "statement": "The notification submitted page gives the contact email importsriskmanagement@apha.gov.uk and 'Telephone: 0330 041 6999'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:194-195",
+      "quote": "await expect(main).toContainText('importsriskmanagement@apha.gov.uk')\n    await expect(main).toContainText('Telephone: 0330 041 6999')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-067",
+      "statement": "After submission, the notification can be viewed at /review-notification?reference=<reference>, which shows the reference and the status Submitted.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:200-205",
+      "quote": "await page.goto(url(`/review-notification?reference=${reference}`))\n    await expect(page.locator('main')).toContainText(reference)\n    await expect(page.locator('main')).toContainText('Submitted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-068",
+      "statement": "A cattle by air notification (France with region code 75, internal reference CATTLE-2026-01, 2 cattle, Internal market for Breeding, ear tag and passport for each animal, Further keeping, not unweaned, Heathrow, Aberdeen Livestock Ltd, a CPH number) can be walked from create to submitted, and its review shows FR-75, CATTLE-2026-01, Bos Taurus, Breeding, Further keeping, 12/345/6789 and Aberdeen Livestock Ltd.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:222-236, test 'cattle by air: identification, unweaned question, CPH number'",
+      "quote": "title: 'cattle by air: identification, unweaned question, CPH number',\n...\n    reviewContains: ['FR-75', 'CATTLE-2026-01', 'Bos Taurus', 'Breeding', 'Further keeping', '12/345/6789', 'Aberdeen Livestock Ltd']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-069",
+      "statement": "A poultry by rail notification (Germany, 400 chickens, Transit via Holyhead POE - GBHLY to the Republic of Ireland, Slaughter, Dover by Rail with transport id EU-RAIL-77, transit through Belgium and France, Danish Meat Export ApS, a CPH number) can be walked from create to submitted with no identification step, and its review shows Germany, Transit, Belgium and Danish Meat Export ApS.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:237-250, test 'poultry by rail: no identification, transit countries'",
+      "quote": "title: 'poultry by rail: no identification, transit countries',\n...\n    reviewContains: ['Germany', 'Transit', 'Belgium', 'Danish Meat Export ApS']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-070",
+      "statement": "A pet cats by air notification (Spain, 2 cats, Internal market as a companion animal not for resale or rehoming, microchip, passport and tattoo per cat, Other purpose, Heathrow, Aberdeen Livestock Ltd, one cat's permanent address the same as the place of destination and the other's a new address) can be walked from create to submitted, and its review shows Spain, 'Companion animal not for resale or rehoming', Felis Catus and 4 High Street.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:251-276, test 'pet cats by air: microchip identification and permanent address'",
+      "quote": "title: 'pet cats by air: microchip identification and permanent address',\n...\n    reviewContains: ['Spain', 'Companion animal not for resale or rehoming', 'Felis Catus', '4 High Street']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-071",
+      "statement": "A horse by sea notification (Republic of Ireland, 1 horse, Temporary admission horses with an exit date 60 days out via Holyhead POE - GBHLY, microchip, passport and horse name, Registered equine animal, Holyhead by Sea with transport id STENA ADVENTURER, Roadtrain Ltd) can be walked from create to submitted, and its review shows Temporary admission horses, Holyhead POE - GBHLY, Registered equine animal and Roadtrain Ltd.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:277-290, test 'horse by sea: temporary admission'",
+      "quote": "title: 'horse by sea: temporary admission',\n...\n    reviewContains: ['Temporary admission horses', 'Holyhead POE - GBHLY', 'Registered equine animal', 'Roadtrain Ltd']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-072",
+      "statement": "A germinal products notification for bovine semen (started from the germinal-products category, Netherlands, net weight 2.5 and 4 packages, Frozen, Internal market for Breeding, donor BULL-007 with collection and production dates and identification number NL-BULL-007, Dover by Road with transport id NL-12-AB, transit through Belgium, Portuguese Livestock Lda) can be walked from create to submitted, and its review shows Netherlands, 'Cattle, Semen', BULL-007 and Portuguese Livestock Lda.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:291-312, test 'germinal products: bovine semen with donor identification'",
+      "quote": "title: 'germinal products: bovine semen with donor identification',\n...\n    reviewContains: ['Netherlands', 'Cattle, Semen', 'BULL-007', 'Portuguese Livestock Lda']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-073",
+      "statement": "A fresh notification's hub has the title 'Overview - Import notification service - GOV.UK', the heading Overview and the status Draft.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:325-331, test 'a fresh notification lists every task as to do'",
+      "quote": "await expect(page).toHaveTitle('Overview - Import notification service - GOV.UK')\n    await expectHeading(page, 'Overview')\n    const main = page.locator('main')\n    await expect(main).toContainText('Draft')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-074",
+      "statement": "The hub has a 'Your commodities' heading with the lines 'Total number of animals in this consignment' and 'Total number of packages in this consignment'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:332-334",
+      "quote": "await expect(main.getByRole('heading', { name: 'Your commodities' })).toBeVisible()\n    await expect(main).toContainText('Total number of animals in this consignment')\n    await expect(main).toContainText('Total number of packages in this consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-075",
+      "statement": "The hub has a 'Notification tasklist' heading and six section headings: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties' and '6. Contact address'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:335-338",
+      "quote": "await expect(main.getByRole('heading', { name: 'Notification tasklist' })).toBeVisible()\n    for (const heading of ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address']) {",
+      "confidence": "verbatim",
+      "note": "Sections 4 and 5 are named differently on the review page ('4. Uploaded documents', '5. Consignment addresses')."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-076",
+      "statement": "On a fresh notification every hub task row shows the status 'To do'.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:339-341",
+      "quote": "for (const row of HUB_ROWS) {\n      await expect(hubRow(page, row)).toContainText('To do')\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-077",
+      "statement": "The hub describes the roles and addresses task with the text 'Consignor or Exporter, Consignee, Importer and Place of Destination'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:342",
+      "quote": "await expect(main).toContainText('Consignor or Exporter, Consignee, Importer and Place of Destination')",
+      "confidence": "inferred",
+      "note": "The test asserts the text is on the hub but not which row carries it; that it describes the roles and addresses task is inferred from its words."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-078",
+      "statement": "Hub task links carry a from=hub query: the 'Where is this consignment coming from?' link goes to /design-release-2.1/origin-of-the-import?from=hub.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:343",
+      "quote": "await expect(main.getByRole('link', { name: 'Where is this consignment coming from?' })).toHaveAttribute('href', url('/origin-of-the-import?from=hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-079",
+      "statement": "The hub's 'Review and submit' button links to /design-release-2.1/review-notification and its 'Return to dashboard' button links to the dashboard (/design-release-2.1), even on a fresh notification.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:344-345",
+      "quote": "await expect(main.getByRole('button', { name: 'Review and submit' })).toHaveAttribute('href', url('/review-notification'))\n    await expect(main.getByRole('button', { name: 'Return to dashboard' })).toHaveAttribute('href', url())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-080",
+      "statement": "Following the 'Main import reason' hub link opens /reason-for-import?from=hub, and saving the page from there returns the user to the hub instead of the next journey page, with that task now shown as Complete.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:349-358, test 'a hub task link returns to the hub after saving'",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Main import reason' }).click()\n    await expect(page).toHaveURL(url('/reason-for-import?from=hub').replace(/\\./g, '.'))\n    await page.locator('input[name=\"importReason\"][value=\"Re-entry\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))\n    await expect(hubRow(page, 'Main import reason')).toContainText('Complete')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-081",
+      "statement": "Choosing Re-entry as the main import reason completes the task with no further question.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:354-357",
+      "quote": "await page.locator('input[name=\"importReason\"][value=\"Re-entry\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))\n    await expect(hubRow(page, 'Main import reason')).toContainText('Complete')",
+      "confidence": "inferred",
+      "note": "Inferred because the test ticks only Re-entry, saves and sees the task Complete."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-082",
+      "statement": "Opening the review page with tasks still to do shows an error summary titled 'There is a problem' that lists, in order: 'Complete additional details', 'Complete arrival details', 'Complete transport details', 'Complete roles and addresses' and 'Complete contact address for this consignment'.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:360-375, test 'review with tasks missing lists each incomplete section'; e2e/support/journey.js:38-44",
+      "quote": "await expectErrorSummary(page, [\n      'Complete additional details',\n      'Complete arrival details',\n      'Complete transport details',\n      'Complete roles and addresses',\n      'Complete contact address for this consignment'\n    ])",
+      "confidence": "verbatim",
+      "note": "State reached: origin, what are you importing (cattle), main import reason and commodity details (1 animal) answered; nothing else. The summary is asserted as this exact list, so the other tasks produce no error here."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-083",
+      "statement": "An incomplete review does not list Upload documents or Identification details as errors: with neither done for one cattle, the error summary names only additional details, arrival, transport, roles and addresses, and contact address.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:360-375",
+      "quote": "await expectErrorSummary(page, [\n      'Complete additional details',\n      'Complete arrival details',\n      'Complete transport details',\n      'Complete roles and addresses',\n      'Complete contact address for this consignment'\n    ])",
+      "confidence": "inferred",
+      "note": "Inferred from the exact-list assertion against a notification with no documents and no cattle identification. Whether documents and identification are optional, or simply not checked by the review, the test does not say."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-084",
+      "statement": "An incomplete review page marks missing answers with the word Missing and shows a Delete button.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:376-378",
+      "quote": "await expect(main).toContainText('Missing')\n    await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "What Delete does is not exercised here."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-085",
+      "statement": "Pressing Continue on an incomplete review page keeps the user on the review page rather than going to the declaration.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:381-383",
+      "quote": "// Continuing from an incomplete review stays on the review page.\n    await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-086",
+      "statement": "Going to the notification submitted page before the declaration is confirmed redirects the user to the declaration page.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:386-390, test 'the submitted page is guarded until the declaration is confirmed'",
+      "quote": "await startNotification(page, 'live-animals')\n    await page.goto(url('/notification-submitted'))\n    await expect(page).toHaveURL(urlFor('/declaration'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-087",
+      "statement": "The tests do not say what the declaration page does when opened for an incomplete notification: the guard test lands on /declaration with an empty draft but asserts nothing about the page it shows.",
+      "kind": "rule",
+      "ref": "e2e/journeys.fit.spec.js:386-390",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at the guard test and the review/declaration steps; only the redirect target is asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-088",
+      "statement": "No end-to-end journey chooses Transhipment as the import reason, although the reason helper supports a transhipment destination country; the transhipment branch is not walked through to submission in this part.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:145, 150; JOURNEYS in journeys.fit.spec.js:221-313",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The helper selects '#transhipment-destination-country' when given transhipmentCountry; no journey in this file passes it."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-089",
+      "statement": "No end-to-end journey in this part imports more than one species in one notification, so the hub, review and submission of a mixed-species consignment are not proven here.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:221-313 (every journey's species list has one entry)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-090",
+      "statement": "The review page's change links are not exercised by the journeys: nothing here asserts where a change link from the review page goes or where saving returns to.",
+      "kind": "behaviour",
+      "ref": "e2e/journeys.fit.spec.js:146-159",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-091",
+      "statement": "The 'save and return to the overview' action (action=hub) is defined but no test in this part uses it, so returning to the hub from a page reached by the linear journey is not proven here.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:23; journeys.fit.spec.js (no call to saveAndReturnToOverview)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p4-092",
+      "statement": "The documents task appears on the hub as 'Upload documents' and the parties task as 'Roles and addresses', and the transporter step's hub row is named 'Transport details'.",
+      "kind": "copy",
+      "ref": "e2e/journeys.fit.spec.js:14-25",
+      "quote": "'Transport details',\n  'Upload documents',\n  'Roles and addresses',",
+      "confidence": "verbatim",
+      "note": "'Transport details' completes once the transporter page (and transit countries where shown) is saved: the walks assert it Complete after answering /transporter, and the incomplete review names it 'Complete transport details'."
+    }
+  ]
+}

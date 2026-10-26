@@ -1,0 +1,647 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 5 mined all 14 trace zips its partition names, from four specs in the tests repo (all read in full): commodities.spec.ts (7 traces: 23432 search box and empty state, 7c5a8 query shorter than three characters, 2d57c grouping by commodity heading, a6ed6 no match, 66568 multiple pairs persisted across queries, 290a2 count and clear, 725f7 empty-submit error), consignment-details.spec.ts (3 traces: ca7de page controls, d0e23 number of animals empty on load, 0e33b valid save), additional-details.spec.ts (3 traces: af002 page controls, 7bbef unchecked on load, 6c9ed valid save) and features/additional-details-scope.spec.ts (1 trace: 1c358 unweaned-animals scope). Trace hashes in refs are the five-character hash in each trace folder name (for example animals-e2e-pages-commodit-66568-...). The tim-run Playwright trace CLI refused every zip (TraceVersionError: the trace was written by a newer Playwright than the viewer), so each zip, already unzipped in this part's working folder, was read directly with jq: the test.trace step log for actions (pw:api@N / expect@N ids), the N-trace.trace frame snapshots for rendered DOM (snapshot call@N ids), and the N-trace.network resource snapshots for the request log. Every trace's setup walks dashboard -> Start a new notification -> Origin of the import (France, No) -> overview; those pages belong to other parts and are claimed here only where they hand over to this slice. Page inventory, in journey order: (1) commodity selection, /live-animals/notifications/{ref}/commodities, H1 'What are you importing?', reached from the overview task 'What are you importing?' and from 'Add another commodity'; states seen: empty, short query, results, no match, selection panel, error summary. (2) commodity details, /consignment-details, H1 'Commodity details', always follows a successful commodity selection save; one section per commodity line, newest first. (3) additional details, /additional-details, H1 'Additional details', reached from the overview task 'Main reason for import' after the import-reason page saves; its unweaned-animals question is conditional on a triggering commodity line (seen with Bos taurus, absent with only Felis catus). Each page posts to itself and redirects (search re-renders with 200; saves 302 to the next page or the overview). No validation error was rendered on the commodity details or additional details pages in any trace; those error states, the Remove action, Save and return to overview, and the commodity-search back-end call are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-e2e-p5-001",
+      "statement": "The commodity selection page is opened from the notification overview by the task link 'What are you importing?', and lives at /live-animals/notifications/{reference}/commodities.",
+      "kind": "behaviour",
+      "ref": "trace 23432 test action pw:api@50 (click) and pw:api@51; snapshot call@764 frame URL",
+      "quote": "getByRole('link', { name: 'What are you importing?', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-002",
+      "statement": "Saving the 'Origin of the import' page redirects straight to the commodity selection page.",
+      "kind": "behaviour",
+      "ref": "trace 0e33b network: POST /live-animals/notifications/GBN-AG-26-NZPDZ0/origin -> 302",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-NZPDZ0/origin -> 302 /live-animals/notifications/GBN-AG-26-NZPDZ0/commodities",
+      "confidence": "verbatim",
+      "note": "Seen in every trace's setup. The tests then navigate to the overview themselves, so the commodity page rendered on that redirect is not the one exercised."
+    },
+    {
+      "id": "trace-e2e-p5-003",
+      "statement": "The commodity selection page's browser title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 6c9ed snapshot of /commodities, TITLE element",
+      "quote": "What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-004",
+      "statement": "The commodity selection page shows the caption 'About the consignment' above the H1 'What are you importing?'.",
+      "kind": "copy",
+      "ref": "trace 23432 snapshot call@764",
+      "quote": "About the consignment / What are you importing?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-005",
+      "statement": "The commodity selection page shows an inset text telling the user each health certificate needs its own notification.",
+      "kind": "copy",
+      "ref": "trace 23432 snapshot call@764, div.govuk-inset-text",
+      "quote": "A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-006",
+      "statement": "The commodity selection page has one search field, labelled 'Search for a commodity' (medium label), a type=search input named commoditySearch, three-quarters width.",
+      "kind": "data",
+      "ref": "trace 23432 snapshot call@764; trace 66568 class list (INPUT#commoditySearch govuk-input govuk-!-width-three-quarters)",
+      "quote": "Search for a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-007",
+      "statement": "The search field's hint says the user can search by commodity name, commodity code or species name, and must enter at least 3 characters.",
+      "kind": "copy",
+      "ref": "trace 23432 snapshot call@764, #commoditySearch-hint",
+      "quote": "You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-008",
+      "statement": "A secondary 'Search' button runs the search by posting the form back to the same page, which re-renders with the results (no client-side lookup).",
+      "kind": "behaviour",
+      "ref": "trace 2d57c test actions pw:api@52-53; trace 0e33b network POST /commodities -> 200; button name=action value=search",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-NZPDZ0/commodities -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-009",
+      "statement": "Before any search, the commodity selection page lists no species checkboxes and shows no selection panel.",
+      "kind": "behaviour",
+      "ref": "trace 23432 expect@54 (checkbox count 0) and expect@55 (#commodity-selection count 0); snapshot call@764",
+      "quote": "Expect \"toHaveCount\" getByRole('checkbox')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-010",
+      "statement": "A query shorter than three characters ('Bo') lists no species and shows no message at all: neither 'No results found' nor an error.",
+      "kind": "rule",
+      "ref": "trace 7c5a8 test actions pw:api@52-53, expect@54; snapshot call@924 (search value 'Bo', no results block)",
+      "quote": "Enter at least 3 characters.",
+      "confidence": "verbatim",
+      "note": "The absence of any message is read from the rendered page after the search; the test asserts only the zero checkbox count."
+    },
+    {
+      "id": "trace-e2e-p5-011",
+      "statement": "Search results are grouped by commodity: each group is a fieldset whose small legend reads '<commodity name> (<commodity code>)', holding small checkboxes, one per species, each labelled '<common name> (<scientific name>)'.",
+      "kind": "behaviour",
+      "ref": "trace 2d57c snapshot call@915 and expect@54-58; class list govuk-checkboxes--small, govuk-fieldset__legend--s",
+      "quote": "Cow (0102) ... Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-012",
+      "statement": "Searching '0102' returns the group 'Cow (0102)' with four species: American bison (Bison bison), Cattle (Bos spp.), Domestic cattle (Bos taurus) and Water buffalo (Bubalus bubalis).",
+      "kind": "data",
+      "ref": "trace 2d57c snapshot call@915",
+      "quote": "Cow (0102) American bison (Bison bison) Cattle (Bos spp.) Domestic cattle (Bos taurus) Water buffalo (Bubalus bubalis)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-013",
+      "statement": "Searching '0101' returns the group 'Horse (0101)' with one species, Horse (Equus caballus).",
+      "kind": "data",
+      "ref": "trace 2d57c snapshot call@929",
+      "quote": "Horse (0101) Horse (Equus caballus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-014",
+      "statement": "Searching '01061900' returns two groups that share that code: 'Cat (01061900)' with Cat (Felis catus) and 'Dog (01061900)' with Dog (Canis lupus familiaris).",
+      "kind": "data",
+      "ref": "trace 2d57c snapshots call@937 and call@945",
+      "quote": "Cat (01061900) Cat (Felis catus) Dog (01061900) Dog (Canis lupus familiaris)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-015",
+      "statement": "Searching '0301' returns the group 'Fish (0301)' with one species, Atlantic salmon (Salmo salar).",
+      "kind": "data",
+      "ref": "trace 2d57c snapshot call@953",
+      "quote": "Fish (0301) Atlantic salmon (Salmo salar)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-016",
+      "statement": "Search matches on species name, including a partial one: 'Bos taurus' returns only Domestic cattle under 'Cow (0102)', 'Felis catus' returns Cat under 'Cat (01061900)', and 'Salmo' returns Atlantic salmon under 'Fish (0301)'.",
+      "kind": "behaviour",
+      "ref": "trace 66568 snapshots call@850 and call@856; trace 290a2 snapshot call@810",
+      "quote": "Domestic cattle (Bos taurus)",
+      "confidence": "verbatim",
+      "note": "Search by commodity name (for example 'Cow'), which the hint offers, was never exercised: see trace-e2e-p5-038."
+    },
+    {
+      "id": "trace-e2e-p5-017",
+      "statement": "Each species checkbox is submitted as field 'species' with a value of the form '<commodity>|<number>', so a choice identifies a commodity and a numbered species within it.",
+      "kind": "data",
+      "ref": "trace 2d57c snapshot call@915 (inputs id species, species-2..4); call@937 (species-group-2 for the second group)",
+      "quote": "value=\"Cow|1148346\"",
+      "confidence": "inferred",
+      "note": "The values (Cow|716661, Cow|1388624, Cow|1148346, Cow|749313, Horse|822332, Cat|923501, Dog|923502, Fish|801204) are verbatim; that the number is a reference-data species identifier is inferred."
+    },
+    {
+      "id": "trace-e2e-p5-018",
+      "statement": "When a query matches nothing ('zzz'), the page says 'No results found' and lists no checkboxes.",
+      "kind": "rule",
+      "ref": "trace a6ed6 expect@54-55; snapshot call@719",
+      "quote": "No results found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-019",
+      "statement": "Once species are chosen, the page shows a selection panel headed with a running count ('1 selected', '2 selected') listing each choice as '<commodity> (<code>): <common name> (<scientific name>)', with the commodity part in bold.",
+      "kind": "behaviour",
+      "ref": "trace 66568 snapshot call@868 (#commodity-selection); trace 290a2 expect@57-58, snapshot call@810",
+      "quote": "2 selected Cow (0102): Domestic cattle (Bos taurus) Cat (01061900): Cat (Felis catus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-020",
+      "statement": "The selection panel is written by the server, so ticking a box does not update it at once; it appears on the next page render, such as the next search.",
+      "kind": "behaviour",
+      "ref": "commodities.spec.ts test 'counts what has been chosen and clears it on request'; trace 290a2 pw:api@54-56 then expect@57",
+      "quote": "The panel is written on the server, so it appears on the next render.",
+      "confidence": "verbatim",
+      "note": "The quote is the spec's own comment; the trace bears it out (the panel first appears in snapshot call@810, after the Salmo search)."
+    },
+    {
+      "id": "trace-e2e-p5-021",
+      "statement": "A choice made under one query is kept when the user searches again: after ticking Bos taurus and searching 'Felis catus', the panel shows '1 selected' with Domestic cattle while the results show only Cat.",
+      "kind": "behaviour",
+      "ref": "trace 66568 test actions pw:api@52-57; snapshot call@856",
+      "quote": "1 selected Cow (0102): Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-022",
+      "statement": "Choices not on screen under the current query are carried in the form as hidden 'selection' fields, one per choice.",
+      "kind": "data",
+      "ref": "trace 66568 snapshots call@856, call@868, call@878, call@884",
+      "quote": "INPUT hidden name=selection value=Cow|1148346",
+      "confidence": "inferred",
+      "note": "Inferred from the DOM: a choice whose checkbox is on screen is not repeated as a hidden field (call@878 carries only Cat while Cow's checkbox is shown ticked)."
+    },
+    {
+      "id": "trace-e2e-p5-023",
+      "statement": "A secondary 'Clear all' button in the selection panel removes every choice; the panel then disappears.",
+      "kind": "behaviour",
+      "ref": "trace 290a2 pw:api@59, expect@60; snapshot call@816 (no panel); button name=action value=clear",
+      "quote": "Clear all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-024",
+      "statement": "Saving several species chosen under different queries persists all of them: Bos taurus and Felis catus both become commodity lines.",
+      "kind": "behaviour",
+      "ref": "trace 66568 pw:api@58, expect@59; snapshot call@860 (two table rows, two sections)",
+      "quote": "accepts and persists multiple commodity-species pairs found under different queries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-025",
+      "statement": "Coming back to the commodity selection page after saving shows the saved choices in the selection panel with an empty search box and no results.",
+      "kind": "behaviour",
+      "ref": "trace 66568 pw:api@62, expect@63-65; snapshot call@868",
+      "quote": "2 selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-026",
+      "statement": "A saved species shows ticked when a later search brings it back on screen.",
+      "kind": "behaviour",
+      "ref": "trace 66568 expect@68 and expect@71; snapshots call@878 and call@884 (checkbox CHECKED)",
+      "quote": "Expect \"toBeChecked\" getByRole('checkbox', { name: 'Bos taurus' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-027",
+      "statement": "Pressing 'Save and continue' with nothing chosen re-shows the page with an error summary titled 'There is a problem' whose one entry, 'Select a commodity', links to the search field.",
+      "kind": "rule",
+      "ref": "trace 725f7 pw:api@52, expect@53-54; snapshot call@904 (error summary link href #commoditySearch)",
+      "quote": "There is a problem Select a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-028",
+      "statement": "With nothing chosen, the error is also shown inline on the search field as 'Error: Select a commodity', and the field's form group takes the error style.",
+      "kind": "rule",
+      "ref": "trace 725f7 snapshot call@904 (p.govuk-error-message inside div.govuk-form-group--error)",
+      "quote": "Error: Select a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-029",
+      "statement": "When the commodity selection page shows an error, its browser title is prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace 725f7 snapshot of /commodities after submit, TITLE element",
+      "quote": "Error: What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-030",
+      "statement": "'Save and continue' with at least one species chosen saves and redirects to the commodity details page (/consignment-details).",
+      "kind": "behaviour",
+      "ref": "trace 0e33b network POST /commodities -> 302; test action pw:api@56 waits for 'Commodity details'",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-NZPDZ0/commodities -> 302 /live-animals/notifications/GBN-AG-26-NZPDZ0/consignment-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-031",
+      "statement": "The commodity selection page has a 'Help with commodity codes' details component explaining commodity codes in three paragraphs.",
+      "kind": "copy",
+      "ref": "trace 0e33b snapshot call@856, details.govuk-details",
+      "quote": "Help with commodity codes / Commodity codes are internationally recognised reference numbers. A commodity code describes a specific product when importing or exporting goods. You can look up commodity codes using the Trade Tariff tool (opens in a new tab).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-032",
+      "statement": "The help text links to the Trade Tariff tool at https://www.gov.uk/trade-tariff, opening in a new tab.",
+      "kind": "integration",
+      "ref": "trace 0e33b snapshot call@856, a.govuk-link href=https://www.gov.uk/trade-tariff target=_blank",
+      "quote": "Trade Tariff tool (opens in a new tab)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-033",
+      "statement": "The commodity selection, commodity details and additional details pages each end with a primary 'Save and continue' button, a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 66568 snapshots call@836 and call@860; trace 6c9ed snapshot call@730; Save and return button name=exit value=hub",
+      "quote": "Save and continue / Save and return to overview / Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-034",
+      "statement": "The back link on all three pages goes to the notification overview (/live-animals/notifications/{reference}), not to the previous page.",
+      "kind": "behaviour",
+      "ref": "trace 66568 snapshots call@836 and call@860 (a.govuk-back-link href); trace 6c9ed snapshot call@730",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-035",
+      "statement": "The commodity details page is a hub task of its own: its back link returns to the overview, and the selection is reopened from the overview task 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "commodities.spec.ts comment in 'accepts and persists multiple commodity-species pairs'; trace 66568 pw:api@60-62, expect@61",
+      "quote": "Commodity details is a hub task of its own, so its back link returns to the overview.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-036",
+      "statement": "Above the form, all three pages show a journey strip with a blue 'Draft' tag and the notification reference in bold (for example GBN-AG-26-DC83HM).",
+      "kind": "copy",
+      "ref": "trace 66568 snapshot call@836, div.app-journey-strip",
+      "quote": "Draft GBN-AG-26-DC83HM",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-037",
+      "statement": "The three pages use only govuk-frontend components (inset text, input, button, details, checkboxes, fieldset, table, radios, error summary) apart from two custom classes: 'app-journey-strip', a wrapper around a standard tag and bold text, and 'app-link-button', a submit button styled as a link for 'Remove'.",
+      "kind": "constraint",
+      "ref": "class lists of /commodities and /consignment-details (trace 66568 1-trace) and /additional-details (trace 7bbef 1-trace)",
+      "quote": "DIV app-journey-strip govuk-!-margin-bottom-4 / BUTTON govuk-link app-link-button",
+      "confidence": "verbatim",
+      "note": "A link-styled form button has no standard govuk-frontend component; the strip could be a plain govuk-tag plus govuk-body text."
+    },
+    {
+      "id": "trace-e2e-p5-038",
+      "statement": "No trace searches by commodity name (for example 'Cow'), though the hint offers it, so the result shape for a name search is not shown.",
+      "kind": "behaviour",
+      "ref": "commodities.spec.ts (all 7 tests); traces 23432, 7c5a8, 2d57c, a6ed6, 66568, 290a2, 725f7",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-039",
+      "statement": "No trace presses 'Search' with an empty query or shows any search validation message; what an empty or too-short search tells the user (beyond the hint) is not shown.",
+      "kind": "rule",
+      "ref": "traces 7c5a8, 725f7",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-040",
+      "statement": "The browser never calls a reference-data or commodity API itself; the commodity search is answered by the frontend server, so the back-end lookup it makes (and its source) is not visible in the traces.",
+      "kind": "integration",
+      "ref": "network logs of traces 0e33b, 66568, 6c9ed, 1c358 (only same-origin page requests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-041",
+      "statement": "Every form on these pages posts to its own URL with browser validation switched off (novalidate), so validation is done on the server.",
+      "kind": "constraint",
+      "ref": "trace 6c9ed snapshots, FORM method=post novalidate on /commodities, /consignment-details, /additional-details",
+      "quote": "FORM {\"method\":\"post\",\"novalidate\":\"\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-042",
+      "statement": "Each form carries a hidden concurrencyToken that rises as the notification is saved (1 on first selection, 2 after the commodity save, 4 on additional details, up to 8 in the scope trace), which suggests saves are guarded against concurrent edits.",
+      "kind": "behaviour",
+      "ref": "trace 1c358 snapshots call@78 (2), call@96 (4), call@114 (5), call@134 (8); trace 66568 call@836 (1)",
+      "quote": "INPUT hidden name=concurrencyToken value=2",
+      "confidence": "inferred",
+      "note": "No trace shows a concurrency conflict, so what the user sees on one is a gap."
+    },
+    {
+      "id": "trace-e2e-p5-043",
+      "statement": "The commodity details page's browser title is 'Commodity details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 6c9ed snapshot of /consignment-details, TITLE element",
+      "quote": "Commodity details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-044",
+      "statement": "The page at /consignment-details shows the caption 'About the consignment' and the H1 'Commodity details' (not 'consignment details').",
+      "kind": "copy",
+      "ref": "trace ca7de expect@57; snapshot call@840",
+      "quote": "About the consignment / Commodity details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-045",
+      "statement": "The commodity details page opens with a table captioned 'Selected commodities' with columns 'Commodity code', 'Common name' and 'Actions', one row per commodity line (for example '0102 | Cow | Remove').",
+      "kind": "data",
+      "ref": "trace ca7de snapshot call@840; trace 66568 snapshot call@860",
+      "quote": "Selected commodities Commodity code Common name Actions 0102 Cow Remove Cow",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-046",
+      "statement": "Each table row has a 'Remove' action, a submit button styled as a link whose hidden text names the commodity ('Remove Cow'), in a form of its own above the details form.",
+      "kind": "behaviour",
+      "ref": "trace 66568 snapshot call@860: BUTTON govuk-link app-link-button name=action value=remove:0 and value=remove-species:1",
+      "quote": "Remove<SPAN class=\"govuk-visually-hidden\"> Cow</SPAN>",
+      "confidence": "verbatim",
+      "note": "The two rows carry different action values, 'remove:0' for Cow and 'remove-species:1' for Cat, so the two rows may remove different things (a whole line or one species). No trace presses Remove: see trace-e2e-p5-058."
+    },
+    {
+      "id": "trace-e2e-p5-047",
+      "statement": "Under the table, an 'Add another commodity' link returns to the commodity selection page.",
+      "kind": "behaviour",
+      "ref": "trace 0e33b snapshot call@874, a.govuk-link href=/live-animals/notifications/GBN-AG-26-NZPDZ0/commodities",
+      "quote": "Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-048",
+      "statement": "For each commodity line the page shows a section headed '<commodity> (<code>)' (large H2) with the species' scientific name beneath (medium H3), separated from the next line by a visible section break.",
+      "kind": "data",
+      "ref": "trace 66568 snapshot call@860; class list HR govuk-section-break--l govuk-section-break--visible",
+      "quote": "Cow (0102) Bos taurus ... Cat (01061900) Felis catus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-049",
+      "statement": "Each commodity line asks for 'Number of animals' in a narrow (width-5) text input with a numeric keypad, one per line (numberOfAnimalsQuantity-0, -1 ...).",
+      "kind": "data",
+      "ref": "trace ca7de expect@58; trace 66568 snapshot call@860 (inputmode=numeric, govuk-input--width-5)",
+      "quote": "Number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-050",
+      "statement": "The number of animals is empty when the commodity details page first loads.",
+      "kind": "behaviour",
+      "ref": "trace d0e23 expect@57 (toHaveValue ''); snapshot call@895",
+      "quote": "Expect \"toHaveValue\" getByLabel('Number of animals')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-051",
+      "statement": "Each commodity line also asks for 'Number of packages (when required)', hinted 'Such as crates, bags or boxes', in a narrow numeric text input (numberOfPackages-N); the label marks it as needed only sometimes.",
+      "kind": "data",
+      "ref": "trace ca7de expect@59; snapshot call@840; trace 0e33b snapshot call@874",
+      "quote": "Number of packages (when required) / Such as crates, bags or boxes",
+      "confidence": "verbatim",
+      "note": "When packages become required is not shown."
+    },
+    {
+      "id": "trace-e2e-p5-052",
+      "statement": "Neither number field shows a unit, prefix or suffix: the count stands alone.",
+      "kind": "data",
+      "ref": "trace 0e33b snapshot call@874 (no govuk-input__prefix/suffix in the class list)",
+      "quote": "Number of animals",
+      "confidence": "inferred",
+      "note": "Read from the absence of any prefix or suffix element in the rendered page."
+    },
+    {
+      "id": "trace-e2e-p5-053",
+      "statement": "Entering 1 animal and 5 packages and pressing 'Save and continue' saves without error and returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 0e33b pw:api@57-59, expect@60; network POST /consignment-details -> 302 /live-animals/notifications/GBN-AG-26-NZPDZ0",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-NZPDZ0/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-NZPDZ0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-054",
+      "statement": "Selecting a further species adds a new commodity line rather than replacing the earlier ones: after Felis catus was saved, adding Bos taurus gives two lines.",
+      "kind": "behaviour",
+      "ref": "trace 1c358 pw:api@78-88; snapshot call@114",
+      "quote": "Each call ADDS a commodity line.",
+      "confidence": "verbatim",
+      "note": "The quote is the scope spec's comment; snapshot call@114 shows both lines."
+    },
+    {
+      "id": "trace-e2e-p5-055",
+      "statement": "The newest commodity line is listed first: after adding Bos taurus to a notification with Felis catus, Cow (0102) is line 0 and Cat (01061900) moves to line 1, keeping its saved count of 1.",
+      "kind": "behaviour",
+      "ref": "trace 1c358 snapshot call@114 (numberOfAnimalsQuantity-0 empty for Cow, numberOfAnimalsQuantity-1 value 1 for Cat)",
+      "quote": "Cow (0102) Bos taurus ... Cat (01061900) Felis catus",
+      "confidence": "verbatim",
+      "note": "The table rows in the same snapshot also list Cow before Cat."
+    },
+    {
+      "id": "trace-e2e-p5-056",
+      "statement": "The selection panel on a return visit lists earlier lines' species ('1 selected', Cat) while a new search offers the next species unticked, which shows selection works per species and adds to the saved lines.",
+      "kind": "behaviour",
+      "ref": "trace 1c358 snapshot call@110",
+      "quote": "1 selected Cat (01061900): Cat (Felis catus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-057",
+      "statement": "According to the tests, the number of animals blocks saving on every commodity line, so each line's count must be filled before the page hands back to the overview.",
+      "kind": "rule",
+      "ref": "features/additional-details-scope.spec.ts comment above addCommodity; trace 1c358 pw:api@85-87",
+      "quote": "The animal count is save-blocking on every line, so each box the consignment page is showing — the lines added on earlier passes included — is filled before it hands back to the hub.",
+      "confidence": "inferred",
+      "note": "The rule comes from the test author's comment. No trace submits a blank or invalid count, so the error copy is a gap (trace-e2e-p5-059)."
+    },
+    {
+      "id": "trace-e2e-p5-058",
+      "statement": "No trace presses 'Remove' on the commodity details page, so what removal does (a whole line or one species), whether it asks for confirmation, and where it lands are not shown.",
+      "kind": "behaviour",
+      "ref": "consignment-details.spec.ts (3 tests); traces ca7de, d0e23, 0e33b, 66568, 1c358",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-059",
+      "statement": "No trace renders a validation error on the commodity details page: the messages for a missing, non-numeric, zero or too-large number of animals, and for packages, are not shown.",
+      "kind": "rule",
+      "ref": "consignment-details.spec.ts (3 tests, all valid or initial state)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-060",
+      "statement": "No trace presses 'Save and return to overview' on any of the three pages, so whether it saves partial answers, or validates them, is not shown.",
+      "kind": "behaviour",
+      "ref": "traces of part 5 (all 14)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-061",
+      "statement": "The additional details page is reached from the overview task 'Main reason for import': saving the import-reason page redirects to /additional-details.",
+      "kind": "behaviour",
+      "ref": "trace 6c9ed pw:api@60-65; network POST /import-reason -> 302 /additional-details",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-FDSG6E/import-reason -> 302 /live-animals/notifications/GBN-AG-26-FDSG6E/additional-details",
+      "confidence": "verbatim",
+      "note": "Seen both after choosing 'Internal market' then 'Breeding' (traces af002, 7bbef, 6c9ed) and after saving the reason blank (trace 1c358)."
+    },
+    {
+      "id": "trace-e2e-p5-062",
+      "statement": "Saving the main reason for import blank goes straight to the additional details page, skipping the internal-market purpose page, because the reason is required only at submission.",
+      "kind": "rule",
+      "ref": "features/additional-details-scope.spec.ts comment above openAdditionalDetails; trace 1c358 pw:api@72-75 and network",
+      "quote": "A blank reason (enforcedAt=submit) walks straight to the tail page, skipping the internal-market purpose page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-063",
+      "statement": "The additional details page's browser title is 'Additional details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 6c9ed snapshot of /additional-details, TITLE element",
+      "quote": "Additional details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-064",
+      "statement": "The additional details page shows the caption 'Commodity details' (unlike the other two pages' 'About the consignment') and the H1 'Additional details'.",
+      "kind": "copy",
+      "ref": "trace af002 expect@66; snapshot call@751",
+      "quote": "Commodity details / Additional details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-065",
+      "statement": "The additional details page asks 'What are the animals certified for?' as a radio group with a medium legend and the hint 'This information can be found on the ITAHC.'",
+      "kind": "data",
+      "ref": "trace af002 snapshot call@751; trace 1c358 expect@76",
+      "quote": "What are the animals certified for? / This information can be found on the ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-066",
+      "statement": "'What are the animals certified for?' offers 16 options in this order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "trace af002 snapshot call@751 (animalsCertifiedFor, -2 ... -16)",
+      "quote": "Further keeping Slaughter Confined establishment Germinal products Registered equine animal Travelling circus/animal act Exhibition Event or activity near borders Release into the wild Dispatch centre Relaying area / purification centre Ornamental aquaculture establishment Technical use Quarantine or similar establishment Live aquatic animals for human consumption Other",
+      "confidence": "verbatim",
+      "note": "Submitted values: further-keeping, slaughter, confined-establishment, germinal-products, registered-equine-animal, travelling-circus-animal-act, exhibition, event-or-activity-near-borders, release-into-the-wild, dispatch-centre, relaying-area-purification-centre, ornamental-aquaculture-establishment, technical-use, quarantine-or-similar-establishment, live-aquatic-animals-for-human-consumption, other. The same 16 options showed for a cat-only and a cattle consignment."
+    },
+    {
+      "id": "trace-e2e-p5-067",
+      "statement": "Choosing 'Other' for what the animals are certified for reveals no further field: no conditional reveal is rendered with the option.",
+      "kind": "data",
+      "ref": "trace 7bbef class list of /additional-details (no govuk-radios__conditional)",
+      "quote": "Other",
+      "confidence": "inferred",
+      "note": "No trace selects 'Other', so a reveal added on selection by script cannot be ruled out; none is present in the server-rendered markup."
+    },
+    {
+      "id": "trace-e2e-p5-068",
+      "statement": "The additional details page asks 'Does the consignment contain any unweaned animals?' as a Yes/No radio group with a medium legend and the hint 'These are animals that are still feeding from their mother.'",
+      "kind": "data",
+      "ref": "trace af002 expect@68; snapshot call@751 (containsUnweanedAnimals yes/no)",
+      "quote": "Does the consignment contain any unweaned animals? / These are animals that are still feeding from their mother. / Yes / No",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-069",
+      "statement": "Both additional details questions are unanswered when the page first loads: no radio is pre-selected.",
+      "kind": "behaviour",
+      "ref": "trace 7bbef expect@66-67; snapshot call@571 (no CHECKED inputs)",
+      "quote": "Expect \"not toBeChecked\" getByRole('radio', { name: 'Slaughter', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-070",
+      "statement": "Answering 'Slaughter' and 'No' and pressing 'Save and continue' saves without error and returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 6c9ed pw:api@66-68, expect@69; network POST /additional-details -> 302 /live-animals/notifications/GBN-AG-26-FDSG6E",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-FDSG6E/additional-details -> 302 /live-animals/notifications/GBN-AG-26-FDSG6E",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-071",
+      "statement": "'What are the animals certified for?' shows whatever the commodities are: it appeared both with only a cat line and with cat and cattle lines.",
+      "kind": "rule",
+      "ref": "trace 1c358 expect@76 and expect@95; snapshots call@96 and call@134",
+      "quote": "What are the animals certified for?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-072",
+      "statement": "The unweaned-animals question is left out of the page entirely (not just hidden) when no commodity line triggers it: with only Felis catus, the page shows the certified-for question alone.",
+      "kind": "rule",
+      "ref": "trace 1c358 expect@77 (toBeHidden); snapshot call@96 (no containsUnweanedAnimals inputs)",
+      "quote": "A non-triggering commodity (cats): certified-for shows, but the notification-level unweaned-animals question is out of scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-073",
+      "statement": "Adding a triggering commodity line (Bos taurus, cattle) brings the unweaned-animals question onto the page; one triggering line among several is enough.",
+      "kind": "rule",
+      "ref": "trace 1c358 expect@96; snapshot call@134",
+      "quote": "Adding a triggering commodity (cattle) brings the unweaned-animals question into scope across the commodity lines (frame:\"anyItem\").",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-074",
+      "statement": "The unweaned-animals question is asked once per notification, not once per commodity line.",
+      "kind": "rule",
+      "ref": "features/additional-details-scope.spec.ts comment; trace 1c358 snapshot call@134 (one containsUnweanedAnimals group for two lines)",
+      "quote": "the notification-level unweaned-animals question",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p5-075",
+      "statement": "Only cattle (Bos taurus) is shown to trigger the unweaned-animals question and only cat (Felis catus) to not trigger it; whether horses, other bovines (bison, buffalo), dogs or fish trigger it is not shown.",
+      "kind": "rule",
+      "ref": "trace 1c358 (the only scope trace)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-076",
+      "statement": "No trace answers 'Yes' to unweaned animals, so any follow-up question or page it leads to is not shown.",
+      "kind": "behaviour",
+      "ref": "traces af002, 7bbef, 6c9ed, 1c358",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-077",
+      "statement": "No trace submits the additional details page blank or half answered, so whether its questions are required at save or only at submission, and their error messages, are not shown.",
+      "kind": "rule",
+      "ref": "additional-details.spec.ts (3 tests); trace 1c358 opens the page but does not save it",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p5-078",
+      "statement": "The species chosen on the selection page is shown on the commodity details page by commodity heading and scientific name only; the common species name shown in the search results ('Domestic cattle') does not appear on the details page.",
+      "kind": "copy",
+      "ref": "trace 0e33b snapshots call@870 (label 'Domestic cattle (Bos taurus)') and call@874 (H3 'Bos taurus', table 'Cow')",
+      "quote": "Cow (0102) / Bos taurus",
+      "confidence": "verbatim"
+    }
+  ]
+}

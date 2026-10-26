@@ -1,0 +1,488 @@
+<title>Design Release 2.1 work by theme</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: a theme index rail on the left, one theme page at a time on the right; the rail becomes a top strip on phones. */
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #566173;
+  --rule: #d9dee6;
+  --accent: #2f5d8a;
+  --accent-soft: #e4edf6;
+  --warn-ground: #fff7e0;
+  --warn-edge: #c99a1a;
+  --block: #a8452e;
+  --block-soft: #f9e6e1;
+  --done: #2f7a5a;
+  --done-soft: #e3f2ea;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+    --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+    --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+  --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+  --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 1.1875rem; line-height: 1.6; padding-inline: 16px; padding-block: 0 72px; }
+.shell { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 44px; padding-top: 32px; }
+@media (max-width: 860px) { .shell { grid-template-columns: 1fr; gap: 20px; } }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-size: 2.1rem; font-weight: 600; }
+h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+a:focus-visible { outline: 3px solid var(--warn-edge); outline-offset: 2px; }
+.mono, .id { font-family: var(--font-mono); font-size: 0.9em; }
+.eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+
+nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; display: grid; gap: 14px; max-height: calc(100vh - 32px); overflow-y: auto; }
+@media (max-width: 860px) { nav.rail { position: static; max-height: none; } }
+.rail .home { font-weight: 600; text-decoration: none; color: var(--ink); }
+.rail-group { display: grid; gap: 4px; }
+.rail-group .eyebrow { margin-bottom: 2px; }
+.rail a.t { display: grid; grid-template-columns: 1fr auto; gap: 8px; text-decoration: none; color: var(--ink); padding: 6px 10px; border-radius: 6px; font-size: 0.93rem; }
+.rail a.t:hover { background: var(--accent-soft); }
+.rail a.t[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.rail a.t .n { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+main { display: grid; gap: 2.5rem; min-width: 0; }
+.lede { font-size: 1.1875rem; color: var(--muted); max-width: 66ch; }
+.rt { max-width: 66ch; min-width: 0; overflow-wrap: anywhere; }
+.rt > p, .rt > ul { margin: 0; }
+.rt > * + * { margin-top: 0.9em; }
+.rt ul { padding-left: 1.3rem; }
+.rt li + li { margin-top: 0.45em; }
+.rt-wide { max-width: none; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.fact { display: grid; gap: 2px; }
+.fact b { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact b.ready { color: var(--done); }
+.fact b.blocked { color: var(--block); }
+.fact span { font-size: 0.8rem; color: var(--muted); }
+
+.section { display: grid; gap: 1.5rem; }
+.section > header { display: grid; gap: 0.9rem; }
+.section > header .s { color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; display: grid; gap: 12px; text-decoration: none; color: var(--ink); align-content: start; }
+.card:hover { border-color: var(--accent); }
+.card .h { font-weight: 600; }
+.card .s { font-size: 0.9rem; color: var(--muted); }
+.card .chips, .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 500; white-space: nowrap; }
+.chip.ready { background: var(--done-soft); color: var(--done); }
+.chip.block { background: var(--block-soft); color: var(--block); }
+.chip.warn { background: var(--warn-ground); color: var(--ink); }
+
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 22px 24px; display: grid; gap: 1.25rem; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+@media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+.prose { max-width: 70ch; display: grid; gap: 1rem; }
+.label { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+ul.plain { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.9rem; }
+
+.groups { display: grid; gap: 1.75rem; }
+.group { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.group.blocked { border-left: 4px solid var(--block); }
+.group.ready { border-left: 4px solid var(--done); }
+.group header { padding: 20px 22px; display: grid; gap: 1rem; border-bottom: 1px solid var(--rule); }
+.group header .s { color: var(--muted); font-size: 1rem; }
+.group header .reason { margin-top: 0.25rem; }
+.group ol { list-style: none; margin: 0; padding: 0; }
+.group li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 12px; padding: 14px 22px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.group li:last-child { border-bottom: 0; }
+.group li .id { color: var(--muted); }
+.group li .after { grid-column: 2; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 560px) { .group li { grid-template-columns: 1fr; } .group li .after { grid-column: 1; } }
+
+.section > *, .panel > *, .group { min-width: 0; }
+.fact.lead b { font-size: 2rem; }
+.fact.lead span { font-size: 0.95rem; color: var(--ink); }
+.bar { height: 10px; border-radius: 5px; background: var(--rule); overflow: hidden; max-width: 520px; }
+.bar > span { display: block; height: 100%; background: var(--done); }
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table.wide { min-width: 880px; }
+table.mid { min-width: 560px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); white-space: nowrap; }
+tr.total td { font-weight: 600; border-top: 2px solid var(--rule); }
+td .id { color: var(--muted); }
+td .stale, .stale { color: var(--muted); font-style: italic; }
+details.fold { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 16px; }
+details.fold > summary { cursor: pointer; font-weight: 600; }
+details.fold[open] > summary { margin-bottom: 12px; }
+.prlinks { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.reason { color: var(--muted); font-size: 1rem; display: grid; gap: 0.5rem; }
+table { border-collapse: collapse; width: 100%; font-size: 1rem; }
+th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; }
+td.repo { font-family: var(--font-mono); white-space: nowrap; }
+
+.callout { background: var(--warn-ground); border-left: 4px solid var(--warn-edge); border-radius: 4px; padding: 20px 24px; display: grid; gap: 1rem; }
+.qcard { display: grid; gap: 1.25rem; }
+.qcard + .qcard { border-top: 1px solid var(--rule); padding-top: 1.75rem; }
+.qcard h3 { font-size: 1.1875rem; }
+.callout.block { background: var(--block-soft); border-left-color: var(--block); }
+.callout.ready { background: var(--done-soft); border-left-color: var(--done); }
+
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.screens figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; display: grid; }
+.screens .frame { max-height: 360px; overflow-y: auto; background: #fff; border-bottom: 1px solid var(--rule); }
+.screens img { display: block; width: 100%; height: auto; max-width: 100%; }
+.screens figcaption { padding: 8px 12px 10px; font-size: 0.85rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 18px; }
+.empty { color: var(--muted); }
+.note { color: var(--muted); font-size: 1rem; }
+footer.end { color: var(--muted); font-size: 1rem; }
+details.fold { margin-top: 0.5rem; }
+</style>
+
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Themes"></nav>
+  <main id="main" tabindex="-1"><p class="empty">Loading the themes…</p></main>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  // Summaries written before the 9 October afternoon rulings reshaped these themes: their background prose is not shown.
+  var STALE_PROSE = ['ins-dashboard', 'transporters'];
+  var D = window.DR21 || { themes: [], blockers: [], questions: [] };
+  var themes = D.themes;
+  var byId = {};
+  themes.forEach(function (t) { t.held = t.held || []; byId[t.id] = t; });
+  var blockerOfRow = {};
+  D.blockers.forEach(function (b) { b.rows.forEach(function (r) { blockerOfRow[r.id] = b; }); });
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  // Renders copy by its format: blank-line-separated paragraphs become <p>, "- " lines become <ul><li>. Text is escaped.
+  function fmt(s, extraClass) {
+    var blocks = String(s == null ? '' : s).split(/\n\s*\n/);
+    var html = '';
+    blocks.forEach(function (block) {
+      var lines = block.split('\n').filter(function (l) { return l.trim() !== ''; });
+      var text = [];
+      var items = [];
+      lines.forEach(function (l) {
+        if (/^\s*- /.test(l)) items.push(l.replace(/^\s*- /, ''));
+        else if (items.length) items[items.length - 1] += ' ' + l.trim();
+        else text.push(l.trim());
+      });
+      if (text.length) html += '<p>' + esc(text.join(' ')) + '</p>';
+      if (items.length) html += '<ul>' + items.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>';
+    });
+    return '<div class="rt' + (extraClass ? ' ' + extraClass : '') + '">' + html + '</div>';
+  }
+  function title(id) { return byId[id] ? byId[id].title : id; }
+  var P = D.progress || null;
+  function unfinished(id) { var t = byId[id]; return !t || t.ready.length > 0 || t.blocked.length > 0 || t.held.length > 0; }
+  function pendingDeps(t) { return t.dependsOn.filter(unfinished); }
+  function canStartNow(t) { return t.ready.length && !pendingDeps(t).length; }
+  function questionsFor(id) { return D.questions.filter(function (q) { return q.theme === id; }); }
+
+  // Themes with rows still to build first, those that can start now at the top; then themes with only blocked rows; then fully built themes.
+  var readyThemes = themes.filter(function (t) { return t.ready.length; })
+    .sort(function (a, b) { return (canStartNow(b) ? 1 : 0) - (canStartNow(a) ? 1 : 0); });
+  var heldThemes = themes.filter(function (t) { return !t.ready.length && t.held.length; });
+  var blockedThemes = themes.filter(function (t) { return !t.ready.length && !t.held.length && t.blocked.length; });
+  var builtThemes = themes.filter(function (t) { return !t.ready.length && !t.held.length && !t.blocked.length; });
+  var order = readyThemes.concat(heldThemes, blockedThemes, builtThemes).map(function (t) { return t.id; });
+  var totalToBuild = themes.reduce(function (a, t) { return a + t.ready.length; }, 0);
+  var totalBlocked = themes.reduce(function (a, t) { return a + t.blocked.length; }, 0);
+
+  function rail(current) {
+    var html = '<a class="home" href="#"' + (current ? '' : ' aria-current="page"') + '>Where the build stands</a>';
+    function group(label, list, count) {
+      if (!list.length) return;
+      html += '<div class="rail-group"><p class="eyebrow">' + label + '</p>';
+      list.forEach(function (t) {
+        html += '<a class="t" href="#' + t.id + '"' + (current === t.id ? ' aria-current="page"' : '') + '><span>' + esc(t.title) + '</span><span class="n">' + count(t) + '</span></a>';
+      });
+      html += '</div>';
+    }
+    group('To build', readyThemes, function (t) { return t.ready.length + (t.blocked.length ? ' · ' + t.blocked.length + ' blocked' : ''); });
+    group('Held for review', heldThemes, function (t) { return t.held.length; });
+    group('Blocked', blockedThemes, function (t) { return t.blocked.length; });
+    group('Built', builtThemes, function (t) { return t.done.length; });
+    document.getElementById('rail').innerHTML = html;
+  }
+
+  function chips(t) {
+    var c = '';
+    if (t.splitOff) c += '<span class="chip">split off</span>';
+    if (t.done.length) c += '<span class="chip ready">' + t.done.length + ' built</span>';
+    if (t.ready.length) c += '<span class="chip">' + t.ready.length + ' to build</span>';
+    if (t.blocked.length) c += '<span class="chip block">' + t.blocked.length + ' blocked</span>';
+    if (t.held.length) c += '<span class="chip warn">' + t.held.length + ' held for review</span>';
+    if (t.dropped.length) c += '<span class="chip">' + t.dropped.length + ' dropped</span>';
+    var q = questionsFor(t.id).length;
+    if (q) c += '<span class="chip warn">' + q + ' to confirm</span>';
+    return c;
+  }
+
+  function landsAfterText(t) {
+    if (!t.ready.length && !t.blocked.length && !t.held.length) return 'Built.';
+    if (!t.ready.length && t.held.length && !t.blocked.length) return 'Held for review.';
+    var p = pendingDeps(t);
+    if (!p.length) return 'Can start now.';
+    return 'Lands after ' + p.map(title).join('; ') + '.';
+  }
+
+  function prLinks(prs) {
+    return '<span class="prlinks">' + prs.map(function (p) {
+      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.label) + ' #' + p.number + '</a>';
+    }).join('') + '</span>';
+  }
+
+  function reviewLinks() {
+    return '<span class="prlinks"><a href="' + esc(P.reviewLinks.business) + '">Business review</a><a href="' + esc(P.reviewLinks.engineering) + '">Engineering review</a></span>';
+  }
+
+  function rowTitle(r) {
+    return esc(r.title) + ' <span class="id">' + esc(r.id) + '</span>';
+  }
+
+  function progressSection() {
+    if (!P) return '';
+    var im = P.implemented;
+    var html = '<section class="section" aria-labelledby="stand-h"><header><h1 id="stand-h">Where the build stands</h1>' +
+      fmt('Design Release 2.1 brings the real services up to the new design.\n\nUpdated ' + P.asOf + '.\n\n- Every row is counted once, across the main backlog and the seven theme backlogs.\n- Dropped rows sit outside the total.', 'lede') + '</header>' +
+      '<div class="facts">' +
+      '<div class="fact lead"><b>' + im.done + ' of ' + im.total + ' (' + im.percent + '%)</b><span>Implemented</span></div>' +
+      '<div class="fact"><b class="ready">' + P.readyCount + '</b><span>ready to build</span></div>' +
+      '<div class="fact"><b>' + P.waitingCount + '</b><span>waiting on another row</span></div>' +
+      '<div class="fact"><b class="blocked">' + P.blockedCount + '</b><span>blocked</span></div>' +
+      '<div class="fact"><b>' + P.heldCount + '</b><span>held for review</span></div>' +
+      '<div class="fact"><b>' + P.droppedCount + '</b><span>dropped (not in the total)</span></div></div>' +
+      '<div class="bar" role="img" aria-label="' + im.done + ' of ' + im.total + ' rows implemented"><span style="width:' + im.percent + '%"></span></div>' +
+      fmt(P.heldCount + ' rows are held, not abandoned.\n\nWhy: ' + P.heldReason + '.\n\nHeld rows stay inside the total until they are built or dropped.', 'note') + '</section>';
+
+    html += '<section class="section" aria-labelledby="theme-h"><header><h2 id="theme-h">Progress by theme</h2>' + fmt('Each theme builds on its own branch, with its own draft pull requests.\n\nNothing merges to main until Sam has checked the finished theme.', 's') + '</header><div class="panel"><div class="table-wrap"><table class="wide"><thead><tr>' +
+      '<th scope="col">Theme</th><th scope="col">Ticket</th><th scope="col">Branch</th><th scope="col">Pull requests</th>' +
+      '<th scope="col" class="num">Built</th><th scope="col" class="num">Ready</th><th scope="col" class="num">Waiting</th><th scope="col" class="num">Blocked</th><th scope="col" class="num">Held</th><th scope="col" class="num">Dropped</th>' +
+      '<th scope="col">State</th><th scope="col">Review</th></tr></thead><tbody>';
+    var sum = { total: 0, done: 0, ready: 0, waiting: 0, blocked: 0, held: 0, dropped: 0 };
+    function add(c) { Object.keys(sum).forEach(function (k) { sum[k] += c[k]; }); }
+    P.themes.forEach(function (t) {
+      add(t.counts);
+      html += '<tr><td><a href="#' + esc(t.id) + '">' + esc(t.title) + '</a></td>' +
+        '<td><a href="' + esc(t.ticketUrl) + '" target="_blank" rel="noopener">' + esc(t.ticket) + '</a></td>' +
+        '<td class="repo" style="white-space:normal;word-break:break-all">' + esc(t.branch) + '</td><td>' + prLinks(t.prs) + '</td>' +
+        '<td class="num">' + t.counts.done + '</td><td class="num">' + t.counts.ready + '</td><td class="num">' + t.counts.waiting + '</td><td class="num">' + t.counts.blocked + '</td><td class="num">' + t.counts.held + '</td><td class="num">' + t.counts.dropped + '</td>' +
+        '<td>' + fmt(t.state) + '</td><td>' + reviewLinks() + '</td></tr>';
+    });
+    var m = P.mainBacklog;
+    add(m);
+    html += '<tr><td>Not yet split off</td><td>No ticket yet</td><td class="repo" style="white-space:normal">main backlog</td><td>No pull requests yet</td>' +
+      '<td class="num">' + m.done + '</td><td class="num">' + m.ready + '</td><td class="num">' + m.waiting + '</td><td class="num">' + m.blocked + '</td><td class="num">' + m.held + '</td><td class="num">' + m.dropped + '</td>' +
+      '<td>' + fmt(m.note) + '</td><td>' + reviewLinks() + '</td></tr>';
+    html += '<tr class="total"><td>All rows</td><td></td><td></td><td></td><td class="num">' + sum.done + '</td><td class="num">' + sum.ready + '</td><td class="num">' + sum.waiting + '</td><td class="num">' + sum.blocked + '</td><td class="num">' + sum.held + '</td><td class="num">' + sum.dropped + '</td><td>' + sum.total + ' rows</td><td></td></tr>';
+    html += '</tbody></table></div>' + fmt('What the columns mean:\n- Ready: a row to build whose every dependency is built.\n- Waiting: a row to build that still waits on another row.\n- Blocked: the row waits on someone outside the build.\n- Held: the row is withheld on purpose until the review is done.', 'note') + '</div></section>';
+
+    var c = P.combined;
+    html += '<section class="section" aria-labelledby="comb-h"><header><h2 id="comb-h">The combined branch</h2><p class="s">All the themes together on one branch, so the whole release can be reviewed and tested as one.</p></header><div class="panel">' +
+      '<p>Branch <span class="mono">' + esc(c.branch) + '</span></p>' +
+      '<div class="callout ready"><p class="label">End-to-end proof</p><p>' + esc(c.e2e.label) + '</p></div>' +
+      '<div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Repo</th><th scope="col">Draft pull request</th></tr></thead><tbody>';
+    c.draftPrs.forEach(function (p) {
+      html += '<tr><td class="repo">' + esc(p.repo) + '</td><td><a href="' + esc(p.url) + '" target="_blank" rel="noopener">#' + p.number + '</a></td></tr>';
+    });
+    html += '</tbody></table></div><div>' + reviewLinks() + '</div></div></section>';
+
+    html += '<section class="section" aria-labelledby="rdy-h"><header><h2 id="rdy-h">Ready to build</h2><p class="s">' + P.readyCount + ' rows with every dependency built.</p></header><div class="panel"><div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Row</th><th scope="col">Area</th></tr></thead><tbody>';
+    P.readyRows.forEach(function (r) { html += '<tr><td>' + rowTitle(r) + '</td><td><a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></td></tr>'; });
+    html += '</tbody></table></div></div></section>';
+
+    html += '<section class="section" aria-labelledby="wait-h"><header><h2 id="wait-h">Waiting on another row</h2>' + fmt(P.waitingCount + ' rows wait on another row.\n\nThe rows in this table hold up the most others.', 's') + '</header><div class="panel"><div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Row</th><th scope="col" class="num">Rows waiting</th></tr></thead><tbody>';
+    P.mostAwaited.forEach(function (r) { html += '<tr><td>' + esc(r.title) + ' <span class="id">' + esc(r.id) + '</span></td><td class="num">' + r.waiters + '</td></tr>'; });
+    html += '</tbody></table></div></div><details class="fold"><summary>All ' + P.waitingCount + ' waiting rows and what each waits on</summary><div class="table-wrap"><table class="wide"><thead><tr><th scope="col">Row</th><th scope="col">Waits on</th></tr></thead><tbody>';
+    P.waitingRows.forEach(function (r) {
+      html += '<tr><td>' + rowTitle(r) + '</td><td>' + r.waitsOn.map(function (w) { return esc(w.title) + ' <span class="id">' + esc(w.id) + '</span>'; }).join('<br>') + '</td></tr>';
+    });
+    html += '</tbody></table></div></details></section>';
+
+    html += '<section class="section" aria-labelledby="held-h"><header><h2 id="held-h">Held for review</h2>' + fmt(P.heldCount + ' rows.\n\n' + P.heldReason + '.', 's') + '</header><div class="panel"><div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Row</th><th scope="col">Area</th></tr></thead><tbody>';
+    P.heldRows.forEach(function (r) { html += '<tr><td>' + rowTitle(r) + '</td><td><a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></td></tr>'; });
+    html += '</tbody></table></div></div></section>';
+
+    html += '<section class="section" aria-labelledby="blk-h"><header><h2 id="blk-h">Blocked</h2>' + fmt(P.blockedCount + ' rows, grouped by what they wait on.\n\nEach group says what unblocks it.\n\nBlocked rows stay in the backlog. They are re-distilled once unblocked.', 's') + '</header><div class="groups">';
+    P.blockedGroups.forEach(function (b) {
+      html += '<article class="group blocked"><header><h3>' + esc(b.title) + ' <span class="chip block">' + b.rows.length + '</span></h3><div class="s"><p class="label">What it waits on</p>' + fmt(b.what) + '</div><div class="reason"><p class="label">Unblocked when</p>' + fmt(b.unblocks) + '</div></header><ol>';
+      b.rows.forEach(function (r) {
+        html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + ' · <a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></span></li>';
+      });
+      html += '</ol></article>';
+    });
+    html += '</div></section>';
+
+    html += '<section class="section" aria-labelledby="drp-h"><details class="fold"><summary id="drp-h">Dropped rows (' + P.droppedCount + ', outside the total)</summary><div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Row</th><th scope="col">Area</th></tr></thead><tbody>';
+    P.droppedRows.forEach(function (r) { html += '<tr><td>' + rowTitle(r) + '</td><td><a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></td></tr>'; });
+    html += '</tbody></table></div></details></section>';
+    return html;
+  }
+
+  function rowLandsAfter(r) {
+    if (!r.landsAfter.length) return '';
+    return '<span class="after">Lands after ' + r.landsAfter.map(function (d) {
+      var other = d.theme && byId[d.theme] && d.theme !== r.theme ? ' (<a href="#' + esc(d.theme) + '">' + esc(title(d.theme)) + '</a>)' : '';
+      return '<span class="id">' + esc(d.id) + '</span>' + other;
+    }).join(', ') + '</span>';
+  }
+
+  function questionCard(q, withTheme) {
+    return '<article class="qcard"><h3>' + (withTheme ? '<a href="#' + esc(q.theme) + '">' + esc(title(q.theme)) + '</a>' : 'Question') + '</h3>' +
+      '<div><p class="label">The question</p>' + fmt(q.question) + '</div>' +
+      '<div><p class="label">As built</p>' + fmt(q.default) + '</div></article>';
+  }
+
+  function overview() {
+    var html = progressSection();
+
+    html += '<section class="section" aria-labelledby="areas-h"><header><h2 id="areas-h">Work by area</h2>' + fmt(totalToBuild + ' rows still to build and ' + totalBlocked + ' blocked, across ' + themes.length + ' areas.\n\nAreas that can start now come first.\n\nEach area page lists its rows and what each lands after.', 's') + '</header><div class="cards">';
+    readyThemes.concat(heldThemes, blockedThemes, builtThemes).forEach(function (t) {
+      html += '<a class="card" href="#' + t.id + '"><p class="h">' + esc(t.title) + '</p>' +
+        (t.splitOff ? '<p class="s">Split off to <span class="mono">' + esc(t.splitOff.branch) + '</span></p>' : '') +
+        '<p class="s">' + esc(landsAfterText(t)) + '</p><div class="chips">' + chips(t) + '</div></a>';
+    });
+    html += '</div></section>';
+
+    if (D.questions.length) {
+      html += '<section class="callout"><p class="label">Still to confirm</p>';
+      D.questions.forEach(function (q) { html += questionCard(q, true); });
+      html += '</section>';
+    }
+    html += '<footer class="end">' + fmt('There are no waves.\n\nThe only order is row to row. Each ready row names the rows it lands after.') + '</footer>';
+    return html;
+  }
+
+  function rowList(rows, withAfter) {
+    var html = '<ol>';
+    rows.forEach(function (r) {
+      html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + (r.reviewPoint ? ' <span class="chip warn">review point</span>' : '') + '</span>' + (withAfter ? rowLandsAfter(r) : '') + '</li>';
+    });
+    return html + '</ol>';
+  }
+
+  function themePage(id) {
+    var t = byId[id];
+    var html = '<header class="prose"><p class="eyebrow">Theme <span class="mono">' + esc(id) + '</span></p>' +
+      '<h1>' + esc(t.title) + '</h1>' + fmt(t.why, 'lede') + '<div class="chips">' + chips(t) + '</div></header>';
+
+    if (t.splitOff) {
+      html += '<section class="callout ready"><p class="label">Split off to its own branch</p><p>Builds on <span class="mono">' + esc(t.splitOff.branch) + '</span>, from the workarea <span class="mono">' + esc(t.splitOff.workarea) + '</span>. Its rows no longer live in the main backlog.</p></section>';
+    }
+
+    var qs = questionsFor(id);
+    if (qs.length) {
+      html += '<section class="callout"><p class="label">Still to confirm in this theme</p>';
+      qs.forEach(function (q) { html += questionCard(q, false); });
+      html += '</section>';
+    }
+
+    var pend = pendingDeps(t);
+    var landedDeps = t.dependsOn.filter(function (d) { return !unfinished(d); });
+    html += '<section class="panel"><p class="label">Lands after</p>';
+    if (pend.length) {
+      html += '<ul class="plain">';
+      pend.forEach(function (d) { html += '<li><a href="#' + esc(d) + '">' + esc(title(d)) + '</a></li>'; });
+      html += '</ul>' + fmt('Each row below names the exact rows it waits for.\n\nRows with none can start now.', 'note');
+    } else {
+      html += '<p>Nothing left. ' + (t.ready.length ? 'This theme can start straight away.' : 'This theme is built or blocked.') + '</p>';
+    }
+    if (landedDeps.length) {
+      html += '<p class="note">Already built: ' + landedDeps.map(function (d) { return '<a href="#' + esc(d) + '">' + esc(title(d)) + '</a>'; }).join('; ') + '.</p>';
+    }
+    html += '</section>';
+
+    html += '<section class="groups" aria-label="Increments">';
+    if (t.done.length) {
+      html += '<article class="group ready"><header><h2>Built</h2><p class="s">' + t.done.length + ' rows.</p></header>' + rowList(t.done, false) + '</article>';
+    }
+    if (t.ready.length) {
+      html += '<article class="group"><header><h2>Still to build</h2><p class="s">' + t.ready.length + ' rows, in build order.</p></header>' + rowList(t.ready, true) + '</article>';
+    }
+    if (t.held.length) {
+      html += '<article class="group"><header><h2>Held for review</h2>' + fmt(t.held.length + ' rows.' + (P ? '\n\n' + P.heldReason + '.' : ''), 's') + '</header>' + rowList(t.held, true) + '</article>';
+    }
+    if (t.dropped.length) {
+      html += '<article class="group"><header><h2>Dropped</h2><p class="s">' + t.dropped.length + ' rows, outside the total.</p></header>' + rowList(t.dropped, false) + '</article>';
+    }
+    if (t.blocked.length) {
+      var groups = {};
+      var keys = [];
+      t.blocked.forEach(function (r) {
+        var b = blockerOfRow[r.id] || { key: 'other', title: 'Waiting on something else', what: '' };
+        if (!groups[b.key]) { groups[b.key] = { b: b, rows: [] }; keys.push(b.key); }
+        groups[b.key].rows.push(r);
+      });
+      keys.forEach(function (k) {
+        var g = groups[k];
+        html += '<article class="group blocked"><header><h2>' + esc(g.b.title) + '</h2>' + fmt(g.b.what, 's') + '</header>' + rowList(g.rows, false) + '</article>';
+      });
+    }
+    html += '</section>';
+
+    var p = t.prose;
+    if (p && STALE_PROSE.indexOf(id) === -1) {
+      html += '<section class="section"><header><h2>Background</h2>' + fmt('From the summary written on the morning of 9 October.\n\nThe rows above are current.', 'note') + '</header>';
+      if (p.headline) html += '<section class="panel"><p class="label">In short</p>' + fmt(p.headline) + '</section>';
+      html += '<div class="two"><section class="panel"><p class="label">What changes</p>' + fmt(p.whatChanges) + '</section>' +
+        '<section class="panel"><p class="label">Today</p>' + fmt(p.today) + '</section></div>';
+      if (p.byRepo && p.byRepo.length) {
+        html += '<section class="panel"><p class="label">Where the work lands</p><div class="table-wrap"><table><thead><tr><th scope="col">Repo</th><th scope="col">What changes</th></tr></thead><tbody>';
+        p.byRepo.forEach(function (r) { html += '<tr><td class="repo">' + esc(r.repo) + '</td><td>' + fmt(r.what, 'rt-wide') + '</td></tr>'; });
+        html += '</tbody></table></div></section>';
+      }
+      if (p.risks && p.risks.length) {
+        html += '<section class="panel"><p class="label">Watch for</p><ul class="plain">';
+        p.risks.forEach(function (r) { html += '<li>' + fmt(r) + '</li>'; });
+        html += '</ul></section>';
+      }
+      html += '</section>';
+    }
+
+    if (p && p.screens && p.screens.length) {
+      html += '<section class="prose" style="max-width:none"><h2>How it looks in Design Release 2.1</h2><div class="screens">';
+      p.screens.forEach(function (sc) {
+        var src = 'img/' + sc.file;
+        html += '<figure><div class="frame" tabindex="0"><img src="' + esc(src) + '" alt="' + esc(sc.caption) + '" loading="lazy"></div><figcaption><span>' + esc(sc.caption) + '</span><a href="' + esc(src) + '" target="_blank" rel="noopener">Full size</a></figcaption></figure>';
+      });
+      html += '</div></section>';
+    }
+
+    var i = order.indexOf(id);
+    html += '<nav class="pager" aria-label="Next and previous theme">' +
+      (i > 0 ? '<a href="#' + order[i - 1] + '">← ' + esc(title(order[i - 1])) + '</a>' : '<a href="#">← Overview</a>') +
+      (i < order.length - 1 ? '<a href="#' + order[i + 1] + '">' + esc(title(order[i + 1])) + ' →</a>' : '<a href="#">Overview →</a>') + '</nav>';
+    return html;
+  }
+
+  function render() {
+    var id = decodeURIComponent((location.hash || '').slice(1));
+    var current = byId[id] ? id : '';
+    rail(current);
+    var main = document.getElementById('main');
+    main.innerHTML = current ? themePage(current) : overview();
+    if (current) main.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', render);
+  render();
+})();
+</script>

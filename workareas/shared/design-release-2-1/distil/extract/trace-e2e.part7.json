@@ -1,0 +1,671 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 7 mined all 8 trace zips its read names, from two spec files in the tests repo's animals project, and read both specs. pages/contact-address.spec.ts (7): renders the page controls [5b1a7]; leaves the contact address unchecked on load [943a0]; accepts a valid contact address [60f4b]; a chosen contact address is shown as the current contact on return, still chosen, and saving again keeps it [2fe1e]; saving with no contact address selected is allowed and exits to the hub [2cb78]; offers no way to add an address in stub mode [676b1, skipped: its test.trace carries the skip annotation and ends after the beforeEach walk, so it shows the page as rendered outside stub mode]; links to INS to add an address when the full stack is running [b077b]. features/all-operators.spec.ts (1): check your answers lists all six operators with the picked name and country [5c7f8]. The bundled trace viewer refuses these zips (TraceVersionError: recorded by a newer Playwright), so each zip, already unzipped into this part's work folder, was read with jq: 1-trace.trace (before events for the action list, frame snapshots rendered back to HTML), 1-trace.network (resource snapshots with post params) and test.trace (steps and annotations). Refs name the trace by its folder hash fragment, then the call id. Pages in this slice, in the order a user meets them: (1) the Overview at /live-animals/notifications/{ref}, mined only for the '6. Contact address' task row and its status, the '5. Consignment parties' row hint and the Review and submit control; (2) the contact address page at /consignment/contact/select (h1 'Contact address for consignment'), always reachable from the Overview, whose variants are first visit (nothing checked, no current-contact card) and return after a save (saved radio checked plus a 'Current contact address' summary card), and whose 'Add a new address' link renders only outside stub mode; (3) Review your notification at /notification-view, reached only by 5c7f8 after a full journey walk, mined for '5. Consignment parties' (the Roles and addresses card, six rows) and '6. Contact address', plus the transporter card the test does not check. Every contact-address test reaches the page by the same beforeEach walk (new notification, origin, commodity). The all-operators walk passes through the addresses hub, the five role pickers, CPH, arrival, transit, transporter and contact pages; those pages belong to other parts and are recorded here only as the route. Network logs hold only browser-to-frontend traffic: the address-book read behind the radio list is server-side and never seen. No trace recorded a browser error. What is conditional: the current-contact card (only once a contact is saved), the checked radio (only once saved), the Add a new address link (only outside stub mode), and the Overview task status (To do until a contact is saved, then Complete). This run re-mined the slice and re-checked the earlier extract's claims for it against the traces, keeping their ids where they still hold.",
+  "claims": [
+    {
+      "id": "trace-e2e-p7-001",
+      "statement": "The contact address page is reached from the Overview task list by the task link 'Contact address for this consignment', under the section heading '6. Contact address'.",
+      "kind": "behaviour",
+      "ref": "trace 5b1a7 action call@1004 (click) and overview snapshot call@1002",
+      "quote": "6. Contact address ... Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-002",
+      "statement": "The contact address task links to /live-animals/notifications/{notification reference}/consignment/contact/select.",
+      "kind": "behaviour",
+      "ref": "trace 5b1a7 overview snapshot call@1002, task link href",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-QE1SAA/consignment/contact/select\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-003",
+      "statement": "Before a contact address is chosen, the Overview task row 'Contact address for this consignment' shows the blue status tag 'To do'.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 overview snapshot call@1002, #contact-address-1-status",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-004",
+      "statement": "After a contact address is chosen and saved, the Overview task row 'Contact address for this consignment' shows the green status tag 'Complete'.",
+      "kind": "rule",
+      "ref": "trace 2fe1e overview snapshot call@1043, #contact-address-1-status",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-005",
+      "statement": "The contact address page's heading (the radios legend, as an h1) is 'Contact address for consignment'.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 action call@1008 (expect heading) and snapshot call@1006",
+      "quote": "Contact address for consignment",
+      "confidence": "verbatim",
+      "note": "The page heading differs from the task link and review card wording 'Contact address for this consignment'."
+    },
+    {
+      "id": "trace-e2e-p7-006",
+      "statement": "The contact address page shows the hint 'Selecting a contact copies their name and address into this notification.' under the heading.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 snapshot call@1006, #contactAddress-hint",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-007",
+      "statement": "The contact address page has a Back link to the notification's Overview.",
+      "kind": "behaviour",
+      "ref": "trace 5b1a7 snapshot call@1006, .govuk-back-link",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-QE1SAA\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-008",
+      "statement": "Above the heading, the contact address page shows a journey strip with the blue tag 'Draft' and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 snapshot call@1006, .app-journey-strip",
+      "quote": "Draft ... GBN-AG-26-QE1SAA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-009",
+      "statement": "The contact address is chosen from a single govuk radios group named contactAddress, one radio per address-book entry.",
+      "kind": "data",
+      "ref": "trace 5b1a7 snapshot call@1006, fieldset .govuk-radios",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"contactAddress\" name=\"contactAddress\" type=\"radio\" value=\"6ac683fa6bdb2fc53f128618\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-010",
+      "statement": "Each contact address radio's label is the address-book entry's name.",
+      "kind": "data",
+      "ref": "trace 5b1a7 snapshot call@1006, label for contactAddress-25",
+      "quote": "Animal and Plant Health Agency",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-011",
+      "statement": "Each contact address radio has an item hint giving the address on one line: address lines, town, postcode and country, comma-separated.",
+      "kind": "data",
+      "ref": "trace 5b1a7 snapshot call@1006, #contactAddress-25-item-hint",
+      "quote": "Woodham Lane, Addlestone, KT15 3NB, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-012",
+      "statement": "The radio value posted for a contact address is the address-book record's id (a 24-character hex id), not the name.",
+      "kind": "data",
+      "ref": "trace 2fe1e network POST /consignment/contact/select, postData params",
+      "quote": "contactAddress=6ac683ef6bdb2fc53f1285ff",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-013",
+      "statement": "The contact address page listed all 28 address-book entries in one radio list, with no search box and no pagination.",
+      "kind": "behaviour",
+      "ref": "trace 5b1a7 snapshot call@1006 (contactAddress to contactAddress-28); trace 5c7f8 snapshot call@436 (28 radios)",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"contactAddress-28\" name=\"contactAddress\" type=\"radio\" value=\"6ac683ef6bdb2fc53f1285fc\"",
+      "confidence": "verbatim",
+      "note": "The address book here is shared with other tests in the run, so it held entries other specs created (e.g. 'Renamed Origin 1791394810919', 'Paged Consignor 1791394803707'). The page offers no way to narrow a long list."
+    },
+    {
+      "id": "trace-e2e-p7-014",
+      "statement": "The contact address radios appear newest first: the list order follows the address-book record ids in descending order, so canned seed entries such as 'Alpine Dairy GmbH' come last and test-created entries come first.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 snapshot call@1006, radio values 6ac683fa...618 down to 6ac683ef...5fc",
+      "quote": "Renamed Origin 1791394810919 ... Alpine Dairy GmbH",
+      "confidence": "inferred",
+      "note": "Inferred from the record ids decreasing monotonically down the list; the page states no ordering."
+    },
+    {
+      "id": "trace-e2e-p7-015",
+      "statement": "The address book offered as contact addresses includes the canned seed entries: Import Co UK; British Livestock Ltd; Origin Farm; Tech Imports Ltd; Astra Rosales; Nordvik Seafood AS; Laiterie du Nord SARL; Jutland Swine ApS; Danish Meat Export ApS; Animal and Plant Health Agency; Iberian Swine SA; Irish Beef Traders Ltd; Alpine Dairy GmbH.",
+      "kind": "data",
+      "ref": "trace 5b1a7 snapshot call@1006, contactAddress-16 to contactAddress-28",
+      "quote": "Import Co UK / 20 Trade Road, London, EC1A 1BB, United Kingdom; British Livestock Ltd / 10 Market Street, Leeds, LS1 6HB, United Kingdom; Origin Farm / 1 Farm Lane, Ennis, V95 X7P2, Ireland; Tech Imports Ltd / 18 Dockside Road, London, E14 9GE, United Kingdom; Astra Rosales / 43 East Hague Extension, Bern, 30055, Switzerland; Nordvik Seafood AS / Havnegata 8, Alesund, 6002, Norway; Laiterie du Nord SARL / 12 Rue de la Gare, Lille, 59000, France; Jutland Swine ApS / Sondergade 4, Aarhus, 8000, Denmark; Danish Meat Export ApS / Havnegade 21, Copenhagen, 1058, Denmark; Animal and Plant Health Agency / Woodham Lane, Addlestone, KT15 3NB, United Kingdom; Iberian Swine SA / Calle Mayor 44, Huesca, 22001, Spain; Irish Beef Traders Ltd / Castle Road 9, Kilkenny, R95 F2X8, Ireland; Alpine Dairy GmbH / Bahnhofstrasse 17, Innsbruck, 6020, Austria",
+      "confidence": "verbatim",
+      "note": "Reference/test data, not copy. The quote joins each radio label and its hint with ' / '."
+    },
+    {
+      "id": "trace-e2e-p7-016",
+      "statement": "The contact address list offers addresses of any country (UK, Ireland, Switzerland, Norway, France, Denmark, Spain, Austria), not only UK addresses.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 snapshot call@1006, radio item hints",
+      "quote": "Havnegata 8, Alesund, 6002, Norway",
+      "confidence": "inferred",
+      "note": "Inferred from what was listed; no filter by role or country is visible on the page."
+    },
+    {
+      "id": "trace-e2e-p7-017",
+      "statement": "On first visit, no contact address radio is checked (the test asserts 'Animal and Plant Health Agency' is not checked, and the fresh snapshot has no checked radio).",
+      "kind": "behaviour",
+      "ref": "trace 943a0 action call@971 (expect not to.be.checked); trace 5b1a7 snapshot call@1006",
+      "quote": "expect internal:role=radio[name=\"Animal and Plant Health Agency\"i] to.be.checked (negated)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-018",
+      "statement": "On first visit there is no 'Current contact address' card on the page.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 snapshot call@1006 (main has no .govuk-summary-card)",
+      "quote": "<FORM method=\"post\" novalidate=\"\"> ... <DIV class=\"govuk-button-group\">",
+      "confidence": "inferred",
+      "note": "Inferred from its absence in the fresh-state snapshot and its presence once a contact is saved (trace 2fe1e call@1049)."
+    },
+    {
+      "id": "trace-e2e-p7-019",
+      "statement": "The contact address page has a primary button 'Save and continue'.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 action call@1012 (expect visible) and snapshot call@1006",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-020",
+      "statement": "The contact address page has a secondary button 'Save and return to overview', which submits exit=hub.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 snapshot call@1006, .govuk-button--secondary",
+      "quote": "<BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\"> Save and return to overview </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-021",
+      "statement": "The contact address page has a link 'Cancel and return to overview' to the notification's Overview, in the button group.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 snapshot call@1006, .govuk-button-group a",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-QE1SAA\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-022",
+      "statement": "Choosing a contact address and pressing 'Save and continue' saves without error and returns to the Overview (POST 302 to the notification root), not to a next question page.",
+      "kind": "behaviour",
+      "ref": "trace 60f4b actions call@799-call@803 and network POST /consignment/contact/select 302; trace 2fe1e call@1043",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-6GT45D/consignment/contact/select 302 /live-animals/notifications/GBN-AG-26-6GT45D",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-023",
+      "statement": "Saving a chosen contact address raises no error summary ('There is a problem' heading count is 0).",
+      "kind": "rule",
+      "ref": "trace 60f4b action call@803 (expect heading 'There is a problem' to.have.count 0)",
+      "quote": "expect internal:role=heading[name=\"There is a problem\"i] to.have.count",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-024",
+      "statement": "The contact address is optional: pressing 'Save and continue' with no radio chosen is allowed, shows no error, and exits to the Overview.",
+      "kind": "rule",
+      "ref": "trace 2cb78 actions call@990-call@994; network POST /consignment/contact/select 302",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-554CNZ/consignment/contact/select 302 /live-animals/notifications/GBN-AG-26-554CNZ concurrencyToken=3",
+      "confidence": "verbatim",
+      "note": "The posted form carried no contactAddress field at all."
+    },
+    {
+      "id": "trace-e2e-p7-025",
+      "statement": "After saving with no contact address chosen, the Overview task row 'Contact address for this consignment' stays 'To do' and no notification banner or error summary is shown.",
+      "kind": "rule",
+      "ref": "trace 2cb78 overview snapshot call@992, #contact-address-1-status",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-026",
+      "statement": "When the user returns to the contact address page after saving a contact, the page shows a summary card titled 'Current contact address' (a region with that accessible name) below the radios and above the buttons.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e action call@1049 (expect region 'Current contact address') and snapshot call@1049",
+      "quote": "<DIV class=\"govuk-summary-card\" role=\"region\" aria-label=\"Current contact address\"> ... Current contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-027",
+      "statement": "The 'Current contact address' card shows one summary-list row: the contact's name as the key and its one-line address as the value.",
+      "kind": "data",
+      "ref": "trace 2fe1e snapshot call@1049, .govuk-summary-card .govuk-summary-list__row",
+      "quote": "Animal and Plant Health Agency ... Woodham Lane, Addlestone, KT15 3NB, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-028",
+      "statement": "The 'Current contact address' card has an 'Edit details' link to /consignment/contact/edit with return=consignment/contact/select, whose hidden text reads 'current contact address (Current contact address)'.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e action call@1051 (expect link 'Edit details' in region) and snapshot call@1049",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-ZE017X/consignment/contact/edit?return=consignment%2Fcontact%2Fselect\">Edit details<SPAN class=\"govuk-visually-hidden\"> current contact address (Current contact address)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-029",
+      "statement": "On return to the contact address page, the radio for the saved contact is still checked.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e action call@1053 (expect radio to be checked) and snapshot call@1049, contactAddress-25",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"contactAddress-25\" name=\"contactAddress\" type=\"radio\" value=\"6ac683ef6bdb2fc53f1285ff\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-030",
+      "statement": "Pressing 'Save and continue' again on return re-posts the same contact id, returns to the Overview, and the contact is still shown as the current contact on the next visit.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e actions call@1055-call@1061; network second POST /consignment/contact/select",
+      "quote": "concurrencyToken=4&contactAddress=6ac683ef6bdb2fc53f1285ff",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-031",
+      "statement": "When the stack is not in stub mode, the contact address page shows a paragraph link 'Add a new address' above the form, pointing to the INS address book's add page.",
+      "kind": "behaviour",
+      "ref": "trace b077b action call@894 (expect link /add.*address/i to have href) and trace 5b1a7 snapshot call@1006",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-032",
+      "statement": "The 'Add a new address' link goes to the INS frontend's /address-book/add with query parameters journey-type=gbn-ag, notification-id (the notification reference), fulfilment-id and handshake-token.",
+      "kind": "integration",
+      "ref": "trace 5b1a7 snapshot call@1006, p.govuk-body a; trace b077b expect call@894 matched /\\/address-book\\/add\\?journey-type=gbn-ag/",
+      "quote": "http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-QE1SAA&fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=[REDACTED]",
+      "confidence": "verbatim",
+      "note": "The handshake-token value is redacted. Port 3002 is the INS frontend in the workspace stack."
+    },
+    {
+      "id": "trace-e2e-p7-033",
+      "statement": "The handshake-token on the 'Add a new address' link is different on every page render, while the fulfilment-id stayed the same across different notifications in the run.",
+      "kind": "rule",
+      "ref": "traces 5b1a7 call@1006, 2fe1e call@1049, 676b1 call@979: handshake-token differs; fulfilment-id f037e8f9-a0b1-4c26-8d72-fe5f60718293 in all",
+      "quote": "fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=[REDACTED]",
+      "confidence": "inferred",
+      "note": "Inferred by comparing link hrefs across three traces; what the fulfilment-id identifies (the user, organisation or session) is not visible."
+    },
+    {
+      "id": "trace-e2e-p7-034",
+      "statement": "The test 'offers no way to add an address in stub mode' was skipped in this run, because the stack ran outside stub mode; its trace shows the beforeEach walk to the contact page and, on that page, the 'Add a new address' link present.",
+      "kind": "behaviour",
+      "ref": "trace 676b1 (contact-address.spec.ts:54) test.trace ends after beforeEach with no test-body actions; snapshot call@979",
+      "quote": "skipIfNonStubStackEnvironment('the INS add link is shown when animals-frontend runs outside stub mode (compose or CDP)')",
+      "confidence": "verbatim",
+      "note": "Quote is from the spec source. The skip reason is the test's own; the trace records no assertion."
+    },
+    {
+      "id": "trace-e2e-p7-035",
+      "statement": "In stub mode the contact address page should offer no link to add an address (no link matching /add.*address/i).",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/pages/contact-address.spec.ts:54-57",
+      "quote": "await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveCount(0);",
+      "confidence": "gap",
+      "note": "Stated by the skipped test only; no trace in this corpus observed the page in stub mode."
+    },
+    {
+      "id": "trace-e2e-p7-036",
+      "statement": "The contact address form posts a CSRF crumb and a concurrencyToken hidden field; the token counts the notification's saves (3 on the first contact save, 4 on the second).",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e network POSTs /consignment/contact/select; snapshot call@1049 hidden inputs",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"4\"></INPUT>",
+      "confidence": "inferred",
+      "note": "Crumb value redacted. That it is an optimistic-concurrency version is inferred from the field name and it increasing by one per save."
+    },
+    {
+      "id": "trace-e2e-p7-037",
+      "statement": "The contact address page uses only GOV.UK Frontend components (back link, tag, fieldset with legend-as-heading, radios with item hints, summary card, button group with primary and secondary buttons) plus one custom class, app-journey-strip, for the Draft/reference strip.",
+      "kind": "constraint",
+      "ref": "trace 5b1a7 snapshot call@1006 and trace 2fe1e snapshot call@1049, class names in main",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-038",
+      "statement": "The contact address list is read from the INS address book (the same records the 'Add a new address' link adds to); the animals frontend makes this call server-side, so it does not appear in the browser network log.",
+      "kind": "integration",
+      "ref": "trace 5b1a7 network: only GET /consignment/contact/select (200) for the page; link host localhost:3002/address-book",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-QE1SAA/consignment/contact/select 200",
+      "confidence": "inferred",
+      "note": "No browser-side data call fetched the addresses; the source of the list is inferred from the link target and the shared entries other address-book tests created."
+    },
+    {
+      "id": "trace-e2e-p7-039",
+      "statement": "The all-operators test reaches Review your notification by walking the full journey. From the Consignment addresses hub it presses each role row's 'Add' link, searches on that role's picker page (/consignors/select, /destinations/select, /place-of-origin/select, /consignees/select, /importers/select) and chooses 'Select <name>' (Consignor or exporter: Astra Rosales; Place of destination: Tech Imports Ltd; Place of origin: Origin Farm; Consignee: British Livestock Ltd; Importer: Import Co UK), each save returning to the hub; it then presses 'Continue' on the hub and enters CPH 12 / 345 / 6789.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 actions call@292-call@364; network GET/POST /<role>/select then POST 302 to /addresses",
+      "quote": "check internal:role=radio[name=\"Select Astra Rosales\"s]",
+      "confidence": "verbatim",
+      "note": "The picker search posts to the role's /select URL and answers 200; the save posts again and redirects 302 to /addresses. The pickers themselves belong to the addresses part of this source."
+    },
+    {
+      "id": "trace-e2e-p7-040",
+      "statement": "The all-operators walk chooses 'Animal and Plant Health Agency' as the contact address, then presses 'Review and submit' on the Overview to reach 'Review your notification' at /notification-view.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 actions call@434-call@444",
+      "quote": "Review your notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-041",
+      "statement": "On Review your notification, section '5. Consignment parties' holds a subheading and summary card both titled 'Roles and addresses'.",
+      "kind": "copy",
+      "ref": "trace 5c7f8 snapshot call@442, #consignment-parties and #roles-and-addresses",
+      "quote": "5. Consignment parties ... Roles and addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-042",
+      "statement": "The 'Roles and addresses' card has a card-level 'Change' link to the addresses page with change=1, hidden text 'roles and addresses (Roles and addresses)'.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 snapshot call@442, #roles-and-addresses .govuk-summary-card__actions",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/addresses?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> roles and addresses (Roles and addresses)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-043",
+      "statement": "The 'Roles and addresses' card has six rows in this order: Place of origin, Consignor, Consignee, Importer, Place of destination, County parish holding (CPH) number.",
+      "kind": "data",
+      "ref": "trace 5c7f8 snapshot call@442, #roles-and-addresses .govuk-summary-list__key",
+      "quote": "Place of origin / Consignor / Consignee / Importer / Place of destination / County parish holding (CPH) number",
+      "confidence": "verbatim",
+      "note": "The test title says 'all six operators'; the six rows are five parties plus the CPH number. No transporter row appears in this card."
+    },
+    {
+      "id": "trace-e2e-p7-044",
+      "statement": "Each party row's value shows the picked name in bold, then each address line, town, postcode, country, telephone and email on separate lines.",
+      "kind": "data",
+      "ref": "trace 5c7f8 snapshot call@442, Place of origin row value",
+      "quote": "<STRONG>Origin Farm</STRONG><BR></BR>1 Farm Lane<BR></BR>Ennis<BR></BR>V95 X7P2<BR></BR>Ireland<BR></BR>+44 1234 567890<BR></BR>contact@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-045",
+      "statement": "The Place of origin row shows Origin Farm, Ireland.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@446-call@448 and snapshot call@442",
+      "quote": "<STRONG>Origin Farm</STRONG><BR></BR>1 Farm Lane<BR></BR>Ennis<BR></BR>V95 X7P2<BR></BR>Ireland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-046",
+      "statement": "The Consignor row shows Astra Rosales, Switzerland: the party picked under 'Consignor or exporter' on the addresses page is labelled 'Consignor' on review.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@294, call@450-call@452 and snapshot call@442",
+      "quote": "<STRONG>Astra Rosales</STRONG><BR></BR>43 East Hague Extension<BR></BR>Bern<BR></BR>30055<BR></BR>Switzerland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-047",
+      "statement": "The Consignee row shows British Livestock Ltd, United Kingdom.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@454-call@456 and snapshot call@442",
+      "quote": "<STRONG>British Livestock Ltd</STRONG><BR></BR>10 Market Street<BR></BR>Leeds<BR></BR>LS1 6HB<BR></BR>United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-048",
+      "statement": "The Importer row shows Import Co UK, United Kingdom.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@458-call@460 and snapshot call@442",
+      "quote": "<STRONG>Import Co UK</STRONG><BR></BR>20 Trade Road<BR></BR>London<BR></BR>EC1A 1BB<BR></BR>United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-049",
+      "statement": "The Place of destination row shows Tech Imports Ltd, United Kingdom.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@462-call@464 and snapshot call@442",
+      "quote": "<STRONG>Tech Imports Ltd</STRONG><BR></BR>18 Dockside Road<BR></BR>London<BR></BR>E14 9GE<BR></BR>United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-050",
+      "statement": "The County parish holding (CPH) number row shows the three CPH parts joined with no separators (12, 345, 6789 shown as 123456789), and the row has no action link.",
+      "kind": "data",
+      "ref": "trace 5c7f8 actions call@358-call@362, call@466 and snapshot call@442, .govuk-summary-list__row--no-actions",
+      "quote": "<DIV class=\"govuk-summary-list__row govuk-summary-list__row--no-actions\"> County parish holding (CPH) number ... 123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-051",
+      "statement": "Each party row on the review card has an 'Edit details' link to that role's edit page with return=notification-view: place-of-origin/edit, consignors/edit, consignees/edit, importers/edit, destinations/edit.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 snapshot call@442, .govuk-summary-list__actions links",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/place-of-origin/edit?return=notification-view\">Edit details<SPAN class=\"govuk-visually-hidden\"> place of origin (Roles and addresses)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-052",
+      "statement": "The review rows' Edit details links carry hidden text naming the role and card: 'place of origin', 'consignor', 'consignee', 'importer', 'place of destination', each followed by '(Roles and addresses)'.",
+      "kind": "copy",
+      "ref": "trace 5c7f8 snapshot call@442, .govuk-visually-hidden in row actions",
+      "quote": "consignor (Roles and addresses) / consignee (Roles and addresses) / importer (Roles and addresses) / place of destination (Roles and addresses)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-053",
+      "statement": "On Review your notification, section '6. Contact address' has a subheading and summary card titled 'Contact address for this consignment', with a card-level 'Change' link to /consignment/contact/select?change=1.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 snapshot call@442, #contact-address-section and #contact-address",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/consignment/contact/select?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> contact address for this consignment (Contact address for this consignment)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-054",
+      "statement": "The review card 'Contact address for this consignment' has one row keyed 'Contact address' showing the chosen contact's name in bold, address lines, town, postcode, country, telephone and email.",
+      "kind": "data",
+      "ref": "trace 5c7f8 snapshot call@442, #contact-address .govuk-summary-list__row",
+      "quote": "Contact address ... <STRONG>Animal and Plant Health Agency</STRONG><BR></BR>Woodham Lane<BR></BR>Addlestone<BR></BR>KT15 3NB<BR></BR>United Kingdom<BR></BR>+44 1234 567890<BR></BR>contact@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-055",
+      "statement": "The review's contact address row has an 'Edit details' link to /consignment/contact/edit?return=notification-view, hidden text 'contact address (Contact address for this consignment)'.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 snapshot call@442, #contact-address .govuk-summary-list__actions",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/consignment/contact/edit?return=notification-view\">Edit details<SPAN class=\"govuk-visually-hidden\"> contact address (Contact address for this consignment)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-056",
+      "statement": "Review your notification ends with a single 'Continue' button in a form that posts the CSRF crumb and the notification's concurrencyToken.",
+      "kind": "copy",
+      "ref": "trace 5c7f8 snapshot call@442, form after section 6",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"17\"></INPUT> <BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\"> Continue </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-057",
+      "statement": "Review your notification uses an h1 'Review your notification', numbered h2 section headings, h3 subheadings and govuk summary cards (h4 titles), with the same Draft/reference journey strip and a Back link to the Overview.",
+      "kind": "constraint",
+      "ref": "trace 5c7f8 snapshot call@442, main",
+      "quote": "<H1 class=\"govuk-heading-l\">Review your notification</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-058",
+      "statement": "No trace in this part follows 'Edit details' from the 'Current contact address' card, so the contact edit page (/consignment/contact/edit) and what it lets the user change are not shown.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e (link asserted visible, never clicked)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-059",
+      "statement": "No trace presses 'Save and return to overview' or 'Cancel and return to overview' on the contact address page, so their behaviour (and whether Cancel discards a change) is not shown.",
+      "kind": "behaviour",
+      "ref": "traces 5b1a7, 943a0, 60f4b, 2fe1e, 2cb78, b077b (buttons rendered, never used)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-060",
+      "statement": "No trace follows the 'Add a new address' link, so the round trip to the INS address book and back to the contact address page (the handshake) is not shown in this part.",
+      "kind": "integration",
+      "ref": "trace b077b (href asserted, not followed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-061",
+      "statement": "No trace shows the contact address page with an empty address book, so what the page says when there are no addresses to choose is not shown.",
+      "kind": "behaviour",
+      "ref": "all contact-address traces show 28 entries",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-062",
+      "statement": "No trace shows the review page with no contact address chosen, nor follows the review's contact 'Change' link (?change=1), so the empty review row and the change-mode return path are not shown.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 (contact chosen; Change link rendered, not followed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-063",
+      "statement": "No trace follows the review card's 'Change' or row 'Edit details' links for the five parties, so where they lead and how they return to review are not shown in this part.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 snapshot call@442 (links rendered, not followed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-064",
+      "statement": "The trace never shows whether choosing a contact copies a snapshot of the address into the notification or keeps a live link to the address-book record; the hint claims a copy, but no trace edits the address-book entry afterwards to prove it.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 snapshot call@1006 hint; no trace edits a chosen record",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p7-065",
+      "statement": "The contact address page's browser title is 'Contact address for consignment - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 5b1a7 frame snapshot call@1006 TITLE; also trace 5c7f8 call@436",
+      "quote": "Contact address for consignment - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-066",
+      "statement": "A contact address radio's one-line item hint includes the second address line and the county when the address-book entry has them, so the hint is every address part present, comma-separated.",
+      "kind": "data",
+      "ref": "trace 5b1a7 snapshot call@1006, #contactAddress-9-item-hint and #contactAddress-13-item-hint",
+      "quote": "12 Copy Street, Unit 4, Carlisle, Cumbria, CA1 5EE, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-067",
+      "statement": "The contact address page's hint is tied to the radios group for screen readers (the fieldset's aria-describedby names the hint), and each radio is described by its own one-line address hint.",
+      "kind": "non-functional",
+      "ref": "trace 5b1a7 snapshot call@1006, fieldset and radio inputs",
+      "quote": "<FIELDSET class=\"govuk-fieldset\" aria-describedby=\"contactAddress-hint\"> ... aria-describedby=\"contactAddress-25-item-hint\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-068",
+      "statement": "The 'Current contact address' card's title is an h2 and the card has no card-level action; its only action is the row's 'Edit details' link.",
+      "kind": "copy",
+      "ref": "trace 2fe1e snapshot call@1049, .govuk-summary-card__title-wrapper",
+      "quote": "<H2 class=\"govuk-summary-card__title\"> Current contact address </H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-069",
+      "statement": "On return, the contact address page still lists every address-book entry as a radio (28 in this run), with the saved one checked; the current-contact card is added below the list rather than replacing it.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e snapshot call@1049, contactAddress to contactAddress-28 then .govuk-summary-card",
+      "quote": "<INPUT class=\"govuk-radios__input\" id=\"contactAddress-28\" name=\"contactAddress\" type=\"radio\" value=\"6ac683ef6bdb2fc53f1285fc\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-070",
+      "statement": "Saving the same contact address again, unchanged, still counts as a save: the concurrencyToken the page renders goes from 4 (before the re-save) to 5 (on the next visit). Inferred from the hidden field's value across the three visits in one trace.",
+      "kind": "behaviour",
+      "ref": "trace 2fe1e snapshots call@1037 (3), call@1049 (4), call@1059 (5); POSTs carry 3 then 4",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"4\"></INPUT>",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p7-071",
+      "statement": "The contact address task is open as soon as a draft has its origin and commodity: every contact-address test reaches the page after answering only the origin (France, region code No) and the commodity (Bos taurus, 1 animal, 5 packages), with the parties, transport and documents tasks still unanswered. Inferred from the beforeEach walk; no ordering gate stopped it.",
+      "kind": "rule",
+      "ref": "trace 5b1a7 actions call@948-call@1006 (same walk in 943a0, 60f4b, 2fe1e, 2cb78, 676b1, b077b)",
+      "quote": "Frame.click internal:role=link[name=\"Contact address for this consignment\"s]",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p7-072",
+      "statement": "The contact address task row on the Overview has no hint text, unlike the 'Roles and addresses' row above it.",
+      "kind": "copy",
+      "ref": "trace 5c7f8 overview snapshot call@440, contact-address task row",
+      "quote": "<A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/consignment/contact/select\" aria-describedby=\"contact-address-1-status\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-073",
+      "statement": "The Overview's 'Roles and addresses' task (section '5. Consignment parties') has the hint 'Consignor or Exporter, Consignee, Importer and Place of Destination', which does not name the Place of origin role that the review card lists.",
+      "kind": "copy",
+      "ref": "trace 5c7f8 overview snapshot call@440, #consignment-parties-1-hint",
+      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim",
+      "note": "Recorded, not reconciled: the hint omits Place of origin while review row 1 is Place of origin."
+    },
+    {
+      "id": "trace-e2e-p7-074",
+      "statement": "On the Overview, 'Review and submit' is a button-styled link (a GET to /notification-view, not a form post), next to a secondary 'Return to dashboard' link-button to /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 overview snapshot call@440, .govuk-button-group; network GET /notification-view 200",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-DH7FYH/notification-view\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\"> Review and submit </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-075",
+      "statement": "Review your notification can be reached while the Documents task still shows 'To do'; the review's '4. Documents' card then reads 'You have not added any documents yet.'",
+      "kind": "rule",
+      "ref": "trace 5c7f8 overview snapshot call@440 (#documents-1-status) and review snapshot call@442 (#documents)",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-076",
+      "statement": "The test titled 'lists all six operators' checks five party rows (Place of origin, Consignor, Consignee, Importer, Place of destination) plus the CPH number row of the 'Roles and addresses' card; the transporter is not in that card. Inferred: the 'six' counts the CPH row, not a sixth party.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/all-operators.spec.ts:7; trace 5c7f8 actions call@446-call@466",
+      "quote": "check your answers lists all six operators with the picked name and country",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p7-077",
+      "statement": "On Review your notification the transporter chosen in the journey is shown not in 'Roles and addresses' but in section '3. Transport and arrival', in a 'Transport details' card with separate rows Name, Address, Country, Approval number and Type, and a card-level Change link to /transporters?change=1.",
+      "kind": "data",
+      "ref": "trace 5c7f8 review snapshot call@442, #transport-details",
+      "quote": "García Livestock Transport SL ... Switzerland ... ES-T2-45001294 ... Commercial",
+      "confidence": "verbatim",
+      "note": "The transporter is laid out as key-value rows, unlike the five parties, which show one bold name then stacked address lines. The transport card belongs to another part of this source; it is recorded here because it is the operator the 'six operators' test does not check."
+    },
+    {
+      "id": "trace-e2e-p7-078",
+      "statement": "The review page's section headings and summary cards carry ids with tabindex -1 (such as consignment-parties, roles-and-addresses, contact-address-section, contact-address), so a link can move focus straight to a section. Inferred from the attributes; no trace follows such a link.",
+      "kind": "non-functional",
+      "ref": "trace 5c7f8 review snapshot call@442, h2#consignment-parties and div#roles-and-addresses",
+      "quote": "<H2 class=\"govuk-heading-m\" id=\"consignment-parties\" tabindex=\"-1\">5. Consignment parties</H2>",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p7-079",
+      "statement": "On the all-operators walk, pressing 'Continue' on the Consignment addresses hub posts the hub and goes to 'Add the county parish holding number (CPH)' (/cph-number), whose save returns to the Overview.",
+      "kind": "behaviour",
+      "ref": "trace 5c7f8 actions call@354-call@366; network POST /addresses 302 /cph-number, POST /cph-number 302 to the notification root",
+      "quote": "Add the county parish holding number (CPH)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p7-080",
+      "statement": "The 'Add a new address' link carries no return URL of its own: the only parameters are journey-type, notification-id, fulfilment-id and handshake-token, so the way back to the contact page must be resolved from those by the address book. Inferred from the href.",
+      "kind": "integration",
+      "ref": "traces 5b1a7 call@1006, 2fe1e call@1049, 5c7f8 call@436, 676b1 call@979: href of 'Add a new address'",
+      "quote": "http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-DH7FYH&fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=[REDACTED]",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p7-081",
+      "statement": "The 'Add a new address' link points at the INS frontend on its own origin (localhost:3002 here), the same host the service navigation's 'Address book' link uses.",
+      "kind": "integration",
+      "ref": "trace 5b1a7 snapshot call@1006, service navigation and p.govuk-body link",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\"> Address book </A>",
+      "confidence": "verbatim"
+    }
+  ]
+}

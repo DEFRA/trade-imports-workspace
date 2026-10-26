@@ -18,6 +18,7 @@ import { registerDuplication } from './duplication.js'
 import { registerMeasure } from './measure.js'
 import { registerWorkers } from './workers.js'
 import { registerTune } from './tune.js'
+import { registerPushWorkflows } from './push-workflows.js'
 
 const SCHEMA_VERSION = 1
 
@@ -445,7 +446,7 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, tune this machine's worker counts, and print them"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, tune this machine's worker counts and print them, and say which workflows a pushed commit starts"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
@@ -457,4 +458,5 @@ export const register = (program, { timVersion }) => {
   registerMeasure(build, timVersion)
   registerWorkers(build, timVersion)
   registerTune(build, timVersion)
+  registerPushWorkflows(build, timVersion)
 }

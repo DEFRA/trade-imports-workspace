@@ -14,7 +14,8 @@ Node.js Ink/React CLI for the trade-imports workspace. Dual-runs alongside the b
 ## Hard rules (non-negotiable)
 
 - **Test on input/output.** Spawn the CLI, assert stdout. Render the component, assert `lastFrame()`. Call the function, assert its return value or thrown error. `toHaveBeenCalled` and `toHaveBeenCalledWith` are banned outside the rare case where the call IS the external side-effect (outbound webhook, analytics emit) — and even then assert on the captured payload, not the spy record. Per-block override only with `// allow-spy-assertion: <why>`.
-- **Library-first integrations.** External services go through a typed client under `src/clients/`. Never shell out to `gh`, `jq`, `curl`, or `../tools/*.sh`. The only sanctioned shell-out in the integration path is one `gh auth token` at startup when `GITHUB_TOKEN` is unset — that's credential retrieval, not service invocation.
+- **Library-first integrations.** External services go through a typed client under `src/clients/`. Never shell out to `gh`, `jq`, `curl`, or `../tools/*.sh`.
+- **No GitHub in tim.** tim has no GitHub commands, client or token. GitHub work (PRs, checks, Actions runs, auth) uses the GitHub CLI (`gh`) directly, outside tim. Never add a GitHub wrapper to tim.
 - **Mock at the network boundary.** Client tests use `nock` via `src/test-support/http-mock.js`; feature/hook tests render real components. Don't `vi.mock()` your own modules — it leaves them untested and turns the feature test into a coupling check.
 - **Ship code + behavioural test together.** Every new `src/**/*.js` lands with a sibling `*.test.js` in the same diff.
 - **GDS plain English for all user-facing strings.** Ink screen text, error messages, `--help`, JSON `error.message`. Active voice, plain words, address the user directly. "Can't find …" not "Could not locate …".
@@ -36,7 +37,6 @@ See `.claude/rules/` — loaded by glob:
 ## Auth env vars (reuse the bash contract)
 
 - `JIRA_USER` + `JIRA_TOKEN` + `JIRA_BASE_URL` — used by `jira-client` AND `confluence-client`. Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token. Matches `../tools/jira/auth.sh` and `../tools/confluence/auth.sh`.
-- `GITHUB_TOKEN` if set; otherwise tim runs `gh auth token` once at startup. Matches `../tools/github/auth.sh`.
 - Anyone with the bash tools working should get seamless pickup with zero new env vars.
 
 ## When to use parent skills
@@ -46,7 +46,7 @@ Use `/review`, `/code-style`, `/ticket`, `/understanding-check` from the workspa
 ## What lives where
 
 - `src/cli.js` — commander entry; auto-sets `--no-ui` when `!isTTY`
-- `src/clients/*.js` — external service clients (octokit / undici); each with sibling `*.test.js`
+- `src/clients/*.js` — external service clients (undici); each with sibling `*.test.js`
 - `src/components/features/<name>/` — Ink feature folders (one per command group)
 - `src/components/common/` — shared screens (Menu, Loading, Error, Confirm, ParallelProgress, StreamingLog)
 - `src/utils/`, `src/config/`, `src/env/`, `src/exec/`, `src/output/`, `src/logging/`, `src/healthcheck/`

@@ -2,10 +2,18 @@
 
 `tim build gate` runs the same rungs on every machine (`gates.json`). How hard
 it drives each one is a property of the machine, so it lives in a per-machine
-file that is never committed:
+file inside the workspace that git ignores:
 
-- `~/.config/tim/machine.json`, or the path in `TIM_MACHINE_CONFIG`
-- start from [`machine.example.json`](machine.example.json) beside this file
+- `config/machine.json` at the workspace root, or the path in `TIM_MACHINE_CONFIG`
+- [`config/machine.example.json`](../../../../config/machine.example.json) is the committed example
+
+**Set it once per machine with `tim build tune`**, with the stack free and
+nothing else heavy running. It takes the stack lease, starts the stack, times
+every FIT and E2E rung in `gates.json` at 2, 3 and 4 workers one run at a time,
+picks each rung's count by the rule under "Measuring a machine" below, writes
+`config/machine.json` and gives the stack back. It takes about an hour.
+`--dry-run` reports without writing; `--counts` times other counts. Each run's
+log, samples and summary go to `workareas/machine-tuning/<time>/`.
 
 | Setting | What it does |
 |---|---|
@@ -20,10 +28,20 @@ does not go through the gate, so nothing here changes CI.
 
 The gate result lists each rung's `workers` and the `machine.config` it read.
 
+`tim build workers` prints the same counts. The build loop runs it once at
+launch and puts the counts in every stage's guard rails, so a FIT or E2E run a
+stage makes itself (a red probe, a plan check, a reviewer's or fixer's check)
+passes the same `--workers` as the gate. Without that, those runs take the
+scripts' own default: `--workers=100%` started 10 browsers on the machine
+below, two repos at once, and swapped out 208,000 pages in 20 seconds on 22
+October. A change to the file reaches the gate at its next run and the stages
+at the loop's next launch.
+
 ## Measuring a machine
 
-Measure with the stack up, because the build loop holds it up for the whole
-run. Run one suite at a time and nothing else.
+`tim build tune` does this. To measure one suite by hand, measure with the
+stack up, because the build loop holds it up for the whole run. Run one suite
+at a time and nothing else.
 
 ```bash
 tim docker lease status
@@ -44,9 +62,10 @@ tim docker lease release --holder "machine tuning" --json
 how long a shell takes to start (a stand-in for whether the terminal stays
 usable) every 5 seconds, and writes `<label>.json`, `.csv` and `.log`.
 
-Pick, per suite, the fewest workers past which the time stops falling. Back off
-one if that count swaps (`swapoutPages` above zero) or the shell's worst start
-time climbs past about 100 ms.
+Pick, per suite, the fewest workers past which the time stops falling (within
+5% of the fastest). Back off one if that count swaps (`swapoutPages` above
+zero) or the shell's worst start time climbs past 100 ms. `tim build tune`
+applies exactly this rule.
 
 ## Measured on 22 October 2026
 
@@ -94,7 +113,7 @@ start time are the better signals of a frozen terminal.
 
 ### Settings chosen for this machine
 
-In [`machine.example.json`](machine.example.json):
+In [`config/machine.example.json`](../../../../config/machine.example.json):
 
 - **FIT plants and animals: 4.** Past 4 the time stops falling (animals 234s
   at 4, 233s at 6) and swapping starts. This chip has 4 performance cores, and

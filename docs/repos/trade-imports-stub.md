@@ -9,7 +9,7 @@ Stub service that mocks responses from third-party integrations for the Trade Im
 ## Responsibilities
 
 **Owns**
-- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`). They are MDM's own responses, captured once from MDM and served whole, with every value MDM masks left out rather than guessed. The capture came in with [DEFRA/trade-imports-stub#18](https://github.com/DEFRA/trade-imports-stub/pull/18).
+- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`). They are MDM's own responses, captured once from MDM and served whole, with every value MDM masks left out rather than guessed. The capture came in with [DEFRA/trade-imports-stub#18](https://github.com/DEFRA/trade-imports-stub/pull/18); `workareas/shared/design-release-2-1/mdm/regenerate/*.jq` rebuild them from the raw captures in `workareas/shared/design-release-2-1/mdm/captures/raw/`.
 - A fake OAuth2 token endpoint that always succeeds.
 
 **Does not own**

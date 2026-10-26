@@ -80,7 +80,14 @@ const duplicationCommand = () => ({
   env: { TIM_NO_AUTO_PULL: '1' }
 })
 
-const commandFor = (rung) => {
+/**
+ * The command a planned rung runs: its npm script with its scope and worker
+ * count, `mvn -B verify`, or tim's duplication check.
+ *
+ * @param {{run: string, scope: string[], workers?: number}} rung
+ * @returns {{command: string, args: string[], env?: object}}
+ */
+export const rungCommand = (rung) => {
   if (rung.run === MVN_VERIFY) return { command: 'mvn', args: ['-B', 'verify'] }
   if (rung.run === TIM_DUPLICATION) return duplicationCommand()
   return npmCommandFor(rung)
@@ -149,7 +156,7 @@ const runRung = async (rung, { logsDir, env }) => {
   if (rung.refusal) return failed(rung, rung.refusal)
   const blocker = cannotRunBecause(rung)
   if (blocker) return failed(rung, blocker)
-  const { command, args, env: commandEnv } = commandFor(rung)
+  const { command, args, env: commandEnv } = rungCommand(rung)
   const logPath = logPathFor(logsDir, rung.repo, rung.name)
   try {
     const { exitCode, durationMs, log } = await runToLog(command, args, {
@@ -569,7 +576,7 @@ export const runGate = async ({
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
-  machineConfigPath = defaultMachineConfigPath(),
+  machineConfigPath = defaultMachineConfigPath(workspaceRoot),
   env
 }) => {
   const startedAt = performance.now()

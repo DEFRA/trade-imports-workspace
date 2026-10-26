@@ -27,7 +27,7 @@ const cliPath = join(here, '..', '..', 'cli.js')
 
 const fakeReadinessProbe = () =>
   Promise.resolve([
-    { service: 'github', ok: true, user: { login: 'sam' } },
+    { service: 'confluence', ok: true, user: { user: 'sam' } },
     {
       service: 'jira',
       ok: false,

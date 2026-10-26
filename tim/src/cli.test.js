@@ -52,12 +52,21 @@ describe('tim CLI', () => {
       'start',
       'auth',
       'jira',
-      'github',
-      'confluence',
-      'gha'
+      'confluence'
     ]) {
       expect(stdout).toContain(cmd)
     }
+  })
+
+  test('--help lists no GitHub command groups', async () => {
+    const { stdout } = await runTim(['--help'])
+
+    const commandNames = stdout
+      .split('\n')
+      .map((line) => line.trim().split(/\s+/)[0])
+
+    expect(commandNames).not.toContain('github')
+    expect(commandNames).not.toContain('gha')
   })
 
   test('no args shows help instead of exiting silently', async () => {

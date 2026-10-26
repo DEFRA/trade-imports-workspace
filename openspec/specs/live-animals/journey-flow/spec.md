@@ -14,7 +14,7 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification is being worked on
 - **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
+- **THEN** they run in this order: the dashboard; origin of the import; what are you importing, main import reason and commodity details; identification details; additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
 
 #### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B

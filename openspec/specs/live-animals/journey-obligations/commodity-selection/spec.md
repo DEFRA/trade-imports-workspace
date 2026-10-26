@@ -47,13 +47,13 @@ The system MUST ask whether the consignment contains unweaned animals, as a mand
 
 ### Requirement: Only a commodity that is counted in packages is asked for a number of packages
 **ID**: REQ-OB-COMMODITY-003
-The system MUST ask a commodity line for a number of packages, as an optional answer, only where that line's commodity is one counted in packages.
+The system MUST ask a commodity line for a number of packages, as a mandatory answer, only where that line's commodity is one counted in packages.
 
 #### Scenario: A line whose commodity is counted in packages is asked for a package count
 **ID**: SCN-OB-COMMODITY-003-A
 - **GIVEN** the user has added a commodity line
 - **WHEN** its commodity is one counted in packages
-- **THEN** that line is asked for a number of packages, as an optional answer
+- **THEN** that line is asked for a number of packages, as a mandatory answer
 
 ### Requirement: A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one
 **ID**: REQ-OB-COMMODITY-004

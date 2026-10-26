@@ -257,8 +257,13 @@ with commits of its own is left as it is. A failure names its step and its exact
    implementor and fixer run its unit and FIT phases to check themselves. No
    agent picks a repo's test scripts. How hard the gate drives this machine
    (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
-   the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
-   see [`machine-tuning.md`](machine-tuning.md).
+   the machine's own gitignored `config/machine.json`, never from `gates.json`;
+   `tim build tune` writes it once per machine: see
+   [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
+   once at launch (`tim build workers`) and gives them to every stage, so a probe,
+   plan check or reviewer's FIT or E2E run outside the gate passes the same
+   `--workers`. A change to the file reaches the gate at its next run and the
+   stages at the next launch.
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also
@@ -925,6 +930,21 @@ says a theme split off early waits on a row the parent no longer has, run
   every requirement it must pick up, every one that changed and every one no longer to build. Add or rewrite rows
   in the split backlog for them, then update the parent's pointer as
   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
+
+### Moving rows to a second machine
+
+To build some rows of a theme already building on one machine in parallel on another, move them into a new theme
+backlog with `tim backlog split <workarea>/themes/<theme id> --rows <ids> --to <new theme id> --write --json`
+([`DISTIL.md`](DISTIL.md#9-moving-rows-out-of-a-split-theme-to-a-second-machine)). It is safe while the loop runs
+on the old backlog: `tim backlog next` there no longer offers the moved rows, and the old backlog keeps a `movedOut`
+pointer to them.
+
+- **Cut the new branch from the old one's tip,** once the row in flight has landed, and open its draft pull requests.
+  The second machine runs the loop on `<workarea>/themes/<new theme id>` with that backlog's `repos` and `branch`.
+- **Bring it back with a merge row.** Add a `chore` row to the old backlog that waits for every moved row through
+  `externalDependsOn`, sets `merge` to `origin/<new branch>` for each repo, and says in its acceptance criteria
+  that both sets of behaviour survive the merge and the full gate is green. Make the old theme's final row depend
+  on it.
 
 ## Branch lifecycle
 

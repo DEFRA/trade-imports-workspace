@@ -323,13 +323,22 @@ const STARTED_AT_FORMAT = /^\d{8}T\d{6}Z$/
 
 const WORKSPACE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'tilde', 'startedAt', 'summary'],
+  required: ['ok', 'abs', 'tilde', 'startedAt', 'machineConfig', 'workers', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
     tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
     canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
     startedAt: { type: 'string', description: 'Exactly what `date -u +%Y%m%dT%H%M%SZ` printed, such as 20261001T091500Z' },
+    machineConfig: {
+      type: ['string', 'null'],
+      description: '`result.config` from `tim build workers --json`, exactly as printed: a path, or null'
+    },
+    workers: {
+      type: 'object',
+      additionalProperties: { type: 'integer' },
+      description: '`result.workers` from `tim build workers --json`, copied key for key: {} when it printed {}'
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -344,6 +353,9 @@ tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash 
 Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
+Then run \`tim build workers --workspace <the candidate path you used> --json\` and copy its \`result.config\` as
+\`machineConfig\` and its \`result.workers\` as \`workers\`, every key and number exactly as printed. If it exits
+non-zero, report ok:false and quote its error message in your summary.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
 No Grep/Glob tools. One command per Bash call.
 ${RUN_WITH_BASH}`,
@@ -367,8 +379,22 @@ if (!workspace.canonical) {
   log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
 }
 
+const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
+const badWorkerEntries = Object.entries(workspace.workers ?? {}).filter(
+  ([rung, count]) => !RUNG_KEY.test(rung) || !Number.isInteger(count) || count < 1
+)
+if (typeof workspace.workers !== 'object' || workspace.workers === null || badWorkerEntries.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: the workspace agent relayed this machine's worker counts in the wrong shape — got ${JSON.stringify(workspace.workers)}. Run \`tim build workers --json\` by hand to see what it should have copied`
+  )
+}
+const MACHINE_WORKERS = workspace.workers
+
 const RUN_ID = `ibl-${workspace.startedAt}`
 log(`${WORKFLOW_NAME}: run ${RUN_ID}`)
+log(
+  `${WORKFLOW_NAME}: this machine's worker counts, from ${workspace.machineConfig ?? 'no settings file'}: ${JSON.stringify(MACHINE_WORKERS)}`
+)
 
 const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
 const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
@@ -710,7 +736,7 @@ PROBES AND DOCS — two more lines in notes, each on a line of its own, whatever
   you have inverted the production line its test depends on, seen the test fail, restored the line and seen it pass,
   by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe". The leased stack holds each frontend's
   default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`, never
-  \`test:fit\`.
+  \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.
 - \`Docs updated: <paths>\`, or \`Docs updated: none — searched <terms> in <dirs>\`. Search the changed repos' \`docs/\`,
   the recipes, the JSDoc and Javadoc of every function you changed, comments within ten lines of every hunk, and
   convention test names, for the behaviour you changed. Every one that now states the old way is part of this change:
@@ -1190,7 +1216,8 @@ in a denied form cannot run, so the ladder stops the increment red with nothing 
 The workspace stack is up for every check, and its frontends hold their own ports (3000 for animals, 3003 for plants
 and so on), so a check that starts a frontend on its default port cannot run. A FIT check therefore runs the script
 gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
-\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`.
+\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`. Write no worker count into
+a plan: whoever runs the check adds this machine's \`--workers\` from GUARD RAILS.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1198,9 +1225,27 @@ none does, add a small test or npm script that makes it to the plan's own work (
 or the performance-tests repo) and name that as the check. To prove a script runs, run the npm script that calls it.
 To vary a script's behaviour, use an npm script or a flag the script takes, never a variable prefix.`
 
+const workerCountLines = Object.entries(MACHINE_WORKERS).map(
+  ([rung, count]) => `    ${rung.replace(/\/(\w+)$/, ' $1')}: \`--workers=${count}\``
+)
+
+const TEST_WORKERS_LINE =
+  workerCountLines.length === 0
+    ? ''
+    : `- THIS MACHINE'S TEST WORKERS. Every FIT or E2E command you run yourself, outside \`tim build gate\` (a probe, a
+  plan check, a reviewer's or fixer's check, a single spec), ends with this machine's worker count, after the spec
+  files, so it drives the machine no harder than the gate does. The scripts' own default can start a browser per core
+  and push this machine into swap. Per repo and rung:
+${workerCountLines.join('\n')}
+  So: \`npm --prefix ${TILDE}/repos/<repo> run test:fit:ci -- <spec file> --workers=<n>\` for FIT, and
+  \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file> --workers=<n>\` for E2E. A repo not listed keeps its
+  script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
+`
+
 const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
 ${RUN_WITH_BASH}
+${TEST_WORKERS_LINE}
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
 - In Bash ALWAYS use tilde paths \`${TILDE}/...\` — a literal /Users/... path in Bash is DENIED.

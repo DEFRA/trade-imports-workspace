@@ -4,9 +4,7 @@ import { SCREENS } from '../constants/menuConfig.js'
 import { useWorkspaceFeature } from './features/workspace/useWorkspaceFeature.js'
 import { useAuthFeature } from './features/auth/useAuthFeature.js'
 import { useJiraFeature } from './features/jira/useJiraFeature.js'
-import { useGithubFeature } from './features/github/useGithubFeature.js'
 import { useConfluenceFeature } from './features/confluence/useConfluenceFeature.js'
-import { useGhaFeature } from './features/gha/useGhaFeature.js'
 import { useDockerFeature } from './features/docker/useDockerFeature.js'
 import { useStartFeature } from './features/start/useStartFeature.js'
 import { useMainMenuFeature } from './features/mainMenu/useMainMenuFeature.js'
@@ -27,9 +25,7 @@ import ErrorScreen from './common/screens/ErrorScreen.js'
  * @param {string} [props.workspaceRoot] - Override the resolved workspace root used by workspace, docker and start features
  * @param {() => Promise<Array<{service: string, ok: boolean, [k: string]: any}>>} [props.probe] - Override `useAuthFeature` probe; defaults to `auth.probeAll`
  * @param {(id: string) => Promise<object>} [props.getTicket] - Override `useJiraFeature` ticket fetch; defaults to `jiraClient.getTicket`
- * @param {(ticketId: string) => Promise<Array<object>>} [props.findPrsForTicket] - Override `useGithubFeature` PR search; defaults to `githubClient.findPrsForTicket`
  * @param {(id: string) => Promise<object>} [props.getPage] - Override `useConfluenceFeature` page fetch; defaults to `confluenceClient.getPage`
- * @param {(repo: string) => Promise<Array<object>>} [props.listRuns] - Override `useGhaFeature` runs list; defaults to `ghaClient.listRuns`
  * @param {(opts: {workspaceRoot: string, script: string, args: string[]}) => Promise<void>} [props.launchStackScript] - Override `useDockerFeature` stack launcher; defaults to unmount + `runStackScript` + `process.exit`
  * @param {(opts: {workspaceRoot: string, service: string}) => Promise<void>} [props.launchService] - Override `useStartFeature` service launcher; defaults to unmount + `startService` + `process.exit`
  */
@@ -38,9 +34,7 @@ const MainMenu = ({
   workspaceRoot,
   probe,
   getTicket,
-  findPrsForTicket,
   getPage,
-  listRuns,
   launchStackScript,
   launchService
 } = {}) => {
@@ -78,28 +72,12 @@ const MainMenu = ({
     ...(getTicket ? { getTicket } : {})
   })
 
-  const github = useGithubFeature({
-    setScreen,
-    setScreenData,
-    setLoadingMessage,
-    navigateToMain,
-    ...(findPrsForTicket ? { findPrsForTicket } : {})
-  })
-
   const confluence = useConfluenceFeature({
     setScreen,
     setScreenData,
     setLoadingMessage,
     navigateToMain,
     ...(getPage ? { getPage } : {})
-  })
-
-  const gha = useGhaFeature({
-    setScreen,
-    setScreenData,
-    setLoadingMessage,
-    navigateToMain,
-    ...(listRuns ? { listRuns } : {})
   })
 
   const docker = useDockerFeature({
@@ -124,9 +102,7 @@ const MainMenu = ({
     workspace,
     auth,
     jira,
-    github,
     confluence,
-    gha,
     docker,
     start,
     exit
@@ -146,9 +122,7 @@ const MainMenu = ({
     ...workspace.routes,
     ...auth.routes,
     ...jira.routes,
-    ...github.routes,
     ...confluence.routes,
-    ...gha.routes,
     ...docker.routes,
     ...start.routes,
     ...mainMenu.routes

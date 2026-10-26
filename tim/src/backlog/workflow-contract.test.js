@@ -4841,6 +4841,28 @@ describe('increment-build-loop', () => {
         expect(prompt).toContain('Never `--squash`')
       })
 
+      test('pushes the tests repo first and waits for its branch image before pushing the rest', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 land')
+
+        expect({
+          first: prompt.includes(
+            'a. Push tests before every other repo, whatever order a list gives.'
+          ),
+          listsPublish: prompt.includes(
+            'gh run list --repo DEFRA/trade-imports-ins-tests --workflow publish-branch.yml --commit <sha>'
+          ),
+          waits: prompt.includes(
+            'gh run watch <run-id> --repo DEFRA/trade-imports-ins-tests --exit-status > ~/ws/workareas/shared/args-fixture/logs/inc-900-tests-image.log 2>&1'
+          ),
+          thenTheRest: prompt.includes('e. Only then push the other repos.')
+        }).toEqual({
+          first: true,
+          listsPublish: true,
+          waits: true,
+          thenTheRest: true
+        })
+      })
+
       test('finds the open PR and never raises, edits or merges one', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const prompt = promptOf(run, 'inc-900 pr')
@@ -5963,6 +5985,15 @@ describe('increment-build-loop', () => {
         expect(prompt).not.toContain('BACKEND FIRST')
       })
 
+      test('pushes in the row’s order when the run builds no tests repo', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 pr')
+
+        expect({
+          rule: prompt.includes('TESTS REPO FIRST'),
+          order: prompt.includes('For EACH of those repos, in that order:')
+        }).toEqual({ rule: false, order: true })
+      })
+
       test('sweeps every configured repo for a PR left open', async () => {
         const prompt = promptOf(await runPerf(), 'inc-014 merge')
 
@@ -7061,6 +7092,112 @@ describe('increment-build-loop', () => {
       expect(prompt).toContain(
         'GitHub repos: frontend=DEFRA/trade-imports-animals-frontend, tests=DEFRA/trade-imports-ins-tests, backend=DEFRA/trade-imports-animals-backend.'
       )
+    })
+
+    describe('pushing the tests repo', () => {
+      const promptOfLabel = async (label) =>
+        (await runLegacyToMerge()).agents.find(
+          (entry) => entry.options.label === label
+        ).prompt
+
+      test('raises the tests PR and waits for its branch image before pushing any other repo', async () => {
+        const prompt = await promptOfLabel('inc-900 pr')
+
+        expect({
+          testsFirst: prompt.includes(
+            'For EACH of those repos, in that order — except that tests, when it has commits, goes through every step first and then waits for its image by TESTS REPO FIRST above:'
+          ),
+          waitsForPublish: prompt.includes(
+            'gh run watch <run-id> --repo DEFRA/trade-imports-ins-tests --exit-status'
+          ),
+          onTheWorkBranch: prompt.includes(
+            'pull request runs its E2E with the tests image tagged for `feat/EUDPA-900-'
+          )
+        }).toEqual({
+          testsFirst: true,
+          waitsForPublish: true,
+          onTheWorkBranch: true
+        })
+      })
+    })
+
+    describe('watching the base branch after each merge', () => {
+      const UNTRIGGERED_MERGE = {
+        green: true,
+        merged: LEGACY_PRS.map(({ repo }) => ({ repo, sha: `${repo}-sha` })),
+        untriggered: [
+          {
+            repo: 'tests',
+            sha: 'tests-sha',
+            why: 'tim CI: no changed file matches its paths'
+          }
+        ],
+        summary: 'merged'
+      }
+
+      const runToMergeAnswering = (merge) =>
+        runLoop(scriptPath, {
+          args: BASE_ARGS,
+          answers: (prompt, { label }) =>
+            ({
+              'inc-900 merge': merge,
+              'inc-900 done': { ok: true, summary: 'ticket moved to Done' },
+              'inc-900 gate check': { ok: true, summary: 'no gate' }
+            })[label] ?? answersFor(label)
+        })
+
+      test('asks tim which workflows each merge commit starts', async () => {
+        const run = await runToMergeAnswering(UNTRIGGERED_MERGE)
+        const prompt = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 merge'
+        ).prompt
+
+        expect(prompt).toContain(
+          'tim build push-workflows ~/ws/<repoPath> --commit <sha> --branch main --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-push-workflows-<repo>.json 2>&1'
+        )
+      })
+
+      test('counts an empty run list as green only when the merge starts no workflow', async () => {
+        const run = await runToMergeAnswering(UNTRIGGERED_MERGE)
+        const prompt = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 merge'
+        ).prompt
+
+        expect({
+          missingRunStops: prompt.includes(
+            '`stopReason: "base-branch-unverified"`, with "<repo> merge commit <sha> should start <workflow> on\n      main and no run of it exists"'
+          ),
+          onlyWayGreen: prompt.includes(
+            'This is the ONLY way an empty run list counts as green.'
+          )
+        }).toEqual({ missingRunStops: true, onlyWayGreen: true })
+      })
+
+      test('lands the increment and logs each merge that started no workflow', async () => {
+        const run = await runToMergeAnswering(UNTRIGGERED_MERGE)
+
+        expect({
+          outcome: run.result.increments[0].outcome,
+          note: run.logs.includes(
+            'inc-900: tests merge tests-sha started no workflow on main, so there was no run to watch — tim CI: no changed file matches its paths'
+          )
+        }).toEqual({ outcome: 'landed', note: true })
+      })
+
+      test('stops at main-red when a workflow the merge starts never ran', async () => {
+        const run = await runToMergeAnswering({
+          green: false,
+          stopReason: 'base-branch-unverified',
+          blocked:
+            'tests merge commit tests-sha should start Publish on main and no run of it exists',
+          summary: 'unverified'
+        })
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'main-red',
+          stopReason: 'base-branch-unverified'
+        })
+      })
     })
   })
 })

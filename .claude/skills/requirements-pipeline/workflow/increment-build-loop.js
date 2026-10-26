@@ -270,6 +270,10 @@ const FRONTEND_CHANGE_SETS = {
 const FRONTEND_CHANGE_PATHS = Object.keys(FRONTEND_CHANGE_SETS)
 const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
 
+const TESTS_REPO_PATH = 'repos/trade-imports-ins-tests'
+const TESTS_IMAGE_WORKFLOW = 'publish-branch.yml'
+const TESTS_KEY = REPO_KEYS.find((key) => REPOS[key].path === TESTS_REPO_PATH)
+
 const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
 const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
@@ -1295,6 +1299,26 @@ ${HEAD_BRANCH_CHECK}
 If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
 Do not commit "just this once" and sort the branch out afterwards.`
 
+const testsImageFirstRule = (id, branch) => {
+  if (!TESTS_KEY) return ''
+  const ghRepo = REPOS[TESTS_KEY].github
+  return `
+TESTS REPO FIRST. Every other repo's pull request runs its E2E with the tests image tagged for \`${branch}\` when one
+is published, and with \`trade-imports-ins-tests:latest\` when not ("Tests image: latest (no branch tag)" in its log),
+which runs the wrong specs. The tests repo publishes that image from its own pull request, in its
+\`${TESTS_IMAGE_WORKFLOW}\` run. So whenever you push ${TESTS_KEY} and any other repo:
+a. Push ${TESTS_KEY} before every other repo, whatever order a list gives. The publish runs only for an open pull
+   request on \`${branch}\`, so where your task registers ${TESTS_KEY}'s pull request, do that before step b too.
+b. Its pushed commit: \`git -C ${TILDE}/${TESTS_REPO_PATH} rev-parse HEAD\`.
+c. \`gh run list --repo ${ghRepo} --workflow ${TESTS_IMAGE_WORKFLOW} --commit <sha> --json databaseId,status,conclusion --limit 5\`
+   An empty list means GitHub has not started it yet: run the same list again, at most 5 times in all.
+d. BLOCK on that run, with the Bash tool's \`timeout\` set to 600000, at most ${CI_WATCH_WINDOWS} times:
+   \`gh run watch <run-id> --repo ${ghRepo} --exit-status > ${WORKAREA_TILDE}/logs/${id}-tests-image.log 2>&1\`
+e. Only then push the other repos. A publish that failed, never started or never finished does not stop you: push the
+   others and name it in your summary. The tests pull request's own checks show it, and the CI stage deals with it.
+None of this applies when you push ${TESTS_KEY} alone, or do not push it.`
+}
+
 const preserveWork = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${guardrails()}
@@ -2294,13 +2318,34 @@ const CI_SCHEMA = {
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
-      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'pr-left-open'],
+      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'base-branch-unverified', 'pr-left-open'],
       description:
         'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
     },
     summary: { type: 'string' }
   },
   additionalProperties: false
+}
+
+const MERGE_SCHEMA = {
+  ...CI_SCHEMA,
+  properties: {
+    ...CI_SCHEMA.properties,
+    untriggered: {
+      type: 'array',
+      description: 'Every merge commit that started no workflow on the base branch, so had no run to watch. Empty when every merge started one',
+      items: {
+        type: 'object',
+        required: ['repo', 'sha', 'why'],
+        properties: {
+          repo: { type: 'string' },
+          sha: { type: 'string' },
+          why: { type: 'string', description: "Each workflow's reason from tim build push-workflows" }
+        },
+        additionalProperties: false
+      }
+    }
+  }
 }
 
 const readIncrement = (id) => `
@@ -3564,7 +3609,7 @@ TASK:
    Leave the status alone.
 7. Push every repo you committed in, by HOW TO PUSH above:
    \`git -C ${TILDE}/<repoPath> push origin refs/heads/${BASE_BRANCH}:refs/heads/${BASE_BRANCH}\`. A rejected push is
-   pushed:false, saying which repo and what git said. Never \`--force\`.
+   pushed:false, saying which repo and what git said. Never \`--force\`.${testsImageFirstRule(id, BASE_BRANCH)}
 8. When no backlog repo had changes and none was mid-merge, commit nothing and push nothing: landed:true, pushed:true,
    no commit, and say so in your summary.
 Report landed, pushed, the commit SHA or SHAs, and a summary.
@@ -3659,7 +3704,7 @@ never create, edit or un-draft a pull request.
 ${guardrails()}
 ${HOUSE_RULES_TO_WRITE}
 ${ciFixStandards(plan)}
-${PUSH_RULE}
+${PUSH_RULE}${testsImageFirstRule(id, BASE_BRANCH)}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList}
@@ -4021,7 +4066,7 @@ TASK:
 ${ruledFixes}
 5. ${SPEC_RULE} It must have no changes: these fixes never touch the spec. If it has any, report landed:false naming them.
 6. Push every repo you committed in, by HOW TO PUSH above. A rejected push is pushed:false, saying which repo and what
-   git said.
+   git said.${testsImageFirstRule(id, BASE_BRANCH)}
 Report landed, pushed, the commit SHA or SHAs in the order of the configured repos, and a summary.
 Return the structured output only.`
 
@@ -5317,8 +5362,9 @@ REPOS, in order: ${repos.join(', ')}. These are the increment's repos and the ON
 configured repo is not this increment's: leave it on whatever branch it is on, and never push it or raise a PR in it.
 GitHub repos: ${repos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}. Repo paths: ${repos.map((key) => `${key}=${REPO_PATH[key]}`).join(', ')}.
 <repo> below is the repo's key from that list, never its GitHub name.
+${repos.includes(TESTS_KEY) ? testsImageFirstRule(id, workBranch) : ''}
 
-For EACH of those repos, in that order:
+For EACH of those repos, in that order${repos.includes(TESTS_KEY) ? ` — except that ${TESTS_KEY}, when it has commits, goes through every step first and then waits for its image by TESTS REPO FIRST above` : ''}:
 1. Prove the repo is on the work branch before you push a thing:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing
@@ -5409,7 +5455,7 @@ CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you 
 ${guardrails()}${ciFixerWorkspaceRule()}
 ${HOUSE_RULES_TO_WRITE}
 ${ciFixStandards(plan)}
-${PUSH_RULE}
+${PUSH_RULE}${testsImageFirstRule(id, workBranch)}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList(prs)}
@@ -5589,14 +5635,29 @@ For EACH pr, in that order:`
 3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
 4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
 5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
-   \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,name,status,conclusion --limit 20\`
-   then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
-   \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
-   At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
-   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
-   base branch went red after merging
-   <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
-   base branch being red is a human decision, not a repair job.
+   a. WHICH WORKFLOWS THE MERGE STARTS. A workflow's push trigger can filter on branches and paths, so a merge
+      that touches none of its paths starts no run at all. Ask tim, from the repo's own workflow files:
+      \`git -C ${TILDE}/<repoPath> fetch origin ${BASE_BRANCH}\`, then
+      \`tim build push-workflows ${TILDE}/<repoPath> --commit <sha> --branch ${BASE_BRANCH} --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-push-workflows-<repo>.json 2>&1\`
+      and read that file once. \`result.starts\` names every workflow the merge starts, as \`gh run list\` names
+      its runs (workflowName); \`result.workflows\` gives each workflow's reason.
+   b. THE RUNS: \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,workflowName,status,conclusion --limit 20\`
+   c. For each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
+      \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
+      At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
+      **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
+      base branch went red after merging
+      <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
+      base branch being red is a human decision, not a repair job.
+   d. EVERY workflow in \`result.starts\` must have a run in that list. One missing means GitHub has not started it
+      yet: run the list in b again, at most 5 times in all, and watch each new run by c. Still missing after that,
+      or tim refused (\`ok:false\`) and the list is empty → **STOP.** Report green:false,
+      \`stopReason: "base-branch-unverified"\`, with "<repo> merge commit <sha> should start <workflow> on
+      ${BASE_BRANCH} and no run of it exists" (or tim's error, word for word) in blocked. Never call it green.
+   e. The list is empty AND \`result.starts\` is empty → this merge starts no workflow on \`${BASE_BRANCH}\`: there is
+      nothing to watch and nothing that can go red, so that repo's base branch counts as green. Put it in
+      untriggered\[\] as { repo, sha, why }, where why gives each workflow's reason from \`result.workflows\`.
+      This is the ONLY way an empty run list counts as green.
 6. Persist it: \`${setRow(id, `--pr '{"url":"<url>","merged":true,"sha":"<merge sha>"}'`)}\`. Do this after EACH merge.
 
 FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole
@@ -5610,10 +5671,10 @@ branch: <url>" in blocked. Do NOT merge it yourself — it has not been through 
 gate in this run, and merging an unvetted PR to clear a warning is worse than the warning. Leave everything
 as it is and name it, so a human can finish it.
 
-green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
-sweep found no open PR left on \`${workBranch}\` in any repo.
+green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them (or, by step 5e,
+the merge started no workflow there), AND the final sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
-      light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
+      light({ label: `${id} merge`, phase: 'Merge', schema: MERGE_SCHEMA })
     )
 
     if (!merge || !merge.green) {
@@ -5644,6 +5705,9 @@ Return the structured output only.`,
     }
 
     log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
+    for (const { repo, sha, why } of merge.untriggered ?? []) {
+      log(`${id}: ${repo} merge ${sha} started no workflow on ${BASE_BRANCH}, so there was no run to watch — ${why}`)
+    }
   }
 
   phase('Done')

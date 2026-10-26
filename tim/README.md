@@ -458,6 +458,7 @@ tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere oth
 tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json
 tim build tune                                              # once per machine: time FIT and E2E at 2, 3, 4 workers, save config/machine.json
 tim build workers --json                                    # this machine's worker counts, as the gate reads them
+tim build push-workflows . --commit 4cd37b9c --json          # which workflows a push of that commit to main starts
 ```
 
 How hard the gate drives the machine comes from the workspace's gitignored
@@ -559,6 +560,27 @@ The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
 clone is `{lines, tokens, first, second}`, and `first` and `second` are
 `{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
 finds a clone, and 2 when `--base` does not exist.
+
+### `tim build push-workflows` — which workflows a pushed commit starts
+
+```bash
+tim build push-workflows . --commit 4cd37b9c --branch main --json
+tim build push-workflows trade-imports-ins-tests --commit origin/main
+```
+
+Reads the repo's `.github/workflows` files as they are at the commit, and the
+files the commit changes from its first parent. A workflow starts when it has a
+push trigger whose `branches`, `branches-ignore` and `tags` filters let the
+branch through, and whose `paths` or `paths-ignore` match at least one changed
+file. `!` patterns count in order, as GitHub reads them. It reads local git
+only, so fetch the commit first.
+
+The result is `{commit, branch, changedFiles, workflows, starts}`. Each
+workflow is `{file, name, starts, reason}`, where `name` is what GitHub calls
+its runs (the workflow's `name`, else its path), and `starts` lists those
+names. It always exits 0. The build loop's merge stage uses it to tell a merge
+that starts no workflow, which has nothing to watch, from a run that has not
+started yet.
 
 ### `tim build probe` — does a test witness a line
 

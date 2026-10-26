@@ -909,7 +909,7 @@ like this:
 | Baseline, Ladder | Run only the row's `gatePhases` (all three when it has none; none for `[]`). A ladder without `e2e` does not fail for want of an end-to-end proof: that proof is another row's |
 | Merge start | Runs only for a row with `merge`, between plan and implement. Fetches and runs `git merge --no-ff --no-commit <ref>` per repo, and reports the conflicted paths. The planner previews the same merge with `git merge-tree` and plans every resolution, reading a resolutions file where the row's notes point at one |
 | Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
-| Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force` |
+| Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force`. The tests repo goes first, and the others wait for its branch image to publish |
 | Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
 | CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR is a red (`pr-conflicting`), not an API failure. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
 | Merge | Does not run |
@@ -1019,6 +1019,19 @@ The script carries no comments. The reasons behind its less obvious choices are 
   Calling a healthy pause a failure costs somebody an afternoon; calling a red base branch a pause hides it.
   `pr-left-open` is its own outcome, because a partly merged increment needs different action from a red base
   branch.
+- **After each merge, the merge stage asks `tim build push-workflows` which workflows the merge commit starts.**
+  tim reads the repo's own workflow files at that commit and checks each push trigger's branch and path filters
+  against the files the commit changes. A merge that starts none (the workspace's tim CI runs only when `tim/` and
+  a few other paths change, so a merge of `openspec/` and `workareas/` starts nothing) has no run to watch: it
+  counts as green, and the loop logs it with each workflow's reason. Every run that does exist is watched, and red
+  stops the run as before. A workflow tim says the merge starts, with no run after five looks, stops the run as
+  `main-red` with `stopReason: "base-branch-unverified"`.
+- **The tests repo pushes first, and the rest wait for its branch image.** Every other repo's PR E2E uses the
+  tests image tagged for the branch, or `trade-imports-ins-tests:latest` when none is published yet ("Tests image:
+  latest (no branch tag)"). The tests repo publishes it from its own PR, in its `publish-branch.yml` run. So the
+  PR stage, the CI fixer and both branch-lifecycle land stages push the tests repo first, see its PR, and block on
+  that run before they push any other repo. A publish that fails or never starts does not stop them: they say so,
+  and the tests PR's own checks carry it to the CI stage.
 
 ### Run telemetry
 

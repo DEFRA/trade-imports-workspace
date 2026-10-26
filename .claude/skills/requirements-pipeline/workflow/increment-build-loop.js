@@ -576,7 +576,11 @@ const HOUSE_RULES = `**Comments**
 
 **Design**
 
-- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Where a guide such as the GDS style guide disagrees, a review raises a \`design\` finding: the question for the designer, never a code fix. Code that differs from its design source is a correctness finding.
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Code that differs from its design source is a correctness finding.
+- A review raises a \`design\` finding, the question for the designer and never a code fix, when a guide such as the GDS style guide disagrees with what the design source sets, when the design source sets two different things for one element (two labels for one field on two pages), or when the code had to choose copy, layout or a component for a case the design source does not show.
+- Read the design source before you raise or judge a \`design\` finding. A backlog row's \`sources\` name it and the workarea's \`sources.json\` gives its location and the commit to read it at. "I could not confirm what the design source sets" never raises one and never refutes one: read it.
+- A \`design\` finding carries everything the designer decides from: the design source quoted at file:line, as a permalink at the commit read when it is a public repo; the code quoted at file:line; the guide's rule with a link, when a guide disagrees; and the question with the options it leaves, such as "keep 'X', or change to 'Y'?".
+- Bad: "The edit label may differ from the prototype. I could not confirm which label it sets." Good: "The prototype labels the name field 'Name or organisation' on the add page (\`consignment-manual-address-fields.html:9\`) and 'Name or organisation name' on the edit page (\`address-book-manual-address-fields.html:9\`), and the code copies both (\`copy.en.js:54\`, \`:36\`). For the designer: should both pages use one label, and which?"
 
 **Tests**
 
@@ -1557,10 +1561,13 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 - code quality: ${quotedList(CODE_QUALITY_CATEGORIES)}. Formatting, idiom, convention and the wrong layer are
   \`structure\`; a test title that claims more than its assertions prove is \`test-readability\`; an id, ticket key or
   before-and-after narration in code is \`history\`.
-- design: ${quotedList(DESIGN_CATEGORIES)}. Copy, layout or a component the design source sets (the prototype, a design
-  release, the acceptanceCriteria) that a guide such as the GDS style guide disagrees with. Name both in \`why\`, and
-  write the question for the designer in \`fix\`. Code that differs from its design source is \`correctness\`, not
-  \`design\`.
+- design: ${quotedList(DESIGN_CATEGORIES)}. Copy, layout or a component where the design source (the prototype, a design
+  release, the acceptanceCriteria) is disagreed with by a guide such as the GDS style guide, sets two different things
+  for one element, or does not show the case the code had to handle. Read the design source first: the row's
+  \`sources\` name it, and the workarea's \`sources.json\` gives its location and commit. In \`why\`, quote the design
+  source at file:line (a permalink at that commit for a public repo), the code at file:line, and the guide's rule with
+  a link when a guide disagrees. In \`fix\`, write the question for the designer with the options it leaves. Code that
+  differs from its design source is \`correctness\`, not \`design\`.
 `
 
 const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its
@@ -1659,8 +1666,12 @@ code in \`quote\`, with its file:line. A refutation with no quote leaves the fin
 "out of the increment's scope", "a comparable file does it", "feature folders are independent" and the like are never
 grounds to refute one. A tool call that failed is not evidence: when you could not read the code, the finding is real.
 A house-rule breach is never taste and never out of scope, whatever its kind.
-DESIGN (${quotedList(DESIGN_CATEGORIES)}): real only when the design source does set the copy, layout or component and
-the guide rule does say otherwise. Cite both in \`reasoning\`.`
+DESIGN (${quotedList(DESIGN_CATEGORIES)}): read the design source the finding cites, and the row's \`sources\` and the
+workarea's \`sources.json\` when it cites none. The finding is real when the source does set what it says and a guide
+rule does disagree, when the source sets two different things for one element, or when the source does not show the
+case the code handles. Quote the source at file:line in \`reasoning\`. A source you did not read, or a finding that did
+not read it, is never grounds to refute: read it. A real finding that lacks its evidence (the source and code at
+file:line, the guide rule, the question and its options) is real: add the missing evidence in \`reasoning\`.`
 
 const describeFindingKind = (finding) => `[${finding.category ?? 'no category'}, ${kindOf(finding)}]`
 
@@ -1841,7 +1852,8 @@ FOR EACH finding decide exactly one of:
   \`${setRow(id, "--open-question '<the question, and the finding that raised it>'")}\`.
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
   Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
-  its question with "For the designer:".
+  its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design
+  source and the code at file:line (permalinks where the verifier gave them) and the guide rule's link.
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.

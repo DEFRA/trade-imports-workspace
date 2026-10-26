@@ -753,8 +753,11 @@ inc-NNN  landed   <title>            PR #123 · EUDPA-4567
 ```
 
 Then list, under "For the designer", every open question starting "For the designer:" on
-the rows the run built. These are `design` findings: copy, layout or a component the design
-source sets and a guide disagrees with. The code keeps the design; the designer decides.
+the rows the run built. These are `design` findings: copy, layout or a component where a guide
+disagrees with the design source, the design source sets two different things for one element,
+or it does not show the case the code handles. The code keeps the design; the designer decides.
+Each question carries its evidence (the design source and the code at file:line, the guide
+rule's link): list it with that evidence, ready to share with the designer.
 
 ```bash
 jq -r '.increments[] | select(.id == "inc-NNN") | .openQuestions[]? | select(startswith("For the designer:"))' <backlog>

@@ -342,13 +342,18 @@ differ, the name does predict what the code returns and changes, or
 the comment is accurate and describes only its own lines. Quote the
 code that shows it.
 
-Copy, layout or a component that a design source sets (the
-prototype, a design release, the ticket's acceptance criteria) and a
-guide such as the GDS style guide disagrees with is a `design`
-finding. Add it only when you can name both: the design source and
-the guide rule go in the issue, and the question for the designer in
-the fix. It is never fixed in code. Code that differs from its design
-source is `correctness`, not `design`.
+Copy, layout or a component is a `design` finding when its design
+source (the prototype, a design release, the ticket's acceptance
+criteria) is disagreed with by a guide such as the GDS style guide,
+sets two different things for one element, or does not show the case
+the code had to handle. Read the design source before you add one:
+the ticket names it, and a programme workarea's `sources.json` gives
+a prototype's location and commit. The issue quotes the design source
+at file:line (a permalink at that commit for a public repo), the code
+at file:line, and the guide rule with a link when a guide disagrees.
+The fix is the question for the designer, with the options it leaves.
+It is never fixed in code. Code that differs from its design source
+is `correctness`, not `design`.
 
 Functional findings (`correctness`, `security`, `error-handling`,
 `coverage-gap`) are the other way round: raise one only with evidence,

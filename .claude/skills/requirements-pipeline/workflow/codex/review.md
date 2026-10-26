@@ -168,11 +168,14 @@ seven are code quality: `naming`, `comments`, `structure`, `duplication`, `loggi
   predict what the code returns and what it changes, the comment is accurate and describes only the lines
   below it, the branch does log once with the ids support searches by. "Taste", "pre-existing", "out of
   scope", "a comparable file does it" and "feature folders are independent" are never reasons to drop one.
-- **Design.** Copy, layout or a component the increment's design source sets (the prototype, a design
-  release, the `acceptanceCriteria`) that a guide such as the GDS style guide disagrees with is a `design`
-  finding. Report it only when you can quote both the design source and the guide rule: name both in `why`,
-  and write the question for the designer in `fix`. It is never fixed in code. Code that differs from its
-  design source is not `design`: it is `correctness`.
+- **Design.** Copy, layout or a component is a `design` finding when the increment's design source (the
+  prototype, a design release, the `acceptanceCriteria`) is disagreed with by a guide such as the GDS style
+  guide, sets two different things for one element, or does not show the case the code had to handle. Read
+  the design source first: the row's `sources` name it, and the workarea's `sources.json` gives its location
+  and commit. In `why`, quote the design source at file:line (a permalink at that commit for a public repo),
+  the code at file:line, and the guide rule with a link when a guide disagrees. In `fix`, write the question
+  for the designer with the options it leaves. It is never fixed in code. Code that differs from its design
+  source is not `design`: it is `correctness`.
 
 Set `confidence` honestly after that check: `certain` (you can cite the evidence), `probable`, `speculative`
 (report it, but say so). A house-rule breach is never taste.

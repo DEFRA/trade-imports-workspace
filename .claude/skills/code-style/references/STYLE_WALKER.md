@@ -18,8 +18,10 @@ the review skill and the build loop's verifier share (`naming`,
 `history`), or a design item (`design`).
 
 A design item is never fixed in code. Mark it Discuss with the note
-`For the designer: <the question>`, naming the design source and the
-guide rule, and list it under "For the designer" in the batch summary.
+`For the designer: <the question and its options>`, carrying the
+item's evidence (the design source and the code at file:line, and the
+guide rule's link), and list it under "For the designer" in the batch
+summary.
 
 A code-quality item is fixed unless the code proves it wrong. Won't Fix only
 with a note that quotes the code, with its file:line, showing the

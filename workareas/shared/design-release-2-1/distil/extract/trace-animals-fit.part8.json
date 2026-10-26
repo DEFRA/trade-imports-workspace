@@ -1,0 +1,483 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 8, Commodity search. Read search.fit.spec.js (describe 'commodity search', 14 tests, lines 63 to 228) and mined all 14 trace zips it produced, one per test, in read order (working folders s01..s14 under trace-animals-fit.work/part8/ map to lines 63, 76, 95, 103, 116, 126, 138, 153, 159, 176, 181, 193, 216, 228). The playwright trace CLI that tim runs refused these traces (TraceVersionError: created by a newer Playwright), so each zip's extracted trace, network and frame-snapshot records were read directly with jq: every action (before events), every localhost request with its form body, status and redirect, and the full DOM snapshot of each distinct page state rendered from main. Every test shares one set-up: stub sign-in, Start a new notification, origin answered (France, No) and saved, then the overview link 'What are you importing?' opens the page. One page is in scope: 'What are you importing?' at /live-animals/notifications/{ref}/commodities (caption 'About the consignment'), always reached from the overview. Its states, all on that one URL: empty (s01, s02 help opened); short query, no results (s03); results grouped by commodity (s04, s05, s06, s07, s14); no match (s08); a running selection panel with Clear all (s09, s12, s13, s14); validation error on empty submit (s11). Save and continue leads to Commodity details (/consignment-details, s12, s13), seen only for its species headings; the back link returns to the overview (s10). The axe test (s14) passed with help open, one species chosen and two result groups showing. Claims record the page skeleton, every field, result and panel copy, the selection and save behaviour, the form posts that carry them, the validation, and gaps for controls no test drove.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p8-001",
+      "statement": "The commodity search page is reached from the notification overview through the link 'What are you importing?', and opens at /live-animals/notifications/{reference}/commodities.",
+      "kind": "behaviour",
+      "ref": "trace s01 (search.fit.spec.js:63) action call@1577; GET /live-animals/notifications/GBN-AG-26-4JA500/commodities 200",
+      "quote": "What are you importing?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-002",
+      "statement": "On a new notification, the first Save and continue on the origin page redirects straight to the commodity search page rather than to the overview; a later origin save returns to the overview.",
+      "kind": "behaviour",
+      "ref": "trace s01 network: POST /origin 302 -> /commodities; second POST /origin 302 -> /live-animals/notifications/GBN-AG-26-4JA500",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-4JA500/origin | 302 | /live-animals/notifications/GBN-AG-26-4JA500/commodities",
+      "confidence": "verbatim",
+      "note": "Seen in every trace's set-up; the origin page itself is another part's."
+    },
+    {
+      "id": "trace-animals-fit-p8-003",
+      "statement": "The page heading is 'What are you importing?'.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1577, main h1.govuk-heading-l",
+      "quote": "What are you importing?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-004",
+      "statement": "The page carries the section caption 'About the consignment' above the heading.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1577, span.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-005",
+      "statement": "The browser title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace s10 action call@2177, TITLE",
+      "quote": "What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-006",
+      "statement": "Above the caption, a journey strip shows a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1577, div.app-journey-strip > strong.govuk-tag.govuk-tag--blue, span.govuk-body.govuk-!-font-weight-bold",
+      "quote": "Draft GBN-AG-26-4JA500",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-007",
+      "statement": "An inset text under the heading says that each health certificate needs its own notification, and that consignments without a health certificate must still be notified.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1581; div.govuk-inset-text",
+      "quote": "A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-008",
+      "statement": "The page offers one search box, labelled 'Search for a commodity' with a medium label, as a type=search input named commoditySearch at three-quarters width.",
+      "kind": "data",
+      "ref": "trace s01 action call@1583; label.govuk-label--m for=commoditySearch, input#commoditySearch type=search class govuk-!-width-three-quarters",
+      "quote": "Search for a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-009",
+      "statement": "The search box hint says the user can search by commodity name, commodity code or species name, and must enter at least 3 characters.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1585; div#commoditySearch-hint.govuk-hint",
+      "quote": "You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-010",
+      "statement": "A secondary 'Search' button next to the box submits the form with action=search; the search runs on the server as a full-page form post to the same URL, which answers 200 with the results rendered.",
+      "kind": "behaviour",
+      "ref": "trace s03 action call@1897; network POST /commodities 200 body 'commoditySearch=Bo&action=search'",
+      "quote": "Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-011",
+      "statement": "Before any search the page lists no results: no checkboxes and no selection panel.",
+      "kind": "behaviour",
+      "ref": "trace s01 actions call@1587 (checkbox count 0), call@1589 (#commodity-selection count 0)",
+      "quote": "internal:role=checkbox | 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-012",
+      "statement": "A collapsed details component titled 'Help with commodity codes' sits below the search form.",
+      "kind": "copy",
+      "ref": "trace s01 action call@1591; details.govuk-details > summary",
+      "quote": "Help with commodity codes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-013",
+      "statement": "Opened, the help says commodity codes are internationally recognised reference numbers.",
+      "kind": "copy",
+      "ref": "trace s02 (search.fit.spec.js:76) action call@1837",
+      "quote": "Commodity codes are internationally recognised reference numbers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-014",
+      "statement": "Opened, the help says a commodity code describes a specific product when importing or exporting goods.",
+      "kind": "copy",
+      "ref": "trace s02 action call@1839",
+      "quote": "A commodity code describes a specific product when importing or exporting goods.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-015",
+      "statement": "Opened, the help says commodity codes can be looked up with the Trade Tariff tool, linked as 'Trade Tariff tool (opens in a new tab)' to https://www.gov.uk/trade-tariff.",
+      "kind": "copy",
+      "ref": "trace s02 actions call@1841, call@1843, call@1845",
+      "quote": "You can look up commodity codes using the Trade Tariff tool (opens in a new tab).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-016",
+      "statement": "The Trade Tariff link opens in a new tab (target=_blank) with rel 'noreferrer noopener'.",
+      "kind": "rule",
+      "ref": "trace s02 actions call@1847, call@1849",
+      "quote": "target=\"_blank\" rel=\"noreferrer noopener\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-017",
+      "statement": "The service links out to the GOV.UK Trade Tariff tool for commodity code look-up; the page does not embed it.",
+      "kind": "integration",
+      "ref": "trace s02 action call@1845, a.govuk-link href",
+      "quote": "https://www.gov.uk/trade-tariff",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-018",
+      "statement": "A query shorter than three characters lists no results and shows no 'No results found' message or any error: the page simply returns with the query in the box.",
+      "kind": "rule",
+      "ref": "trace s03 (search.fit.spec.js:95) actions call@1895 (fill 'Bo'), call@1899, call@1901; snapshot call@1899",
+      "quote": "Enter at least 3 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-019",
+      "statement": "After a search the box keeps the query the user typed.",
+      "kind": "behaviour",
+      "ref": "trace s04 snapshot call@2021, input#commoditySearch value",
+      "quote": "value=\"Bos\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-020",
+      "statement": "Results are grouped by commodity: each matching commodity is a fieldset whose small legend is the commodity name with its code in brackets, holding small checkboxes, one per matching species.",
+      "kind": "behaviour",
+      "ref": "trace s04 (search.fit.spec.js:103) actions call@2021, call@2023; snapshot call@2021 fieldset > legend.govuk-fieldset__legend--s, div.govuk-checkboxes--small",
+      "quote": "Cow (0102)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-021",
+      "statement": "Searching 'Bos' returns one group, Cow (0102), with two species: Cattle (Bos spp.) and Domestic cattle (Bos taurus), in that order; American bison (Bison bison), also a Cow (0102) species, is not matched.",
+      "kind": "behaviour",
+      "ref": "trace s04 actions call@2023, call@2025, call@2027; trace s05 (search.fit.spec.js:116) action call@1975",
+      "quote": "Cattle (Bos spp.) | Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-022",
+      "statement": "Each species is offered as its common name with its scientific name in brackets after it.",
+      "kind": "copy",
+      "ref": "trace s05 action call@1975 (.govuk-checkboxes__label toHaveText)",
+      "quote": "Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-023",
+      "statement": "The search matches a species by its common name: 'cattle' returns Cattle (Bos spp.) and Domestic cattle (Bos taurus) under Cow (0102), and nothing else.",
+      "kind": "rule",
+      "ref": "trace s06 (search.fit.spec.js:126) actions call@1665, call@1669, call@1671, call@1673",
+      "quote": "cattle",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-024",
+      "statement": "The search matches by commodity code prefix: '0106' returns two separate groups, Cat (01061900) with Cat (Felis catus) and Dog (01061900) with Dog (Canis lupus familiaris), two checkboxes in all.",
+      "kind": "rule",
+      "ref": "trace s07 (search.fit.spec.js:138) actions call@2023 to call@2035; snapshot call@2027",
+      "quote": "Cat (01061900) | Dog (01061900)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-025",
+      "statement": "Two commodities may share a commodity code and still render as separate groups, keyed by commodity name (Cat and Dog both show 01061900).",
+      "kind": "rule",
+      "ref": "trace s07 snapshot call@2027",
+      "quote": "Dog (01061900)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-026",
+      "statement": "The search matches by scientific name: 'Salmo' returns Fish (0301) with Atlantic salmon (Salmo salar); 'Bos taurus', 'Felis catus' and 'Bison bison' each return their species.",
+      "kind": "rule",
+      "ref": "trace s09 snapshot call@1939 (Salmo); s12 actions call@1975 to call@1991",
+      "quote": "Atlantic salmon (Salmo salar)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-027",
+      "statement": "Each species checkbox is named species and carries the value '<commodity name>|<species id>' (for example Cow|1148346 for Domestic cattle, Cow|1388624 for Cattle (Bos spp.), Cow|716661 for American bison, Cat|923501, Dog|923502, Fish|801204).",
+      "kind": "data",
+      "ref": "trace s04 snapshot call@2021; s07 snapshot call@2027; s09 snapshot call@1939; s12 snapshot call@2001",
+      "quote": "name=\"species\" type=\"checkbox\" value=\"Cow|1148346\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-028",
+      "statement": "The commodity and species list the search reads (commodity name, code, species common and scientific name, species id) is reference data looked up on the server; no browser call reveals which service holds it.",
+      "kind": "integration",
+      "ref": "trace s04 network: only POST /commodities 200 seen from the browser",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The fit run used stubbed backends; the server-side reference-data call is not in a browser trace."
+    },
+    {
+      "id": "trace-animals-fit-p8-029",
+      "statement": "When a search of three or more characters matches nothing, the page says 'No results found' and lists no checkboxes.",
+      "kind": "copy",
+      "ref": "trace s08 (search.fit.spec.js:153) actions call@1313 (fill 'zzz'), call@1317, call@1319; p.govuk-body",
+      "quote": "No results found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-030",
+      "statement": "Species ticked in one search are kept when the user searches again: the next search posts them, and the page carries them forward as hidden 'selection' fields.",
+      "kind": "behaviour",
+      "ref": "trace s09 (search.fit.spec.js:159) network POSTs: 'commoditySearch=Felis catus&action=search&species=Cow|1148346' then 'selection=Cow|1148346&commoditySearch=Salmo&action=search&species=Cat|923501'; snapshot call@1939 hidden inputs",
+      "quote": "<input type=\"hidden\" name=\"selection\" value=\"Cow|1148346\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-031",
+      "statement": "Once anything is chosen, a selection panel appears below the results with a small heading counting the chosen species ('1 selected', '2 selected', '3 selected').",
+      "kind": "copy",
+      "ref": "trace s09 snapshot call@1933 ('1 selected'), action call@1939 ('2 selected'); s12 action call@2005 ('3 selected'); div#commodity-selection > h2.govuk-heading-s",
+      "quote": "2 selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-032",
+      "statement": "The selection panel lists one bold line per commodity, 'Commodity (code): ' followed by its chosen species as 'Common name (Scientific name)', comma-separated when more than one species of that commodity is chosen.",
+      "kind": "copy",
+      "ref": "trace s09 snapshot call@1939; s12 snapshot call@2001, ul.govuk-list > li > span.govuk-!-font-weight-bold",
+      "quote": "Cow (0102): American bison (Bison bison), Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-033",
+      "statement": "The selection panel still shows species chosen under earlier queries while the current results show something else (Salmo results with Cow and Cat chosen).",
+      "kind": "behaviour",
+      "ref": "trace s09 actions call@1939, call@1941, call@1943",
+      "quote": "Cat (01061900): Cat (Felis catus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-034",
+      "statement": "The selection panel has a secondary 'Clear all' button that posts action=clear; afterwards the panel is gone and nothing is chosen, while the current search results stay on the page.",
+      "kind": "behaviour",
+      "ref": "trace s09 actions call@1945, call@1947; network POST 'selection=Cow|1148346&selection=Cat|923501&commoditySearch=Salmo&action=clear' 200; snapshot call@1947",
+      "quote": "Clear all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-035",
+      "statement": "The selection panel is a plain div with id commodity-selection built from a heading, a govuk-list and a secondary button, not a GOV.UK component of its own.",
+      "kind": "constraint",
+      "ref": "trace s09 snapshot call@1939, div#commodity-selection",
+      "quote": "<div id=\"commodity-selection\">",
+      "confidence": "verbatim",
+      "note": "Every other element on the page is govuk-* apart from the app-journey-strip wrapper."
+    },
+    {
+      "id": "trace-animals-fit-p8-036",
+      "statement": "The page has a primary 'Save and continue' button.",
+      "kind": "copy",
+      "ref": "trace s12 action call@1993; div.govuk-button-group > button.govuk-button",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-037",
+      "statement": "Save and continue saves every chosen species (those carried as selection plus those ticked in the current results) and redirects to Commodity details at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace s12 (search.fit.spec.js:193) network POST 'selection=Cow|1148346&selection=Cat|923501&commoditySearch=Bison bison&species=Cow|716661' 302 -> /consignment-details; action call@1995",
+      "quote": "Commodity details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-038",
+      "statement": "Species chosen in the order Felis catus, Bos taurus, Bison bison are saved and shown on Commodity details in canonical order: Bison bison, Bos taurus, Felis catus (level-3 headings), under their commodity headings Cow (0102) then Cat (01061900).",
+      "kind": "rule",
+      "ref": "trace s12 actions call@1997 (heading level 3 allTextContents); snapshot call@1995 h2 'Cow (0102)', h3 'Bison bison', h3 'Bos taurus', h2 'Cat (01061900)', h3 'Felis catus'",
+      "quote": "Bison bison | Bos taurus | Felis catus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-039",
+      "statement": "The canonical order appears to sort commodities first (Cow 0102 before Cat 01061900) and species within a commodity by scientific name, regardless of the order they were ticked.",
+      "kind": "rule",
+      "ref": "trace s12 snapshot call@1995 and call@2001",
+      "quote": "Cow (0102): American bison (Bison bison), Domestic cattle (Bos taurus)",
+      "confidence": "inferred",
+      "note": "Inferred from one example; whether commodities sort by code, by name or by reference-data order is not distinguishable here."
+    },
+    {
+      "id": "trace-animals-fit-p8-040",
+      "statement": "Reopening the search page after saving shows the saved species in the selection panel ('3 selected', with all three species) and an empty search box; a species not chosen (Canis lupus familiaris) is not listed.",
+      "kind": "behaviour",
+      "ref": "trace s12 actions call@2001 to call@2013; snapshot call@2001",
+      "quote": "3 selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-041",
+      "statement": "Searching again on a notification that already holds a species shows that species' checkbox already ticked in the results, and the panel counts it ('1 selected').",
+      "kind": "behaviour",
+      "ref": "trace s13 (search.fit.spec.js:216) action call@2067; snapshot call@2067 input value=Cow|1148346 checked",
+      "quote": "Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-042",
+      "statement": "Commodity details' back link returns to the overview, not to the search page, so the search page is reopened from the overview row 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "trace s12 actions call@1999, call@2001; s13 actions call@2057, call@2059; spec comment search.fit.spec.js:47",
+      "quote": "Commodity details is its own hub task now, so its back link returns to the hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-043",
+      "statement": "The page has a 'Back' link to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace s10 (search.fit.spec.js:176) actions call@2181, call@2183; snapshot call@2177 a.govuk-back-link href=/live-animals/notifications/GBN-AG-26-55Y646",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-044",
+      "statement": "Pressing Save and continue with nothing chosen fails validation: the server answers 400 and re-renders the page.",
+      "kind": "rule",
+      "ref": "trace s11 (search.fit.spec.js:181) action call@2101; network POST 'commoditySearch=' 400",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-6SC7Y9/commodities | 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-045",
+      "statement": "With nothing chosen, an error summary titled 'There is a problem' appears above the caption, linking 'Select a commodity' to the search box.",
+      "kind": "rule",
+      "ref": "trace s11 actions call@2103; snapshot call@2103 div.govuk-error-summary, a href=#commoditySearch",
+      "quote": "There is a problem Select a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-046",
+      "statement": "With nothing chosen, the search box shows the inline error 'Select a commodity' and takes the error styling.",
+      "kind": "rule",
+      "ref": "trace s11 snapshot call@2103, p#commoditySearch-error.govuk-error-message, input.govuk-input--error",
+      "quote": "Error: Select a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-047",
+      "statement": "On the error state the browser title is prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace s11 snapshot call@2103, TITLE",
+      "quote": "Error: What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-048",
+      "statement": "Clicking the error summary link moves focus to the search box, and no selection panel shows.",
+      "kind": "behaviour",
+      "ref": "trace s11 actions call@2105, call@2107 (toBeFocused), call@2109",
+      "quote": "Select a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-049",
+      "statement": "The page has a secondary 'Save and return to overview' button (name exit, value hub).",
+      "kind": "copy",
+      "ref": "trace s01 snapshot call@1577, div.govuk-button-group",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-050",
+      "statement": "No test drove 'Save and return to overview', so what it saves from this page and whether it validates an empty selection is not shown.",
+      "kind": "behaviour",
+      "ref": "search.fit.spec.js: no test clicks it",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p8-051",
+      "statement": "The page has a 'Cancel and return to overview' link to the notification overview.",
+      "kind": "copy",
+      "ref": "trace s01 snapshot call@1577, a.govuk-link href=/live-animals/notifications/GBN-AG-26-4JA500",
+      "quote": "Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-052",
+      "statement": "No test followed 'Cancel and return to overview', so whether it discards species ticked but not yet saved is not shown.",
+      "kind": "behaviour",
+      "ref": "search.fit.spec.js: no test clicks it",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p8-053",
+      "statement": "No test unticks a single saved species on the search page, so how one chosen species is removed (other than Clear all) is not shown.",
+      "kind": "behaviour",
+      "ref": "search.fit.spec.js: no test unchecks a checkbox",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p8-054",
+      "statement": "No test runs a search that returns many results, so any limit, paging or ordering of large result sets is not shown.",
+      "kind": "behaviour",
+      "ref": "search.fit.spec.js: largest result set seen is two checkboxes",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p8-055",
+      "statement": "No test covers Save and continue with a search query typed but nothing ticked, or Clear all followed by Save and continue on a notification that already holds species.",
+      "kind": "rule",
+      "ref": "search.fit.spec.js: s11 submits with an empty query only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p8-056",
+      "statement": "The page form posts carry a concurrency token (concurrencyToken=0 on a fresh notification) alongside the search, selection and action fields.",
+      "kind": "data",
+      "ref": "trace s03 network POST /commodities body; snapshot call@1899 input[name=concurrencyToken]",
+      "quote": "concurrencyToken=0&commoditySearch=Bo&action=search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-057",
+      "statement": "The page meets the automated accessibility check: axe finds no serious or critical violations with one species chosen, two result groups showing and the help details open.",
+      "kind": "non-functional",
+      "ref": "trace s14 (search.fit.spec.js:228) actions call@1747 to call@1777; test passed",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-058",
+      "statement": "The page is built from GOV.UK components: inset text, input with hint, secondary and primary buttons, details, fieldset with small checkboxes, button group, error summary and error message; the only non-govuk wrapper is app-journey-strip around the Draft tag and reference.",
+      "kind": "constraint",
+      "ref": "trace s04 snapshot call@2021 and s11 snapshot call@2103, classes in main",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p8-059",
+      "statement": "The search runs only on a Search button press (a server round trip); no trace shows search-as-you-type or any client-side filtering.",
+      "kind": "behaviour",
+      "ref": "every trace s03 to s14: each query is fill then click 'Search', followed by a POST /commodities",
+      "quote": "action=search",
+      "confidence": "inferred",
+      "note": "Inferred from every search in the part going through a full form post."
+    }
+  ]
+}

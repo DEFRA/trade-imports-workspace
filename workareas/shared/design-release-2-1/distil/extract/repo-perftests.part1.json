@@ -1,0 +1,732 @@
+{
+  "source": "repo:perftests",
+  "structure": "Part 1, Live-animals journey routes. Read in full: src/k6/journeys.js (552 lines, the shared notification walker: dashboard, create, draft sessions, review and declaration, read-back, amend, cancel-amend, backend replay), src/k6/live-animals.js (232 lines, the 13 live-animals draft steps, the re-edit list and the amend edit), src/k6/journey-pages.js (167 lines, page path, save check, choice and address-picker helpers), src/k6/documents.js (146 lines, the accompanying-documents upload, status poll and continue), src/k6/pages.js (172 lines, the walker that opens, posts, submits, uploads and reaches pages), src/config/journey-endpoints.js (103 lines, the endpoint tags per step and the shared-page tags), src/config/smoke.js (112 lines, JOURNEYS set bases, identity and scenarios), src/config/test-data.js (73 lines, commodity search, document date and scan timing), src/lib/redirects.js (120 lines, create-path id parsing, staleAction and sign-in hop rules), src/lib/forms.js (52 lines), src/lib/form-fill.js (111 lines, blank-field answer rules and the d/m/yyyy date writer), src/lib/redirects.test.js (154 lines, read only to confirm routes and the draft id shape) and the workspace page docs/repos/trade-imports-performance-tests.md (134 lines, context). There is no route table: routes appear as the set base '/live-animals', the create path '<setBase>/notifications', the notification base '<setBase>/notifications/<id>' and the page slugs each step opens under it. Covered: the journey dashboard at the set root and its search by ?referenceNumber=, the create POST and the id read from its redirect, the hub at the notification base, all 13 live-animals steps in STEP_ENDPOINTS order (origin, commodities with search, consignment-details, commodities/identification, import-reason, additional-details, accompanying-documents with upload and status, addresses with five party pickers and their search, cph-number, port-of-entry, transit-countries with add, transporters, consignment/contact/select) with every field name and value posted, the re-edit list, notification-view, declaration and its save, confirmation, amend, cancel-amend and its save, the three backend requests (fulfilments, list by referenceNumber, replace), the staleAction and sign-in redirect rules, and every check name the scripts make. The scripts assert no page heading, caption or copy: their only text check is that the dashboard search page contains the reference number. Left to part 2: the INS front door (sign-in pages, INS dashboard, address book). Left out by the partition: the high-risk plants journey and harness internals (think time, traffic classes, metrics, redirect-hop limits, eventing). The suite has no germinal-products journey anywhere under src/.",
+  "claims": [
+    {
+      "id": "repo-perftests-p1-001",
+      "statement": "The live-animals journey's set base is the path /live-animals.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:40",
+      "quote": "setBase: '/live-animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-002",
+      "statement": "The live-animals journey is served by trade-imports-animals-frontend.",
+      "kind": "integration",
+      "ref": "src/config/smoke.js:38",
+      "quote": "frontend: 'trade-imports-animals-frontend',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-003",
+      "statement": "The live-animals journey persists its notifications in trade-imports-animals-backend.",
+      "kind": "integration",
+      "ref": "src/config/smoke.js:39",
+      "quote": "backend: 'trade-imports-animals-backend',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-004",
+      "statement": "Live animals has a single notification type, 'live-animals', unlike high-risk plants which splits by commodity type.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:100-107; src/k6/live-animals.js:229",
+      "quote": "Live animals has one type. High-risk plants has one per commodity type in\n * the traffic model.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-005",
+      "statement": "Opening the set root /live-animals renders the live-animals journey dashboard, and that page carries a non-empty crumb (form token) a user posts back to create a notification.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:156-167",
+      "quote": "'journey dashboard opens with a crumb': (page) =>\n      page.status === HTTP_OK && page.crumb !== ''",
+      "confidence": "verbatim",
+      "note": "The partition names this set-root dashboard as the request inc-129 stops serving when the notification list moves to the INS front door; that is context from the partition, not something this repo says."
+    },
+    {
+      "id": "repo-perftests-p1-006",
+      "statement": "Each journey session signs in through the INS front door and opens the INS dashboard before it opens the live-animals journey dashboard.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:127-154, 410-412",
+      "quote": "openInsDashboard(ins)",
+      "confidence": "verbatim",
+      "note": "The INS front door itself is part 2's to claim."
+    },
+    {
+      "id": "repo-perftests-p1-007",
+      "statement": "A new live-animals notification is created by posting the dashboard's crumb to the create path /live-animals/notifications.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:123, 169-175",
+      "quote": "const createPathOf = (journey) => `${journey.setBase}/notifications`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-008",
+      "statement": "Creating a live-animals draft redirects to /live-animals/notifications/<id>/origin, so origin is the first page a new draft lands on.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:178-183; src/config/smoke.js:41",
+      "quote": "'draft created through the frontend': (page) =>\n      page.status === HTTP_OK &&\n      id !== '' &&\n      page.url.endsWith(`/${run.journey.firstSavePage}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-009",
+      "statement": "The notification id is the path segment straight after the create path in the URL the create request redirects to.",
+      "kind": "rule",
+      "ref": "src/lib/redirects.js:103-120",
+      "quote": "Reads the notification id from the URL a create request redirects to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-010",
+      "statement": "A draft notification id looks like DRAFT.GB.2026.1, per the unit test of the id parser.",
+      "kind": "data",
+      "ref": "src/lib/redirects.test.js:140-147",
+      "quote": "`http://localhost:3000${createPath}/DRAFT.GB.2026.1/origin?x=1`",
+      "confidence": "inferred",
+      "note": "Test fixture value; it shows the shape the suite expects, not a format the frontend is proven to issue."
+    },
+    {
+      "id": "repo-perftests-p1-011",
+      "statement": "Each notification's pages sit under the notification base /live-animals/notifications/<id>, at <base>/<slug>.",
+      "kind": "data",
+      "ref": "src/k6/journeys.js:125; src/k6/journey-pages.js:72",
+      "quote": "const baseOf = (journey, id) => `${createPathOf(journey)}/${id}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-012",
+      "statement": "The notification base itself (/live-animals/notifications/<id>) is the notification hub page.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:294, 425",
+      "quote": "const hub = reads.open(context.base, run.shared.hub)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-013",
+      "statement": "A draft can be drafted across more than one session: a later session signs in afresh and continues the same draft by opening its hub.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:410-426, 486-492",
+      "quote": "Runs one notification as a real user would: drafted across one or two\n * sessions, submitted, read back, then amended and cancelled or resubmitted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-014",
+      "statement": "The live-animals draft steps, in order, are: origin, commodities, consignment-details, identification, import-reason, additional-details, documents, addresses, cph-number, port-of-entry, transit-countries, transporters, contact.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:166-219; src/config/journey-endpoints.js:21-45",
+      "quote": "draft: [\n    reachAndSubmit('origin', 'origin', ENDPOINTS.origin, originAnswers),\n    commodities,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-015",
+      "statement": "Every step save is expected to land on a page that renders, with no redirect loop and no staleAction redirect; a step whose save lands otherwise fails its '<step> saved' check.",
+      "kind": "rule",
+      "ref": "src/k6/journey-pages.js:9-29",
+      "quote": "export const isSaved = (page) =>\n  page.status === HTTP_OK && !page.tooManyRedirects && !page.staleActionHandled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-016",
+      "statement": "The origin page is at <base>/origin.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:168",
+      "quote": "reachAndSubmit('origin', 'origin', ENDPOINTS.origin, originAnswers)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-017",
+      "statement": "The origin page has a countryOfOrigin select whose options the suite draws from at random, falling back to FR.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:31, 34-43",
+      "quote": "countryOfOrigin: drawnOrElse(\n    context,\n    page.formInputs,\n    'countryOfOrigin',\n    FRANCE\n  ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-018",
+      "statement": "The origin page has a regionOfOriginCodeRequirement field, answered 'no'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:44",
+      "quote": "regionOfOriginCodeRequirement: 'no',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-019",
+      "statement": "The origin page has an internalReferenceNumber text field, answered with a value of the form PERF-<vu>-<iteration>, plus -A when amending.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:45; src/k6/journeys.js:44, 330",
+      "quote": "internalReferenceNumber: `PERF-${context.vu}-${context.iteration}${context.suffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-020",
+      "statement": "The commodities page is at <base>/commodities and has a commodity search box named commoditySearch, submitted with action=search.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:48-61",
+      "quote": "{ commoditySearch: ANIMAL_COMMODITY_SEARCH, action: 'search' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-021",
+      "statement": "The suite searches commodities for 'Cow'.",
+      "kind": "data",
+      "ref": "src/config/test-data.js:5",
+      "quote": "export const ANIMAL_COMMODITY_SEARCH = 'Cow'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-022",
+      "statement": "The live-animals step list depends on the commodity chosen: only Cow's pages match the step list the suite walks exactly, so other commodities bring different pages.",
+      "kind": "rule",
+      "ref": "src/config/test-data.js:4",
+      "quote": "// Cow is the one commodity whose pages match the live-animals step list exactly.",
+      "confidence": "inferred",
+      "note": "That other commodities change the pages follows from 'the one commodity whose pages match'; the comment does not say which pages differ."
+    },
+    {
+      "id": "repo-perftests-p1-023",
+      "statement": "The commodity search results offer species choices named species, and saving one of them saves the commodities page.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:63-69",
+      "quote": "{ species: pickFrom(context, choiceValues(searched, 'species')) },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-024",
+      "statement": "The consignment-details page is at <base>/consignment-details, and every blank text field and unselected select on it is answered.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:170-175",
+      "quote": "reachAndSubmit(\n      'consignment-details',\n      'consignment-details',\n      ENDPOINTS['consignment-details'],\n      (context, page) => blankFieldAnswers(page.formInputs, identityOf(context))\n    ),",
+      "confidence": "verbatim",
+      "note": "The suite names no consignment-details field; it fills whatever blank fields the page renders."
+    },
+    {
+      "id": "repo-perftests-p1-025",
+      "statement": "The identification page is at <base>/commodities/identification, and every blank text field and unselected select on it is answered.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:176-181",
+      "quote": "'identification',\n      'commodities/identification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-026",
+      "statement": "Blank fields are answered by name: a field starting numberOfAnimalsQuantity gets 1, numberOfPackages gets 5, a name containing 'tag' gets UK123456789012, 'quantity' gets 5, otherwise PERF<vu><iteration>; these values pass the animals pages' validation.",
+      "kind": "data",
+      "ref": "src/lib/form-fill.js:19-34, 57-77",
+      "quote": "[/^numberOfAnimalsQuantity/, '1'],\n  [/^numberOfPackages/, '5'],\n  [/tag/i, 'UK123456789012'],\n  [/quantity/i, '5'],",
+      "confidence": "verbatim",
+      "note": "commodityCode, eppoCode and species rules in the same table are plants values and not claimed here."
+    },
+    {
+      "id": "repo-perftests-p1-027",
+      "statement": "An unselected select is answered with its first non-empty option, so selects open on an empty placeholder option.",
+      "kind": "behaviour",
+      "ref": "src/lib/form-fill.js:36-45",
+      "quote": "Picks the first option that is not the empty placeholder.",
+      "confidence": "inferred",
+      "note": "That the pages' selects start on an empty placeholder is read from the helper skipping one."
+    },
+    {
+      "id": "repo-perftests-p1-028",
+      "statement": "Search boxes named q, commoditySearch, search or referenceNumber are never filled as answers.",
+      "kind": "rule",
+      "ref": "src/lib/form-fill.js:12-17, 29-30",
+      "quote": "const SEARCH_FIELDS = new Set([\n  'q',\n  'commoditySearch',\n  'search',\n  'referenceNumber'\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-029",
+      "statement": "The import-reason page is at <base>/import-reason, with a reasonForImport field answered 'internalMarket'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:182-187",
+      "quote": "reasonForImport: 'internalMarket',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-030",
+      "statement": "The import-reason page has a purposeInInternalMarket field, answered 'breeding' when the reason is internal market.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:188",
+      "quote": "purposeInInternalMarket: 'breeding'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-031",
+      "statement": "The additional-details page is at <base>/additional-details, with an animalsCertifiedFor choice that has an option labelled 'Slaughter'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:191-200",
+      "quote": "animalsCertifiedFor: choiceLabelled(\n          page,\n          'animalsCertifiedFor',\n          'Slaughter'\n        ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-032",
+      "statement": "The additional-details page has a containsUnweanedAnimals choice that has an option labelled 'No'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:201-205",
+      "quote": "containsUnweanedAnimals: choiceLabelled(\n          page,\n          'containsUnweanedAnimals',\n          'No'\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-033",
+      "statement": "Radio and checkbox choices on the journey pages each have a label tied to the input by its id, which is how the suite finds a choice by its label text.",
+      "kind": "constraint",
+      "ref": "src/k6/journey-pages.js:31-63",
+      "quote": "page.html.find(`label[for=\"${input.attr('id')}\"]`).text()",
+      "confidence": "inferred",
+      "note": "Read from the helper's lookup; the suite falls back to the first choice when no label matches."
+    },
+    {
+      "id": "repo-perftests-p1-034",
+      "statement": "The documents page is at <base>/accompanying-documents.",
+      "kind": "data",
+      "ref": "src/k6/documents.js:21, 131-135",
+      "quote": "const DOCUMENTS_SLUG = 'accompanying-documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-035",
+      "statement": "A document is added on the documents page with a multipart upload of one file plus accompanyingDocumentReference, accompanyingDocumentType, accompanyingDocumentDateOfIssue and action=add.",
+      "kind": "behaviour",
+      "ref": "src/k6/documents.js:32-43, 93-105",
+      "quote": "accompanyingDocumentReference: reference,\n  accompanyingDocumentType: pickFrom(\n    context,\n    selectOptions(page.formInputs, 'accompanyingDocumentType')\n  ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-036",
+      "statement": "accompanyingDocumentType is a select whose options the suite draws from at random.",
+      "kind": "data",
+      "ref": "src/k6/documents.js:34-37",
+      "quote": "selectOptions(page.formInputs, 'accompanyingDocumentType')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-037",
+      "statement": "The backend accepts a document reference of letters and digits only.",
+      "kind": "rule",
+      "ref": "src/k6/documents.js:28-30",
+      "quote": "// The backend accepts a document reference of letters and digits only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-038",
+      "statement": "The document date of issue is entered as one text field in d/m/yyyy, here 30 days before today.",
+      "kind": "data",
+      "ref": "src/k6/documents.js:38-41; src/config/test-data.js:47-48",
+      "quote": "export const DOCUMENT_ISSUED_DAYS_AGO = 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-039",
+      "statement": "Date fields on the journey pages take a single text value written d/m/yyyy with no zero padding, the way the frontends render a date.",
+      "kind": "data",
+      "ref": "src/lib/form-fill.js:100-111",
+      "quote": "Writes a date the way the frontends render one, in UTC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-040",
+      "statement": "A successful document upload lands back on <base>/accompanying-documents.",
+      "kind": "behaviour",
+      "ref": "src/k6/documents.js:89-91, 107-109",
+      "quote": "response.url.split(/[?#]/)[0].endsWith(`${base}/${DOCUMENTS_SLUG}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-041",
+      "statement": "Uploaded documents go through the frontend to the real cdp-uploader and its virus scan.",
+      "kind": "integration",
+      "ref": "src/k6/documents.js:118-126",
+      "quote": "Each document goes through the frontend to the real cdp-uploader and its\n * virus scan.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-042",
+      "statement": "The documents page has a JSON status route at <base>/accompanying-documents/status listing the documents and their scan state, which the page's script polls every 3 seconds until nothing is pending.",
+      "kind": "behaviour",
+      "ref": "src/k6/documents.js:58-77, 118-126; src/config/test-data.js:50-54",
+      "quote": "The step then polls the frontend's status route, as the page's\n * script does every 3 seconds, until nothing is pending",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-043",
+      "statement": "A document scan that stays pending for more than 120 seconds is treated as stuck.",
+      "kind": "non-functional",
+      "ref": "src/config/test-data.js:50-54",
+      "quote": "pollSeconds: 3,\n  timeoutSeconds: 120",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-044",
+      "statement": "A scanned document must settle and must not be rejected by the scan.",
+      "kind": "rule",
+      "ref": "src/k6/documents.js:79-87",
+      "quote": "'document scan settled': isScanned,\n    'document scan not rejected': (listed) => !scanWasRejected(listed)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-045",
+      "statement": "The document scan is held to a P99 under 60 seconds, the same allowance as upload pages.",
+      "kind": "non-functional",
+      "ref": "src/config/test-data.js:56-62",
+      "quote": "'Document scan allowance: P99 under 60s, as for upload pages (DR-EUDP-005 section 4.7, SYN-28, SYN-29)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-046",
+      "statement": "The documents page is left by submitting action=continue; with no documents to add, the page is only opened and continued.",
+      "kind": "behaviour",
+      "ref": "src/k6/documents.js:126-146",
+      "quote": "walker.submit(page, { action: 'continue' }, ENDPOINTS.save)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-047",
+      "statement": "The addresses page is at <base>/addresses.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:74-79",
+      "quote": "const path = pagePath(context, 'addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-048",
+      "statement": "From the addresses page five party pickers are filled in order: place of origin, consignor, consignee, importer, destination, at <base>/place-of-origin/select, consignors/select, consignees/select, importers/select and destinations/select.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:24-30, 81-88",
+      "quote": "const PARTY_SLUGS = [\n  'place-of-origin/select',\n  'consignors/select',\n  'consignees/select',\n  'importers/select',\n  'destinations/select'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-049",
+      "statement": "Each party picker has a search box named q, submitted with action=search, and lists matching addresses as radios named party, saved with action=save.",
+      "kind": "behaviour",
+      "ref": "src/k6/journey-pages.js:108-125; src/k6/live-animals.js:82-87",
+      "quote": "{ q: addressName, action: 'search' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-050",
+      "statement": "Saving a picker lands back on the page it came from.",
+      "kind": "behaviour",
+      "ref": "src/k6/journey-pages.js:92-98",
+      "quote": "The picker's own save lands on the page it came from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-051",
+      "statement": "A picker search must answer a 255-character search term, the longest an address-book name may be.",
+      "kind": "non-functional",
+      "ref": "src/k6/journey-pages.js:74-90; src/config/test-data.js:1-2",
+      "quote": "// The longest searchable address field: ins-frontend features/address-book/fields.js FIELD_RULES.name.maxLength.\nexport const WORST_CASE_SEARCH_LENGTH = 255",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-052",
+      "statement": "The pickers search for and choose the performance-test address named 'Perf Test Holding', 4 Nursery Lane, Perth, PH1 5EX.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:13-23; src/k6/journey-pages.js:92-125",
+      "quote": "name: 'Perf Test Holding',\n  addressLine1: '4 Nursery Lane',",
+      "confidence": "inferred",
+      "note": "The wiring of PERF_ADDRESS.name into addressName is in src/suites/, outside this part's read; the pickers search by addressName."
+    },
+    {
+      "id": "repo-perftests-p1-053",
+      "statement": "After the five pickers, the addresses page is reopened and saved with an empty form.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:90-97",
+      "quote": "walker.reach(page, path, ENDPOINTS.addresses.open),\n        {},\n        ENDPOINTS.addresses.save",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-054",
+      "statement": "The CPH number page is at <base>/cph-number and takes the CPH as three fields: cphCounty (12), cphParish (345) and cphHolding (6789).",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:210-214",
+      "quote": "cphCounty: '12',\n      cphParish: '345',\n      cphHolding: '6789'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-055",
+      "statement": "The port-of-entry page is at <base>/port-of-entry, with an arrivalDateAtPort date field answered 7 days ahead.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:23, 101-106",
+      "quote": "arrivalDateAtPort: slashDateText(context.now, ARRIVAL_DAYS_AHEAD),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-056",
+      "statement": "The port-of-entry page has a portOfEntry select drawn at random from its options, falling back to 'GB ABD'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:32, 107-112",
+      "quote": "const DEFAULT_PORT_OF_ENTRY = 'GB ABD'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-057",
+      "statement": "The port-of-entry page has a meansOfTransport field, answered 'ROAD_VEHICLE'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:113",
+      "quote": "meansOfTransport: 'ROAD_VEHICLE',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-058",
+      "statement": "The port-of-entry page has a transportIdentification field, answered 'FR-892-LK'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:114",
+      "quote": "transportIdentification: 'FR-892-LK',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-059",
+      "statement": "The port-of-entry page has a transportDocumentReference field, answered 'CMR-2026-884721'.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:115",
+      "quote": "transportDocumentReference: 'CMR-2026-884721'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-060",
+      "statement": "The transit-countries page is at <base>/transit-countries and adds a country by posting a transitedCountry select value with action=add, falling back to FR.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:119-141",
+      "quote": "transitedCountry: drawnOrElse(\n          context,\n          opened.formInputs,\n          'transitedCountry',\n          FRANCE\n        ),\n        action: 'add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-061",
+      "statement": "After a transit country is added, the transit-countries page is saved with an empty form.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:143",
+      "quote": "return saved('transit-countries', walker.submit(added, {}, endpoints.save))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-062",
+      "statement": "The transporters page is at <base>/transporters and offers transporter radios named transporter, saved with action=save.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:147-155",
+      "quote": "transporter: choiceValues(page, 'transporter')[0],\n    action: 'save'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-063",
+      "statement": "The contact step is at <base>/consignment/contact/select and offers address radios named contactAddress, from which the performance-test address is chosen by its label.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:157-164",
+      "quote": "'consignment/contact/select',\n  ENDPOINTS.contact,\n  ({ addressName }, page) => ({\n    contactAddress: choiceLabelled(page, 'contactAddress', addressName)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-064",
+      "statement": "After the draft steps, origin, import-reason, additional-details, cph-number and port-of-entry are reopened and saved again before submission, so answered pages can be revisited and resaved.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:220-226; src/k6/journeys.js:237-249",
+      "quote": "reEdit: [\n    'origin',\n    'import-reason',\n    'additional-details',\n    'cph-number',\n    'port-of-entry'\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-065",
+      "statement": "Submission starts at the notification-view page, <base>/notification-view.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:251-256",
+      "quote": "pagePath(context, 'notification-view'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-066",
+      "statement": "The declaration page is at <base>/declaration and is submitted with declaration=confirmed.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:257-266",
+      "quote": "{ declaration: 'confirmed' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-067",
+      "statement": "Submitting the declaration lands on a URL ending /confirmation.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:268-273, 379-384",
+      "quote": "page.url.endsWith('/confirmation')",
+      "confidence": "verbatim",
+      "note": "Check name 'submitted through the declaration page' for a first submission."
+    },
+    {
+      "id": "repo-perftests-p1-068",
+      "statement": "The live-animals dashboard can be searched by reference number with /live-animals?referenceNumber=<id>.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:285-292",
+      "quote": "`${run.journey.setBase}?referenceNumber=${run.id}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-069",
+      "statement": "A submitted notification appears on the dashboard search results: the page text contains its reference number.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:300-303",
+      "quote": "'submitted notification is on the dashboard': (page) =>\n      page.status === HTTP_OK && page.html.text().includes(run.id)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-070",
+      "statement": "After submission the hub and the notification-view page both still open.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:293-307",
+      "quote": "check(hub, { 'submitted hub reads back': (page) => page.status === HTTP_OK })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-071",
+      "statement": "A submitted notification is amended by posting the crumb to <base>/amend, which lands on the hub at <base>.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:328-340, 393",
+      "quote": "`${context.base}/amend`,",
+      "confidence": "verbatim",
+      "note": "The crumb comes from the dashboard search page."
+    },
+    {
+      "id": "repo-perftests-p1-072",
+      "statement": "The amendment edits the origin page.",
+      "kind": "behaviour",
+      "ref": "src/k6/live-animals.js:227; src/k6/journeys.js:346-347",
+      "quote": "amendEdit: 'origin',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-073",
+      "statement": "An amendment can be cancelled from <base>/cancel-amend by submitting its form, which lands on notification-view with cancelled=1 in the URL.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:312-326",
+      "quote": "page.url.includes('/notification-view') &&\n      page.url.includes('cancelled=1')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-074",
+      "statement": "An amendment not cancelled is resubmitted through notification-view and the declaration, landing on /confirmation.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:353-358",
+      "quote": "submitFromReview(run, context, 'amendment resubmitted', 'amendment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-075",
+      "statement": "The animals backend serves a notification's fulfilments at GET /notifications/<id>/fulfilments.",
+      "kind": "integration",
+      "ref": "src/k6/journeys.js:70-79",
+      "quote": "`${notificationUrl}/fulfilments`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-076",
+      "statement": "The animals backend lists notifications by reference number at GET /notifications?referenceNumber=<id>, returning them under content.",
+      "kind": "integration",
+      "ref": "src/k6/journeys.js:62-68, 80-85",
+      "quote": "`${backendUrl}/notifications?referenceNumber=${id}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-077",
+      "statement": "The animals backend replaces a notification with PUT /notifications/<id> and a JSON body built from the fulfilments and list reads, answering 200.",
+      "kind": "integration",
+      "ref": "src/k6/journeys.js:99-121",
+      "quote": "'backend replay accepted the captured save': (response) =>\n      response.status === HTTP_OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-078",
+      "statement": "When a save is out of date the journey redirects the user back with staleAction=1 in the URL, for example /live-animals?staleAction=1.",
+      "kind": "behaviour",
+      "ref": "src/lib/redirects.js:58-67; src/lib/redirects.test.js:86-96",
+      "quote": "The journey sends the user back with `staleAction=1` when a save is out of date.",
+      "confidence": "verbatim",
+      "note": "That the redirect goes to the set root is only shown by test fixtures."
+    },
+    {
+      "id": "repo-perftests-p1-079",
+      "statement": "Sign-in passes through the frontend's /auth routes and the identity provider (/oauth2/, /idphub/, /organisations), ending at the OIDC callback /oauth2/authresp.",
+      "kind": "integration",
+      "ref": "src/lib/redirects.js:69-101",
+      "quote": "Every hop through the frontend's `/auth` routes and the identity provider\n * counts as `sign-in`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-080",
+      "statement": "Opening the live-animals dashboard while signed out can redirect through sign-in before reaching /live-animals.",
+      "kind": "behaviour",
+      "ref": "src/lib/redirects.test.js:118-135",
+      "quote": "['http://localhost:3000/live-animals', 'animals-dashboard'],",
+      "confidence": "inferred",
+      "note": "Read from the hop-classification test, which starts sign-in chains from the animals-dashboard endpoint."
+    },
+    {
+      "id": "repo-perftests-p1-081",
+      "statement": "The frontends redirect with absolute, browser-visible localhost addresses when run locally.",
+      "kind": "behaviour",
+      "ref": "src/lib/redirects.js:30-41",
+      "quote": "The frontends send browser-visible `localhost` addresses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-082",
+      "statement": "Journey forms carry hidden fields, such as the crumb, that a browser posts back with the answers.",
+      "kind": "behaviour",
+      "ref": "src/lib/forms.js:18-30",
+      "quote": "Builds the fields a browser would post: the page's hidden fields, then the answers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-083",
+      "statement": "The animals journey's requests are tagged with these endpoint names: animals-origin, animals-commodities (and -search), animals-consignment-details, animals-identification, animals-import-reason, animals-additional-details, animals-documents (-upload, -status), animals-addresses with animals-party-picker (and -search), animals-cph-number, animals-port-of-entry, animals-transit-countries (-add), animals-transporters, animals-contact, each page with a -save.",
+      "kind": "data",
+      "ref": "src/config/journey-endpoints.js:1-45",
+      "quote": "const page = (prefix, slug) => ({\n  open: `${prefix}-${slug}`,\n  save: `${prefix}-${slug}-save`\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-084",
+      "statement": "The pages every journey shares are tagged animals-dashboard, animals-dashboard-search, animals-create, animals-hub, animals-notification-view, animals-declaration, animals-declaration-save, animals-amend, animals-cancel-amend and animals-cancel-amend-save, and the backend calls animals-backend-fulfilments, animals-backend-list and animals-backend-replace.",
+      "kind": "data",
+      "ref": "src/config/journey-endpoints.js:64-103",
+      "quote": "dashboard: `${prefix}-dashboard`,\n  dashboardSearch: `${prefix}-dashboard-search`,\n  create: `${prefix}-create`,\n  hub: `${prefix}-hub`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-085",
+      "statement": "The journey signs in as the stub identity with CRN 2100010101.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:6",
+      "quote": "export const IDENTITY = Object.freeze({ crn: '2100010101' })",
+      "confidence": "verbatim",
+      "note": "The stub password default in the same file is [REDACTED] and not copied."
+    },
+    {
+      "id": "repo-perftests-p1-086",
+      "statement": "The performance suite drives the journey frontends, among other services, over HTTP.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-performance-tests.md, Integrations table",
+      "quote": "| Outbound | The services under test (INS frontend, journey frontends, reference-data, dynamics-gateway, stub, defra-id-stub) | HTTP | The traffic a suite generates |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-087",
+      "statement": "The suite has no germinal-products journey: no set base, steps or endpoints for germinal products exist anywhere under src/, so no germinal route is exercised.",
+      "kind": "behaviour",
+      "ref": "src/config/smoke.js:36-53 (JOURNEYS has only live-animals and high-risk-plants); grep -rli germinal src/ finds nothing",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-perftests-p1-088",
+      "statement": "The suite asserts no page heading, caption, label copy or error message on any live-animals page; its only text check is that the dashboard search page contains the reference number.",
+      "kind": "copy",
+      "ref": "src/k6/journeys.js, src/k6/live-animals.js, src/k6/documents.js (every check call)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-perftests-p1-089",
+      "statement": "The suite never shows a validation error path: it only posts answers that pass, so no live-animals validation rule or error message is exercised.",
+      "kind": "rule",
+      "ref": "src/k6/live-animals.js; src/lib/form-fill.js:57-62",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -1,0 +1,1131 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "A corpus of 455 Playwright fit-test traces (one trace.zip per test folder, report.json maps tests to folders; 29 spec files) of the animals frontend at 4c2119da, all passed. Scope rule: every trace folder is in scope (whole-folder scope, no filter needed). The installed Playwright trace viewer rejects these zips (TraceVersionError: trace created by a newer Playwright), so `tim distil trace ... open` could not be used; instead I unzipped selected traces into the working folder and read the recorded action list (before events), the network log and the DOM frame-snapshots directly with jq, rendering the main content text. I did not open all 455 traces: I indexed all 455 test titles from report.json (index.tsv) and mined the rendered pages from one core-journey trace (journey-smoke 'the opening run carries a new notification through to the review page in one pass', 71 snapshots pages) plus targeted traces for the dashboard, hub, declaration, confirmation, delete, cancel-amend, check-answers (unfinished), and error states (origin, import-reason, CPH, commodity details, arrival date, documents upload, address picker). Journey order and conditions as rendered: dashboard (/live-animals) > Start a new notification > origin (Origin of the import) > commodities (What are you importing?) > consignment-details (Commodity details) > import-reason (Main reason for import) > commodities/identification (Identification details, only when the commodity declares identifiers) > additional-details > port-of-entry (Arrival details) > transit-countries (only on overland transport in this trace) > transporters (Transporter details; add route: type question then private or commercial form) > accompanying-documents (Upload documents) > addresses (Consignment addresses hub with place-of-origin, consignors, consignees, importers, destinations select pickers and cph-number) > consignment/contact/select (Contact address for consignment) > notification-view (Review your notification, six numbered sections) > declaration > confirmation. A hub overview page (Overview with Notification tasklist of six numbered sections) is reachable from any page. Also in scope but mined only through test titles: service navigation, page title and section caption features, delete-notification, cancel-amend, notification-actions (copy), party-edit. Page chrome (header, phase banner, footer) skipped. Server-to-server calls (backend, address book, reference data, document scan) are not visible in browser network logs, so integrations are inferred or gaps.",
+  "scopeHash": "2b85d2ca87b45d4085d6a1727e0995b8f764054e765e101965946d5e41d1ee40",
+  "claims": [
+    {
+      "id": "trace-animals-fit-001",
+      "statement": "The dashboard is headed Import notification service and offers a Start a new notification button with an introduction.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@13",
+      "quote": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-002",
+      "statement": "The dashboard has a search box for a keyword or reference under a Filter notifications heading.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@13",
+      "quote": "Keyword or reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-003",
+      "statement": "The dashboard offers four sort orders (arrival and date created, each newest or oldest first), defaulting to arrival newest to oldest, applied with an Update sort button.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@13",
+      "quote": "Arrival (newest to oldest)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-004",
+      "statement": "An empty dashboard says no notifications have been started in this session.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@13",
+      "quote": "You have not started any notifications in this session.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-005",
+      "statement": "A draft notification row on the dashboard offers Resume, Copy as new and Delete, and shows Commodity, Origin, Arrival at destination, Consignee, Consignor, Status, Date created and Date submitted.",
+      "kind": "behaviour",
+      "ref": "trace delete-notification-delete-389e3-actions-and-dashboard-links-features snapshot of dashboard (call before delete page)",
+      "quote": "Resume notification GBN-AG-26-2Y12DM",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-006",
+      "statement": "A submitted notification row on the dashboard offers View, Amend, Copy as new and Delete, shows Status Submitted, and shows the commodity common name, country of origin, arrival date (7 Nov 2026 style), consignee and consignor.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot of dashboard with one result",
+      "quote": "Amend notification GBN-AG-26-MGHY42",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-007",
+      "statement": "The dashboard reports how many results the filter returned.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot of dashboard with one result",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-008",
+      "statement": "The dashboard paginates at 20 rows and keeps the chosen sort (test titles only; pagination copy not rendered in a mined snapshot).",
+      "kind": "behaviour",
+      "ref": "report.json dashboard.fit.spec.js 'paginates at the 20-row boundary and preserves the selected sort'",
+      "quote": "paginates at the 20-row boundary and preserves the selected sort",
+      "confidence": "inferred",
+      "note": "Quote is the test title, not rendered copy."
+    },
+    {
+      "id": "trace-animals-fit-009",
+      "statement": "Starting a new notification creates a draft with a reference of the form GBN-AG-26-XXXXXX and opens the origin page, which shows a Draft status and the reference above the section caption.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "GBN-AG-26-Z3P16P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-010",
+      "statement": "The first journey page is Origin of the import, under the section caption About the consignment.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-011",
+      "statement": "Country of origin is a type-ahead over a native select (which is the no-JavaScript fallback), with a placeholder option Select a country.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Start typing to search for a country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-012",
+      "statement": "The country of origin list is reference data of about 83 options (European and related territories, such as Azores, Canary Islands, French Guiana, Madeira, Reunion).",
+      "kind": "data",
+      "ref": "trace origin-origin.fit-origin-c-e0412--holds-the-user-on-the-page-features snapshot error state (truncated option list)",
+      "quote": "[... 83 options in total, truncated]",
+      "confidence": "inferred",
+      "note": "Count is from the rendering tool's truncation note, not source text; the quote is that note."
+    },
+    {
+      "id": "trace-animals-fit-013",
+      "statement": "The origin page asks whether the consignment has a region of origin code (Yes or No); Yes reveals an Enter the region of origin code box limited to 5 characters.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Does the consignment have a region of origin code?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-014",
+      "statement": "The region of origin code question explains the code appears on the health certificate.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "If a region of origin code is required it will be shown on your health certificate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-015",
+      "statement": "The region code box hint limits entry to five characters, and the chosen country code shows as a fixed prefix beside the box.",
+      "kind": "data",
+      "ref": "trace origin-origin.fit-origin-c-e0412--holds-the-user-on-the-page-features snapshot error state",
+      "quote": "Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-016",
+      "statement": "The internal reference is optional, free text, up to 58 characters.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Your internal reference for this consignment (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-017",
+      "statement": "The internal reference hint.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-018",
+      "statement": "Every answering page offers three exits: a Save and continue button, a Save and return to overview button, and a Cancel and return to overview link.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-019",
+      "statement": "Validation failures show a summary headed There is a problem whose links jump to the field, and repeat the message beside the field with an Error: prefix.",
+      "kind": "rule",
+      "ref": "trace origin-origin.fit-origin-c-e0412--holds-the-user-on-the-page-features snapshot error state",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-020",
+      "statement": "Choosing Yes for the region of origin code with the box empty is refused.",
+      "kind": "rule",
+      "ref": "trace origin-origin.fit-origin-c-e0412--holds-the-user-on-the-page-features snapshot error state",
+      "quote": "Error: Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-021",
+      "statement": "The commodity page is headed What are you importing? and says one notification is needed per health certificate.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@41",
+      "quote": "A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-022",
+      "statement": "Commodities are found by searching a name, code or species name, with a minimum of three characters.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@41",
+      "quote": "You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-023",
+      "statement": "A Help with commodity codes expander explains commodity codes and links to the Trade Tariff tool in a new tab.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@41",
+      "quote": "Commodity codes are internationally recognised reference numbers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-024",
+      "statement": "Search results group species under their commodity heading, each as a checkbox showing the common name then the scientific name in brackets.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-search.fit-8b82d-der-their-commodity-heading-features snapshot after searching Bos",
+      "quote": "Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-025",
+      "statement": "The Commodity details page lists the selected commodities with code, common name and a Remove action, and offers Add another commodity.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@51",
+      "quote": "Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-026",
+      "statement": "Commodity details asks for Number of animals for each species, under a commodity heading (name and code) and a species heading.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@51",
+      "quote": "Number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-027",
+      "statement": "Commodity details asks for Number of packages (when required) for each species, with a hint.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@51",
+      "quote": "Such as crates, bags or boxes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-028",
+      "statement": "A blank Number of animals is refused once per species, each error linking to that species' box.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-7f2a3-page-and-names-each-species-features snapshot error state",
+      "quote": "Enter the number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-029",
+      "statement": "The import reason page asks What is the main reason for importing the animals? with radios Internal market, Transhipment or onward travel, Transit, Re-entry and Temporary admission horses, each with a hint.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "What is the main reason for importing the animals?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-030",
+      "statement": "Choosing Internal market reveals a purpose in the internal market radio list of eleven purposes.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "Purpose in the internal market",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-031",
+      "statement": "The internal market purposes are Transfer of ownership - Sale/gift, Transfer of ownership - Rescue, Breeding, Research, Racing competition show or training, Approved premises or body, Companion animal not for resale or rehoming, Production, Slaughter, Fattening and Restocking, each with a hint.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "Racing, competition, show or training",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-032",
+      "statement": "Transhipment or onward travel reveals a Destination country select (about 67 options).",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-033",
+      "statement": "Transit reveals Port of exit (about 161 options) then Destination country.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-034",
+      "statement": "Temporary admission horses reveals an Exit date (text with a Choose date calendar, hint with an example) and then a Port of exit.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "For example, 27/3/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-035",
+      "statement": "Re-entry has no reveal.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@59",
+      "quote": "For animals authorised for re-entry, or rejected exports re-entering Great Britain.",
+      "confidence": "inferred",
+      "note": "No field follows the Re-entry radio in the snapshot."
+    },
+    {
+      "id": "trace-animals-fit-036",
+      "statement": "Choosing Transit without a destination country is refused, linking to the destination country select.",
+      "kind": "rule",
+      "ref": "trace import-reason-import-reaso-71671-d-and-keeps-the-reveal-open-features snapshot error state",
+      "quote": "Select a destination country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-037",
+      "statement": "The identification page is headed Identification details and tells the trader every identification detail must be added before arrival at the port of entry.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@67",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-038",
+      "statement": "Identification shows a table of selected commodities with number of animals, and each animal gets a card headed Enter details for <species> N of M.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@67",
+      "quote": "Enter details for Bos taurus 1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-039",
+      "statement": "A cattle animal is asked for Ear tag (hint For example, UK123456789012) then Passport (hint For example, UK123456789).",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@67",
+      "quote": "For example, UK123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-040",
+      "statement": "A cat is asked for Microchip number (hint For example, 900123456789012), Passport and Tattoo (hint For example, AB1234).",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-bfdf8-lds-and-never-for-a-country-features snapshot",
+      "quote": "For example, 900123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-041",
+      "statement": "The identification page warns that giving a false permanent address is fraud and defines a permanent address as where the animal will reside and APHA can check.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-bfdf8-lds-and-never-for-a-country-features snapshot",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-042",
+      "statement": "A permanent address is asked as eight fields and no country: Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Phone number, Email address.",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-bfdf8-lds-and-never-for-a-country-features snapshot",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-043",
+      "statement": "With more than one animal outstanding the identification page offers Save and add another alongside Save and continue; a line with a single animal offers no in-card button.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-bfdf8-lds-and-never-for-a-country-features snapshot",
+      "quote": "Save and add another",
+      "confidence": "verbatim",
+      "note": "The single-animal half is from test title 'offers no in-card button on a line of one animal and saves it on Save and continue'."
+    },
+    {
+      "id": "trace-animals-fit-044",
+      "statement": "Identification offers a Save and finish button at the top and a Change number of animals link on every card.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@67",
+      "quote": "Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-045",
+      "statement": "Identifier text values are limited to 58 characters, and the address fields to 255 (names, lines), 100 (town, county), 12 (postcode), 20 (phone) and 254 (email) characters (test titles).",
+      "kind": "rule",
+      "ref": "report.json identification.fit.spec.js 'permanent address validation: ... over 255 characters' and Microchip/Tattoo/Passport/Ear tag over 58 characters",
+      "quote": "permanent address validation: postcode or Zip code over 12 characters links to and focuses the preserved value",
+      "confidence": "inferred",
+      "note": "Limits are in test titles, not rendered copy; error messages were not mined."
+    },
+    {
+      "id": "trace-animals-fit-046",
+      "statement": "The additional details page, under the caption Commodity details, asks What are the animals certified for? with 16 options from Further keeping to Other.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@73",
+      "quote": "What are the animals certified for?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-047",
+      "statement": "The certified-for options are Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption and Other.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@73",
+      "quote": "Relaying area / purification centre",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-048",
+      "statement": "The certified-for question hint points to the ITAHC.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@73",
+      "quote": "This information can be found on the ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-049",
+      "statement": "The additional details page asks whether the consignment contains unweaned animals (Yes or No); a horses-only consignment is not asked.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@73",
+      "quote": "Does the consignment contain any unweaned animals?",
+      "confidence": "verbatim",
+      "note": "Horses-only exclusion is from test titles 'does not ask a horses-only consignment about unweaned animals'."
+    },
+    {
+      "id": "trace-animals-fit-050",
+      "statement": "The unweaned animals hint.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@73",
+      "quote": "These are animals that are still feeding from their mother.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-051",
+      "statement": "The arrival page is headed Arrival details under the caption Transport and arrival.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@81",
+      "quote": "Transport and arrival",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-052",
+      "statement": "Arrival date at port of entry is an editable text date with a Choose date calendar; dates before the window are shown as Excluded date and the hint gives a worked example.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@81",
+      "quote": "The expected date of arrival at the port of entry. For example, 7/10/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-053",
+      "statement": "An arrival date outside the allowed window is refused, naming the earliest and latest allowed dates (here 30/9/2026 and 7/4/2027).",
+      "kind": "rule",
+      "ref": "trace transport-fit-arrival-tran-d029e-focuses-the-preserved-value-features snapshot error state",
+      "quote": "Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-054",
+      "statement": "Port of entry is a type-ahead (with native select fallback) searching by port or airport name or code, over about 159 ports.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@81",
+      "quote": "Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-055",
+      "statement": "Means of transport to the port of entry is a select of 11 options including Airplane, Railway and Road Vehicle.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@81",
+      "quote": "Means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-056",
+      "statement": "Transport identification and Transport document reference are free-text boxes with hints naming what to enter (flight number, train number, registration, vessel name; air waybill, bill of lading, CMR).",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@81",
+      "quote": "Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-057",
+      "statement": "Both transport identification and transport document reference are limited to 58 characters (test titles).",
+      "kind": "rule",
+      "ref": "report.json arrival-transit.fit.spec.js",
+      "quote": "transport identification validation: over 58 characters links to and focuses the preserved value",
+      "confidence": "inferred",
+      "note": "Limit from test title."
+    },
+    {
+      "id": "trace-animals-fit-058",
+      "statement": "After arrival details, overland transport leads to a transit countries page headed Which countries will the consignment travel through? under the caption Movement.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@103",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim",
+      "note": "Test title 'routes overland transport to transit countries'. The smoke trace used road vehicle."
+    },
+    {
+      "id": "trace-animals-fit-059",
+      "statement": "Transit countries excludes the United Kingdom and means countries between the country of origin and the destination.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@103",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-060",
+      "statement": "Transit countries are added one at a time from a type-ahead with an Add country button, starting from an empty list, optional, up to 12, each row with its own Remove.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@103",
+      "quote": "You have not added any countries yet.",
+      "confidence": "verbatim",
+      "note": "Optional and cap of 12 from test titles 'transit countries are optional' and 'the twelfth country takes the search away and announces the limit'."
+    },
+    {
+      "id": "trace-animals-fit-061",
+      "statement": "The transporter page is headed Transporter details and states that a transporter must hold a valid authorisation issued by DAERA or APHA in the UK if transporting vertebrate animals, over 65 km or commercially.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@137",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-062",
+      "statement": "Documents issued by DAERA are valid in GB; EU member state documents are not.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@137",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-063",
+      "statement": "Transporters are chosen from a searchable list (search by name, address or approval number) shown as a table with Select, Name, Address, Approval number, Type and Status columns.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@137",
+      "quote": "Name, address or approval number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-064",
+      "statement": "Each transporter has a Type of Commercial or Private and a Status of Approved or New; the list shows six transporters in the trace.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@137",
+      "quote": "Select Romanian Agri Exports SRL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-065",
+      "statement": "The transporter list offers an Add a transporter link that leads to a type question.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@137",
+      "quote": "Add a transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-066",
+      "statement": "The type question is headed Choose a transporter type under the caption Add a new transporter, with a warning to search first, and offers Private transporter or Commercial.",
+      "kind": "data",
+      "ref": "trace transport-fit-transporters-652d3--the-trader-to-search-first-features snapshot",
+      "quote": "Before you add this transporter, please ensure you have already searched for it first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-067",
+      "statement": "A commercial transporter can only be one from Northern Ireland.",
+      "kind": "rule",
+      "ref": "trace transport-fit-transporters-652d3--the-trader-to-search-first-features snapshot",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-068",
+      "statement": "The private transporter form is headed Add private transporter and asks Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country (select, about 69 options), then Enter contact details: Email address and Phone number.",
+      "kind": "data",
+      "ref": "trace transport-fit-transporters-57b34-fields-and-explanatory-copy-features snapshot",
+      "quote": "Enter the name and address of the private transporter moving the animals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-069",
+      "statement": "The phone number field hints the international dialling code.",
+      "kind": "copy",
+      "ref": "trace transport-fit-transporters-57b34-fields-and-explanatory-copy-features snapshot",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-070",
+      "statement": "The commercial transporter form (fixed to Northern Ireland, with a transporter authorisation number, name, address and contact details) and its limits are exercised only through test titles.",
+      "kind": "data",
+      "ref": "report.json commercial-transporter-details.fit.spec.js 'fixes the country to Northern Ireland and does not let the trader change it'",
+      "quote": "asks for the authorisation number, the name, the address and the contact details",
+      "confidence": "inferred",
+      "note": "Quote is a test title; the commercial form DOM was not mined. Limits per titles: authorisation number 50 characters."
+    },
+    {
+      "id": "trace-animals-fit-071",
+      "statement": "The documents page is headed Upload documents under the caption Documents and says an ITAHC must be attached if the consignment needs one, and can be added later.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-072",
+      "statement": "An expander titled Check which additional documents you must upload holds a table of consignment type against documents needed (no health certificate, bluetongue GBHC172, rodents for research RM39).",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "Livestock transiting bluetongue restricted territories",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-073",
+      "statement": "A document is added under a File upload heading with Document reference (hint For example, GBHC1234567890.), Document type (select), Date of issue (with calendar, hint For example, 12/12/2025) and an Attachment, using Save and add another.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "For example, GBHC1234567890.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-074",
+      "statement": "The Document type select starts with Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill and has 31 options in the trace.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "Intra Trade Animal Health Certificate (ITAHC)",
+      "confidence": "verbatim",
+      "note": "A test title says the select offers fourteen document types; the snapshot shows 31 options. Both recorded, not reconciled."
+    },
+    {
+      "id": "trace-animals-fit-075",
+      "statement": "The Attachment constraints: smaller than 10MB; a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX; up to a maximum of 15 files; ZIP files not allowed.",
+      "kind": "constraint",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-076",
+      "statement": "The documents page says No documents yet until one is saved, and uploading is optional.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@141",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim",
+      "note": "Optional from test title 'continue with an untouched form leaves the page, uploading being optional'."
+    },
+    {
+      "id": "trace-animals-fit-077",
+      "statement": "Pressing save with no file is refused with a message linking to the file control, preserving the other answers.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-aa231-d-while-preserving-metadata-features snapshot error state",
+      "quote": "Upload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-078",
+      "statement": "Uploaded documents are virus-scanned and show a status (Check completed, Virus found) in a table, and Continue is blocked while a scan runs (test titles).",
+      "kind": "integration",
+      "ref": "report.json scan-status.fit.spec.js 'blocks continue while the scan runs, then renders Check completed and allows the journey to continue'",
+      "quote": "renders Virus found and its per-file error until the document is removed",
+      "confidence": "inferred",
+      "note": "Test titles only; the scan service itself is not visible in browser traces."
+    },
+    {
+      "id": "trace-animals-fit-079",
+      "statement": "The addresses page is headed Consignment addresses under the caption Consignment parties and warns that a false address is fraud.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "Providing a false address is an act of fraud.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-080",
+      "statement": "The addresses page lists six rows, Place of origin, Consignor or exporter, Consignee, Importer, Place of destination and County parish holding (CPH) number, each with a hint and Not added yet until chosen.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "Not added yet",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-081",
+      "statement": "The hint for Place of origin.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "The address where the animals begin their journey to Great Britain",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-082",
+      "statement": "The hint for Place of destination states animals are unloaded there for at least 48 hours.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-083",
+      "statement": "The hints for Consignor, Consignee and Importer.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "This is usually the same as the consignee. You can select a different person if needed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-084",
+      "statement": "A chosen role shows the party name with Change and Edit details links; an unchosen role shows an Add link.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (addresses page)",
+      "quote": "Edit details consignor or exporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-085",
+      "statement": "Each role has a picker page headed with the role name, a search over Name, address or country, and a paged radio table of the address book showing five at a time with a count line and numbered pages.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (picker page)",
+      "quote": "Showing 5 of 13 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-086",
+      "statement": "Each picker row has a View details disclosure showing the full address with phone and email, and no way to add an address is offered.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@157 (picker page)",
+      "quote": "View details for Astra Rosales",
+      "confidence": "verbatim",
+      "note": "No add-address option is from test title 'offers no way to add an address' on the contact page."
+    },
+    {
+      "id": "trace-animals-fit-087",
+      "statement": "Submitting a role picker with nothing selected is refused with a role-specific message linking to the first address.",
+      "kind": "rule",
+      "ref": "trace addresses-fit-hub-picker.f-18c1d-d-focuses-the-first-address-features snapshot error state",
+      "quote": "Select a place of origin from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-088",
+      "statement": "Selecting a party copies it into the notification (copy-on-select); the copy can then be edited for this notification only and cancelling leaves it as it was.",
+      "kind": "behaviour",
+      "ref": "report.json party-edit.fit.spec.js 'saves the edit to this notification and returns to the hub'",
+      "quote": "cancel leaves the copy as it was",
+      "confidence": "inferred",
+      "note": "Quote is a test title; contact page copy Selecting a contact copies their name and address into this notification. supports it."
+    },
+    {
+      "id": "trace-animals-fit-089",
+      "statement": "Roles are mandatory: a consignment with no role chosen is refused at review with Complete roles and addresses.",
+      "kind": "rule",
+      "ref": "trace check-answers-check-answer-1670e-e-trader-on-the-review-page-features snapshot error state",
+      "quote": "Complete roles and addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-090",
+      "statement": "A CPH number is asked on a page headed Add the county parish holding number (CPH) in three boxes, County, Parish and Holding number, with a hint example 12/345/6789.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@177",
+      "quote": "For example, 12/345/6789.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-091",
+      "statement": "The CPH page explains a CPH number is a unique 9-digit number.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@177",
+      "quote": "A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-092",
+      "statement": "A wrong CPH part is refused naming that part and its required length; every wrong part is named at once.",
+      "kind": "rule",
+      "ref": "trace cph-number-cph-number.fit--2cce7-wrong-part-is-named-at-once-features snapshot error state",
+      "quote": "County must be 2 digits",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-093",
+      "statement": "The Parish part must be 3 digits and the Holding number 4 digits.",
+      "kind": "rule",
+      "ref": "trace cph-number-cph-number.fit--2cce7-wrong-part-is-named-at-once-features snapshot error state",
+      "quote": "Holding number must be 4 digits",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-094",
+      "statement": "CPH is asked only for some consignments: fish consignments are asked, horses are not (test titles).",
+      "kind": "rule",
+      "ref": "report.json hub-picker.fit.spec.js 'asks a consignment of fish for a CPH number' / 'does not ask a consignment of horses for a CPH number'",
+      "quote": "does not ask a consignment of horses for a CPH number",
+      "confidence": "inferred",
+      "note": "Quote is a test title."
+    },
+    {
+      "id": "trace-animals-fit-095",
+      "statement": "The contact address page is headed Contact address for consignment and says selecting a contact copies the name and address, listing address-book contacts as radios (13 in the trace) including Animal and Plant Health Agency.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@191 (contact page)",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-096",
+      "statement": "The review page is headed Review your notification and has six numbered sections: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-097",
+      "statement": "Each review card has a subsection heading and a Change link in the card heading, which returns to the same review after saving; no summary row carries a Change link.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "Change import details (Import details)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-098",
+      "statement": "The review shows the origin card with Country of origin, Region of origin code required, Region of origin code and Internal reference number.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "Region of origin code required",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-099",
+      "statement": "The review shows the commodity card with Commodity code, Common name, Species, Number of animals, Number of packages and an Animal details table of identifiers.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "Animal details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-100",
+      "statement": "The review shows transport cards for Arrival details, Transit countries (comma separated) and Transport details (name, address, country, approval number, type).",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "Countries that the consignment will travel through",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-101",
+      "statement": "The review ends with a Continue button, leading to the declaration.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@193",
+      "quote": "Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-102",
+      "statement": "An unfinished review refuses Continue, shows a summary naming each unfinished card, marks each card with an error and shows Missing for blank rows.",
+      "kind": "rule",
+      "ref": "trace check-answers-check-answer-1670e-e-trader-on-the-review-page-features snapshot error state",
+      "quote": "Complete reason for import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-103",
+      "statement": "The unfinished review summary names: Complete reason for import, Complete species details, Complete additional animal details, Complete arrival details, Complete transport details, Complete roles and addresses, Complete contact address for this consignment.",
+      "kind": "rule",
+      "ref": "trace check-answers-check-answer-1670e-e-trader-on-the-review-page-features snapshot error state",
+      "quote": "Complete contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-104",
+      "statement": "A blank row on the unfinished review reads Missing, and settled blanks (optional answers) read Not applicable.",
+      "kind": "copy",
+      "ref": "trace check-answers-check-answer-1670e-e-trader-on-the-review-page-features snapshot error state",
+      "quote": "Not applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-105",
+      "statement": "The declaration page repeats declaration statements headed I am the contact for the authorities and located in the UK., I confirm I am responsible for this consignment. and I confirm that I am accountable for:.",
+      "kind": "copy",
+      "ref": "trace declaration-declaration.fi-dbd39-tement-and-the-current-date-features snapshot",
+      "quote": "I confirm I am responsible for this consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-106",
+      "statement": "The accountability list covers payment for official controls, re-dispatch, quarantine costs and destruction costs.",
+      "kind": "copy",
+      "ref": "trace declaration-declaration.fi-dbd39-tement-and-the-current-date-features snapshot",
+      "quote": "any costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-107",
+      "statement": "The declaration requires a confirmation checkbox and shows today's date.",
+      "kind": "data",
+      "ref": "trace declaration-declaration.fi-dbd39-tement-and-the-current-date-features snapshot",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-108",
+      "statement": "The declaration date line.",
+      "kind": "copy",
+      "ref": "trace declaration-declaration.fi-dbd39-tement-and-the-current-date-features snapshot",
+      "quote": "Date of declaration: 7 October 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-109",
+      "statement": "Submitting the declaration unchecked is refused (test title: links to and focuses the clear checkbox); message wording was not mined.",
+      "kind": "rule",
+      "ref": "report.json declaration.fit.spec.js 'declaration validation: when unchecked, links to and focuses the clear checkbox'",
+      "quote": "declaration validation: when unchecked, links to and focuses the clear checkbox",
+      "confidence": "inferred",
+      "note": "Quote is a test title."
+    },
+    {
+      "id": "trace-animals-fit-110",
+      "statement": "The confirmation page reads Import notification submitted with the reference number and no back link.",
+      "kind": "copy",
+      "ref": "trace confirmation-confirmation.-bc3a5-ation-date-and-no-back-link-features snapshot",
+      "quote": "Import notification submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-111",
+      "statement": "The confirmation page tells the trader what still needs doing before the consignment is imported.",
+      "kind": "copy",
+      "ref": "trace confirmation-confirmation.-bc3a5-ation-date-and-no-back-link-features snapshot",
+      "quote": "upload the health certificate and any other required documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-112",
+      "statement": "The confirmation page tells the trader a submitted notification can be viewed, amended and resubmitted from the dashboard.",
+      "kind": "copy",
+      "ref": "trace confirmation-confirmation.-bc3a5-ation-date-and-no-back-link-features snapshot",
+      "quote": "You can view or amend this notification from your dashboard and resubmit it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-113",
+      "statement": "The confirmation page offers Return to your dashboard and Create a new notification.",
+      "kind": "behaviour",
+      "ref": "trace confirmation-confirmation.-bc3a5-ation-date-and-no-back-link-features snapshot",
+      "quote": "Create a new notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-114",
+      "statement": "The confirmation page lists help contacts: APHA email, telephone 0330 041 6999, hours, HMRC for customs declarations.",
+      "kind": "copy",
+      "ref": "trace confirmation-confirmation.-bc3a5-ation-date-and-no-back-link-features snapshot",
+      "quote": "Monday to Friday, 8:30am to 5pm, except bank holidays",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-115",
+      "statement": "The hub page (Overview) shows two total boxes (Total number of animals in this consignment, Total number of packages in this consignment) and a Notification tasklist of six numbered sections.",
+      "kind": "data",
+      "ref": "trace hub-hub.fit-hub-feature-re-34521--of-a-newly-entered-journey-features snapshot",
+      "quote": "Notification tasklist",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-116",
+      "statement": "The tasklist rows are: 1. About the consignment (Where is this consignment coming from?, What are you importing?, Main reason for import), 2. Description of the goods (Commodity details, Additional details), 3. Transport and arrival (Arrival details, Transport details), 4. Documents (Upload documents), 5. Consignment parties (Roles and addresses), 6. Contact address (Contact address for this consignment).",
+      "kind": "data",
+      "ref": "trace hub-hub.fit-hub-feature-re-34521--of-a-newly-entered-journey-features snapshot",
+      "quote": "Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-117",
+      "statement": "Each tasklist row shows a status of Complete or To do.",
+      "kind": "data",
+      "ref": "trace hub-hub.fit-hub-feature-re-34521--of-a-newly-entered-journey-features snapshot",
+      "quote": "To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-118",
+      "statement": "The Roles and addresses row carries a hint listing the roles.",
+      "kind": "copy",
+      "ref": "trace hub-hub.fit-hub-feature-re-34521--of-a-newly-entered-journey-features snapshot",
+      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-119",
+      "statement": "The hub ends with Review and submit and a Return to dashboard link.",
+      "kind": "behaviour",
+      "ref": "trace hub-hub.fit-hub-feature-re-34521--of-a-newly-entered-journey-features snapshot",
+      "quote": "Return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-120",
+      "statement": "The Animal identification row appears on the hub only when a chosen commodity carries identifiers (test titles); every task opens before a commodity is chosen.",
+      "kind": "rule",
+      "ref": "report.json hub.fit.spec.js 'overview: when a commodity carrying identifiers is chosen, the animal identification row appears'",
+      "quote": "overview: when no commodity is chosen, the animal identification row is absent",
+      "confidence": "inferred",
+      "note": "Quote is a test title."
+    },
+    {
+      "id": "trace-animals-fit-121",
+      "statement": "Deleting a notification asks Delete this notification? with This cannot be undone., Yes, delete notification and No, return to dashboard.",
+      "kind": "behaviour",
+      "ref": "trace delete-notification-delete-389e3-actions-and-dashboard-links-features snapshot of delete page",
+      "quote": "This cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-122",
+      "statement": "Amending a submitted notification shows an Amending status, and a Cancel amendment link on review leads to Cancel this amendment?, discarding changes and restoring the submitted version.",
+      "kind": "behaviour",
+      "ref": "trace cancel-amend-cancel-amend.-43973-ctions-and-review-back-link-features snapshot of cancel-amend page",
+      "quote": "Your changes since you started amending will be discarded and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-123",
+      "statement": "The cancel amendment page offers Yes, cancel amendment and No, return to notification.",
+      "kind": "behaviour",
+      "ref": "trace cancel-amend-cancel-amend.-43973-ctions-and-review-back-link-features snapshot of cancel-amend page",
+      "quote": "No, return to notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-124",
+      "statement": "Copying a notification creates a separate draft preserving the answers, leaving both on the dashboard (test titles).",
+      "kind": "behaviour",
+      "ref": "report.json notification-actions.fit.spec.js 'copy preserves the source answers in the new draft'",
+      "quote": "copy creates a separate draft notification",
+      "confidence": "inferred",
+      "note": "Quote is a test title."
+    },
+    {
+      "id": "trace-animals-fit-125",
+      "statement": "The service navigation offers four items on the dashboard, marks the dashboard as the current section on every page inside a notification, offers sign-out, and shows the signed-in user nowhere (test titles); the header links Dashboard, Address book, Manage account and Log out.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17 (header)",
+      "quote": "Manage account",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-126",
+      "statement": "The Address book link goes to a separate service on another origin (the INS front door).",
+      "kind": "integration",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17 (header)",
+      "quote": "http://localhost:3002/address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-127",
+      "statement": "The page carries an Alpha phase banner offering feedback by email.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17 (header)",
+      "quote": "This is a new service. Help us improve it and  give your feedback by email",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-128",
+      "statement": "A draft notification is saved on first entry of any page and every page posts with a crumb and a concurrency token, so a stale form is rejected.",
+      "kind": "constraint",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshot call@17",
+      "quote": "name=concurrencyToken",
+      "confidence": "inferred",
+      "note": "Hidden concurrencyToken and crumb inputs appear on every form; the stale-form rejection is inferred."
+    },
+    {
+      "id": "trace-animals-fit-129",
+      "statement": "Page titles read page name, service name and GOV.UK joined by hyphens, with an error prefix when the page shows errors (test titles).",
+      "kind": "copy",
+      "ref": "report.json page-title.fit.spec.js",
+      "quote": "puts the error prefix in front of the whole title when the page shows errors",
+      "confidence": "inferred",
+      "note": "Quote is a test title."
+    },
+    {
+      "id": "trace-animals-fit-130",
+      "statement": "Each page names its section above the heading as a caption (About the consignment, Commodity details, Transport and arrival, Movement, Documents, Consignment parties) and the overview is left bare.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshots call@17,call@73,call@81,call@103,call@141,call@157",
+      "quote": "Consignment parties",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-131",
+      "statement": "All journey pages use govuk-frontend components (radios, select, summary list, table, error summary, warning text, details, date picker); no non-govuk classes were mined beyond the accessible-autocomplete enhancement and the totals boxes (static panels styled from govuk design tokens, test title).",
+      "kind": "constraint",
+      "ref": "report.json hub.fit.spec.js 'the boxes are static panels styled from govuk design tokens'",
+      "quote": "the boxes are static panels styled from govuk design tokens",
+      "confidence": "inferred",
+      "note": "Class-level audit via eval was not possible (no browser); based on snapshot attributes and titles."
+    },
+    {
+      "id": "trace-animals-fit-132",
+      "statement": "Every page passes an axe check with no serious or critical violations (test titles for each page and error state).",
+      "kind": "non-functional",
+      "ref": "report.json all *.fit.spec.js 'has no serious or critical axe violations'",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "inferred",
+      "note": "Quote is a repeated test title."
+    },
+    {
+      "id": "trace-animals-fit-133",
+      "statement": "The trace network log shows only the frontend's own routes under /live-animals; calls to the backend, address book, reference data and scanner are server-side and not visible.",
+      "kind": "integration",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys 1-trace.network",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Integration shapes (animals backend, address book, MDM reference data, cdp-uploader) cannot be mined from these traces."
+    },
+    {
+      "id": "trace-animals-fit-134",
+      "statement": "Reference data shown: the countries list, ports (about 159 to 161), means of transport (11), certified-for options (16), purposes, document types, transporters (6 in the trace) and the address book (13 in the trace). The trace holds only the options rendered, not the authoritative lists.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52-the-review-page-in-one-pass-journeys snapshots",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Option lists are truncated in my rendering after 8 entries; full lists are reference data for the reference-data repo to hold."
+    },
+    {
+      "id": "trace-animals-fit-135",
+      "statement": "Most validation message wording was not mined (identifier lengths, address fields, transporter fields, commercial form, document reference/date, transit country errors, upload size, unweaned, certification, import reason purpose, picker search empty state); only the titles of the tests are known.",
+      "kind": "rule",
+      "ref": "report.json features specs",
+      "quote": "",
+      "confidence": "gap",
+      "note": "A later pass could render each error-state snapshot; 455 tests indexed in the extract work folder."
+    },
+    {
+      "id": "trace-animals-fit-136",
+      "statement": "The trace set does not show the INS dashboard, notification read model sort and filter beyond the animals-frontend dashboard, nor how a submitted notification reaches other services.",
+      "kind": "integration",
+      "ref": "trace set scope",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Out of scope for animals frontend fit traces; see trace:ins-fit and trace:e2e."
+    },
+    {
+      "id": "trace-animals-fit-137",
+      "statement": "The installed Playwright trace viewer could not open these traces (TraceVersionError: the trace was created by a newer version of Playwright), so no accessibility tree, hint text via eval or component class audit was taken; rendered text was recovered from the recorded DOM frame-snapshots instead.",
+      "kind": "constraint",
+      "ref": "tim distil trace ... -- open <trace.zip>",
+      "quote": "TraceVersionError: The trace was created by a newer version of Playwright and is not supported by this version of the viewer.",
+      "confidence": "verbatim",
+      "note": "A tooling problem the parent should know about; reconcile may not rely on component-class findings from this source."
+    }
+  ]
+}

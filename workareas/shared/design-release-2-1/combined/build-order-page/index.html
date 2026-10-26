@@ -1,0 +1,651 @@
+<title>Design Release 2.1 Build Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground: #eef1f4;
+    --surface: #ffffff;
+    --surface-sunk: #e4e9ee;
+    --ink: #10161f;
+    --muted: #5b6775;
+    --rule: #ccd4dd;
+    --rule-soft: #dde3ea;
+    --accent: #1b4a7a;
+    --accent-soft: #e2ebf4;
+    --done: #1a6b4a;
+    --part: #9a6413;
+    --open: #6b7685;
+    --blocked: #9b2c31;
+
+    --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0d1218;
+      --surface: #151c25;
+      --surface-sunk: #1d2630;
+      --ink: #e4e9ef;
+      --muted: #8d98a6;
+      --rule: #27313d;
+      --rule-soft: #1f2832;
+      --accent: #74a8de;
+      --accent-soft: #1b2836;
+      --done: #45b588;
+      --part: #d99f49;
+      --open: #7b8696;
+      --blocked: #e0787e;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0d1218;
+    --surface: #151c25;
+    --surface-sunk: #1d2630;
+    --ink: #e4e9ef;
+    --muted: #8d98a6;
+    --rule: #27313d;
+    --rule-soft: #1f2832;
+    --accent: #74a8de;
+    --accent-soft: #1b2836;
+    --done: #45b588;
+    --part: #d99f49;
+    --open: #7b8696;
+    --blocked: #e0787e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 28px 96px; display: flex; flex-direction: column; gap: 56px; }
+  .prose { max-width: 68ch; }
+
+  .masthead { padding: 56px 0 0; display: flex; flex-direction: column; gap: 18px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0;
+  }
+
+  h1 {
+    font-family: var(--sans); font-weight: 700;
+    font-size: clamp(2.1rem, 5vw, 3.1rem); line-height: 1.04;
+    letter-spacing: -0.022em; text-wrap: balance; margin: 0;
+  }
+
+  .standfirst { font-size: 1.14rem; line-height: 1.52; color: var(--muted); margin: 0; max-width: 62ch; }
+
+  .asof {
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+    margin: 0; padding-top: 4px; border-top: 1px solid var(--rule);
+  }
+
+  .figures {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  }
+
+  .figure-tile { background: var(--surface); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 3px; }
+
+  .figure-tile .n {
+    font-family: var(--sans); font-weight: 600; font-size: 1.72rem;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+
+  .figure-tile .k {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.055em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .figure-tile.is-done .n { color: var(--done); }
+  .figure-tile.is-part .n { color: var(--part); }
+  .figure-tile.is-blocked .n { color: var(--blocked); }
+
+  h2 {
+    font-family: var(--sans); font-weight: 600; font-size: 1.5rem;
+    letter-spacing: -0.014em; margin: 0 0 10px; text-wrap: balance;
+  }
+
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 1.04rem; letter-spacing: -0.008em; margin: 0 0 6px; }
+
+  p { margin: 0 0 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  section { display: flex; flex-direction: column; gap: 22px; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 18px; }
+
+  .plate { background: var(--surface); border: 1px solid var(--rule); padding: 22px 20px 12px; overflow-x: auto; }
+  .plate svg { display: block; min-width: 860px; width: 100%; height: auto; color: var(--accent); }
+
+  figcaption { font-size: 0.93rem; line-height: 1.55; color: var(--muted); max-width: 78ch; }
+
+  .node-box { fill: var(--surface); stroke: var(--rule); stroke-width: 1.4; }
+  .node-box.ready { stroke: var(--accent); stroke-width: 2.2; }
+  .node-name { font-family: var(--sans); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .node-count { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .node-rule { stroke: var(--rule); stroke-width: 1; }
+  .ticket-hit { fill: transparent; }
+  .ticket-emoji { font-size: 11px; }
+  .ticket-key { font-family: var(--mono); font-size: 10.5px; fill: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  .plate a:hover .ticket-hit { fill: var(--accent-soft); }
+  .plate a:hover .ticket-key { fill: var(--ink); }
+  .plate a:focus-visible { outline: none; }
+  .plate a:focus-visible .ticket-hit { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+  .edge { fill: none; stroke: var(--accent); stroke-width: 1.3; opacity: 0.72; }
+  .axis-line { stroke: var(--rule); stroke-width: 1; }
+  .axis-num { font-family: var(--mono); font-size: 11px; font-weight: 500; fill: var(--muted); }
+  .stripe-done { fill: var(--done); }
+  .stripe-part { fill: var(--part); }
+  .stripe-open { fill: var(--open); }
+  .stripe-blocked { fill: var(--blocked); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px 26px; padding: 14px 18px;
+    background: var(--surface-sunk); border: 1px solid var(--rule);
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  .swatch { width: 5px; height: 17px; flex: none; }
+  .swatch.done { background: var(--done); }
+  .swatch.part { background: var(--part); }
+  .swatch.open { background: var(--open); }
+  .swatch.blocked { background: var(--blocked); }
+  .ring { width: 19px; height: 15px; flex: none; border: 2.2px solid var(--accent); background: var(--surface); }
+  .tagkey { color: var(--accent); font-weight: 500; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-family: var(--sans); font-size: 13.5px; }
+
+  thead th {
+    text-align: left; font-weight: 600; font-size: 10.5px; font-family: var(--mono);
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    padding: 12px 14px; border-bottom: 1px solid var(--rule);
+    white-space: nowrap; background: var(--surface-sunk);
+  }
+
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  td.lvl, td.built { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.tkt { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  td.name { font-weight: 600; }
+  td.follows { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+  td.no-tkt { color: var(--muted); }
+
+  .state {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
+    font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+  }
+
+  .state::before { content: ""; width: 4px; height: 13px; flex: none; }
+  .state.done { color: var(--done); }
+  .state.done::before { background: var(--done); }
+  .state.part { color: var(--part); }
+  .state.part::before { background: var(--part); }
+  .state.open { color: var(--open); }
+  .state.open::before { background: var(--open); }
+  .state.blocked { color: var(--blocked); }
+  .state.blocked::before { background: var(--blocked); }
+
+  .readings {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(286px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  }
+
+  .reading { background: var(--surface); padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 7px; }
+  .reading p { font-size: 0.95rem; line-height: 1.55; color: var(--muted); margin: 0; }
+
+  .reading .mark {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--accent);
+  }
+
+  .reading.is-derived .mark { color: var(--done); }
+
+  .provenance {
+    border-top: 1px solid var(--rule); padding-top: 22px;
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.75; color: var(--muted);
+  }
+
+  .provenance code { background: var(--surface-sunk); padding: 1px 5px; border-radius: 2px; font-size: 11px; }
+  .provenance strong { color: var(--ink); font-weight: 500; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="eyebrow">DEFRA trade imports · design release 2.1</p>
+    <h1>Theme build order</h1>
+    <p class="standfirst" id="standfirst"></p>
+    <p class="asof" id="asof"></p>
+  </header>
+
+  <div class="figures" id="figures"></div>
+
+  <section>
+    <div class="prose">
+      <h2>The schematic</h2>
+      <p>A theme sits one level below the last theme it waits on. Lines run top to bottom: the theme at the tail must
+        land before the theme at the head can start. Where lines cross, nothing is implied — the crossing is only
+        routing.</p>
+    </div>
+
+    <figure>
+      <div class="plate" id="plate"></div>
+
+      <div class="legend">
+        <span class="legend-item"><span class="swatch done"></span>Complete</span>
+        <span class="legend-item"><span class="swatch part"></span>Part built</span>
+        <span class="legend-item"><span class="swatch open"></span>Not started</span>
+        <span class="legend-item"><span class="swatch blocked"></span>Mostly blocked on someone outside the team</span>
+        <span class="legend-item"><span class="ring"></span>Every dependency met — can start now</span>
+      </div>
+
+      <div class="legend" id="badge-legend"></div>
+
+      <figcaption id="figcaption"></figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>The theme register</h2>
+      <p>“Follows” lists only the themes a theme waits on directly. Everything above those is inherited, so a theme
+        near the foot of the schematic is effectively waiting on the whole programme.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Level</th>
+            <th scope="col">Theme</th>
+            <th scope="col">Ticket</th>
+            <th scope="col">Built</th>
+            <th scope="col">State</th>
+            <th scope="col">Follows</th>
+          </tr>
+        </thead>
+        <tbody id="register"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <h2>What the shape tells you</h2>
+    </div>
+    <div class="readings" id="readings"></div>
+  </section>
+
+  <footer class="provenance" id="provenance"></footer>
+
+</div>
+
+<script src="data.js"></script>
+<script>
+  (function () {
+    const data = window.DR21_BUILD_ORDER
+    const SVG = 'http://www.w3.org/2000/svg'
+    const byId = new Map(data.themes.map((theme) => [theme.id, theme]))
+    const t = data.totals
+
+    const el = (tag, attrs, text) => {
+      const node = document.createElementNS(SVG, tag)
+      for (const key in attrs) node.setAttribute(key, attrs[key])
+      if (text !== undefined) node.textContent = text
+      return node
+    }
+
+    const nameOf = (id) => byId.get(id).name
+    const list = (ids) => ids.map(nameOf).sort((a, b) => a.localeCompare(b))
+    const sentence = (parts) =>
+      parts.length <= 1 ? parts.join('') : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1]
+
+    /* ---------------------------------------------------------- masthead --- */
+
+    document.getElementById('standfirst').textContent =
+      t.themes + ' themes bring the real GB notification services up to Design Release 2.1 of the prototype. ' +
+      'Each one can only start once the themes it depends on have landed. This is the order that produces, ' +
+      'and where the work has reached.'
+
+    document.getElementById('asof').textContent =
+      'Generated ' + data.generatedAt + ' from ' + t.rows + ' backlog rows on feat/NO_JIRA-design-release-2-1'
+
+    /* ----------------------------------------------------------- figures --- */
+
+    const tiles = [
+      { n: t.themes, k: 'themes', tone: '' },
+      { n: t.levels, k: 'levels deep', tone: '' },
+      { n: t.done, k: 'of ' + t.live + ' rows built', tone: 'is-done' },
+      { n: t.ticketed, k: 'themes ticketed', tone: 'is-part' },
+      { n: t.blocked, k: 'rows blocked', tone: 'is-blocked' },
+      { n: t.ready, k: 'themes ready now', tone: '' }
+    ]
+
+    document.getElementById('figures').innerHTML = tiles
+      .map((tile) =>
+        '<div class="figure-tile ' + tile.tone + '"><span class="n">' + tile.n +
+        '</span><span class="k">' + tile.k + '</span></div>'
+      )
+      .join('')
+
+    /* --------------------------------------------------------- schematic --- */
+
+    const g = data.geometry
+    const svg = el('svg', {
+      viewBox: g.viewBox,
+      role: 'img',
+      'aria-label':
+        'Dependency schematic of the ' + t.themes + ' Design Release 2.1 themes arranged in ' + t.levels +
+        ' build levels. ' +
+        data.levels
+          .map((level) => {
+            const names = data.themes.filter((theme) => theme.level === level).map((theme) => theme.name)
+            return 'Level ' + level + ': ' + sentence(names) + '.'
+          })
+          .join(' ')
+    })
+
+    const defs = el('defs')
+    const marker = el('marker', {
+      id: 'ar', viewBox: '0 0 10 10', refX: '8.6', refY: '5',
+      markerWidth: '6.4', markerHeight: '6.4', orient: 'auto'
+    })
+    marker.appendChild(el('path', { d: 'M 0 1 L 9 5 L 0 9 z', fill: 'currentColor', opacity: '0.72' }))
+    defs.appendChild(marker)
+    svg.appendChild(defs)
+
+    // Level axis: the numbers are the build order, so they carry real information.
+    const axis = el('g')
+    const lastLevel = data.levels[data.levels.length - 1]
+    const axisTop = g.levelBands[data.levels[0]].top
+    const axisBottom = g.levelBands[lastLevel].top + g.levelBands[lastLevel].height
+    axis.appendChild(el('line', { class: 'axis-line', x1: -44, y1: axisTop, x2: -44, y2: axisBottom }))
+    data.levels.forEach((level) => {
+      const y = g.levelBands[level].top + 30
+      axis.appendChild(el('line', { class: 'axis-line', x1: -44, y1: y, x2: -32, y2: y }))
+      axis.appendChild(el('text', { class: 'axis-num', x: -54, y: y + 4, 'text-anchor': 'end' }, String(level)))
+    })
+    svg.appendChild(axis)
+
+    const edges = el('g', { class: 'edge', 'marker-end': 'url(#ar)' })
+    for (const path of g.paths) edges.appendChild(el('path', { d: path.d }))
+    svg.appendChild(edges)
+
+    /** Splits a theme name over at most two lines so it fits inside its box. */
+    function wrap(name, budget) {
+      const words = name.split(' ')
+      if (name.length <= budget) return [name]
+      const lines = ['']
+      for (const word of words) {
+        const line = lines[lines.length - 1]
+        if (line && (line + ' ' + word).length > budget && lines.length < 2) lines.push(word)
+        else lines[lines.length - 1] = line ? line + ' ' + word : word
+      }
+      return lines
+    }
+
+    for (const theme of data.themes) {
+      const b = g.boxes[theme.id]
+      const node = el('g')
+      node.appendChild(
+        el('rect', { class: 'node-box' + (theme.ready ? ' ready' : ''), x: b.x, y: b.y, width: b.w, height: b.h })
+      )
+      node.appendChild(el('rect', { class: 'stripe-' + theme.state, x: b.x, y: b.y, width: 5, height: b.h }))
+
+      const lines = wrap(theme.name, 18)
+      const textX = b.x + 17
+      if (lines.length === 1) {
+        node.appendChild(el('text', { class: 'node-name', x: textX, y: b.y + 28 }, lines[0]))
+      } else {
+        node.appendChild(el('text', { class: 'node-name', x: textX, y: b.y + 24 }, lines[0]))
+        node.appendChild(el('text', { class: 'node-name', x: textX, y: b.y + 38 }, lines[1]))
+      }
+
+      let count = theme.done + ' of ' + theme.live + (lines.length === 1 ? ' rows' : '')
+      if (theme.state === 'blocked') count = theme.done + ' of ' + theme.live + ' · ' + theme.blocked + ' blocked'
+      if (theme.deferred > 0) count = theme.done + ' of ' + theme.live + ' · ' + theme.deferred + ' held'
+      node.appendChild(el('text', { class: 'node-count', x: textX, y: b.y + (lines.length === 1 ? 46 : 53) }, count))
+
+      // One row per Jira ticket, under a rule, each a link badged by domain.
+      if (theme.tickets.length) {
+        const rulesY = b.y + 60
+        node.appendChild(
+          el('line', { class: 'node-rule', x1: b.x + 6, y1: rulesY, x2: b.x + b.w - 6, y2: rulesY })
+        )
+        theme.tickets.forEach((ticket, i) => {
+          const y = rulesY + g.ticketPad + g.ticketRowH * i + 11
+          const link = el('a', {
+            href: ticket.url,
+            target: '_blank',
+            rel: 'noopener',
+            'aria-label': ticket.key + ' — ' + ticket.label
+          })
+          // A transparent box over the whole row, so the whole row is clickable.
+          link.appendChild(
+            el('rect', { class: 'ticket-hit', x: b.x + 6, y: y - 11, width: b.w - 12, height: g.ticketRowH })
+          )
+          link.appendChild(el('text', { class: 'ticket-emoji', x: b.x + 17, y: y }, ticket.emoji))
+          link.appendChild(el('text', { class: 'ticket-key', x: b.x + 36, y: y }, ticket.key))
+          link.appendChild(el('title', {}, ticket.key + ' — ' + ticket.label))
+          node.appendChild(link)
+        })
+      }
+      svg.appendChild(node)
+    }
+
+    document.getElementById('plate').appendChild(svg)
+
+    // The domain badges actually in use, so the legend never names one no card shows.
+    const badges = []
+    for (const theme of data.themes) {
+      for (const ticket of theme.tickets) {
+        if (!badges.some((b) => b.domain === ticket.domain)) {
+          badges.push({ domain: ticket.domain, emoji: ticket.emoji, label: ticket.label })
+        }
+      }
+    }
+
+    document.getElementById('badge-legend').innerHTML =
+      '<span class="legend-item" style="color:var(--ink)">Jira tickets on each card</span>' +
+      badges
+        .map((b) => '<span class="legend-item"><span style="font-size:13px">' + b.emoji + '</span>' + b.label + '</span>')
+        .join('')
+
+    const repeats = t.edgesRecorded - t.edgesDrawn
+    document.getElementById('figcaption').textContent =
+      t.edgesDrawn + ' lines are drawn. The backlog records ' + t.edgesRecorded +
+      ' direct theme-to-theme dependencies, but ' + repeats +
+      ' of them repeat a path that already exists through another theme — germinal products records journey ' +
+      'foundation as a dependency, for instance, though it already inherits it several times over. Removing the ' +
+      'repeats leaves the true hierarchy without changing what has to land before what.'
+
+    /* ---------------------------------------------------------- register --- */
+
+    const stateLabel = (theme) => {
+      if (theme.state === 'done') return 'Complete'
+      if (theme.state === 'part') return theme.deferred > 0 ? 'Part built, ' + theme.deferred + ' held' : 'Part built'
+      if (theme.state === 'blocked') return theme.blocked + ' of ' + theme.live + ' blocked'
+      return theme.ready ? 'Ready now' : 'Not started'
+    }
+
+    document.getElementById('register').innerHTML = data.themes
+      .map((theme) =>
+        '<tr>' +
+        '<td class="lvl">' + theme.level + '</td>' +
+        '<td class="name">' + theme.name + '</td>' +
+        '<td class="tkt' + (theme.ticket ? '' : ' no-tkt') + '">' + (theme.ticket || 'none') + '</td>' +
+        '<td class="built">' + theme.done + ' of ' + theme.live +
+        (theme.merged > 0 ? ' · ' + theme.merged + ' merged' : '') + '</td>' +
+        '<td><span class="state ' + theme.state + '">' + stateLabel(theme) + '</span></td>' +
+        '<td class="follows">' + (theme.follows.length ? sentence(list(theme.follows)) : '— nothing') + '</td>' +
+        '</tr>'
+      )
+      .join('')
+
+    /* ---------------------------------------------------------- readings --- */
+
+    const roots = data.themes.filter((theme) => theme.followsAll.length === 0)
+    const ready = data.themes.filter((theme) => theme.ready)
+    const outOfOrder = data.themes.filter(
+      (theme) => theme.done > 0 && theme.followsAll.some((parent) => byId.get(parent).done === 0)
+    )
+
+    // The longest chain through the graph: the sequence nothing can shorten.
+    const chainCache = new Map()
+    function longestChain(id) {
+      if (chainCache.has(id)) return chainCache.get(id)
+      const parents = byId.get(id).followsAll
+      let best = []
+      for (const parent of parents) {
+        const chain = longestChain(parent)
+        if (chain.length > best.length) best = chain
+      }
+      const result = [...best, id]
+      chainCache.set(id, result)
+      return result
+    }
+    let critical = []
+    for (const theme of data.themes) {
+      const chain = longestChain(theme.id)
+      if (chain.length > critical.length) critical = chain
+    }
+    const criticalUnbuilt = critical.filter((id) => byId.get(id).done === 0)
+    const criticalRows = criticalUnbuilt.reduce((n, id) => n + byId.get(id).live, 0)
+    const criticalUnticketed = criticalUnbuilt.filter((id) => !byId.get(id).ticket).length
+
+    const readings = []
+
+    readings.push({
+      derived: true,
+      mark: roots.every((theme) => theme.state === 'done') ? 'Both roots are done' : 'The roots',
+      head: roots.every((theme) => theme.state === 'done')
+        ? 'Nothing is waiting on a foundation'
+        : 'The foundations are not finished',
+      body:
+        sentence(list(roots.map((theme) => theme.id))) + ' ' + (roots.length > 1 ? 'are' : 'is') +
+        ' the only ' + (roots.length > 1 ? 'themes' : 'theme') + ' nothing sits above, and every other theme traces ' +
+        'back to ' + (roots.length > 1 ? 'one or both' : 'it') + '. Building ' +
+        (roots.length > 1 ? 'them' : 'it') + ' first stopped the themes below editing the shared journey flow at ' +
+        'the same time.'
+    })
+
+    if (ready.length) {
+      readings.push({
+        derived: true,
+        mark: ready.length + (ready.length === 1 ? ' theme ready' : ' themes ready'),
+        head: sentence(list(ready.map((theme) => theme.id))) + ' can start today',
+        body:
+          'Every theme ' + (ready.length === 1 ? 'it waits' : 'they wait') + ' on is complete, so nothing blocks ' +
+          (ready.length === 1 ? 'it' : 'them') + '. ' +
+          'Between ' + (ready.length === 1 ? 'it holds' : 'them they hold') + ' ' +
+          ready.reduce((n, theme) => n + theme.live, 0) + ' rows, and ' +
+          (ready.every((theme) => !theme.ticket)
+            ? 'not one has a Jira ticket.'
+            : ready.filter((theme) => !theme.ticket).length + ' of them have no Jira ticket.')
+      })
+    }
+
+    if (outOfOrder.length) {
+      readings.push({
+        derived: true,
+        mark: 'Built out of order',
+        head: sentence(list(outOfOrder.map((theme) => theme.id))) + ' jumped a dependency',
+        body:
+          outOfOrder
+            .map((theme) => {
+              const missing = list(theme.followsAll.filter((parent) => byId.get(parent).done === 0))
+              return theme.name + ' is level ' + theme.level + ' and follows ' + sentence(missing) +
+                ', which ' + (missing.length > 1 ? 'have' : 'has') + ' not been started, yet ' + theme.done +
+                ' of its rows have landed'
+            })
+            .join('; ') +
+          '. Rows that depend on the missing work are the ones left blocked.'
+      })
+    }
+
+    readings.push({
+      derived: true,
+      mark: 'The critical path',
+      head: critical.length + ' levels with no way to parallelise',
+      body:
+        sentence(critical.map(nameOf)) + ' run strictly in sequence — the longest chain in the programme, and the ' +
+        'one nothing can shorten. The ' + criticalUnbuilt.length + ' of them not yet started hold ' + criticalRows +
+        ' rows, ' + (criticalUnticketed === criticalUnbuilt.length ? 'none of which has a ticket.' :
+        'and ' + criticalUnticketed + ' have no ticket.')
+    })
+
+    // Authored judgement about two particular themes. Guarded, so the page still
+    // renders if either theme is renamed, merged away or finished.
+    const transporters = byId.get('transporters')
+    if (transporters && transporters.state !== 'done') {
+      readings.push({
+        derived: false,
+        mark: 'Commentary',
+        head: 'Transporters needs its parents and a decision',
+        body:
+          'It cannot start until ' + sentence(list(transporters.follows)) + ' land, and ' + transporters.blocked +
+          ' of its ' + transporters.live + ' rows then wait on a decision about whether and where transporters are ' +
+          'managed at all — 47 requirements behind one answer.'
+      })
+    }
+
+    const holding = byId.get('waiting-on-design')
+    if (holding && holding.state !== 'done') {
+      readings.push({
+        derived: false,
+        mark: 'Commentary',
+        head: 'Waiting on design is a holding pen',
+        body:
+          'It inherits ' + holding.inherits + ' themes in all because it collects the JavaScript-only prototype ' +
+          'behaviours pulled out of each one, one blocked row per design question. It has no shape of its own and ' +
+          'will empty as answers arrive.'
+      })
+    }
+
+    document.getElementById('readings').innerHTML = readings
+      .map((reading) =>
+        '<div class="reading' + (reading.derived ? ' is-derived' : '') + '">' +
+        '<span class="mark">' + reading.mark + '</span>' +
+        '<h3>' + reading.head + '</h3>' +
+        '<p>' + reading.body + '</p>' +
+        '</div>'
+      )
+      .join('')
+
+    /* -------------------------------------------------------- provenance --- */
+
+    document.getElementById('provenance').innerHTML =
+      '<p><strong>Where this comes from.</strong> Workspace branch <code>feat/NO_JIRA-design-release-2-1</code>, ' +
+      'workarea <code>workareas/shared/design-release-2-1</code>. Levels and lines are derived from every row’s ' +
+      '<code>dependsOn</code> and <code>externalDependsOn</code> across ' + data.sources.length + ' backlogs (' +
+      data.sources.map((source) => '<code>' + source + '</code>').join(', ') + '), then mapped to owning themes ' +
+      'and reduced. Rebuild with <code>npm run build</code> in <code>build/</code>, then republish this page to the ' +
+      'same URL.</p>' +
+      '<p><strong>Counts.</strong> ' + t.rows + ' rows in total, ' + t.dropped + ' dropped, ' + t.rejected +
+      ' rejected and ' + t.merged + ' merged into another row, all excluded, leaving ' + t.live + '. A row counts as built when its status is <code>done</code>. ' + t.deferred + ' rows are ' +
+      '<code>deferred</code> rather than blocked — paused for review, not waiting on anyone. Readings marked ' +
+      '<em>Commentary</em> are authored judgement, not derived, so check them against the register.</p>'
+  })()
+</script>

@@ -1,0 +1,396 @@
+{
+  "source": "document:dr1-parity-backlog",
+  "structure": "Part 4, Origin, reason for import and hub. Read in full, by line range in backlog.json, the eight in-scope rows of this slice: inc-079 (3096-3376, origin, done, region of origin code prefix), inc-067 (9817-10221, import-reason, done, purpose and exit questions as conditional reveals), inc-069 (10417-10643, hub, done, Exit details task), inc-081 (10644-10788, origin, blocked, Canary Islands / Jersey / French Guiana in the country list), inc-082 (10789-10933, origin, done, origin page refuses to save), inc-071 (12632-12915, import-reason, blocked, port of exit list), inc-033 (28474-28610, hub, done, Commodity details task row) and inc-043 (30082-30186, hub, rejected, 'Notification tasklist' heading). Each row carries title, detail, finding {frontend, prototype, difference, correction, falsifiedBy, relatedTo}, citations, provenance and PRs; the judgement fields are openQuestions (inc-079: 1, inc-067: 3, inc-033: 1), notes (inc-067: two failed attempts, inc-043: falsified attempt), failure_reason (inc-069, inc-082: both cleared false main-red stops) and decision (inc-081, inc-071: block on MDM; inc-043: falsified). Claims record, per row, what DR1 judged (built, blocked, rejected), then every deferral, open question, action and reason in those judgement fields; where a done row's finding also leaves a point to settle (inc-079's reference-data route) or a blocked row leaves its finding's question open (inc-081's EFTA states, inc-071's V4 spec conflict), that is recorded as a gap. Provenance matching notes, citations, evidence, screens and PR bookkeeping were read for context and not claimed.",
+  "claims": [
+    {
+      "id": "document-dr1-parity-backlog-p4-001",
+      "statement": "DR1 parity built (status done) the region of origin code as a fixed prefix derived from the chosen country of origin, with the user entering only the part after the prefix.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-079, title and status",
+      "quote": "Design release 1 fills in the country's code as a fixed prefix and asks only for the rest of the region of origin code; Frontend makes the user type the whole code inside five characters.",
+      "confidence": "verbatim",
+      "note": "status \"done\", commit 7f2c45ab, frontend PR #216 and tests PR #135 merged."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-002",
+      "statement": "As built in DR1 parity, the region of origin code prefix is rendered server-side only, from the stored answers, so on a first visit before the page is submitted the prefix is not shown and the user sees a bare five-character box.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-079, openQuestions[0]",
+      "quote": "This increment renders the prefix server-side only: src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:169 sets regionCodePrefix = prefixFor(values.countryOfOrigin), and the GET path at controller.js:172-175 feeds those values from the stored answers, so on a first visit — a user starting a notification, choosing France and checking Yes without submitting — regionCodePrefix is '' and govuk-frontend drops the prefix element entirely (its input template's hasPrefix guard). The user sees a bare five-character box",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-003",
+      "statement": "On that first pass a user who types the whole code, such as 'FR-DUB', is rejected with the error 'Region of origin code must be 5 characters or less'.",
+      "kind": "copy",
+      "ref": "backlog.json inc-079, openQuestions[0]",
+      "quote": "may type the whole code ('FR-DUB'), and is rejected by maxText('regionOfOriginCodeSuffix', 5) with 'Region of origin code must be 5 characters or less'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-004",
+      "statement": "Nothing is stored wrongly in that case: the submit derives the prefix from the submitted country, and the error re-render then shows the prefix.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-079, openQuestions[0]",
+      "quote": "Nothing is stored wrong — the POST derives the prefix from the payload's country (controller.js:80-97) and the error re-render then shows the prefix — but the first pass does not yet deliver the design's point that the user cannot get the prefix wrong.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-005",
+      "statement": "Design release 1 writes the region code prefix from client-side script the moment a country is chosen, with no form submission; DR1 parity DEFERRED building that live prefix rather than fixing it in the increment.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-079, openQuestions[0]",
+      "quote": "Design release 1 writes the prefix from client-side JS the moment a country is chosen (workareas/shared/dr1c-parity/specs/prototype/consignment.pw.js:146-153 records that the ISO prefix is written by the country search, not by the radio, and asserts the prefix reads 'FR' with no form submission). DEFERRED rather than fixed in this increment because code alone cannot settle it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-006",
+      "statement": "A live prefix needs a new progressive-enhancement client component rather than a server change.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-079, openQuestions[0], reason (1)",
+      "quote": "(1) it needs a new progressive-enhancement client component under src/client/javascripts/components/ registered in application.js, not a server change",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-007",
+      "statement": "Undecided: what the region code prefix shows before a country is chosen, because govukInput cannot render an empty prefix box. The options named are an empty grey box, a hidden element the script reveals, or hand-rolled markup, and hand-rolling departs from the govuk-frontend toolbox.",
+      "kind": "rule",
+      "ref": "backlog.json inc-079, openQuestions[0], reason (2)",
+      "quote": "(2) govukInput cannot render an empty prefix box, so someone has to decide what the prefix shows before a country is chosen — an empty grey box, a hidden element the script reveals, or hand-rolled markup outside the govuk macro, and hand-rolling departs from the govuk-frontend toolbox this repo holds to",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-008",
+      "statement": "Undecided: the no-JavaScript behaviour of the region code prefix; it stays as shipped (server-side prefix after submit) until decided.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-079, openQuestions[0], reason (3)",
+      "quote": "(3) the no-JS behaviour has to be decided, and stays as shipped here",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-009",
+      "statement": "The live prefix depends on the country of origin control (inc-077), which may be replaced by an accessible autocomplete and so change what the prefix script listens to.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-079, openQuestions[0], reason (4)",
+      "quote": "(4) this increment's own relatedTo already ties the prefix to inc-077 ('the prefix is derived from the country of origin, so this change depends on the country control being able to report the chosen country'), which may replace the plain select with the accessible autocomplete and so change what the component listens to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-010",
+      "statement": "Open action: decide with design whether the live region code prefix is required for Design release 1 parity, and if it is, build it together with the country control change in inc-077.",
+      "kind": "rule",
+      "ref": "backlog.json inc-079, openQuestions[0], ACTION",
+      "quote": "ACTION: decide with design whether the live prefix is required for Design release 1 parity, and if it is, build it with inc-077 so the country control and its prefix listener land together.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-011",
+      "statement": "The row's finding left one point to settle: whether the region code prefix is rebuilt from the country option values (needing no new reference data) or lifted from Design release 1's prefix table, which is keyed on its own country labels and so rides on the country list change in inc-081 (since blocked).",
+      "kind": "data",
+      "ref": "backlog.json inc-079, finding.difference",
+      "quote": "How much reference data this needs is the one point the two runs read differently. Frontend already holds the two-letter code as the value of every country option (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61), and Design release 1's own prefix map departs from the plain country code only for Ceuta and Melilla, neither of which is in Frontend's list — on that reading nothing new is needed. Against that, Design release 1's prefix table is keyed on its own country label strings, so if the prefix map is lifted across rather than rebuilt from the option values, this change rides on the country list change in inc-081. Settle which of those two routes is being taken before starting.",
+      "confidence": "gap",
+      "note": "Sits in finding.difference, not openQuestions; the row is done, and the row does not record which route was taken. Recorded as a gap because inc-081 is blocked (claim p4-030)."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-012",
+      "statement": "DR1 parity built (status done) the purpose and exit questions as conditional reveals under the chosen import reason, deleting their separate pages and the conditional exit-details task row.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-067, title, status and finding.difference",
+      "quote": "Move the four questions onto the reason page as conditional reveals under the radio that requires them, and delete the four pages, the conditional exit-details task row and the four page-name headings that go with them.",
+      "confidence": "verbatim",
+      "note": "status \"done\", commit 7aa5b03f, tests PR #154 and frontend PR #255 merged."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-013",
+      "statement": "The first build attempt of the conditional-reveals change (2026-09-06) failed on the E2E leg because the backend container could not reach Mongo; it was assessed as an environment fault, not a defect in the diff.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, notes, first ATTEMPT FAILED",
+      "quote": "ATTEMPT FAILED (2026-09-06) — red verification ladder, work preserved but NOT built. What went red: the tests-repo E2E leg (playwright.docker-compose.config.ts against the workspace stack) could not run. Container trade-imports-trade-imports-animals-backend-1 was Exited(1), killed by com.mongodb.MongoTimeoutException against host.docker.internal:27017 ... Assessment: environment fault, not a defect in the diff — a Node frontend change cannot break the Java backend's Mongo connection.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-014",
+      "statement": "The second build attempt (2026-09-06) also went red: 16 E2E failures, none in the increment's own code, mostly worker sign-in timeouts, with the stack and Docker daemon wedged so the run could not be repeated.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, notes, second ATTEMPT FAILED",
+      "quote": "the tests-repo E2E leg (npm run test:docker-compose) finished 16 failed / 1 skipped / 159 passed, and none of the 16 is in this increment's own code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-015",
+      "statement": "In the second attempt the accessibility E2E leg never ran, although the increment changed two a11y specs, so that leg was recorded as genuinely unverified; the fault was assessed as environmental but unproven either way.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, notes, second ATTEMPT FAILED",
+      "quote": "The a11y E2E leg never ran at all (same globalSetup address-book timeout), and this increment modifies tests/a11y/notification-journey-filled-state.spec.ts and tests/a11y/notification-journey-initial-state.spec.ts, so that leg is genuinely unverified. Assessment: environment fault rather than a defect proven in the diff, but unproven either way — needs a healthy stack, or CI, to re-run the ladder.",
+      "confidence": "verbatim",
+      "note": "The row later reached status done with both PRs merged; the notes do not record a later re-run of the a11y leg."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-016",
+      "statement": "After the reveal move, none of the four conditional-reveal answers on the import reason page (purpose, destination country, port of exit, exit date) is proven to work without JavaScript: the only no-JS test of the exit date field was deleted with its page and nothing replaced it.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, openQuestions[0]",
+      "quote": "Deleting src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js removed its `test.use({ javaScriptEnabled: false })` block — the only no-JS coverage of a moj-datepicker field, which asserted a typed 27/3/2026 exit date persists and that no 'Choose date' button renders — and nothing on the reason page replaced it. ... So all four reveal answers — purpose, destination country, port of exit and exit date — are now unproven without JavaScript",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-017",
+      "statement": "Because the follow-up questions no longer have pages of their own, a regression in govuk-frontend's hiding of conditional reveals would make every follow-up question unreachable for users without JavaScript, with no test failing.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, openQuestions[0]",
+      "quote": "because the questions no longer have pages of their own there is no other route to them: if govuk-frontend's gating of .govuk-radios__conditional--hidden behind .govuk-frontend-supported ever regresses, every follow-up question becomes permanently unreachable for no-JS users with nothing in the suite failing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-018",
+      "statement": "No-JS coverage of the reveals was DEFERRED because it is a new class of coverage (asserting govuk-frontend's reveal gating), not a like-for-like restored assertion.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-067, openQuestions[0]",
+      "quote": "DEFERRED rather than fixed in this increment because it is not a like-for-like port: the deleted block tested an always-visible field on a page of its own, whereas the equivalent here has to assert a govuk-frontend gating behaviour (reveals rendered visible when the enhancement script never runs) that this repo has never asserted anywhere",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-019",
+      "statement": "Open action: decide whether progressive enhancement of conditional reveals is in the service's test contract. If yes, add a no-JS test that chooses temporary admission horses, types 27/3/2026 into the exit date, selects a port of exit, submits, and asserts both answers come back on reload and no 'Choose date' button renders, and consider the same for the other three reveals; if no, record that no-JS reveal behaviour is govuk-frontend's contract and deliberately untested.",
+      "kind": "rule",
+      "ref": "backlog.json inc-067, openQuestions[0], ACTION",
+      "quote": "ACTION: decide whether progressive enhancement of conditional reveals is in this service's test contract. If yes, add a `test.use({ javaScriptEnabled: false })` describe to src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js that checks the temporaryAdmissionHorses radio, types 27/3/2026 into #temporaryAdmissionExitDate, selects #temporaryAdmissionPortOfExit, submits, and asserts both answers come back on reload plus that the 'Choose date' button has count 0 — and consider the same shape for the other three reveals. If no, record here that no-JS reveal behaviour is govuk-frontend's contract and is deliberately untested in this repo.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-020",
+      "statement": "After the reveal move, Lighthouse audits the import reason page only in its draft (internal market) shape, so the five reveal controls (transit port of exit, transit destination country, transhipment destination country, temporary admission port of exit and the exit date picker) are never audited in a visible state.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, openQuestions[1]",
+      "quote": "/import-reason is audited only on the draft shape, whose reason is internalMarket (src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json). govukRadios renders every unchosen branch's conditional inside .govuk-radios__conditional--hidden (display:none), which axe and Lighthouse skip, so transitPortOfExit, transitDestinationCountry, transhipmentDestinationCountry, temporaryAdmissionPortOfExit and the mojDatePicker at import-reason/template.njk:66 — five controls this increment introduces — are never audited in a visible state anywhere.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-021",
+      "statement": "Lighthouse coverage of the reveal states was DEFERRED because it needs a redesign of the Lighthouse harness (one route audited under several notification shapes, plus opening a reveal before the audit).",
+      "kind": "constraint",
+      "ref": "backlog.json inc-067, openQuestions[1]",
+      "quote": "the alternative — auditing the same route under more than one notification shape — is a structural change to FILLED_BY, auditUrls and reportNames, which today assume one shape per path and one report name per route, plus a way to open a reveal before the audit runs. That is a Lighthouse-harness redesign, not a fix to this diff.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-022",
+      "statement": "Open action: decide with the team whether reveal-state accessibility is audited by Lighthouse or left to the fit-spec axe scans, which do scan with a reveal open; if Lighthouse, let a route be audited under several shapes with distinguishing report names.",
+      "kind": "rule",
+      "ref": "backlog.json inc-067, openQuestions[1], ACTION",
+      "quote": "ACTION: decide with the team whether reveal-state accessibility is audited by Lighthouse or left to the fit-spec axe runs in import-reason.fit.spec.js (which do scan with a reveal open). If Lighthouse is to cover it, allow a route to be audited under several shapes — e.g. /import-reason on both draft and a reason-per-branch shape — and reinstate a seed shape per audited reason with a report name that distinguishes them.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-023",
+      "statement": "After the reveal move, the opening run's rule that a step whose gate is closed is skipped and the next reachable step is shown is no longer pinned by any test, and no real combination of answers can currently reach it.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-067, openQuestions[2]",
+      "quote": "the continue branch at run.js:44-49 — documented at run.js:15-20 as 'a null target skips the step' — is unpinned. ... so no combination of real answers gates one step off while a later one passes — the skip is currently unreachable through data.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-024",
+      "statement": "Pinning the skip rule was DEFERRED because it needs either a production change to accept an injectable step list or module mocking of the gates, which the repo does not do in app code.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-067, openQuestions[2]",
+      "quote": "DEFERRED rather than fixed in this increment because there is no honest way to pin it without expanding the blast radius. ... Pinning it therefore needs either a production change to run.js to accept an injectable step list, or module mocking of flow/gates.js, a technique this repo confines to infrastructure boundaries (auth, plugins, helpers) and never uses anywhere under src/server/app.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-025",
+      "statement": "Open action: decide how the flow layer pins branches no real answer state can reach: (a) accept the gap until a gated run step returns, (b) let the run take its steps as a parameter, or (c) sanction mocking the gates; whichever is chosen, add a test 'Should skip a run step whose gate is closed and land on the next reachable one'.",
+      "kind": "rule",
+      "ref": "backlog.json inc-067, openQuestions[2], ACTION",
+      "quote": "ACTION: decide how the flow layer pins branches that no real answer state can reach. Either (a) accept the gap until an increment reintroduces a conditionally-gated RUN_STEP and require that increment to pin the skip with real answers, or (b) agree that flow/run.js may take its steps as a parameter (export nextRunTarget(stepId, scope, journeyId, steps = RUN_STEPS)) so run.test.js can drive a two-step list whose first target is null, or (c) sanction vi.mock of flow/gates.js inside src/server/app tests. Whichever is chosen, add the test named for the behaviour: 'Should skip a run step whose gate is closed and land on the next reachable one'.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-026",
+      "statement": "DR1 parity built (status done) the removal of the hub's 'Exit details' task, folding destination country, port of exit and exit date into the 'Main reason for import' task so group 1 of the hub shows three tasks, not four.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-069, title, status and finding.difference",
+      "quote": "Fold destination country, port of exit and exit date into the 'Main reason for import' task so the hub shows three tasks in group 1, not four, and so that task's status reflects the follow-up answers as well as the reason.",
+      "confidence": "verbatim",
+      "note": "status \"done\", commit 4e37bd25, frontend PR #258 merged."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-027",
+      "statement": "The build loop's main-red stop on the Exit details change was cleared on 2026-09-07: the red Lighthouse run belonged to an older PR branch (EUDPA-295) still seeding the deleted import-purpose page, not to main, and the change landed correctly.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-069, failure_reason",
+      "quote": "Cleared 2026-09-07. The loop stopped this increment as main-red after merging PR #258. The red run was Lighthouse CI run 34131259256, which checked out feature/EUDPA-295-freeze-address-on-submit — a PR branch predating PR #255 — and failed on its own stale seed step import-purpose. ... The tree at 4e37bd2 contains no import-purpose; E2E and Publish were green there. inc-069 landed correctly.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-028",
+      "statement": "Lighthouse runs triggered from Publish Branch Image on pull requests are displayed by GitHub against the default branch, so a PR branch's red run reads as main being red.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-069, failure_reason",
+      "quote": "Lighthouse only ever runs on workflow_run from Publish Branch Image gated to pull_request events, and GitHub displays such runs against the default branch, so it read as main.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-029",
+      "statement": "DR1 parity BLOCKED adding Design release 1's fourteen regions and territories (such as Canary Islands, Jersey and French Guiana) and its labels to the country of origin and destination country lists: ruling 'block', by Rhys, 2026-09-07.",
+      "kind": "rule",
+      "ref": "backlog.json inc-081, status and decision.ruling",
+      "quote": "Blocked by Rhys, 2026-09-07: the list of countries, regions and territories is master reference data and will come from MDM, which the service integrates with properly after the DR1 parity build.",
+      "confidence": "verbatim",
+      "note": "decision.ruling \"block\", ruledAt 2026-09-07T00:00:00Z."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-030",
+      "statement": "The reason for the block: the country, region and territory list is master reference data that will come from MDM after the DR1 parity build, so widening the frontend's own hard-coded list now is work MDM replaces.",
+      "kind": "integration",
+      "ref": "backlog.json inc-081, decision.note",
+      "quote": "the list of countries, regions and territories is master reference data and will come from MDM, which the service integrates with properly after the DR1 parity build. Widening the frontend's own hard-coded list now is work MDM replaces.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-031",
+      "statement": "EUDPA-475 was raised and closed without implementation, its branch cut with nothing committed or pushed; the country list change is to be revisited when MDM lands.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-081, decision.note",
+      "quote": "EUDPA-475 was raised and CLOSED without implementation; the branch feat/EUDPA-475-a-user-importing-from-the-canary-islands was cut but nothing was committed or pushed. Revisit when MDM lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-032",
+      "statement": "While the country list change is blocked, a user importing from the Canary Islands, Jersey or French Guiana still cannot say so, because the frontend's country list holds only sovereign states.",
+      "kind": "data",
+      "ref": "backlog.json inc-081, title and status blocked",
+      "quote": "A user importing from the Canary Islands, Jersey or French Guiana cannot say so: the frontend's country list holds only sovereign states, where DR1 offers fourteen regions and territories alongside them.",
+      "confidence": "inferred",
+      "note": "Inferred: the row is blocked and nothing was committed, so the frontend's list stays as the finding describes it."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-033",
+      "statement": "Unsettled: whether dropping Iceland, Liechtenstein, Norway and Switzerland from the country list is intended; Design release 1 not offering them may be an omission rather than a rule, and the block left the question open.",
+      "kind": "data",
+      "ref": "backlog.json inc-081, finding.difference and finding.correction",
+      "quote": "Settle whether dropping Iceland, Liechtenstein, Norway and Switzerland is intended before removing them — DR1 not offering them may be an omission rather than a rule",
+      "confidence": "gap",
+      "note": "The correction says the open question is correctly left open; the block ruling does not answer it."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-034",
+      "statement": "DR1 parity built (status done) the origin page saving a partly answered page with no country of origin chosen, instead of refusing to save.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-082, title, status and finding.difference",
+      "quote": "Stop blocking on country of origin at the page and let a partly answered origin page save.",
+      "confidence": "verbatim",
+      "note": "status \"done\", commit 4c577d03, frontend PR #259 and tests PR #155 merged."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-035",
+      "statement": "Country of origin stays mandatory for completeness: the hub still shows the origin task as unfinished without it, and the review page still stops a submission without it.",
+      "kind": "rule",
+      "ref": "backlog.json inc-082, finding.difference",
+      "quote": "Keep the field mandatory for completeness, so the hub still shows the task as unfinished and the review page still stops a submission without it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-036",
+      "statement": "The build loop's main-red stop on the origin save change was cleared on 2026-09-07: the red E2E and Lighthouse runs were PR runs for the EUDPA-295 branch, whose tests branch was behind main and still asserted the error summary the origin page no longer shows; the change landed correctly in both repos.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-082, failure_reason",
+      "quote": "Cleared 2026-09-07. The loop stopped this increment as main-red after merging frontend #259 and tests #155. The red runs did not belong to main: E2E run 34143052503 and Lighthouse run 34143052111 were both PR runs for feature/EUDPA-295-freeze-address-on-submit ... The EUDPA-295 tests branch (PR #123) is 7 commits behind main and lacks 140c021 (#155), the spec update this increment shipped, so it asserted an error summary the frontend no longer shows. ... inc-082 landed correctly in both repos.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-037",
+      "statement": "DR1 parity BLOCKED replacing the port of exit list (today the port of entry list) with Design release 1's ten animal-approved exit border control posts: ruling 'block', by Rhys, 2026-09-07.",
+      "kind": "rule",
+      "ref": "backlog.json inc-071, status and decision.ruling",
+      "quote": "Blocked by Rhys, 2026-09-07: the port list is master reference data and will come from MDM, which the service integrates with properly after the DR1 parity build.",
+      "confidence": "verbatim",
+      "note": "decision.ruling \"block\", ruledAt 2026-09-07T00:00:00Z; band needs-backend."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-038",
+      "statement": "The reason for the block: the port list is master reference data from MDM, and the exit list needs an approved-for-animals attribute that today's port records do not carry and that travels with MDM; the same grounds as inc-081 and inc-127. To be revisited when MDM lands.",
+      "kind": "integration",
+      "ref": "backlog.json inc-071, decision.note",
+      "quote": "This increment needs the list to carry an approved-for-animals attribute it does not have today, and that record shape travels with MDM. Same grounds as inc-081 and inc-127. Revisit when MDM lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-039",
+      "statement": "While the port of exit change is blocked, the port of exit remains the shared port of entry list, with the hint 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.'",
+      "kind": "copy",
+      "ref": "backlog.json inc-071, finding.frontend and status blocked",
+      "quote": "the field's hint reads \"Choose where the consignment will leave Great Britain. Exit and entry share the same port list.\"",
+      "confidence": "inferred",
+      "note": "Inferred: the row is blocked with commit null, so the frontend's port of exit list is unchanged. The hint sentence's removal is also asked for by inc-068, outside this part; this row does not say whether that landed."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-040",
+      "statement": "Unsettled: the requirements conflict between the V4 field spec, which says exit and entry share one port list, and Design release 1, the signed-off design, which gives exit its own list; the row was meant to be where that is settled, and the block leaves it open.",
+      "kind": "rule",
+      "ref": "backlog.json inc-071, finding.difference",
+      "quote": "Frontend is not doing this by accident. It is following a different requirements source, the V4 field spec quoted in its own obligation, which says exit and entry share a list. Design release 1 is the signed-off design and says otherwise, so the two documents disagree and this ticket is where that gets settled.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-041",
+      "statement": "DR1 parity built (status done) a 'Commodity details' hub task row of its own, with its own status, placed first in the section Design release 1 calls '2. Description of the goods', split out of the 'What are you importing?' row.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-033, title, status and finding.difference",
+      "quote": "Split the consignment-details page out of the frontend's commodities task row into a task row of its own, labelled \"Commodity details\", placed first in the section Design release 1 calls \"2. Description of the goods\".",
+      "confidence": "verbatim",
+      "note": "status \"done\", commit f2a1933a, frontend PR #342 and tests PR #225 merged."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-042",
+      "statement": "As built, the 'Commodity details' row has no entry gate: on a brand-new notification the hub shows it live as 'Not yet started', and following it redirects silently to the commodity search page when no commodity line exists, so two hub rows both land on 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-033, openQuestions[0]",
+      "quote": "consignmentDetailsPage carries no entry gate (features/commodities/page.js), so on a brand-new notification the hub renders a live \"Not yet started\" \"Commodity details\" row whose href is /notifications/{id}/consignment-details, and a GET there redirects to the commodity search page when there are no lines (consignment-details.controller.js, `lines.length === 0`). A trader therefore sees two hub rows — \"What are you importing?\" and \"Commodity details\" — that both land on \"What are you importing?\", with no explanation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-043",
+      "statement": "Undecided product/design call: whether the 'Commodity details' row matches Design release 1 (live with a 'To do' tag from the start, silent redirect), is gated to 'Cannot start yet' until a commodity is selected, or stays live with the redirect explained on the search page.",
+      "kind": "rule",
+      "ref": "backlog.json inc-033, openQuestions[0]",
+      "quote": "Design release 1 shows the row with a \"To do\" tag from the start (app/routes.js:5770-5777), so whether the frontend should match that (row live, silent redirect), gate the row to \"Cannot start yet\" until a commodity is selected, or keep it live but explain the redirect on the search page, is a product/design call rather than a code one.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-044",
+      "statement": "The gating question was deferred from the inc-033 review because every option beyond the status quo adds a gate and changes hub row statuses for a fresh notification.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-033, openQuestions[0]",
+      "quote": "Deferred from the inc-033 review because every option beyond the status quo adds a gate and changes the hub's row statuses for a fresh notification, widening this increment past the row split it exists for.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-045",
+      "statement": "DR1 parity REJECTED the 'Notification tasklist' heading change (status rejected; ruling 'falsified' by the build orchestrator, 2026-09-16) because its own falsifier was met: the heading is already rendered on the frontend hub.",
+      "kind": "rule",
+      "ref": "backlog.json inc-043, status and decision",
+      "quote": "The finding own falsifiedBy condition is met: a \"Notification tasklist\" heading is already rendered on the frontend hub (copy.en.js taskListHeading, covered by copy.test.js and hub.fit.spec.js). Nothing to build.",
+      "confidence": "verbatim",
+      "note": "decision.ruling \"falsified\", by build-orchestrator, date 2026-09-16."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-046",
+      "statement": "The frontend hub already renders 'Notification tasklist' as a second-level heading between the commodity summary and the first task group, with the group captions as third-level headings under it.",
+      "kind": "copy",
+      "ref": "backlog.json inc-043, notes",
+      "quote": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:26 already renders `<h2 class=\"govuk-heading-l\">{{ copy.taskListHeading }}</h2>` between the commodity-summary block and the first group, and copy/copy.en.js:20 sets taskListHeading to \"Notification tasklist\"; template.njk:29 already renders each group caption as `<h3 class=\"govuk-heading-m\">`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p4-047",
+      "statement": "That heading change had already landed with inc-037 (EUDPA-600, PR #345, 2026-09-15), so inc-043 is a duplicate; the recommended disposition is to close it as a duplicate of inc-037, and EUDPA-609 and its unused branch want closing.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-043, notes and decision.reason",
+      "quote": "Frontend commit ab5cf60e (increment inc-037, EUDPA-600, PR #345, 2026-09-15) made exactly that change — the promotion of the tasklist heading to h2 and the demotion of the six group captions to h3 — so inc-043 is a duplicate of work already landed, not a red build step. ... Recommended disposition for a human: close inc-043 as a duplicate of inc-037 rather than re-attempting it, or re-derive the finding against the current tree if some part of the DR1 comparison is still unmet.",
+      "confidence": "verbatim",
+      "note": "decision.reason adds: \"EUDPA-609 was raised and its branch cut before this was checked; both are unused and want closing.\" The branch was not pushed and no PR raised."
+    }
+  ]
+}

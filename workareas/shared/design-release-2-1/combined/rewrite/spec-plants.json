@@ -1,0 +1,922 @@
+{
+  "batch": "plants",
+  "changes": [
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-003",
+      "requirementName": "Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview",
+      "change": "changed",
+      "before": "### Requirement: Continuing from any page moves to the next still in scope, and finishing a section returns to Overview\n**ID**: REQ-PLANTS-FLOW-003\nThe system MUST take the user, on continuing from a page, to the next page in that section whose conditions are met, skipping any that are not. Once no page remains in the section, the system MUST return them to Overview, unless a newly created notification is still in its opening sequence — that sequence continues to the next in-scope step (REQ-PLANTS-FLOW-007).\n\n#### Scenario: Continuing skips a page that is not in scope\n**ID**: SCN-PLANTS-FLOW-003-A\n- **GIVEN** the user is on a page whose section holds a later page that is not in scope for this notification\n- **WHEN** they save and continue\n- **THEN** they are taken past the page that is not in scope, to the next one that is\n\n#### Scenario: Finishing the last page of a section returns to Overview\n**ID**: SCN-PLANTS-FLOW-003-B\n- **GIVEN** the user is on the last page of a section that is still in scope, and the opening sequence has finished\n- **WHEN** they save and continue\n- **THEN** they return to Overview rather than continuing into another section",
+      "after": "### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview\n**ID**: REQ-PLANTS-FLOW-003\nOutside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check your answers, continuing from a page MUST go to the next in-scope page of that section in the same Overview task, and otherwise MUST return to Overview. A page in no Overview task (check your answers, the declaration) MUST go on to the next page of its section (REQ-PLANTS-FLOW-006). The system MUST NOT add a marker to a page's address, link or form to tell such a save.\n\n#### Scenario: Continuing skips a page that is not in scope\n**ID**: SCN-PLANTS-FLOW-003-A\n- **GIVEN** the user is on a page whose section holds a later page that is not in scope for this notification\n- **WHEN** they save and continue\n- **THEN** they are taken past the page that is not in scope, to the next one that is\n\n#### Scenario: Finishing the last page of a section returns to Overview\n**ID**: SCN-PLANTS-FLOW-003-B\n- **GIVEN** the user is on the last page of a section that is still in scope, and the opening sequence has finished\n- **WHEN** they save and continue\n- **THEN** they return to Overview rather than continuing into another section\n\n#### Scenario: Arrival details opened from Overview returns to Overview, not the place of destination\n**ID**: SCN-PLANTS-FLOW-003-C\n- **GIVEN** the opening sequence has ended and the arrival task opened from Overview\n- **WHEN** the user saves arrival status and then arrival details\n- **THEN** arrival details follows arrival status, and saving arrival details shows Overview, not the place of destination\n\n#### Scenario: A task of more than one page moves through its own pages first\n**ID**: SCN-PLANTS-FLOW-003-D\n- **GIVEN** the opening sequence has ended\n- **WHEN** the user opens what are you importing from Overview and saves the commodity type\n- **THEN** the commodities list is shown\n- **WHEN** they continue from it\n- **THEN** Overview is shown\n\n#### Scenario: Consignor opened from Overview returns to Overview, not identification numbers\n**ID**: SCN-PLANTS-FLOW-003-E\n- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor or exporter task opened from Overview\n- **WHEN** the user chooses an address and saves and continues\n- **THEN** Overview is shown, not identification numbers, which has its own task\n\n#### Scenario: Nothing marks a page as opened from Overview\n**ID**: SCN-PLANTS-FLOW-003-F\n- **GIVEN** Overview\n- **WHEN** the user opens a task\n- **THEN** the page's address is the one the opening sequence uses, with nothing added to it or to the link",
+      "summary": "A page opened from Overview now goes back to Overview when saved, unless its own task has more pages to go through first.\n\nBefore, it carried on to the next page of the whole section.",
+      "cards": [
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-004",
+      "requirementName": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
+      "change": "changed",
+      "before": "### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview\n**ID**: REQ-PLANTS-FLOW-004\nThe system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way.\n\n#### Scenario: Cancel and return to overview discards unsaved input\n**ID**: SCN-PLANTS-FLOW-004-A\n- **GIVEN** the user has typed into a field on a task page without saving\n- **WHEN** they select \"Cancel and return to overview\"\n- **THEN** they return to Overview, and re-opening the task page shows the field as it was before, not the discarded input\n\n#### Scenario: Save and return to overview commits the input and returns to Overview\n**ID**: SCN-PLANTS-FLOW-004-B\n- **GIVEN** the user has typed into a field on a task page\n- **WHEN** they select \"Save and return to overview\"\n- **THEN** they return to Overview, and re-opening the task page shows the committed input",
+      "after": "### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview\n**ID**: REQ-PLANTS-FLOW-004\nThe system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, and MUST still refuse an answer that breaks its own rule with that answer's error and save nothing. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: Cancel and return to overview discards unsaved input\n**ID**: SCN-PLANTS-FLOW-004-A\n- **GIVEN** the user has typed into a field on a task page without saving\n- **WHEN** they select \"Cancel and return to overview\"\n- **THEN** they return to Overview, and re-opening the task page shows the field as it was before, not the discarded input\n\n#### Scenario: Save and return to overview commits the input and returns to Overview\n**ID**: SCN-PLANTS-FLOW-004-B\n- **GIVEN** the user has typed into a field on a task page\n- **WHEN** they select \"Save and return to overview\"\n- **THEN** they return to Overview, and re-opening the task page shows the committed input\n\n#### Scenario: Save and return to overview saves a blank arrival details page\n**ID**: SCN-PLANTS-FLOW-004-C\n- **GIVEN** a potatoes notification is on the arrival details with nothing answered\n- **WHEN** the user selects \"Save and return to overview\"\n- **THEN** they return to Overview with no error shown\n- **AND** the arrival task row does not read \"Completed\"\n\n#### Scenario: A time not on the 24-hour clock is refused on save and return\n**ID**: SCN-PLANTS-FLOW-004-D\n- **GIVEN** a potatoes notification is on the arrival details with a time that is not on the 24-hour clock\n- **WHEN** the user selects \"Save and return to overview\"\n- **THEN** they stay on the page, which shows \"Enter a real time, like 14:30\"\n- **AND** nothing is saved",
+      "summary": "\"Save and return to overview\" now saves a half-finished page without asking for the missing answers. An answer in the wrong format is still refused, and nothing is saved.\n\nWhile amending, the page ends differently.",
+      "cards": [
+        "soft-save",
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-006",
+      "requirementName": "Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready",
+      "change": "changed",
+      "before": "### Requirement: Check your answers, the declaration and the confirmation are reachable only once every task row is ready\n**ID**: REQ-PLANTS-FLOW-006\nThe system MUST withhold the review section — check your answers, the declaration and the confirmation — until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.\n\n#### Scenario: The review section is withheld while a task row is outstanding\n**ID**: SCN-PLANTS-FLOW-006-A\n- **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional\n- **WHEN** the user tries to reach check your answers\n- **THEN** the review section is not open to them\n\n#### Scenario: The review section opens once every row is fulfilled, not applicable or optional\n**ID**: SCN-PLANTS-FLOW-006-B\n- **GIVEN** a notification whose every task row is fulfilled, not applicable or optional\n- **WHEN** the user goes to check their answers\n- **THEN** check your answers is shown, leading on to the declaration and then the confirmation",
+      "after": "### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready\n**ID**: REQ-PLANTS-FLOW-006\nThe system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification owes, naming what is outstanding. Overview's check-and-submit row MUST stay withheld until every task row is ready (REQ-PLANTS-OB-REVIEW-001), a row being ready when fulfilled, not applicable or optional. Until then, continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.\n\n#### Scenario: Continuing from check your answers is refused while a task row is outstanding\n**ID**: SCN-PLANTS-FLOW-006-A\n- **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional\n- **WHEN** the user continues from check your answers\n- **THEN** they stay on check your answers, which names what is outstanding\n- **AND** the declaration is not opened\n\n#### Scenario: The review section opens once every row is fulfilled, not applicable or optional\n**ID**: SCN-PLANTS-FLOW-006-B\n- **GIVEN** a notification whose every task row is fulfilled, not applicable or optional\n- **WHEN** the user goes to check their answers\n- **THEN** check your answers is shown, leading on to the declaration and then the confirmation",
+      "summary": "Check your answers now opens even when the notification is unfinished, and lists what is still to do. Before, it was withheld until every task was ready.\n\nA notification still cannot be submitted until every task is ready.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-007",
+      "requirementName": "A notification created in this session runs an opening sequence ending on check your answers",
+      "change": "changed",
+      "before": "### Requirement: A notification created in this session runs an opening sequence ending on Overview\n**ID**: REQ-PLANTS-FLOW-007\nThe system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to Overview once every step is done.\n\n#### Scenario: A newly created notification is walked through the opening sequence to Overview\n**ID**: SCN-PLANTS-FLOW-007-A\n- **GIVEN** the user has just created a notification from the dashboard\n- **WHEN** they save each page in turn, answering every step\n- **THEN** they are taken through every in-scope step of the opening sequence in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact\n- **AND** they arrive at Overview once the last step is saved, without being taken into check your answers as part of the sequence\n\n#### Scenario: An opening-sequence step not yet in scope is skipped\n**ID**: SCN-PLANTS-FLOW-007-B\n- **GIVEN** the user is in the opening sequence and the next step is not yet in scope\n- **WHEN** they save the page they are on\n- **THEN** they are taken to the next step that is in scope\n\n#### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it\n**ID**: SCN-PLANTS-FLOW-007-C\n- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview\n- **WHEN** they open one of the opening sequence's own pages again and save it\n- **THEN** they return to Overview, not to whatever would be the next step of the sequence",
+      "after": "### Requirement: A notification created in this session runs an opening sequence ending on check your answers\n**ID**: REQ-PLANTS-FLOW-007\nThe system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence.\n\n#### Scenario: A newly created notification is walked through the opening sequence to check your answers\n**ID**: SCN-PLANTS-FLOW-007-A\n- **GIVEN** the user has just created a notification from the dashboard\n- **WHEN** they save each page in turn, answering every step\n- **THEN** they are taken through every in-scope step of the opening sequence in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact\n- **AND** they arrive at check your answers once the last step is saved\n\n#### Scenario: An opening-sequence step not yet in scope is skipped\n**ID**: SCN-PLANTS-FLOW-007-B\n- **GIVEN** the user is in the opening sequence and the next step is not yet in scope\n- **WHEN** they save the page they are on\n- **THEN** they are taken to the next step that is in scope\n\n#### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it\n**ID**: SCN-PLANTS-FLOW-007-C\n- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or check your answers\n- **WHEN** they open origin again and save it\n- **THEN** they return to Overview, not to arrival status, the next step the sequence would have taken\n- **AND** a revisited page with a later page in its own Overview task, such as commodity type or arrival status, goes on only to that page (REQ-PLANTS-FLOW-003), never past the end of its task\n\n#### Scenario: The opening sequence ends on check your answers even when tasks are outstanding\n**ID**: SCN-PLANTS-FLOW-007-D\n- **GIVEN** the user is in the opening sequence with tasks outstanding\n- **WHEN** they save the last step\n- **THEN** check your answers shows the unfinished notification and names every outstanding task",
+      "summary": "A new notification's first run now ends on check your answers, even when tasks are still outstanding, and that page names them. Before, the run ended on Overview.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-008",
+      "requirementName": "A journey opened out of context is sent to its entry page",
+      "change": "changed",
+      "before": "### Requirement: A journey opened out of context is sent to its entry page\n**ID**: REQ-PLANTS-FLOW-008\nThe system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds any answer the user has entered. The commodity-type page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.\n\n#### Scenario: A deep link to an unknown journey lands on the entry page\n**ID**: SCN-PLANTS-FLOW-008-A\n- **GIVEN** a link to a page deep inside a journey that this session did not create and that holds no answers the user entered\n- **WHEN** the user opens it\n- **THEN** they land on the commodity-type page for that journey\n\n#### Scenario: A journey carrying answers the user entered opens where it was asked for\n**ID**: SCN-PLANTS-FLOW-008-B\n- **GIVEN** a link to a page inside a journey that already holds an answer the user entered\n- **WHEN** the user opens it\n- **THEN** that page is shown, rather than the entry page",
+      "after": "### Requirement: A journey opened out of context is sent to its entry page\n**ID**: REQ-PLANTS-FLOW-008\nThe system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds an answer the user entered. Exempt MUST be: the commodity-type page and those beneath it, so the redirect cannot loop; the dashboard's actions on a notification (amend, cancel an amendment, copy, delete); and a notification that does not exist, which the page asked for answers (for the view, REQ-PLANTS-CYA-015).\n\n#### Scenario: A deep link to an unknown journey lands on the entry page\n**ID**: SCN-PLANTS-FLOW-008-A\n- **GIVEN** a link to a page deep inside a journey that this session did not create and that holds no answers the user entered\n- **WHEN** the user opens it\n- **THEN** they land on the commodity-type page for that journey\n\n#### Scenario: A journey carrying answers the user entered opens where it was asked for\n**ID**: SCN-PLANTS-FLOW-008-B\n- **GIVEN** a link to a page inside a journey that already holds an answer the user entered\n- **WHEN** the user opens it\n- **THEN** that page is shown, rather than the entry page",
+      "summary": "A notification that does not exist is now exempt from the redirect to the first page.\n\nThis lets its view send the trader to the notification list instead.",
+      "cards": [
+        "view-header"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-012",
+      "requirementName": "A page reached from another page, not from the hub directly, ends with only its primary action",
+      "change": "changed",
+      "before": "### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action\n**ID**: REQ-PLANTS-FLOW-012\nThe system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.\n\n#### Scenario: A page reached via a detour offers only its primary action\n**ID**: SCN-PLANTS-FLOW-012-A\n- **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row\n- **WHEN** the page is shown\n- **THEN** only its primary save-and-continue action is offered, with no separate \"Save and return to overview\" or \"Cancel and return to overview\" control",
+      "after": "### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action\n**ID**: REQ-PLANTS-FLOW-012\nThe system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: A page reached via a detour offers only its primary action\n**ID**: SCN-PLANTS-FLOW-012-A\n- **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row\n- **WHEN** the page is shown\n- **THEN** only its primary save-and-continue action is offered, with no separate \"Save and return to overview\" or \"Cancel and return to overview\" control",
+      "summary": "No change to what a detour page offers outside an amendment. The rule now points to the new amendment page endings.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-014",
+      "requirementName": "While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview\n**ID**: REQ-PLANTS-FLOW-014\nWhile a notification is being amended, the system MUST end each page the hub links to directly with a primary \"Save and return\" to the review, a secondary \"Save and continue\" that goes on as it does outside an amendment, and a link-styled \"Save and return to overview\", with no \"Cancel and return to overview\". The consignor or exporter, place of destination and consignment contact pickers MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.\n\n#### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change\n**ID**: SCN-PLANTS-FLOW-014-A\n- **GIVEN** a notification being amended\n- **WHEN** the user opens Identification numbers from Overview\n- **THEN** it ends with \"Save and return\", \"Save and continue\" and a link-styled \"Save and return to overview\", and no \"Cancel and return to overview\"\n- **WHEN** they change the producer number and select \"Save and return\"\n- **THEN** the review is shown with the new producer number\n\n#### Scenario: Save and continue while amending goes to the next page of the task\n**ID**: SCN-PLANTS-FLOW-014-B\n- **GIVEN** a plants-for-planting notification being amended\n- **WHEN** the user selects \"Save and continue\" on Arrival status\n- **THEN** Arrival details is shown, whose Back link goes to Overview\n- **WHEN** they select \"Save and return to overview\" on Arrival details\n- **THEN** Overview is shown\n\n#### Scenario: The address pickers offer two controls while amending, and Save and return goes back to the review\n**ID**: SCN-PLANTS-FLOW-014-C\n- **GIVEN** a notification being amended\n- **WHEN** the user opens the consignor or exporter, place of destination or consignment contact picker\n- **THEN** each ends with \"Save and return\" and \"Save and continue\" and no \"Save and return to overview\"\n- **AND** \"Save and return\" on the consignor or exporter picker returns to the review",
+      "summary": "New. While amending, each page ends with Save and return (back to the review), Save and continue and a link Save and return to overview.\n\nThere is no cancel link.\n\nThe address pickers show only the first two.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-flow",
+      "capabilityName": "High-risk plants: How the journey moves between pages",
+      "requirementId": "REQ-PLANTS-FLOW-015",
+      "requirementName": "A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun\n**ID**: REQ-PLANTS-FLOW-015\nThe system MUST, when a user chooses Plants for planting, Potatoes (seed and ware) or Wood products on the Import Notification Service's \"What are you importing?\" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.\n\n#### Scenario: Choosing a plants type opens a new draft at the entry question\n**ID**: SCN-PLANTS-FLOW-015-A\n- **GIVEN** the user is on the Import Notification Service's \"What are you importing?\" question\n- **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue\n- **THEN** a new high-risk plants draft is created and its \"What are you importing?\" entry page is shown",
+      "summary": "New. Choosing a plants type on the Import Notification Service question creates a new plants draft and opens its first page.",
+      "cards": [
+        "t-plants-first-page"
+      ]
+    },
+    {
+      "capability": "plants/journey-obligations/review",
+      "capabilityName": "High-risk plants: Review obligations",
+      "requirementId": "REQ-PLANTS-OB-REVIEW-002",
+      "requirementName": "Continuing from check-your-answers while a task is still outstanding is refused on the page",
+      "change": "changed",
+      "before": "### Requirement: Continuing from check-your-answers while a task is still outstanding returns to Overview\n**ID**: REQ-PLANTS-OB-REVIEW-002\nThe system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead return them to Overview when they continue from check-your-answers.\n\n#### Scenario: Continuing an incomplete notification returns to Overview\n**ID**: SCN-PLANTS-OB-REVIEW-002-A\n- **GIVEN** a notification is open on check-your-answers with a task still outstanding\n- **WHEN** the user continues\n- **THEN** they are returned to Overview",
+      "after": "### Requirement: Continuing from check-your-answers while a task is still outstanding is refused on the page\n**ID**: REQ-PLANTS-OB-REVIEW-002\nThe system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead keep them on check-your-answers with the outstanding tasks named: on a draft whenever the page is shown, and while the notification is being amended only once the user has continued, the notification staying in amendment (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-013).\n\n#### Scenario: Continuing an incomplete notification stays on check-your-answers\n**ID**: SCN-PLANTS-OB-REVIEW-002-A\n- **GIVEN** a draft notification is open on check-your-answers with a task still outstanding\n- **WHEN** the user continues\n- **THEN** they stay on check-your-answers, which names the outstanding task",
+      "summary": "Continuing from an unfinished notification now keeps the trader on check your answers, which names what is outstanding. Before, it sent them back to Overview.",
+      "cards": [
+        "run-ends-on-review",
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-obligations/review",
+      "capabilityName": "High-risk plants: Review obligations",
+      "requirementId": "REQ-PLANTS-OB-REVIEW-003",
+      "requirementName": "An origin that commodity lines no longer allow blocks continue, with a correction into origin",
+      "change": "changed",
+      "before": "### Requirement: An origin that commodity lines no longer allow blocks continue, with a correction into origin\n**ID**: REQ-PLANTS-OB-REVIEW-003\nThe system MUST refuse to continue from check-your-answers when the saved country of origin falls outside the narrowest scope of the notification's commodity lines, showing an error that links into the origin page under change context, and MUST leave the notification in draft. The origin scopes themselves are governed by `plants/journey-obligations/origin`.\n\n#### Scenario: A saved country that a new ware-potato line disallows blocks continue with a link to origin\n**ID**: SCN-PLANTS-OB-REVIEW-003-A\n- **GIVEN** a draft notification has saved a French origin under seed potatoes\n- **WHEN** the user adds a ware-potato commodity line and continues from check-your-answers\n- **THEN** they remain on check-your-answers, still Draft\n- **AND** an error summary offers a correction that opens origin under change context, naming the ware-potato countries",
+      "after": "### Requirement: An origin that commodity lines no longer allow blocks continue, with a correction into origin\n**ID**: REQ-PLANTS-OB-REVIEW-003\nThe system MUST refuse to continue from check-your-answers, leaving the status unchanged, when the saved country of origin falls outside the narrowest scope of the commodity lines (`plants/journey-obligations/origin`). It MUST show an error linking into origin under change context: on a draft whenever the page is shown, and while being amended only once the user has continued (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-013).\n\n#### Scenario: A saved country that a new ware-potato line disallows blocks continue with a link to origin\n**ID**: SCN-PLANTS-OB-REVIEW-003-A\n- **GIVEN** a draft notification has saved a French origin under seed potatoes\n- **WHEN** the user adds a ware-potato commodity line and continues from check-your-answers\n- **THEN** they remain on check-your-answers, still Draft\n- **AND** an error summary offers a correction that opens origin under change context, naming the ware-potato countries",
+      "summary": "The origin error now shows on a draft whenever the page is shown. On an amendment it shows only after the trader presses Continue.",
+      "cards": [
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-obligations/review",
+      "capabilityName": "High-risk plants: Review obligations",
+      "requirementId": "REQ-PLANTS-OB-REVIEW-004",
+      "requirementName": "A previously selected party whose address no longer resolves blocks continue",
+      "change": "changed",
+      "before": "### Requirement: A previously selected party whose address no longer resolves blocks continue\n**ID**: REQ-PLANTS-OB-REVIEW-004\nThe system MUST refuse to continue from check-your-answers when a party role that was previously answered no longer resolves to an address, showing an error that asks the user to select an address for that role. How the unresolved role is shown on the page itself is governed by `plants/journey-pages/check-your-answers`.\n\n#### Scenario: A deleted place of destination blocks continue\n**ID**: SCN-PLANTS-OB-REVIEW-004-A\n- **GIVEN** a complete draft notification is open on check-your-answers\n- **WHEN** the place-of-destination address is removed from the address book and the user continues\n- **THEN** they remain on check-your-answers\n- **AND** an error summary asks them to select an address for the place of destination",
+      "after": "### Requirement: A previously selected party whose address no longer resolves blocks continue\n**ID**: REQ-PLANTS-OB-REVIEW-004\nThe system MUST refuse to continue from check-your-answers when a party role that was previously answered no longer resolves to an address. It MUST show an error asking the user to select an address for that role: on a draft whenever the page is shown, and while being amended only once the user has continued. How the page shows the unresolved role, and when errors show, is governed by `plants/journey-pages/check-your-answers` (REQ-PLANTS-CYA-013).\n\n#### Scenario: A deleted place of destination blocks continue\n**ID**: SCN-PLANTS-OB-REVIEW-004-A\n- **GIVEN** a complete draft notification is open on check-your-answers\n- **WHEN** the place-of-destination address is removed from the address book and the user continues\n- **THEN** they remain on check-your-answers\n- **AND** an error summary asks them to select an address for the place of destination",
+      "summary": "The removed-address error now shows on a draft whenever the page is shown. On an amendment it shows only after the trader presses Continue.",
+      "cards": [
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-002",
+      "requirementName": "A potatoes notification also asks for the time and the place of landing",
+      "change": "changed",
+      "before": "### Requirement: A potatoes notification also asks for the time and the place of landing\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-002\nThe system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field.\n\n#### Scenario: Potatoes see the time and the searchable place of landing\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-A\n- **GIVEN** a potatoes notification is on the arrival details\n- **WHEN** the page loads\n- **THEN** it asks for the expected time of arrival and the proposed place of landing\n- **AND** the place of landing is a searchable field",
+      "after": "### Requirement: A potatoes notification also asks for the time and the place of landing\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-002\nThe system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field, hinted \"Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.\"\n\n#### Scenario: Potatoes see the time and the searchable place of landing\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-A\n- **GIVEN** a potatoes notification is on the arrival details\n- **WHEN** the page loads\n- **THEN** it asks for the expected time of arrival and the proposed place of landing\n- **AND** the place of landing is a searchable field\n\n#### Scenario: The place of landing is hinted as the animals port of entry is\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-B\n- **GIVEN** a potatoes notification is on the arrival details\n- **WHEN** the page loads\n- **THEN** the place of landing hint reads \"Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.\"",
+      "summary": "The place of landing now has a hint: \"Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.\"\n\nIt follows the live animals port of entry hint.",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-003",
+      "requirementName": "The place-of-landing field offers ports by name or code and shows the chosen port as name and code together",
+      "change": "changed",
+      "before": "### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-003\nThe system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code.\n\n#### Scenario: Choosing a port shows its name and code and is kept on return\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-A\n- **GIVEN** a potatoes notification is on the arrival details\n- **WHEN** they choose a port, complete the page and save it\n- **THEN** the port field shows that port's name and code together\n- **AND** returning to the page still holds that choice",
+      "after": "### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-003\nThe system MUST let the user find a proposed place of landing by typing a port's name or code, MUST offer each port reading \"<port name> - <port code>\", MUST show the chosen port in the search field the same way, MUST submit and keep the port's code, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.\n\n#### Scenario: Choosing a port shows its name and code and is kept on return\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-A\n- **GIVEN** a potatoes notification is on the arrival details\n- **WHEN** they choose a port, complete the page and save it\n- **THEN** the port field shows that port as \"<port name> - <port code>\", for example \"Port of Dover - GB DVR\"\n- **AND** returning to the page still holds that choice\n- **AND** the port's code is what the notification keeps\n\n#### Scenario: Every port the reference data service serves is offered as a place of landing, in its order\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-B\n- **GIVEN** a potatoes notification is on the arrival details page\n- **WHEN** the place-of-landing list is read in full\n- **THEN** it holds every port the reference data service serves, each reading \"<port name> - <port code>\", in the order the service serves them\n\n#### Scenario: Places of landing are listed airports first, then seaports, then rail ports, each A to Z by name\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-C\n- **GIVEN** a potatoes notification is on the arrival details page\n- **WHEN** the place-of-landing list is read in full\n- **THEN** every airport comes before every seaport, and every seaport before every rail port\n- **AND** within each group the ports run A to Z by name ignoring letter case, with non-breaking and doubled spaces read as single spaces",
+      "summary": "Each port now reads like \"Port of Dover - GB DVR\", in the list and in the box once chosen.\n\nPorts are listed airports first, then seaports, then rail ports, each A to Z.",
+      "cards": [
+        "port-labels",
+        "port-order"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-005",
+      "requirementName": "Saving and continuing with the page empty is refused",
+      "change": "changed",
+      "before": "### Requirement: Saving the page empty is refused\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-005\nThe system MUST refuse to save the arrival details when the required answers for the notification's state are missing, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error.\n\n#### Scenario: A blank potato page names the date, time and place of landing\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-A\n- **GIVEN** a potatoes notification is on the arrival details with nothing answered\n- **WHEN** they save and continue\n- **THEN** an error summary names the missing date, time and place of landing\n- **WHEN** they follow the date error\n- **THEN** the date field is focused\n\n#### Scenario: A blank plants or wood page names the missing date\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-B\n- **GIVEN** a plants or wood notification is on the arrival details with nothing answered\n- **WHEN** they save and continue\n- **THEN** an error summary names the missing arrival date",
+      "after": "### Requirement: Saving and continuing with the page empty is refused\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-005\nThe system MUST refuse to save and continue from the arrival details when the required answers for the notification's state are missing, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error. It MUST NOT refuse the page for a missing answer on save and return to overview.\n\n#### Scenario: A blank potato page names the date, time and place of landing\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-A\n- **GIVEN** a potatoes notification is on the arrival details with nothing answered\n- **WHEN** they save and continue\n- **THEN** an error summary names the missing date, time and place of landing\n- **WHEN** they follow the date error\n- **THEN** the date field is focused\n\n#### Scenario: A blank plants or wood page names the missing date\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-B\n- **GIVEN** a plants or wood notification is on the arrival details with nothing answered\n- **WHEN** they save and continue\n- **THEN** an error summary names the missing arrival date\n\n#### Scenario: Save and return to overview saves a blank page and leaves the arrival row incomplete\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-C\n- **GIVEN** a potatoes notification is on the arrival details with nothing answered\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown\n- **AND** the arrival task row does not read \"Completed\"",
+      "summary": "Missing answers are now refused only on Save and continue. Save and return to overview saves the blank page with no error, and the arrival task does not show Completed.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-006",
+      "requirementName": "An impossible date is rejected with its own error, distinct from a missing date",
+      "change": "changed",
+      "before": "### Requirement: An impossible date is rejected with its own error, distinct from a missing date\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-006\nThe system MUST refuse a date that does not exist on the calendar with an error naming that the date is invalid, not that it is missing, and MUST preserve the value typed and the page's other answers.\n\n#### Scenario: A date that names no day is refused and kept\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-006-A\n- **GIVEN** the user has answered the other arrival questions the notification owes\n- **WHEN** they type a date that does not exist and save and continue\n- **THEN** an error says the date is invalid, not that it is missing\n- **AND** the date field still holds what was typed\n- **AND** the other answers already given are still held",
+      "after": "### Requirement: An impossible date is rejected with its own error, distinct from a missing date\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-006\nThe system MUST refuse a date that does not exist on the calendar with an error naming that the date is invalid, not that it is missing, on either save control, and MUST preserve the value typed and the page's other answers.\n\n#### Scenario: A date that names no day is refused and kept\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-006-A\n- **GIVEN** the user has answered the other arrival questions the notification owes\n- **WHEN** they type a date that does not exist and save and continue\n- **THEN** an error says the date is invalid, not that it is missing\n- **AND** the date field still holds what was typed\n- **AND** the other answers already given are still held",
+      "summary": "An impossible date is now refused on Save and return to overview as well as on Save and continue.",
+      "cards": [
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-007",
+      "requirementName": "A future date is refused once the consignment has already arrived",
+      "change": "changed",
+      "before": "### Requirement: A future date is refused once the consignment has already arrived\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-007\nThe system MUST refuse an arrival date after today when the consignment has already arrived, with an error saying the date cannot be in the future, and MUST NOT apply that future-date refusal when the consignment has not yet arrived or the notification is for potatoes.\n\n#### Scenario: A future date is refused for an already-arrived consignment\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-007-A\n- **GIVEN** a plants or wood notification has answered that the consignment has already arrived\n- **WHEN** they enter a future arrival date and save and continue\n- **THEN** an error says the date the consignment arrived cannot be in the future",
+      "after": "### Requirement: A future date is refused once the consignment has already arrived\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-007\nThe system MUST refuse an arrival date after today when the consignment has already arrived, with an error saying the date cannot be in the future, on either save control, and MUST NOT apply that future-date refusal when the consignment has not yet arrived or the notification is for potatoes.\n\n#### Scenario: A future date is refused for an already-arrived consignment\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-007-A\n- **GIVEN** a plants or wood notification has answered that the consignment has already arrived\n- **WHEN** they enter a future arrival date and save and continue\n- **THEN** an error says the date the consignment arrived cannot be in the future",
+      "summary": "A future arrival date is now refused on Save and return to overview as well as on Save and continue.",
+      "cards": [
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-008",
+      "requirementName": "An invalid place of landing is rejected",
+      "change": "changed",
+      "before": "### Requirement: An invalid place of landing is rejected\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-008\nThe system MUST refuse a proposed place of landing that is not one of the ports the service holds, showing an error against that field.\n\n#### Scenario: A port the service does not hold is refused\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-008-A\n- **GIVEN** a potatoes notification has answered the date and time\n- **WHEN** the submitted place of landing is not one of the offered ports\n- **THEN** an error is shown against the place of landing",
+      "after": "### Requirement: An invalid place of landing is rejected\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-008\nThe system MUST refuse a proposed place of landing that is not one of the ports the service holds, on either save control, showing an error against that field.\n\n#### Scenario: A port the service does not hold is refused\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-008-A\n- **GIVEN** a potatoes notification has answered the date and time\n- **WHEN** the submitted place of landing is not one of the offered ports\n- **THEN** an error is shown against the place of landing",
+      "summary": "A place of landing that is not on the list is now refused on Save and return to overview.\n\nIt is refused on Save and continue as well.",
+      "cards": [
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-009",
+      "requirementName": "An invalid time is rejected, focusing the time field",
+      "change": "changed",
+      "before": "### Requirement: An invalid time is rejected, focusing the time field\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-009\nThe system MUST refuse an expected time of arrival that is not on the 24-hour clock, and MUST focus the time field when the user follows the error.\n\n#### Scenario: A time not on the 24-hour clock is refused\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-009-A\n- **GIVEN** a potatoes notification has answered the date and place of landing\n- **WHEN** they enter a time that is not on the 24-hour clock and save and continue\n- **THEN** an error is shown against the time\n- **WHEN** they follow the error\n- **THEN** the time field is focused",
+      "after": "### Requirement: An invalid time is rejected, focusing the time field\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-009\nThe system MUST refuse an expected time of arrival that is not on the 24-hour clock on either save control, and MUST focus the time field when the user follows the error.\n\n#### Scenario: A time not on the 24-hour clock is refused\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-009-A\n- **GIVEN** a potatoes notification has answered the date and place of landing\n- **WHEN** they enter a time that is not on the 24-hour clock and save and continue\n- **THEN** an error is shown against the time\n- **WHEN** they follow the error\n- **THEN** the time field is focused",
+      "summary": "A time that is not on the 24-hour clock is now refused on Save and return to overview as well as on Save and continue.",
+      "cards": [
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-010",
+      "requirementName": "The page offers a full set of save controls and is reachable from Overview",
+      "change": "changed",
+      "before": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-010\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when that row opens on the details.\n\n#### Scenario: The page is reachable from the Overview arrival row for potatoes\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A\n- **GIVEN** a potatoes notification on Overview\n- **WHEN** they open the arrival task row\n- **THEN** the arrival details page is shown\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-B\n- **GIVEN** the user is on the arrival details\n- **WHEN** they enter a date and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the date empty\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-C\n- **GIVEN** the user is on the arrival details\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-010\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when that row opens on the details. Saving the page opened from that task, once the opening sequence has finished, MUST return the user to Overview. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: The page is reachable from the Overview arrival row for potatoes\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A\n- **GIVEN** a potatoes notification on Overview\n- **WHEN** they open the arrival task row\n- **THEN** the arrival details page is shown\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-B\n- **GIVEN** the user is on the arrival details\n- **WHEN** they enter a date and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the date empty\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-C\n- **GIVEN** the user is on the arrival details\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: Saving the arrival details opened from Overview returns to Overview\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-D\n- **GIVEN** the arrival task opened from Overview after the opening sequence\n- **WHEN** the user saves the arrival details\n- **THEN** Overview is shown, not the place of destination",
+      "summary": "Saving arrival details opened from Overview now returns to Overview. Before, it went on to the place of destination.\n\nWhile amending, the page ends with the amend controls.",
+      "cards": [
+        "overview-return",
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-012",
+      "requirementName": "Every arrival question is set in the medium label size",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Every arrival question is set in the medium label size\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-012\nThe system MUST set every question on the arrival details page in the GOV.UK medium label size: the arrival date in whichever of its three wordings the notification's state chooses, and, for potatoes, the expected time of arrival and the proposed place of landing.\n\n#### Scenario: A potatoes notification's arrival questions read at medium size\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-012-A\n- **GIVEN** a potatoes notification on arrival details\n- **WHEN** the page loads\n- **THEN** the expected date of arrival, expected time of arrival and proposed place of landing questions are each set in the medium label size\n\n#### Scenario: A plants or wood notification's date question reads at medium size\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-012-B\n- **GIVEN** a plants or wood notification on arrival details\n- **WHEN** the page loads\n- **THEN** its arrival date question is set in the medium label size",
+      "summary": "New. Every question on arrival details is now set in the medium label size.",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-details",
+      "capabilityName": "High-risk plants: Arrival details page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-DETAILS-013",
+      "requirementName": "The place-of-landing field works without client-side JavaScript",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The place-of-landing field works without client-side JavaScript\n**ID**: REQ-PLANTS-ARRIVAL-DETAILS-013\nThe system MUST keep an ordinary, labelled port list underneath the searchable place-of-landing field, so a user without JavaScript can still choose a port, MUST have each port in it read \"<port name> - <port code>\", and MUST save the chosen port's code.\n\n#### Scenario: A potatoes notification chooses its place of landing from an ordinary list\n**ID**: SCN-PLANTS-ARRIVAL-DETAILS-013-A\n- **GIVEN** a potatoes notification is on the arrival details without JavaScript\n- **WHEN** they choose a port from the ordinary list, complete the page and save it\n- **THEN** the list is labelled as the place of landing question and each port reads \"<port name> - <port code>\"\n- **AND** returning to the page still holds that port's code",
+      "summary": "New. Without JavaScript, the place of landing is an ordinary labelled list whose ports read like \"Port of Dover - GB DVR\".\n\nThe chosen port's code is saved.",
+      "cards": [
+        "port-labels"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-status",
+      "capabilityName": "High-risk plants: Arrival status page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-STATUS-005",
+      "requirementName": "Saving and continuing with no status chosen is refused, focusing the first option",
+      "change": "changed",
+      "before": "### Requirement: Saving with no status chosen is refused, focusing the first option\n**ID**: REQ-PLANTS-ARRIVAL-STATUS-005\nThe system MUST refuse to save the page when no status has been chosen, showing an error summary, and MUST focus the first status option when the user follows the error.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first option\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-005-A\n- **GIVEN** the user is on the arrival-status page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing arrival status\n- **WHEN** they follow the error\n- **THEN** the first status option is focused",
+      "after": "### Requirement: Saving and continuing with no status chosen is refused, focusing the first option\n**ID**: REQ-PLANTS-ARRIVAL-STATUS-005\nThe system MUST refuse to save and continue from the page when no status has been chosen, showing an error summary, and MUST focus the first status option when the user follows the error. It MUST NOT refuse the page for a missing status on save and return to overview.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first option\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-005-A\n- **GIVEN** the user is on the arrival-status page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing arrival status\n- **WHEN** they follow the error\n- **THEN** the first status option is focused\n\n#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-005-B\n- **GIVEN** the user is on the arrival-status page with nothing chosen\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown",
+      "summary": "A missing arrival status is now refused only on Save and continue. Save and return to overview goes back to Overview with no error.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/arrival-status",
+      "capabilityName": "High-risk plants: Arrival status page",
+      "requirementId": "REQ-PLANTS-ARRIVAL-STATUS-006",
+      "requirementName": "The page offers a full set of save controls and is reachable from Overview",
+      "change": "changed",
+      "before": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ARRIVAL-STATUS-006\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when the notification is asked the question.\n\n#### Scenario: The page is reachable from the Overview arrival row\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-A\n- **GIVEN** a plants or wood notification on Overview that is asked whether it has arrived\n- **WHEN** they open the arrival task row\n- **THEN** the arrival-status page is shown\n\n#### Scenario: Save and return to overview saves the choice without continuing the journey\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-B\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they choose a status and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that status still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-C\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they choose a status and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no status chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-D\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ARRIVAL-STATUS-006\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: The page is reachable from the Overview arrival row\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-A\n- **GIVEN** a plants or wood notification on Overview that is asked whether it has arrived\n- **WHEN** they open the arrival task row\n- **THEN** the arrival-status page is shown\n\n#### Scenario: Save and return to overview saves the choice without continuing the journey\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-B\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they choose a status and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that status still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-C\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they choose a status and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no status chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-ARRIVAL-STATUS-006-D\n- **GIVEN** the user is on the arrival-status page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "summary": "No change to the controls outside an amendment. While amending, the page ends with the amend controls instead.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-003",
+      "requirementName": "The party cards read the address line by line, with no telephone number or email address",
+      "change": "changed",
+      "before": "### Requirement: The contact card shows the selected party's details\n**ID**: REQ-PLANTS-CYA-003\nThe system MUST show the selected consignment contact's name, address, telephone number and email address on the Contact card.\n\n#### Scenario: Contact details appear on the Contact card\n**ID**: SCN-PLANTS-CYA-003-A\n- **GIVEN** a notification has a consignment contact selected\n- **WHEN** the user views check-your-answers\n- **THEN** the Contact card shows that party's name, address lines, telephone number and email address",
+      "after": "### Requirement: The party cards read the address line by line, with no telephone number or email address\n**ID**: REQ-PLANTS-CYA-003\nThe system MUST show, on the Place of destination, Consignor or exporter and Contact cards, a \"Name\" row with the selected party's name and an \"Address\" row reading each address line on its own line followed by the country on its own line, and MUST NOT show a \"Telephone number\" or \"Email address\" row.\n\n#### Scenario: The Contact card reads the contact's address line by line\n**ID**: SCN-PLANTS-CYA-003-A\n- **GIVEN** a notification has a consignment contact selected\n- **WHEN** the user views check-your-answers\n- **THEN** the Contact card has only \"Name\" and \"Address\" rows, the Address row reading each address line on its own line and then the country, and no telephone number or email address is shown\n\n#### Scenario: The Place of destination card reads the address line by line\n**ID**: SCN-PLANTS-CYA-003-B\n- **GIVEN** a notification has a place of destination selected\n- **WHEN** the user views check-your-answers\n- **THEN** the Place of destination card has only \"Name\" and \"Address\" rows, the Address row reading each address line on its own line and then the country\n\n#### Scenario: The Consignor or exporter card has no telephone or email row\n**ID**: SCN-PLANTS-CYA-003-C\n- **GIVEN** a plants-for-planting notification has a consignor selected\n- **WHEN** the user views check-your-answers\n- **THEN** the Consignor or exporter card has only \"Name\" and \"Address\" rows",
+      "summary": "The Place of destination, Consignor or exporter and Contact cards now show only a name and an address.\n\nEach address line, and the country, sits on its own line.\n\nThe telephone number and email address are gone.",
+      "cards": [
+        "review-parties"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-004",
+      "requirementName": "Anything not yet answered, or whose address no longer resolves, is shown as \"Not provided\"",
+      "change": "changed",
+      "before": "### Requirement: Anything not yet answered, or whose address no longer resolves, is shown as \"Not provided\"\n**ID**: REQ-PLANTS-CYA-004\nThe system MUST show \"Not provided\" against any field or party role that has not yet been answered, and MUST show \"Not provided\" for a previously selected party whose address no longer resolves. An unanswered role MUST NOT be shown as an error — an error is reserved for a role whose linked address no longer resolves, as governed by `plants/journey-obligations/review`.\n\n#### Scenario: An unanswered destination reads Not provided, with no error shown\n**ID**: SCN-PLANTS-CYA-004-A\n- **GIVEN** a notification whose place of destination has never been answered\n- **WHEN** the user views check-your-answers\n- **THEN** the destination card's rows each read \"Not provided\", and no error is shown against it\n\n#### Scenario: A deleted destination reads Not provided on every row\n**ID**: SCN-PLANTS-CYA-004-B\n- **GIVEN** a complete draft notification is open on check-your-answers\n- **WHEN** the place-of-destination address is removed from the address book and the page is reloaded\n- **THEN** the Place of destination card's rows each read \"Not provided\", and the removed party's name is not shown",
+      "after": "### Requirement: Anything not yet answered, or whose address no longer resolves, is shown as \"Not provided\"\n**ID**: REQ-PLANTS-CYA-004\nThe system MUST show \"Not provided\" against any field or party role that has not yet been answered, and MUST show \"Not provided\" for a previously selected party whose address no longer resolves. An unanswered role MUST NOT be shown as an error — an error is reserved for a role whose linked address no longer resolves, as governed by `plants/journey-obligations/review`.\n\n#### Scenario: An unanswered destination reads Not provided, with no address error, and is named as outstanding\n**ID**: SCN-PLANTS-CYA-004-A\n- **GIVEN** a notification whose place of destination has never been answered\n- **WHEN** the user views check-your-answers\n- **THEN** the destination card's rows each read \"Not provided\", no address error is shown against it, and the error summary names the place of destination as a task still to complete\n\n#### Scenario: A deleted destination reads Not provided on every row\n**ID**: SCN-PLANTS-CYA-004-B\n- **GIVEN** a complete draft notification is open on check-your-answers\n- **WHEN** the place-of-destination address is removed from the address book and the page is reloaded\n- **THEN** the Place of destination card's rows each read \"Not provided\", and the removed party's name is not shown",
+      "summary": "An unanswered destination still reads \"Not provided\" with no address error. The error summary now also names the place of destination as a task still to complete.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-005",
+      "requirementName": "A Change link returns to check-your-answers",
+      "change": "changed",
+      "before": "### Requirement: A Change link returns to check-your-answers\n**ID**: REQ-PLANTS-CYA-005\nThe system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page.\n\n#### Scenario: Editing an answer via Change returns to check-your-answers with the new value\n**ID**: SCN-PLANTS-CYA-005-A\n- **GIVEN** the user is on check-your-answers\n- **WHEN** they follow a Change link for country of origin, choose a different country and save\n- **THEN** they return to check-your-answers, showing the new country\n- **WHEN** they follow a Change link for a commodity line, change its quantity and save through the commodities list\n- **THEN** they return to check-your-answers, showing the new quantity",
+      "after": "### Requirement: A Change link returns to check-your-answers\n**ID**: REQ-PLANTS-CYA-005\nThe system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's \"Save and return\".\n\n#### Scenario: Editing an answer via Change returns to check-your-answers with the new value\n**ID**: SCN-PLANTS-CYA-005-A\n- **GIVEN** the user is on check-your-answers\n- **WHEN** they follow a Change link for country of origin, choose a different country and save\n- **THEN** they return to check-your-answers, showing the new country\n- **WHEN** they follow a Change link for a commodity line, change its quantity and save through the commodities list\n- **THEN** they return to check-your-answers, showing the new quantity",
+      "summary": "No change for a draft. During an amendment, the save that returns to the review is the page's new \"Save and return\" button.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-006",
+      "requirementName": "A draft notification invites submission and offers Delete notification in its header",
+      "change": "changed",
+      "before": "### Requirement: A draft notification invites submission and withholds post-submission actions\n**ID**: REQ-PLANTS-CYA-006\nThe system MUST invite the user to submit a draft notification, offering a continue action under a \"Now submit your notification\" heading, and MUST NOT offer delete or cancel-amendment while it is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.\n\n#### Scenario: The draft view invites submission and withholds delete and cancel-amendment\n**ID**: SCN-PLANTS-CYA-006-A\n- **GIVEN** a draft notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** it invites them to continue to the declaration to submit\n- **AND** no delete or cancel-amendment action is offered",
+      "after": "### Requirement: A draft notification invites submission and offers Delete notification in its header\n**ID**: REQ-PLANTS-CYA-006\nThe system MUST invite the user to submit a draft notification with a continue action under a \"Now submit your notification\" heading, keeping \"Save and return to overview\" and the Cancel link. It MUST offer a red \"Delete notification\" in the header that opens the delete page, not beside Continue, and MUST NOT offer \"Copy as new\" or cancel-amendment. Lateness warnings are governed by `plants/journey-obligations/review`.\n\n#### Scenario: The draft view invites submission and offers delete in its header\n**ID**: SCN-PLANTS-CYA-006-A\n- **GIVEN** a draft notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** it invites them to continue to the declaration to submit\n- **AND** a red \"Delete notification\" stands in its header and not beside \"Continue\", with \"Save and return to overview\" and the Cancel link at the foot\n- **AND** no \"Copy as new\" or cancel-amendment action is offered\n\n#### Scenario: Delete notification on a draft opens the delete page\n**ID**: SCN-PLANTS-CYA-006-B\n- **GIVEN** a draft notification is open on check-your-answers\n- **WHEN** the user selects \"Delete notification\"\n- **THEN** the delete page for that notification opens",
+      "summary": "A draft's check your answers now offers a red \"Delete notification\" in its header. Before, it offered no delete.\n\nThere is still no \"Copy as new\".",
+      "cards": [
+        "review-draft-header"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-008",
+      "requirementName": "A submitted notification is read-only and offers Amend this notification and Delete notification in its header",
+      "change": "changed",
+      "before": "### Requirement: A submitted notification is read-only and offers delete\n**ID**: REQ-PLANTS-CYA-008\nThe system MUST show a submitted notification read-only — with no Change links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.\n\n#### Scenario: The submitted view is read-only and offers delete\n**ID**: SCN-PLANTS-CYA-008-A\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** the status shown is \"Submitted\"\n- **AND** no Change links and no continue action are offered\n- **AND** a delete action is offered, and no cancel-amendment action is shown\n\n#### Scenario: A submitted notification can be deleted from check-your-answers\n**ID**: SCN-PLANTS-CYA-008-B\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user deletes it and confirms\n- **THEN** they return to the dashboard with the notification no longer listed\n- **AND** a deleted banner is shown",
+      "after": "### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header\n**ID**: REQ-PLANTS-CYA-008\nThe system MUST show a submitted notification read-only, with no Change links and no continue action. It MUST offer in the header a primary \"Amend this notification\" button that submits a form, and a red \"Delete notification\" button that leads to the delete page, not at the foot. It MUST NOT offer \"Copy as new\", or cancel-amendment while no amendment is in progress. What delete does is owned by `plants/notification-lifecycle`.\n\n#### Scenario: The submitted view is read-only and offers delete\n**ID**: SCN-PLANTS-CYA-008-A\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** the status shown is \"Submitted\"\n- **AND** no Change links and no continue action are offered\n- **AND** \"Amend this notification\" and a red \"Delete notification\" are offered in its header, and no \"Copy as new\" or cancel-amendment action is shown\n\n#### Scenario: A submitted notification can be deleted from check-your-answers\n**ID**: SCN-PLANTS-CYA-008-B\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user deletes it and confirms\n- **THEN** they return to the dashboard with the notification no longer listed\n- **AND** a deleted banner is shown\n\n#### Scenario: Amend this notification starts an amendment\n**ID**: SCN-PLANTS-CYA-008-C\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user chooses \"Amend this notification\"\n- **THEN** the notification is being amended",
+      "summary": "A submitted notification's view now has an \"Amend this notification\" button and a red \"Delete notification\" button in its header. Before, it offered only a delete action.\n\nThere is still no \"Copy as new\".",
+      "cards": [
+        "view-actions"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-009",
+      "requirementName": "An amending notification offers cancel-amendment instead of delete",
+      "change": "changed",
+      "before": "### Requirement: An amending notification offers cancel-amendment instead of delete\n**ID**: REQ-PLANTS-CYA-009\nThe system MUST offer a cancel-amendment action on check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.\n\n#### Scenario: Cancel amendment is offered only while amending\n**ID**: SCN-PLANTS-CYA-009-A\n- **GIVEN** a notification is being amended\n- **WHEN** the user views check-your-answers\n- **THEN** a \"Cancel amendment\" action is offered\n- **AND** no delete action is offered\n\n#### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers\n**ID**: SCN-PLANTS-CYA-009-B\n- **GIVEN** a notification is being amended with an edited identification number\n- **WHEN** the user cancels the amendment from check-your-answers and confirms\n- **THEN** they return to a read-only check-your-answers showing the previously submitted answers\n- **AND** a success banner explains the amendment was cancelled\n- **AND** the discarded edit is not shown",
+      "after": "### Requirement: An amending notification offers cancel-amendment instead of delete\n**ID**: REQ-PLANTS-CYA-009\nThe system MUST offer \"Cancel amend\" on check-your-answers while a notification is being amended as a secondary button beside Continue that opens the cancel-amendment confirmation, MUST NOT offer it in the status bar on this page, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.\n\n#### Scenario: Cancel amendment is offered only while amending\n**ID**: SCN-PLANTS-CYA-009-A\n- **GIVEN** a notification is being amended\n- **WHEN** the user views check-your-answers\n- **THEN** \"Cancel amend\" is offered as a secondary button beside \"Continue\"\n- **AND** the status bar offers no \"Cancel amend\"\n- **AND** no delete action is offered\n\n#### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers\n**ID**: SCN-PLANTS-CYA-009-B\n- **GIVEN** a notification is being amended with an edited identification number\n- **WHEN** the user cancels the amendment from check-your-answers and confirms\n- **THEN** they return to a read-only check-your-answers showing the previously submitted answers\n- **AND** a success banner explains the amendment was cancelled\n- **AND** the discarded edit is not shown",
+      "summary": "On an amendment's review, \"Cancel amend\" is now a secondary button beside Continue. Before, it was a \"Cancel amendment\" action.\n\nThe status bar on this page does not offer it.",
+      "cards": [
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-010",
+      "requirementName": "A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list",
+      "change": "changed",
+      "before": "### Requirement: A back link and a save-and-return action open Overview\n**ID**: REQ-PLANTS-CYA-010\nThe system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers.\n\n#### Scenario: Back and save-and-return open Overview\n**ID**: SCN-PLANTS-CYA-010-A\n- **GIVEN** the user is on check-your-answers\n- **WHEN** they follow the back link, or choose save and return\n- **THEN** Overview is shown",
+      "after": "### Requirement: A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list\n**ID**: REQ-PLANTS-CYA-010\nThe system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers for a draft or an amendment, and MUST take them to the plants notification list when they follow the back link from a submitted notification's read-only view.\n\n#### Scenario: Back and save-and-return open Overview\n**ID**: SCN-PLANTS-CYA-010-A\n- **GIVEN** the user is on check-your-answers for a draft\n- **WHEN** they follow the back link, or choose save and return\n- **THEN** Overview is shown\n\n#### Scenario: The submitted view's back link opens the notification list\n**ID**: SCN-PLANTS-CYA-010-B\n- **GIVEN** a submitted notification's read-only view is open\n- **WHEN** the user follows the back link\n- **THEN** the plants notification list is shown",
+      "summary": "Back from a submitted notification's view now goes to the plants notification list. For a draft or an amendment it still goes to Overview.",
+      "cards": [
+        "view-header"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-012",
+      "requirementName": "An unfinished draft names every outstanding task",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: An unfinished draft names every outstanding task\n**ID**: REQ-PLANTS-CYA-012\nThe system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.\n#### Scenario: Viewing an unfinished notification names each outstanding task\n**ID**: SCN-PLANTS-CYA-012-A\n- **GIVEN** a draft notification with one or more tasks not yet complete\n- **WHEN** the user views check-your-answers\n- **THEN** an error summary titled \"There is a problem\" names each task not yet complete\n- **AND** each entry links to that task's page, which returns to check-your-answers once saved\n\n#### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page\n**ID**: SCN-PLANTS-CYA-012-B\n- **GIVEN** a draft notification with a task still to complete is open on check-your-answers\n- **WHEN** the user continues\n- **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it\n- **AND** the declaration is not opened",
+      "summary": "New. An unfinished draft's check your answers lists each task still to do, with a link to it.\n\nPressing Continue keeps the trader on the page.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-013",
+      "requirementName": "An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why\n**ID**: REQ-PLANTS-CYA-013\nWhile a notification is being amended, the system MUST open check-your-answers with no error summary and no error message against any card or role. When the user continues while any answer is incomplete or breaks its rules, the system MUST keep them on check-your-answers, still amending and without opening the declaration, and MUST show the error summary naming what is missing.\n\n#### Scenario: An incomplete amendment's review shows no error\n**ID**: SCN-PLANTS-CYA-013-A\n- **GIVEN** a notification being amended whose arrival date has been cleared and saved\n- **WHEN** the user opens check-your-answers\n- **THEN** no error summary and no error message is shown\n\n#### Scenario: Continuing from an incomplete amendment is refused, naming what is missing\n**ID**: SCN-PLANTS-CYA-013-B\n- **GIVEN** a notification being amended whose arrival date has been cleared and saved\n- **WHEN** the user continues\n- **THEN** they stay on check-your-answers and the error summary names \"Complete arrival details\"\n- **AND** the notification is still being amended\n- **AND** the declaration is not opened",
+      "summary": "New. An amendment's review opens with no errors showing.\n\nPressing Continue on an incomplete amendment keeps the trader on the review, which then names what is missing.",
+      "cards": [
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-014",
+      "requirementName": "A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated\n**ID**: REQ-PLANTS-CYA-014\nA submitted notification's read-only view and a draft's check answers MUST be headed and titled by the notification's reference in place of \"Check your answers\", with its status as a tag and no status bar. Under the heading they MUST show the UK day the notification was submitted (\"Date submitted: <d Month yyyy>\") or, for a draft, created (\"Date created: <d Month yyyy>\"). An amendment MUST keep its \"Check your answers\" heading, title and status bar.\n\n#### Scenario: The submitted view is headed by its reference with a Submitted tag\n**ID**: SCN-PLANTS-CYA-014-A\n- **GIVEN** a notification that has been submitted\n- **WHEN** the user opens its read-only view\n- **THEN** the page heading is the notification's reference number\n- **AND** a \"Submitted\" tag stands beside it\n- **AND** no status bar is shown\n\n#### Scenario: The submitted view's browser title starts with its reference\n**ID**: SCN-PLANTS-CYA-014-B\n- **GIVEN** a notification that has been submitted\n- **WHEN** the user opens its read-only view\n- **THEN** the browser title starts with the reference, before the service name\n\n#### Scenario: The submitted view shows the date it was submitted\n**ID**: SCN-PLANTS-CYA-014-C\n- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026\n- **WHEN** the user opens its read-only view\n- **THEN** under the heading it reads \"Date submitted: 22 July 2026\"\n\n#### Scenario: A draft's check answers is headed by its reference with a Draft tag\n**ID**: SCN-PLANTS-CYA-014-D\n- **GIVEN** a draft notification\n- **WHEN** the user opens its check-your-answers\n- **THEN** the page heading is the notification's reference number\n- **AND** a \"Draft\" tag stands beside it\n- **AND** no status bar is shown\n- **AND** the browser title starts with the reference\n\n#### Scenario: A draft's check answers shows the date it was created\n**ID**: SCN-PLANTS-CYA-014-E\n- **GIVEN** a draft created at 23:30 UTC on 21 July 2026\n- **WHEN** the user opens its check-your-answers\n- **THEN** under the heading it reads \"Date created: 22 July 2026\"\n\n#### Scenario: An amendment's check answers keeps its heading and status bar\n**ID**: SCN-PLANTS-CYA-014-F\n- **GIVEN** a notification is being amended\n- **WHEN** the user views check-your-answers\n- **THEN** the page heading and browser title are \"Check your answers\"\n- **AND** the status bar is shown",
+      "summary": "New. A submitted notification's view and a draft's check your answers are headed by the reference, with a status tag and a date.\n\nThey no longer use the heading \"Check your answers\".\n\nAn amendment keeps its old heading.",
+      "cards": [
+        "view-header",
+        "review-draft-header"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-015",
+      "requirementName": "Opening the view of a notification that does not exist goes to the notification list",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Opening the view of a notification that does not exist goes to the notification list\n**ID**: REQ-PLANTS-CYA-015\nThe system MUST send the user to the plants notification list when they open the view of a notification that does not exist.\n\n#### Scenario: An unknown notification's view opens the notification list\n**ID**: SCN-PLANTS-CYA-015-A\n- **GIVEN** no notification has the reference GBN-HRP-00-000000\n- **WHEN** the user opens that notification's view\n- **THEN** the plants notification list is shown",
+      "summary": "New. Asking to view a notification that does not exist now opens the plants notification list.",
+      "cards": [
+        "view-header"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-016",
+      "requirementName": "A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy\n**ID**: REQ-PLANTS-CYA-016\nOn a submitted notification's read-only view or a draft's check answers, the system MUST show an \"Import reference numbers\" section with the warning \"You must use the correct reference and code on the customs declaration or your consignment will be delayed.\" and a \"Notification reference\" row with the reference, as plain text the user can select with JavaScript on or off. It MUST NOT show a \"Customs document code\" row or any \"Copy\" button.\n\n#### Scenario: The submitted view shows its notification reference\n**ID**: SCN-PLANTS-CYA-016-A\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** an \"Import reference numbers\" section shows the warning \"You must use the correct reference and code on the customs declaration or your consignment will be delayed.\"\n- **AND** it holds a \"Notification reference\" row reading the notification's reference\n\n#### Scenario: Without JavaScript the reference reads as plain text, with no customs document code and no Copy button\n**ID**: SCN-PLANTS-CYA-016-B\n- **GIVEN** JavaScript is off\n- **WHEN** the user opens a submitted notification's view\n- **THEN** the notification reference is shown as text\n- **AND** no \"Customs document code\" row is shown\n- **AND** no \"Copy\" button is shown\n\n#### Scenario: A draft's check answers shows its notification reference\n**ID**: SCN-PLANTS-CYA-016-C\n- **GIVEN** a draft notification is open on check-your-answers\n- **WHEN** the user views it\n- **THEN** an \"Import reference numbers\" section shows the warning \"You must use the correct reference and code on the customs declaration or your consignment will be delayed.\"\n- **AND** it holds a \"Notification reference\" row reading the notification's reference\n- **AND** no \"Customs document code\" row and no \"Copy\" button is shown",
+      "summary": "New. A submitted notification's view and a draft's check your answers show an \"Import reference numbers\" section with the notification reference as text to select.\n\nThere is no customs document code row and no Copy button.",
+      "cards": [
+        "import-reference-numbers"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/check-your-answers",
+      "capabilityName": "High-risk plants: Check your answers page",
+      "requirementId": "REQ-PLANTS-CYA-017",
+      "requirementName": "The error summary names each task still to complete as \"Complete <task>\", once, after any origin or address error",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The error summary names each task still to complete as \"Complete <task>\", once, after any origin or address error\n**ID**: REQ-PLANTS-CYA-017\nEach task still to complete MUST be named in the error summary as \"Complete what you are importing\", \"Complete where this consignment is coming from\", \"Complete arrival details\", \"Complete place of destination\", \"Complete consignor or exporter\", \"Complete identification numbers\" or \"Complete contact address for consignment\". Any country-of-origin or removed-address error MUST be listed first, then the tasks in Overview order. A task already named by such an error MUST NOT be named again.\n\n#### Scenario: An unfinished draft names the missing contact as a task to complete\n**ID**: SCN-PLANTS-CYA-017-A\n- **GIVEN** a draft notification complete except for its contact address\n- **WHEN** the user views check-your-answers\n- **THEN** the error summary reads \"Complete contact address for consignment\"\n\n#### Scenario: A removed destination is named once\n**ID**: SCN-PLANTS-CYA-017-B\n- **GIVEN** a complete draft whose place-of-destination address has been removed from the address book\n- **WHEN** the user continues from check-your-answers\n- **THEN** the error summary names \"Select an address for the place of destination\"\n- **AND** it does not also name \"Complete place of destination\"",
+      "summary": "New. The error summary names each unfinished task as \"Complete\" followed by the task, for example \"Complete arrival details\".\n\nOrigin and removed-address errors come first, and no task is named twice.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/commodities",
+      "capabilityName": "High-risk plants: Commodities list page",
+      "requirementId": "REQ-PLANTS-COMMODITIES-006",
+      "requirementName": "The page ends with its primary action alone, and continuing during the opening sequence leaves the section for origin",
+      "change": "changed",
+      "before": "### Requirement: The page ends with its primary action alone, and continuing leaves the section for origin\n**ID**: REQ-PLANTS-COMMODITIES-006\nThe system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved.\n\n#### Scenario: The page offers only its primary action\n**ID**: SCN-PLANTS-COMMODITIES-006-A\n- **GIVEN** the user is on the commodities list with at least one line saved\n- **WHEN** the page is shown\n- **THEN** only the save-and-continue action is offered\n\n#### Scenario: Continuing with at least one line leaves the section for origin\n**ID**: SCN-PLANTS-COMMODITIES-006-B\n- **GIVEN** the consignment holds at least one commodity line\n- **WHEN** the user saves and continues from the list\n- **THEN** the origin page is shown",
+      "after": "### Requirement: The page ends with its primary action alone, and continuing during the opening sequence leaves the section for origin\n**ID**: REQ-PLANTS-COMMODITIES-006\nThe system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved during the opening sequence. Outside the opening sequence, continuing returns to Overview (`plants/journey-flow` REQ-PLANTS-FLOW-003).\n\n#### Scenario: The page offers only its primary action\n**ID**: SCN-PLANTS-COMMODITIES-006-A\n- **GIVEN** the user is on the commodities list with at least one line saved\n- **WHEN** the page is shown\n- **THEN** only the save-and-continue action is offered\n\n#### Scenario: Continuing with at least one line during the opening sequence leaves the section for origin\n**ID**: SCN-PLANTS-COMMODITIES-006-B\n- **GIVEN** a notification still in its opening sequence whose consignment holds at least one commodity line\n- **WHEN** the user saves and continues from the list\n- **THEN** the origin page is shown",
+      "summary": "Continuing from the commodities list goes to origin only during the opening run. Opened later from Overview, it now returns to Overview.",
+      "cards": [
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/commodity-type",
+      "capabilityName": "High-risk plants: What are you importing page",
+      "requirementId": "REQ-PLANTS-COMMODITY-TYPE-004",
+      "requirementName": "Saving and continuing with no type chosen is refused, focusing the first option",
+      "change": "changed",
+      "before": "### Requirement: Saving with no type chosen is refused, focusing the first option\n**ID**: REQ-PLANTS-COMMODITY-TYPE-004\nThe system MUST refuse to save the page when no type has been chosen, showing an error summary, and MUST focus the first type option when the user follows the error.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first option\n**ID**: SCN-PLANTS-COMMODITY-TYPE-004-A\n- **GIVEN** the user is on the commodity-type page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing commodity type\n- **WHEN** they follow the error\n- **THEN** the first type option is focused",
+      "after": "### Requirement: Saving and continuing with no type chosen is refused, focusing the first option\n**ID**: REQ-PLANTS-COMMODITY-TYPE-004\nThe system MUST refuse to save and continue from the page when no type has been chosen, showing an error summary, and MUST focus the first type option when the user follows the error. It MUST NOT refuse the page for a missing type on save and return to overview.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first option\n**ID**: SCN-PLANTS-COMMODITY-TYPE-004-A\n- **GIVEN** the user is on the commodity-type page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing commodity type\n- **WHEN** they follow the error\n- **THEN** the first type option is focused\n\n#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error\n**ID**: SCN-PLANTS-COMMODITY-TYPE-004-B\n- **GIVEN** the user is on the commodity-type page with nothing chosen\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown",
+      "summary": "A missing commodity type is now refused only on Save and continue. Save and return to overview goes back to Overview with no error.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/commodity-type",
+      "capabilityName": "High-risk plants: What are you importing page",
+      "requirementId": "REQ-PLANTS-COMMODITY-TYPE-005",
+      "requirementName": "The page offers a full set of save controls, being reached directly from Overview",
+      "change": "changed",
+      "before": "### Requirement: The page offers a full set of save controls, being reached directly from Overview\n**ID**: REQ-PLANTS-COMMODITY-TYPE-005\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview commodities task row as well as from creating a new notification.\n\n#### Scenario: The page is reachable from the Overview commodities row\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-A\n- **GIVEN** the user is on Overview with a notification already carrying a commodity type\n- **WHEN** they open the commodities task row\n- **THEN** the commodity-type page is shown\n\n#### Scenario: Save and return to overview saves the choice without continuing the journey\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-B\n- **GIVEN** the user is on the commodity-type page\n- **WHEN** they choose a type and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that type still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-C\n- **GIVEN** the user is on the commodity-type page\n- **WHEN** they choose a type and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no type chosen",
+      "after": "### Requirement: The page offers a full set of save controls, being reached directly from Overview\n**ID**: REQ-PLANTS-COMMODITY-TYPE-005\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview commodities task row as well as from creating a new notification. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: The page is reachable from the Overview commodities row\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-A\n- **GIVEN** the user is on Overview with a notification already carrying a commodity type\n- **WHEN** they open the commodities task row\n- **THEN** the commodity-type page is shown\n\n#### Scenario: Save and return to overview saves the choice without continuing the journey\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-B\n- **GIVEN** the user is on the commodity-type page\n- **WHEN** they choose a type and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that type still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-COMMODITY-TYPE-005-C\n- **GIVEN** the user is on the commodity-type page\n- **WHEN** they choose a type and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no type chosen",
+      "summary": "No change to the controls outside an amendment. While amending, the page ends with the amend controls instead.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/confirmation",
+      "capabilityName": "High-risk plants: Notification submitted page",
+      "requirementId": "REQ-PLANTS-CONFIRMATION-002",
+      "requirementName": "The confirmation page is not shown for a notification that is not currently submitted",
+      "change": "changed",
+      "before": "### Requirement: The confirmation page is not shown for a notification that has not yet been submitted\n**ID**: REQ-PLANTS-CONFIRMATION-002\nThe system MUST redirect a request for the confirmation page to check-your-answers when the notification it names has not been submitted.\n\n#### Scenario: Requesting confirmation for an unsubmitted notification redirects to check-your-answers\n**ID**: SCN-PLANTS-CONFIRMATION-002-A\n- **GIVEN** a notification has been started but not submitted\n- **WHEN** its confirmation page is requested directly\n- **THEN** check-your-answers is shown instead",
+      "after": "### Requirement: The confirmation page is not shown for a notification that is not currently submitted\n**ID**: REQ-PLANTS-CONFIRMATION-002\nThe system MUST redirect a request for the confirmation page to the declaration page when the notification it names is not currently submitted, whether it is a draft or an amendment still to be re-submitted.\n\n#### Scenario: Requesting confirmation for an unsubmitted notification opens the declaration\n**ID**: SCN-PLANTS-CONFIRMATION-002-A\n- **GIVEN** a notification has been started but not submitted\n- **WHEN** its confirmation page is requested directly\n- **THEN** the declaration page is shown instead\n\n#### Scenario: Requesting confirmation while a notification is being amended opens the declaration\n**ID**: SCN-PLANTS-CONFIRMATION-002-B\n- **GIVEN** a submitted notification is being amended and has not been re-submitted\n- **WHEN** its confirmation page is requested directly\n- **THEN** the declaration page is shown instead",
+      "summary": "Opening the submitted page too early now goes to the declaration, not to check your answers. This also applies to an amendment not yet re-submitted.",
+      "cards": [
+        "confirmation-guard"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignment-contact-select",
+      "capabilityName": "High-risk plants: Contact address for consignment page",
+      "requirementId": "REQ-PLANTS-CONTACT-SELECT-001",
+      "requirementName": "The page offers the address book as a paged table, none chosen in advance",
+      "change": "changed",
+      "before": "### Requirement: The page offers the address book as a paged table, none chosen in advance\n**ID**: REQ-PLANTS-CONTACT-SELECT-001\nThe system MUST ask which contact address to use, offering the organisation's address book as a table of rows under Name, Address and Country headings, each row carrying a control to select it and a route to view its details, with a hint that selecting a contact copies their name and address into the notification. The system MUST show one page of results at a time, reporting how many are shown against the total and offering links to the other pages, and MUST leave every address unchosen when the page is first opened.\n\n#### Scenario: The page shows the first page of the address book, none preselected\n**ID**: SCN-PLANTS-CONTACT-SELECT-001-A\n- **GIVEN** the user has reached the contact page without answering it before\n- **WHEN** the page loads\n- **THEN** it shows the first page of the organisation's address book, reporting how many addresses are shown against the total\n- **AND** a record held on a later page is not among the options\n- **AND** a link to the next page of results is offered\n- **AND** no address is shown as chosen, and the copy-on-select hint is shown",
+      "after": "### Requirement: The page offers the address book as a paged table, none chosen in advance\n**ID**: REQ-PLANTS-CONTACT-SELECT-001\nThe system MUST ask which contact address to use, offering the organisation's address book as a table under Name, Address and Country headings, each row with a control to select it and a route to its details, and a hint that selecting copies the contact's name and address into the notification. It MUST show one page of results at a time, reporting how many are shown against the total with links to the other pages, and MUST leave every address unchosen when first opened.\n\n#### Scenario: The page shows the first page of the address book, none preselected\n**ID**: SCN-PLANTS-CONTACT-SELECT-001-A\n- **GIVEN** the user has reached the contact page without answering it before\n- **WHEN** the page loads\n- **THEN** it shows the first page of the organisation's address book, reporting how many addresses are shown against the total\n- **AND** a record held on a later page is not among the options\n- **AND** a link to the next page of results is offered\n- **AND** no address is shown as chosen, and the copy-on-select hint is shown",
+      "summary": "Wording only. The page behaves as before.",
+      "cards": []
+    },
+    {
+      "capability": "plants/journey-pages/consignment-contact-select",
+      "capabilityName": "High-risk plants: Contact address for consignment page",
+      "requirementId": "REQ-PLANTS-CONTACT-SELECT-002",
+      "requirementName": "A chosen contact is accepted, completes the Overview task, and persists",
+      "change": "changed",
+      "before": "### Requirement: A chosen contact is accepted, completes the Overview task, and persists\n**ID**: REQ-PLANTS-CONTACT-SELECT-002\nThe system MUST accept a chosen contact address, return the user to Overview with the contact task Completed, and MUST show that address still chosen when the user returns to the page. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save the chosen address without continuing the journey.\n\n#### Scenario: Choosing a contact saves, completes the task, and persists on return\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-A\n- **GIVEN** the user is on the contact page\n- **WHEN** they choose an address and save and continue\n- **THEN** they reach Overview with the contact task Completed\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Save and return to overview saves the address without continuing\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-B\n- **GIVEN** the user is on the contact page\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview with the contact task Completed\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Choosing a different address replaces the one already saved\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-C\n- **GIVEN** a contact address is already saved\n- **WHEN** the user chooses a different address and saves\n- **THEN** only the new address is shown as chosen",
+      "after": "### Requirement: A chosen contact is accepted, completes the Overview task, and persists\n**ID**: REQ-PLANTS-CONTACT-SELECT-002\nThe system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. After the opening sequence, save-and-continue MUST reach Overview with the contact task Completed; within it, save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-007). Save-and-return-to-overview MUST save the address without continuing the journey.\n\n#### Scenario: Choosing a contact saves, completes the task, and persists on return\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-A\n- **GIVEN** the user is on the contact page after the opening sequence has ended\n- **WHEN** they choose an address and save and continue\n- **THEN** they reach Overview with the contact task Completed\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Save and return to overview saves the address without continuing\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-B\n- **GIVEN** the user is on the contact page of a notification that is not being amended\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview with the contact task Completed\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Choosing a different address replaces the one already saved\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-C\n- **GIVEN** a contact address is already saved\n- **WHEN** the user chooses a different address and saves\n- **THEN** only the new address is shown as chosen\n\n#### Scenario: In the opening sequence, Continue goes to check your answers\n**ID**: SCN-PLANTS-CONTACT-SELECT-002-D\n- **GIVEN** a wood notification in its opening sequence, on the contact page, with arrival details still outstanding\n- **WHEN** the user chooses an address and saves and continues\n- **THEN** check your answers is shown, headed by the notification's reference\n- **AND** its error summary names the outstanding arrival answer",
+      "summary": "In the opening run, Save and continue on the contact page now goes to check your answers, even when something is still owed.\n\nAfter the run it still returns to Overview.",
+      "cards": [
+        "run-ends-on-review",
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignment-contact-select",
+      "capabilityName": "High-risk plants: Contact address for consignment page",
+      "requirementId": "REQ-PLANTS-CONTACT-SELECT-003",
+      "requirementName": "Saving with nothing chosen is allowed and leaves the task incomplete",
+      "change": "changed",
+      "before": "### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete\n**ID**: REQ-PLANTS-CONTACT-SELECT-003\nThe system MUST allow the page to be saved with no address chosen — on either save-and-continue or save-and-return-to-overview — returning the user to Overview without an error, and MUST leave the contact task not yet started.\n\n#### Scenario: A blank save returns to Overview with the task not yet started\n**ID**: SCN-PLANTS-CONTACT-SELECT-003-A\n- **GIVEN** the user is on the contact page with no address chosen\n- **WHEN** they save and continue or save and return to overview\n- **THEN** they reach Overview with no error summary\n- **AND** the contact task shows not yet started\n- **AND** returning to the page still shows no address chosen",
+      "after": "### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete\n**ID**: REQ-PLANTS-CONTACT-SELECT-003\nThe system MUST allow the page to be saved with no address chosen, on either save-and-continue or save-and-return-to-overview, without an error, and MUST leave the contact task not yet started. Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return the user to Overview. Within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).\n\n#### Scenario: A blank save returns to Overview with the task not yet started\n**ID**: SCN-PLANTS-CONTACT-SELECT-003-A\n- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen\n- **WHEN** they save and continue or save and return to overview\n- **THEN** they reach Overview with no error summary\n- **AND** the contact task shows not yet started\n- **AND** returning to the page still shows no address chosen",
+      "summary": "Saving with no contact chosen still returns to Overview after the opening run. During the run, Save and continue goes to check your answers.",
+      "cards": [
+        "run-ends-on-review",
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignment-contact-select",
+      "capabilityName": "High-risk plants: Contact address for consignment page",
+      "requirementId": "REQ-PLANTS-CONTACT-SELECT-005",
+      "requirementName": "Cancel discards a new choice; the back link returns to Overview",
+      "change": "changed",
+      "before": "### Requirement: Cancel discards a new choice; the back link returns to Overview\n**ID**: REQ-PLANTS-CONTACT-SELECT-005\nThe system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview, and MUST return to Overview when they follow the back link.\n\n#### Scenario: Cancel keeps the previously saved choice\n**ID**: SCN-PLANTS-CONTACT-SELECT-005-A\n- **GIVEN** a contact address is already saved\n- **WHEN** the user checks a different address and selects cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the previously saved address still chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-CONTACT-SELECT-005-B\n- **GIVEN** the user is on the contact page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: Cancel discards a new choice; the back link returns to Overview\n**ID**: REQ-PLANTS-CONTACT-SELECT-005\nOutside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST return to Overview when the user follows the back link.\n\n#### Scenario: Cancel keeps the previously saved choice\n**ID**: SCN-PLANTS-CONTACT-SELECT-005-A\n- **GIVEN** a contact address is already saved on a notification that is not being amended\n- **WHEN** the user checks a different address and selects cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the previously saved address still chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-CONTACT-SELECT-005-B\n- **GIVEN** the user is on the contact page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "summary": "While amending, the contact page no longer offers Cancel or Save and return to overview. It uses the amend controls instead.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignor-select",
+      "capabilityName": "High-risk plants: Consignor or exporter page",
+      "requirementId": "REQ-PLANTS-CONSIGNOR-001",
+      "requirementName": "The page asks for a consignor with the searchable address-book picker",
+      "change": "changed",
+      "before": "### Requirement: The page asks for a consignor with the searchable address-book picker\n**ID**: REQ-PLANTS-CONSIGNOR-001\nThe system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, with save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.\n\n#### Scenario: The page presents its caption, heading, description and search\n**ID**: SCN-PLANTS-CONSIGNOR-001-A\n- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification\n- **WHEN** the page loads\n- **THEN** it shows the parties section caption, the heading \"Consignor or exporter\", the sender description, and a search box\n- **AND** the three save controls are offered",
+      "after": "### Requirement: The page asks for a consignor with the searchable address-book picker\n**ID**: REQ-PLANTS-CONSIGNOR-001\nThe system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: The page presents its caption, heading, description and search\n**ID**: SCN-PLANTS-CONSIGNOR-001-A\n- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification that is not being amended\n- **WHEN** the page loads\n- **THEN** it shows the parties section caption, the heading \"Consignor or exporter\", the sender description, and a search box\n- **AND** the three save controls are offered",
+      "summary": "The three save controls are now offered outside an amendment only. While amending, the page uses the amend controls.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignor-select",
+      "capabilityName": "High-risk plants: Consignor or exporter page",
+      "requirementId": "REQ-PLANTS-CONSIGNOR-003",
+      "requirementName": "A chosen consignor is accepted, continues the journey, and persists",
+      "change": "changed",
+      "before": "### Requirement: A chosen consignor is accepted, continues the journey, and persists\n**ID**: REQ-PLANTS-CONSIGNOR-003\nThe system MUST accept a chosen address, continue to identification numbers on save-and-continue, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.\n\n#### Scenario: Choosing a consignor saves, continues to identification numbers, and persists on return\n**ID**: SCN-PLANTS-CONSIGNOR-003-A\n- **GIVEN** the user is on the consignor page\n- **WHEN** they choose an address and save and continue\n- **THEN** they reach identification numbers\n- **AND** returning to the consignor page shows that address still chosen\n\n#### Scenario: Choosing a different address replaces the one already saved\n**ID**: SCN-PLANTS-CONSIGNOR-003-B\n- **GIVEN** a consignor is already saved\n- **WHEN** the user chooses a different address and saves\n- **THEN** only the new address is shown as chosen\n\n#### Scenario: Save and return to overview saves without continuing\n**ID**: SCN-PLANTS-CONSIGNOR-003-C\n- **GIVEN** the user is on the consignor page\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-CONSIGNOR-003-D\n- **GIVEN** the user is on the consignor page\n- **WHEN** they choose an address and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no address chosen",
+      "after": "### Requirement: A chosen consignor is accepted, continues the journey, and persists\n**ID**: REQ-PLANTS-CONSIGNOR-003\nThe system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.\n\n#### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return\n**ID**: SCN-PLANTS-CONSIGNOR-003-A\n- **GIVEN** the user is on the consignor page in the opening sequence\n- **WHEN** they choose an address and save and continue\n- **THEN** they reach identification numbers\n- **AND** returning to the consignor page shows that address still chosen\n\n#### Scenario: Choosing a different address replaces the one already saved\n**ID**: SCN-PLANTS-CONSIGNOR-003-B\n- **GIVEN** a consignor is already saved\n- **WHEN** the user chooses a different address and saves\n- **THEN** only the new address is shown as chosen\n\n#### Scenario: Save and return to overview saves without continuing\n**ID**: SCN-PLANTS-CONSIGNOR-003-C\n- **GIVEN** the user is on the consignor page of a notification that is not being amended\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-CONSIGNOR-003-D\n- **GIVEN** the user is on the consignor page of a notification that is not being amended\n- **WHEN** they choose an address and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no address chosen\n\n#### Scenario: Opened from Overview, saving returns to Overview\n**ID**: SCN-PLANTS-CONSIGNOR-003-E\n- **GIVEN** the consignor page opened from its Overview task\n- **WHEN** the user chooses an address and saves and continues\n- **THEN** Overview is shown, with the consignor task Completed",
+      "summary": "Save and continue goes on to identification numbers only during the opening run. Opened from Overview, it now returns to Overview.",
+      "cards": [
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/consignor-select",
+      "capabilityName": "High-risk plants: Consignor or exporter page",
+      "requirementId": "REQ-PLANTS-CONSIGNOR-004",
+      "requirementName": "Saving with nothing chosen, or after a no-match search, is refused with focused recovery",
+      "change": "changed",
+      "before": "### Requirement: Saving with nothing chosen, or after a no-match search, is refused with focused recovery\n**ID**: REQ-PLANTS-CONSIGNOR-004\nThe system MUST refuse to save when nothing has been chosen, focusing the first address row when the user follows the error, and MUST focus the search field instead when the list is empty after a no-match search. Choosing an address after the error MUST recover.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first row\n**ID**: SCN-PLANTS-CONSIGNOR-004-A\n- **GIVEN** the user is on the consignor page with nothing chosen\n- **WHEN** they save and continue and follow the error\n- **THEN** the first address row is focused\n\n#### Scenario: Saving after a no-match search focuses the search field\n**ID**: SCN-PLANTS-CONSIGNOR-004-B\n- **GIVEN** the user has searched for a term that matched nothing\n- **WHEN** they save and continue and follow the error\n- **THEN** the search field is focused\n\n#### Scenario: Choosing an address after the error recovers\n**ID**: SCN-PLANTS-CONSIGNOR-004-C\n- **GIVEN** the consignor page is showing the nothing-chosen error\n- **WHEN** the user chooses an address and saves\n- **THEN** they continue to identification numbers",
+      "after": "### Requirement: Saving with nothing chosen, or after a no-match search, is refused with focused recovery\n**ID**: REQ-PLANTS-CONSIGNOR-004\nThe system MUST refuse to save when nothing has been chosen, focusing the first address row when the user follows the error, and MUST focus the search field instead when the list is empty after a no-match search. Choosing an address after the error MUST recover.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the first row\n**ID**: SCN-PLANTS-CONSIGNOR-004-A\n- **GIVEN** the user is on the consignor page with nothing chosen\n- **WHEN** they save and continue and follow the error\n- **THEN** the first address row is focused\n\n#### Scenario: Saving after a no-match search focuses the search field\n**ID**: SCN-PLANTS-CONSIGNOR-004-B\n- **GIVEN** the user has searched for a term that matched nothing\n- **WHEN** they save and continue and follow the error\n- **THEN** the search field is focused\n\n#### Scenario: Choosing an address after the error recovers\n**ID**: SCN-PLANTS-CONSIGNOR-004-C\n- **GIVEN** the consignor page, reached in the opening sequence, is showing the nothing-chosen error\n- **WHEN** the user chooses an address and saves\n- **THEN** they continue to identification numbers",
+      "summary": "Wording only. The recovery example is now stated for a page reached in the opening run.\n\nThe rule is unchanged.",
+      "cards": [
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/declaration",
+      "capabilityName": "High-risk plants: Declaration page",
+      "requirementId": "REQ-PLANTS-DECLARATION-006",
+      "requirementName": "The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar\n**ID**: REQ-PLANTS-DECLARATION-006\nThe system MUST offer the confirmation as a small GOV.UK checkbox in a group whose legend \"Declaration confirmation\" is announced to screen-reader users but not shown on screen. It MUST NOT show a status bar above the heading — no \"Draft\" or \"Amend\" tag, no reference number and no \"Cancel amend\" — whether the notification is a draft being submitted for the first time or an amendment being re-submitted.\n\n#### Scenario: A draft's declaration offers a small confirmation in a hidden-legend group and no status bar\n**ID**: SCN-PLANTS-DECLARATION-006-A\n- **GIVEN** a draft notification ready to submit\n- **WHEN** the user opens the declaration\n- **THEN** the confirmation is a small checkbox in a group named \"Declaration confirmation\", whose name is not shown on screen\n- **AND** no status bar is shown above the heading\n\n#### Scenario: An amendment's declaration shows no status bar\n**ID**: SCN-PLANTS-DECLARATION-006-B\n- **GIVEN** a notification is being amended\n- **WHEN** the user continues from check your answers to the declaration\n- **THEN** no status bar, reference number or \"Cancel amend\" is shown above the heading",
+      "summary": "New. The declaration checkbox is now the smaller GOV.UK style, in a group that only screen readers hear named.\n\nThe page shows no Draft or Amend tag, reference or Cancel amend above its heading.",
+      "cards": [
+        "declaration"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/identification-numbers",
+      "capabilityName": "High-risk plants: Identification numbers page",
+      "requirementId": "REQ-PLANTS-IDENT-NUMBERS-001",
+      "requirementName": "The page shows only the identification fields in scope for the commodity type",
+      "change": "changed",
+      "before": "### Requirement: The page shows only the identification fields in scope for the commodity type\n**ID**: REQ-PLANTS-IDENT-NUMBERS-001\nThe system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.\n\n#### Scenario: Plants for planting shows supplier and consignment only\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-A\n- **GIVEN** a plants-for-planting notification\n- **WHEN** the identification numbers page loads\n- **THEN** the supplier and consignment number fields are shown\n- **AND** the producer and crop fields are not shown\n\n#### Scenario: Potatoes shows producer, crop and consignment only\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-B\n- **GIVEN** a potatoes notification\n- **WHEN** the identification numbers page loads\n- **THEN** the producer, crop and consignment number fields are shown\n- **AND** the supplier field is not shown\n\n#### Scenario: Wood and cut trees shows only the optional consignment number\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-C\n- **GIVEN** a wood-and-cut-trees notification\n- **WHEN** the identification numbers page loads\n- **THEN** only the consignment number field is shown",
+      "after": "### Requirement: The page shows only the identification fields in scope for the commodity type\n**ID**: REQ-PLANTS-IDENT-NUMBERS-001\nThe system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: Plants for planting shows supplier and consignment only\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-A\n- **GIVEN** a plants-for-planting notification\n- **WHEN** the identification numbers page loads\n- **THEN** the supplier and consignment number fields are shown\n- **AND** the producer and crop fields are not shown\n\n#### Scenario: Potatoes shows producer, crop and consignment only\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-B\n- **GIVEN** a potatoes notification\n- **WHEN** the identification numbers page loads\n- **THEN** the producer, crop and consignment number fields are shown\n- **AND** the supplier field is not shown\n\n#### Scenario: Wood and cut trees shows only the optional consignment number\n**ID**: SCN-PLANTS-IDENT-NUMBERS-001-C\n- **GIVEN** a wood-and-cut-trees notification\n- **WHEN** the identification numbers page loads\n- **THEN** only the consignment number field is shown",
+      "summary": "No change to the fields or to the controls outside an amendment. While amending, the page ends with the amend controls instead.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/identification-numbers",
+      "capabilityName": "High-risk plants: Identification numbers page",
+      "requirementId": "REQ-PLANTS-IDENT-NUMBERS-003",
+      "requirementName": "Mandatory fields, length and consignment syntax are enforced",
+      "change": "changed",
+      "before": "### Requirement: Mandatory fields, length and consignment syntax are enforced\n**ID**: REQ-PLANTS-IDENT-NUMBERS-003\nThe system MUST refuse to save when a mandatory field on offer is blank or longer than 58 characters, MUST refuse a consignment number longer than 58 characters or containing characters other than letters, numbers and underscores, and MUST focus the named field when the user follows the resulting error.\n\n#### Scenario: A blank mandatory field is refused and its error focuses the field\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-A\n- **GIVEN** the user is on identification numbers with a mandatory field on offer\n- **WHEN** they leave that field blank and save and continue, then follow the error\n- **THEN** that field is focused\n\n#### Scenario: A value longer than 58 characters is refused\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-B\n- **GIVEN** the user enters more than 58 characters in an identification field on offer\n- **WHEN** they save and continue and follow the error\n- **THEN** that field is focused, still holding the over-long value\n\n#### Scenario: A consignment number with disallowed characters is refused\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-C\n- **GIVEN** the user enters a consignment number containing characters other than letters, numbers or underscores\n- **WHEN** they save and continue and follow the error\n- **THEN** the consignment number field is focused",
+      "after": "### Requirement: Mandatory fields, length and consignment syntax are enforced\n**ID**: REQ-PLANTS-IDENT-NUMBERS-003\nThe system MUST refuse to save and continue when a mandatory field on offer is blank, MUST NOT refuse the page for a blank mandatory field on save and return to overview, MUST refuse on either save control a field longer than 58 characters and a consignment number containing characters other than letters, numbers and underscores, and MUST focus the named field when the user follows the resulting error.\n\n#### Scenario: A blank mandatory field is refused and its error focuses the field\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-A\n- **GIVEN** the user is on identification numbers with a mandatory field on offer\n- **WHEN** they leave that field blank and save and continue, then follow the error\n- **THEN** that field is focused\n\n#### Scenario: A value longer than 58 characters is refused\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-B\n- **GIVEN** the user enters more than 58 characters in an identification field on offer\n- **WHEN** they save and continue and follow the error\n- **THEN** that field is focused, still holding the over-long value\n\n#### Scenario: A consignment number with disallowed characters is refused\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-C\n- **GIVEN** the user enters a consignment number containing characters other than letters, numbers or underscores\n- **WHEN** they save and continue and follow the error\n- **THEN** the consignment number field is focused\n\n#### Scenario: Save and return to overview with a mandatory field blank reaches Overview without an error\n**ID**: SCN-PLANTS-IDENT-NUMBERS-003-D\n- **GIVEN** the user is on identification numbers with a mandatory field on offer\n- **WHEN** they leave that field blank and save and return to overview\n- **THEN** they return to Overview with no error shown",
+      "summary": "A blank required field is now refused only on Save and continue. Save and return to overview saves it with no error.\n\nToo-long values and a badly formed consignment number are still refused on both buttons.",
+      "cards": [
+        "soft-save",
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/identification-numbers",
+      "capabilityName": "High-risk plants: Identification numbers page",
+      "requirementId": "REQ-PLANTS-IDENT-NUMBERS-004",
+      "requirementName": "Save-and-return saves; cancel discards later edits; back returns to Overview",
+      "change": "changed",
+      "before": "### Requirement: Save-and-return saves; cancel discards later edits; back returns to Overview\n**ID**: REQ-PLANTS-IDENT-NUMBERS-004\nThe system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST return to Overview on the back link.\n\n#### Scenario: Save and return to overview keeps the values; cancel discards later edits\n**ID**: SCN-PLANTS-IDENT-NUMBERS-004-A\n- **GIVEN** the user has saved values via save-and-return-to-overview\n- **WHEN** they reopen the page, change the values, and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the previously saved values, not the discarded edits\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-IDENT-NUMBERS-004-B\n- **GIVEN** the user is on identification numbers\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: Save-and-return saves; cancel discards later edits; back returns to Overview\n**ID**: REQ-PLANTS-IDENT-NUMBERS-004\nThe system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST return to Overview on the back link. While the notification is being amended, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).\n\n#### Scenario: Save and return to overview keeps the values; cancel discards later edits\n**ID**: SCN-PLANTS-IDENT-NUMBERS-004-A\n- **GIVEN** the user has saved values via save-and-return-to-overview\n- **WHEN** they reopen the page, change the values, and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows the previously saved values, not the discarded edits\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-IDENT-NUMBERS-004-B\n- **GIVEN** the user is on identification numbers\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "summary": "While amending, the page no longer offers a cancel control. Outside an amendment nothing changes.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/origin",
+      "capabilityName": "High-risk plants: Origin of the import page",
+      "requirementId": "REQ-PLANTS-ORIGIN-001",
+      "requirementName": "The page asks for the country of origin",
+      "change": "changed",
+      "before": "### Requirement: The page asks for the country of origin\n**ID**: REQ-PLANTS-ORIGIN-001\nThe system MUST ask the user for the country of origin, offering a searchable country field with a hint to start typing, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.\n\n#### Scenario: The page presents its question and controls unanswered\n**ID**: SCN-PLANTS-ORIGIN-001-A\n- **GIVEN** the user has reached the origin of the import page without answering it before\n- **WHEN** the page loads\n- **THEN** it asks for the country of origin with a searchable field and a save-and-continue action\n- **AND** no country is shown as chosen",
+      "after": "### Requirement: The page asks for the country of origin\n**ID**: REQ-PLANTS-ORIGIN-001\nThe system MUST ask the user for the country of origin, offering a searchable country field labelled \"Country of origin\" with no hint, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.\n\n#### Scenario: The page presents its question and controls unanswered\n**ID**: SCN-PLANTS-ORIGIN-001-A\n- **GIVEN** the user has reached the origin of the import page without answering it before\n- **WHEN** the page loads\n- **THEN** it asks for the country of origin with a searchable field and a save-and-continue action\n- **AND** no country is shown as chosen",
+      "summary": "The country of origin question no longer has the hint to start typing.",
+      "cards": [
+        "origin-country-box"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/origin",
+      "capabilityName": "High-risk plants: Origin of the import page",
+      "requirementId": "REQ-PLANTS-ORIGIN-003",
+      "requirementName": "The country field offers a placeholder and every origin country the service primes, and submits a country code",
+      "change": "changed",
+      "before": "### Requirement: The country field offers a placeholder and every origin country the service primes, and submits a country code\n**ID**: REQ-PLANTS-ORIGIN-003\nThe system MUST offer a placeholder inviting the user to select a country ahead of every origin country the service primes, and MUST submit the chosen country's code rather than the text typed into the search field.\n\n#### Scenario: The country list holds a placeholder ahead of the primed origin countries\n**ID**: SCN-PLANTS-ORIGIN-003-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** its first entry invites the user to select a country, and it holds every origin country the service primes besides\n\n#### Scenario: Choosing a country submits and keeps its code\n**ID**: SCN-PLANTS-ORIGIN-003-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and save the page\n- **THEN** the country's code is what the notification keeps, not the text typed into the search field",
+      "after": "### Requirement: The country field offers a placeholder and every origin country the service primes, and submits a country code\n**ID**: REQ-PLANTS-ORIGIN-003\nThe system MUST offer a placeholder inviting the user to select a country ahead of every origin country the service primes, and MUST submit the chosen country's code rather than the text typed into the search field, taking those countries and their names from the reference data service's SPS origin block, in the order it serves them.\n\n#### Scenario: The country list holds a placeholder ahead of the primed origin countries\n**ID**: SCN-PLANTS-ORIGIN-003-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** its first entry invites the user to select a country, and it holds every origin country the service primes besides\n\n#### Scenario: Choosing a country submits and keeps its code\n**ID**: SCN-PLANTS-ORIGIN-003-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and save the page\n- **THEN** the country's code is what the notification keeps, not the text typed into the search field\n\n#### Scenario: The country list holds the reference data service's SPS origin countries, in its order\n**ID**: SCN-PLANTS-ORIGIN-003-C\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** besides the placeholder it holds exactly the countries the reference data service serves for the SPS origin block, by their served names, in the order it serves them",
+      "summary": "The country list is now exactly the countries the reference data service serves for the SPS origin block, with their served names, in its order.",
+      "cards": [
+        "stub-lists"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/origin",
+      "capabilityName": "High-risk plants: Origin of the import page",
+      "requirementId": "REQ-PLANTS-ORIGIN-007",
+      "requirementName": "Saving and continuing without a country is refused, focusing the field",
+      "change": "changed",
+      "before": "### Requirement: Saving without a country is refused, focusing the field\n**ID**: REQ-PLANTS-ORIGIN-007\nThe system MUST refuse to save the origin page when no country has been chosen, showing an error that names the missing country of origin, and MUST focus the country field when the user follows the error.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the field\n**ID**: SCN-PLANTS-ORIGIN-007-A\n- **GIVEN** the user is on the origin of the import page with no country chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing country of origin\n- **WHEN** they follow the error\n- **THEN** the country field is focused",
+      "after": "### Requirement: Saving and continuing without a country is refused, focusing the field\n**ID**: REQ-PLANTS-ORIGIN-007\nThe system MUST refuse to save and continue from the origin page when no country has been chosen, showing an error that names the missing country of origin, and MUST focus the country field when the user follows the error. It MUST NOT refuse the page for a missing country on save and return to overview.\n\n#### Scenario: Saving with nothing chosen shows the error and focuses the field\n**ID**: SCN-PLANTS-ORIGIN-007-A\n- **GIVEN** the user is on the origin of the import page with no country chosen\n- **WHEN** they save and continue\n- **THEN** an error summary is shown, naming the missing country of origin\n- **WHEN** they follow the error\n- **THEN** the country field is focused\n\n#### Scenario: Save and return to overview with no country chosen reaches Overview without an error\n**ID**: SCN-PLANTS-ORIGIN-007-B\n- **GIVEN** the user is on the origin of the import page with no country chosen\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown",
+      "summary": "A missing country is now refused only on Save and continue. Save and return to overview goes back to Overview with no error.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/origin",
+      "capabilityName": "High-risk plants: Origin of the import page",
+      "requirementId": "REQ-PLANTS-ORIGIN-009",
+      "requirementName": "The page offers a full set of save controls and is reachable from Overview",
+      "change": "changed",
+      "before": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ORIGIN-009\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row.\n\n#### Scenario: The page is reachable from the Overview origin row\n**ID**: SCN-PLANTS-ORIGIN-009-A\n- **GIVEN** the user is on Overview with a notification that has reached origin\n- **WHEN** they open the origin task row\n- **THEN** the origin of the import page is shown\n\n#### Scenario: Save and return to overview saves the country without continuing the journey\n**ID**: SCN-PLANTS-ORIGIN-009-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that country still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ORIGIN-009-C\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no country chosen",
+      "after": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-ORIGIN-009\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.\n\n#### Scenario: The page is reachable from the Overview origin row\n**ID**: SCN-PLANTS-ORIGIN-009-A\n- **GIVEN** the user is on Overview with a notification that has reached origin\n- **WHEN** they open the origin task row\n- **THEN** the origin of the import page is shown\n\n#### Scenario: Save and return to overview saves the country without continuing the journey\n**ID**: SCN-PLANTS-ORIGIN-009-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that country still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-ORIGIN-009-C\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no country chosen",
+      "summary": "No change to the controls outside an amendment. While amending, the page ends with the amend controls instead.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/origin",
+      "capabilityName": "High-risk plants: Origin of the import page",
+      "requirementId": "REQ-PLANTS-ORIGIN-012",
+      "requirementName": "The country question carries no hint, and its empty search box invites a search",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The country question carries no hint, and its empty search box invites a search\n**ID**: REQ-PLANTS-ORIGIN-012\nThe system MUST ask \"Country of origin\" with no hint text, with or without JavaScript, and MUST keep its own country list, guidance and errors. With JavaScript the empty search box MUST show the placeholder \"Search for a country\"; without JavaScript the country list MUST begin with its blank \"Select a country\" entry, and choosing a country there MUST save it.\n\n#### Scenario: With JavaScript, the empty search box shows \"Search for a country\" and no hint\n**ID**: SCN-PLANTS-ORIGIN-012-A\n- **GIVEN** the user has reached the origin of the import page with JavaScript available and no country chosen\n- **WHEN** the page loads\n- **THEN** the country field, labelled \"Country of origin\", shows the placeholder \"Search for a country\"\n- **AND** no hint text is shown for the country question\n\n#### Scenario: Without JavaScript, the country list begins with \"Select a country\", shows no hint, and saves the chosen country\n**ID**: SCN-PLANTS-ORIGIN-012-B\n- **GIVEN** the user has reached the origin of the import page without JavaScript\n- **WHEN** they read the country list, choose a country from it and save and continue\n- **THEN** the list, labelled \"Country of origin\", began with its blank \"Select a country\" entry and no hint text was shown\n- **AND** returning to the page shows that country chosen",
+      "summary": "New. The country question has no hint.\n\nWith JavaScript the empty box shows \"Search for a country\". Without JavaScript the list starts with \"Select a country\".",
+      "cards": [
+        "origin-country-box"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/overview",
+      "capabilityName": "High-risk plants: Overview page",
+      "requirementId": "REQ-PLANTS-OVERVIEW-005",
+      "requirementName": "Overview's numbered groups are named regions inside one task list region",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Overview's numbered groups are named regions inside one task list region\n**ID**: REQ-PLANTS-OVERVIEW-005\nThe system MUST mark each numbered task group on Overview, with its heading and task list, as a region named by that heading, MUST hold the groups together in one region named \"Notification tasklist\", and MUST NOT show \"Notification tasklist\" as a visible heading.\n\n#### Scenario: Each group is a named region inside the Notification tasklist region\n**ID**: SCN-PLANTS-OVERVIEW-005-A\n- **GIVEN** a new notification has just been started\n- **WHEN** the user views Overview\n- **THEN** the four numbered groups are each a region named by their heading, for example \"1. About the consignment\"\n- **AND** all four sit inside one region named \"Notification tasklist\"\n- **AND** no \"Notification tasklist\" text or heading is shown on the page",
+      "summary": "New. Nothing changes on screen.\n\nScreen reader users can now jump between Overview's numbered groups, which are named regions inside one \"Notification tasklist\" region.",
+      "cards": [
+        "overview-regions"
+      ]
+    },
+    {
+      "capability": "plants/journey-pages/place-of-destination",
+      "capabilityName": "High-risk plants: Place of destination page",
+      "requirementId": "REQ-PLANTS-PLACE-OF-DESTINATION-007",
+      "requirementName": "The page offers a full set of save controls and is reachable from Overview",
+      "change": "changed",
+      "before": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007\nThe system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview destination task row.\n\n#### Scenario: The page is reachable from the Overview destination row\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A\n- **GIVEN** the user is on Overview with a notification that has reached destination\n- **WHEN** they open the destination task row\n- **THEN** the place of destination page is shown\n\n#### Scenario: Save and return to overview saves the address without continuing the journey\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-B\n- **GIVEN** the user is on the place of destination page\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-C\n- **GIVEN** the user is on the place of destination page\n- **WHEN** they choose an address and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no address chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-D\n- **GIVEN** the user is on the place of destination page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The page offers a full set of save controls and is reachable from Overview\n**ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007\nOutside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview destination task row.\n\n#### Scenario: The page is reachable from the Overview destination row\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A\n- **GIVEN** the user is on Overview with a notification that has reached destination\n- **WHEN** they open the destination task row\n- **THEN** the place of destination page is shown\n\n#### Scenario: Save and return to overview saves the address without continuing the journey\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-B\n- **GIVEN** the user is on the place of destination page of a notification that is not being amended\n- **WHEN** they choose an address and select save-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows that address still chosen\n\n#### Scenario: Cancel and return to overview reaches Overview without saving\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-C\n- **GIVEN** the user is on the place of destination page of a notification that is not being amended\n- **WHEN** they choose an address and select cancel-and-return-to-overview\n- **THEN** they reach Overview\n- **AND** returning to the page shows no address chosen\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-D\n- **GIVEN** the user is on the place of destination page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "summary": "The three save controls are now offered outside an amendment only. While amending, the page uses the amend controls.",
+      "cards": [
+        "amend-endings"
+      ]
+    },
+    {
+      "capability": "plants/notification-dashboard",
+      "capabilityName": "High-risk plants: Notification dashboard",
+      "requirementId": "REQ-PLANTS-DASH-004",
+      "requirementName": "The actions offered on a card depend on the notification's status",
+      "change": "changed",
+      "before": "### Requirement: The actions offered on a card depend on the notification's status\n**ID**: REQ-PLANTS-DASH-004\nThe system MUST offer resume and delete on a draft notification's card without offering view or amend, MUST offer view, amend and delete on a submitted notification's card, and MUST offer resume, cancel-amendment and delete on a card being amended. The system MUST NOT offer a copy-as-new action on any card.\n\n#### Scenario: A draft notification's card offers resume and delete\n**ID**: SCN-PLANTS-DASH-004-A\n- **GIVEN** a draft notification exists\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows a \"Draft\" status, offering resume and delete actions\n- **AND** no view, amend or copy-as-new action is offered\n\n#### Scenario: A submitted notification's card offers view, amend and delete\n**ID**: SCN-PLANTS-DASH-004-B\n- **GIVEN** a submitted notification exists\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows a \"Submitted\" status, offering view, amend and delete actions\n\n#### Scenario: A notification being amended offers resume and cancel-amendment\n**ID**: SCN-PLANTS-DASH-004-C\n- **GIVEN** an amendment has been started on a submitted notification\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows an \"Amending\" status, offering resume and cancel-amendment actions",
+      "after": "### Requirement: The actions offered on a card depend on the notification's status\n**ID**: REQ-PLANTS-DASH-004\nThe system MUST offer resume and delete on a draft notification's card without offering view or amend, MUST offer view, amend and delete on a submitted notification's card, and MUST offer resume, cancel-amendment and delete on a card being amended. The system MUST NOT offer a copy-as-new action on any card.\n\n#### Scenario: A draft notification's card offers resume and delete\n**ID**: SCN-PLANTS-DASH-004-A\n- **GIVEN** a draft notification exists\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows a \"Draft\" status, offering resume and delete actions\n- **AND** no view, amend or copy-as-new action is offered\n\n#### Scenario: A submitted notification's card offers view, amend and delete\n**ID**: SCN-PLANTS-DASH-004-B\n- **GIVEN** a submitted notification exists\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows a \"Submitted\" status, offering view, amend and delete actions\n\n#### Scenario: A notification being amended offers resume and cancel-amendment\n**ID**: SCN-PLANTS-DASH-004-C\n- **GIVEN** an amendment has been started on a submitted notification\n- **WHEN** the user searches the dashboard for its reference number\n- **THEN** its card shows an \"Amend\" status, offering resume and cancel-amendment actions",
+      "summary": "A notification being amended now shows the status \"Amend\" on its dashboard card. Before, it read \"Amending\".",
+      "cards": [
+        "amend-bar"
+      ]
+    },
+    {
+      "capability": "plants/notification-lifecycle",
+      "capabilityName": "High-risk plants: Notification lifecycle",
+      "requirementId": "REQ-PLANTS-LIFECYCLE-001",
+      "requirementName": "A notification moves through a fixed lifecycle as the user acts on it",
+      "change": "changed",
+      "before": "### Requirement: A notification moves through a fixed lifecycle as the user acts on it\n**ID**: REQ-PLANTS-LIFECYCLE-001\nThe system MUST move a notification through Draft, Submitted, Amend, and Deleted as it is created, submitted, amended, and removed. The state recorded as Amend MUST be shown to the user as \"Amending\" wherever a notification's state is displayed.\n\n#### Scenario: A full lifecycle walk moves the notification through each status in turn\n**ID**: SCN-PLANTS-LIFECYCLE-001-A\n- **GIVEN** a new notification has just been created\n- **WHEN** it is submitted, then an amendment is started on it, then that amendment is cancelled, then it is soft-deleted\n- **THEN** the notification's status is Draft, then Submitted, then Amend, then Submitted again, then Deleted, at each corresponding step",
+      "after": "### Requirement: A notification moves through a fixed lifecycle as the user acts on it\n**ID**: REQ-PLANTS-LIFECYCLE-001\nThe system MUST move a notification through Draft, Submitted, Amend, and Deleted as it is created, submitted, amended, and removed. The state recorded as Amend MUST be shown to the user as \"Amend\" wherever a notification's state is displayed.\n\n#### Scenario: A full lifecycle walk moves the notification through each status in turn\n**ID**: SCN-PLANTS-LIFECYCLE-001-A\n- **GIVEN** a new notification has just been created\n- **WHEN** it is submitted, then an amendment is started on it, then that amendment is cancelled, then it is soft-deleted\n- **THEN** the notification's status is Draft, then Submitted, then Amend, then Submitted again, then Deleted, at each corresponding step",
+      "summary": "The status shown to the trader while amending is now \"Amend\". Before, it was \"Amending\".",
+      "cards": [
+        "amend-bar"
+      ]
+    },
+    {
+      "capability": "plants/notification-lifecycle",
+      "capabilityName": "High-risk plants: Notification lifecycle",
+      "requirementId": "REQ-PLANTS-LIFECYCLE-005",
+      "requirementName": "Amending a submitted notification re-enters it at Overview",
+      "change": "changed",
+      "before": "### Requirement: Amending a submitted notification re-enters it at Overview\n**ID**: REQ-PLANTS-LIFECYCLE-005\nThe system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked \"Amending\".\n\n#### Scenario: Starting an amendment opens Overview with editing enabled\n**ID**: SCN-PLANTS-LIFECYCLE-005-A\n- **GIVEN** a submitted notification exists\n- **WHEN** the user starts an amendment on it from the dashboard\n- **THEN** they land on Overview, with the notification's status shown as \"Amending\"",
+      "after": "### Requirement: Amending a submitted notification re-enters it at Overview\n**ID**: REQ-PLANTS-LIFECYCLE-005\nThe system MUST let the user start an amendment on a submitted notification from the dashboard or from the notification's read-only view, re-entering the notification at Overview with editing enabled and marked \"Amend\".\n\n#### Scenario: Starting an amendment opens Overview with editing enabled\n**ID**: SCN-PLANTS-LIFECYCLE-005-A\n- **GIVEN** a submitted notification exists\n- **WHEN** the user starts an amendment on it from the dashboard\n- **THEN** they land on Overview, with the notification's status shown as \"Amend\"\n\n#### Scenario: Starting an amendment from the read-only view opens Overview\n**ID**: SCN-PLANTS-LIFECYCLE-005-B\n- **GIVEN** a submitted notification's read-only view is open\n- **WHEN** the user chooses \"Amend this notification\"\n- **THEN** they land on Overview, with the notification's status shown as \"Amend\"",
+      "summary": "A trader can now start an amendment from the submitted notification's own view as well as from the dashboard. The status reads \"Amend\", not \"Amending\".",
+      "cards": [
+        "view-actions",
+        "amend-bar"
+      ]
+    },
+    {
+      "capability": "plants/notification-lifecycle",
+      "capabilityName": "High-risk plants: Notification lifecycle",
+      "requirementId": "REQ-PLANTS-LIFECYCLE-007",
+      "requirementName": "An in-progress amendment can be cancelled, discarding its edits",
+      "change": "changed",
+      "before": "### Requirement: An in-progress amendment can be cancelled, discarding its edits\n**ID**: REQ-PLANTS-LIFECYCLE-007\nThe system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.\n\n#### Scenario: A Cancel amendment option is offered while amending\n**ID**: SCN-PLANTS-LIFECYCLE-007-A\n- **GIVEN** a notification is being amended\n- **WHEN** the user views it on the dashboard or check-your-answers\n- **THEN** a \"Cancel amendment\" option is shown alongside its \"Amending\" status\n\n#### Scenario: Choosing to cancel asks for confirmation before discarding anything\n**ID**: SCN-PLANTS-LIFECYCLE-007-B\n- **GIVEN** a notification is being amended\n- **WHEN** the user selects \"Cancel amendment\"\n- **THEN** a confirmation page asks whether to cancel this amendment, with options to confirm or reject\n\n#### Scenario: Declining the confirmation keeps the amendment in progress\n**ID**: SCN-PLANTS-LIFECYCLE-007-C\n- **GIVEN** the user has opened the cancel-amendment confirmation page\n- **WHEN** they decline to cancel\n- **THEN** they return to the notification, still \"Amending\", with its edits intact\n\n#### Scenario: Confirming the cancellation restores the submitted answers\n**ID**: SCN-PLANTS-LIFECYCLE-007-D\n- **GIVEN** the user has changed an answer while amending and then opened the cancel-amendment confirmation page\n- **WHEN** they confirm the cancellation\n- **THEN** a message confirms the amendment was cancelled and the submitted version restored\n- **AND** the notification's status shows \"Submitted\" again, with the changed answer reverted and no Change links shown",
+      "after": "### Requirement: An in-progress amendment can be cancelled, discarding its edits\n**ID**: REQ-PLANTS-LIFECYCLE-007\nThe system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.\n\nWhile amending, a status bar above each page's caption and heading MUST offer a \"Cancel amend\" link to that confirmation, with or without JavaScript, except on the confirmation page itself, on the declaration page, which shows no status bar at all, and on check-your-answers, which offers its own \"Cancel amend\" button beside Continue.\n\n#### Scenario: A Cancel amend option is offered while amending\n**ID**: SCN-PLANTS-LIFECYCLE-007-A\n- **GIVEN** a notification is being amended\n- **WHEN** the user views it on the dashboard, Overview, check-your-answers or any question page\n- **THEN** the dashboard shows a \"Cancel amendment\" action alongside its \"Amend\" status\n- **AND** on Overview and any question page a status bar above the caption and heading shows \"Amend\", the reference number and \"Cancel amend\"\n- **AND** on check-your-answers \"Cancel amend\" is a button beside Continue\n\n#### Scenario: Choosing to cancel asks for confirmation before discarding anything\n**ID**: SCN-PLANTS-LIFECYCLE-007-B\n- **GIVEN** a notification is being amended\n- **WHEN** the user selects \"Cancel amendment\" or \"Cancel amend\"\n- **THEN** a confirmation page asks whether to cancel this amendment, with options to confirm or reject\n\n#### Scenario: Declining the confirmation keeps the amendment in progress\n**ID**: SCN-PLANTS-LIFECYCLE-007-C\n- **GIVEN** the user has opened the cancel-amendment confirmation page\n- **WHEN** they decline to cancel\n- **THEN** they return to the notification, still \"Amend\", with its edits intact\n\n#### Scenario: Confirming the cancellation restores the submitted answers\n**ID**: SCN-PLANTS-LIFECYCLE-007-D\n- **GIVEN** the user has changed an answer while amending and then opened the cancel-amendment confirmation page\n- **WHEN** they confirm the cancellation\n- **THEN** a message confirms the amendment was cancelled and the submitted version restored\n- **AND** the notification's status shows \"Submitted\" again, with the changed answer reverted and no Change links shown\n\n#### Scenario: Cancel amend on a question page opens the confirmation page\n**ID**: SCN-PLANTS-LIFECYCLE-007-E\n- **GIVEN** a notification is being amended and the user is on a question page\n- **WHEN** the user selects \"Cancel amend\" in the status bar\n- **THEN** the cancel-amendment confirmation page opens\n- **AND** declining returns to the notification, still \"Amend\"\n\n#### Scenario: Cancel amend works without JavaScript\n**ID**: SCN-PLANTS-LIFECYCLE-007-F\n- **GIVEN** JavaScript is off and the notification is being amended\n- **WHEN** the user selects \"Cancel amend\" on a question page and confirms\n- **THEN** the notification shows \"Submitted\" with its submitted answers restored\n\n#### Scenario: A draft offers no Cancel amend\n**ID**: SCN-PLANTS-LIFECYCLE-007-G\n- **GIVEN** a draft notification\n- **WHEN** the user views Overview or a question page\n- **THEN** the status bar shows \"Draft\" and the reference, and no \"Cancel amend\"",
+      "summary": "While amending, a status bar above the heading on Overview and every question page now shows \"Amend\", the reference and a \"Cancel amend\" link.\n\nThis works with or without JavaScript.\n\nA draft shows \"Draft\" and no Cancel amend.",
+      "cards": [
+        "amend-bar",
+        "amend-review"
+      ]
+    },
+    {
+      "capability": "plants/notification-lifecycle",
+      "capabilityName": "High-risk plants: Notification lifecycle",
+      "requirementId": "REQ-PLANTS-LIFECYCLE-008",
+      "requirementName": "A draft or submitted notification can be deleted after confirmation",
+      "change": "changed",
+      "before": "### Requirement: A draft or submitted notification can be deleted after confirmation\n**ID**: REQ-PLANTS-LIFECYCLE-008\nThe system MUST let the user delete a draft from the dashboard, and a submitted notification from check-your-answers, each after confirming, removing it from the dashboard listing.\n\n#### Scenario: Deleting a draft removes it from the dashboard\n**ID**: SCN-PLANTS-LIFECYCLE-008-A\n- **GIVEN** a draft notification exists\n- **WHEN** the user confirms its deletion from the dashboard\n- **THEN** a message confirms the notification has been deleted\n- **AND** searching the dashboard for its reference number shows no card\n\n#### Scenario: Deleting a submitted notification removes it from the dashboard\n**ID**: SCN-PLANTS-LIFECYCLE-008-B\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user confirms its deletion\n- **THEN** they return to the dashboard with a deletion confirmation\n- **AND** searching for its reference number shows no card",
+      "after": "### Requirement: A draft or submitted notification can be deleted after confirmation\n**ID**: REQ-PLANTS-LIFECYCLE-008\nThe system MUST let the user delete a draft from the dashboard or from its check answers, and a submitted notification from its read-only view, each after confirming, removing it from the dashboard listing. While an amendment is in progress, check-your-answers MUST NOT offer delete.\n\n#### Scenario: Deleting a draft removes it from the dashboard\n**ID**: SCN-PLANTS-LIFECYCLE-008-A\n- **GIVEN** a draft notification exists\n- **WHEN** the user confirms its deletion from the dashboard\n- **THEN** a message confirms the notification has been deleted\n- **AND** searching the dashboard for its reference number shows no card\n\n#### Scenario: Deleting a submitted notification removes it from the dashboard\n**ID**: SCN-PLANTS-LIFECYCLE-008-B\n- **GIVEN** a submitted notification is open on check-your-answers\n- **WHEN** the user confirms its deletion\n- **THEN** they return to the dashboard with a deletion confirmation\n- **AND** searching for its reference number shows no card\n\n#### Scenario: Deleting a draft from its check answers removes it from the dashboard\n**ID**: SCN-PLANTS-LIFECYCLE-008-C\n- **GIVEN** a draft notification is open on check-your-answers\n- **WHEN** the user selects \"Delete notification\" and confirms its deletion\n- **THEN** a message confirms the notification has been deleted\n- **AND** searching the dashboard for its reference number shows no card\n\n#### Scenario: An amendment's check answers offers no delete\n**ID**: SCN-PLANTS-LIFECYCLE-008-D\n- **GIVEN** a notification is being amended\n- **WHEN** the user views it on check-your-answers\n- **THEN** no \"Delete notification\" is offered",
+      "summary": "A draft can now be deleted from its own check your answers page as well as from the dashboard. An amendment's review offers no delete.",
+      "cards": [
+        "review-draft-header",
+        "view-actions"
+      ]
+    },
+    {
+      "capability": "plants/page-titles",
+      "capabilityName": "High-risk plants: Page titles",
+      "requirementId": "REQ-PLANTS-PAGE-TITLE-001",
+      "requirementName": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Every page's title names the page, then the service, then GOV.UK, joined by hyphens\n**ID**: REQ-PLANTS-PAGE-TITLE-001\nThe system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order and joined by hyphens. The system MUST NOT separate them with a pipe.\n\n#### Scenario: A page's title reads page name, service name, GOV.UK\n**ID**: SCN-PLANTS-PAGE-TITLE-001-A\n- **GIVEN** the user is on a page of the service that carries a name of its own, such as the commodity type page\n- **WHEN** the page's title is read\n- **THEN** it reads that page's name, then the service name, then GOV.UK, joined by hyphens, such as `What are you importing? - Import notification service - GOV.UK`\n\n#### Scenario: The parts are not separated by a pipe\n**ID**: SCN-PLANTS-PAGE-TITLE-001-B\n- **GIVEN** a page of the service\n- **WHEN** its title is built\n- **THEN** no pipe separates the page name, the service name and GOV.UK",
+      "summary": "New. Browser tab titles read the page name, then the service name, then GOV.UK, joined by hyphens.\n\nThey do not use a pipe.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "plants/page-titles",
+      "capabilityName": "High-risk plants: Page titles",
+      "requirementId": "REQ-PLANTS-PAGE-TITLE-002",
+      "requirementName": "A page showing errors opens its whole title with an error prefix",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A page showing errors opens its whole title with an error prefix\n**ID**: REQ-PLANTS-PAGE-TITLE-002\nThe system MUST open the title of a page showing errors with an error prefix, ahead of the page's own name, so the whole title — not only the page name — is marked as being in error.\n\n#### Scenario: The error prefix opens the title while errors are shown\n**ID**: SCN-PLANTS-PAGE-TITLE-002-A\n- **GIVEN** the user has submitted a page that answers back with an error summary, such as the commodity type page with nothing chosen\n- **WHEN** the page's title is read\n- **THEN** it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before",
+      "summary": "New. A page showing errors starts its whole title with an error prefix.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "plants/page-titles",
+      "capabilityName": "High-risk plants: Page titles",
+      "requirementId": "REQ-PLANTS-PAGE-TITLE-003",
+      "requirementName": "An error page's title follows the same pattern",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: An error page's title follows the same pattern\n**ID**: REQ-PLANTS-PAGE-TITLE-003\nThe system MUST title its error pages with the error's name, then the service name, then the GOV.UK brand word, joined by hyphens, as it titles every other page.\n\n#### Scenario: A page that does not exist is titled Page not found - Import notification service - GOV.UK\n**ID**: SCN-PLANTS-PAGE-TITLE-003-A\n- **GIVEN** a signed-in user\n- **WHEN** they open a page that does not exist\n- **THEN** the title reads `Page not found - Import notification service - GOV.UK`",
+      "summary": "New. Error pages, such as \"Page not found\", are titled in the same pattern as every other page.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "plants/service-navigation",
+      "capabilityName": "High-risk plants: Service navigation",
+      "requirementId": "REQ-PLANTS-NAV-001",
+      "requirementName": "The navigation offers five items in a fixed order",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The navigation offers five items in a fixed order\n**ID**: REQ-PLANTS-NAV-001\nThe system MUST offer Dashboard, Templates, Address book, Manage account and Log out, in that order, in the service navigation to a signed-in user, and MUST offer none to a visitor who is not signed in.\n\n#### Scenario: The navigation lists its five items on the dashboard\n**ID**: SCN-PLANTS-NAV-001-A\n- **GIVEN** the user is signed in\n- **WHEN** they view the dashboard\n- **THEN** the navigation offers, in order, Dashboard, Templates, Address book, Manage account and Log out\n\n#### Scenario: A visitor who is not signed in is offered no navigation items\n**ID**: SCN-PLANTS-NAV-001-B\n- **GIVEN** the visitor is not signed in\n- **WHEN** a page of the service is shown\n- **THEN** the service name is shown\n- **AND** no navigation item is offered",
+      "summary": "New. A signed-in trader's navigation has five items in order: Dashboard, Templates, Address book, Manage account and Log out.\n\nA visitor who is not signed in sees none.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "plants/service-navigation",
+      "capabilityName": "High-risk plants: Service navigation",
+      "requirementId": "REQ-PLANTS-NAV-002",
+      "requirementName": "The Templates item opens Manage templates in the live animals service",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The Templates item opens Manage templates in the live animals service\n**ID**: REQ-PLANTS-NAV-002\nThe system MUST open the page headed \"Manage templates\" in the live animals journey when the user follows the Templates item.\n\n#### Scenario: Following Templates opens Manage templates\n**ID**: SCN-PLANTS-NAV-002-A\n- **GIVEN** the user is signed in\n- **WHEN** they follow Templates in the navigation\n- **THEN** the page headed \"Manage templates\" is shown",
+      "summary": "New. The Templates item opens Manage templates in the live animals service.\n\nPlants has no templates page of its own.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "plants/service-navigation",
+      "capabilityName": "High-risk plants: Service navigation",
+      "requirementId": "REQ-PLANTS-NAV-003",
+      "requirementName": "The navigation marks Dashboard as current on the dashboard and inside a notification, and never Templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The navigation marks Dashboard as current on the dashboard and inside a notification, and never Templates\n**ID**: REQ-PLANTS-NAV-003\nThe system MUST mark Dashboard as the current section on the dashboard and anywhere inside a notification, and MUST NOT mark Templates, since no templates page is part of this service.\n\n#### Scenario: Dashboard is marked current on the dashboard and Templates is not\n**ID**: SCN-PLANTS-NAV-003-A\n- **GIVEN** the user is on the dashboard\n- **WHEN** they view the navigation\n- **THEN** Dashboard is marked as the current section\n- **AND** Templates is not\n\n#### Scenario: Dashboard stays marked current inside a notification\n**ID**: SCN-PLANTS-NAV-003-B\n- **GIVEN** the user is working on a notification\n- **WHEN** they view the navigation\n- **THEN** Dashboard is marked as the current section\n- **AND** Templates is not",
+      "summary": "New. Dashboard is highlighted on the dashboard and inside a notification.\n\nTemplates is never highlighted in plants.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "plants/service-navigation",
+      "capabilityName": "High-risk plants: Service navigation",
+      "requirementId": "REQ-PLANTS-NAV-004",
+      "requirementName": "The Dashboard and Address book items lead to the plants dashboard and the INS address book",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The Dashboard and Address book items lead to the plants dashboard and the INS address book\n**ID**: REQ-PLANTS-NAV-004\nThe system MUST open the high-risk plants dashboard when the user follows Dashboard, including from inside a notification, and MUST open the Import Notification Service's address book when they follow Address book.\n\n#### Scenario: Following Dashboard from inside a notification opens the plants dashboard\n**ID**: SCN-PLANTS-NAV-004-A\n- **GIVEN** the user is working on a notification\n- **WHEN** they follow Dashboard in the navigation\n- **THEN** the plants dashboard is shown\n\n#### Scenario: Following Address book opens the INS address book\n**ID**: SCN-PLANTS-NAV-004-B\n- **GIVEN** the user is signed in\n- **WHEN** they follow Address book in the navigation\n- **THEN** the Import Notification Service address book is shown",
+      "summary": "New. Dashboard opens the plants dashboard, including from inside a notification.\n\nAddress book opens the Import Notification Service address book.",
+      "cards": []
+    }
+  ]
+}

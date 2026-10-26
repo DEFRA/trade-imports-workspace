@@ -1,0 +1,957 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 8, Accompanying documents: the live-animals documents feature at src/server/app/sets/live-animals/journeys/linear/features/documents (repo at main 4c2119da, tag 0.286.0), read in full. One page, /accompanying-documents (page.js), served by controller.js with four routes: GET page, POST page (multipart, add / remove / retry / continue, 10MB+1KiB payload cap with an onPreResponse oversize handler), GET status (JSON for client polling) and GET {uploadId}/file (download). template.njk lays out section caption, heading, guidance (intro, bullet list, closed details expander with an additional-documents table and a GOV.UK link), then a multipart form with a 'File upload' summary card holding reference, document type, MOJ date picker, enhanced govuk file upload, 'Save and add another', the documents-added table (or empty state), a refresh link and timeout hint, then the shared save actions, and an aria-live scan-status announcer. Supporting files: upload-config.js (allowed types, 10MB cap, messages), scan-poll.js (statuses, 3s x 10 polling decision), download-content-type.js, validate.js (stored-list check), evaluation.js (collection fields), form/ (field rules, add errors, page-order error sorting, payload parsing, retry), contracts/ (max 15 documents from the documents obligation, offered types from the document-types service, #documents-added anchor, upload id pattern and ownership, remove button), scan/ (status lookup, settling and virus summary errors), handlers/ (page load with scan status, download headers, upload details), view-model/ (render, table rows, status tags, refresh href, text and escaping), copy/ (copy.en.js quoted; copy.cy.js read for parity, marked machine-draft Welsh), client/ (drop-zone enhancement, scan polling and announcements, client oversize validation with error summary and field error). Fit specs read in full: upload.fit.spec.js (28 tests), scan-status.fit.spec.js (4), drop-zone.fit.spec.js (6), guidance.fit.spec.js (4) and axe.js (WCAG tags, serious/critical gate). The documents obligation's maxEntries (15) was looked up in obligations/sections/documents.js only to resolve MAX_DOCUMENTS; that file belongs to the obligation part.",
+  "claims": [
+    {
+      "id": "repo-frontend-p8-001",
+      "statement": "The accompanying documents page is served at the journey page path with slug 'accompanying-documents' (GET and POST on the same path).",
+      "kind": "behaviour",
+      "ref": "features/documents/page.js:1-4; controller.js:316-338",
+      "quote": "export const documentsPage = {\n  id: 'accompanying-documents',\n  slug: 'accompanying-documents'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-002",
+      "statement": "A trader reaches the documents page from the notification overview by the link 'Upload documents', once the sections are unlocked.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:26-31 openDocuments",
+      "quote": "await page.getByRole('link', { name: 'Upload documents' }).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-003",
+      "statement": "The page heading (h1, large) is 'Upload documents', and the same text is the page title.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:2; template.njk:20; view-model/render.js:39",
+      "quote": "title: 'Upload documents',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-004",
+      "statement": "A section caption is shown above the heading, using the shared section-caption macro.",
+      "kind": "copy",
+      "ref": "features/documents/template.njk:19",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "inferred",
+      "note": "The caption text comes from shared layout code outside this part; this part only shows that the page renders one."
+    },
+    {
+      "id": "repo-frontend-p8-005",
+      "statement": "The page's back link goes to the notification overview (hub), and following it shows the 'Overview' heading.",
+      "kind": "behaviour",
+      "ref": "features/documents/view-model/render.js:39-43; fit/upload.fit.spec.js:211-214 'back link returns to the overview'",
+      "quote": "backLink: hubPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-006",
+      "statement": "Above the form the page tells the trader: 'You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.'",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:4-5; template.njk:23",
+      "quote": "'You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-007",
+      "statement": "The guidance continues 'Other documents you may need to attach include:' followed by a bulleted list.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:6; template.njk:24-29",
+      "quote": "otherDocumentsLead: 'Other documents you may need to attach include:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-008",
+      "statement": "The other-documents bullet list has two items: 'import licences or authorisations' and 'commercial documents or invoices'.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:7-10",
+      "quote": "otherDocuments: [\n      'import licences or authorisations',\n      'commercial documents or invoices'\n    ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-009",
+      "statement": "The guidance sits outside and before the upload form, so the trader reads what to attach before the upload panel (design release 1).",
+      "kind": "behaviour",
+      "ref": "features/documents/template.njk:22-59; fit/guidance.fit.spec.js:33-48 'tells the trader what to attach, above the form'",
+      "quote": "{# What to attach and why, before the form asks for it (design release 1). #}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-010",
+      "statement": "An expander (details) titled 'Check which additional documents you must upload' is closed by default and hides the additional-documents table until opened.",
+      "kind": "behaviour",
+      "ref": "features/documents/copy/copy.en.js:12; template.njk:54-57; fit/guidance.fit.spec.js:50-76 'keeps the additional-documents table behind a closed expander'",
+      "quote": "summary: 'Check which additional documents you must upload',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-011",
+      "statement": "The additional-documents table has a visually hidden caption 'Additional documents by type of consignment' and two columns, 'Consignment' and 'Documents needed'.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:13-15; template.njk:40-48",
+      "quote": "caption: 'Additional documents by type of consignment',\n      consignment: 'Consignment',\n      documentsNeeded: 'Documents needed',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-012",
+      "statement": "Additional-documents row: 'Animals that do not need a health certificate' need 'An exporter's declaration that they are fit to travel'.",
+      "kind": "rule",
+      "ref": "features/documents/copy/copy.en.js:17-20",
+      "quote": "consignment: 'Animals that do not need a health certificate',\n          documents: \"An exporter's declaration that they are fit to travel\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-013",
+      "statement": "Additional-documents row: 'Livestock transiting bluetongue restricted territories' need 'Bluetongue declaration GBHC172'.",
+      "kind": "rule",
+      "ref": "features/documents/copy/copy.en.js:21-24",
+      "quote": "consignment: 'Livestock transiting bluetongue restricted territories',\n          documents: 'Bluetongue declaration GBHC172'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-014",
+      "statement": "Additional-documents row: 'Rodents imported for research purposes' need 'An RM39 licence and supplementary health certificate'.",
+      "kind": "rule",
+      "ref": "features/documents/copy/copy.en.js:25-28",
+      "quote": "consignment: 'Rodents imported for research purposes',\n          documents: 'An RM39 licence and supplementary health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-015",
+      "statement": "Inside the expander, a link 'Check the documents you need on GOV.UK (opens in a new tab)' goes to https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system, opening in a new tab with rel 'noreferrer noopener'.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:30-32; template.njk:49-51; fit/guidance.fit.spec.js:78-84 'links out to the GOV.UK guidance in a new tab'",
+      "quote": "linkText: 'Check the documents you need on GOV.UK (opens in a new tab)',\n      linkHref:\n        'https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-016",
+      "statement": "The form posts as multipart/form-data with browser validation turned off, and carries the CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "features/documents/template.njk:59-63",
+      "quote": "<form method=\"post\" enctype=\"multipart/form-data\" novalidate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-017",
+      "statement": "The document fields, the 'Save and add another' button and the documents-added table sit together in a summary card region headed 'File upload'; the page's 'Save and continue' button sits outside it.",
+      "kind": "behaviour",
+      "ref": "features/documents/template.njk:73-161; copy/copy.en.js:35; fit/upload.fit.spec.js:181-209 'groups the fields and the add button under the file upload heading, leaving the page actions outside'",
+      "quote": "fileUploadHeading: 'File upload',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-018",
+      "statement": "Once a document is saved, its row stays inside the 'File upload' region and 'Save and continue' stays outside it.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:563-586 'keeps the saved row inside the file upload group and the page actions outside it'",
+      "quote": "test('keeps the saved row inside the file upload group and the page actions outside it'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-019",
+      "statement": "The first field is a text input labelled 'Document reference' with the hint 'For example, GBHC1234567890.' at width 20.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:36-39; template.njk:78-86",
+      "quote": "reference: {\n    label: 'Document reference',\n    hint: 'For example, GBHC1234567890.'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-020",
+      "statement": "A document reference is required when adding a document; leaving it blank shows 'Enter a document reference'.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:21-28; copy/copy.en.js:124; fit/upload.fit.spec.js:223-240",
+      "quote": "referenceRequired: 'Enter a document reference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-021",
+      "statement": "A document reference longer than 58 characters shows 'Document reference must be 58 characters or fewer', and the over-long value is kept in the field.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:17,24-28; copy/copy.en.js:122; fit/upload.fit.spec.js:242-260",
+      "quote": "export const REFERENCE_MAX_LENGTH = 58",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-022",
+      "statement": "The document reference and the chosen document type are trimmed of surrounding spaces before they are checked and saved.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:39-48",
+      "quote": "accompanyingDocumentReference: (\n    payload.accompanyingDocumentReference ?? ''\n  ).trim(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-023",
+      "statement": "The second field is a select labelled 'Document type' whose first option is a placeholder 'Select one' with no value, selected by default.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:40-43; view-model/fragments/document-type.js:11-17; fit/upload.fit.spec.js:121",
+      "quote": "documentType: {\n    label: 'Document type',\n    placeholder: 'Select one'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-024",
+      "statement": "The document type select offers all fourteen types from the document-types service, in this order: Intra Trade Animal Health Certificate (ITAHC); Veterinary health certificate; Air waybill; Import permit; Letter of authority (Directive 2008/61/EC); Commercial invoice; Sea waybill; Rail waybill; Bill of lading; Catch certificate; Laboratory sampling results for aflatoxin (Reg 2019/1793); Health certificate; Journey log; Other.",
+      "kind": "data",
+      "ref": "features/documents/copy/copy.en.js:76-92; fit/upload.fit.spec.js:146-166 'offers all fourteen document types behind a placeholder, between the reference and the date'",
+      "quote": "ITAHC: 'Intra Trade Animal Health Certificate (ITAHC)',\n    VETERINARY_HEALTH_CERTIFICATE: 'Veterinary health certificate',\n    AIR_WAYBILL: 'Air waybill',\n    IMPORT_PERMIT: 'Import permit',\n    LETTER_OF_AUTHORITY: 'Letter of authority (Directive 2008/61/EC)',\n    COMMERCIAL_INVOICE: 'Commercial invoice',\n    SEA_WAYBILL: 'Sea waybill',\n    RAIL_WAYBILL: 'Rail waybill',\n    BILL_OF_LADING: 'Bill of lading',\n    CATCH_CERTIFICATE: 'Catch certificate',\n    LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN:\n      'Laboratory sampling results for aflatoxin (Reg 2019/1793)',\n    HEALTH_CERTIFICATE: 'Health certificate',\n    JOURNEY_LOG: 'Journey log',\n    OTHER: 'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-025",
+      "statement": "Existing ruling: every GBN-AG document type is selectable, coded on the outbound event from the GBN-AG document-type codelist (EUDPA-310); design release 1 held Health certificate back and EUDPA-310 offers it again.",
+      "kind": "rule",
+      "ref": "features/documents/contracts/document-type-options.js:3-6",
+      "quote": "// The document-types service is the list, and the page offers all of it: every\n// GBN-AG document type is selectable, each one coded on the outbound event from\n// the GBN-AG document-type codelist (EUDPA-310). Design release 1 held\n// HEALTH_CERTIFICATE back; EUDPA-310 offers it again.",
+      "confidence": "verbatim",
+      "note": "A deliberate divergence from design release 1 recorded in code."
+    },
+    {
+      "id": "repo-frontend-p8-026",
+      "statement": "Leaving the document type on the placeholder, or sending a type the page did not offer, shows 'Select a document type'; the other answers are kept.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:29-35; copy/copy.en.js:125; fit/upload.fit.spec.js:269-289",
+      "quote": "typeRequired: 'Select a document type',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-027",
+      "statement": "On the page the document reference comes first, then the document type, then the date of issue.",
+      "kind": "behaviour",
+      "ref": "features/documents/template.njk:78-97; fit/upload.fit.spec.js:168-178",
+      "quote": "expect(controlIds).toEqual([\n      'accompanyingDocumentReference',\n      'accompanyingDocumentType',\n      'accompanyingDocumentDateOfIssue'\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-028",
+      "statement": "The third field is a date picker (MOJ date picker) labelled 'Date of issue' with the hint 'For example, 12/12/2025', entered as a single dd/mm/yyyy text value.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:44-47; template.njk:97; view-model/render.js:64-69",
+      "quote": "dateOfIssue: {\n    label: 'Date of issue',\n    hint: 'For example, 12/12/2025'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-029",
+      "statement": "The date of issue field has a 'Choose date' button that opens a calendar dialog.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:696-705 'document date picker has no serious or critical axe violations'",
+      "quote": "await page.getByRole('button', { name: 'Choose date' }).click()\n    await expect(page.getByRole('dialog')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-030",
+      "statement": "A date of issue is required when adding a document; leaving it blank shows 'Enter a date of issue'.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:25-27; copy/copy.en.js:126; fit/upload.fit.spec.js:313-330",
+      "quote": "dateRequired: 'Enter a date of issue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-031",
+      "statement": "A date of issue that is not a real date (for example 31/2/2026) shows 'Enter a real date', and the entered text is kept.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:36; copy/copy.en.js:123; fit/upload.fit.spec.js:332-351",
+      "quote": "dateInvalid: 'Enter a real date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-032",
+      "statement": "The documents page has no rule on whether a date of issue may be in the future or how far in the past it may be; only presence and real-date checks exist.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:22-37; form/errors.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in form/payload.js, form/errors.js, validate.js and copy.en.js errors: no future or range rule or message."
+    },
+    {
+      "id": "repo-frontend-p8-033",
+      "statement": "The file field is labelled 'Attachment' and its hint starts, in bold, 'Your file must be:' followed by a bulleted list of constraints.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:49-50; template.njk:99-116",
+      "quote": "label: 'Attachment',\n    mustBe: 'Your file must be:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-034",
+      "statement": "The first file-hint bullet reads 'smaller than 10MB'.",
+      "kind": "copy",
+      "ref": "features/documents/template.njk:102; copy/copy.en.js:51; upload-config.js:43-46",
+      "quote": "<li>{{ copy.file.smallerThan }} {{ maxFileSizeLabel }}</li>",
+      "confidence": "inferred",
+      "note": "Assembled from smallerThan: 'smaller than' and MAX_FILE_SIZE_LABEL = `${MAX_FILE_SIZE_MB}MB` with MAX_FILE_SIZE_MB = 10."
+    },
+    {
+      "id": "repo-frontend-p8-035",
+      "statement": "The second file-hint bullet reads 'a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', built from every accepted extension so JPG is not dropped (EUDPA-523).",
+      "kind": "copy",
+      "ref": "features/documents/upload-config.js:28-35; template.njk:103",
+      "quote": "// Label every accepted extension, not the de-duplicated MIME types: .jpeg and\n// .jpg share image/jpeg, so collapsing on MIME dropped JPG from the sentence\n// while the input still accepted it. See EUDPA-523.",
+      "confidence": "inferred",
+      "note": "The sentence is produced by Intl.ListFormat('en-GB', disjunction) over the upper-cased extensions in ALLOWED_TYPES order."
+    },
+    {
+      "id": "repo-frontend-p8-036",
+      "statement": "The third file-hint bullet reads 'up to a maximum of 15 files', stated before the trader picks a file and again in the error once the limit is reached, both from the same number (design release 1).",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:53-56; contracts/max-documents.js:3",
+      "quote": "upToMaximum: (max) => `up to a maximum of ${max} files`,",
+      "confidence": "verbatim",
+      "note": "max is MAX_DOCUMENTS = documents.requires.maxEntries, which is 15 in obligations/sections/documents.js."
+    },
+    {
+      "id": "repo-frontend-p8-037",
+      "statement": "The fourth file-hint bullet reads 'ZIP files are not allowed for security reasons', and it stays visible when an archive has been refused.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:57; fit/upload.fit.spec.js:390-392",
+      "quote": "noZipFiles: 'ZIP files are not allowed for security reasons',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-038",
+      "statement": "Allowed upload types are PDF, DOC, DOCX, JPEG, JPG, PNG, XLS and XLSX, each with its MIME type; the file input's accept attribute lists those extensions.",
+      "kind": "rule",
+      "ref": "features/documents/upload-config.js:3-26; template.njk:117",
+      "quote": "{ ext: 'pdf', mime: 'application/pdf' },\n  { ext: 'doc', mime: 'application/msword' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-039",
+      "statement": "The file size limit is 10MB (10,000,000 bytes), held at 10 to stay inside CDP's 10 MiB ingress request-body cap; EUDPA-518 raised it to 50 for design release 1 but it was put back until the ingress cap is raised.",
+      "kind": "constraint",
+      "ref": "features/documents/upload-config.js:39-46",
+      "quote": "// Held at 10 so MAX_PAYLOAD_BYTES stays inside the ingress request-body cap in\n// front of this service, which on CDP is nginx's 10 MiB default. EUDPA-518\n// raised this to 50 for Design release 1; a 50MB upload never reaches the\n// service, so the limit goes back until the ingress cap is raised with it.\nconst MAX_FILE_SIZE_MB = 10",
+      "confidence": "verbatim",
+      "note": "A recorded divergence from design release 1's 50MB."
+    },
+    {
+      "id": "repo-frontend-p8-040",
+      "statement": "Adding a document with no file shows 'Upload a document' and keeps the reference, type and date entered.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:30-33; copy/copy.en.js:127; fit/upload.fit.spec.js:360-371",
+      "quote": "fileRequired: 'Upload a document',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-041",
+      "statement": "A file whose extension is not allowed (for example a .zip) shows 'The selected file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX' and keeps the other answers.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:37-39; copy/copy.en.js:135-136; upload-config.js:37; fit/upload.fit.spec.js:373-393",
+      "quote": "fileType: (allowedTypesHint) =>\n      `The selected file must be a ${allowedTypesHint}`,",
+      "confidence": "verbatim",
+      "note": "The type check is on the filename's extension, not the file's content."
+    },
+    {
+      "id": "repo-frontend-p8-042",
+      "statement": "A file over 10MB that reaches the server is refused with 'The selected file must be smaller than 10MB'.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:34-36; copy/copy.en.js:137-138; upload-config.js:47",
+      "quote": "oversize: (maxSizeLabel) =>\n      `The selected file must be smaller than ${maxSizeLabel}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-043",
+      "statement": "A request body larger than the 10MB file limit plus 1KiB multipart allowance is rejected before parsing; the page is redrawn with the oversize message on the file field and a 400 status, the summary link focusing the upload control.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:299-314,326-336; upload-config.js:49-50; fit/upload.fit.spec.js:464-483 'file validation: server rejects an oversize multipart payload'",
+      "quote": "return render(request, h, pageState, EMPTY_FORM, {\n    errors: { file: OVERSIZE_FILE_MESSAGE },\n    extra: { crumb }\n  }).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-044",
+      "statement": "When the server refuses an over-limit request body, the reference, type and date the trader entered are not kept: the page is redrawn with an empty form.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:310",
+      "quote": "return render(request, h, pageState, EMPTY_FORM, {",
+      "confidence": "inferred",
+      "note": "Follows from EMPTY_FORM being passed; the client-side check (p8-086) is what normally keeps the metadata."
+    },
+    {
+      "id": "repo-frontend-p8-045",
+      "statement": "If the upload service fails to accept the file, the page shows 'The file could not be uploaded. Try again.' on the file field with a 500 status.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:82-91,124-128; copy/copy.en.js:130",
+      "quote": "uploadFailed: 'The file could not be uploaded. Try again.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-046",
+      "statement": "The error summary lists add-a-document errors in the page's order: reference, type, date of issue, file.",
+      "kind": "behaviour",
+      "ref": "features/documents/form/errors.js:43-68",
+      "quote": "const FIELD_ORDER = [\n  'accompanyingDocumentReference',\n  'accompanyingDocumentType',\n  'accompanyingDocumentDateOfIssue',\n  'file'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-047",
+      "statement": "Each add-a-document error appears in the error summary as a link that moves focus to its field; for the file it focuses the enhanced upload button.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:223-393",
+      "quote": "await link.click()\n    await expect(uploadControl(page)).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-048",
+      "statement": "Field-level error messages carry a visually hidden 'Error:' prefix.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:121; template.njk:13-15",
+      "quote": "hiddenPrefix: 'Error:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-049",
+      "statement": "Every document field (reference, type, date of issue, file) is mandatory per document and there is no page to edit a saved document, so all are checked when the document is added.",
+      "kind": "rule",
+      "ref": "features/documents/form/errors.js:18-21",
+      "quote": "// Every document field is mandatory per record and there is no edit\n// page — a record added with blanks could never be completed in place,\n// so presence is enforced at add time.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-050",
+      "statement": "A secondary button 'Save and add another' (action 'add') saves the document and returns the trader to the same page, ready for the next one.",
+      "kind": "behaviour",
+      "ref": "features/documents/copy/copy.en.js:67; template.njk:127-132; controller.js:96-98,287-289",
+      "quote": "addAnother: 'Save and add another',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-051",
+      "statement": "Every successful document save redirects back to the page (post-redirect-get), so a reload cannot add the document twice, and the form fields are cleared.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:100-103; fit/upload.fit.spec.js:559",
+      "quote": "// `afterSave` is where a saved document lands the trader. Every successful\n// save redirects back to the page — the POST mutated state, so a reload must\n// not be able to replay it and append the document twice.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-052",
+      "statement": "The saved row reports the document type the trader chose, whatever the file is called, and the type select resets to the placeholder after saving.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:291-304 'the chosen type is what the saved row reports, whatever the file is called'",
+      "quote": "await expect(row).toContainText(copy.types.COMMERCIAL_INVOICE)\n    await expect(page.getByLabel(copy.documentType.label)).toHaveValue('')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-053",
+      "statement": "Each saved document holds its type, reference, date of issue, an attachment type taken from the file extension in capitals (for example PDF), the upload id and the filename.",
+      "kind": "data",
+      "ref": "features/documents/controller.js:130-135; evaluation.js:24-37; upload-config.js:58-63",
+      "quote": "const savedEntry = {\n    ...bare,\n    accompanyingDocumentAttachmentType: attachmentTypeFor(filename),\n    uploadId: outcome.uploadId,\n    filename\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-054",
+      "statement": "Adding a document sends the file to the document uploads service with the journey id, filename, content type, bytes, document type, reference, date of issue as an ISO date, the 10MB limit and the allowed MIME types, and gets back an upload id.",
+      "kind": "integration",
+      "ref": "features/documents/handlers/reads/download.js:16-26; controller.js:82-91",
+      "quote": "export const uploadDetails = (journey, entry, file, filename) => ({\n  journeyId: journey.journeyId,\n  filename,\n  contentType: file.headers?.['content-type'],\n  bytes: file.payload,\n  documentType: entry.accompanyingDocumentType,\n  documentReference: entry.accompanyingDocumentReference,\n  dateOfIssue: isoDateFromDateParts(entry.accompanyingDocumentDateOfIssue),\n  maxFileSize: MAX_FILE_SIZE_BYTES,\n  mimeTypes: ALLOWED_MIME_TYPES\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-055",
+      "statement": "A notification can hold at most 15 documents; adding another once 15 are saved shows 'You can upload a maximum of 15 files', linked to the documents-added table, with the entered values kept and a 400 status.",
+      "kind": "rule",
+      "ref": "features/documents/controller.js:108-112; form/errors.js:70-75; copy/copy.en.js:131; fit/upload.fit.spec.js:647-673 'rejects another upload after the maximum document capacity is reached'",
+      "quote": "maxDocuments: (max) => `You can upload a maximum of ${max} files`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-056",
+      "statement": "The 'up to a maximum of 15 files' hint stays on the page once documents have been saved, not only on the empty page.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:588-602 'keeps stating the document limit once a document is saved'",
+      "quote": "// The limit bullet stays on the page once rows exist, so the trader sees the\n    // total on the populated state — not only on the empty page and not only\n    // once they are refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-057",
+      "statement": "With no documents saved, the File upload card shows 'You have not added any documents yet.'",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:99; template.njk:155-157",
+      "quote": "empty: 'You have not added any documents yet.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-058",
+      "statement": "Saved documents are listed in a table (id documents-added) with a visually hidden caption 'Documents you have added' and columns 'Document reference', 'Document type', 'Date of issue', 'Status' and a visually hidden 'Actions'.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:68-75; template.njk:134-148",
+      "quote": "table: {\n    caption: 'Documents you have added',\n    reference: 'Document reference',\n    type: 'Document type',\n    dateOfIssue: 'Date of issue',\n    status: 'Status',\n    actionsHidden: 'Actions'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-059",
+      "statement": "Each table row shows the reference, the type's display name and the date of issue as day/month/year (as entered, not zero-padded); a blank value shows 'Not provided'.",
+      "kind": "behaviour",
+      "ref": "features/documents/view-model/rows.js:49-56; view-model/fragments/text.js:8-13; copy/copy.en.js:100",
+      "quote": "export const dateText = (value) =>\n  isBlank(value) ? NOT_PROVIDED : `${value.day}/${value.month}/${value.year}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-060",
+      "statement": "The Status column shows the virus check as a tag: 'Scanning for virus' (blue) while it runs, 'Check completed' (green) once clean, 'Virus found' (red) if rejected, and 'Unknown' (grey) for any other status.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:105-110; view-model/fragments/status.js:8-25",
+      "quote": "scanTags: {\n    complete: 'Check completed',\n    virusFound: 'Virus found',\n    scanning: 'Scanning for virus',\n    unknown: 'Unknown'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-061",
+      "statement": "The status wording follows design release 1 for 'Scanning for virus' and 'Check completed'; 'Virus found' and 'Unknown' have no design release 1 counterpart and keep the service's existing wording.",
+      "kind": "rule",
+      "ref": "features/documents/copy/copy.en.js:101-104",
+      "quote": "// The Status column reports the virus check, not a verdict on the file\n  // (design release 1): \"Scanning for virus\" while it runs, \"Check completed\"\n  // once it has. Virus found and Unknown have no design release 1 counterpart\n  // and keep the wording this service already uses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-062",
+      "statement": "Each status tag is preceded by visually hidden text 'Virus check status for <reference>', which survives a polled status change.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:111-114; view-model/fragments/status.js:32-40; fit/scan-status.fit.spec.js:77-81,98-100",
+      "quote": "scanStatusHidden: (reference) => `Virus check status for ${reference}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-063",
+      "statement": "Text the trader typed, such as the document reference, is HTML-escaped before it is placed in a table cell built as markup.",
+      "kind": "non-functional",
+      "ref": "features/documents/view-model/fragments/text.js:15-25",
+      "quote": "// Table cells built as HTML lose Nunjucks' auto-escaping, so anything the\n// trader typed — a document reference, say — is escaped here before it is\n// interpolated into a cell's markup.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-064",
+      "statement": "A row offers a 'View file' link (with hidden text 'for document N') only once its scan has completed clean; a pending or virus-found file has no View file link.",
+      "kind": "behaviour",
+      "ref": "features/documents/view-model/rows.js:16-35; copy/copy.en.js:95-96; fit/scan-status.fit.spec.js:122",
+      "quote": "// A file is only offered once its scan has settled clean — a pending or\n// virus-bearing upload has nothing safe to open.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-065",
+      "statement": "Every row has a 'Remove' button (with hidden text 'document N'), styled as a link; it submits the page form with the CSRF crumb, so no GET can remove a document.",
+      "kind": "behaviour",
+      "ref": "features/documents/contracts/remove-action.js:9-13; copy/copy.en.js:93-94",
+      "quote": "// A removal deletes the backend upload, so it submits the page form — the\n// crumb travels with it and no GET can trigger it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-066",
+      "statement": "Removing a document deletes its file from the upload service, removes it from the notification and returns the trader to the page; removing the only document restores the empty state.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:208-254; fit/upload.fit.spec.js:624-638 'removes a saved document and restores the empty state'",
+      "quote": "await documentUploads.remove(entry.uploadId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-067",
+      "statement": "If the upload service fails to delete the file, the document is left in place and the trader is returned to the page with no error message.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:227-233",
+      "quote": "try {\n      await documentUploads.remove(entry.uploadId)\n    } catch {\n      return backToPage(request, h)\n    }",
+      "confidence": "inferred",
+      "note": "No error is passed on the redirect, so nothing tells the trader the removal failed."
+    },
+    {
+      "id": "repo-frontend-p8-068",
+      "statement": "If saving an uploaded document to the notification fails recoverably, the page is redrawn with a recoverable-error state (500) and the upload id and filename are carried in hidden fields, so retrying saves the same upload without sending the file again.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:144-177; form/payload.js:65-71; template.njk:64-67",
+      "quote": "<input type=\"hidden\" name=\"retryUploadId\" value=\"{{ pendingDocumentSave.uploadId }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-069",
+      "statement": "Retrying a save for an upload that is already in the notification does not add it twice.",
+      "kind": "rule",
+      "ref": "features/documents/controller.js:139-160",
+      "quote": "if (isAlreadySaved(pageState, savedEntry.uploadId)) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-070",
+      "statement": "If removing a document from the notification fails recoverably after its file was deleted, the page is redrawn with a recoverable-error state (500) and hidden retry fields, so retrying finishes the removal without calling the upload service again.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:182-254,279-286; template.njk:68-71",
+      "quote": "<input type=\"hidden\" name=\"retryRemoveUploadId\" value=\"{{ pendingDocumentRemoval.uploadId }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-071",
+      "statement": "A document's scan status comes from the document uploads service as COMPLETE, PENDING or REJECTED; a document with no upload id counts as complete, and a failed status lookup counts as pending.",
+      "kind": "integration",
+      "ref": "features/documents/scan/status.js:4-17; scan-poll.js:1-5",
+      "quote": "export const SCAN_STATUS = {\n  COMPLETE: 'COMPLETE',\n  PENDING: 'PENDING',\n  REJECTED: 'REJECTED'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-072",
+      "statement": "While any document is still being scanned, the page shows a link 'Refresh virus scan status' that reloads the page with an attempt count, and a reload with an attempt count asks the upload service for a fresh status.",
+      "kind": "behaviour",
+      "ref": "features/documents/copy/copy.en.js:97; template.njk:149-153; view-model/refresh.js:5-17; handlers/load-page.js:7-10",
+      "quote": "refreshStatus: 'Refresh virus scan status',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-073",
+      "statement": "After 10 refresh or poll attempts with a document still pending, the page shows the hint 'Still checking some documents. Refresh again in a moment.'",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:98; template.njk:154; view-model/render.js:54; scan-poll.js:8",
+      "quote": "stillChecking: 'Still checking some documents. Refresh again in a moment.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-074",
+      "statement": "A status endpoint at <page>/status returns JSON listing each uploaded document's upload id and a freshly fetched scan status, for the page's script to poll.",
+      "kind": "integration",
+      "ref": "features/documents/controller.js:60-69,339-344; scan/status.js:27-30",
+      "quote": "// The JSON leg the client bundle polls. A poll is the scripted equivalent of\n// the refresh link, so it asks the upload service for a fresh status.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-075",
+      "statement": "Each document the scan rejected adds an error to the summary on every view of the page: '<filename> contains a virus. Remove it and try again with a different file.' (or 'The file' when no filename is held), linked to the documents-added table, until the document is removed.",
+      "kind": "rule",
+      "ref": "features/documents/scan/summary-errors.js:11-19; copy/copy.en.js:132-134; view-model/render.js:33-37; fit/scan-status.fit.spec.js:110-147",
+      "quote": "virusFound: (filename) =>\n      `${filename} contains a virus. Remove it and try again with a different file.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-076",
+      "statement": "Pressing 'Save and continue' while any document is not yet scanned clean keeps the trader on the page with 'You cannot continue until all documents have been scanned or removed', linked to the documents table.",
+      "kind": "rule",
+      "ref": "features/documents/controller.js:256-266; scan/summary-errors.js:21-24; copy/copy.en.js:128-129; fit/scan-status.fit.spec.js:64-108",
+      "quote": "cannotContinue:\n      'You cannot continue until all documents have been scanned or removed',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-077",
+      "statement": "When a blocked Continue happens while a rejected (virus) document is present, the 'cannot continue' message is not added; only the per-file virus errors are shown.",
+      "kind": "rule",
+      "ref": "features/documents/scan/summary-errors.js:21-24",
+      "quote": "documents.some((item) => item.scanStatus === SCAN_STATUS.REJECTED)\n    ? []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-078",
+      "statement": "Once every document has scanned clean (or a virus-found document is removed), 'Save and continue' takes the trader on through the journey (to the overview in the fit run).",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:265; fit/scan-status.fit.spec.js:101-107,140-146",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, pageState.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-079",
+      "statement": "Uploading documents is optional: 'Save and continue' with an untouched form (no document type chosen) leaves the page without adding anything.",
+      "kind": "rule",
+      "ref": "features/documents/form/payload.js:50-57; fit/upload.fit.spec.js:524-529 'continue with an untouched form leaves the page, uploading being optional'",
+      "quote": "// The one field a trader cannot fill in by accident, so it is the one that\n// says a document is on its way (design release 1). A form carrying a chosen\n// type is a part-filled document to be finished, not an empty form being\n// skipped past; a form without one is left alone, uploading being optional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-080",
+      "statement": "'Save and continue' with a document type chosen treats the form as a document to add: it is saved and the trader returned to the page (pressing Continue again leaves once scanned), or the missing fields are reported.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:268-295; fit/upload.fit.spec.js:495-522",
+      "quote": "// Continue submits the add-a-document fields along with it, so a part-filled\n// form reaching here is a document the trader means to attach. Finish it —\n// save it and return them to the page, or say what is missing — rather than\n// drop it without a word.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-081",
+      "statement": "Choosing only a document type and pressing 'Save and continue' reports 'Enter a document reference', 'Enter a date of issue' and 'Upload a document' and stays on the page.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:510-522 'continue with a document type and nothing else says what is missing'",
+      "quote": "await expect(errorLink(page, copy.errors.referenceRequired)).toBeVisible()\n    await expect(errorLink(page, copy.errors.dateRequired)).toBeVisible()\n    await expect(errorLink(page, copy.errors.fileRequired)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-082",
+      "statement": "The exit back to the overview (the shared save actions' hub link) always leaves, even while files are still being checked, and discards any part-filled document form.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:256-274; template.njk:161",
+      "quote": "// Leaving the page, once nothing is left to save. A file still being checked\n// holds Continue back; the exit to the overview is a deliberate stop and goes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-083",
+      "statement": "The page's primary button is the shared 'Save and continue', alongside the shared save actions linking back to the overview.",
+      "kind": "copy",
+      "ref": "features/documents/template.njk:161",
+      "quote": "{{ saveActions(hubHref, { text: sharedCopy.saveActions.saveAndContinue, name: \"action\", value: \"continue\" }, sharedCopy.saveActions) }}",
+      "confidence": "inferred",
+      "note": "The exact wording of the shared save actions lives in shared/copy.en.js, outside this part."
+    },
+    {
+      "id": "repo-frontend-p8-084",
+      "statement": "When the saved list is checked, any document whose type or attachment type the document-types service no longer lists raises 'One or more of your saved documents are no longer valid. Review the list before you continue.'",
+      "kind": "rule",
+      "ref": "features/documents/validate.js:12-38; copy/copy.en.js:139-140",
+      "quote": "someNoLongerValid:\n      'One or more of your saved documents are no longer valid. Review the list before you continue.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-085",
+      "statement": "Two document messages are defined but not used by the documents page itself: 'One or more of your documents are still being scanned. Wait a moment and try again.' and 'One or more of your documents were rejected. Return to Documents to remove and re-upload.'",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:141-144",
+      "quote": "someStillScanning:\n      'One or more of your documents are still being scanned. Wait a moment and try again.',\n    someRejected:\n      'One or more of your documents were rejected. Return to Documents to remove and re-upload.'",
+      "confidence": "inferred",
+      "note": "No file in the documents feature references these keys; they may be used elsewhere (for example check answers or declaration), outside this part."
+    },
+    {
+      "id": "repo-frontend-p8-086",
+      "statement": "With JavaScript, choosing a file over 10MB and submitting is stopped in the browser: an error summary item with the oversize message appears (or is appended to an existing summary, keeping one summary per page), the summary title takes focus, and the entered metadata is kept.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/oversize-validation/submit.js:48-64; client/oversize-validation/error-summary.js:56-74; fit/upload.fit.spec.js:402-439",
+      "quote": "// GDS allows one error summary per page. A server-rendered summary may\n// already be on the page, so append to its list instead of adding a second.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-087",
+      "statement": "The client-side oversize error message is placed above the whole drop zone (label, hint, error, control order), with a hidden 'Error:' prefix, and the upload button's description points at it.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/oversize-validation/field-error.js:38-55; client/oversize-validation/control.js:16-17; fit/upload.fit.spec.js:418-437",
+      "quote": "// GDS order is label, hint, error, control: the message goes above the\n    // whole drop zone, never inside it under the Choose file button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-088",
+      "statement": "The client-side oversize summary link points at the enhanced upload button and moves focus to it.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:441-462 'file validation: the client-side oversize summary link focuses the upload control'",
+      "quote": "// The enhanced upload renames the input to file-input and gives the new\n  // button the original id, so the summary link has to point at the button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-089",
+      "statement": "Each submit clears any earlier client-side oversize error before checking again.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/oversize-validation/submit.js:27-49",
+      "quote": "const onUploadSubmit = (form, container, maxFileSize) => (event) => {\n  clearPreviousClientErrors(form)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-090",
+      "statement": "With JavaScript, the file input is enhanced into a GOV.UK drop zone whose button reads 'Choose file' and 'or drop file'; the plain input remains for a trader whose JavaScript does not run (design release 1).",
+      "kind": "behaviour",
+      "ref": "features/documents/template.njk:109-125; client/index.js:6-8; copy/copy.en.js:58-62; fit/drop-zone.fit.spec.js:59-67",
+      "quote": "{# javascript: true asks for the enhanced control — a drop zone with a\n           live region naming the chosen file (design release 1). The plain\n           input stays behind it for a trader whose JavaScript does not run. #}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-091",
+      "statement": "The drop zone's wording matches the design system defaults: 'No file chosen', 'Entered drop zone' and 'Left drop zone'.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:58-65",
+      "quote": "noFileChosen: 'No file chosen',\n    enteredDropZone: 'Entered drop zone',\n    leftDropZone: 'Left drop zone'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-092",
+      "statement": "The drop zone says 'No file chosen' in a polite live region until a file is chosen, then names the chosen file.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:69-79 'says no file is chosen, in a live region, until one is'",
+      "quote": "await expect(status).toHaveText(copy.file.noFileChosen)\n    await expect(status).toHaveAttribute('aria-live', 'polite')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-093",
+      "statement": "A file dropped onto the zone is named in the status line and reaches the file input the form posts.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:81-92 'takes a file dropped onto the zone and names it'",
+      "quote": "// The file has to reach the input, not just the status line — that is what\n    // the form posts.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-094",
+      "statement": "The enhancement leaves a single file input named 'file' behind the zone.",
+      "kind": "constraint",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:97-102 'enhancement leaves a single file input named file behind the zone'",
+      "quote": "await expect(fileInput(page)).toHaveCount(1)\n    await expect(fileInput(page)).toHaveAttribute('name', 'file')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-095",
+      "statement": "A server-side file error is drawn on the drop zone itself (error border) and the upload button's accessible description includes the error.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:104-118 'draws the failed attachment on the zone itself'",
+      "quote": "// The red border is the form group's error state reaching the drop zone,\n    // so the failure is drawn on the control the trader has to go back to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-096",
+      "statement": "The no-JavaScript fallback for the file upload (plain input with no drop zone) has no test; coverage is recorded as an open question on inc-137.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:94-96",
+      "quote": "// The enhancement must not duplicate the input or change the field the form\n  // posts. This runs with JavaScript on, so it does not exercise the no-JS\n  // fallback itself — that coverage is an open question on inc-137.",
+      "confidence": "gap",
+      "note": "The spec names the gap itself; quoted for provenance."
+    },
+    {
+      "id": "repo-frontend-p8-097",
+      "statement": "With JavaScript, if any document is pending the page hides the refresh link and polls the status endpoint every 3 seconds, up to 10 times.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/scan-status/poll.js:57-71; scan-poll.js:7-8,22-36",
+      "quote": "export const POLL_INTERVAL_MS = 3000\nexport const MAX_POLL_ATTEMPTS = 10",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-098",
+      "statement": "Polling updates each changed row's status tag in place and, when a row completes clean, adds its 'View file' link; rows still pending are left alone.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/scan-status/status-cell.js:31-66; fit/scan-status.fit.spec.js:169-191 'updates one settled row in place, announces it and leaves a still-pending row alone'",
+      "quote": "if (scanStatus === SCAN_STATUS.COMPLETE) {\n    actionsCell.appendChild(viewFileLink(actionsCell, uploadId))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-099",
+      "statement": "A status change is announced in a polite live region: 'Document scan complete: the file is safe to use' when clean, or 'Document scan failed: a virus was found. Remove the file and try again.' when a virus is found.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:115-119; template.njk:164-169; client/scan-status/announce.js:9-14; fit/scan-status.fit.spec.js:188-190",
+      "quote": "announce: {\n    safe: 'Document scan complete: the file is safe to use',\n    virusFound:\n      'Document scan failed: a virus was found. Remove the file and try again.'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-100",
+      "statement": "When every document has settled, the script navigates to the page's GET address so the server redraws it with the Continue state and any virus errors.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/scan-status/poll.js:29-37",
+      "quote": "// A settled scan changes the Continue state and may add virus errors, so\n// re-render from the server. The page is also reachable by POST (a blocked\n// Continue), so navigate to its GET href rather than reloading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-101",
+      "statement": "When polling gives up after 10 attempts with documents still pending, the script reveals the 'Still checking some documents' hint.",
+      "kind": "behaviour",
+      "ref": "features/documents/client/scan-status/poll.js:21-27,47-48",
+      "quote": "// The server already renders the hint; polling only unhides it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-102",
+      "statement": "Saved files are served at <page>/<uploadId>/file, where the upload id must be letters, digits and hyphens only.",
+      "kind": "behaviour",
+      "ref": "features/documents/controller.js:345-358; contracts/upload-id.js:3-5; view-model/rows.js:13-14",
+      "quote": "export const UPLOAD_ID_PATTERN = /^[a-zA-Z0-9-]+$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-103",
+      "statement": "Asking for a file that does not belong to the trader's own notification returns 404 (not 403), so the service never confirms such an upload exists.",
+      "kind": "rule",
+      "ref": "features/documents/controller.js:71-80; contracts/upload-id.js:7-10",
+      "quote": "// A well-formed id belonging to somebody else's journey is answered 404, not\n// 403 — the journey never confirms an upload it does not own exists.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-104",
+      "statement": "A downloaded file is served with its content type only if it is one of the accepted upload types, otherwise as application/octet-stream; the upload service's content disposition is passed on (default 'attachment') and X-Content-Type-Options is 'nosniff'.",
+      "kind": "non-functional",
+      "ref": "features/documents/download-content-type.js:1-24; handlers/reads/download.js:9-14",
+      "quote": "// Only a type the journey accepts on the way in is echoed on the way out;\n// anything else is served as bytes so the browser never renders it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-105",
+      "statement": "A saved PDF opened through View file returns 200 with content type application/pdf, nosniff, and the PDF bytes.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:604-622 'downloads a saved document with safe response headers'",
+      "quote": "expect(response.status()).toBe(HTTP_OK)\n    expect(response.headers()['content-type']).toContain('application/pdf')\n    expect(response.headers()['x-content-type-options']).toBe('nosniff')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-106",
+      "statement": "Uploading through the configured stub shows the new row first as 'Scanning for virus' and then 'Check completed', with the type name and date of issue, and clears the reference field.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:538-561 'uploads through the configured stub and renders the saved row'",
+      "quote": "await expect(row).toContainText(copy.scanTags.scanning)\n    await expect(page.getByLabel(copy.reference.label)).toHaveValue('')\n    await expect(row).toContainText(copy.scanTags.complete)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-107",
+      "statement": "The empty page shows the reference and date hints as the fields' accessible descriptions, the type select on its placeholder, the file accept list, every file-hint bullet, the empty-state text, and both 'Save and add another' and 'Save and continue'.",
+      "kind": "behaviour",
+      "ref": "features/documents/fit/upload.fit.spec.js:112-144 'renders feature copy, upload constraints and empty state'",
+      "quote": "test('renders feature copy, upload constraints and empty state'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-108",
+      "statement": "In the fit test environment the upload stub reports a virus for a file named like 'virus-invoice.pdf' and never finishes scanning a file named like 'never-scans-invoice.pdf'.",
+      "kind": "integration",
+      "ref": "features/documents/fit/scan-status.fit.spec.js:114,174",
+      "quote": "const stuck = documentNamed('POLL-STUCK-0002', 'never-scans-invoice.pdf')",
+      "confidence": "inferred",
+      "note": "Inferred from the filenames the specs choose and the outcomes they expect; the stub's rules live outside this part."
+    },
+    {
+      "id": "repo-frontend-p8-109",
+      "statement": "The documents page's accessibility tests run axe with WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules and fail on any serious or critical violation.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/axe.js:4-20",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-110",
+      "statement": "The empty documents page has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/upload.fit.spec.js:675-682 'empty upload state has no serious or critical axe violations'",
+      "quote": "test('empty upload state has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-111",
+      "statement": "The documents page in its validation error state (empty add, with a document type error shown) has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/upload.fit.spec.js:684-694 'validation error state has no serious or critical axe violations'",
+      "quote": "test('validation error state has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-112",
+      "statement": "The open date-of-issue picker dialog has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/upload.fit.spec.js:696-705 'document date picker has no serious or critical axe violations'",
+      "quote": "test('document date picker has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-113",
+      "statement": "The documents page with a saved, scanned document has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/upload.fit.spec.js:707-719 'populated upload state has no serious or critical axe violations'; fit/scan-status.fit.spec.js:149-160 'the settled scan-status table has no serious or critical axe violations'",
+      "quote": "test('populated upload state has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-114",
+      "statement": "The drop zone with a chosen file has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/drop-zone.fit.spec.js:120-127 'the chosen-file drop zone has no serious or critical axe violations'",
+      "quote": "test('the chosen-file drop zone has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-115",
+      "statement": "The page with the additional-documents guidance expanded has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/documents/fit/guidance.fit.spec.js:86-94 'expanded guidance has no serious or critical axe violations'",
+      "quote": "test('expanded guidance has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p8-116",
+      "statement": "The guidance tells the trader they must attach an ITAHC if the consignment requires one, but nothing on the documents page checks that an ITAHC has been attached before continuing.",
+      "kind": "rule",
+      "ref": "features/documents/controller.js:256-297; validate.js; form/errors.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in controller.js, validate.js and form/errors.js: the only leave-page checks are scan status and stored-list validity; no rule ties a required document type to the consignment. Any such rule may live in the obligation model, outside this part."
+    },
+    {
+      "id": "repo-frontend-p8-117",
+      "statement": "The documents page's Welsh copy mirrors every English key but is machine-drafted and not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/documents/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    }
+  ]
+}

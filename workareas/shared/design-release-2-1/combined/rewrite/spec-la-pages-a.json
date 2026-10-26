@@ -1,0 +1,359 @@
+{
+  "batch": "la-pages-a",
+  "changes": [
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-002",
+      "requirementName": "A chosen reason is accepted",
+      "change": "changed",
+      "before": "### Requirement: A chosen reason is accepted\n**ID**: REQ-IMPORT-REASON-002\nThe system MUST accept a chosen import reason, saving it without error.\n\n#### Scenario: Choosing a reason saves without error\n**ID**: SCN-IMPORT-REASON-002-A\n- **GIVEN** the user is on the import reason page\n- **WHEN** they choose the \"Internal market\" reason and save and continue\n- **THEN** the answer is saved and no error summary is shown",
+      "after": "### Requirement: A chosen reason is accepted\n**ID**: REQ-IMPORT-REASON-002\nThe system MUST accept a chosen import reason whose own questions, if it reveals any, are answered, saving it without error.\n\n#### Scenario: Choosing a reason that asks nothing more saves without error\n**ID**: SCN-IMPORT-REASON-002-A\n- **GIVEN** the user is on the import reason page\n- **WHEN** they choose the \"Re-entry\" reason and save and continue\n- **THEN** the answer is saved and no error summary is shown",
+      "summary": "The rule now says a reason is accepted when any follow-up questions it opens are answered. The example now uses Re-entry, which asks nothing more, instead of Internal market.",
+      "cards": [
+        "reason-complete-alone",
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-003",
+      "requirementName": "The internal market reason reveals a follow-up purpose question",
+      "change": "changed",
+      "before": "### Requirement: The internal market reason reveals a follow-up purpose question\n**ID**: REQ-IMPORT-REASON-003\nThe system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, and MUST accept the reason and purpose together.\n\n#### Scenario: Choosing internal market reveals the purpose question and accepts an answer to it\n**ID**: SCN-IMPORT-REASON-003-A\n- **GIVEN** the user is on the import reason page\n- **WHEN** they choose the \"Internal market\" reason\n- **THEN** a purpose question appears, with no purpose shown as chosen\n- **WHEN** they choose a purpose and save and continue\n- **THEN** both answers are saved and no error summary is shown",
+      "after": "### Requirement: The internal market reason reveals a follow-up purpose question\n**ID**: REQ-IMPORT-REASON-003\nThe system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, MUST accept the reason and purpose together, and MUST refuse Save and continue from the internal market reason while its purpose is unanswered, keeping the reveal open and focusing the first purpose.\n\n#### Scenario: Choosing internal market reveals the purpose question and accepts an answer to it\n**ID**: SCN-IMPORT-REASON-003-A\n- **GIVEN** the user is on the import reason page\n- **WHEN** they choose the \"Internal market\" reason\n- **THEN** a purpose question appears, with no purpose shown as chosen\n- **WHEN** they choose a purpose and save and continue\n- **THEN** both answers are saved and no error summary is shown\n\n#### Scenario: Internal market without a purpose is refused on save and continue\n**ID**: SCN-IMPORT-REASON-003-B\n- **GIVEN** the user is on the import reason page\n- **WHEN** they choose \"Internal market\", leave the purpose unanswered and save and continue\n- **THEN** an error reading \"Select a purpose in the internal market\" is shown, with the purpose question still open under Internal market\n- **AND** following the error focuses the first purpose option, with \"Internal market\" still chosen",
+      "summary": "Save and continue now refuses Internal market until a purpose is chosen. The page keeps the purpose question open and focuses the first purpose.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-004",
+      "requirementName": "The port of exit is chosen from the same list as the port of entry",
+      "change": "changed",
+      "before": "### Requirement: The port of exit is chosen from the same list as the port of entry\n**ID**: REQ-IMPORT-REASON-004\nThe system MUST offer the same list of ports for the port of exit, which this page asks for under the reasons that call for it, as it offers for the port of entry.\n\n#### Scenario: The port of exit offers the port of entry's list\n**ID**: SCN-IMPORT-REASON-004-A\n- **GIVEN** the reason for importing calls for a port of exit\n- **WHEN** the user answers it\n- **THEN** the ports offered are those offered for the port of entry",
+      "after": "### Requirement: The port of exit is chosen from the same list as the port of entry\n**ID**: REQ-IMPORT-REASON-004\nThe system MUST offer, for the port of exit under each reason that asks it, the same ports as the port of entry, in the same order, after the placeholder \"Select one\", each reading \"<port name> - <port code>\", and MUST save the chosen port's code and show it as chosen when the page is reopened.\n\n#### Scenario: The port of exit offers the port of entry's list\n**ID**: SCN-IMPORT-REASON-004-A\n- **GIVEN** the reason for importing calls for a port of exit\n- **WHEN** the user answers it\n- **THEN** the ports offered are those offered for the port of entry\n\n#### Scenario: Each port of exit reads its name, a dash and its code, in the port of entry's order\n**ID**: SCN-IMPORT-REASON-004-B\n- **GIVEN** the user has chosen \"Transit\" or \"Temporary admission horses\"\n- **WHEN** the port of exit list is read in full\n- **THEN** after the placeholder \"Select one\" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name\n- **AND** each reads \"<port name> - <port code>\", for example \"Aberdeen Harbour - GB ABD\"\n\n#### Scenario: A chosen port of exit is kept and offered back\n**ID**: SCN-IMPORT-REASON-004-C\n- **GIVEN** the user has chosen \"Transit\"\n- **WHEN** they choose a port of exit, answer the destination country and save and continue\n- **THEN** no error is shown\n- **AND** when they reopen the page that port of exit is shown as chosen",
+      "summary": "The port of exit list now matches the port of entry list in content and order.\n\nEach port reads as name, dash and code, and the chosen port is kept and shown again.",
+      "cards": [
+        "port-labels",
+        "port-order",
+        "reason-select-one"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-006",
+      "requirementName": "An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered",
+      "change": "changed",
+      "before": "### Requirement: An incompletely answered reveal is rejected without closing it, keeping what was already answered\n**ID**: REQ-IMPORT-REASON-006\nThe system MUST refuse to save a reason whose revealed questions are only partly answered, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.\n\n#### Scenario: Answering only the port of exit under Transit is rejected, keeping the port and the reveal open\n**ID**: SCN-IMPORT-REASON-006-A\n- **GIVEN** the user has chosen \"Transit\" and answered the port of exit but not the destination country\n- **WHEN** they save and continue\n- **THEN** an error focuses the destination country, with the reveal still open\n- **AND** the port of exit they already answered is still held",
+      "after": "### Requirement: An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered\n**ID**: REQ-IMPORT-REASON-006\nThe system MUST refuse to save and continue from a reason whose revealed questions are only partly answered, MUST NOT refuse the page for that on save and return to overview, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.\n\n#### Scenario: Answering only the port of exit under Transit is rejected, keeping the port and the reveal open\n**ID**: SCN-IMPORT-REASON-006-A\n- **GIVEN** the user has chosen \"Transit\" and answered the port of exit but not the destination country\n- **WHEN** they save and continue\n- **THEN** an error focuses the destination country, with the reveal still open\n- **AND** the port of exit they already answered is still held\n\n#### Scenario: Save and return to overview saves a partly answered reveal and returns to Overview\n**ID**: SCN-IMPORT-REASON-006-B\n- **GIVEN** the user has chosen \"Transit\" and left the port of exit and the destination country blank\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown\n- **AND** re-opening the page shows \"Transit\" still chosen",
+      "summary": "The refusal for a half-answered follow-up now applies to Save and continue only. Save and return to overview saves what was entered and goes back to Overview.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-008",
+      "requirementName": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
+      "change": "changed",
+      "before": "### Requirement: The back link returns to Overview\n**ID**: REQ-IMPORT-REASON-008\nThe system MUST return the user to Overview when they follow the back link from the import reason page.\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-IMPORT-REASON-008-A\n- **GIVEN** the user is on the import reason page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise\n**ID**: REQ-IMPORT-REASON-008\nThe system MUST return the user to the commodity selection page (\"What are you importing?\") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task.\n\n#### Scenario: The back link opens Overview when the page was opened from Overview\n**ID**: SCN-IMPORT-REASON-008-A\n- **GIVEN** the opening sequence has ended and the user opened main import reason from its task on Overview\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: In the opening sequence, the back link opens what are you importing\n**ID**: SCN-IMPORT-REASON-008-B\n- **GIVEN** the user is in the opening sequence and reached main import reason from what are you importing\n- **WHEN** they follow the back link\n- **THEN** \"What are you importing?\" is shown",
+      "summary": "In the opening sequence Back now goes to What are you importing?. It still goes to Overview when the page was opened from Overview.\n\nThe page's own name also changes from Main reason for import to Main import reason.",
+      "cards": [
+        "back-links",
+        "q-reason-walk",
+        "q-commodity-walk",
+        "reason-rename"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-009",
+      "requirementName": "The destination country is chosen from the origin countries and their territories, each territory named with its country",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The destination country is chosen from the origin countries and their territories, each territory named with its country\n**ID**: REQ-IMPORT-REASON-009\nThe system MUST offer, for the destination country under both Transit and Transhipment or onward travel, the placeholder \"Select one\" and then the origin countries and their territories that the reference data service serves, in one alphabetical list, naming each territory \"<territory> (<country>)\" with its country's served name.\n\n#### Scenario: The transhipment destination country offers the origin countries and their territories\n**ID**: SCN-IMPORT-REASON-009-A\n- **GIVEN** the user has chosen \"Transhipment or onward travel\"\n- **WHEN** the destination country list is read in full\n- **THEN** after the placeholder \"Select one\" it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order\n\n#### Scenario: The transit destination country offers the same places\n**ID**: SCN-IMPORT-REASON-009-B\n- **GIVEN** the user has chosen \"Transit\"\n- **WHEN** the destination country list is read in full\n- **THEN** it holds the same places as under \"Transhipment or onward travel\"\n\n#### Scenario: Each territory is named with its country\n**ID**: SCN-IMPORT-REASON-009-C\n- **GIVEN** either destination country list\n- **WHEN** a territory is read\n- **THEN** it reads \"<territory> (<country>)\", for example \"Canary Islands (Spain)\"",
+      "summary": "New. Both destination country lists offer the origin countries and their territories in one A to Z list.\n\nA territory reads as, for example, Canary Islands (Spain).",
+      "cards": [
+        "destination-country-lists",
+        "origin-subdivisions"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-010",
+      "requirementName": "A chosen destination country, a territory included, is kept and offered back",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A chosen destination country, a territory included, is kept and offered back\n**ID**: REQ-IMPORT-REASON-010\nThe system MUST save a territory chosen as the destination country without an error, and MUST show the saved destination country, a territory or a country saved before territories were offered, as chosen when the page is reopened.\n\n#### Scenario: A territory chosen as the destination country is kept\n**ID**: SCN-IMPORT-REASON-010-A\n- **GIVEN** the user has chosen a reason that asks the destination country\n- **WHEN** they choose a territory and save and continue\n- **THEN** no error is shown\n- **AND** when they reopen the page the territory is shown as chosen\n\n#### Scenario: A destination country saved before territories were offered is still shown\n**ID**: SCN-IMPORT-REASON-010-B\n- **GIVEN** the notification holds a destination country from the country list\n- **WHEN** the user reopens the page\n- **THEN** that country is shown as chosen",
+      "summary": "New. A territory chosen as the destination country is saved without error and shown as chosen when the page is reopened.\n\nA country saved earlier still shows.",
+      "cards": [
+        "destination-country-lists"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-011",
+      "requirementName": "The page is headed and titled Main import reason",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page is headed and titled Main import reason\n**ID**: REQ-IMPORT-REASON-011\nThe system MUST head the page \"Main import reason\" and give it the browser title \"Main import reason - Import notification service - GOV.UK\".\n\n#### Scenario: The page reads Main import reason in its heading and browser title\n**ID**: SCN-IMPORT-REASON-011-A\n- **GIVEN** the user opens the import reason page\n- **WHEN** it loads\n- **THEN** its heading reads \"Main import reason\"\n- **AND** the browser title reads \"Main import reason - Import notification service - GOV.UK\"\n- **AND** \"Main reason for import\" does not appear on the page",
+      "summary": "New. The page heading and browser title now read Main import reason, and the old wording no longer appears.",
+      "cards": [
+        "reason-rename"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-012",
+      "requirementName": "Each destination country and port of exit select opens on Select one, with no divider",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Each destination country and port of exit select opens on Select one, with no divider\n**ID**: REQ-IMPORT-REASON-012\nThe system MUST start every destination country and port of exit select on the page with an empty option reading \"Select one\", selected while nothing is chosen, followed straight by the places or ports with no divider line.\n\n#### Scenario: A destination country select opens on Select one\n**ID**: SCN-IMPORT-REASON-012-A\n- **GIVEN** the user has chosen \"Transhipment or onward travel\" or \"Transit\"\n- **WHEN** the destination country list is read\n- **THEN** its first option reads \"Select one\" and is selected\n- **AND** the next option is the first place, with no divider line between\n\n#### Scenario: A port of exit select opens on Select one\n**ID**: SCN-IMPORT-REASON-012-B\n- **GIVEN** the user has chosen \"Transit\" or \"Temporary admission horses\"\n- **WHEN** the port of exit list is read\n- **THEN** its first option reads \"Select one\" and is selected\n- **AND** the next option is the first port, with no divider line between",
+      "summary": "New. Every destination country and port of exit dropdown opens on Select one, followed straight by the list with no divider line.",
+      "cards": [
+        "reason-select-one"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/import-reason",
+      "capabilityName": "Live animals: Main import reason page",
+      "requirementId": "REQ-IMPORT-REASON-013",
+      "requirementName": "Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format\n**ID**: REQ-IMPORT-REASON-013\nThe system MUST, on Save and return to overview — and, while amending, on Save and return — save the reason and whatever of its questions were answered without refusing the page for an unanswered question, MUST clear the answers of a reason no longer chosen, MUST leave every saved reason answer as it was when no reason is chosen, whichever save is used (Save and continue included), and MUST still refuse an exit date that is not a real date with \"Enter a real date\".\n\n#### Scenario: Transit without a port of exit saves and keeps the country\n**ID**: SCN-IMPORT-REASON-013-A\n- **GIVEN** the user has chosen \"Transit\" and given a destination country but no port of exit\n- **WHEN** they save and return to overview\n- **THEN** no error is shown and Overview is shown\n- **AND** when they reopen the page, Transit is chosen with the destination country given\n\n#### Scenario: Changing the reason clears the saved purpose\n**ID**: SCN-IMPORT-REASON-013-B\n- **GIVEN** the user has saved \"Internal market\" with a purpose\n- **WHEN** they change the reason to \"Transit\" and save and return to overview\n- **THEN** choosing \"Internal market\" again shows no purpose chosen\n\n#### Scenario: No reason chosen keeps every earlier answer\n**ID**: SCN-IMPORT-REASON-013-C\n- **GIVEN** the user has saved a reason and its answers\n- **WHEN** they save and return to overview with no reason chosen\n- **THEN** every earlier saved reason answer is kept\n\n#### Scenario: Save and continue with no reason chosen keeps every earlier answer\n**ID**: SCN-IMPORT-REASON-013-F\n- **GIVEN** the user has saved a reason and its answers\n- **WHEN** they choose Save and continue with no reason chosen\n- **THEN** every earlier saved reason answer is unchanged\n\n#### Scenario: An exit date that is not a real date is refused\n**ID**: SCN-IMPORT-REASON-013-D\n- **GIVEN** the user has chosen \"Temporary admission horses\" and entered the exit date 31/2/2026\n- **WHEN** they save and return to overview\n- **THEN** the page stays open and the exit date shows \"Enter a real date\"\n- **AND** nothing is saved\n\n#### Scenario: While amending, Save and return with transit and no port of exit opens the review\n**ID**: SCN-IMPORT-REASON-013-E\n- **GIVEN** the user is amending and has chosen \"Transit\" with a destination country but no port of exit\n- **WHEN** they use Save and return\n- **THEN** no error is shown and the review page is shown",
+      "summary": "New. Save and return to overview saves what was entered without the required-answer checks, and so does Save and return while amending.\n\nAnswers for a reason no longer chosen are cleared. With no reason chosen, every earlier answer is kept, whichever save is used.\n\nAn exit date that is not a real date is still refused.",
+      "cards": [
+        "soft-save",
+        "format-refused",
+        "reason-change-clears",
+        "q-soft-save-format"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/additional-details",
+      "capabilityName": "Live animals: Additional details page",
+      "requirementId": "REQ-ADDL-DETAILS-004",
+      "requirementName": "The back link returns to the page before it in the opening sequence, and to Overview otherwise",
+      "change": "changed",
+      "before": "### Requirement: The back link returns to Overview\n**ID**: REQ-ADDL-DETAILS-004\nThe system MUST return the user to Overview when they follow the back link from the additional details page.\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-ADDL-DETAILS-004-A\n- **GIVEN** the user is on the additional details page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The back link returns to the page before it in the opening sequence, and to Overview otherwise\n**ID**: REQ-ADDL-DETAILS-004\nThe system MUST return the user, when they follow the back link from the additional details page during the opening sequence, to identification details when any chosen commodity needs identifiers and to commodity details otherwise, and MUST return them to Overview when the page was opened from its Overview task.\n\n#### Scenario: The back link opens Overview when the page was opened from Overview\n**ID**: SCN-ADDL-DETAILS-004-A\n- **GIVEN** the opening sequence has ended and the user opened additional details from its task on Overview\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers\n**ID**: SCN-ADDL-DETAILS-004-B\n- **GIVEN** the user is in the opening sequence with cattle chosen and reached additional details from identification details\n- **WHEN** they follow the back link\n- **THEN** identification details is shown\n\n#### Scenario: In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers\n**ID**: SCN-ADDL-DETAILS-004-C\n- **GIVEN** the user is in the opening sequence with only Atlantic salmon chosen and reached additional details from commodity details\n- **WHEN** they follow the back link\n- **THEN** commodity details is shown",
+      "summary": "In the opening sequence Back now goes to identification details, or to commodity details when nothing chosen needs identifiers. It goes to Overview only when opened from Overview.",
+      "cards": [
+        "back-links",
+        "q-reason-walk"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/additional-details",
+      "capabilityName": "Live animals: Additional details page",
+      "requirementId": "REQ-ADDL-DETAILS-006",
+      "requirementName": "The certification question names the ITAHC as where its answer is found",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The certification question names the ITAHC as where its answer is found\n**ID**: REQ-ADDL-DETAILS-006\nThe system MUST hint the certification question \"You can find this information on the ITAHC.\"\n\n#### Scenario: The certification question carries the ITAHC hint\n**ID**: SCN-ADDL-DETAILS-006-A\n- **GIVEN** the user is on the additional details page\n- **WHEN** the page loads\n- **THEN** the question asking what the animals are certified for is hinted \"You can find this information on the ITAHC.\"",
+      "summary": "New. The certification question now has the hint: You can find this information on the ITAHC.",
+      "cards": [
+        "certification-hint"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/additional-details",
+      "capabilityName": "Live animals: Additional details page",
+      "requirementId": "REQ-ADDL-DETAILS-007",
+      "requirementName": "Saving with nothing answered saves without an error and keeps earlier answers",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Saving with nothing answered saves without an error and keeps earlier answers\n**ID**: REQ-ADDL-DETAILS-007\nThe system MUST, whichever save is used (Save and return to overview or Save and continue), with both questions unanswered show no error, move the user on, and keep any answer previously saved to each question, so a blank answer never clears a stored one.\n\n#### Scenario: Saving and returning with both questions unanswered keeps the earlier answers\n**ID**: SCN-ADDL-DETAILS-007-A\n- **GIVEN** the user has earlier saved both answers\n- **WHEN** they submit the page with neither question answered by Save and return to overview\n- **THEN** Overview is shown with no error\n- **AND** reopening the page shows both earlier answers chosen\n\n#### Scenario: Save and continue with both questions unanswered keeps the earlier answers\n**ID**: SCN-ADDL-DETAILS-007-B\n- **GIVEN** the user has earlier saved both answers\n- **WHEN** they submit the page with neither question answered by Save and continue\n- **THEN** no error is shown and the user moves on\n- **AND** both earlier answers are unchanged",
+      "summary": "New. Saving with both questions blank shows no error and moves on.\n\nIt never clears an answer saved earlier.",
+      "cards": [
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/cph-number",
+      "capabilityName": "Live animals: County parish holding (CPH) number page",
+      "requirementId": "REQ-CPH-006",
+      "requirementName": "The back link returns to the consignment addresses page from its row, and to Overview otherwise",
+      "change": "changed",
+      "before": "### Requirement: The back link returns to where the page was entered from\n**ID**: REQ-CPH-006\nThe system MUST return the user to Overview when they follow the back link from the CPH number page during the sequential journey walk, and to the addresses hub when they arrived at the page from its row there.\n\n#### Scenario: The back link opens Overview on a sequential walk\n**ID**: SCN-CPH-006-A\n- **GIVEN** the user reached the CPH number page by walking the journey in order\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: The back link returns to the addresses hub when entered from there\n**ID**: SCN-CPH-006-B\n- **GIVEN** the user reached the CPH number page from its row on the addresses hub (`?return=addresses`)\n- **WHEN** they follow the back link\n- **THEN** the addresses hub is shown",
+      "after": "### Requirement: The back link returns to the consignment addresses page from its row, and to Overview otherwise\n**ID**: REQ-CPH-006\nThe system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page after arriving from its row there, and to Overview when they arrived any other way.\n\n#### Scenario: The back link opens Overview when the page was not opened from its row\n**ID**: SCN-CPH-006-A\n- **GIVEN** the user reached the CPH number page other than from its row on the consignment addresses page (for example a Change link from check your answers)\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: The back link returns to the addresses hub when entered from there\n**ID**: SCN-CPH-006-B\n- **GIVEN** the user reached the CPH number page from its row on the addresses hub (`?return=addresses`)\n- **WHEN** they follow the back link\n- **THEN** the addresses hub is shown",
+      "summary": "Back still goes to the consignment addresses page when the user came from its row there, and to Overview otherwise.\n\nThe wording changes because the page is no longer reached by walking the journey in order.\n\nThe example is now a Change link from check your answers.\n\nThe page intro also now says the page is never a step of the opening sequence.",
+      "cards": [
+        "cph-not-in-run",
+        "back-links"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/cph-number",
+      "capabilityName": "Live animals: County parish holding (CPH) number page",
+      "requirementId": "REQ-CPH-007",
+      "requirementName": "Saving the CPH number returns to the consignment addresses page",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Saving the CPH number returns to the consignment addresses page\n**ID**: REQ-CPH-007\nThe system MUST return the user to the consignment addresses page after they save the CPH number, whether or not an opening sequence is under way. While the notification is being amended, \"Save and return\" returns to the review instead (REQ-FLOW-013).\n\n#### Scenario: Saving from its row returns to the consignment addresses page, showing the number\n**ID**: SCN-CPH-007-A\n- **GIVEN** the user opened the CPH number page from its row on the consignment addresses page\n- **WHEN** they save a valid CPH number\n- **THEN** the consignment addresses page is shown\n- **AND** the CPH number row shows the nine digits\n\n#### Scenario: Saving without the row's context also returns to the consignment addresses page\n**ID**: SCN-CPH-007-B\n- **GIVEN** the user reached the CPH number page other than from its row and not from check your answers\n- **WHEN** they save a valid CPH number\n- **THEN** the consignment addresses page is shown",
+      "summary": "New. Saving the CPH number always returns to the consignment addresses page, showing the nine digits.\n\nWhile amending, Save and return goes to the review instead.",
+      "cards": [
+        "cph-not-in-run"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-details",
+      "capabilityName": "Live animals: Commodity details page",
+      "requirementId": "REQ-COMMODITY-DETAILS-003",
+      "requirementName": "A collection table lists every chosen species, each removable on its own",
+      "change": "changed",
+      "before": "### Requirement: A collection table lists every chosen species, each removable on its own\n**ID**: REQ-COMMODITY-DETAILS-003\nThe system MUST list every chosen commodity and species in a table naming the commodity's code, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.\n\n#### Scenario: The table lists each commodity and species with its code\n**ID**: SCN-COMMODITY-DETAILS-003-A\n- **GIVEN** the user has chosen more than one species\n- **WHEN** they view the commodity details page\n- **THEN** the table lists each commodity by name and code, and each of its chosen species\n\n#### Scenario: Removing one species leaves another's saved counts untouched\n**ID**: SCN-COMMODITY-DETAILS-003-B\n- **GIVEN** the user has saved counts for two species under different commodities\n- **WHEN** they remove one species\n- **THEN** it no longer appears in the table, and the other species' saved counts are unchanged",
+      "after": "### Requirement: A collection table lists every chosen species, each removable on its own\n**ID**: REQ-COMMODITY-DETAILS-003\nThe system MUST list every chosen commodity and species in a table with the columns \"Commodity code\", \"Common name\" and \"Species\", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.\n\n#### Scenario: The table lists each commodity and species with its code\n**ID**: SCN-COMMODITY-DETAILS-003-A\n- **GIVEN** the user has chosen more than one species\n- **WHEN** they view the commodity details page\n- **THEN** the table lists each commodity by name and code, and each of its chosen species\n\n#### Scenario: Removing one species leaves another's saved counts untouched\n**ID**: SCN-COMMODITY-DETAILS-003-B\n- **GIVEN** the user has saved counts for two species under different commodities\n- **WHEN** they remove one species\n- **THEN** it no longer appears in the table, and the other species' saved counts are unchanged\n\n#### Scenario: Each row's Species cell lists the Latin names chosen under it\n**ID**: SCN-COMMODITY-DETAILS-003-C\n- **GIVEN** the user has chosen two species under the Cow commodity\n- **WHEN** they view the commodity details page\n- **THEN** the table has the columns \"Commodity code\", \"Common name\" and \"Species\"\n- **AND** the Cow row reads 0102, Cow, and the Latin name of each of the two species",
+      "summary": "The table now has the columns Commodity code, Common name and Species. The Species cell lists the Latin names chosen under that row.",
+      "cards": [
+        "commodity-details-caption-species"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-details",
+      "capabilityName": "Live animals: Commodity details page",
+      "requirementId": "REQ-COMMODITY-DETAILS-009",
+      "requirementName": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
+      "change": "changed",
+      "before": "### Requirement: The back link returns to Overview\n**ID**: REQ-COMMODITY-DETAILS-009\nThe system MUST return the user to Overview when they follow the back link from commodity details, the page the hub task row links straight to.\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-COMMODITY-DETAILS-009-A\n- **GIVEN** the user is on the commodity details page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise\n**ID**: REQ-COMMODITY-DETAILS-009\nThe system MUST return the user to the commodity selection page (\"What are you importing?\") when they follow the back link from commodity details during the opening sequence, not to the main reason for import that comes between them, and MUST return them to Overview when the page was opened from its Overview task.\n\n#### Scenario: The back link opens Overview when the page was opened from Overview\n**ID**: SCN-COMMODITY-DETAILS-009-A\n- **GIVEN** the opening sequence has ended and the user opened commodity details from its task on Overview\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept\n**ID**: SCN-COMMODITY-DETAILS-009-B\n- **GIVEN** the user is in the opening sequence and reached commodity details from main reason for import\n- **WHEN** they follow the back link\n- **THEN** \"What are you importing?\" is shown, with the species they chose still chosen",
+      "summary": "In the opening sequence Back now goes to What are you importing?, skipping the main import reason between them. It goes to Overview when opened from Overview.",
+      "cards": [
+        "back-links",
+        "q-commodity-walk"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-details",
+      "capabilityName": "Live animals: Commodity details page",
+      "requirementId": "REQ-COMMODITY-DETAILS-010",
+      "requirementName": "The error summary lists errors by question",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The error summary lists errors by question\n**ID**: REQ-COMMODITY-DETAILS-010\nThe system MUST list every number of animals error in the error summary before any number of packages error, each linking to its own field.\n\n#### Scenario: Two species with blank counts and invalid package counts list both animals errors first\n**ID**: SCN-COMMODITY-DETAILS-010-A\n- **GIVEN** the user has two species on the commodity details page, each missing its number of animals and each with a number of packages that is not a whole number\n- **WHEN** they save and continue\n- **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species\n- **AND** each error links to its own field",
+      "summary": "New. The error summary lists every number of animals error first, then every number of packages error.\n\nEach error links to its own field.",
+      "cards": [
+        "commodity-details-errors"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-details",
+      "capabilityName": "Live animals: Commodity details page",
+      "requirementId": "REQ-COMMODITY-DETAILS-011",
+      "requirementName": "The page ends with Save and continue, Save and return to overview and Cancel and return to overview",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview\n**ID**: REQ-COMMODITY-DETAILS-011\nOutside an amendment the system MUST end the commodity details page with \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\", in the opening sequence as when opened from Overview.\n\n#### Scenario: The opening sequence offers all three controls\n**ID**: SCN-COMMODITY-DETAILS-011-A\n- **GIVEN** the user is in the opening sequence on commodity details\n- **WHEN** the page is shown\n- **THEN** it offers \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\"",
+      "summary": "New. Outside an amendment the page ends with Save and continue, Save and return to overview and Cancel and return to overview.\n\nThis holds in the opening sequence and from Overview.",
+      "cards": [
+        "q-commodity-walk"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-details",
+      "capabilityName": "Live animals: Commodity details page",
+      "requirementId": "REQ-COMMODITY-DETAILS-012",
+      "requirementName": "The page holds until every species asked for a number of packages has one",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page holds until every species asked for a number of packages has one\n**ID**: REQ-COMMODITY-DETAILS-012\nThe system MUST refuse to save, by \"Save and continue\" or by \"Save and return to overview\", while a species whose commodity calls for a number of packages has none, showing \"Enter the number of packages\" linked to that species' field. It MUST save a species whose commodity does not call for one without a number of packages.\n\n#### Scenario: A blank number of packages is refused on the species that asks for it\n**ID**: SCN-COMMODITY-DETAILS-012-A\n- **GIVEN** a species whose commodity calls for a number of packages, with its number of animals entered\n- **WHEN** they save and continue with its number of packages blank\n- **THEN** the save is blocked, with \"Enter the number of packages\" linking to and focusing that species' field\n\n#### Scenario: A species not asked for a number of packages saves without one\n**ID**: SCN-COMMODITY-DETAILS-012-B\n- **GIVEN** a species whose commodity does not call for a number of packages\n- **WHEN** they enter its number of animals and save and continue\n- **THEN** no number of packages is asked, and the answers are saved with no error summary\n\n#### Scenario: Save and return to overview also holds on a blank number of packages\n**ID**: SCN-COMMODITY-DETAILS-012-C\n- **GIVEN** a species whose commodity calls for a number of packages, with it left blank\n- **WHEN** they select \"Save and return to overview\"\n- **THEN** they stay on the page, which shows \"Enter the number of packages\", and nothing is saved",
+      "summary": "New. Neither save works while a species that is asked for a number of packages has none.\n\nThe error reads Enter the number of packages. Species not asked for one save without it.",
+      "cards": [
+        "commodity-details-errors"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-005",
+      "requirementName": "The page explains what a commodity code is and links out to look one up",
+      "change": "changed",
+      "before": "### Requirement: The page explains what a commodity code is and links out to look one up\n**ID**: REQ-COMMODITY-SELECT-005\nThe system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab.\n\n#### Scenario: The commodity-code help explains the code and links to the Trade Tariff tool\n**ID**: SCN-COMMODITY-SELECT-005-A\n- **GIVEN** the user is on the commodity selection page\n- **WHEN** they open the commodity-code help\n- **THEN** it explains what the code is and offers a link to look one up, which opens the Trade Tariff tool in a new tab",
+      "after": "### Requirement: The page explains what a commodity code is and links out to look one up\n**ID**: REQ-COMMODITY-SELECT-005\nThe system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab, reading \"Trade Tariff tool\" with \"(opens in a new tab)\" on its own line after it, both part of the link's name.\n\n#### Scenario: The commodity-code help explains the code and links to the Trade Tariff tool\n**ID**: SCN-COMMODITY-SELECT-005-A\n- **GIVEN** the user is on the commodity selection page\n- **WHEN** they open the commodity-code help\n- **THEN** it explains what the code is and offers a link to look one up, which opens the Trade Tariff tool in a new tab\n- **AND** the link reads \"Trade Tariff tool\" with \"(opens in a new tab)\" on its own line after it, both part of the link's name",
+      "summary": "The Trade Tariff tool link now reads Trade Tariff tool, with (opens in a new tab) on its own line after it. Both are part of the link's name.",
+      "cards": [
+        "commodity-page-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-006",
+      "requirementName": "Species chosen under different searches are all kept, in a canonical order",
+      "change": "changed",
+      "before": "### Requirement: Species chosen under different searches are all kept, in a canonical order\n**ID**: REQ-COMMODITY-SELECT-006\nThe system MUST keep every species the user has chosen, whichever search brought it on screen, MUST list them all in the selection tally without any search in place, MUST show each as still chosen when its own search brings it back, and MUST list saved species in a canonical order rather than the order they were chosen in.\n\n#### Scenario: Species found under separate searches are kept together\n**ID**: SCN-COMMODITY-SELECT-006-A\n- **GIVEN** the user is on the commodity selection page\n- **WHEN** they choose one species found under one search and another found under a different search, then save and continue\n- **THEN** both are saved and no error summary is shown\n- **WHEN** they return to the page\n- **THEN** the selection tally lists both, and reports two chosen, with no search in place\n- **AND** searching for either one again shows it as still chosen\n\n#### Scenario: Saved species are ordered canonically, not by the order they were chosen\n**ID**: SCN-COMMODITY-SELECT-006-B\n- **GIVEN** the user chooses three species in a search order that does not match their canonical order\n- **WHEN** they save and continue to commodity details\n- **THEN** the species appear there in their canonical order, not the order chosen",
+      "after": "### Requirement: Species chosen under different searches are all kept, in a canonical order\n**ID**: REQ-COMMODITY-SELECT-006\nThe system MUST keep every species the user has chosen, whichever search brought it on screen, MUST list them all in the selection tally without any search in place, MUST show each as still chosen when its own search brings it back, and MUST list saved species in a canonical order rather than the order they were chosen in.\n\n#### Scenario: Species found under separate searches are kept together\n**ID**: SCN-COMMODITY-SELECT-006-A\n- **GIVEN** the user is on the commodity selection page\n- **WHEN** they choose one species found under one search and another found under a different search, then save and continue\n- **THEN** both are saved and no error summary is shown\n- **WHEN** they return to the page\n- **THEN** the selection tally lists both, and reports two chosen, with no search in place\n- **AND** searching for either one again shows it as still chosen\n\n#### Scenario: Saved species are ordered canonically, not by the order they were chosen\n**ID**: SCN-COMMODITY-SELECT-006-B\n- **GIVEN** the user chooses three species in a search order that does not match their canonical order\n- **WHEN** they save, and open commodity details from Overview\n- **THEN** the species appear there in their canonical order, not the order chosen",
+      "summary": "One scenario step changed. The saved species are now checked by opening commodity details from Overview, not by saving and continuing.",
+      "cards": [
+        "opening-run-order",
+        "q-commodity-walk"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-007",
+      "requirementName": "The back link returns to the origin of the import in the opening sequence, and to Overview otherwise",
+      "change": "changed",
+      "before": "### Requirement: The back link returns to Overview\n**ID**: REQ-COMMODITY-SELECT-007\nThe system MUST return the user to Overview when they follow the back link from the commodity selection page.\n\n#### Scenario: The back link opens Overview\n**ID**: SCN-COMMODITY-SELECT-007-A\n- **GIVEN** the user is on the commodity selection page\n- **WHEN** they follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: The back link returns to the origin of the import in the opening sequence, and to Overview otherwise\n**ID**: REQ-COMMODITY-SELECT-007\nThe system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, and to Overview when the page was opened from its Overview task.\n\n#### Scenario: The back link opens Overview when the page was opened from Overview\n**ID**: SCN-COMMODITY-SELECT-007-A\n- **GIVEN** the opening sequence has ended and the user opened what are you importing from its task on Overview\n- **WHEN** they follow the back link\n- **THEN** Overview is shown\n\n#### Scenario: In the opening sequence, the back link opens origin of the import\n**ID**: SCN-COMMODITY-SELECT-007-B\n- **GIVEN** the user is in the opening sequence and has saved origin of the import\n- **WHEN** they follow the back link from what are you importing\n- **THEN** the origin of the import page is shown",
+      "summary": "In the opening sequence Back now goes to the origin of the import page. It goes to Overview only when opened from Overview.",
+      "cards": [
+        "back-links",
+        "q-commodity-walk"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-009",
+      "requirementName": "Saving and continuing without choosing a commodity is rejected",
+      "change": "changed",
+      "before": "### Requirement: Saving without choosing a commodity is rejected\n**ID**: REQ-COMMODITY-SELECT-009\nThe system MUST refuse to save the commodity selection page when nothing has been chosen, showing an error summary that names what is needed.\n\n#### Scenario: Saving with nothing chosen shows an error summary\n**ID**: SCN-COMMODITY-SELECT-009-A\n- **GIVEN** the user is on the commodity selection page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown, telling the user to select a commodity",
+      "after": "### Requirement: Saving and continuing without choosing a commodity is rejected\n**ID**: REQ-COMMODITY-SELECT-009\nThe system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing \"Select a commodity\" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. On save and return to overview the system MUST NOT check the choice: it saves the selection as it stands, an empty one included, and the Overview shows the commodity selection task as \"To do\" when nothing is chosen.\n\n#### Scenario: Saving with nothing chosen shows an error summary\n**ID**: SCN-COMMODITY-SELECT-009-A\n- **GIVEN** the user is on the commodity selection page with nothing chosen\n- **WHEN** they save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown, telling the user to select a commodity\n- **AND** the same error shows inline on the search field, and the summary link goes to the search field\n\n#### Scenario: Save and return to overview with nothing chosen returns to Overview without an error\n**ID**: SCN-COMMODITY-SELECT-009-B\n- **GIVEN** the user is on the commodity selection page with nothing chosen\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown\n- **AND** the commodity selection task reads \"To do\"\n\n#### Scenario: With results listed, the error still sits on the search field\n**ID**: SCN-COMMODITY-SELECT-009-C\n- **GIVEN** the user has searched, so species are listed, and has chosen none\n- **WHEN** they save and continue\n- **THEN** \"Select a commodity\" shows in the error summary and inline on the search field, not on the listed species\n- **AND** the summary link goes to the search field\n\n#### Scenario: Save and return to overview after clearing a saved selection empties it\n**ID**: SCN-COMMODITY-SELECT-009-D\n- **GIVEN** the user has a saved selection and clears it on the commodity selection page\n- **WHEN** they save and return to overview\n- **THEN** they return to Overview with no error shown and the commodity selection task reads \"To do\"\n- **AND** reopening the page shows nothing chosen",
+      "summary": "Select a commodity is now shown on the search field as well as in the summary, whether or not results are listed.\n\nSave and return to overview skips the check and saves an empty choice, leaving the task as To do.",
+      "cards": [
+        "select-commodity-error",
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-011",
+      "requirementName": "The page says one notification is needed per ITAHC and how to search",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page says one notification is needed per ITAHC and how to search\n**ID**: REQ-COMMODITY-SELECT-011\nThe system MUST show the inset \"You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.\" and the search hint \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\", with no sentence about a minimum search length.\n\n#### Scenario: The page explains the ITAHC rule and the ways to search\n**ID**: SCN-COMMODITY-SELECT-011-A\n- **GIVEN** the user has reached the commodity selection page\n- **WHEN** the page loads\n- **THEN** the inset reads \"You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.\"\n- **AND** the search hint reads \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\" with no sentence about a minimum number of characters",
+      "summary": "New. The page shows an inset saying a separate notification is needed for every ITAHC, and a search hint with examples and no minimum-length sentence.",
+      "cards": [
+        "commodity-page-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/commodity-selection",
+      "capabilityName": "Live animals: What are you importing? (commodity selection) page",
+      "requirementId": "REQ-COMMODITY-SELECT-012",
+      "requirementName": "The page ends with Save and continue, Save and return to overview and Cancel and return to overview",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview\n**ID**: REQ-COMMODITY-SELECT-012\nOutside an amendment, and while a template is being created, the system MUST end the commodity selection page with \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\", in the opening sequence as when opened from Overview. While a saved template's section is changed, it MUST end as live-animals/notification-templates REQ-TEMPLATES-028 specifies; REQ-TEMPLATES-012 says where Save and continue leads while a template is being created.\n\n#### Scenario: The opening sequence offers all three controls\n**ID**: SCN-COMMODITY-SELECT-012-A\n- **GIVEN** the user is in the opening sequence on what are you importing\n- **WHEN** the page is shown\n- **THEN** it offers \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\"",
+      "summary": "New. Outside an amendment, and while a template is being created, the page ends with three actions.\n\nThey are Save and continue, Save and return to overview and Cancel and return to overview.\n\nWhen a saved template's section is changed, the templates rules apply instead.",
+      "cards": [
+        "q-commodity-walk"
+      ]
+    }
+  ]
+}

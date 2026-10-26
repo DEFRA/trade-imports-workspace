@@ -1,0 +1,611 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 12 (Additional details and contact) mined all 15 traces its read names: 9 from additional-details.fit.spec.js (rendering: 98ff4 :43, 7551a :74, be2d3 :83; unweaned commodity gate: a90fd :101, 01f6b :112; validation: db17f :139, c0bef :169; persistence and accessibility: 95b78 :208, 42575 :227) and 6 from contact.fit.spec.js (3ac7c :43, d776d :60, 6b476 :66, 6aea6 :89, c6038 :117, a6bde :125). Both spec files were read in full for test titles and assertions. Method note: the trace CLI run through `tim distil trace` refused every zip (TraceVersionError: the traces were recorded by a newer Playwright than the viewer tim installs), so each zip, already unzipped into this part's working folder by an earlier run, was read directly: the action timeline from the `before` events of 1-trace.trace, the rendered DOM from the largest frame-snapshot for a call (rendered to markup with a jq filter), the page title and back link from the same snapshot, the form posts and redirects from 1-trace.network, and the axe result from the `after` event of the axe finishRun call. Action ids below are those callIds. Pages, in journey order: (1) Additional details, /live-animals/notifications/{ref}/additional-details, caption 'Commodity details', h1 'Additional details', task row 'Additional details' under '2. Description of the goods' on the Overview hub. Two radio questions under one h1: 'What are the animals certified for?' (16 options, always asked) and 'Does the consignment contain any unweaned animals?' (Yes/No, asked of cattle (Bos taurus) and not of a horses-only (Equus caballus) consignment). Every trace reached it by direct navigation after origin, commodity selection and commodity details. (2) Contact address for consignment, /live-animals/notifications/{ref}/consignment/contact/select, single-question page whose legend is the h1, task row 'Contact address for this consignment' under '6. Contact address'. One radio question listing 13 address-book contacts, each with its address as a radio hint; once a contact is saved, a 'Current contact address' summary card with an 'Edit details' link appears. Every contact trace reached it by direct navigation after only the origin page. Both pages post back to themselves (POST, 302 to the Overview hub on success, 400 with an error summary on an invalid value), carry a hidden concurrencyToken, and offer 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'. Both are entirely govuk-frontend components apart from the app-journey-strip (Draft tag and notification reference). Not reached by any trace in this part: a blank submission on either page, the 'Yes' unweaned answer, 'Save and return to overview', 'Cancel and return to overview', the contact 'Edit details' page, and any server-side call to the certification-purposes or address-book services; each is recorded as a gap.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p12-001",
+      "statement": "The Additional details page is at /live-animals/notifications/{notification reference}/additional-details and its browser title is 'Additional details - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "trace be2d3 (additional-details.fit.spec.js:83) action call@79",
+      "quote": "Additional details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-002",
+      "statement": "The Additional details page has the caption 'Commodity details' above its h1 'Additional details'.",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "<SPAN class=\"govuk-caption-l\">Commodity details</SPAN> <H1 class=\"govuk-heading-l\">Additional details</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-003",
+      "statement": "The Additional details page is reached from the Overview hub task row 'Additional details', the third row under '2. Description of the goods' when a commodity has been chosen, and the row shows 'To do' until the page is saved.",
+      "kind": "behaviour",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) action call@219; trace be2d3 action call@79 (hub before save)",
+      "quote": "<H3 class=\"govuk-heading-m\">2. Description of the goods</H3> ... href=\"/live-animals/notifications/GBN-AG-26-ZRTXMW/additional-details\" aria-describedby=\"description-of-the-goods-3-status\"> Additional details </A>",
+      "confidence": "verbatim",
+      "note": "In a contact trace where no commodity had been chosen (6aea6 call@1831), 'Additional details' is the second row of that section, because 'Identification details' is absent."
+    },
+    {
+      "id": "trace-animals-fit-p12-004",
+      "statement": "The Additional details page asks 'What are the animals certified for?' as a radio question whose legend is set at the medium size.",
+      "kind": "data",
+      "ref": "trace 7551a (additional-details.fit.spec.js:74) action call@83; trace 98ff4 action call@79",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-fieldset__legend--m\"> What are the animals certified for? </LEGEND>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-005",
+      "statement": "The certification question has the hint 'This information can be found on the ITAHC.'",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "This information can be found on the ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-006",
+      "statement": "The certification question offers 16 options, in this order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) actions call@79 and call@87 to call@117",
+      "quote": "Further keeping | Slaughter | Confined establishment | Germinal products | Registered equine animal | Travelling circus/animal act | Exhibition | Event or activity near borders | Release into the wild | Dispatch centre | Relaying area / purification centre | Ornamental aquaculture establishment | Technical use | Quarantine or similar establishment | Live aquatic animals for human consumption | Other",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-007",
+      "statement": "Each certification option submits a kebab-case value under the field name animalsCertifiedFor: further-keeping, slaughter, confined-establishment, germinal-products, registered-equine-animal, travelling-circus-animal-act, exhibition, event-or-activity-near-borders, release-into-the-wild, dispatch-centre, relaying-area-purification-centre, ornamental-aquaculture-establishment, technical-use, quarantine-or-similar-establishment, live-aquatic-animals-for-human-consumption, other.",
+      "kind": "data",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "name=\"animalsCertifiedFor\" type=\"radio\" value=\"further-keeping\" ... value=\"relaying-area-purification-centre\" ... value=\"live-aquatic-animals-for-human-consumption\" ... value=\"other\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-008",
+      "statement": "The certification options come from a certification-purposes service rather than being written into the page: the test checks the rendered radio values equal the service's list, in order.",
+      "kind": "integration",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) test title; spec lines 43-60",
+      "quote": "renders service-backed certification options and conditional copy",
+      "confidence": "inferred",
+      "note": "The trace records only browser traffic, so the call to the certification-purposes service (if it is remote) is not visible; see the gap claim on it."
+    },
+    {
+      "id": "trace-animals-fit-p12-009",
+      "statement": "The certification options are the same 16 for a horses-only consignment as for cattle: the list is not filtered by species.",
+      "kind": "rule",
+      "ref": "trace 01f6b (additional-details.fit.spec.js:112) action call@79",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-fieldset__legend--m\"> What are the animals certified for? </LEGEND>",
+      "confidence": "verbatim",
+      "note": "Sixteen animalsCertifiedFor radios render on the Equus caballus page, the same values as on the Bos taurus page."
+    },
+    {
+      "id": "trace-animals-fit-p12-010",
+      "statement": "Choosing 'Other' for the certification reveals no follow-up field: no option on the certification question has a conditional reveal.",
+      "kind": "rule",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "<INPUT ... id=\"animalsCertifiedFor-16\" name=\"animalsCertifiedFor\" type=\"radio\" value=\"other\"></INPUT> <LABEL class=\"govuk-label govuk-radios__label\" for=\"animalsCertifiedFor-16\"> Other </LABEL>",
+      "confidence": "inferred",
+      "note": "Read from the markup: no govuk-radios__conditional block and no data-aria-controls on any certification option. No trace selects 'Other'."
+    },
+    {
+      "id": "trace-animals-fit-p12-011",
+      "statement": "The Additional details page asks 'Does the consignment contain any unweaned animals?' as a radio question whose legend is set at the medium size.",
+      "kind": "data",
+      "ref": "trace 7551a (additional-details.fit.spec.js:74) action call@85; trace 98ff4 action call@79",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-fieldset__legend--m\"> Does the consignment contain any unweaned animals? </LEGEND>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-012",
+      "statement": "The unweaned question has the hint 'These are animals that are still feeding from their mother.'",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "These are animals that are still feeding from their mother.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-013",
+      "statement": "The unweaned question offers 'Yes' and 'No', submitted as yes and no under the field name containsUnweanedAnimals.",
+      "kind": "data",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) actions call@79, call@121, call@123",
+      "quote": "name=\"containsUnweanedAnimals\" type=\"radio\" value=\"yes\"> ... Yes ... name=\"containsUnweanedAnimals\" type=\"radio\" value=\"no\"> ... No",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-014",
+      "statement": "The unweaned question is asked when the consignment is cattle (Bos taurus).",
+      "kind": "rule",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) actions call@69 (Bos taurus checked) and call@119",
+      "quote": "Does the consignment contain any unweaned animals?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-015",
+      "statement": "The unweaned question is not asked of a horses-only (Equus caballus) consignment: the page shows only the certification question.",
+      "kind": "rule",
+      "ref": "trace a90fd (additional-details.fit.spec.js:101) actions call@69 (Equus caballus checked), call@83, call@85",
+      "quote": "does not ask a horses-only consignment about unweaned animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-016",
+      "statement": "Whether the unweaned question is asked depends on whether the chosen commodity carries unweaned options, according to the spec's own commentary; the traces show only cattle (asked) and horses (not asked).",
+      "kind": "rule",
+      "ref": "additional-details.fit.spec.js comment above the 'the unweaned commodity gate' describe",
+      "quote": "Design release 1 asks the unweaned-animals question only of a commodity that carries unweaned options — cattle, not horses",
+      "confidence": "inferred",
+      "note": "The rule is stated in the spec file this part reads for test intent, not rendered in any trace."
+    },
+    {
+      "id": "trace-animals-fit-p12-017",
+      "statement": "The Additional details page has a 'Save and continue' primary button.",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\"> Save and continue </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-018",
+      "statement": "The Additional details page has a secondary 'Save and return to overview' button that submits exit=hub.",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "<BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Save and return to overview </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-019",
+      "statement": "The Additional details page has a 'Cancel and return to overview' link to the notification's Overview hub.",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-RJ91F9\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-020",
+      "statement": "The Additional details page's 'Back' link goes to the notification's Overview hub, and following it lands on the hub.",
+      "kind": "behaviour",
+      "ref": "trace be2d3 (additional-details.fit.spec.js:83) actions call@79, call@83, call@85",
+      "quote": "[\"A\",{\"href\":\"/live-animals/notifications/GBN-AG-26-ZQ14FN\",\"class\":\"govuk-back-link\"},\"Back\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-021",
+      "statement": "Saving both answers on Additional details posts animalsCertifiedFor and containsUnweanedAnimals to the page's own URL and redirects (302) to the notification's Overview hub.",
+      "kind": "behaviour",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) actions call@213 to call@219; network POST /additional-details",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-ZRTXMW/additional-details | 302 | /live-animals/notifications/GBN-AG-26-ZRTXMW",
+      "confidence": "verbatim",
+      "note": "Form fields posted: crumb [REDACTED], concurrencyToken=0, animalsCertifiedFor=slaughter, containsUnweanedAnimals=no."
+    },
+    {
+      "id": "trace-animals-fit-p12-022",
+      "statement": "Saved Additional details answers are shown pre-selected when the user returns to the page.",
+      "kind": "behaviour",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) actions call@221, call@223, call@225",
+      "quote": "__playwright_checked_=\"true\" ... value=\"slaughter\" ... __playwright_checked_=\"true\" ... value=\"no\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-023",
+      "statement": "After both questions are answered and saved, the Overview hub's 'Additional details' task row shows 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) action call@219",
+      "quote": "Additional details </A> </DIV> <DIV class=\"govuk-task-list__status\" id=\"description-of-the-goods-3-status\"> <STRONG class=\"govuk-tag govuk-tag--green\"> Complete </STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-024",
+      "statement": "A horses-only consignment saves with only a certification answer: the post carries no containsUnweanedAnimals field and redirects (302) to the Overview hub.",
+      "kind": "behaviour",
+      "ref": "trace 01f6b (additional-details.fit.spec.js:112) actions call@83 to call@87; network POST /additional-details",
+      "quote": "[302,[\"/live-animals/notifications/GBN-AG-26-GN94VR\"],[{\"name\":\"concurrencyToken\",\"value\":\"0\"},{\"name\":\"animalsCertifiedFor\",\"value\":\"slaughter\"}]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-025",
+      "statement": "For a horses-only consignment, answering only the certification question marks the 'Additional details' task row 'Complete'.",
+      "kind": "rule",
+      "ref": "trace 01f6b (additional-details.fit.spec.js:112) action call@87",
+      "quote": "Additional details </A> </DIV> <DIV class=\"govuk-task-list__status\" id=\"description-of-the-goods-3-status\"> <STRONG class=\"govuk-tag govuk-tag--green\"> Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-026",
+      "statement": "On returning to Additional details for a saved horses-only consignment, the certification answer is still selected and the unweaned question is still absent.",
+      "kind": "behaviour",
+      "ref": "trace 01f6b (additional-details.fit.spec.js:112) actions call@89, call@91, call@93",
+      "quote": "__playwright_checked_=\"true\" class=\"govuk-radios__input\" id=\"animalsCertifiedFor-2\" name=\"animalsCertifiedFor\" type=\"radio\" value=\"slaughter\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-027",
+      "statement": "Submitting a certification value that is not one of the options fails validation with the message 'Select a valid option'.",
+      "kind": "rule",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) actions call@177, call@181, call@183",
+      "quote": "Select a valid option",
+      "confidence": "verbatim",
+      "note": "The test forced the first radio's value to 'not-a-real-purpose' in the browser before submitting."
+    },
+    {
+      "id": "trace-animals-fit-p12-028",
+      "statement": "A failed Additional details submission responds with HTTP 400 and re-renders the page rather than redirecting.",
+      "kind": "behaviour",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) and trace c0bef (:169) network POST /additional-details",
+      "quote": "[400,[{\"name\":\"concurrencyToken\",\"value\":\"0\"},{\"name\":\"animalsCertifiedFor\",\"value\":\"not-a-real-purpose\"},{\"name\":\"containsUnweanedAnimals\",\"value\":\"no\"}]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-029",
+      "statement": "When Additional details fails validation, the browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) action call@183",
+      "quote": "Error: Additional details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-030",
+      "statement": "An invalid certification value shows an error summary titled 'There is a problem', with a 'Select a valid option' link to the certification question's first radio, placed above the caption and h1.",
+      "kind": "copy",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) action call@183",
+      "quote": "<H2 class=\"govuk-error-summary__title\"> There is a problem </H2> ... <A href=\"#animalsCertifiedFor\">Select a valid option</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-031",
+      "statement": "An invalid certification value also shows the inline error 'Select a valid option' on the certification question, with its form group marked as in error.",
+      "kind": "copy",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) action call@183",
+      "quote": "id=\"animalsCertifiedFor-error\" class=\"govuk-error-message\"> <SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Select a valid option",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-032",
+      "statement": "Selecting the certification error link in the summary moves focus to the certification question's first radio.",
+      "kind": "behaviour",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) actions call@185, call@187",
+      "quote": "certification validation: invalid option links to and focuses the group while preserving the valid unweaned answer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-033",
+      "statement": "After an invalid certification value, no certification option is selected on the re-rendered page, but the valid unweaned answer the user gave stays selected.",
+      "kind": "behaviour",
+      "ref": "trace db17f (additional-details.fit.spec.js:139) actions call@183, call@189, call@191",
+      "quote": "__playwright_checked_=\"true\" class=\"govuk-radios__input\" id=\"containsUnweanedAnimals-2\" name=\"containsUnweanedAnimals\" type=\"radio\" value=\"no\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-034",
+      "statement": "Submitting an unweaned value that is not Yes or No fails validation with the message 'Select a valid option', shown in the error summary (linking to the first unweaned radio) and inline on the unweaned question.",
+      "kind": "rule",
+      "ref": "trace c0bef (additional-details.fit.spec.js:169) action call@183",
+      "quote": "<A href=\"#containsUnweanedAnimals\">Select a valid option</A> ... <P id=\"containsUnweanedAnimals-error\" class=\"govuk-error-message\"> <SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Select a valid option </P>",
+      "confidence": "verbatim",
+      "note": "The test forced the first unweaned radio's value to 'not-a-real-answer'."
+    },
+    {
+      "id": "trace-animals-fit-p12-035",
+      "statement": "Selecting the unweaned error link moves focus to the unweaned question's first radio.",
+      "kind": "behaviour",
+      "ref": "trace c0bef (additional-details.fit.spec.js:169) actions call@185, call@187",
+      "quote": "unweaned validation: invalid option links to and focuses the group while preserving the valid certification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-036",
+      "statement": "After an invalid unweaned value, neither unweaned option is selected on the re-rendered page, but the valid certification the user gave (Slaughter) stays selected.",
+      "kind": "behaviour",
+      "ref": "trace c0bef (additional-details.fit.spec.js:169) actions call@183, call@189, call@191",
+      "quote": "__playwright_value_=\"slaughter\" __playwright_checked_=\"true\" class=\"govuk-radios__input\" id=\"animalsCertifiedFor-2\" name=\"animalsCertifiedFor\" type=\"radio\" value=\"slaughter\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-037",
+      "statement": "The Additional details page, with both questions answered, has no accessibility violations of any impact under axe-core's WCAG 2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace 42575 (additional-details.fit.spec.js:227) actions call@175 to call@197",
+      "quote": "{\"a\":[],\"id\":1856}",
+      "confidence": "verbatim",
+      "note": "The test only requires no serious or critical violations; the recorded violations array is empty. axe-core 4.13.0."
+    },
+    {
+      "id": "trace-animals-fit-p12-038",
+      "statement": "The Contact address page is at /live-animals/notifications/{notification reference}/consignment/contact/select and its browser title is 'Contact address for consignment - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) action call@2129",
+      "quote": "Contact address for consignment - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-039",
+      "statement": "The Contact address page is reached from the Overview hub task row 'Contact address for this consignment', the only row under '6. Contact address', which shows 'To do' until a contact is saved.",
+      "kind": "behaviour",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) action call@219; trace 6aea6 (contact.fit.spec.js:89) action call@1831",
+      "quote": "<H3 class=\"govuk-heading-m\">6. Contact address</H3> ... href=\"/live-animals/notifications/GBN-AG-26-ZRTXMW/consignment/contact/select\" aria-describedby=\"contact-address-1-status\"> Contact address for this consignment </A> ... <STRONG class=\"govuk-tag govuk-tag--blue\"> To do </STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-040",
+      "statement": "The Contact address page can be opened and saved once only the origin page has been answered: no commodity or other section has to be done first.",
+      "kind": "rule",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) actions call@1821 to call@1831",
+      "quote": "<P class=\"app-commodity-total__value\">0</P> <H3 class=\"app-commodity-total__label\">Animals</H3>",
+      "confidence": "inferred",
+      "note": "Inferred from every contact trace navigating straight to the page after the origin page and saving successfully, with 0 animals on the hub. The traces do not show whether any other entry guard exists."
+    },
+    {
+      "id": "trace-animals-fit-p12-041",
+      "statement": "The Contact address page is a single radio question whose legend is the h1 'Contact address for consignment', set at the large size, with no caption.",
+      "kind": "copy",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) action call@2129",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-fieldset__legend--l\"> <H1 class=\"govuk-fieldset__heading\"> Contact address for consignment </H1> </LEGEND>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-042",
+      "statement": "The contact question has the hint 'Selecting a contact copies their name and address into this notification.'",
+      "kind": "copy",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) actions call@2129, call@2133",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-043",
+      "statement": "Selecting a contact copies that contact's name and address into the notification, rather than linking to the address-book entry.",
+      "kind": "rule",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) action call@2129",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "inferred",
+      "note": "Inferred from the hint copy only; the trace cannot show what is stored."
+    },
+    {
+      "id": "trace-animals-fit-p12-044",
+      "statement": "The contact question lists the organisation's address-book contacts as radios (field name contactAddress, value the contact id), each labelled with the contact's name and with its address and country as the radio hint.",
+      "kind": "data",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) actions call@2129 to call@2187",
+      "quote": "<INPUT ... name=\"contactAddress\" type=\"radio\" value=\"astra-rosales\" aria-describedby=\"contactAddress-item-hint\"></INPUT> <LABEL class=\"govuk-label govuk-radios__label\" for=\"contactAddress\"> Astra Rosales </LABEL> <DIV id=\"contactAddress-item-hint\" class=\"govuk-hint govuk-radios__hint\"> 43 East Hague Extension, Bern, 30055, Switzerland </DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-045",
+      "statement": "With the stub organisation signed in, the contact question lists 13 contacts in this order: Astra Rosales, Tech Imports Ltd, Origin Farm, British Livestock Ltd, Import Co UK, Animal and Plant Health Agency, Danish Meat Export ApS, Jutland Swine ApS, Laiterie du Nord SARL, Nordvik Seafood AS, Alpine Dairy GmbH, Irish Beef Traders Ltd, Iberian Swine SA.",
+      "kind": "data",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) actions call@2137 to call@2185",
+      "quote": "Astra Rosales | Tech Imports Ltd | Origin Farm | British Livestock Ltd | Import Co UK | Animal and Plant Health Agency | Danish Meat Export ApS | Jutland Swine ApS | Laiterie du Nord SARL | Nordvik Seafood AS | Alpine Dairy GmbH | Irish Beef Traders Ltd | Iberian Swine SA",
+      "confidence": "verbatim",
+      "note": "These are the address-book stub's records (STUB_BOOK, organisation stub-org-1), so they are test data, not reference data. Hints include '18 Dockside Road, London, E14 9GE, United Kingdom' and 'Woodham Lane, Addlestone, KT15 3NB, United Kingdom'."
+    },
+    {
+      "id": "trace-animals-fit-p12-046",
+      "statement": "The contact radio hint joins the address lines and country with commas, omitting empty lines.",
+      "kind": "rule",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) action call@2129; contact.fit.spec.js addressSummary helper",
+      "quote": "Woodham Lane, Addlestone, KT15 3NB, United Kingdom",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered hints and the spec's mirror of the controller's hint ('addressText + country', filter(Boolean))."
+    },
+    {
+      "id": "trace-animals-fit-p12-047",
+      "statement": "The contacts come from the address book service for the signed-in organisation.",
+      "kind": "integration",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) test title; contact.fit.spec.js imports STUB_BOOK from services/address-book/stub",
+      "quote": "renders the address-book contacts and feature copy",
+      "confidence": "inferred",
+      "note": "The browser network log shows no call to an address-book API; the lookup happens server-side and is not visible in the trace."
+    },
+    {
+      "id": "trace-animals-fit-p12-048",
+      "statement": "The Contact address page offers no way to add a new address: there is no link whose name matches 'add … address'.",
+      "kind": "rule",
+      "ref": "trace d776d (contact.fit.spec.js:60) actions call@2057 to call@2061",
+      "quote": "offers no way to add an address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-049",
+      "statement": "The Contact address page has 'Save and continue', a secondary 'Save and return to overview' (submitting exit=hub) and a 'Cancel and return to overview' link to the Overview hub.",
+      "kind": "copy",
+      "ref": "trace 3ac7c (contact.fit.spec.js:43) action call@2129",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\"> Save and continue </BUTTON> <BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Save and return to overview </BUTTON> <A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-25GT0Z\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-050",
+      "statement": "The Contact address page's 'Back' link goes to the notification's Overview hub, and following it lands on the hub.",
+      "kind": "behaviour",
+      "ref": "trace c6038 (contact.fit.spec.js:117) actions call@2231, call@2235, call@2237; trace 3ac7c action call@2129",
+      "quote": "[\"A\",{\"href\":\"/live-animals/notifications/GBN-AG-26-25GT0Z\",\"class\":\"govuk-back-link\"},\"Back\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-051",
+      "statement": "Submitting a contact value that is not one of the listed contacts fails validation with the message 'Select a contact address', and the server responds with HTTP 400.",
+      "kind": "rule",
+      "ref": "trace 6b476 (contact.fit.spec.js:66) actions call@2115 to call@2121; network POST /consignment/contact/select",
+      "quote": "Select a contact address",
+      "confidence": "verbatim",
+      "note": "The test forced the first radio's value to 'not-a-real-contact'. Posted: concurrencyToken=0, contactAddress=not-a-real-contact; response 400."
+    },
+    {
+      "id": "trace-animals-fit-p12-052",
+      "statement": "An invalid contact shows an error summary titled 'There is a problem' with a 'Select a contact address' link to the first contact radio, and the same message inline on the question, with the browser title prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace 6b476 (contact.fit.spec.js:66) action call@2121",
+      "quote": "<H2 class=\"govuk-error-summary__title\"> There is a problem </H2> ... <A href=\"#contactAddress\">Select a contact address</A> ... <P id=\"contactAddress-error\" class=\"govuk-error-message\"> <SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Select a contact address </P>",
+      "confidence": "verbatim",
+      "note": "Title: 'Error: Contact address for consignment - Import notification service - GOV.UK'."
+    },
+    {
+      "id": "trace-animals-fit-p12-053",
+      "statement": "Selecting the contact error link moves focus to the first contact radio, and the invalid selection is not kept: no contact is selected on the re-rendered page.",
+      "kind": "behaviour",
+      "ref": "trace 6b476 (contact.fit.spec.js:66) actions call@2123, call@2125, call@2127",
+      "quote": "contact validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-054",
+      "statement": "Saving a valid contact posts contactAddress (the contact id) to the page's own URL and redirects (302) to the notification's Overview hub.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) actions call@1827 to call@1831; network POST /consignment/contact/select",
+      "quote": "[\"http://localhost:3000/live-animals/notifications/GBN-AG-26-G8X5M9/consignment/contact/select\",302,[\"/live-animals/notifications/GBN-AG-26-G8X5M9\"],[{\"name\":\"concurrencyToken\",\"value\":\"0\"},{\"name\":\"contactAddress\",\"value\":\"astra-rosales\"}]]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-055",
+      "statement": "After a contact is saved, the Overview hub's 'Contact address for this consignment' task row shows 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) action call@1831",
+      "quote": "Contact address for this consignment </A> </DIV> <DIV class=\"govuk-task-list__status\" id=\"contact-address-1-status\"> <STRONG class=\"govuk-tag govuk-tag--green\"> Complete </STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-056",
+      "statement": "On returning to the Contact address page after saving, the saved contact's radio is still selected.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) actions call@1833, call@1839",
+      "quote": "__playwright_value_=\"astra-rosales\" __playwright_checked_=\"true\" class=\"govuk-radios__input\" id=\"contactAddress\" name=\"contactAddress\" type=\"radio\" value=\"astra-rosales\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-057",
+      "statement": "Once a contact is saved, the Contact address page shows a summary card region named 'Current contact address', below the radios, listing the saved contact's name and address.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) actions call@1833, call@1835",
+      "quote": "<DIV class=\"govuk-summary-card\" role=\"region\"> ... <H2 class=\"govuk-summary-card__title\"> Current contact address </H2> ... <DT class=\"govuk-summary-list__key\"> Astra Rosales </DT> <DD class=\"govuk-summary-list__value\"> 43 East Hague Extension, Bern, 30055, Switzerland </DD>",
+      "confidence": "verbatim",
+      "note": "The card carries aria-label 'Current contact address'. It is absent before any contact is saved (trace 3ac7c call@2129)."
+    },
+    {
+      "id": "trace-animals-fit-p12-058",
+      "statement": "The 'Current contact address' card has an 'Edit details' link to /consignment/contact/edit, carrying a return parameter back to the select page, with visually hidden text ' current contact address (Current contact address)'.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) actions call@1833, call@1837",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-G8X5M9/consignment/contact/edit?return=consignment%2Fcontact%2Fselect\">Edit details<SPAN class=\"govuk-visually-hidden\"> current contact address (Current contact address)</SPAN></A>",
+      "confidence": "verbatim",
+      "note": "The visually hidden text repeats the card title, so a screen reader hears 'Edit details current contact address (Current contact address)'."
+    },
+    {
+      "id": "trace-animals-fit-p12-059",
+      "statement": "The Contact address page has no accessibility violations of any impact under axe-core's WCAG 2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace a6bde (contact.fit.spec.js:125) axe finishRun result",
+      "quote": "{\"a\":[],\"id\":2337}",
+      "confidence": "verbatim",
+      "note": "Run against the page with no contact selected and no contact saved."
+    },
+    {
+      "id": "trace-animals-fit-p12-060",
+      "statement": "Both pages carry a hidden concurrencyToken field that is posted with every save; it stayed at 0 across the saves these traces made.",
+      "kind": "data",
+      "ref": "trace 95b78 (additional-details.fit.spec.js:208) actions call@209 and call@221; trace 6aea6 (contact.fit.spec.js:89) action call@1833",
+      "quote": "<INPUT __playwright_value_=\"0\" type=\"hidden\" name=\"concurrencyToken\" value=\"0\"></INPUT>",
+      "confidence": "verbatim",
+      "note": "Its purpose (optimistic concurrency control) is not visible in the trace. The forms also carry a hidden crumb (CSRF) token, value [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p12-061",
+      "statement": "Both pages show a journey strip above the content with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace 98ff4 (additional-details.fit.spec.js:43) action call@79; trace 3ac7c (contact.fit.spec.js:43) action call@2129",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"> <STRONG class=\"govuk-tag govuk-tag--blue\"> Draft </STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-RJ91F9</SPAN> </DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-062",
+      "statement": "Both pages are built entirely from govuk-frontend components (Radios, Fieldset, Hint, Error summary, Error message, Button, Summary card and Summary list), apart from the app-journey-strip wrapper, a layout container round a standard Tag that needs no custom component.",
+      "kind": "constraint",
+      "ref": "trace 98ff4 action call@79; trace 6aea6 action call@1833; trace db17f action call@183",
+      "quote": "app-journey-strip govuk-!-margin-bottom-4",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p12-063",
+      "statement": "No trace shows what happens when Additional details is submitted with nothing selected, so the blank-submission error copy for either question is unknown.",
+      "kind": "rule",
+      "ref": "traces 98ff4, 7551a, be2d3, a90fd, 01f6b, db17f, c0bef, 95b78, 42575: none submits blank",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-064",
+      "statement": "No trace answers 'Yes' to the unweaned question, so it is unknown whether 'Yes' leads to any follow-up question or page.",
+      "kind": "behaviour",
+      "ref": "traces 98ff4, db17f, c0bef, 95b78, 42575: unweaned answered 'No' or left untouched",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-065",
+      "statement": "No trace covers a consignment of commodities other than cattle-only or horses-only (for example a mix of cattle and horses, or another species), so which commodities trigger the unweaned question beyond these two is unknown.",
+      "kind": "rule",
+      "ref": "traces a90fd, 01f6b (Equus caballus); all other additional-details traces (Bos taurus)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-066",
+      "statement": "No trace shows what happens to a saved unweaned answer when the commodities change so the question no longer applies, or start applying.",
+      "kind": "behaviour",
+      "ref": "all additional-details traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-067",
+      "statement": "No trace shows the 'Additional details' task status for cattle when only one of the two questions has been answered and saved (for example through 'Save and return to overview').",
+      "kind": "rule",
+      "ref": "all additional-details traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-068",
+      "statement": "No trace on either page uses 'Save and return to overview' or 'Cancel and return to overview', so where they lead, and whether 'Save and return to overview' saves a partial answer, is not shown.",
+      "kind": "behaviour",
+      "ref": "all 15 traces in part 12",
+      "quote": "",
+      "confidence": "gap",
+      "note": "'Save and continue' redirected to the Overview hub on both pages in these traces."
+    },
+    {
+      "id": "trace-animals-fit-p12-069",
+      "statement": "No trace shows what happens when the Contact address page is submitted with no contact selected, so the blank-submission error copy is unknown.",
+      "kind": "rule",
+      "ref": "traces 3ac7c, d776d, 6b476, 6aea6, c6038, a6bde: none submits blank",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-070",
+      "statement": "No trace follows the 'Edit details' link, so the contact edit page (/consignment/contact/edit) and what it lets the user change are not shown.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89) action call@1837 asserts the link only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-071",
+      "statement": "No trace shows the Contact address page for an organisation with an empty address book, so the empty state is unknown.",
+      "kind": "behaviour",
+      "ref": "all contact traces sign in as organisationId=stub-org-1",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-072",
+      "statement": "The traces do not show the server-side calls behind either page: how the certification purposes are fetched, how address-book contacts are fetched, or how the answers are persisted to the backend.",
+      "kind": "integration",
+      "ref": "1-trace.network of traces 95b78, 01f6b, 6aea6: only browser-to-frontend requests on localhost:3000",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p12-073",
+      "statement": "No trace covers changing a saved contact to a different one, so whether the 'Current contact address' card and the copied details update is not shown.",
+      "kind": "behaviour",
+      "ref": "trace 6aea6 (contact.fit.spec.js:89): one save only",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

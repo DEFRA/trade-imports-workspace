@@ -1,0 +1,888 @@
+{
+  "source": "repo:tests",
+  "structure": "Source is repos/trade-imports-ins-tests, scoped to tests/animals and tests/ins (page objects and test data under the repo's page-objects, domain and resources folders were read only where a spec leaned on them for a value). Layout: tests/animals/e2e/pages (one spec per journey page plus the dashboard, pagination and notification-view states), tests/animals/e2e/features (scope rules, documents, dashboard sort and search, delete, cancel-amend, amend-resubmit, hub groups, reference strip, auth, address-book handshake and copy behaviour), tests/animals/e2e/journeys (promoted journey, Dynamics, persistence), tests/animals/e2e/visual (one origin screenshot), tests/animals/a11y and tests/animals/security (Playwright a11y and security suites, listed but not mined claim by claim), tests/ins/e2e/features (address book add, edit, delete, persistence, auth, cross-user visibility, handshake guard; INS dashboard navigation; aggregated notification store; cross-service sessions), tests/ins/a11y (empty, .gitkeep only) and tests/ins/security/address-book. Many specs are tagged @duplicated-in-frontend (they mirror a frontend fit spec) and several are @compose or @mongodb only. Claims record what a spec proves a user can do or what rule it holds the suite to, with spec file and test or describe name as provenance. Left out: a11y and security specs beyond noting they exist, the plants project, page-object and fixture internals, and Playwright harness config. Notably absent from the scope: no spec mentions notification templates, and the INS dashboard has only one navigation spec in tests/ins.",
+  "scopeHash": "f212e2db13f797c12f6f06e3717afa11a6efd5da601fa5c3ba82832f0246892a",
+  "claims": [
+    {
+      "id": "repo-tests-001",
+      "statement": "The animals dashboard opens at the live-animals set's own base path, and a signed-out user opening it is sent to the sign-in page, where signing in lands them on the dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:14,19 (Authentication)",
+      "quote": "test('lands on the sign in page when opening the notification dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-002",
+      "statement": "Signing in with an invalid user id or an invalid password shows the same error in the error summary: a valid 10-digit customer reference number (CRN) and password are required.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:25-35",
+      "quote": "toContainText('Enter a valid 10-digit customer reference number (CRN) and password')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-003",
+      "statement": "The service root redirects to the default set's dashboard (live animals) once signed in.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:40",
+      "quote": "test('redirects the service root to the default set’s dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-004",
+      "statement": "Sign-out is a link on the dashboard that leads to a signed-out page; reopening the dashboard afterwards returns the user to sign-in.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:47,62",
+      "quote": "test('lands on the sign in page when reopening the notification dashboard after sign out'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-005",
+      "statement": "Design release 1 shows no signed-in identity on the dashboard: the email address and the strip that carried it are gone, and sign-out lives in the service navigation as 'Log out'. The suite asserts the absence.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:55-58",
+      "quote": "// Design release 1 shows no signed-in identity: the email address and the strip that carried it are gone,",
+      "confidence": "verbatim",
+      "note": "An existing rule the suite holds: DR2.1 may or may not keep it."
+    },
+    {
+      "id": "repo-tests-006",
+      "statement": "A signed-out user opening a page further into the journey is sent to sign-in, and signing in returns them to that page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:87,92 (Origin of the import (unauthenticated entry))",
+      "quote": "test('allows signing into a page further in the journey'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-007",
+      "statement": "The animals frontend sends a Content-Security-Policy header on the dashboard document.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/features/headers.spec.ts:5",
+      "quote": "test('promoted frontend sends a Content-Security-Policy header'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-008",
+      "statement": "Signing in to the animals, INS and plants frontends in one browser keeps all three sessions alive.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:9",
+      "quote": "test('signing in to animals, then ins, then plants in one browser keeps all three sessions'",
+      "confidence": "verbatim",
+      "note": "Tagged @compose, so only run against the compose stack."
+    },
+    {
+      "id": "repo-tests-009",
+      "statement": "The animals dashboard has a heading, a 'Create new notification' style button that starts a journey at the origin page, and a notification list with a result count.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:33,39 (dashboard basics)",
+      "quote": "test('allows creating a new notification, landing on the journey entry page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-010",
+      "statement": "Each dashboard notification card shows its GBN-AG reference as the heading, the commodity, the origin, the arrival at destination date, the status and the date created, with dates written like '12 March 2026'.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:49-62; DISPLAYED_DATE_PATTERN line 5",
+      "quote": "test('displays details on a notification card'",
+      "confidence": "verbatim",
+      "note": "Date shape is read from the pattern /\\d{1,2} \\w+ \\d{4}/."
+    },
+    {
+      "id": "repo-tests-011",
+      "statement": "A notification reference has the shape GBN-AG-NN-XXXXXX: two digits then six upper-case letters or digits (the strip test narrows the characters to those excluding I, L, O and U).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:3; tests/animals/e2e/features/reference-strip.spec.ts:3",
+      "quote": "const GBN_REFERENCE = /GBN-AG-\\d{2}-[0-9A-HJKMNP-TV-Z]{6}/;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-012",
+      "statement": "A draft notification's dashboard card is tagged Draft and offers Resume, Copy as new and Delete, but no Amend.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:66 (notification card actions by status)",
+      "quote": "test('shows resume, copy and delete actions for a draft notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-013",
+      "statement": "A submitted notification's dashboard card is tagged Submitted and offers View, Copy as new and Amend.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:78",
+      "quote": "test('shows view, copy and amend actions for a submitted notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-014",
+      "statement": "Copy as new from a dashboard card creates a new draft with a different reference and opens it at the hub.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:89",
+      "quote": "'copies a submitted notification from its searched dashboard card',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-015",
+      "statement": "The dashboard sort dropdown defaults to 'Arrival (newest to oldest)'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:9",
+      "quote": "test('default sort option is \"Arrival (newest to oldest)\"'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-016",
+      "statement": "The dashboard sort dropdown offers exactly four options, in this order: arrival newest to oldest, arrival oldest to newest, date created newest to oldest, date created oldest to newest. Choosing one submits and reloads with a ?sort= query.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:14-30",
+      "quote": "test('sort dropdown contains all four expected options'",
+      "confidence": "verbatim",
+      "note": "The option labels come from the sortByValues constant in the tests repo's domain folder; the spec checks the order and count, not the ordering of results (its own comment says result order is covered at a lower level)."
+    },
+    {
+      "id": "repo-tests-017",
+      "statement": "Sorting by date created newest to oldest puts sort=createdAt,desc in the URL.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:79-94",
+      "quote": "await expect(pages.page).toHaveURL(/sort=createdAt%2Cdesc/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-018",
+      "statement": "The dashboard has a 'filter notifications' search form with a single reference-number search input and a search button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:19",
+      "quote": "test('displays the filter notifications search form'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-019",
+      "statement": "Searching by a complete reference number returns that one notification and the results label reads 'Showing 1 Result'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:26-41",
+      "quote": "await expect(animalsPages.dashboard.resultsLabel).toHaveText('Showing 1 Result');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-020",
+      "statement": "A search with no match, including free text that is not a reference, shows 'No notifications found' with no error summary.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:62-77",
+      "quote": "await expect(animalsPages.dashboard.resultsLabel).toHaveText('No notifications found');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-021",
+      "statement": "The searched reference number is kept in the URL and in the search box when the user changes the sort or goes to another page of results.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:79,96",
+      "quote": "test('preserves referenceNumber in the URL when a page param is present'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-022",
+      "statement": "The dashboard paginates 25 notifications to a page with GOV.UK pagination; the count reads 'Showing 1 to 25 of N Results' on page one and 'Showing 26 to M of N Results' on page two, with Next and Previous links and ?page=2 in the URL.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:4",
+      "quote": "toHaveText(/^Showing 1 to 25 of \\d+ Results$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-023",
+      "statement": "Opening View on a searched dashboard card opens that notification's read-only view page showing the reference number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:43",
+      "quote": "test('opens notification view when clicking View after searching by reference number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-024",
+      "statement": "The notification reference is minted when the notification is created, so a Draft tag and a GBN-AG reference strip show from the entry (origin) page onwards, on the hub and every task page, and not on the dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/reference-strip.spec.ts:6",
+      "quote": "test('the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-025",
+      "statement": "The hub carries a 'Notification tasklist' heading and groups its tasks under six numbered headings: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address, with nothing after them.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts:6-24",
+      "quote": "'1. About the consignment',\n      '2. Description of the goods',\n      '3. Transport and arrival',\n      '4. Documents',\n      '5. Consignment parties',\n      '6. Contact address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-026",
+      "statement": "The hub task rows are, by group: 'Where is this consignment coming from?', 'What are you importing?', 'Main reason for import'; 'Additional details'; 'Arrival details', 'Transport details'; 'Upload documents'; 'Roles and addresses'; 'Contact address for this consignment'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts:37-49",
+      "quote": "await expectListedTasks(taskLists.nth(2), ['Arrival details', 'Transport details']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-027",
+      "statement": "The hub ends with a primary 'Review and submit' button beside a secondary 'Return to dashboard' button, not a seventh section holding a locked row.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts:21-23",
+      "quote": "toHaveText(['Review and submit', 'Return to dashboard'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-028",
+      "statement": "Conditional hub rows (exit details, transit countries, identification details) are off the hub on a fresh notification and appear only when their condition is met.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts:30-47",
+      "quote": "// Identification is only owed once a chosen commodity carries identifiers,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-029",
+      "statement": "Task pages offer 'Cancel and return to overview', which discards typed input, and 'Save and return to overview', which commits the page and lands on the hub instead of the next flow step.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/task-page-exits.spec.ts:4",
+      "quote": "test('Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-030",
+      "statement": "The origin page asks for a country of origin chosen from a type-ahead that enhances a native select, with 'Select a country' first and 41 options: the 31 SPS origin countries and nine journey subdivisions plus the placeholder. The select stays as the no-JavaScript fallback and submits the country code.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts:4",
+      "quote": "await expect(fallback.locator('option')).toHaveCount(41);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-031",
+      "statement": "The origin page asks whether a region of origin code is required (Yes or No) and has an internal reference field. Choosing Yes without giving a code shows an error summary.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:53",
+      "quote": "test('shows an error summary when a region of origin code is claimed but not given'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-032",
+      "statement": "A region of origin code selection and a country subdivision selection each persist when saved and reopened.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:61,75",
+      "quote": "test('persists a country subdivision selection'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-033",
+      "statement": "The origin page saves what the user has when submitted without a country: no error, the user is put down on the hub, and the other answers are kept. The gap is held at the hub task row and again at the check page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:29-37",
+      "quote": "test('saves what the user has when submitted without a country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-034",
+      "statement": "The commodity page opens with a search box and lists nothing until it is used; a query under three characters lists nothing; the search is asked for by country of origin.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:18,26",
+      "quote": "test('lists nothing for a query shorter than three characters'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-035",
+      "statement": "Matching species are grouped as checkboxes under a commodity group labelled with its name and code, for example Cow (0102) with Bison bison, Bos spp., Bos taurus and Bubalus bubalis; Horse (0101); Cat (01061900) and Dog (01061900) sharing a code; Fish (0301) with Salmo salar.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:3-9",
+      "quote": "['Cow (0102)', '0102', ['Bison bison', 'Bos spp.', 'Bos taurus', 'Bubalus bubalis']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-036",
+      "statement": "When nothing matches the commodity search the page says 'No results found'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:42",
+      "quote": "await expect(pages.page.getByText('No results found')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-037",
+      "statement": "Species chosen under different queries are all kept: a selection panel shows a running count such as '2 selected' with each chosen species, each is re-ticked when its own query returns, and a 'clear all' control empties the panel.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:48,74",
+      "quote": "test('counts what has been chosen and clears it on request'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-038",
+      "statement": "Submitting the commodity page with nothing chosen shows the error summary link 'Select a commodity'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:85",
+      "quote": "await expect(pages.page.getByRole('link', { name: 'Select a commodity' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-039",
+      "statement": "Commodity details asks for a number of animals for each chosen species line. The count blocks the save on every line.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/cph-scope.spec.ts:22-24; tests/animals/e2e/pages/consignment-details.spec.ts:15",
+      "quote": "// The animal count is save-blocking on every line, so each box the details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-040",
+      "statement": "The identification details page is reached only when a chosen commodity carries identifier types; a consignment where no commodity has one never reaches it, and a commodity with no identifier type gets no panel while the lines that have one keep theirs.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts:67,99",
+      "quote": "test('a consignment where no commodity has an identifier type never reaches the identification page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-041",
+      "statement": "Identification shows only the identifier types the commodity requires. Cats show passport, tattoo and a permanent address block; ear tag and horse name are hidden for them; no free-text identifier or animal description field is offered.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts:4,34-41",
+      "quote": "// Cats gate passport + tattoo + permanent address on; ear tag + horse name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-042",
+      "statement": "The permanent address for cats and dogs asks for a name or organisation name and eight address fields with no country, because an address APHA can inspect is a Great Britain address. A partial permanent address blocks the add with the error link 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts:36-54",
+      "quote": "// The permanent address block asks for eight fields and no country — an",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-043",
+      "statement": "Identification is entered one animal at a time with the heading 'Enter details for <species> N of M'; 'Save and add another' moves to the next record, a saved-animals table lists records with Animal, Ear tag, Passport columns and a remove control, and the last animal offers 'Save and finish' instead.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts:4-32",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'Enter details for Bos taurus 1 of 2' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-044",
+      "statement": "At the declared count the entry form is replaced by the message 'You have entered details for all N <species> animals'; removing a record frees a slot.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts:36-45",
+      "quote": "pages.page.getByText('You have entered details for all 2 Bos taurus animals'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-045",
+      "statement": "Lowering the number of animals below the number of identifier records already saved is blocked on the details page with an error that names the species and links to that species' identifier card. Records are never silently trimmed.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts:4,47-62",
+      "quote": "// Count-drop guard: lowering the count below the record count blocks the",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-046",
+      "statement": "The CPH number page and the 'County parish holding (CPH) number' row on the addresses hub show only when a CPH-triggering commodity line exists (cattle yes, cats no). When shown, the row reads 'Not added yet' until added, and the stored value is shown with slashes stripped.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/cph-scope.spec.ts:4",
+      "quote": "test('the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-047",
+      "statement": "The CPH page shows an error summary when submitted empty.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:29",
+      "quote": "test('shows an error summary when submitted empty'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-048",
+      "statement": "The import reason page asks the main reason as a radio group whose question is the legend ('What is the main reason for importing the animals?'), not an h1 page heading.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:8-16",
+      "quote": "// The question is the radio group's legend, not the page heading — if it is",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-049",
+      "statement": "Choosing the reason Internal market reveals a purpose radio group (for example Breeding) on the same page; submitting without a purpose is refused with the error link 'Select a purpose in the internal market'.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:31,43",
+      "quote": "await expect(pages.page.getByRole('link', { name: 'Select a purpose in the internal market' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-050",
+      "statement": "The import purpose is owed only for the internal market reason and is wiped when the reason changes. Choosing the reason Transit instead reveals a port of exit and a destination country on the same page. Leaving the internal market reason and returning leaves no purpose pre-selected.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/reason-purpose-scope.spec.ts:4",
+      "quote": "test('purpose is owed only for the internal market and is wiped when the reason changes'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-051",
+      "statement": "A blank main reason saves and walks straight to the additional details page, skipping the internal-market purpose page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/additional-details-scope.spec.ts:36-38",
+      "quote": "// A blank reason (enforcedAt=submit) walks straight to the tail page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-052",
+      "statement": "Additional details asks 'What are the animals certified for?' (options include Slaughter and Exhibition) for every consignment, and asks 'Does the consignment contain any unweaned animals?' only when a triggering commodity line exists (cattle yes, cats no).",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/additional-details-scope.spec.ts:4,17-22",
+      "quote": "const unweaned = pages.page.getByRole('group', {\n      name: 'Does the consignment contain any unweaned animals?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-053",
+      "statement": "Arrival details asks for port of entry, means of transport, transport identification, transport document reference and an arrival date. A draft may be saved with a blank arrival date: the page raises nothing on an empty submit and goes on to the transporter page. Presence is enforced when the trader continues from the review page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:13-49",
+      "quote": "test('saves a draft and moves on when submitted empty'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-054",
+      "statement": "The arrival date picker is restricted to one week back and six months ahead; a typed date outside the window is rejected with 'Arrival date at port of entry must be between <earliest> and <latest>' in the summary and against the field, and is not saved.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:5,51-78",
+      "quote": "const OUT_OF_RANGE_MESSAGE = `Arrival date at port of entry must be between ${EARLIEST_ALLOWED} and ${LATEST_ALLOWED}`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-055",
+      "statement": "Port of entry is a combobox with the accessible name 'Port of entry' that shows the whole list on focus and filters by name or port code (labels such as 'Aberdeen Harbour (GB ABD)'). The label shows in the field and the code is what submits and persists.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/port-of-entry-select.spec.ts:8",
+      "quote": "const PORT_OPTION = 'Aberdeen Harbour (GB ABD)';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-056",
+      "statement": "The transit countries page is routed only when the means of transport is rail or road; for any other means (airplane, vessel) it is skipped and the hub shows no Transit countries row. Changing the means to a non-overland one wipes the saved countries.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/transit-means-scope.spec.ts:4",
+      "quote": "test('the transit-countries page is routed only for rail or road; changing the means wipes saved countries'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-057",
+      "statement": "On the transited countries page the user adds countries one at a time with an Add country button into a list, can remove one while keeping the others, and may continue with none (the page then reads 'You have not added any countries yet.'). Pressing Add country with no country chosen shows an error summary.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:15-47",
+      "quote": "test('transit countries are optional: continuing with none saves and goes on'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-058",
+      "statement": "The transporter list page offers a radio list that mixes commercial and private transporters (for example 'García Livestock Transport SL' and 'Aberdeen Livestock Ltd'), unchecked on load, an 'Add a transporter' link and Save and continue. Picking one returns the user to the hub.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter.spec.ts:8-30",
+      "quote": "test('lists both a commercial and a private transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-059",
+      "statement": "The transporter type question (Commercial or Private) sits behind 'Add a transporter' on its own page, unchecked on load.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-add.spec.ts:12-23",
+      "quote": "test('leaves the transporter type unchecked on load'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-060",
+      "statement": "Choosing the Commercial type opens an add-commercial form for a transporter not on the approved list (approval number, name, address line 1, town or city, postcode, email, phone) with the country fixed to Northern Ireland rather than asked. The commercial details are owed only for that type and are wiped when the type changes.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts:16",
+      "quote": "await expect(animalsPages.commercialTransporter.country).toHaveValue('Northern Ireland');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-061",
+      "statement": "Choosing the Private type opens a private transporter details page (name or organisation name, address line 1, town or city, postcode or zip code, country, phone number, email address). A partial fill blocks the save with an error such as 'Enter address line 1'; the details are owed only for that type and are wiped when the type changes.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/private-transporter-scope.spec.ts:17",
+      "quote": "test('keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-062",
+      "statement": "A trader can submit a notification using a hand-added commercial transporter.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/commercial-transporter-submission.spec.ts:15",
+      "quote": "test('a trader can submit a notification using a hand-added commercial transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-063",
+      "statement": "The upload documents page takes a reference, an issue date and a file per document and adds it to a table with 'Save and add another'; each row shows a scan status, a remove control, and a view link only after the scan has completed.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:37",
+      "quote": "test('clean upload: shows Scanning for virus with no view link, then Check completed with a view link'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-064",
+      "statement": "An infected upload is accepted while scanning, then the row reads 'Virus found', an error summary appears with '<file name> contains a virus. Remove it and try again with a different file.' and there is no view link.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:15-35",
+      "quote": "contains a virus. Remove it and try again with a different file.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-065",
+      "statement": "Without JavaScript, the scan status offers a refresh link that reflects scan progress.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:11",
+      "quote": "test('the refresh fallback reflects scan progress without client JavaScript'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-066",
+      "statement": "A notification takes at most 15 documents; a sixteenth is refused with the summary link 'You can upload a maximum of 15 files' and the table stays at 15 rows.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:9-10,21",
+      "quote": "const maximumDocumentsMessage = `You can upload a maximum of ${maximumDocuments} files`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-067",
+      "statement": "A document file of exactly 10MB (decimal) is accepted and one byte over is refused with 'The selected file must be smaller than 10MB' in the summary and against the field.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:53; resources/file-upload/constants.ts:11",
+      "quote": "export const OVERSIZE_FILE_MESSAGE = 'The selected file must be smaller than 10MB';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-068",
+      "statement": "An unsupported file type is rejected without adding a document, and with no documents added the page reads 'You have not added any documents yet.'",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:39; tests/animals/e2e/features/documents-reject.spec.ts:21",
+      "quote": "test('rejects an unsupported file type without adding a document'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-069",
+      "statement": "A document is uploaded, scanned, downloaded and removed through the real uploader service.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:7",
+      "quote": "test('uploads, scans, downloads and removes a document through the real uploader', async",
+      "confidence": "verbatim",
+      "note": "Tagged @compose."
+    },
+    {
+      "id": "repo-tests-070",
+      "statement": "The roles and addresses hub has a row per party (Consignor or exporter, Place of origin, Consignee, Importer, Place of destination) plus the CPH row when in scope, each with Add when unanswered and both Change and 'Edit details' once a copied address is held.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:162",
+      "quote": "test('a copied address offers both Change and Edit details on the hub, the contact page and the review, and an unanswered role offers only Add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-071",
+      "statement": "The party picker lists address-book records with search and paging, shows 5 at a time ('Showing 5 of N addresses'), expands a row's details in place with 'View details', and saves the row selected on a later page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:4",
+      "quote": "test('the picker searches and pages the address book, and the row selected on a later page is the one that saves'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-072",
+      "statement": "The journey never writes to the address book. Outside stub mode each party picker links out to INS to add an address (href containing /address-book/add?journey-type=gbn-ag); in stub mode no add link is offered; the journey's own create-address page returns 404.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:21-58",
+      "quote": "await expect(picker(animalsPages).addNewAddress).toHaveAttribute('href', /\\/address-book\\/add\\?journey-type=gbn-ag/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-073",
+      "statement": "Saving a new address in INS from the journey returns to the picker with that address selected and committed; cancelling in INS returns to the picker without saving an address.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:13,58",
+      "quote": "test('saving a new address in INS returns to the picker with it selected and committed'",
+      "confidence": "verbatim",
+      "note": "Compose stack only."
+    },
+    {
+      "id": "repo-tests-074",
+      "statement": "INS refuses the add-address handshake for an unrecognised journey type with a 'Page not found' page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-handshake-guard.spec.ts:9",
+      "quote": "test('refuses an unrecognised journey type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-075",
+      "statement": "Picked addresses are copied onto the notification, not linked: editing or deleting the address book record afterwards leaves the notification's copy unchanged with no error, and a deleted record drops from the picker.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:4,110",
+      "quote": "test('deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-076",
+      "statement": "A copied address is edited on the notification itself, changing only that notification, not the address book record or another notification. The edit form opens with the copied details including the county; Save changes and Cancel return the user to where the edit was started (hub, contact page or review).",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:28,73,130",
+      "quote": "test('editing a copied address changes only this notification, not the address book record or another notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-077",
+      "statement": "An edited copied address that breaks the address book rules is refused and not saved, with messages in the summary and against each field: 'Enter a name', 'Postcode must be 12 characters or fewer', 'Enter an email address in the correct format', 'Enter a country'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:99-128",
+      "quote": "await expect(form.errorSummary).toContainText('Postcode must be 12 characters or fewer');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-078",
+      "statement": "A copied address that breaks the rules (for example a country name instead of a listed country) is named on the review page as 'Correct the address details for the consignor', in the summary and on the role's row, blocks Continue and the declaration submit, and clears once corrected through a link to the edit page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:169",
+      "quote": "const message = 'Correct the address details for the consignor';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-079",
+      "statement": "After submit, renaming or deleting the address book record changes neither the submitted view nor an amendment, shows no error, and cancelling the amendment keeps the copy.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts:4,81",
+      "quote": "test('renaming the book after submit changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-080",
+      "statement": "The contact address page lists address-book entries as radios (for example 'Animal and Plant Health Agency'), unchecked on load. A chosen contact is shown as the current contact on return and stays chosen; saving with none selected is allowed and returns to the hub; the current contact can be edited apart from the list.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:15-52",
+      "quote": "test('saving with no contact address selected is allowed and exits to the hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-081",
+      "statement": "Following the Address book item from the animals journey opens the INS address book and a link returns to the journey.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6",
+      "quote": "test('follows the Address book item from the animals journey to the INS address book and back'",
+      "confidence": "verbatim",
+      "note": "Tagged @compose."
+    },
+    {
+      "id": "repo-tests-082",
+      "statement": "The review (notification view) page shows the answers in the same six numbered sections, in summary cards such as 'Import details', 'Uploaded documents' and one card per commodity titled like 'Cow (0102) — Bos taurus'. 'You have not added any documents yet.' shows when there are none.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:13",
+      "quote": "test('renders the recorded answers in the numbered design sections'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-083",
+      "statement": "A draft's view page shows a Draft strip with the reference, one Change link per card named for the card (for example 'Change import details', 'Change commodity 1', 'Change additional animal details'), a Continue button, and none of Copy as new, Delete or Cancel amendment.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:27-42; tests/animals/e2e/features/change-from-cya.spec.ts:19-21",
+      "quote": "test('offers submission and none of the post-submit actions'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-084",
+      "statement": "Continue on an unfinished draft's view page stays put and shows 'There is a problem' with links naming what is left, such as 'Complete arrival details'; once every section is answered there is no error summary and Continue goes to the declaration.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:44,60,65",
+      "quote": "getByRole('link', { name: 'Complete arrival details' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-085",
+      "statement": "A Change link opens the answering page with ?change=1 and the save returns to the review page with the new value, instead of continuing to the next flow step.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/change-from-cya.spec.ts:4",
+      "quote": "test('a Change link opens the answering page with change context and the save returns to check your answers with the new value'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-086",
+      "statement": "The review page lists all six operators with the picked name and country (Place of origin, Consignor, Consignee, Importer, Place of destination) and the CPH number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/all-operators.spec.ts:7",
+      "quote": "test('check your answers lists all six operators with the picked name and country'",
+      "confidence": "verbatim",
+      "note": "The title says six operators; the body asserts five parties plus the CPH number row."
+    },
+    {
+      "id": "repo-tests-087",
+      "statement": "The declaration page has a confirmation checkbox and a continue button; submitting unconfirmed shows 'There is a problem'. Confirming submits and shows the heading 'Import notification submitted'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:15; tests/animals/e2e/features/amend-resubmit.spec.ts:46",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'Import notification submitted' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-088",
+      "statement": "A submitted notification's view page is read-only: a Submitted strip with the reference, no Change links, and Copy as new and Delete buttons. Copy as new makes a new draft with a different reference.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:78,84,90",
+      "quote": "test('offers Copy as new and Delete on the read-only view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-089",
+      "statement": "Delete asks 'Delete this notification?' on its own page; confirming with 'Yes, delete notification' shows 'The notification has been deleted.' and the notification no longer appears on the dashboard.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:6,17",
+      "quote": "await pages.page.getByRole('heading', { name: 'Delete this notification?' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-090",
+      "statement": "Amending a submitted notification re-enters at the hub with an Amending strip, and Review and submit leads to a view with Change links. Resubmitting through the declaration returns it to Submitted with the edited answer kept, read-only again, with Amend offered again on the dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:14",
+      "quote": "test('resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-091",
+      "statement": "While amending, the view page shows a Cancel amendment link that opens a confirmation page: 'Your changes since you started amending will be discarded and the submitted version restored.' with Yes and No.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:10-27",
+      "quote": "'Your changes since you started amending will be discarded and the submitted version restored.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-092",
+      "statement": "On the cancel-amend confirmation, No returns to the view with the amendment still in progress. Yes restores the submitted answers, lands on /notification-view?cancelled=1 with the alert 'The amendment has been cancelled and the submitted version restored.', and the strip returns to Submitted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:29,40-66",
+      "quote": "'The amendment has been cancelled and the submitted version restored.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-093",
+      "statement": "The notification lifecycle through the backend API is: create gives DRAFT, submit gives SUBMITTED, amend gives AMEND, cancel-amend returns to SUBMITTED, copy creates a new DRAFT (two copies of the same notification give two distinct copies, and the caller passes the source's concurrency token), and soft delete gives DELETED and is idempotent. A fulfilments view reflects each status.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:6",
+      "quote": "test('creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes'",
+      "confidence": "verbatim",
+      "note": "Tagged @compose."
+    },
+    {
+      "id": "repo-tests-094",
+      "statement": "A draft persists as DRAFT up to the declaration, and a submitted notification persists its journey answers and reloads read-only; a seeded notification stores what the same journey stores through the browser.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:21,39; api-seed-parity.spec.ts:12",
+      "quote": "test('submitted notification persists the journey answers and reloads read-only'",
+      "confidence": "verbatim",
+      "note": "Tagged @mongodb."
+    },
+    {
+      "id": "repo-tests-095",
+      "statement": "An accompanying document uploaded in the journey persists to Mongo and reloads.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:23",
+      "quote": "test('uploads a document that persists to Mongo and reloads'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-096",
+      "statement": "A submitted notification is created in PIMS Dynamics with its reference as the name, status submitted and a submission date near the submit time, and is stored with the importer, consignor and consignee company names.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:33; notification-data.spec.ts:26",
+      "quote": "test('a submitted notification is stored in PIMS Dynamics with the data it was submitted with'",
+      "confidence": "verbatim",
+      "note": "Runs only outside the compose stack, which has no PIMS Dynamics; its own comment says the column assertions are a starting set."
+    },
+    {
+      "id": "repo-tests-097",
+      "statement": "The INS aggregated notification store holds one document per notification, with id Imports.Notification.GBN-AG.<reference>, that starts as DRAFT with origin country, commodity, arrival date, last updated and an aggregate version, and is updated in place to SUBMITTED with no duplicate created.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:17",
+      "quote": "const aggregateIdFor = (referenceNumber: string): string => `Imports.Notification.GBN-AG.${referenceNumber}`;",
+      "confidence": "verbatim",
+      "note": "Compose and Mongo only."
+    },
+    {
+      "id": "repo-tests-098",
+      "statement": "The INS dashboard's View link for a submitted animals notification opens that notification's read-only view in the animals frontend, but only once the aggregated store has caught up to SUBMITTED; until then the link resolves to the hub.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:7",
+      "quote": "test('viewing a submitted notification from the INS dashboard opens it in the owning journey frontend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-099",
+      "statement": "The INS address book renders after sign-in with a heading and no error summary; opening a page past the landing page while signed out goes to sign-in.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:4; address-book-auth.spec.ts:12,17",
+      "quote": "test('renders the address book after signing in'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-100",
+      "statement": "A created address persists with its full Standard Address Block: name, address line 1, address line 2, town or city, county, postcode, country, phone and email.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts:13",
+      "quote": "test('a created address persists with its full Standard Address Block'",
+      "confidence": "verbatim",
+      "note": "Mongo only. Country is chosen from a list in the INS form (for example 'United Kingdom') and held as a country code."
+    },
+    {
+      "id": "repo-tests-101",
+      "statement": "Editing an address replaces the whole record, so optional fields (address line 2, county) left blank on the form are cleared; the edited address replaces the old one in the list; after saving the user returns to the address book list with a success banner.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:15,49",
+      "quote": "test('an edit replaces the whole record, clearing the optional fields left blank'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-102",
+      "statement": "Deleting an address through INS asks for confirmation on its own page, returns to the list with the row gone, and tombstones the record (flagged deleted, still readable by id, omitted from list and search) so notifications referencing it do not dangle. A deletion by one user hides it from other users in the same organisation.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:16,35",
+      "quote": "test('deleting through the UI tombstones the record rather than removing it'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-103",
+      "statement": "Addresses are scoped to the organisation: an address added by one user is visible to another user of the same organisation (different users, same SBI).",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-cross-user-visibility.spec.ts:7",
+      "quote": "test('an address added by one user is visible to another user in the same organisation'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-104",
+      "statement": "An Accessibility suite exists for the animals set, covering initial, filled and error states of the journey, conditional pages, dashboard views and viewports, notification view states, lifecycle states, address edit and sign-in. The INS a11y folder holds only a .gitkeep placeholder.",
+      "kind": "non-functional",
+      "ref": "tests/animals/a11y/*.spec.ts; tests/ins/a11y/.gitkeep",
+      "quote": "notification-journey-conditional-pages.spec.ts",
+      "confidence": "inferred",
+      "note": "Inferred from file names only; the a11y specs were listed, not read claim by claim."
+    },
+    {
+      "id": "repo-tests-105",
+      "statement": "A security suite exists for the animals frontend (auth, dashboard params, documents, lifecycle, change context, conditional pages, draft validation errors, notification journey) and the backend submission, and for the INS address book (auth and records).",
+      "kind": "non-functional",
+      "ref": "tests/animals/security/*.spec.ts; tests/animals/security/backend/notification-submission.spec.ts; tests/ins/security/address-book/",
+      "quote": "frontend-dashboard-params.spec.ts",
+      "confidence": "inferred",
+      "note": "Inferred from file names only; not read claim by claim, and no weakness is recorded here."
+    },
+    {
+      "id": "repo-tests-106",
+      "statement": "No spec in tests/animals or tests/ins covers notification templates (creating, listing or using one). Searched with a case-insensitive grep for 'template' across both folders: no matches.",
+      "kind": "behaviour",
+      "ref": "tests/animals and tests/ins (grep -rli template: no files)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-107",
+      "statement": "The INS dashboard has a single navigation spec and no spec for its own filters, sort, pagination or status handling under tests/ins; dashboard search, sort and pagination are proven only through the animals project's dashboard of the live-animals set.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features (only notification-dashboard-navigation.spec.ts on the dashboard) versus tests/animals/e2e/features/notification-dashboard-*.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every file under tests/ins/e2e/features listed in the folder."
+    },
+    {
+      "id": "repo-tests-108",
+      "statement": "The suite has no spec asserting the notification dashboard's status filter, any status other than Draft, Submitted and Amending, or a deleted notification being visible anywhere but gone from search.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts; notification-dashboard-search.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Absence read from the search spec, which offers only a reference-number input."
+    }
+  ]
+}

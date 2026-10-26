@@ -1,0 +1,1596 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 12 mined the three end-to-end traces of journeys.fit.spec.js (describe 'notification journeys end to end'), every action of each read from the full action list and every journey page snapshotted with main innerText, form fields, hints, back link and classes. Refs name the trace by its zip and the action id the snapshot was taken at. TRACE C = journeys--notification-journeys-end-to-end-cattle-by-air-identification-unweaned-question-cph-number.zip (journeys.fit.spec.js › notification journeys end to end › cattle by air: identification, unweaned question, CPH number; 259 actions; reference GBN-AG-26-0W1JKI). TRACE H = journeys--notification-journeys-end-to-end-horse-by-sea-temporary-admission.zip (journeys.fit.spec.js:317 › notification journeys end to end › horse by sea: temporary admission; 246 actions, 0 errors; reference GBN-AG-26-0SWFHC). TRACE G = journeys--notification-journeys-end-to-end-germinal-products-bovine-semen-with-donor-identification.zip (› germinal products: bovine semen with donor identification; 239 actions; reference GBN-AG-26-0ZMQHI). Page order, cattle by air: create-notification (302) > notification-type 'What are you importing?' (live animals) > origin-of-the-import > what-are-you-importing (commodity search) > reason-for-import > consignment-details 'Commodity details' > animal-identification-details (one entry per animal, save and add another) > additional-animal-details (certified for + unweaned question) > arrival-details > transporter > upload-documents (add another then continue) > roles-and-addresses 'Consignment addresses' with place-of-origin, consignor-or-exporter, consignee, importer, place-of-destination and cph-number sub-pages each returning to it > contact-address-for-consignment > review-notification (POST redirect lands here) > [test navigates to notification-hub 'Overview', all tasks Complete] > review-notification > declaration (submit without the box shows an error, then with it) > notification-submitted > review-notification?reference=<ref> (submitted view). Horse by sea: same order with Temporary admission horses reason (exit date + port of exit reveal), three identifiers per horse (Microchip, Passport, Horse name), no unweaned question, no CPH section. Germinal products: create-notification?category=germinal-products skips the notification-type page and lands on origin-of-the-import (back link /germinal-products); the commodity-details page asks weight, packages and storage temperature; identification asks donor, collection and production dates and identification mark; no additional-details page; a transit-countries page follows arrival details; hub lists Transit countries and no Additional details. Network: every journey page is a server-rendered GET plus a POST that 302-redirects (GOV.UK Prototype Kit, Express, on localhost:3010); no data API calls fired; the remaining traffic is static assets and browser-sync live reload (excluded as harness noise). Notable findings recorded as claims: the submitted view shows the same canned cattle notification (Bison bison, LIV-2026-0142) whatever was submitted; captions, button wording (overview vs hub) and date hints differ between pages; review labels differ from page labels; the species 'Equus caballus' renders as 'Equus cabalus'.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p12-001",
+      "statement": "Starting a notification at /design-release-2.1/create-notification redirects (302) to the notification-type page, which asks what the user is importing with five radio options.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 8 (navigate) and action 11 snapshot; network request 1 GET 302 create-notification, request 2 GET 200 notification-type",
+      "quote": "What are you importing?\nLive animals\nGerminal products (semen, ova, embryos)\nPlants for planting\nPotatoes (seed and ware)\nWood products\nContinue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-002",
+      "statement": "The notification-type page is titled 'What are you importing?' with the caption 'About the consignment', a Back link to the dashboard (/design-release-2.1) and a 'Continue' button.",
+      "kind": "copy",
+      "ref": "TRACE C action 11 snapshot",
+      "quote": "What are you importing? - Import notification service - GOV.UK ... About the consignment ... =BACK= /design-release-2.1 Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-003",
+      "statement": "The notification-type radios are named notificationType with values live-animals, germinal-products, plants-for-planting, potatoes and wood-products; the cattle and horse journeys choose live-animals.",
+      "kind": "data",
+      "ref": "TRACE C action 10 (check) and action 11 fields; TRACE H action 10",
+      "quote": "INPUT|radio|notificationType|notificationType|live-animals|checked ... notificationType-5|wood-products",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-004",
+      "statement": "Opening create-notification with ?category=germinal-products skips the notification-type page and redirects straight to the origin page.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 8 (navigate); network request 1 GET 302 create-notification?category=germinal-products then request 2 GET 200 origin-of-the-import",
+      "quote": "Navigate to \"/design-release-2.1/create-notification?category=germinal-products\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-005",
+      "statement": "In the germinal journey the origin page's Back link points to /design-release-2.1/germinal-products, whereas in the live-animals journeys it points to the notification-type page.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 17 snapshot; TRACE C action 16 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/germinal-products",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-006",
+      "statement": "A draft notification reference in the form GBN-AG-26-XXXXXX is shown with a 'Draft' tag at the top of every journey page from the origin page onwards, so the reference is allocated when the notification type is chosen.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 16 snapshot (and every later journey page); TRACE H action 22; TRACE G action 17",
+      "quote": "Draft\nGBN-AG-26-0W1JKI",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-007",
+      "statement": "Notification references seen are GBN-AG-26-0W1JKI (cattle), GBN-AG-26-0SWFHC (horse) and GBN-AG-26-0ZMQHI (germinal): prefix GBN-AG, a two-digit year, and a six-character alphanumeric suffix.",
+      "kind": "data",
+      "ref": "TRACE C action 246; TRACE H action 227; TRACE G action 228",
+      "quote": "GBN-AG-26-0W1JKI",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-008",
+      "statement": "The origin page is headed 'Origin of the import' with caption 'About the consignment'.",
+      "kind": "copy",
+      "ref": "TRACE C action 16 snapshot",
+      "quote": "About the consignment\n\nOrigin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-009",
+      "statement": "The origin page asks for the country of origin through a type-ahead search field labelled 'Country of origin' (search input plus hidden countryOfOrigin value); typing part of a name shows option buttons to pick from, and the choice is announced as 'Selected <country>'.",
+      "kind": "data",
+      "ref": "TRACE C actions 16-20 and action 24 snapshot",
+      "quote": "Country of origin\nSearch\nSelected France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-010",
+      "statement": "Countries chosen as origin in these journeys are France (typed 'Fran'), Republic of Ireland (typed 'Irel') and Netherlands (typed 'Neth').",
+      "kind": "data",
+      "ref": "TRACE C action 18-20; TRACE H action 18-20; TRACE G action 13-15",
+      "quote": "Type \"Irel\" ... filter({ hasText: 'Republic of Ireland' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-011",
+      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as Yes/No radios (regionOfOriginRequired) with a hint pointing to the health certificate.",
+      "kind": "data",
+      "ref": "TRACE C action 16 snapshot",
+      "quote": "Does the consignment have a region of origin code?\n\nCheck the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-012",
+      "statement": "Answering Yes to the region of origin question reveals a field 'Enter the region of origin code' with hint 'Enter up to 5 characters.' and a fixed prefix showing the country's two-letter code (FR for France); the user types only the suffix.",
+      "kind": "rule",
+      "ref": "TRACE C action 24 snapshot (field regionOfOriginCodeSuffix, govuk-input__prefix)",
+      "quote": "Yes\nEnter the region of origin code\nEnter up to 5 characters.\nFR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-013",
+      "statement": "The region of origin code is stored as country prefix plus suffix: entering 75 for France is shown on review as FR-75.",
+      "kind": "data",
+      "ref": "TRACE C action 22 (fill 75) and action 175 snapshot",
+      "quote": "Region of origin code\nFR-75",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-014",
+      "statement": "When No is chosen for the region of origin code, the review shows 'Not applicable' for it.",
+      "kind": "behaviour",
+      "ref": "TRACE H action 21 and action 165 snapshot; TRACE G action 165 snapshot",
+      "quote": "Region of origin code\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-015",
+      "statement": "The origin page has an optional free-text field 'Your internal reference for this consignment (optional)' with hint text.",
+      "kind": "data",
+      "ref": "TRACE C action 16 snapshot (field internalReference)",
+      "quote": "Your internal reference for this consignment (optional)\nEnter any internal reference you want to use to identify this consignment, or leave blank.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-016",
+      "statement": "When no internal reference is entered, the review shows 'Not applicable' for 'Internal reference number'; when one is entered (CATTLE-2026-01) it is shown.",
+      "kind": "behaviour",
+      "ref": "TRACE H action 165 snapshot; TRACE C action 175 snapshot",
+      "quote": "Internal reference number\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-017",
+      "statement": "The origin page offers only a 'Save and continue' button; it has no 'Save and return to overview' or cancel link, unlike later pages.",
+      "kind": "copy",
+      "ref": "TRACE C action 16 snapshot",
+      "quote": "Your internal reference for this consignment (optional)\nEnter any internal reference you want to use to identify this consignment, or leave blank.\nSave and continue\n=FIELDS=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-018",
+      "statement": "The origin page's country search reuses classes from the commodity search component (app-commodity-search*) and app-country-search, a custom type-ahead outside the GOV.UK Design System; an accessible-autocomplete would be the standard replacement.",
+      "kind": "constraint",
+      "ref": "TRACE C action 16 snapshot classes",
+      "quote": "app-commodity-search app-commodity-search-panel ... app-country-search__status app-country-search__value",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-019",
+      "statement": "The commodity page is headed 'What are you importing?' with caption 'About the consignment' and an inset telling the user to submit one notification per ITAHC.",
+      "kind": "copy",
+      "ref": "TRACE C action 31 snapshot",
+      "quote": "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-020",
+      "statement": "For live animals the commodity search field is labelled 'Search for a commodity' with a hint saying it searches by common name, commodity code or Latin name.",
+      "kind": "copy",
+      "ref": "TRACE C action 31 snapshot",
+      "quote": "Search for a commodity\nYou can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-021",
+      "statement": "For germinal products the commodity search hint changes to mention semen, ova or embryos and an 8-digit commodity code.",
+      "kind": "copy",
+      "ref": "TRACE G action 27 snapshot",
+      "quote": "You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-022",
+      "statement": "Typing in the commodity search shows species checkboxes under their commodity; checking one adds it to a selected list headed with a count ('1 selected'), a 'Clear all' control and a per-species 'Remove' control.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 28-33 and action 31 snapshot",
+      "quote": "1 selected\n\nClear all\n\nCattle (0102):\n\nBos taurus\nRemove Bos taurus\n1 option selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-023",
+      "statement": "The commodity selection is submitted as hidden fields: commodityId, commodityCode, selectedSpecies (JSON array of species ids) and commoditySelections (JSON array of {type, commodityId, commodityCode, speciesId}).",
+      "kind": "data",
+      "ref": "TRACE C action 31 snapshot fields",
+      "quote": "INPUT|hidden|commoditySelections||[{\"type\":\"species\",\"commodityId\":\"cattle\",\"commodityCode\":\"0102\",\"speciesId\":\"cattle-bos-taurus\"}]|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-024",
+      "statement": "Commodities selected in these journeys: Cattle (0102) species Bos taurus (search 'cattle'); Horse (0101) species shown as 'Equus cabalus' (search 'horse', id horse-equus-caballus); Cattle, Semen (05111000) species Bos taurus (search 'semen').",
+      "kind": "data",
+      "ref": "TRACE C action 31; TRACE H action 32 snapshot; TRACE G action 27 snapshot",
+      "quote": "Horse (0101):\n\nEquus cabalus\nRemove Equus cabalus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-025",
+      "statement": "The horse species name renders as 'Equus cabalus' (one l) although its id is horse-equus-caballus; the Latin name is Equus caballus, so the displayed name looks misspelt.",
+      "kind": "copy",
+      "ref": "TRACE H action 32 snapshot fields and text",
+      "quote": "Equus cabalus ... INPUT|hidden|selectedSpecies||[\"horse-equus-caballus\"]|",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-026",
+      "statement": "The commodity page has a 'Help with commodity codes' details component and the buttons 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link; its Back link goes to the origin page.",
+      "kind": "copy",
+      "ref": "TRACE C action 31 snapshot",
+      "quote": "Help with commodity codes\nSave and continue\nSave and return to overview\n\nCancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-027",
+      "statement": "The commodity search and selected-list is a custom component (app-commodity-search*) outside the GOV.UK Design System.",
+      "kind": "constraint",
+      "ref": "TRACE C action 31 snapshot classes",
+      "quote": "app-commodity-search__selected app-commodity-search__selected--visible app-commodity-search__selected-chips app-commodity-search__selected-clear",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-028",
+      "statement": "The main import reason page is headed 'Main import reason' with caption 'About the consignment' and the question 'What is the main reason for importing the animals?' as radios (importReason).",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot",
+      "quote": "Main import reason\n What is the main reason for importing the animals? ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-029",
+      "statement": "For cattle the main import reason offers five reasons, each with a hint: Internal market, Transhipment or onward travel, Transit, Re-entry, Temporary admission horses.",
+      "kind": "data",
+      "ref": "TRACE C action 38 snapshot fields and hints",
+      "quote": "Internal market\nFor imports of animals intended for sale or use in Great Britain (England, Scotland or Wales). ... Transhipment or onward travel ... Transit ... Re-entry\nFor animals authorised for re-entry, or rejected exports re-entering Great Britain.\nTemporary admission horses\nFor horses authorised for temporary entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-030",
+      "statement": "The hint for Transhipment or onward travel says the animals stay within the same port or airport while moving to another means of transport.",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hint import-reason-2-item-hint",
+      "quote": "For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-031",
+      "statement": "The hint for Transit says the animals enter at one port or airport and leave from a different one.",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hint import-reason-3-item-hint",
+      "quote": "For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-032",
+      "statement": "Choosing Internal market reveals a nested radio question 'Purpose in the internal market' (internalMarketPurpose); for cattle it offers 11 purposes.",
+      "kind": "rule",
+      "ref": "TRACE C action 38 snapshot (app-internal-market-purpose-reveal)",
+      "quote": "Purpose in the internal market\nTransfer of ownership - Sale/gift ... Transfer of ownership - Rescue ... Breeding ... Research ... Racing, competition, show or training ... Approved premises or body ... Companion animal not for resale or rehoming ... Production ... Slaughter ... Fattening ... Restocking",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-033",
+      "statement": "Each internal market purpose carries a hint; for example Breeding is 'Animals for reproduction...' and Slaughter is 'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.'",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hints internal-market-purpose-*-item-hint",
+      "quote": "Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-034",
+      "statement": "The hint for 'Transfer of ownership - Sale/gift' explains it covers any sale or transfer of ownership, including gifts.",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hint internal-market-purpose-item-hint",
+      "quote": "Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-035",
+      "statement": "The hint for 'Companion animal not for resale or rehoming' describes privately owned animals imported under commercial rules.",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hint internal-market-purpose-7-item-hint",
+      "quote": "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-036",
+      "statement": "Hints for the remaining cattle purposes: Rescue, Research, Racing, Approved premises, Production, Fattening and Restocking each have one-line explanations.",
+      "kind": "copy",
+      "ref": "TRACE C action 38 snapshot hints",
+      "quote": "Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money. ... Animals for use in scientific or medical research. ... Animals to participate in competitive or training events. ... Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed. ... Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product. ... Animals to be fattened for meat production. ... To replenish or enhance populations of species, for example, restocking of game or fish.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-037",
+      "statement": "Choosing Transhipment or onward travel reveals a destination country select (transhipmentDestinationCountry) with 42 options starting 'Select one', Austria, Azores (Portugal), Belgium...",
+      "kind": "rule",
+      "ref": "TRACE C action 38 snapshot fields (app-transhipment-destination-reveal)",
+      "quote": "SELECT|select-one|transhipmentDestinationCountry|transhipment-destination-country|| opts=42: =Select one ; Austria=Austria ; Azores (Portugal)=Azores (Portugal) ; Belgium=Belgium",
+      "confidence": "verbatim",
+      "note": "Option list truncated at 25 in the capture: Austria to Lithuania, including Guernsey, Isle of Man and Jersey (United Kingdom) and EU outermost regions. Reference data."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-038",
+      "statement": "Choosing Transit reveals an exit border control post select (transitExitBorderControlPost) and a destination country select (transitDestinationCountry, 42 options).",
+      "kind": "rule",
+      "ref": "TRACE C action 38 snapshot fields (app-transit-options-reveal)",
+      "quote": "SELECT|select-one|transitExitBorderControlPost|transit-exit-border-control-post|| opts=11 ... SELECT|select-one|transitDestinationCountry|transit-destination-country|| opts=42",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-039",
+      "statement": "The border control post list used for transit exit and temporary admission port of exit has 10 posts plus 'Select one'.",
+      "kind": "data",
+      "ref": "TRACE C action 38 snapshot; TRACE H action 40 snapshot",
+      "quote": "Edinburgh Airport (animals) - GBEDI4\nGatwick Airport (animals) - GBLGW4\nGlasgow Airport (animals) - GBGLA002\nHeathrow Airport - HARC (animals) - GBLHR4A\nHeathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022\nHeathrow Airport – Animal Aircare Ltd (animals) - GBLHR067\nHolyhead POE - GBHLY\nManchester Airport (animals) - GBMNC4\nPrestwick Airport (animals) - GBPIK4\nStansted Airport (animals) - GBSTN4A",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-040",
+      "statement": "One border control post label repeats its code: 'Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022'.",
+      "kind": "copy",
+      "ref": "TRACE H action 40 snapshot",
+      "quote": "Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-041",
+      "statement": "Choosing 'Temporary admission horses' reveals an 'Exit date' date picker (hint 'For example, 27/3/2026') and a 'Port of exit' select of border control posts.",
+      "kind": "rule",
+      "ref": "TRACE H actions 36-39 and action 40 snapshot (app-temporary-admission-horses-reveal)",
+      "quote": "Exit date\nFor example, 27/3/2026\nChoose date\nPort of exit\nSelect one",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-042",
+      "statement": "The horse journey records temporary admission with exit date 6/12/2026 and port of exit Holyhead POE - GBHLY, and the review shows both under Main import reason.",
+      "kind": "behaviour",
+      "ref": "TRACE H action 37-39 and action 165 snapshot",
+      "quote": "Main import reason\nTemporary admission horses\nExit date\n6/12/2026\nPort of exit\nHolyhead POE - GBHLY",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-043",
+      "statement": "The 'Temporary admission horses' reason is offered even when the commodity is cattle, so the reason list is not filtered to horses.",
+      "kind": "rule",
+      "ref": "TRACE C action 38 snapshot",
+      "quote": "INPUT|radio|importReason|import-reason-5|Temporary admission horses|",
+      "confidence": "inferred",
+      "note": "The cattle reason page shows all five reasons; whether the horse page shows the same list was not captured beyond the temporary admission reveal."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-044",
+      "statement": "For germinal products (bovine semen) the main import reason offers only Internal market and Transit, and the internal market purposes are reduced to Transfer of ownership - Sale/gift, Breeding, Research and Production.",
+      "kind": "rule",
+      "ref": "TRACE G action 33 snapshot",
+      "quote": "Internal market ... Purpose in the internal market\nTransfer of ownership - Sale/gift ... Breeding ... Research ... Production ... Transit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-045",
+      "statement": "The germinal main import reason page still asks 'What is the main reason for importing the animals?' and uses animal wording in its hints.",
+      "kind": "copy",
+      "ref": "TRACE G action 33 snapshot",
+      "quote": " What is the main reason for importing the animals? \nInternal market\nFor imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-046",
+      "statement": "The main import reason review shows 'Purpose in the market' for the internal market purpose (Breeding in cattle and germinal).",
+      "kind": "copy",
+      "ref": "TRACE C action 175 snapshot; TRACE G action 165 snapshot",
+      "quote": "Main import reason\nInternal market\nPurpose in the market\nBreeding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-047",
+      "statement": "The main import reason page uses the MOJ date picker (moj-datepicker) for the exit date, a component outside govuk-frontend.",
+      "kind": "constraint",
+      "ref": "TRACE C action 38 snapshot classes",
+      "quote": "moj-datepicker moj-datepicker-icon moj-datepicker__button moj-datepicker__calendar",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-048",
+      "statement": "The commodity details page is headed 'Commodity details' with caption 'Description of the goods' and shows a 'Selected commodities' table (Commodity code, Common name, Species) with a Remove action and an 'Add another commodity' link.",
+      "kind": "copy",
+      "ref": "TRACE C action 45 snapshot",
+      "quote": "Description of the goods\n\nCommodity details\nSelected commodities\nCommodity code\nCommon name\nSpecies\n0102\nCattle\nBos taurus\nRemove\n\nAdd another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-049",
+      "statement": "For live animals the commodity details page asks per species 'Number of animals' (numberOfAnimals[<species>]) and 'Number of packages (when required)' (numberOfPackages[<species>]) with hint 'Such as crates, bags or boxes'.",
+      "kind": "data",
+      "ref": "TRACE C action 45 snapshot; TRACE H action 45 snapshot",
+      "quote": "Number of animals\nNumber of packages (when required)\nSuch as crates, bags or boxes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-050",
+      "statement": "The cattle journey enters 2 animals and the horse journey 1 animal; packages are left blank and the review shows 'Not applicable' for packages.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 44 and action 175; TRACE H action 44 and action 165",
+      "quote": "Number of animals\n2\nChange\nNumber of packages (when required)\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-051",
+      "statement": "For germinal products the commodity details page asks per species 'Total gross weight' in kg, 'Number of packages', and a 'Temperature' radio question with hint 'How will the products be stored' offering Ambient, Chilled and Frozen.",
+      "kind": "data",
+      "ref": "TRACE G actions 37-39 and action 40 snapshot",
+      "quote": "Total gross weight\nkg\nNumber of packages\nTemperature\nHow will the products be stored\nAmbient\nChilled\nFrozen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-052",
+      "statement": "The germinal weight field is labelled 'Total gross weight' but submitted as netWeight[<species>], so gross and net weight are conflated.",
+      "kind": "data",
+      "ref": "TRACE G action 40 snapshot fields",
+      "quote": "INPUT|text|netWeight[cattle-semen-bos-taurus]|net-weight-cattle-semen-bos-taurus|2.5|",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-053",
+      "statement": "The germinal storage temperature radio is one field (storageTemperature) for the whole page, not per species, whereas weight and packages are per species.",
+      "kind": "data",
+      "ref": "TRACE G action 39 and action 40 snapshot fields",
+      "quote": "INPUT|radio|storageTemperature|storage-temperature-3|Frozen|checked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-054",
+      "statement": "The germinal review shows weight as '2.5 kg', packages 4 and temperature Frozen under the commodity.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 165 snapshot",
+      "quote": "Total gross weight\n2.5 kg\nChange\nNumber of packages\n4\nTemperature\nFrozen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-055",
+      "statement": "The commodity details page's Back link goes to the commodity search page (what-are-you-importing).",
+      "kind": "behaviour",
+      "ref": "TRACE C action 45 snapshot; TRACE G action 40 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/what-are-you-importing Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-056",
+      "statement": "The identification details page is headed 'Identification details' with caption 'About the consignment' and an inset saying identification must be added before arrival at the port of entry.",
+      "kind": "copy",
+      "ref": "TRACE C action 51 snapshot",
+      "quote": "About the consignment\n\nIdentification details\nYou must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-057",
+      "statement": "The identification page caption is 'About the consignment' while the commodity details page before it uses 'Description of the goods' and the hub places Identification details under '2. Description of the goods', so the caption is inconsistent.",
+      "kind": "copy",
+      "ref": "TRACE C action 51 and action 45 and action 152 snapshots",
+      "quote": "About the consignment\n\nIdentification details",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-058",
+      "statement": "The identification page repeats the selected commodities with the number of animals, a 'Change' link, 'Add another commodity' and a 'Change number of animals' link under each species.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 51 snapshot",
+      "quote": "Selected commodities\nCommodity code\nCommon name\nSpecies\nNumber of animals\n0102\nCattle\nBos taurus\n2\nChange\n\nAdd another commodity\n\nCattle (0102)\n\nBos taurus\n\nChange number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-059",
+      "statement": "For cattle the identification page asks, per animal, 'Ear tag' and 'Passport' (identifiers[cattle-bos-taurus][ear-tag] and [passport]).",
+      "kind": "data",
+      "ref": "TRACE C action 51 snapshot fields",
+      "quote": "Enter details for Bos taurus 1 of 2\nEar tag\nPassport",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-060",
+      "statement": "When several animals are declared, the identification page collects them one at a time ('Enter details for Bos taurus 1 of 2') with a 'Save and add another' button that saves the animal and reloads for the next.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 49-55 (button value save:cattle-bos-taurus) and action 51 snapshot",
+      "quote": "Enter details for Bos taurus 1 of 2\nEar tag\nPassport\nSave and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-061",
+      "statement": "On the last animal of the declared number the per-animal button reads 'Save and finish' instead of 'Save and add another', and the animals saved so far are listed in a table (Animal, Ear tag, Passport) with a Remove action each.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 55 snapshot",
+      "quote": "Enter details for Bos taurus 2 of 2\nEar tag\nPassport\nSave and finish\nAnimal\nEar tag\nPassport\nBos taurus 1\nEAR-TAG-1\nPASSPORT-1\nRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-062",
+      "statement": "Once all declared animals are entered, the entry form disappears and only the saved table remains, with rows labelled '<species> 1', '<species> 2'.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 57 snapshot",
+      "quote": "Animal\nEar tag\nPassport\nBos taurus 1\nEAR-TAG-1\nPASSPORT-1\nRemove\nBos taurus 2\nEAR-TAG-2\nPASSPORT-2\nRemove\nSave and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-063",
+      "statement": "Each 'Save and add another' / 'Save and finish' press is a full page POST that redirects back to the identification page.",
+      "kind": "behaviour",
+      "ref": "TRACE C network requests 240-281 (POST 302 then GET 200 animal-identification-details, three times)",
+      "quote": "240. POST     302      animal-identification-details ... 241. GET      200      animal-identification-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-064",
+      "statement": "For a horse the identification page asks 'Microchip', 'Passport' and 'Horse name' per animal.",
+      "kind": "data",
+      "ref": "TRACE H actions 49-51 and action 52 snapshot",
+      "quote": "Enter details for Equus cabalus 1 of 1\nMicrochip\nPassport\nHorse name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-065",
+      "statement": "With only one animal declared the identification page shows no per-animal save button: the user fills the fields and presses 'Save and continue'.",
+      "kind": "behaviour",
+      "ref": "TRACE H action 52 snapshot and action 52 (click continue)",
+      "quote": "Horse name\nSave and continue\nSave and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-066",
+      "statement": "For germinal products (bovine semen) the identification page asks, once per species and not per animal, 'Donor name/ID', 'Collection date', 'Production date' and 'Identification number/mark'.",
+      "kind": "data",
+      "ref": "TRACE G actions 44-49 and action 50 snapshot",
+      "quote": "Enter details for Bos taurus\nDonor name/ID\nCollection date\nFor example, 27/03/2026\nChoose date\nProduction date\nFor example, 27/03/2026\nChoose date\nIdentification number/mark",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-067",
+      "statement": "The germinal identification page's selected-commodities table shows 'Number of packages' (4) instead of number of animals, yet still offers a 'Change number of animals' link.",
+      "kind": "copy",
+      "ref": "TRACE G action 50 snapshot",
+      "quote": "Number of packages\n05111000\nCattle, Semen\nBos taurus\n4\nChange\n\nAdd another commodity\n\nCattle, Semen (05111000)\n\nBos taurus\n\nChange number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-068",
+      "statement": "Date hints differ in format: the germinal identification dates say 'For example, 27/03/2026' while the arrival, exit and document dates say 'For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "TRACE G action 50 snapshot; TRACE C action 77 and action 92 snapshots",
+      "quote": "identifier-cattle-semen-bos-taurus-collection-date-hint :: For example, 27/03/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-069",
+      "statement": "The germinal review lists the identification details as rows (Donor name/ID BULL-007, Collection date 1/9/2026, Production date 2/9/2026, Identification number/mark NL-BULL-007).",
+      "kind": "behaviour",
+      "ref": "TRACE G action 165 snapshot",
+      "quote": "Identification details\nChange\nDonor name/ID\nBULL-007\nCollection date\n1/9/2026\nProduction date\n2/9/2026\nIdentification number/mark\nNL-BULL-007",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-070",
+      "statement": "The identification page's Back link goes to the commodity details page (consignment-details).",
+      "kind": "behaviour",
+      "ref": "TRACE C action 51 snapshot; TRACE G action 50 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/consignment-details Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-071",
+      "statement": "The identification page is built from custom app-animal-identification-* classes (summary rows, panels, saved table) rather than the GOV.UK summary list or table components.",
+      "kind": "constraint",
+      "ref": "TRACE C action 57 snapshot classes",
+      "quote": "app-animal-identification-panel__saved app-animal-identification-panel__saved-action app-animal-identification-panel__saved-key app-animal-identification-panel__saved-remove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-072",
+      "statement": "The additional details page is headed 'Additional details' with caption 'Commodity details' and asks 'What are the animals certified for?' with hint 'You can find this information on the ITAHC.'",
+      "kind": "copy",
+      "ref": "TRACE C action 63 snapshot",
+      "quote": "Commodity details\n\nAdditional details\nWhat are the animals certified for?\nYou can find this information on the ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-073",
+      "statement": "'What are the animals certified for?' is a radio question (certificationPurpose) with 16 options.",
+      "kind": "data",
+      "ref": "TRACE C action 63 snapshot fields",
+      "quote": "Further keeping\nSlaughter\nConfined establishment\nGerminal products\nRegistered equine animal\nTravelling circus/animal act\nExhibition\nEvent or activity near borders\nRelease into the wild\nDispatch centre\nRelaying area / purification centre\nOrnamental aquaculture establishment\nTechnical use\nQuarantine or similar establishment\nLive aquatic animals for human consumption\nOther",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-074",
+      "statement": "For cattle the additional details page also asks 'Does the consignment contain any unweaned animals?' as Yes/No radios (unweanedAnimals) with a hint.",
+      "kind": "data",
+      "ref": "TRACE C action 62 and action 63 snapshot",
+      "quote": "Does the consignment contain any unweaned animals?\nThese are animals that are still feeding from their mother.\nYes\nNo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-075",
+      "statement": "For a horse the additional details page asks only the certification question; the unweaned animals question is not shown, so it is conditional on the commodity.",
+      "kind": "rule",
+      "ref": "TRACE H action 57 snapshot",
+      "quote": "Live aquatic animals for human consumption\nOther\nSave and continue\nSave and return to overview",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-076",
+      "statement": "The certification options are not filtered by commodity: the horse page offers the same 16 options as cattle, and the horse journey chooses 'Registered equine animal'.",
+      "kind": "rule",
+      "ref": "TRACE H action 56 and action 57 snapshot",
+      "quote": "INPUT|radio|certificationPurpose|certification-purpose-5|Registered equine animal|checked",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-077",
+      "statement": "The review shows the additional details as 'Certified for' and, for cattle, 'Includes unweaned animals'.",
+      "kind": "copy",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "Additional details\nChange\nCertified for\nFurther keeping\nIncludes unweaned animals\nNo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-078",
+      "statement": "Germinal products have no additional details page: identification details goes straight to arrival details, and the hub has no Additional details task.",
+      "kind": "rule",
+      "ref": "TRACE G network requests 201-202 (POST animal-identification-details then GET arrival-details); TRACE G action 142 snapshot",
+      "quote": "201. POST     302      animal-identification-details ... 202. GET      200      arrival-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-079",
+      "statement": "Even though no additional details page was shown, the germinal review shows an Additional details block 'Certified for: Germinal products', so the certification purpose is set automatically for germinal products.",
+      "kind": "rule",
+      "ref": "TRACE G action 165 snapshot",
+      "quote": "Additional details\nCertified for\nGerminal products",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-080",
+      "statement": "The additional details page's Back link goes to the identification details page.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 63 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/animal-identification-details Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-081",
+      "statement": "The arrival details page is headed 'Arrival details' with caption 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "TRACE C action 77 snapshot",
+      "quote": "Transport and arrival\n\nArrival details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-082",
+      "statement": "The arrival details page asks 'Arrival date at port of entry' with a date picker and hint.",
+      "kind": "data",
+      "ref": "TRACE C action 67 and action 77 snapshot (field arrivalDateAtPort)",
+      "quote": "Arrival date at port of entry\nThe expected date of arrival at the port of entry. For example, 27/3/2026\nChoose date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-083",
+      "statement": "The arrival details page asks 'Port of entry' through a type-ahead search; the chosen port is shown as 'Selected <port>'.",
+      "kind": "data",
+      "ref": "TRACE C actions 69-73 and action 77 snapshot (fields port-of-entry search, hidden portOfEntry)",
+      "quote": "Port of entry\nSelect where the transporter will enter with the consignment. Start typing to search by port or airport name or code.\nSearch\nSelected London Heathrow - LHR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-084",
+      "statement": "Ports of entry chosen in these journeys: London Heathrow - LHR (typed 'Heathrow'), Holyhead - GBHLY (typed 'Holyhead'), Dover - GBDVR (typed 'Dover').",
+      "kind": "data",
+      "ref": "TRACE C action 77; TRACE H action 71; TRACE G action 64",
+      "quote": "INPUT|hidden|portOfEntry||Holyhead - GBHLY|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-085",
+      "statement": "The port-of-entry list uses a different label format from the border control post list (for example 'Holyhead - GBHLY' as port of entry versus 'Holyhead POE - GBHLY' as port of exit), so two different port reference lists are in use.",
+      "kind": "data",
+      "ref": "TRACE H action 71 and action 40 snapshots",
+      "quote": "Holyhead - GBHLY ... Holyhead POE - GBHLY",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-086",
+      "statement": "The arrival details page asks 'Means of transport to the port of entry' as a select with Air, Rail, Road and Sea.",
+      "kind": "data",
+      "ref": "TRACE C action 77 snapshot (field meansOfTransport)",
+      "quote": "SELECT|select-one|meansOfTransport|means-of-transport|Air| opts=5: =Select one ; Air=Air ; Rail=Rail ; Road=Road ; Sea=Sea",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-087",
+      "statement": "The arrival details page asks 'Transport identification' with a bulleted hint listing what to enter.",
+      "kind": "data",
+      "ref": "TRACE C action 77 snapshot (field transportIdentification)",
+      "quote": "Transport identification\n\nEnter one of the following:\n\nflight number\ntrain number\nroad vehicle registration number\nvessel name (for ferries, also the road vehicle registration number)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-088",
+      "statement": "The arrival details page asks 'Transport document reference' with a hint naming the accepted transport documents.",
+      "kind": "data",
+      "ref": "TRACE C action 77 snapshot (field transportDocumentReference)",
+      "quote": "Transport document reference\nEnter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-089",
+      "statement": "Arrival values entered: cattle by Air, BA0123, AWB-123; horse by Sea, STENA ADVENTURER, AWB-123; germinal by Road, NL-12-AB, AWB-123; arrival date 21/10/2026 in all three.",
+      "kind": "data",
+      "ref": "TRACE C actions 67-76; TRACE H actions 61-70 and action 71; TRACE G actions 54-63 and action 64",
+      "quote": "SELECT|select-one|meansOfTransport|means-of-transport|Sea|\nINPUT|text|transportIdentification|transport-identification|STENA ADVENTURER|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-090",
+      "statement": "The arrival details page's Back link goes to the notification hub rather than the previous journey page (additional details or identification).",
+      "kind": "behaviour",
+      "ref": "TRACE C action 77 snapshot; TRACE G action 64 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/notification-hub Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-091",
+      "statement": "The review labels the arrival date 'Arrival date at destination', although the page asks for 'Arrival date at port of entry'.",
+      "kind": "copy",
+      "ref": "TRACE C action 175 snapshot and action 77 snapshot",
+      "quote": "Port of entry\nLondon Heathrow - LHR\nArrival date at destination\n21/10/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-092",
+      "statement": "For germinal products a 'Transit countries' page follows arrival details, headed 'Which countries will the consignment travel through?' with caption 'Movement'.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 67 and action 73 snapshot; network request 242 GET transit-countries",
+      "quote": "Movement\n\nWhich countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-093",
+      "statement": "The transit countries page explains which countries count and that the United Kingdom is excluded.",
+      "kind": "copy",
+      "ref": "TRACE G action 73 snapshot",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.\n\nThis does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-094",
+      "statement": "The transit countries page has a country type-ahead 'Enter a country' (hint 'Enter each country that the consignment will travel through'); each chosen country is added to a Country table with a Remove action and kept in a hidden transitCountries JSON array.",
+      "kind": "data",
+      "ref": "TRACE G actions 68-72 and action 73 snapshot",
+      "quote": "Enter a country\nEnter each country that the consignment will travel through\nAdded Belgium\nSearch\nCountry\nBelgium\nRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-095",
+      "statement": "The transit countries page's Back link goes to arrival details.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 73 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/arrival-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-096",
+      "statement": "The review shows transit countries under Transport and arrival as 'Countries that the consignment will travel through'.",
+      "kind": "copy",
+      "ref": "TRACE G action 165 snapshot",
+      "quote": "Transit countries\nCountries that the consignment will travel through\nBelgium\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-097",
+      "statement": "The cattle and horse journeys do not show a transit countries page: arrival details goes straight to the transporter page.",
+      "kind": "rule",
+      "ref": "TRACE C network requests 400-401; TRACE H network requests 318-319",
+      "quote": "400. POST     302      arrival-details ... 401. GET      200      transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-098",
+      "statement": "The transporter page is titled 'Transporter details' with caption 'Transport and arrival' and an intro defining the transporter.",
+      "kind": "copy",
+      "ref": "TRACE C action 82 snapshot",
+      "quote": "Transport and arrival\n\nTransporter details\n\nThis is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-099",
+      "statement": "The transporter page explains when the transporter needs an authorisation issued by DAERA or APHA.",
+      "kind": "copy",
+      "ref": "TRACE C action 82 snapshot",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:\n\ntransporting any live vertebrate animals in, to, from or through Great Britain (GB)\ntravelling on journeys of over 65 km\ntransporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-100",
+      "statement": "The transporter page links to guidance in a new tab and states which authorisation documents are valid in GB.",
+      "kind": "copy",
+      "ref": "TRACE C action 82 snapshot",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)\n\nDocuments issued by DAERA are valid for use in GB.\n\nDocuments issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-101",
+      "statement": "The transporter page has a search box (hint 'Name, address or approval number'), an 'Add a transporter' button and a 'Select a transporter' table of radio rows with columns Name, Address, Approval number, Type, Status and a 'View details' action.",
+      "kind": "data",
+      "ref": "TRACE C action 82 snapshot",
+      "quote": "Select a transporter\nSearch\nName, address or approval number\nAdd a transporter\nSelect a transporter\nSelect\n\tName\tAddress\tApproval number\tType\tStatus\t\nAction",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-102",
+      "statement": "Eight transporters are listed, typed Commercial or Private, with status Approved or New; the journeys choose Aberdeen Livestock Ltd (cattle), Roadtrain Ltd (horse) and Portuguese Livestock Lda (germinal).",
+      "kind": "data",
+      "ref": "TRACE C action 82 snapshot; TRACE H action 75; TRACE G action 77",
+      "quote": "Yusen Logistics (Romania) SRL ... Roadtrain Ltd ... Aberdeen Livestock Ltd\t15 Union Street, Aberdeen, AB11 5BN\tUK/ABERDEEN/T1/00092001\tPrivate\tApproved ... Danish Meat Export ApS ... Portuguese Livestock Lda ... Romanian Agri Exports SRL ... Private\tNew ... Slovak Farm Export ... Finnish Livestock Oy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-103",
+      "statement": "The review shows the transporter as Name, Address, Country, Approval number and Type.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "Transport details\nChange\nName\nAberdeen Livestock Ltd\nAddress\n\n15 Union Street\n\nAberdeen\n\nAB11 5BN\n\nCountry\nUnited Kingdom\nApproval number\nUK/ABERDEEN/T1/00092001\nType\nPrivate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-104",
+      "statement": "For Roadtrain Ltd the review's Address block repeats the country (Republic of Ireland) that is also shown in the separate Country row.",
+      "kind": "copy",
+      "ref": "TRACE H action 165 snapshot",
+      "quote": "Address\n\nThe Roadtrain Complex\n\nBluebell Industrial Estate\n\nDublin 12\n\nD12 P046\n\nRepublic of Ireland\n\nCountry\nRepublic of Ireland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-105",
+      "statement": "The transporter page's Back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 82 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/notification-hub Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-106",
+      "statement": "The transporter table is a GOV.UK table with radios inside rows and custom app-transporter-* classes (including a green tag for Approved and app-transporter-table__tag--new for New).",
+      "kind": "constraint",
+      "ref": "TRACE C action 82 snapshot classes",
+      "quote": "app-transporter-table__radio app-transporter-table__row app-transporter-table__tag app-transporter-table__tag--new ... govuk-table ... govuk-tag--green",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-107",
+      "statement": "The upload documents page is headed 'Upload documents' with caption 'Documents' and explains the ITAHC requirement and document rules.",
+      "kind": "copy",
+      "ref": "TRACE C action 92 snapshot",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-108",
+      "statement": "The upload documents page lists other documents the user may need and has a details link 'Check which additional documents you must upload'.",
+      "kind": "copy",
+      "ref": "TRACE C action 92 snapshot",
+      "quote": "Other documents you may need to attach include:\n\nimport licences or authorisations\ncommercial documents or invoices\nCheck which additional documents you must upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-109",
+      "statement": "The 'File upload' card asks for 'Document reference' (text), 'Document type' (select), 'Date of issue' (date picker, hint 'For example, 27/3/2026') and an 'Attachment' file.",
+      "kind": "data",
+      "ref": "TRACE C actions 86-90 and action 92 snapshot fields",
+      "quote": "File upload\nDocument reference\nDocument type\nSelect one ... Date of issue\nFor example, 27/3/2026\nChoose date\nAttachment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-110",
+      "statement": "The document type select has 13 types plus 'Select one'.",
+      "kind": "data",
+      "ref": "TRACE C action 92 snapshot (documentType opts=14)",
+      "quote": "itahc=Intra Trade Animal Health Certificate (ITAHC) ; veterinary-health-certificate=Veterinary health certificate ; air-waybill=Air waybill ; import-permit=Import permit ; letter-of-authority-directive-2008-61-ec=Letter of authority (Directive 2008/61/EC) ; commercial-invoice=Commercial invoice ; sea-waybill=Sea waybill ; rail-waybill=Rail waybill ; bill-of-lading=Bill of lading ; catch-certificate=Catch certificate ; laboratory-sampling-results-for-aflatoxin-reg-2019-1793=Laboratory sampling results for aflatoxin (Reg 2019/1793) ; journey-log=Journey log ; other=Other",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-111",
+      "statement": "The attachment rules shown: under 50MB, PDF/DOC/DOCX/JPEG/JPG/PNG/XLS/XLSX, up to 15 files, no ZIP files.",
+      "kind": "rule",
+      "ref": "TRACE C action 92 snapshot",
+      "quote": "Your file must be:\nfiles that are smaller than 50MB\nPDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX\nup to a maximum of 15 files\nZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-112",
+      "statement": "The attachment control offers 'Choose file' or 'or drop file' (drag and drop); the chosen file name is held in a hidden attachmentFileName field.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 90-91 and action 92 snapshot",
+      "quote": "itahc.pdf\nChoose file\nor drop file ... INPUT|hidden|attachmentFileName||itahc.pdf|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-113",
+      "statement": "'Save and add another' adds the document to a table (Document reference, Document type, Date of issue, Status, Action) and clears the form for another document.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 92-94 and action 95 snapshot",
+      "quote": "Save and add another\nDocument reference\tDocument type\tDate of issue\tStatus\t\nAction\n\nCATTLE-AIR-ITAHC\tIntra Trade Animal Health Certificate (ITAHC)\t5/10/2026\t\nVirus check status for CATTLE-AIR-ITAHC\nScanning for virus\tRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-114",
+      "statement": "An added document shows a virus-check status 'Scanning for virus' in the documents table.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 95 snapshot",
+      "quote": "Virus check status for CATTLE-AIR-ITAHC\nScanning for virus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-115",
+      "statement": "Each journey uploads one ITAHC (CATTLE-AIR-ITAHC, HORSE-SEA-ITAHC, GERMINAL-SEMEN-ITAHC) dated 5/10/2026 with file itahc.pdf; the review lists it as 'Document 1' with reference, type, date of issue and attachment name.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175; TRACE H action 165; TRACE G action 165",
+      "quote": "4. Uploaded documents\nDocument 1\nChange\nDocument reference\nHORSE-SEA-ITAHC\nDocument type\nIntra Trade Animal Health Certificate (ITAHC)\nDate of issue\n5/10/2026\nAttachment\nitahc.pdf",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-116",
+      "statement": "No upload request to a file store or virus scanner is seen in the network log: documents are posted with the page form and the 'Scanning for virus' status is static.",
+      "kind": "integration",
+      "ref": "TRACE C network requests 480-519 (POST 302 upload-documents, GET 200 upload-documents); TRACE C full request log",
+      "quote": "480. POST     302      upload-documents ... 481. GET      200      upload-documents",
+      "confidence": "gap",
+      "note": "The prototype simulates the upload and scan; the real cdp-uploader integration is not exercised."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-117",
+      "statement": "The upload documents page's Back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 92 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/notification-hub Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-118",
+      "statement": "The upload page is built from custom app-upload-documents-card* classes (dropzone, card) plus the MOJ date picker, outside the GOV.UK file upload component.",
+      "kind": "constraint",
+      "ref": "TRACE C action 92 snapshot classes",
+      "quote": "app-upload-documents-card__dropzone app-upload-documents-card__dropzone--has-file ... moj-datepicker",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-119",
+      "statement": "The roles and addresses page (/roles-and-addresses) is headed 'Consignment addresses' with caption 'Consignment parties', an intro and a warning about false addresses.",
+      "kind": "copy",
+      "ref": "TRACE C action 99 snapshot",
+      "quote": "Consignment parties\n\nConsignment addresses\n\nAdd all the addresses that are involved in the consignment.\n\n!\nWarning\nProviding a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-120",
+      "statement": "For cattle the consignment addresses page lists six sections, each with a description and an add link: Place of origin, Consignor, Consignee, Importer, Place of destination and County parish holding (CPH) number.",
+      "kind": "data",
+      "ref": "TRACE C action 99 snapshot links",
+      "quote": "Add a place of origin -> /design-release-2.1/place-of-origin\nAdd a consignor -> /design-release-2.1/consignor-or-exporter\nAdd a consignee -> /design-release-2.1/consignee\nAdd an importer -> /design-release-2.1/importer\nAdd a place of destination -> /design-release-2.1/place-of-destination\nAdd a CPH number -> /design-release-2.1/cph-number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-121",
+      "statement": "Section descriptions on the consignment addresses page: place of origin is where the animals begin their journey; consignor is the sender; consignee is the receiver or buyer; importer is usually the consignee; place of destination is where animals are unloaded for at least 48 hours; CPH identifies the holding.",
+      "kind": "copy",
+      "ref": "TRACE C action 99 snapshot",
+      "quote": "The address where the animals begin their journey to Great Britain ... This is the sender of the consignment. ... This is the receiver or buyer of the consignment being shipped or transported. ... This is usually the same as the consignee. You can select a different person if needed. ... This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address. ... The county parish holding (CPH) number identifies the holding where the animals will be kept.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-122",
+      "statement": "For a horse and for germinal products the consignment addresses page shows no CPH number section; only the five address roles appear.",
+      "kind": "rule",
+      "ref": "TRACE H action 130 snapshot; TRACE G action 131 snapshot",
+      "quote": "Riverside Holding Facility\n\nEast Farm Road\n\nLeeds, LS25 3EB, United Kingdom\n\nChange\n\nSave and continue",
+      "confidence": "inferred",
+      "note": "CPH appears in the cattle journey only, so it is conditional on the commodity (bovine live animals at least)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-123",
+      "statement": "Once an address is chosen, its section on the consignment addresses page shows the name and address with a 'Change' link in place of the add link.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 142 snapshot",
+      "quote": "Place of origin\n\nThe address where the animals begin their journey to Great Britain\n\nGreen Valley Livestock Farm\n\n14 Meadow Lane\n\nLower Hartham\n\nUtrecht, 3511 AA, Netherlands\n\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-124",
+      "statement": "Each address sub-page saves with a POST that redirects back to the consignment addresses page; only the consignment addresses page's own 'Save and continue' moves on to the contact address.",
+      "kind": "behaviour",
+      "ref": "TRACE C network requests 598-599, 676-677, 1031-1032",
+      "quote": "598. POST     302      place-of-origin ... 599. GET      200      roles-and-addresses ... 1031. POST     302      roles-and-addresses ... 1032. GET      200      contact-address-for-consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-125",
+      "statement": "The consignment addresses page's Back link and 'Cancel and return to overview' both go to the notification hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 99 snapshot",
+      "quote": "Cancel and return to overview -> /design-release-2.1/notification-hub\n=BACK=\n/design-release-2.1/notification-hub Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-126",
+      "statement": "The place of origin page is headed 'Place of origin' with caption 'Consignment parties', an 'Add a new address' action, and a table of address radios (Name, Address, Country, View) with a results count.",
+      "kind": "data",
+      "ref": "TRACE C action 102 snapshot",
+      "quote": "Place of origin\nAdd a new address\n\nThe address where the animals begin their journey to Great Britain\n\n... Select an address\n\nShowing 9 out of 9 results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-127",
+      "statement": "The place of origin page's search field carries the label 'Enter a country' and hint 'Enter each country that the consignment will travel through', copy that belongs to transit countries, and the field has no name.",
+      "kind": "copy",
+      "ref": "TRACE C action 102 snapshot",
+      "quote": "Enter a country\nEnter each country that the consignment will travel through\nSearch ... INPUT|search||place-of-origin-search||",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-128",
+      "statement": "Nine place-of-origin addresses are offered across Romania, Republic of Ireland, Netherlands, Austria and Poland; the journeys choose Green Valley Livestock Farm, Utrecht, Netherlands.",
+      "kind": "data",
+      "ref": "TRACE C action 101 and action 102 snapshot",
+      "quote": "Green Valley Farm ... Valea Mare Farm ... Oak Hill Farm ... Ballymore Farm ... Riverside Farm ... Green Meadow Farm ... Green Valley Livestock Farm\t14 Meadow Lane\nLower Hartham\nUtrecht, 3511 AA\tNetherlands ... Alpine Breeding Centre ... Baltic Animal Farm",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-129",
+      "statement": "The consignor page is headed 'Consignor' with a search (hint 'Name, address or country') and nine addresses; the journeys choose Nordic Livestock Export AB, Gothenburg, Sweden.",
+      "kind": "data",
+      "ref": "TRACE C action 107 and action 108 snapshot",
+      "quote": "Consignor\nAdd a new address\n\nThis is the sender of the consignment.\n\nSearch\nName, address or country ... Showing 9 out of 9 results ... Nordic Livestock Export AB\tVästra Hamngatan 6\nFloor 2\nGothenburg, 41117\tSweden",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-130",
+      "statement": "The consignor page lives at /consignor-or-exporter and the hub describes the role as 'Consignor or Exporter', but the page heading and section say only 'Consignor'.",
+      "kind": "copy",
+      "ref": "TRACE C action 108 snapshot and action 152 snapshot",
+      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-131",
+      "statement": "The consignee page lists six UK addresses; the journeys choose Northern Livestock Imports Ltd, Hull.",
+      "kind": "data",
+      "ref": "TRACE C action 113 and action 114 snapshot",
+      "quote": "Consignee\nAdd a new address\n\nThis is the receiver or buyer of the consignment being shipped or transported. ... Showing 6 out of 6 results ... Northern Livestock Imports Ltd\tDockside Business Park\nWarehouse 3\nHull, HU9 5PX\tUnited Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-132",
+      "statement": "The importer page lists the same six UK companies as the consignee page but under different ids (for example britannia-trade-livestock for importer vs britannia-trade-livestock-consignee); the journeys choose Britannia Trade & Livestock Ltd, Bristol.",
+      "kind": "data",
+      "ref": "TRACE C action 119 and action 120 snapshot",
+      "quote": "INPUT|radio|importerAddressId|importer-address-britannia-trade-livestock|britannia-trade-livestock|checked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-133",
+      "statement": "The place of destination page lists three UK facilities; the journeys choose Riverside Holding Facility, Leeds.",
+      "kind": "data",
+      "ref": "TRACE C action 125 and action 126 snapshot",
+      "quote": "Showing 3 out of 3 results ... Riverside Holding Facility\tEast Farm Road\nLeeds, LS25 3EB\tUnited Kingdom ... Greenfields Quarantine Centre ... Meadowbrook Animal Facility",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-134",
+      "statement": "The address sub-pages offer 'Save and return to hub' and 'Cancel and return to hub', while other journey pages say 'overview'; their Back link goes to the consignment addresses page.",
+      "kind": "copy",
+      "ref": "TRACE C actions 102-126 snapshots",
+      "quote": "Save and continue\nSave and return to hub\n\nCancel and return to hub ... =BACK=\n/design-release-2.1/roles-and-addresses Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-135",
+      "statement": "The CPH page is reached from 'Add a CPH number' and is headed 'Add the county parish holding number (CPH)' with caption 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "TRACE C action 129 and action 133 snapshot",
+      "quote": "Consignment parties\n\nAdd the county parish holding number (CPH)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-136",
+      "statement": "The CPH page asks for the CPH number as three inputs in a 'CPH number' fieldset: County, Parish and Holding number, with hint 'For example 12/345/6789'.",
+      "kind": "data",
+      "ref": "TRACE C actions 130-132 and action 133 snapshot",
+      "quote": "LEGEND: CPH number\nLABEL: County\nLABEL: Parish\nLABEL: Holding number ... cph-number-hint :: For example 12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-137",
+      "statement": "The CPH page has a 'What is a CPH number?' details component explaining it is a unique 9-digit number.",
+      "kind": "copy",
+      "ref": "TRACE C action 133 snapshot (c133b)",
+      "quote": "What is a CPH number? A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled. You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-138",
+      "statement": "The CPH number is shown joined with slashes (12/345/6789) on the consignment addresses page and the review.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 142 and action 175 snapshots",
+      "quote": "County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-139",
+      "statement": "The CPH inputs reuse the GOV.UK date input component classes (govuk-date-input) for a three-part number.",
+      "kind": "constraint",
+      "ref": "TRACE C action 133 snapshot classes",
+      "quote": "govuk-date-input govuk-date-input__input govuk-date-input__item govuk-date-input__label",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-140",
+      "statement": "The contact address page is headed 'Contact address for consignment' with no caption and explains whose address it is.",
+      "kind": "copy",
+      "ref": "TRACE C action 147 snapshot",
+      "quote": "Contact address for consignment\n\nThis is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-141",
+      "statement": "The contact address page offers three branch addresses as radios (contactAddressId) and a link to add a new branch address in the address book, returning to this page.",
+      "kind": "data",
+      "ref": "TRACE C action 146 and action 147 snapshot",
+      "quote": "If the correct address is not shown, add a new branch address, then return to this page.\n\n Select an address \nAberdeen Livestock Ltd\n15 Union Street, Aberdeen, AB11 5BN\nWest Country Livestock Ltd\n41 Commerce Way, Bristol, BS11 9DQ\nCymru Animal Imports Ltd\n12 Cathedral Road, Cardiff, CF11 9LJ ... add a new branch address -> /design-release-2.1/address-book/add?from=contact-address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-142",
+      "statement": "The contact address radio values do not match their labels: 'West Country Livestock Ltd' is value aberdeen-livestock-harbour-road and 'Cymru Animal Imports Ltd' is aberdeen-livestock-king-street.",
+      "kind": "data",
+      "ref": "TRACE C action 147 snapshot fields",
+      "quote": "INPUT|radio|contactAddressId|contact-address-2|aberdeen-livestock-harbour-road|\nINPUT|radio|contactAddressId|contact-address-3|aberdeen-livestock-king-street|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-143",
+      "statement": "The contact address page's Back link goes to the consignment addresses page and its cancel link to the hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 147 snapshot",
+      "quote": "Cancel and return to hub -> /design-release-2.1/notification-hub\n=BACK=\n/design-release-2.1/roles-and-addresses Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-144",
+      "statement": "Saving the contact address in a first pass through the journey takes the user straight to 'Review your notification', not back to the hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C network requests 1070-1071; TRACE H 911-912; TRACE G 874-875",
+      "quote": "1070. POST     302      contact-address-for-consignment ... 1071. GET      200      review-notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-145",
+      "statement": "The notification hub is titled 'Overview' and shows the draft tag and reference.",
+      "kind": "copy",
+      "ref": "TRACE C action 150 (navigate) and action 152 snapshot",
+      "quote": "Overview - Import notification service - GOV.UK\n=TEXT=\nDraft\nGBN-AG-26-0W1JKI\nOverview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-146",
+      "statement": "For live animals the hub's 'Your commodities' cards show the total number of animals and the total number of packages.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 152 snapshot; TRACE H action 140 snapshot",
+      "quote": "Your commodities\n\n2\n\nAnimals\n\nTotal number of animals in this consignment\n\n0\n\nPackages/boxes\n\nTotal number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-147",
+      "statement": "For germinal products the hub's commodity cards show packages/boxes and total weight in kilograms instead of animals.",
+      "kind": "behaviour",
+      "ref": "TRACE G action 142 snapshot",
+      "quote": "Your commodities\n\n4\n\nPackages/boxes\n\nTotal number of packages in this consignment\n\n2.5\n\nKilograms\n\nTotal weight of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-148",
+      "statement": "The hub's 'Notification tasklist' groups tasks into six numbered sections, each task with a status tag (Complete once done) and a link carrying ?from=hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 152 snapshot",
+      "quote": "Notification tasklist\n1. About the consignment\nWhere is this consignment coming from?\nComplete\nWhat are you importing?\nComplete\nMain import reason\nComplete\n2. Description of the goods\nCommodity details\nComplete\nIdentification details\nComplete\nAdditional details\nComplete\n3. Transport and arrival\nArrival details\nComplete\nTransport details\nComplete\n4. Documents\nUpload documents\nComplete\n5. Consignment parties\nRoles and addresses\n\nConsignor or Exporter, Consignee, Importer and Place of Destination\n\nComplete\n6. Contact address\nContact address for this consignment\nComplete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-149",
+      "statement": "Hub task names differ from the page headings they open: 'Where is this consignment coming from?' opens 'Origin of the import', 'Transport details' opens 'Transporter details', 'Roles and addresses' opens 'Consignment addresses'.",
+      "kind": "copy",
+      "ref": "TRACE C action 152 snapshot links",
+      "quote": "Where is this consignment coming from? -> /design-release-2.1/origin-of-the-import?from=hub ... Transport details -> /design-release-2.1/transporter?from=hub ... Roles and addresses -> /design-release-2.1/roles-and-addresses?from=hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-150",
+      "statement": "The hub task list depends on the commodity: germinal products drop 'Additional details' and add 'Transit countries' under Transport and arrival.",
+      "kind": "rule",
+      "ref": "TRACE G action 142 snapshot",
+      "quote": "2. Description of the goods\nCommodity details\nComplete\nIdentification details\nComplete\n3. Transport and arrival\nArrival details\nComplete\nTransit countries\nComplete\nTransport details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-151",
+      "statement": "The hub ends with a 'Review and submit' button (to /review-notification) and a 'Return to dashboard' link (to /design-release-2.1).",
+      "kind": "behaviour",
+      "ref": "TRACE C action 152 snapshot links and action 170",
+      "quote": "Review and submit -> /design-release-2.1/review-notification\nReturn to dashboard -> /design-release-2.1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-152",
+      "statement": "The CPH number is not a hub task of its own; it is part of 'Roles and addresses', whose hint still names only four roles.",
+      "kind": "copy",
+      "ref": "TRACE C action 152 snapshot",
+      "quote": "Roles and addresses\n\nConsignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-153",
+      "statement": "The hub is built from custom app-notification-hub-* classes (cards, tasklist) rather than the GOV.UK task list component.",
+      "kind": "constraint",
+      "ref": "TRACE C action 152 snapshot classes",
+      "quote": "app-notification-hub-card app-notification-hub-tasklist app-notification-hub-tasklist__item app-notification-hub-tasklist__tag",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-154",
+      "statement": "The review page is titled 'Review your notification', shows the draft tag and reference, and has no error summary when every task is complete.",
+      "kind": "copy",
+      "ref": "TRACE C actions 171-174 and action 175 snapshot",
+      "quote": "Review your notification - Import notification service - GOV.UK\n=TEXT=\nDraft\nGBN-AG-26-0W1JKI\nReview your notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-155",
+      "statement": "The review page groups answers into six numbered sections matching the hub: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Uploaded documents, 5. Consignment addresses, 6. Contact address.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Uploaded documents ... 5. Consignment addresses ... 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-156",
+      "statement": "Each review card has a Change link back to its page; the documents and contact address links carry ?from=review while the others do not.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot links",
+      "quote": "A Change -> /design-release-2.1/upload-documents?from=review ... A Change -> /design-release-2.1/roles-and-addresses\nA Change -> /design-release-2.1/contact-address-for-consignment?from=review",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-157",
+      "statement": "The review section 'Origin of import' (not 'Origin of the import') shows Country of origin, Region of origin code and Internal reference number.",
+      "kind": "copy",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "Origin of import\nChange\nCountry of origin\nFrance\nRegion of origin code\nFR-75\nInternal reference number\nCATTLE-2026-01",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-158",
+      "statement": "The review capitalises the species epithet ('Bos Taurus', 'Equus Cabalus') while the identification table keeps 'Bos taurus 1'.",
+      "kind": "copy",
+      "ref": "TRACE C action 175 snapshot; TRACE H action 165 snapshot",
+      "quote": "Species\nBos Taurus ... Bos taurus 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-159",
+      "statement": "For live animals the review's commodity card shows the species, number of animals, number of packages, and an identification table with one row per animal.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot; TRACE H action 165 snapshot",
+      "quote": "Identification details\nAnimal\nMicrochip\nPassport\nHorse name\nChange\nEquus cabalus 1\nMICROCHIP-1\nPASSPORT-1\nHORSE-NAME-1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-160",
+      "statement": "The review's consignment addresses card shows each role's name and address, and the CPH number for cattle.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "5. Consignment addresses\nAddresses\nChange\nPlace of origin\n\nGreen Valley Livestock Farm ... Consignor\n\nNordic Livestock Export AB ... County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-161",
+      "statement": "The review's contact address card shows the company, street, town and postcode, and country.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "6. Contact address\nContact address\nChange\nContact address\n\nAberdeen Livestock Ltd\n\n15 Union Street\n\nAberdeen, AB11 5BN\n\nUnited Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-162",
+      "statement": "The review page ends with a 'Continue' button that leads to the declaration, and a red (warning) 'Delete' button linking to /notifications/delete?reference=<ref>.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot links and classes; network requests 1187-1188",
+      "quote": "BUTTON Continue -> \nA Delete -> /design-release-2.1/notifications/delete?reference=GBN-AG-26-0W1JKI ... govuk-button--warning",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-163",
+      "statement": "The review page's Back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 175 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/notification-hub Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-164",
+      "statement": "The review page uses custom app-dr2-review-card / app-dr2-review-row classes rather than the GOV.UK summary card and summary list components.",
+      "kind": "constraint",
+      "ref": "TRACE C action 175 snapshot classes",
+      "quote": "app-dr2-review-card app-dr2-review-card-wrapper app-dr2-review-card__header app-dr2-review-row app-dr2-review-row__key app-dr2-review-row__value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-165",
+      "statement": "The declaration page is titled 'Declaration' and states the user is the UK contact and complies with Regulation (EU) 2017/625.",
+      "kind": "copy",
+      "ref": "TRACE C actions 198-203 and action 201 snapshot",
+      "quote": "Declaration\nI am the contact for the authorities and located in the UK.\n\nI am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.\n\nI confirm I am responsible for this consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-166",
+      "statement": "The declaration sets out how long the user is responsible for the consignment.",
+      "kind": "copy",
+      "ref": "TRACE C action 201 snapshot",
+      "quote": "I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:\n\ncleared official checks at the border\nreached the Place of Destination as stated on the health certificate or notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-167",
+      "statement": "The declaration lists the costs the user is accountable for.",
+      "kind": "copy",
+      "ref": "TRACE C action 201 snapshot",
+      "quote": "I confirm that I am accountable for:\nany payment for the official controls at the border\nany arrangements to re-dispatch the consignment\nany costs needed for quarantine or isolation of consignments\nany costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-168",
+      "statement": "The declaration covers acting for a third party.",
+      "kind": "copy",
+      "ref": "TRACE C action 201 snapshot",
+      "quote": "I am authorised as being accountable for these things if raising notifications on behalf of a third party.\n\nI can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-169",
+      "statement": "The declaration has a single small checkbox (declarationConfirmed, value yes) in a 'Declaration confirmation' fieldset, then shows today's date as the date of declaration and a 'Continue' button.",
+      "kind": "data",
+      "ref": "TRACE C action 201 snapshot fields",
+      "quote": " Declaration confirmation \nI confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.\n\nDate of declaration: 7 October 2026\n\nContinue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-170",
+      "statement": "The declaration page has no draft tag or reference, and its Back link goes to the review page.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 201 snapshot",
+      "quote": "=BACK=\n/design-release-2.1/review-notification Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-171",
+      "statement": "Pressing Continue on the declaration without ticking the box re-renders the page (POST 200) with an error summary 'There is a problem' and an inline error linking to the checkbox.",
+      "kind": "rule",
+      "ref": "TRACE C actions 213-217 and action 216 snapshot; network request 1227 POST 200 declaration; same in TRACE H actions 196-200 and TRACE G actions 197-201",
+      "quote": "There is a problem\nConfirm that you have reviewed and comply with this declaration ... -> #declaration-confirmed\n=INLINE=\nError:\nConfirm that you have reviewed and comply with this declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-172",
+      "statement": "Ticking the declaration and pressing Continue submits the notification and redirects to the submitted page.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 224-228; network requests 1266-1267",
+      "quote": "1266. POST     302      declaration ... 1267. GET      200      notification-submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-173",
+      "statement": "The submitted page is a GOV.UK confirmation panel 'Import notification submitted' showing 'Your reference number' and the reference; it has no Back link.",
+      "kind": "copy",
+      "ref": "TRACE C action 231 snapshot",
+      "quote": "Import notification submitted\nYour reference number\nGBN-AG-26-0W1JKI ... =BACK=\nnone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-174",
+      "statement": "The submitted page tells the user to have the consignment go directly to the place of destination and that animals may need to stay there for inspection.",
+      "kind": "copy",
+      "ref": "TRACE C action 231 snapshot",
+      "quote": "Transporting the consignment\n\nTell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.\n\nThe animals or consignment may need to be inspected.\n\nIf so, the animals must stay at the place of destination for either:\n\nthe time stated on the health certificate\n48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-175",
+      "statement": "The submitted page shows the same animal-focused transport and inspection wording for germinal products as for live animals.",
+      "kind": "copy",
+      "ref": "TRACE G action 213 snapshot",
+      "quote": "The animals or consignment may need to be inspected.\n\nIf so, the animals must stay at the place of destination for either:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-176",
+      "statement": "The submitted page explains how to view or amend the notification and links 'Return to your dashboard' (/design-release-2.1) and 'Create a new notification' (/create-notification).",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 235-236 and action 231 snapshot",
+      "quote": "How to view or amend this notification\n\nYou can view or change this notification from your dashboard.\n\nReturn to your dashboard\n\nCreate a new notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-177",
+      "statement": "The submitted page's 'Getting help' section gives an imports risk management email, the APHA service desk telephone and email, opening hours, and links to HMRC and call charges.",
+      "kind": "copy",
+      "ref": "TRACE C action 231 snapshot",
+      "quote": "To get help with import notifications for live animals or germinal products, email importsriskmanagement@apha.gov.uk.\n\nContact the Animal and Plant Health Agency (APHA) if you need technical help with this service:\n\nTelephone: 0330 041 6999\nEmail: APHAServiceDesk@apha.gov.uk\n\nMonday to Friday, 8:30am to 5pm, except bank holidays\n\nIf you need help with your customs declaration, contact HMRC.\n\nFind out about call charges",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-178",
+      "statement": "The submitted page's HMRC link goes to the customs, international trade and excise enquiries contact page and the call charges link to gov.uk/call-charges.",
+      "kind": "integration",
+      "ref": "TRACE C action 231 snapshot links",
+      "quote": "A contact HMRC -> https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries\nA Find out about call charges -> https://www.gov.uk/call-charges",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-179",
+      "statement": "A submitted notification can be opened at /review-notification?reference=<ref>; it shows the reference, a 'Submitted' tag, 'Date submitted' and the actions 'Amend this notification', 'Copy as new' and 'Delete'.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 246 (navigate) and action 247 snapshot",
+      "quote": "GBN-AG-26-0W1JKI\nSubmitted\nAmend this notification\nCopy as new\nDelete\n\nDate submitted: 7 October 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-180",
+      "statement": "The submitted view shows an 'Import reference numbers' block with a warning, the notification reference and the customs document code C640, each with a Copy button.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 247 snapshot",
+      "quote": "Import reference numbers\n!\nWarning\nYou must use the correct reference and code on the customs declaration or your consignment will be delayed.\n\nNotification reference\n\nGBN-AG-26-0W1JKI\n\nCopy\n\nCustoms document code\n\nC640\n\nCopy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-181",
+      "statement": "'Amend this notification' opens a confirmation dialog 'Amend notification' asking 'Are you sure you want to change this notification?' with 'Yes, continue' (to /notifications/amend?reference=<ref>) and 'No, go back'.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 247 snapshot links and dialogs (c248b)",
+      "quote": "Amend notification Are you sure you want to change this notification? Yes, continue No, go back ... A Yes, continue -> /design-release-2.1/notifications/amend?reference=GBN-AG-26-0W1JKI",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-182",
+      "statement": "'Copy as new' links to /notifications/copy-as-new?reference=<ref> and 'Delete' to /notifications/delete?reference=<ref>.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 247 snapshot links",
+      "quote": "A Copy as new -> /design-release-2.1/notifications/copy-as-new?reference=GBN-AG-26-0W1JKI\nA Delete -> /design-release-2.1/notifications/delete?reference=GBN-AG-26-0W1JKI",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-183",
+      "statement": "The amend confirmation is a custom modal (app-dr2-amend-modal) rather than a GOV.UK pattern.",
+      "kind": "constraint",
+      "ref": "TRACE C action 247 snapshot (c248b classes)",
+      "quote": "app-dr2-amend-modal app-dr2-amend-modal__actions app-dr2-amend-modal__dialog app-dr2-amend-modal__overlay",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-184",
+      "statement": "The submitted view does not show what was submitted: for all three journeys (cattle, horse, germinal) it shows the same canned cattle notification (Bison bison, 5 animals, internal reference LIV-2026-0142, Slaughter, health-certificate.pdf), with only the reference changed.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 247 snapshot; TRACE H action 229 snapshot; TRACE G action 229 snapshot",
+      "quote": "Internal reference number\nLIV-2026-0142\nWhat are you importing?\nCommodity code\n0102\nCommon name\nCattle\nSpecies\nBison Bison",
+      "confidence": "verbatim",
+      "note": "A prototype limitation: the submitted view is static sample content. The test only asserts the reference and the word 'Submitted'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-185",
+      "statement": "The submitted view has no Change links and its Back link goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "TRACE C action 247 snapshot",
+      "quote": "=BACK=\n/design-release-2.1 Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-186",
+      "statement": "The submitted view's page title has no page name ('Import notification service - GOV.UK').",
+      "kind": "copy",
+      "ref": "TRACE C action 247 snapshot",
+      "quote": "Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-187",
+      "statement": "Journey pages share a common footer of 'Save and continue', 'Save and return to overview' (secondary) and a 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "TRACE C actions 31-92 snapshots",
+      "quote": "Save and continue\nSave and return to overview\n\nCancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-188",
+      "statement": "Every journey page submits with a full page POST that 302-redirects to the next page's GET; no JSON or API calls are made by the browser during the journey.",
+      "kind": "integration",
+      "ref": "TRACE C network log (c-requests-all) requests 1-1306; TRACE H and G request lists",
+      "quote": "41. POST     302      notification-type\n   42. GET      200      origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-189",
+      "statement": "The prototype runs on the GOV.UK Prototype Kit (Express) on localhost:3010 and keeps the notification in the kit's session cookie.",
+      "kind": "constraint",
+      "ref": "TRACE H request 989 headers",
+      "quote": "Cookie: govuk-prototype-kit-[REDACTED] ... x-powered-by: Express",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-190",
+      "statement": "No lookup services are called for countries, commodities, ports, transporters or addresses: all lists arrive in the server-rendered page.",
+      "kind": "integration",
+      "ref": "TRACE C network log (c-requests-all)",
+      "quote": "82. GET      200      what-are-you-importing                              27ms    33.8K",
+      "confidence": "inferred",
+      "note": "The real service would draw these from reference data, the address book and a transporter register; none of those calls appear in the traces."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-191",
+      "statement": "No validation errors on journey pages before the declaration are exercised: every page was filled correctly, so their error messages are not shown.",
+      "kind": "rule",
+      "ref": "TRACE C, H and G action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-192",
+      "statement": "The 'Add a new address', 'Add a transporter', 'View details', 'View' (address) and 'Help with commodity codes' / 'Check which additional documents you must upload' contents are not opened in these traces.",
+      "kind": "behaviour",
+      "ref": "TRACE C action list",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-193",
+      "statement": "The 'Save and return to overview' and 'Cancel and return to overview' buttons are never pressed in these traces, so their behaviour is not shown.",
+      "kind": "behaviour",
+      "ref": "TRACE C, H and G action lists (only button value continue and add-another used)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-194",
+      "statement": "The amend, copy-as-new and delete flows linked from the submitted view and review page are not followed.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 245-254",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-195",
+      "statement": "Multi-commodity consignments ('Add another commodity') and more than one document are not exercised in these end-to-end traces.",
+      "kind": "behaviour",
+      "ref": "TRACE C, H and G action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-196",
+      "statement": "The horse journey's transporter, upload, contact address and declaration pages were walked but not separately snapshotted; their actions match the cattle journey (transporter radio, ITAHC upload with add another, contact address radio, declaration error then confirm).",
+      "kind": "behaviour",
+      "ref": "TRACE H actions 73-90, 132-136, 180-207",
+      "quote": "Check\n                   locator('input[name=\"transporterId\"][value=\"roadtrain-ltd\"]')",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-197",
+      "statement": "The test asserts the submitted page title, reference, transport wording, dashboard wording, help email and telephone, and that the submitted view contains the reference and 'Submitted'.",
+      "kind": "behaviour",
+      "ref": "prototype-specs/e2e/journeys.fit.spec.js lines 184-203",
+      "quote": "await expect(page).toHaveTitle('Import notification submitted - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-198",
+      "statement": "The test checks every hub task reads 'Complete' before reviewing: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Additional details (live animals only), Arrival details, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, Identification details.",
+      "kind": "behaviour",
+      "ref": "TRACE C actions 151-162; TRACE G actions 141-151; journeys.fit.spec.js line 141",
+      "quote": "await expect(hubRow(page, row)).toContainText('Complete')",
+      "confidence": "verbatim"
+    }
+  ]
+}

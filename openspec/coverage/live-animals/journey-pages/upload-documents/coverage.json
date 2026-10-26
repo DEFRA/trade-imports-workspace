@@ -67,7 +67,8 @@
           "name": "A file at exactly the size limit is accepted, one byte over is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 10MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 50MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "witnesses the at-the-limit leg only — a file of exactly MAX_FILE_SIZE_BYTES is accepted and its row appears; it never submits one byte over" }
           ]
         },
         {
@@ -84,7 +85,7 @@
           "name": "An oversize file submitted without the browser check running is still refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: server rejects an oversize multipart payload", "strength": "full", "notes": "bypasses client check via form.submit(); focuses file field; empty state remains" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: a file the upload service refuses as too large is reported on receipt", "strength": "full", "notes": "the upload service refuses a file named as oversize and the page maps its FILE_TOO_LARGE verdict; focuses file field; empty state remains" }
           ]
         }
       ]
@@ -164,23 +165,33 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Scanning for virus with no view link, then Check completed with a view link", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Scanning for virus then Check completed on the row — does not assert view-link absence while scanning" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "partial", "notes": "scanning then Check completed; continue gate — view-link transition covered better by E2E" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "partial", "notes": "scanning then Check completed; continue gate — view-link transition covered better by E2E" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "a real scan resolves the row to Check completed and a View file link is there to follow — it does not assert the Scanning for virus state or the view link's absence before the scan resolves" }
           ]
         },
         {
           "id": "SCN-DOCS-007-B",
-          "name": "An infected upload is flagged and blocked",
+          "name": "A rejected upload is flagged and blocked, naming the reason",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should name the reason virus.pdf was refused for, in the tag and the key the client rewrites by", "strength": "full", "notes": "the tag text and the key the polled client rewrites by; sibling cases cover the upload and download failures" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-007-C",
+          "name": "A refusal the system has no wording for is not named wrongly",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should fall back to the plain refusal tag for a reason it has no wording for", "strength": "full", "notes": "an undeclared code falls back to Rejected rather than naming a cause" }
           ]
         }
       ]
     },
     {
       "id": "REQ-DOCS-008",
-      "name": "The user cannot continue while a document is still being scanned or is infected",
+      "name": "The user cannot continue while a document is still being scanned or has been rejected",
       "coverage": "full",
       "scenarios": [
         {
@@ -193,10 +204,10 @@
         },
         {
           "id": "SCN-DOCS-008-B",
-          "name": "Continuing is blocked while an infected document remains",
+          "name": "Continuing is blocked while a rejected document remains",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "Continue re-shows virus error; after remove, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders a rejected document and its per-file error until it is removed", "strength": "full", "notes": "Continue re-shows the rejection error; after remove, Continue reaches Overview" }
           ]
         }
       ]
@@ -242,7 +253,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "downloads a saved document with safe response headers", "strength": "partial", "notes": "content-type PDF, nosniff, body starts with %PDF- — not a full byte-for-byte compare against the upload buffer" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "uploads, scans, downloads and removes a document through the real uploader", "strength": "full", "notes": "expect(downloaded).toEqual(uploaded) byte-for-byte; application/pdf and nosniff" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-documents.spec.ts", "test": "uploads, scans, downloads and removes a document through the real uploader", "strength": "full", "notes": "expect(downloaded).toEqual(uploaded) byte-for-byte; application/pdf and nosniff" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "byte-for-byte compare of the download against the uploaded file at the full size limit — it asserts nothing about the response's content type or nosniff" }
           ]
         },
         {
@@ -338,12 +350,20 @@
     },
     {
       "id": "REQ-DOCS-016",
-      "name": "Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave",
+      "name": "Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave",
       "coverage": "full",
       "scenarios": [
-        { "id": "SCN-DOCS-016-A", "name": "Continuing with a filled-in form saves the document", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue saves the document the trader filled in, then leaves once it is scanned", "strength": "full", "notes": "" } ] },
+        { "id": "SCN-DOCS-016-A", "name": "Continuing with a filled-in form keeps the answers and asks for the add action", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue keeps the answers and asks for the add action, and adding the re-picked file saves a row showing the chosen type", "strength": "full", "notes": "every answer preserved; the file is re-chosen and added" }, { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should not claim a file was chosen when Continue asks for the add action", "strength": "full", "notes": "witnesses the claims-nothing-about-a-chosen-file AND; the fit test reads the copy by key, so it holds whatever the wording says" } ] },
         { "id": "SCN-DOCS-016-B", "name": "Continuing with only the document type says what is missing", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with a document type and nothing else says what is missing", "strength": "full", "notes": "" } ] },
         { "id": "SCN-DOCS-016-C", "name": "Continuing with an untouched form leaves the page", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with an untouched form leaves the page, uploading being optional", "strength": "full", "notes": "" } ] }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-017",
+      "name": "Two tabs on one notification each keep their own upload",
+      "coverage": "full",
+      "scenarios": [
+        { "id": "SCN-DOCS-017-A", "name": "Each of two tabs adds its own document", "coverage": "full", "tests": [ { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-two-tabs.spec.ts", "test": "keeps two tabs on one notification from taking each other’s upload", "strength": "full", "notes": "both rows reach Check completed, both survive a reload, and each row View file link serves back the bytes its own tab uploaded; the two fixtures are small and written to different lengths so a document serving the other tab bytes fails the comparison" } ] }
       ]
     }
   ]

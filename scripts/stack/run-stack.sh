@@ -26,6 +26,14 @@ for entry in "${services[@]}"; do
   valid_labels+=("${entry%%|*}")
 done
 
+# A sidecar publishes its service's host port and proxies to that service, so
+# excluding the service takes the sidecar with it. Left in, the sidecar holds
+# the port the natively-run service binds and forwards to a container that is
+# no longer up. Third field: what a host-side run of that service loses.
+sidecars=(
+  "frontend|animals-frontend-nginx|host port 3000 is the natively-run frontend's, and /upload-and-scan is no longer proxied to cdp-uploader"
+)
+
 # shellcheck source=lib/colour.sh
 source "$LIB_DIR/colour.sh"
 # shellcheck source=lib/compose.sh
@@ -123,10 +131,17 @@ for label in ${excluded_labels[@]+"${excluded_labels[@]}"}; do
   done
 done
 
+removed_sidecars=()
+for entry in "${sidecars[@]}"; do
+  IFS='|' read -r label sidecar _ <<< "$entry"
+  is_excluded "$label" && removed_sidecars+=("$sidecar")
+done
+
 up_services=()
 for svc in ${active_services[@]+"${active_services[@]}"}; do
   skip=0
-  for excl in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"}; do
+  for excl in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"} \
+    ${removed_sidecars[@]+"${removed_sidecars[@]}"}; do
     if [ "$svc" = "$excl" ]; then
       skip=1
       break
@@ -207,6 +222,17 @@ for entry in "${services[@]}"; do
     unset "$env_var" 2>/dev/null
     printf '  %-16s latest\n' "$label:"
   fi
+done
+
+for entry in "${sidecars[@]}"; do
+  IFS='|' read -r label sidecar loss <<< "$entry"
+  is_excluded "$label" || continue
+  in_active=0
+  for s in ${active_services[@]+"${active_services[@]}"}; do
+    [ "$s" = "$sidecar" ] && { in_active=1; break; }
+  done
+  [ "$in_active" -eq 0 ] && continue
+  printf '  %-16s %sremoved with %s - %s%s\n' "$sidecar:" "$COLOUR_GREY" "$label" "$loss" "$COLOUR_RESET"
 done
 
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }

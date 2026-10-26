@@ -47,7 +47,7 @@ The system MUST accept up to fifteen documents per notification and MUST reject 
 
 ### Requirement: Each accompanying document has a maximum file size
 **ID**: REQ-DOCS-004
-The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run, preserving the empty state.
+The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run, preserving the empty state. However the file is submitted, the user MUST be returned to the page with the same error explaining the file must be smaller than the maximum size.
 
 #### Scenario: A file at exactly the size limit is accepted, one byte over is rejected
 **ID**: SCN-DOCS-004-A
@@ -69,7 +69,8 @@ The system MUST reject a document over the maximum file size, both at the point 
 **ID**: SCN-DOCS-004-C
 - **GIVEN** the user is adding a document, and the browser's own size check has not run
 - **WHEN** an oversize file is nonetheless submitted
-- **THEN** an error links to and focuses the file field
+- **THEN** it is refused, and the page comes back with the error explaining the file must be smaller than the maximum size
+- **AND** an error links to and focuses the file field
 - **AND** the notification still shows no documents added
 
 ### Requirement: Only supported file types can be uploaded
@@ -125,7 +126,7 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Virus found" with an error and no way to view it.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. The upload service reports the reason it refused a file alongside its own wording, so a refused document MUST be shown as the reason it was refused for — "Virus found", "Upload failed" or "Download failed" — and MUST say the same to assistive technology. A reason the system has no wording for MUST be shown as "Rejected" rather than named wrongly.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -135,17 +136,24 @@ The system MUST show a document as "Scanning for virus" immediately after upload
 - **WHEN** the virus scan completes and the file is clean
 - **THEN** its row shows "Check completed" and a link to view the file appears
 
-#### Scenario: An infected upload is flagged and blocked
+#### Scenario: A rejected upload is flagged and blocked, naming the reason
 **ID**: SCN-DOCS-007-B
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
 - **THEN** its row shows "Scanning for virus"
-- **WHEN** the virus scan completes and finds a virus
-- **THEN** its row shows "Virus found", an error explains the file contains a virus and must be removed, and there is no way to view the file
+- **WHEN** the scan completes and refuses the file for carrying a virus
+- **THEN** its row shows "Virus found", an error explains the file cannot be used and must be removed, and there is no way to view the file
+- **AND** assistive technology is told the file contains a virus
 
-### Requirement: The user cannot continue while a document is still being scanned or is infected
+#### Scenario: A refusal the system has no wording for is not named wrongly
+**ID**: SCN-DOCS-007-C
+- **GIVEN** the user has uploaded a document
+- **WHEN** the scan refuses the file for a reason the system has no wording for
+- **THEN** its row shows "Rejected" rather than naming a cause, and there is no way to view the file
+
+### Requirement: The user cannot continue while a document is still being scanned or has been rejected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Virus found", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the infected one has been removed.
+The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Rejected", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the rejected one has been removed.
 
 #### Scenario: Continuing is blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
@@ -155,12 +163,12 @@ The system MUST refuse to let the user continue past the page while any document
 - **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
 
-#### Scenario: Continuing is blocked while an infected document remains
+#### Scenario: Continuing is blocked while a rejected document remains
 **ID**: SCN-DOCS-008-B
-- **GIVEN** a document on the page has come back "Virus found"
+- **GIVEN** a document on the page has come back "Rejected"
 - **WHEN** the user tries to continue
-- **THEN** the same virus error is shown again
-- **WHEN** they remove the infected document
+- **THEN** the same rejection error is shown again
+- **WHEN** they remove the rejected document
 - **THEN** continuing takes them onward
 
 ### Requirement: Each document's scan status updates independently, and completion is announced
@@ -278,23 +286,26 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 - **WHEN** they look at its link to the GOV.UK guidance
 - **THEN** it opens in a new tab
 
-### Requirement: Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
+### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST, when the user continues with the add-a-document fields filled in, save that document rather than dropping the file, and let them continue once it has been scanned. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer and keep them on the page. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
 
-#### Scenario: Continuing with a filled-in form saves the document
+#### Scenario: Continuing with a filled-in form keeps the answers and asks for the add action
 **ID**: SCN-DOCS-016-A
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
 - **WHEN** they continue
-- **THEN** the document is added, its row shows the type chosen and "Check completed" once scanned
-- **WHEN** they continue again
-- **THEN** Overview is shown
+- **THEN** an error on the file says to choose a file and use the add action
+- **AND** that error claims nothing about a file already chosen
+- **AND** the answers they typed are still on the form
+- **WHEN** they choose the file again and add it
+- **THEN** the document is added, its row showing the type chosen
 
 #### Scenario: Continuing with only the document type says what is missing
 **ID**: SCN-DOCS-016-B
 - **GIVEN** the user has chosen a document type and filled in nothing else
 - **WHEN** they continue
-- **THEN** errors say the reference, the date of issue and the file are required
+- **THEN** errors say the reference and the date of issue are required
+- **AND** an error on the file says to choose a file and use the add action
 - **AND** the user stays on the upload documents page
 
 #### Scenario: Continuing with an untouched form leaves the page
@@ -302,3 +313,15 @@ The system MUST, when the user continues with the add-a-document fields filled i
 - **GIVEN** the user has added nothing and filled in nothing
 - **WHEN** they continue
 - **THEN** Overview is shown
+
+### Requirement: Two tabs on one notification each keep their own upload
+**ID**: REQ-DOCS-017
+The system MUST let a user with the same notification open in two tabs upload a document from each, adding both to the notification with their own files, rather than one tab's upload replacing the other's.
+
+#### Scenario: Each of two tabs adds its own document
+**ID**: SCN-DOCS-017-A
+- **GIVEN** the user has the upload documents page open in two tabs on one notification
+- **WHEN** they add a different document from each tab
+- **THEN** each tab's row resolves to "Check completed"
+- **AND** reloading the page lists both documents
+- **AND** viewing each document serves back the file its own tab uploaded

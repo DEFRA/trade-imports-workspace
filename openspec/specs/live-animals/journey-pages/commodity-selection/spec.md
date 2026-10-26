@@ -117,9 +117,9 @@ The system MUST report how many species have been chosen and name them, and MUST
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
-### Requirement: Saving and continuing without choosing a commodity is rejected
+### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009
-The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. On save and return to overview the system MUST NOT check the choice: it saves the selection as it stands, an empty one included, and the Overview shows the commodity selection task as "To do" when nothing is chosen.
+The system MUST refuse to save from the commodity selection page when nothing has been chosen, on save and continue and on save and return to overview alike, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. A selection already saved MUST stay as it was.
 
 #### Scenario: Saving with nothing chosen shows an error summary
 **ID**: SCN-COMMODITY-SELECT-009-A
@@ -128,11 +128,11 @@ The system MUST refuse to save and continue from the commodity selection page wh
 - **THEN** an error summary headed "There is a problem" is shown, telling the user to select a commodity
 - **AND** the same error shows inline on the search field, and the summary link goes to the search field
 
-#### Scenario: Save and return to overview with nothing chosen returns to Overview without an error
+#### Scenario: Save and return to overview with nothing chosen shows the same error
 **ID**: SCN-COMMODITY-SELECT-009-B
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
+- **THEN** they stay on the page, which shows "Select a commodity" in the error summary and inline on the search field
 - **AND** the commodity selection task reads "To do"
 
 #### Scenario: With results listed, the error still sits on the search field
@@ -142,12 +142,12 @@ The system MUST refuse to save and continue from the commodity selection page wh
 - **THEN** "Select a commodity" shows in the error summary and inline on the search field, not on the listed species
 - **AND** the summary link goes to the search field
 
-#### Scenario: Save and return to overview after clearing a saved selection empties it
+#### Scenario: Save and return to overview after clearing a saved selection is refused and keeps the saved selection
 **ID**: SCN-COMMODITY-SELECT-009-D
 - **GIVEN** the user has a saved selection and clears it on the commodity selection page
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown and the commodity selection task reads "To do"
-- **AND** reopening the page shows nothing chosen
+- **THEN** they stay on the page, which shows "Select a commodity"
+- **AND** reopening the page shows the saved selection still chosen
 
 ### Requirement: A notification must carry at least one commodity line
 **ID**: REQ-COMMODITY-SELECT-010

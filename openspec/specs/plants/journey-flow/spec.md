@@ -76,7 +76,7 @@ Outside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check 
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
-The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, and MUST still refuse an answer that breaks its own rule with that answer's error and save nothing. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-PLANTS-FLOW-004-A
@@ -90,12 +90,12 @@ The system MUST let the user leave a page the hub links to directly either by di
 - **WHEN** they select "Save and return to overview"
 - **THEN** they return to Overview, and re-opening the task page shows the committed input
 
-#### Scenario: Save and return to overview saves a blank arrival details page
+#### Scenario: Save and return to overview refuses a blank arrival details page
 **ID**: SCN-PLANTS-FLOW-004-C
 - **GIVEN** a potatoes notification is on the arrival details with nothing answered
 - **WHEN** the user selects "Save and return to overview"
-- **THEN** they return to Overview with no error shown
-- **AND** the arrival task row does not read "Completed"
+- **THEN** they stay on the page, which shows an error for each missing answer
+- **AND** nothing is saved
 
 #### Scenario: A time not on the 24-hour clock is refused on save and return
 **ID**: SCN-PLANTS-FLOW-004-D

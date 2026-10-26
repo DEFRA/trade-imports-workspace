@@ -96,7 +96,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, which are checked before saving either way.
+Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -110,13 +110,13 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **WHEN** they select "Save and return to overview"
 - **THEN** they return to Overview, and re-opening the task page shows the committed input
 
-#### Scenario: Save and return to overview saves a page with a required answer missing
+#### Scenario: Save and return to overview refuses a page with a required answer missing
 **ID**: SCN-FLOW-004-C
 - **GIVEN** the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
 - **WHEN** the user selects "Save and return to overview"
-- **THEN** they return to Overview with no error shown
-- **AND** the Main import reason task does not read "Complete"
-- **AND** re-opening the page shows "Transit" chosen
+- **THEN** they stay on the page, which shows "Select a port of exit" and "Select a destination country"
+- **AND** "Transit" is still chosen
+- **AND** nothing is saved
 
 #### Scenario: An answer that breaks its own rule is refused on save and return
 **ID**: SCN-FLOW-004-D
@@ -125,7 +125,7 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **THEN** they stay on the page, which shows "Enter a real arrival date"
 - **AND** nothing is saved
 
-#### Scenario: Commodity details keeps its checks on save and return
+#### Scenario: Commodity details with the number of animals blank is refused on save and return
 **ID**: SCN-FLOW-004-E
 - **GIVEN** the Commodity details page with the number of animals left blank
 - **WHEN** the user selects "Save and return to overview"

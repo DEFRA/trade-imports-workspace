@@ -4,9 +4,9 @@ import { render } from 'ink-testing-library'
 import AuthResultsScreen from './AuthResultsScreen.js'
 
 const ok = {
-  service: 'github',
+  service: 'confluence',
   ok: true,
-  user: { login: 'sam', name: 'Sam Farrington' }
+  user: { user: 'sam', displayName: 'Sam Farrington' }
 }
 
 const failed = {
@@ -26,7 +26,7 @@ describe('AuthResultsScreen', () => {
 
     const frame = lastFrame()
     expect(frame).toMatch(/Auth/i)
-    expect(frame).toContain('github')
+    expect(frame).toContain('confluence')
     expect(frame).toContain('jira')
   })
 
@@ -51,10 +51,10 @@ describe('AuthResultsScreen', () => {
     expect(lastFrame()).toContain('Set JIRA_USER')
   })
 
-  test('falls back to login or username when no display name is available', () => {
+  test('falls back to the username when no display name is available', () => {
     const { lastFrame } = render(
       createElement(AuthResultsScreen, {
-        results: [{ service: 'github', ok: true, user: { login: 'sam' } }],
+        results: [{ service: 'jira', ok: true, user: { user: 'sam' } }],
         onReturn: () => {}
       })
     )

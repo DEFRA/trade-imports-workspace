@@ -127,7 +127,7 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. The upload service reports the reason it refused a file alongside its own wording, so a refused document MUST be shown as the reason it was refused for — "Virus found", "Upload failed" or "Download failed" — and MUST say the same to assistive technology. A reason the system has no wording for MUST be shown as "Rejected" rather than named wrongly.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. A refused document MUST be shown as the reason the upload service gave ("Virus found", "Upload failed" or "Download failed"), say the same to assistive technology, and read "Rejected" for a reason the system has no wording for.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -294,33 +294,77 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 - **THEN** "Animals that do not need a health certificate" needs "Exporter's declaration that they are fit to travel"
 - **AND** "Rodents imported for research purposes" needs "RM39 licence and supplementary health certificate"
 
-### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
+### Requirement: Every save button keeps a document the user has filled in, says what is missing from one half filled in, adds a complete one and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST keep a document the user has filled in, whichever save button they select. A document is started by any of its reference, type, date of issue or a chosen file. One not complete MUST keep the user on the page with an error for each detail not given, what they typed kept and nothing added. A complete one MUST be added by every save button. An untouched form MUST let the user leave.
 
-#### Scenario: Continuing with a filled-in form keeps the answers and asks for the add action
+#### Scenario: Save and return to overview with every detail filled in adds the document and shows Overview
 **ID**: SCN-DOCS-016-A
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
-- **WHEN** they continue
-- **THEN** an error on the file says to choose a file and use the add action
-- **AND** that error claims nothing about a file already chosen
-- **AND** the answers they typed are still on the form
-- **WHEN** they choose the file again and add it
-- **THEN** the document is added, its row showing the type chosen
+- **WHEN** they save and return to overview
+- **THEN** Overview is shown
+- **AND** reopening Upload documents lists the document, its row showing the type chosen
 
-#### Scenario: Continuing with only the document type says what is missing
+#### Scenario: Save and continue with only the document type says what is missing
 **ID**: SCN-DOCS-016-B
 - **GIVEN** the user has chosen a document type and filled in nothing else
-- **WHEN** they continue
+- **WHEN** they save and continue
 - **THEN** errors say the reference and the date of issue are required
-- **AND** an error on the file says to choose a file and use the add action
+- **AND** an error on the file says "Upload a document"
 - **AND** the user stays on the upload documents page
 
-#### Scenario: Continuing with an untouched form leaves the page
+#### Scenario: Save and continue with an untouched form leaves the page
 **ID**: SCN-DOCS-016-C
 - **GIVEN** the user has added nothing and filled in nothing
-- **WHEN** they continue
+- **WHEN** they save and continue
 - **THEN** Overview is shown
+
+#### Scenario: Save and return to overview with a part-filled document is refused
+**ID**: SCN-DOCS-016-D
+- **GIVEN** the user has filled in only the reference
+- **WHEN** they save and return to overview
+- **THEN** they stay on the upload documents page, with an error for each of the document type, the date of issue and the file
+- **AND** the reference they typed is still on the form
+- **AND** no document is added
+
+#### Scenario: A reference, date of issue and attachment with no document type is refused on save and continue
+**ID**: SCN-DOCS-016-E
+- **GIVEN** the user has filled in the reference and the date of issue, chosen a file and left the document type unchosen
+- **WHEN** they save and continue
+- **THEN** the page shows "Select a document type"
+- **AND** no document is added
+
+#### Scenario: The same rules hold without JavaScript
+**ID**: SCN-DOCS-016-F
+- **GIVEN** the user has no JavaScript
+- **WHEN** they save and return to overview with every detail filled in
+- **THEN** Overview is shown and reopening Upload documents lists the document
+- **WHEN** they save and return to overview with only the reference filled in
+- **THEN** they stay on the upload documents page with an error for each detail not given, and no document is added
+
+#### Scenario: A complete document saved with Save and continue is added and held while it is scanned
+**ID**: SCN-DOCS-016-G
+- **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
+- **WHEN** they save and continue
+- **THEN** the document is added and listed as "Scanning for virus"
+- **AND** they stay on the upload documents page, which shows "You cannot continue until all documents have been scanned or removed"
+- **AND** the same holds while amending for "Save and return" and "Save and continue"
+
+#### Scenario: While amending, an untouched form leaves by the button chosen
+**ID**: SCN-DOCS-016-H
+- **GIVEN** a notification being amended, with the upload documents page opened from a Change link and nothing filled in
+- **WHEN** the user selects "Save and return"
+- **THEN** the review is shown
+- **WHEN** they instead select "Save and continue"
+- **THEN** the page after upload documents is shown, not the review
+
+#### Scenario: Save and add another with a part-filled document is refused
+**ID**: SCN-DOCS-016-I
+- **GIVEN** the user has filled in some but not all of the reference, document type, date of issue and file
+- **WHEN** they select "Save and add another"
+- **THEN** they stay on the upload documents page, with an error for each detail not given
+- **AND** the values they typed are still on the form
+- **AND** no document is added
 
 ### Requirement: Two tabs on one notification each keep their own upload
 **ID**: REQ-DOCS-017

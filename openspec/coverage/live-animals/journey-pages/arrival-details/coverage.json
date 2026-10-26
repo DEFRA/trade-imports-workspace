@@ -82,7 +82,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should mark the saved port as the selected option, labelled with its name and code", "strength": "partial", "notes": "render side only" }
           ]
         },
         {
@@ -131,15 +132,26 @@
     },
     {
       "id": "REQ-ARRIVAL-006",
-      "name": "Saving the page empty keeps a draft and moves on",
+      "name": "Save and continue without a means of transport is refused",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ARRIVAL-006-A",
-          "name": "Saving with nothing answered keeps a draft and moves on",
+          "name": "Saving with no means of transport shows an error on that question",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "saves a draft and returns to the overview when submitted empty", "strength": "full", "notes": "asserts no error summary; the page was opened from its overview task, so the next page is the overview (see journey-flow)" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when no means of transport is chosen, refuses the save with an error on the means of transport", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: an empty save links to and focuses the means of transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and continue with no means of transport, naming the means of transport question and saving nothing", "strength": "partial", "notes": "asserts the field error and that nothing is saved; not the summary heading or link" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-006-B",
+          "name": "The other answers are shown back and nothing is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when no means of transport is chosen, keeps the other answers and saves nothing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should show the other answers back when the means of transport is missing", "strength": "partial", "notes": "asserts the re-rendered values, not a later visit" }
           ]
         }
       ]

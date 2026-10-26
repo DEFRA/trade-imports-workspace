@@ -8,13 +8,13 @@ Asks which address-book record is the consignment's point of contact, from a sea
 
 ### Requirement: The page offers the address book as a paged table, none chosen in advance
 **ID**: REQ-PLANTS-CONTACT-SELECT-001
-The system MUST ask which contact address to use, offering the organisation's address book as a table of rows under Name, Address and Country headings, each row carrying a control to select it and a route to view its details, with a hint that selecting a contact copies their name and address into the notification. The system MUST show one page of results at a time, reporting how many are shown against the total and offering links to the other pages, and MUST leave every address unchosen when the page is first opened.
+The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and a hint that selecting a contact copies their name and address into the notification. It MUST show one page at a time, reporting under the heading "Select an address" how many are shown out of the total and linking to the other pages, and MUST leave every address unchosen when first opened.
 
 #### Scenario: The page shows the first page of the address book, none preselected
 **ID**: SCN-PLANTS-CONTACT-SELECT-001-A
 - **GIVEN** the user has reached the contact page without answering it before
 - **WHEN** the page loads
-- **THEN** it shows the first page of the organisation's address book, reporting how many addresses are shown against the total
+- **THEN** it shows the first page of the organisation's address book, reading "Showing 5 out of <total> results" under the heading "Select an address"
 - **AND** a record held on a later page is not among the options
 - **AND** a link to the next page of results is offered
 - **AND** no address is shown as chosen, and the copy-on-select hint is shown
@@ -53,18 +53,18 @@ The system MUST keep a row the user has ticked as they move between pages of res
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address, return the user to Overview with the contact task Completed, and MUST show that address still chosen when the user returns to the page. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save the chosen address without continuing the journey.
+The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. After the opening sequence, save-and-continue MUST reach Overview with the contact task Completed; within it, save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-007). Save-and-return-to-overview MUST save the address without continuing the journey.
 
 #### Scenario: Choosing a contact saves, completes the task, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
-- **GIVEN** the user is on the contact page
+- **GIVEN** the user is on the contact page after the opening sequence has ended
 - **WHEN** they choose an address and save and continue
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Save and return to overview saves the address without continuing
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-B
-- **GIVEN** the user is on the contact page
+- **GIVEN** the user is on the contact page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
@@ -75,13 +75,20 @@ The system MUST accept a chosen contact address, return the user to Overview wit
 - **WHEN** the user chooses a different address and saves
 - **THEN** only the new address is shown as chosen
 
+#### Scenario: In the opening sequence, Continue goes to check your answers
+**ID**: SCN-PLANTS-CONTACT-SELECT-002-D
+- **GIVEN** a wood notification in its opening sequence, on the contact page, with arrival details still outstanding
+- **WHEN** the user chooses an address and saves and continues
+- **THEN** check your answers is shown
+- **AND** its error summary names the outstanding arrival answer
+
 ### Requirement: Saving with nothing chosen is allowed, keeping any contact already held
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen — on either save-and-continue or save-and-return-to-overview — returning the user to Overview without an error, and MUST leave the contact task not yet started when no contact address is held. A contact address already held MUST be kept, as governed by `plants/addresses`.
+The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return to Overview; within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).
 
 #### Scenario: A blank save returns to Overview with the task not yet started
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
-- **GIVEN** the user is on the contact page with no address chosen and no contact address held yet
+- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen and no contact address held yet
 - **WHEN** they save and continue or save and return to overview
 - **THEN** they reach Overview with no error summary
 - **AND** the contact task shows not yet started
@@ -98,22 +105,28 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 - **THEN** the first address row is focused
 - **AND** the search term they entered is still in the search box
 
-### Requirement: Cancel discards a new choice; the back link returns to Overview
+### Requirement: Cancel discards a new choice; the back link returns to identification numbers in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-The system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview, and MUST return to Overview when they follow the back link.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST send the back link to identification numbers during the opening sequence and to Overview otherwise.
 
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A
-- **GIVEN** a contact address is already saved
+- **GIVEN** a contact address is already saved on a notification that is not being amended
 - **WHEN** the user checks a different address and selects cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows the previously saved address still chosen
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-B
-- **GIVEN** the user is on the contact page
+- **GIVEN** the opening sequence has ended and the user is on the contact page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens identification numbers
+**ID**: SCN-PLANTS-CONTACT-SELECT-005-C
+- **GIVEN** the user is in the opening sequence and reached the contact page from identification numbers
+- **WHEN** they follow the back link
+- **THEN** the identification numbers page is shown
 
 ### Requirement: The page is reachable from Overview's contact task row
 **ID**: REQ-PLANTS-CONTACT-SELECT-008

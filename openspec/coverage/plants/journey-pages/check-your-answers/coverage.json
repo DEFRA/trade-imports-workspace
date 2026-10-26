@@ -40,7 +40,7 @@
           "name": "A potatoes notification omits the consignor card",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Consignor or exporter card count 0" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Consignor card count 0" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "consignor heading count 0 on potato seed path" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "cards titles not to contain consignor" }
           ]
@@ -50,7 +50,7 @@
           "name": "A plants-for-planting notification shows the consignor card",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/journey.spec.ts", "test": "spruce from Germany with species and EPPO code: sign in, submit and view the saved notification", "strength": "full", "notes": "Consignor or exporter contains address name" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/journey.spec.ts", "test": "spruce from Germany with species and EPPO code: sign in, submit and view the saved notification", "strength": "full", "notes": "Consignor card contains address name" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should omit potato-only fields and show the consignor for plants", "strength": "full", "notes": "" }
           ]
         }
@@ -190,7 +190,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-010",
-      "name": "A back link and a save-and-return action open Overview",
+      "name": "A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list",
       "coverage": "full",
       "scenarios": [
         {
@@ -199,6 +199,33 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Back, Save and return, and Cancel to Overview", "strength": "full", "notes": "back and cancel hrefs to hub; Save and return click lands on hub" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-B",
+          "name": "The submitted view's back link opens the notification list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from a submitted notification to the notification list", "strength": "partial", "notes": "href only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Back from a submitted notification's view opens the notification list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-C",
+          "name": "An amendment's review back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from the review of an amendment to the overview", "strength": "partial", "notes": "href only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Back from an amendment review opens the overview", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-D",
+          "name": "The submitted view shown after an amendment is cancelled has a back link to the notification list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Back from the restored submitted view opens the notification list", "strength": "full", "notes": "red with a submitted view's Back link pointing at the overview" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from the submitted view shown after an amendment is cancelled to the notification list", "strength": "partial", "notes": "href only" }
           ]
         }
       ]

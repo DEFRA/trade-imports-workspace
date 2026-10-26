@@ -6,15 +6,16 @@ The accompanying documents attached to a notification — uploading, virus-scann
 
 ## Requirements
 
-### Requirement: The page states its upload constraints and shows an empty state before anything is added
+### Requirement: The page states its upload constraints before anything is added
 **ID**: REQ-DOCS-001
-The system MUST tell the user, before they add anything, which file types are accepted and the maximum file size, and MUST show an empty-state message when no documents have been added yet.
+The system MUST tell the user, before they add anything, which file types are accepted and the maximum file size, and MUST show no table and no message in the File upload card when no documents have been added yet.
 
 #### Scenario: The empty page states its constraints
 **ID**: SCN-DOCS-001-A
 - **GIVEN** the user opens the upload documents page on a notification with none added yet
 - **WHEN** the page loads
-- **THEN** it states the accepted file types and the maximum file size, and shows a message that no documents have been added
+- **THEN** it states the maximum file size as "files that are smaller than 10MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
+- **AND** the File upload card shows no table and no message after its "Save and add another" button
 
 #### Scenario: The limit stays stated once documents have been added
 **ID**: SCN-DOCS-001-B
@@ -34,7 +35,7 @@ The system MUST offer a back link from the upload documents page that returns th
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
-The system MUST accept up to fifteen documents per notification and MUST reject a sixteenth with an error that links to the documents-added list, preserving the reference value entered and returning the user to the list already added, without discarding the fifteen already added.
+The system MUST accept up to fifteen documents per notification and MUST reject a sixteenth with an error that links to the Attachment field and shows on that field, preserving the reference value entered, without discarding the fifteen already added.
 
 #### Scenario: A fifteenth document is accepted and a sixteenth is rejected
 **ID**: SCN-DOCS-003-A
@@ -42,7 +43,7 @@ The system MUST accept up to fifteen documents per notification and MUST reject 
 - **WHEN** the user adds a fifteenth document
 - **THEN** it is accepted and the list shows fifteen documents
 - **WHEN** the user then tries to add a sixteenth document
-- **THEN** an error explains that a maximum of fifteen documents can be added, links to the documents-added list, and preserves the reference value entered
+- **THEN** the error summary reads "You can upload a maximum of 15 files" and links to the Attachment field, the same message shows on that field, and the reference value entered is preserved
 - **AND** the list still shows only the original fifteen documents
 
 ### Requirement: Each accompanying document has a maximum file size
@@ -63,7 +64,7 @@ The system MUST reject a document over the maximum file size, both at the point 
 - **GIVEN** the user is adding a document to a notification with none yet added
 - **WHEN** they pick a file well above the maximum allowed size
 - **THEN** an error explains the file is too large
-- **AND** the notification still shows no documents added
+- **AND** no added-documents table is shown
 
 #### Scenario: An oversize file submitted without the browser check running is still refused
 **ID**: SCN-DOCS-004-C
@@ -83,7 +84,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 - **WHEN** they upload a file of an unsupported type
 - **THEN** an error is shown, linking to and focusing the file field
 - **AND** the reference and date already entered are preserved
-- **AND** the notification still shows no documents added
+- **AND** no added-documents table is shown
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
@@ -209,7 +210,7 @@ The system MUST let the user download exactly the file they uploaded once it is 
 - **GIVEN** a notification has one accompanying document
 - **WHEN** the user removes that document
 - **THEN** it no longer appears in the document list
-- **AND** the notification shows that no documents have been added yet
+- **AND** the File upload card shows no table and no message after its "Save and add another" button
 
 ### Requirement: An attached document keeps its exact file and survives a reload
 **ID**: REQ-DOCS-012
@@ -264,7 +265,7 @@ The system MUST offer a drop zone carrying the service's own choose-file button 
 
 ### Requirement: The page tells the user what to attach, above the upload form
 **ID**: REQ-DOCS-015
-The system MUST show guidance above the upload form saying that an ITAHC must be attached if the consignment requires one, that it can be added later, that documents should be uploaded before the consignment arrives at the UK port, and that documents must be in English with all pages uploaded, followed by the other documents the user may need. The system MUST keep a table of additional documents by type of consignment behind a closed expander, with a link to the GOV.UK guidance that opens in a new tab.
+The system MUST show guidance above the upload form saying that an ITAHC must be attached if the consignment requires one, that it can be added later, that documents should be uploaded before the consignment arrives at the UK port, and that documents must be in English with all pages uploaded, followed by the other documents the user may need. The system MUST keep a table of additional documents by type of consignment behind a closed expander, with a GOV.UK guidance link that opens in a new tab.
 
 #### Scenario: The guidance sits above the form
 **ID**: SCN-DOCS-015-A
@@ -285,6 +286,13 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 - **GIVEN** the user has opened the additional documents expander
 - **WHEN** they look at its link to the GOV.UK guidance
 - **THEN** it opens in a new tab
+
+#### Scenario: The additional documents table names the documents each consignment needs
+**ID**: SCN-DOCS-015-D
+- **GIVEN** the user has opened the additional documents expander
+- **WHEN** they read the table
+- **THEN** "Animals that do not need a health certificate" needs "Exporter's declaration that they are fit to travel"
+- **AND** "Rodents imported for research purposes" needs "RM39 licence and supplementary health certificate"
 
 ### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
@@ -325,3 +333,25 @@ The system MUST let a user with the same notification open in two tabs upload a 
 - **THEN** each tab's row resolves to "Check completed"
 - **AND** reloading the page lists both documents
 - **AND** viewing each document serves back the file its own tab uploaded
+
+### Requirement: The added-documents table is headed and keeps each row's actions at its end
+**ID**: REQ-DOCS-018
+The system MUST head the added-documents table "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action", and MUST place each row's "View file" and "Remove" at the right-hand end of the row.
+
+#### Scenario: The table shows five headings with each row's actions at its end
+**ID**: SCN-DOCS-018-A
+- **GIVEN** the user has added a document and its scan has completed
+- **WHEN** the page shows the added-documents table
+- **THEN** its column headings are "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action"
+- **AND** the row's "View file" and "Remove" sit at the right-hand end of the row
+
+### Requirement: The document reference has no hint and the date of issue hints an example date
+**ID**: REQ-DOCS-019
+The system MUST ask for the document reference with no hint, and MUST hint the date of issue with an example date.
+
+#### Scenario: The reference carries no hint and the date of issue carries an example
+**ID**: SCN-DOCS-019-A
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page loads
+- **THEN** the Document reference field has no hint
+- **AND** the hint under the Date of issue field reads "For example, 27/3/2026"

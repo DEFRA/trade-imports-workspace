@@ -141,6 +141,130 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-OVERVIEW-008",
+      "name": "Main import reason completes on the reason's own answers, apart from Additional details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-008-A",
+          "name": "The reason task completes while Additional details is still to do",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "compose stack only; Internal market and Transit each complete the row with Additional details To do" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-008-B",
+          "name": "The reason task is not complete with no reason saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "compose stack only; reads To do before any reason is saved" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-009",
+      "name": "Where is this consignment coming from? completes only once the country and the region code question are answered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-009-A",
+          "name": "A country with the region question unanswered is not complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the origin row only once a country is chosen and the region question is answered, with a code under Yes", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-009-B",
+          "name": "A country with No is complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the origin row only once a country is chosen and the region question is answered, with a code under Yes", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-009-C",
+          "name": "A country with Yes and a code is complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the origin row only once a country is chosen and the region question is answered, with a code under Yes", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-011",
+      "name": "The third task of About the consignment is Main import reason",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-011-A",
+          "name": "The first section lists Main import reason third",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should render the eleven page-level rows in their groups on an unlocked journey (transit stays absent)", "strength": "full", "notes": "asserts the first group's three row titles in order" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings, with nothing after them", "strength": "full", "notes": "asserts each section's exact ordered task list" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-012",
+      "name": "The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-012-B",
+          "name": "A chosen commodity travelling by rail or road shows the task in its place",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "Rail: the row reads To do with no country saved; not probed against a reverted line" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-012-C",
+          "name": "The task completes once a country is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "not probed against a reverted line" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-012-D",
+          "name": "A consignment travelling by air has no Transit countries task",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should show the conditional transit row only for an overland means of transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-013",
+      "name": "Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-013-A",
+          "name": "A saved arrival date more than 7 days in the past reads To do",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        },
+        {
+          "id": "SCN-OVERVIEW-013-B",
+          "name": "A saved arrival date exactly 7 days in the past still reads Complete",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        }
+      ]
     }
   ]
 }

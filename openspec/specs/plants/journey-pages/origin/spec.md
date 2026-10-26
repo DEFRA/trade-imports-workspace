@@ -8,7 +8,7 @@ Asks where the consignment comes from. The page is titled "Origin of the import"
 
 ### Requirement: The page asks for the country of origin
 **ID**: REQ-PLANTS-ORIGIN-001
-The system MUST ask the user for the country of origin, offering a searchable country field with a hint to start typing, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.
+The system MUST ask the user for the country of origin, offering a searchable country field labelled "Country of origin" with no hint, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.
 
 #### Scenario: The page presents its question and controls unanswered
 **ID**: SCN-PLANTS-ORIGIN-001-A
@@ -39,11 +39,11 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
 
-### Requirement: The country field offers a placeholder and every origin country the service primes, and submits a country code
+### Requirement: The country field offers select text and every origin country the service primes, and submits a country code
 **ID**: REQ-PLANTS-ORIGIN-003
-The system MUST offer a placeholder inviting the user to select a country ahead of every origin country and territory the service primes (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text typed into the search field, taking those countries, their territories and their names from the reference data service's SPS origin block, listed by name.
+The system MUST offer select text inviting the user to select a country ahead of every origin country and territory the service primes (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text typed into the search field, taking those countries, their territories and their names from the reference data service's SPS origin block, listed by name.
 
-#### Scenario: The country list holds a placeholder ahead of the primed origin countries
+#### Scenario: The country list holds select text ahead of the primed origin countries
 **ID**: SCN-PLANTS-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
@@ -59,7 +59,7 @@ The system MUST offer a placeholder inviting the user to select a country ahead 
 **ID**: SCN-PLANTS-ORIGIN-003-C
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** besides the placeholder it holds exactly the countries and territories the reference data service serves for the SPS origin block, by their served names, in alphabetical order
+- **THEN** besides the select text it holds exactly the countries and territories the reference data service serves for the SPS origin block, by their served names, in alphabetical order
 
 ### Requirement: A search matching no country says so
 **ID**: REQ-PLANTS-ORIGIN-004
@@ -127,7 +127,7 @@ The system MUST show the ware-potato origin-scope guidance when the notification
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ORIGIN-009
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview origin row
 **ID**: SCN-PLANTS-ORIGIN-009-A
@@ -149,21 +149,27 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **THEN** they reach Overview
 - **AND** returning to the page shows no country chosen
 
-### Requirement: The back link depends on whether the journey already has an answer
+### Requirement: The back link opens the commodities list in the opening sequence, and otherwise depends on whether the journey already has an answer
 **ID**: REQ-PLANTS-ORIGIN-010
-The system MUST send the user to the dashboard when they follow the back link from this page before any answer is saved, and to Overview once the journey holds an answer.
+The system MUST send the user to the commodities list when they follow the back link from this page during the opening sequence. Outside it, the system MUST send the user to the dashboard before any answer is saved, and to Overview once the journey holds an answer.
 
 #### Scenario: The back link opens the dashboard before any answer is saved
 **ID**: SCN-PLANTS-ORIGIN-010-A
-- **GIVEN** the user has just started a notification and reached the origin of the import page without saving anything
+- **GIVEN** the user has just started a notification and reached the origin of the import page, outside the opening sequence, without saving anything
 - **WHEN** they follow the back link
 - **THEN** the dashboard is shown
 
 #### Scenario: The back link opens Overview once an answer is saved
 **ID**: SCN-PLANTS-ORIGIN-010-B
-- **GIVEN** the user has saved at least one answer on the notification
+- **GIVEN** the opening sequence has ended and the user has saved at least one answer on the notification
 - **WHEN** they return to the origin of the import page and follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the commodities list
+**ID**: SCN-PLANTS-ORIGIN-010-C
+- **GIVEN** the user is in the opening sequence and reached the origin of the import page from the commodities list
+- **WHEN** they follow the back link
+- **THEN** the commodities list is shown
 
 ### Requirement: Completing the origin page completes the origin task row
 **ID**: REQ-PLANTS-ORIGIN-011
@@ -174,3 +180,21 @@ The system MUST show the Overview origin task row as completed once a country of
 - **GIVEN** the user has chosen a country and saved the origin page
 - **WHEN** they open Overview
 - **THEN** the origin task row reads completed
+
+### Requirement: The country question carries no hint, and its empty search box invites a search
+**ID**: REQ-PLANTS-ORIGIN-012
+The system MUST ask "Country of origin" with no hint text, with or without JavaScript, and MUST keep its own country list, guidance and errors. With JavaScript the empty search box MUST show the placeholder "Search for a country"; without JavaScript the country list MUST begin with its blank "Select a country" entry, and choosing a country there MUST save it.
+
+#### Scenario: With JavaScript, the empty search box shows "Search for a country" and no hint
+**ID**: SCN-PLANTS-ORIGIN-012-A
+- **GIVEN** the user has reached the origin of the import page with JavaScript available and no country chosen
+- **WHEN** the page loads
+- **THEN** the country field, labelled "Country of origin", shows the placeholder "Search for a country"
+- **AND** no hint text is shown for the country question
+
+#### Scenario: Without JavaScript, the country list begins with "Select a country", shows no hint, and saves the chosen country
+**ID**: SCN-PLANTS-ORIGIN-012-B
+- **GIVEN** the user has reached the origin of the import page without JavaScript
+- **WHEN** they read the country list, choose a country from it and save and continue
+- **THEN** the list, labelled "Country of origin", began with its blank "Select a country" entry and no hint text was shown
+- **AND** returning to the page shows that country chosen

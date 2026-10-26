@@ -38,6 +38,13 @@ The system MUST ask whether the consignment contains unweaned animals, as a mand
 - **WHEN** the user works through the journey
 - **THEN** the notification is not asked whether it contains unweaned animals
 
+#### Scenario: Changing the commodities to cats or dogs only clears a saved unweaned answer
+**ID**: SCN-OB-COMMODITY-002-C
+- **GIVEN** a notification with a cattle line and a saved answer to whether it contains unweaned animals
+- **WHEN** the user changes the commodity choice so that every species is under commodity code 01061900, such as Cat or Dog, and saves it
+- **THEN** the saved answer is cleared and check answers no longer shows it
+- **AND** choosing cattle again asks the question afresh
+
 ### Requirement: Only a commodity that is counted in packages is asked for a number of packages
 **ID**: REQ-OB-COMMODITY-003
 The system MUST ask a commodity line for a number of packages, as an optional answer, only where that line's commodity is one counted in packages.

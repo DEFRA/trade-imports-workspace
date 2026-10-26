@@ -8,7 +8,7 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service; editing an address copied onto the notification (REQ-ADDR-014) changes the notification's copy, never the record. Outside stub mode, the journey MAY offer a control that hands the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return the user to the picker with the newly added address already selected once they save it there, or to the picker unchanged if they cancel.
+The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service. Outside stub mode, the journey MAY hand the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return them to the picker.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
@@ -32,7 +32,8 @@ The system MUST NOT let a user create, edit, or remove an address book record fr
 **ID**: SCN-ADDR-001-D
 - **GIVEN** the user is choosing an address for a consignment role or the consignment contact, and the address book service is available
 - **WHEN** they view the page
-- **THEN** a link to the address book's own add-address page is offered, and no add-address form is served within the journey itself
+- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading; for the consignment contact, a link is offered
+- **AND** either leads to the address book's own add-address page, and no add-address form is served within the journey itself
 
 #### Scenario: Saving a new address in the address book's own service returns to the picker with it selected
 **ID**: SCN-ADDR-001-E
@@ -73,7 +74,7 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: A copied address can be edited on the notification without changing the address book
 **ID**: REQ-ADDR-014
-The system MUST let the user edit the details of an address copied onto the notification, for each consignment role and the consignment contact, wherever that address is shown with its actions — the consignment addresses page, the consignment contact page and the check-your-answers view. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages: name, address line 1, town or city, postcode, country, telephone and email required; address line 2 and county optional; the address book's length limits; an email in the correct format; a country from the list.
+The system MUST let the user edit the details of an address copied onto the notification, for each consignment role and the consignment contact, wherever that address is shown with its actions. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages.
 
 #### Scenario: Editing a copied address changes only this notification
 **ID**: SCN-ADDR-014-A
@@ -106,6 +107,13 @@ The system MUST let the user edit the details of an address copied onto the noti
 - **WHEN** the user views that role on the consignment addresses page, the consignment contact page or the check-your-answers view
 - **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
 - **AND** a role with no address chosen offers only adding one
+
+#### Scenario: An edit is held to the address book's field rules
+**ID**: SCN-ADDR-014-F
+- **GIVEN** the user is editing a copied address
+- **WHEN** the edit is checked
+- **THEN** name, address line 1, town or city, postcode, country, telephone and email are required, and address line 2 and county are optional
+- **AND** each field is held to the address book's length limit, the email must be in the correct format, and the country must be one from the list
 
 ### Requirement: A submitted notification keeps its copied addresses, through amendment and cancellation
 **ID**: REQ-ADDR-013
@@ -146,14 +154,14 @@ The system MUST refuse to continue past the review page, and refuse the submit, 
 
 ### Requirement: Choosing a role's address offers a search of the whole book, reporting how many matched
 **ID**: REQ-ADDR-006
-The system MUST let the user search the whole address book by name when choosing an address for a consignment role, MUST narrow the list to the matching records, and MUST report how many were found against how many the book holds.
+The system MUST let the user search the whole address book when choosing an address for any consignment role, place of origin included, narrowing the list to the matching records. It MUST report under the heading "Select an address" how many were shown out of how many the book holds, and offer the addresses as one group with that name. The search box MUST be labelled "Search" with the hint "Name, address or country", and run on the server from the "Search" button or Enter.
 
 #### Scenario: Searching narrows the list and reports the count
 **ID**: SCN-ADDR-006-A
 - **GIVEN** the user is choosing an address for a consignment role
 - **WHEN** they search for a term matching two records in the book
 - **THEN** only the matching records are listed
-- **AND** the page reports that it is showing two of two addresses
+- **AND** under the heading "Select an address" the page reads "Showing 2 out of 2 results"
 
 #### Scenario: Clearing the search restores the whole book
 **ID**: SCN-ADDR-006-B
@@ -161,33 +169,60 @@ The system MUST let the user search the whole address book by name when choosing
 - **WHEN** they clear the search and search again with nothing entered
 - **THEN** the whole book is listed again, paginated as before
 
-### Requirement: Choosing a role's address without selecting one is refused, focusing the first address in the list
-**ID**: REQ-ADDR-007
-The system MUST refuse to save a role's address page when nothing has been chosen and the role holds no address yet, and MUST focus the first address in the list when the user follows the resulting error, rather than showing a generic error.
+#### Scenario: Without JavaScript, Enter in the search box narrows the list
+**ID**: SCN-ADDR-006-C
+- **GIVEN** the user is choosing an address for a consignment role with JavaScript off
+- **WHEN** they enter a term in the search box and press Enter
+- **THEN** only the matching records are listed
+- **AND** the search box still holds the term
 
-#### Scenario: Saving with nothing selected links to and focuses the first address
+#### Scenario: The listed addresses are one group named "Select an address"
+**ID**: SCN-ADDR-006-D
+- **GIVEN** the user is choosing an address for a consignment role
+- **WHEN** they view the list
+- **THEN** every listed address belongs to one group named "Select an address"
+
+### Requirement: Saving a role's address with nothing chosen is not refused, and an address not in the book is
+**ID**: REQ-ADDR-007
+The system MUST NOT refuse a role's address page when nothing has been chosen: it MUST return to the consignment addresses page without an error, committing nothing, so the role stays empty or keeps the address it held. It MUST refuse a chosen address that is not in the address book, or no longer in it, with the role's error, and MUST focus the first address in the list when the user follows the error, or the search field when the list is empty.
+
+#### Scenario: Saving with nothing selected returns to the consignment addresses page with the role still empty
 **ID**: SCN-ADDR-007-A
 - **GIVEN** the user is choosing an address for a consignment role that holds no address yet
 - **WHEN** they save without selecting an address
-- **THEN** an error is shown naming that role
-- **WHEN** they follow the error
-- **THEN** the first address in the list is focused, with none checked
+- **THEN** they return to the consignment addresses page with no error
+- **AND** the role still shows no address added
 
-### Requirement: A search with no matches shows its own empty state, and its validation focuses the search field
+#### Scenario: An address not in the book is refused and the first address is focused
+**ID**: SCN-ADDR-007-B
+- **GIVEN** the user is choosing an address for a consignment role and submits an address that is not in the book
+- **WHEN** the save is attempted
+- **THEN** an error is shown naming that role, and nothing is saved
+- **WHEN** they follow the error
+- **THEN** the first address in the list is focused, with none checked, and the search term they entered is kept
+
+#### Scenario: Saving with nothing selected keeps the address the role already holds
+**ID**: SCN-ADDR-007-C
+- **GIVEN** a consignment role holds an address whose details have been edited on the notification, so the list names no selected address
+- **WHEN** the user reopens the list and saves without selecting another
+- **THEN** they return to the consignment addresses page, where the role still shows the address it held
+
+#### Scenario: An address not in the book is refused after a search that matched nothing, and the search field is focused
+**ID**: SCN-ADDR-007-D
+- **GIVEN** the user is choosing an address for a consignment role and a search has matched nothing
+- **WHEN** they save with an address id that the book no longer holds
+- **THEN** the role's error is shown, and following it focuses the search field
+- **AND** the search field still holds the term
+
+### Requirement: A search with no matches shows its own empty state
 **ID**: REQ-ADDR-008
-The system MUST show an empty-state message when a search matches nothing, and MUST focus the search field — preserving the search term — when the user saves with no address chosen after such a search, rather than focusing an address list that has nothing in it.
+The system MUST show an empty-state message in place of the results count when a search matches nothing, and MUST keep the search term in the search field.
 
 #### Scenario: A search with no matches shows an empty state and preserves the term
 **ID**: SCN-ADDR-008-A
 - **GIVEN** the user is choosing an address for a consignment role
 - **WHEN** they search for a term that matches nothing
-- **THEN** an empty-state message is shown, and the search field still holds the term they searched for
-
-#### Scenario: Saving after a no-match search focuses the search field, not an address
-**ID**: SCN-ADDR-008-B
-- **GIVEN** the user has searched for a term that matched nothing
-- **WHEN** they save without selecting an address and follow the resulting error
-- **THEN** the search field is focused, still holding the term they searched for
+- **THEN** an empty-state message is shown in place of the count, and the search field still holds the term they searched for
 
 ### Requirement: An address's full details can be read without leaving the list
 **ID**: REQ-ADDR-009

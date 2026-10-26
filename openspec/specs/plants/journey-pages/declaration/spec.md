@@ -8,7 +8,7 @@ The last step before a high-risk plants notification is submitted, asking the us
 
 ### Requirement: The page asks the user to confirm the declaration, having told them what they are agreeing to
 **ID**: REQ-PLANTS-DECLARATION-001
-The system MUST present the declaration's statements before asking the user to confirm it — that they are notifying under the Plant Health National Notification Scheme, that the relevant plant health authority may spot-check the consignment without prior notice, and that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance — MUST show the date of declaration, and MUST offer a confirmation to agree to and a continue action.
+The system MUST present the declaration's statements before asking the user to confirm it — that they are notifying under the Plant Health National Notification Scheme, that the relevant plant health authority may spot-check the consignment without prior notice, and that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance — MUST show the date of declaration in bold, and MUST offer a confirmation to agree to and a continue action.
 
 #### Scenario: The page presents the declaration's statements, the date, and its confirmation
 **ID**: SCN-PLANTS-DECLARATION-001-A
@@ -16,6 +16,12 @@ The system MUST present the declaration's statements before asking the user to c
 - **WHEN** the page loads
 - **THEN** it presents the declaration's statements and the date of declaration, offering a confirmation to agree to and a continue action
 - **AND** the confirmation is unchecked
+
+#### Scenario: The date of declaration is shown in bold
+**ID**: SCN-PLANTS-DECLARATION-001-B
+- **GIVEN** the user has reached the declaration page
+- **WHEN** the page loads
+- **THEN** the date after "Date of declaration:" is bold
 
 ### Requirement: Continuing without confirming the declaration is rejected, focusing the confirmation
 **ID**: REQ-PLANTS-DECLARATION-002
@@ -59,3 +65,20 @@ The system MUST submit the notification when the user confirms the declaration a
 - **WHEN** they confirm the declaration and continue
 - **THEN** the confirmation page opens
 - **AND** the read-only check-your-answers shows no late banner
+
+### Requirement: The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar
+**ID**: REQ-PLANTS-DECLARATION-006
+The system MUST offer the confirmation as a small GOV.UK checkbox in a group whose legend "Declaration confirmation" is announced to screen-reader users but not shown on screen. It MUST NOT show a status bar above the heading — no "Draft" or "Amend" tag, no reference number and no "Cancel amend" — whether the notification is a draft being submitted for the first time or an amendment being re-submitted.
+
+#### Scenario: A draft's declaration offers a small confirmation in a hidden-legend group and no status bar
+**ID**: SCN-PLANTS-DECLARATION-006-A
+- **GIVEN** a draft notification ready to submit
+- **WHEN** the user opens the declaration
+- **THEN** the confirmation is a small checkbox in a group named "Declaration confirmation", whose name is not shown on screen
+- **AND** no status bar is shown above the heading
+
+#### Scenario: An amendment's declaration shows no status bar
+**ID**: SCN-PLANTS-DECLARATION-006-B
+- **GIVEN** a notification is being amended
+- **WHEN** the user continues from check your answers to the declaration
+- **THEN** no status bar, reference number or "Cancel amend" is shown above the heading

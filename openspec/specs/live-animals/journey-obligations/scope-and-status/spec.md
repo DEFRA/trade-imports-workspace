@@ -29,16 +29,6 @@ The system MUST discard the stored answer to an obligation once the notification
 - **WHEN** they change the earlier choice back, so it applies again
 - **THEN** the obligation is asked with nothing filled in
 
-### Requirement: An obligation that only changes status keeps its answer
-**ID**: REQ-OB-SCOPE-003
-The system MUST keep the stored answer to an obligation that continues to apply and merely changes between mandatory and optional, discarding an answer only where the obligation stops applying altogether.
-
-#### Scenario: An answer survives a change of status
-**ID**: SCN-OB-SCOPE-003-A
-- **GIVEN** the user has answered an obligation that applies as mandatory
-- **WHEN** they change an earlier answer so that it applies as optional instead
-- **THEN** the answer they gave is still held, and still shown
-
 ### Requirement: A task row reflects only what applies to the notification in hand
 **ID**: REQ-OB-SCOPE-004
 The system MUST judge a task row's status against the obligations that apply to that notification, counting a row as ready when its obligations are fulfilled, do not apply, or are optional.

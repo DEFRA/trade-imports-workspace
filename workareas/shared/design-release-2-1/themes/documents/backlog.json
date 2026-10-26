@@ -48,10 +48,6 @@
     "tests": {
       "path": "repos/trade-imports-ins-tests",
       "github": "DEFRA/trade-imports-ins-tests"
-    },
-    "workspace": {
-      "path": ".",
-      "github": "DEFRA/trade-imports-workspace"
     }
   },
   "theme": "documents",
@@ -97,8 +93,7 @@
       "kind": "feat",
       "repos": [
         "frontend",
-        "tests",
-        "workspace"
+        "tests"
       ],
       "sources": [
         {
@@ -135,9 +130,14 @@
         "The criteria assert the page by its heading, never by a literal path (req-1822).",
         "Sam's 9 October afternoon ruling accepts the documents theme as distilled, inc-031 to inc-035 (ruling:sam-2026-10-09-pm p2-051, p2-052). Plants has no documents page, so the same-increment plants rule changes nothing here (plants-common-mapping-2026-10-09.json, documents theme).",
         "Corrected 26 Oct: there is no documents gate on main any more, so the obligation does not own one. The journey's only section gate is the review's (linear/flow/flow.js, `gate: (scope) => scope.readyForCheckYourAnswers`); the documents section has none, and the deep-link guard (linear/flow/entry-guard.js) lets any journey page open once one user answer is committed. If a later row needs a gate on the documents task, that shared change belongs with the flow, not in features/documents.",
-        "Re-analysed 26 Oct against main: the behaviour is already there, the proof is not. Every overview task row is linked from the moment a notification is started, documents included, and none reads 'Cannot start yet' (features/hub/copy/copy.test.js, 'Should link every row on a brand new notification'); the only section gate is the review's and the entry guard turns nobody away once one answer is committed. Still to build: a test that opens the page with the origin and nothing else answered -- both repos' helpers still answer origin, commodity and commodity details first (frontend fit/live-animals-journey.js unlockSections, tests repo flows/animals/journey.ts unlockSections) -- and an openspec requirement in the upload-documents spec, which today says nothing about when the page can be opened. Treat this row as test-and-spec work, not a code change."
+        "Re-analysed 26 Oct against main: the behaviour is already there, the proof is not. Every overview task row is linked from the moment a notification is started, documents included, and none reads 'Cannot start yet' (features/hub/copy/copy.test.js, 'Should link every row on a brand new notification'); the only section gate is the review's and the entry guard turns nobody away once one answer is committed. Still to build: a test that opens the page with the origin and nothing else answered -- both repos' helpers still answer origin, commodity and commodity details first (frontend fit/live-animals-journey.js unlockSections, tests repo flows/animals/journey.ts unlockSections) -- and an openspec requirement in the upload-documents spec, which today says nothing about when the page can be opened. Treat this row as test-and-spec work, not a code change.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red."
       ],
-      "gate": null
+      "gate": null,
+      "gatePhases": [
+        "unit",
+        "fit"
+      ]
     },
     {
       "id": "inc-033",
@@ -229,8 +229,7 @@
       "kind": "feat",
       "repos": [
         "frontend",
-        "tests",
-        "workspace"
+        "tests"
       ],
       "sources": [
         {
@@ -266,9 +265,14 @@
         "Carries the document-type half of inc-033, which is merged-into this row. The reference-characters half (req-497) needed no row: see inc-033's closing note.",
         "Re-analysed 26 Oct against main: src/server/app/services/document-types/stub.js lists the fourteen options, and dropping HEALTH_CERTIFICATE leaves exactly the design's thirteen in exactly the design's order, so this is a deletion rather than a reordering. The frontend reads the list from that module through features/documents/contracts/document-type-options.js, and form/payload.js validates the submitted type against the same list, so an older saved value is refused as a type the page never offered -- which is why the third criterion exists.",
         "The backend is not in repos. It keeps HEALTH_CERTIFICATE in accompanyingdocument/DocumentType.java so saved documents still load and are coded on the outbound event (conflict c-085), and the claim endpoint takes whatever type the frontend sends, so nothing there changes.",
-        "Plants has no document entry or type list (plants-common-mapping-2026-10-09.json), so plantsfrontend is not in repos."
+        "Plants has no document entry or type list (plants-common-mapping-2026-10-09.json), so plantsfrontend is not in repos.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red."
       ],
-      "gate": null
+      "gate": null,
+      "gatePhases": [
+        "unit",
+        "fit"
+      ]
     },
     {
       "id": "inc-034",
@@ -287,8 +291,7 @@
       "kind": "feat",
       "repos": [
         "frontend",
-        "tests",
-        "workspace"
+        "tests"
       ],
       "sources": [
         {
@@ -333,7 +336,8 @@
         "Depends on the journey-foundation rows for the step order (inc-001: Upload documents after the transporter and before Consignment addresses) and for the overview fallback (inc-002). The shared kit's change-context and next-target helpers are also used by other pages, so any change to them belongs to journey-foundation. The afternoon ruling's plants changes to inc-002 ride in that row; plants has no documents page, so nothing here changes plants.",
         "Trimmed 20 Oct, re-checked 26 Oct against main. Already true and must stay true: Save and continue goes on to Consignment addresses in the opening run (flow/run.js puts documents after the transporter list and before the addresses) and back to the overview from the overview; opened from the review page with ?change=1, Save and continue returns to the review page (shared/kit.js exitTarget); and the change context survives Save and add another and Remove, because the page the add returns to is built by documents/contracts/upload-session.js documentsPageHref, which applies kit.withChangeContext. Still to build: (1) the Back link, which view-model/render.js line 95 still hard-codes to hubPath(journey.journeyId); (2) the amend case however the page was opened, because both kit.runBackLink and kit.amendReviewTarget fall back to the overview unless the request carries ?change=1, so an amendment reached without that query returns to the overview rather than the review page.",
         "Added 22 Oct at the split: build the Back link on the run Back-target helper that design snagging inc-218 (Back links) puts on main, runBackLink in the animals kit (runBackLink and runBackTarget name the same seam). Extend it so the documents page goes Back to the review page when opened from review or while amending, and to the overview otherwise. Do not write a second Back-target rule in the documents feature. inc-218 leaves the documents page going Back to the overview, so this row owns that change.",
-        "Re-analysed 26 Oct. Both externalDependsOn rows are done, so nothing outside this theme holds the row up: journey-foundation inc-001 (step order) and inc-002 (overview fallback) are both done in themes/journey-foundation. Design snagging inc-218 is merged to main, so kit.runBackLink is there to extend (shared/kit.js line 169) and the documents page is the only animals page whose Back link bypasses it. EUDPA-296 (frontend #424) rebuilt the add as a post straight to the upload service and back through a correlation id, so the page now reloads far more often than when this row was written; the return context has to survive that round trip too, which it does today through documentsPageHref. Spec: openspec REQ-DOCS-002 still says flatly that the page offers a route back to Overview, so this row rewrites it and SCN-DOCS-002-A."
+        "Re-analysed 26 Oct. Both externalDependsOn rows are done, so nothing outside this theme holds the row up: journey-foundation inc-001 (step order) and inc-002 (overview fallback) are both done in themes/journey-foundation. Design snagging inc-218 is merged to main, so kit.runBackLink is there to extend (shared/kit.js line 169) and the documents page is the only animals page whose Back link bypasses it. EUDPA-296 (frontend #424) rebuilt the add as a post straight to the upload service and back through a correlation id, so the page now reloads far more often than when this row was written; the return context has to survive that round trip too, which it does today through documentsPageHref. Spec: openspec REQ-DOCS-002 still says flatly that the page offers a route back to Overview, so this row rewrites it and SCN-DOCS-002-A.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -345,6 +349,10 @@
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-002"
         }
+      ],
+      "gatePhases": [
+        "unit",
+        "fit"
       ]
     },
     {
@@ -433,8 +441,7 @@
       "kind": "feat",
       "repos": [
         "frontend",
-        "tests",
-        "workspace"
+        "tests"
       ],
       "sources": [
         {
@@ -466,9 +473,14 @@
         "Carries the scan half of inc-035, which is merged-into this row. The Save and return to overview half went to inc-232 in themes/design-snagging-followups under Sam's 26 October ruling, and inc-035's other criterion was withdrawn: see inc-035's closing note.",
         "Re-analysed 26 Oct against main. features/documents/controller.js leavePage refuses on hasDocumentsNotClearedByScan, which treats every status other than COMPLETE as not cleared, so PENDING and REJECTED are refused together; splitting them is the change. The tests that pin the current behaviour are in the frontend: controller.test.js 'Should block Continue while a scan is PENDING, naming the reason and leaving the add form open', and fit/scan-status.fit.spec.js line 76. The tests repo's documents-scan-lifecycle.spec.ts no longer asserts the hold, so an earlier note saying that spec changes here is wrong.",
         "The rejected wording moved under EUDPA-296: the summary line is now '<filename> cannot be used. Remove it and try again with a different file.', not '<filename> contains a virus...'. 'Virus found' is still the status tag on the row, and the local stack's cdp-uploader mock rejects the tests repo's EICAR file, as documents-scan-lifecycle.spec.ts relies on.",
-        "Ordering against inc-232 (themes/design-snagging-followups), which makes Save and return to overview run Save and continue's checks on every page. Both change what leaving the documents page checks: this row changes the scan branch of leavePage, inc-232 the hub-exit branch. Whichever lands second updates the other's tests, so that Save and return inherits the same rule -- a document still scanning never holds either button, a rejected one holds both. Say in the report which order it happened in, so Sam can watch for the clash."
+        "Ordering against inc-232 (themes/design-snagging-followups), which makes Save and return to overview run Save and continue's checks on every page. Both change what leaving the documents page checks: this row changes the scan branch of leavePage, inc-232 the hub-exit branch. Whichever lands second updates the other's tests, so that Save and return inherits the same rule -- a document still scanning never holds either button, a rejected one holds both. Say in the report which order it happened in, so Sam can watch for the clash.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red."
       ],
-      "gate": null
+      "gate": null,
+      "gatePhases": [
+        "unit",
+        "fit"
+      ]
     },
     {
       "id": "inc-036",
@@ -557,9 +569,7 @@
       "theme": "documents",
       "status": "todo",
       "kind": "docs",
-      "repos": [
-        "workspace"
-      ],
+      "repos": [],
       "sources": [
         {
           "source": "repo:frontend",
@@ -581,7 +591,8 @@
         "The tests that prove both criteria already exist: documents-large-uploads.spec.ts uploads a file of exactly 50,000,000 bytes and reads the same bytes back, documents-limits.spec.ts accepts one at the cap and refuses one a byte over, and the frontend's controller.test.js 'documents -- what a document reference may carry' covers 125-12345675, CHEDA.GB.2026.1234567 and INV 2026/0042 and refuses REF<script>. This row writes no test; it links them.",
         "Do not restate the character rule as 'any non-blank reference'. Design Release 2.1 asks for that, but main deliberately narrows it and tells the trader so ('Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes'). The spec records what the service does; re-opening the design question is inc-033's closing note, not this row."
       ],
-      "gate": null
+      "gate": null,
+      "gatePhases": []
     }
   ]
 }

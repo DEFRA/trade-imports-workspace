@@ -153,11 +153,15 @@ const describeStack = ({
   startedForE2e,
   stoppedAfter,
   downError,
+  startError = null,
   held,
   refresh = null
 }) => {
   if (held) {
     return `The workspace stack was not the gate’s to use: ${held.detail}`
+  }
+  if (startError) {
+    return `The gate could not start the workspace stack, so no E2E rung ran: ${startError}`
   }
   if (wasUp === null) return 'The gate did not use the workspace stack.'
   if (!startedForE2e) {
@@ -217,6 +221,7 @@ const gateFailureMessage = ({ rungs, stack }) => {
     .map(({ repo, name }) => `${repo} ${name}`)
   const stackProblem = [
     ...(stack.held ? [`stack held: ${stack.held.detail}`] : []),
+    ...(stack.startError ? [`stack: ${stack.startError}`] : []),
     ...(stack.downError ? [`stack: ${stack.downError}`] : [])
   ]
   return `The gate failed: ${[...failedRungs, ...stackProblem].join(', ')}.`

@@ -304,6 +304,7 @@ const NO_E2E_STACK = {
   upLog: null,
   downLog: null,
   downError: null,
+  startError: null,
   held: null,
   refresh: null
 }
@@ -381,6 +382,7 @@ const refusedE2e = (rungs, lease) => ({
     ...NO_E2E_STACK,
     wasUp: lease.up,
     upLog: lease.log ?? null,
+    startError: lease.up === false && !lease.refused ? lease.reason : null,
     held: lease.refused ? { holder: lease.holder, detail: lease.reason } : null
   }
 })

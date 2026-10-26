@@ -400,6 +400,39 @@ describe('renderGateText for a held stack', () => {
   })
 })
 
+describe('renderGateText for a stack that did not start', () => {
+  test('says the gate could not start the stack and why, not that the stack was left up', () => {
+    const startError =
+      'The workspace stack did not come up (run-stack.sh exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
+
+    const text = renderGateText({
+      green: false,
+      logs: '/logs',
+      rungs: [
+        {
+          repo: 'tests',
+          name: 'e2e-plants',
+          phase: 'e2e',
+          ok: false,
+          reason: startError
+        }
+      ],
+      stack: {
+        wasUp: false,
+        startedForE2e: false,
+        stoppedAfter: false,
+        downError: null,
+        startError,
+        held: null
+      }
+    })
+
+    expect(text.split('\n')[2]).toBe(
+      `The gate could not start the workspace stack, so no E2E rung ran: ${startError}`
+    )
+  })
+})
+
 describe('renderGateText for a repo whose dependencies it reinstalled', () => {
   const outcomeWith = (dependency) => ({
     green: true,

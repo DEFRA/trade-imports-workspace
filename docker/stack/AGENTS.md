@@ -45,12 +45,24 @@ the wrappers and is the surface to use.
   through `host.docker.internal` on purpose (see
   [Hostname rules](#hostname-rules--no-etchosts-edits-required)). It is what
   lets `-e` run one service natively, and CI runs the same way. Never change
-  it or propose changing it. Docker Desktop's port forwarder now and then
-  stalls a connection, seen as
-  `ConnectTimeoutError … 192.168.65.254:8091, timeout 10000ms`. When the
-  evidence names the call, fix it in the calling service's client: a short
-  connect timeout and one retry, on connect errors only, with a log line for
-  the retry. Never weaken a test assertion to hide it.
+  it or propose changing it. A call through it can fail fast with
+  `ConnectTimeoutError … 192.168.65.254:8091, timeout 10000ms`. The
+  `10000ms` is misleading: it is undici's configured connect timeout, not
+  how long the call waited. In the case seen, the page returned a 500 after
+  532ms. `host.docker.internal` resolves to an IPv4 and an IPv6 address.
+  Node's happy-eyeballs connect gives each address about 250ms, and when
+  neither answers in that window it throws `AggregateError` (`ETIMEDOUT`),
+  which undici relabels as `ConnectTimeoutError` with its own timeout in the
+  message. The 250ms is Node's process-wide default, so it hits every client
+  in a service, not only `fetch`: in the frontends the JWKS fetch at sign-in
+  (Wreck) failed the same way. Fix it once for the whole process, as the
+  frontends' `startServer` does: it calls
+  `net.setDefaultAutoSelectFamilyAttemptTimeout(1000)` before the server is
+  created, which covers Wreck, Bell and `fetch`. Where a call can safely be
+  tried again, add a connect-only retry in its client, as the frontends'
+  `backendFetch` does: a 2-second connect timeout and one retry when the
+  connection was refused or never opened, with a log line for the retry.
+  Never weaken a test assertion to hide it.
 - **A shell export does not reach a container.** Compose passes a variable
   only when a service names it under `environment:` or interpolates it
   (`${NAME:-default}`). To change a setting for an experiment, add it to the

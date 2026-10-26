@@ -149,6 +149,21 @@ elif [ -f package.json ]; then
     echo "npm test failed — push blocked" >&2
     exit 2
   fi
+  # Tell the repo's own git pre-push hook that this exact commit has already
+  # been built and tested, so it runs only the checks this script does not
+  # cover (format, lint) instead of repeating the build and the full suite.
+  # This hook runs BEFORE the `git push` command, so the git hook fires
+  # afterwards and reads the marker we leave here.
+  #
+  # Only when the tree is clean: `npm test` above ran against the working
+  # tree, so a dirty tree means what was tested is not what HEAD will push,
+  # and the marker would be a lie. Falling back to testing twice is the safe
+  # outcome. `.cache/` is gitignored in these repos.
+  #
+  # Harmless for repos with no pre-push hook yet — nothing reads the file.
+  if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+    mkdir -p .cache && git rev-parse HEAD > .cache/prepush-verified
+  fi
   # Static analysis only — does not re-run the tests that just produced coverage.
   sonar-scanner "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" 1>&2
   RESULT=$?

@@ -4,7 +4,7 @@ The accompanying documents theme is ready to build. Paste the block at the foot 
 session opened at the workspace root.
 
 - **Ticket:** [EUDPA-724](https://eaflood.atlassian.net/browse/EUDPA-724), a stub under epic EUDPA-328 (Catch up
-  frontend with prototype), relates to EUDPA-691. Status Ready for Dev. Filled in per domain once the loop drains.
+  frontend with prototype), relates to EUDPA-691. Status In Dev since 26 October (see the prep section below). Filled in per domain once the loop drains.
 - **Branch:** `feat/EUDPA-724-design-release-2-1-documents`, the same name in every repo the theme touches, **the
   workspace included** — its openspec changes go on that branch too, not on a `NO_JIRA` workspace branch as design
   snagging did. Cut from `main` in each repo.
@@ -53,6 +53,53 @@ service. Each row was re-read against `main` in the animals frontend, the animal
   says nothing about the reference's characters. Workspace only; the tests that prove it already exist.
 - The theme envelope's Save-and-return invariant has been rewritten to the 26 October rule, `workspace` added to its
   repos (and to `build-args.json`), and `touches` brought up to date.
+
+## Prep already done (26 October) — start at step 4
+
+Steps 1 to 3 of the paste-in prompt are complete and pushed. A session picking this up goes straight to the
+build launch. Nothing below needs repeating.
+
+- **The backend is out of the data as well as the prose.** `backlog.json`'s envelope `repos` and
+  `build-args.json` both listed `backend` while the re-analysis above said it had left the theme, which would
+  have had the loop branch a fourth repo and open a carry-only draft PR for it. Dropped from both in
+  `0ffcf51b`. inc-033 keeps `backend` in its own `repos`: the row is `merged-into` and its record stands.
+  `themes/HOW-TO-BUILD.md`'s "Accompanying documents" section was pre-re-analysis on four points (5 rows with
+  4 ready, inc-036 blocked on EUDPA-518, the backend in the branch set, the workspace on its own `NO_JIRA`
+  branch) and is rewritten to match this file.
+- **Branches:** `feat/EUDPA-724-design-release-2-1-documents` cut from current `origin/main` and pushed in the
+  animals frontend, the tests repo and this workspace repo. The two service branches carry one empty
+  `chore(EUDPA-724): open the documents theme branch` commit, as the design snagging branch did, because a
+  pull request needs a commit. `tim workspace branch` reports exactly those two repos on the branch and every
+  other on `main`.
+- **Draft pull requests,** all titled "EUDPA-724: Design Release 2.1 accompanying documents", bodies saying
+  the work is loop-built and not for merge until Sam's technical review:
+  - [animals frontend #435](https://github.com/DEFRA/trade-imports-animals-frontend/pull/435)
+  - [tests #58](https://github.com/DEFRA/trade-imports-ins-tests/pull/58)
+  - [workspace #161](https://github.com/DEFRA/trade-imports-workspace/pull/161)
+- **EUDPA-724 is In Dev** (theme-ticket START flow, run 26 October). On this board that status is reached by
+  the transition named `In Progress`, not `In Dev` — `tim jira transition EUDPA-724 "In Dev"` resolves it.
+  The description is deliberately untouched and still describes the pre-re-analysis theme; the WRITE flow
+  rewrites it once the loop drains.
+- **Stack:** a hand-started `trade-imports-mongodb-1` container had been up four days with no lease, which the
+  loop treats as somebody else's and refuses. Taken down; `tim docker lease status` reports the stack down and
+  unleased.
+- **Checks:** `tim backlog check shared/design-release-2-1/themes/documents` passes (8 increments, 5 todo,
+  2 merged-into, 1 dropped) and `tim backlog next` is inc-031.
+
+**Known blocker, 26 October: the `Workflow` launch cannot be approved.** The prep above is finished, but the
+build never started. Launching `workflow/increment-build-loop.js` raises a permission dialog that offers no way
+to say yes — only a way to decline — so the run was rejected twice with identical args. What is established:
+
+- `/config`'s **Dynamic workflow size** was already on throughout, and was never changed. It is not the cause,
+  and raising it is not the fix.
+- `Workflow` is in neither the `allow` nor the `deny` list of `.claude/settings.json`, so the project's
+  permission file is not the cause either.
+- The session that tried had been initialised with a workflow size guideline of *medium* ("keep workflows under
+  15 agents") in its own system context, which does not agree with the `/config` value the user reports. That
+  mismatch is the one hard datapoint; whether it is the cause is unknown.
+
+Do not work round it. The loop's guard rails forbid building a row outside the loop, so hand-building inc-031
+is not a fallback. Report the dialog as a harness problem, and launch from step 4 once it can be approved.
 
 ## What has to happen first — satisfied
 

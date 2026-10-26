@@ -262,7 +262,7 @@
       ],
       "dependsOn": [],
       "theme": "design-snagging-followups",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -281,8 +281,72 @@
       "gate": null,
       "notes": [
         "Sam, 23 Oct: do not assume the 7 October soft-save ruling (c-211) is right; the BA is challenging it. The BA's wider finding stands as an open issue: on upload, origin and main reason for import, Save and return to overview skips the checks Save and continue makes. The detail above calling origin and main reason 'as designed' only describes the current ruling, not a decision that it is correct. Settle the question below before building; the documents fix may become part of a wider change to Save and return on every page.",
-        "Evidence for the Save and return question (23 Oct): (1) Sam's 7 Oct ruling never mentions Save and return; it only sets precedence (prototype wins unless validation/persistence/auth/cross-service). c-211 applied it from one prototype test on one page (COVERAGE.md:59) and did not weigh Confluence; plants' 'same checks' behaviour (d-059) was overruled by c-313 via an orchestrator-applied claim, not Sam's own decision. (2) Prototype is mixed: origin, main reason, arrival, transit, transporter, roles lenient; upload documents makes Save and continue's checks on Save and return once a type is chosen; consignment details, CPH, contact strict. (3) Confluence 6497338582 has two tiers, 'Mandatory to proceed' and 'Mandatory to submit', never defining 'proceed'; every field the BA tested is 'to proceed' (region code when Yes, the reason's follow-ups, a document once its type is chosen). (4) The spec (journey-flow REQ-FLOW-004, origin line 177, import-reason 97 and 213) states the lenient rule plainly. (5) GOV.UK task-list guidance leans lenient, but is guidance only. Options: (A) same checks everywhere (animals 4 controllers, plants 5, spec and soft-save e2e rewritten, c-211/c-313 re-ruled; traders cannot park a half-done page); (A-narrow) refuse blank 'Mandatory to proceed' fields on Save and return, skip 'to submit' ones (covers all three BA pages; needs 'proceed' defined); (B) keep the lenient rule and fix documents only. Under every option Save and return must stop dropping a complete document. Also found: the transporter page already refuses a blank choice on Save and return, against c-211's list."
+        "Evidence for the Save and return question (23 Oct): (1) Sam's 7 Oct ruling never mentions Save and return; it only sets precedence (prototype wins unless validation/persistence/auth/cross-service). c-211 applied it from one prototype test on one page (COVERAGE.md:59) and did not weigh Confluence; plants' 'same checks' behaviour (d-059) was overruled by c-313 via an orchestrator-applied claim, not Sam's own decision. (2) Prototype is mixed: origin, main reason, arrival, transit, transporter, roles lenient; upload documents makes Save and continue's checks on Save and return once a type is chosen; consignment details, CPH, contact strict. (3) Confluence 6497338582 has two tiers, 'Mandatory to proceed' and 'Mandatory to submit', never defining 'proceed'; every field the BA tested is 'to proceed' (region code when Yes, the reason's follow-ups, a document once its type is chosen). (4) The spec (journey-flow REQ-FLOW-004, origin line 177, import-reason 97 and 213) states the lenient rule plainly. (5) GOV.UK task-list guidance leans lenient, but is guidance only. Options: (A) same checks everywhere (animals 4 controllers, plants 5, spec and soft-save e2e rewritten, c-211/c-313 re-ruled; traders cannot park a half-done page); (A-narrow) refuse blank 'Mandatory to proceed' fields on Save and return, skip 'to submit' ones (covers all three BA pages; needs 'proceed' defined); (B) keep the lenient rule and fix documents only. Under every option Save and return must stop dropping a complete document. Also found: the transporter page already refuses a blank choice on Save and return, against c-211's list.",
+        "Sam, 26 Oct: documents must not behave differently from other pages. Save and return makes the same checks as Save and continue everywhere. This row is folded into inc-232, which carries every documents criterion here plus the rule for every page in animals and plants. The open question above is answered by that ruling."
       ]
+    },
+    {
+      "id": "inc-232",
+      "title": "Save and return to overview makes the same checks as Save and continue on every page, in animals and plants",
+      "detail": "Sam, 26 Oct, on the BA's find: Save and return to overview must behave consistently with Save and continue on every page. This replaces the 7 October soft-save ruling (c-211, and c-313 for plants), which let Save and return skip blank required answers. Today Save and return skips required-answer checks through allowMissing: kit.isHubExit(request) (lib/validate/run.js) and the plants equivalent, and the animals Upload documents page leaves through leavePage without checking at all (documents/controller.js:293-335), throwing away even a complete document. Change every page that ends with the save buttons so Save and return runs the same validation as Save and continue: on any error the trader stays on the page with the error summary and every answer they gave is kept; with no error the answers are saved and the trader goes to the overview. Upload documents follows the same rule: a document is started when any of its reference, type (offered or not), date of issue text or a file with content is given (today startsADocument in documents/form/payload.js:45-48 counts only an offered type, so Save and continue drops a part-filled document with no type), its all-or-nothing errors show on every save button, and a complete document is saved, not dropped. Unit tests that pin the old lenient behaviour (documents controller.test.js:582-614, the soft-save tests, save-actions tests) change with it. The transporter page already refuses a blank choice on Save and return; it now matches the rule rather than being the exception.",
+      "acceptanceCriteria": [
+        "Given I am on any page with Save and continue and Save and return to overview, when I select Save and return to overview with an answer missing or not valid, then I see an error message for each answer that is missing or not valid, I remain on that page, and what I entered is kept. (BA, 23 and 26 Oct)",
+        "Given every answer on the page is valid, when I select Save and return to overview, then my answers are saved and Overview is shown.",
+        "Given I am adding a document and have given some but not all of its reference, type, date of issue and attachment, when I select Save and add another, Save and continue or Save and return to overview, then I stay on Upload documents with an error for each detail not given, what I typed is kept, and no document is added.",
+        "Given a reference, date of issue and attachment but no document type, when I select Save and continue, then I see 'Select a document type' and no document is added.",
+        "Given every detail of a document is filled in, when I select Save and return to overview, then Overview is shown and reopening Upload documents lists the document.",
+        "The same holds in live animals and high-risk plants, and without JavaScript.",
+        "openspec journey-flow REQ-FLOW-004 and every page spec that states the lenient rule (origin, import reason, upload documents REQ-DOCS-016, the plants equivalents) say Save and return makes Save and continue's checks; the soft-save e2e specs prove it; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug reports 23 and 26 Oct (Save and return skips validation on upload, origin and main reason; documents dropped); Sam's ruling 26 Oct: consistent with Save and continue everywhere, replacing c-211 and c-313"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-233",
+      "title": "Add another commodity and Change return the trader to the page they came from",
+      "detail": "BA find, 26 Oct. 'Add another commodity' on Commodity details and 'Change' next to a commodity on Identification details both open 'What are you importing?', but its Save and continue then follows the opening run (flow/run.js RUN_STEPS: commodities, then importReason, then consignmentDetails), so the trader lands on the purpose page instead of going back. The links carry only the review's change context (kit.withChangeContext), never where they came from. Give these detours a return marker, as the addresses pages already do with their return-to-addresses entry context, so 'What are you importing?' sends the trader back to the page that opened it, with the counts already saved still filled in. A Change from the review keeps going to the review. Check plants' commodity pages for the same detour and fix it there too if it is present.",
+      "acceptanceCriteria": [
+        "Given I am on the 'Commodity details' page, when I select 'Add another commodity', then I am taken to 'What are you importing?', and after I select 'Save and continue' I return to the 'Commodity details' page, and the number of animals and number of packages I have already saved are still there. (BA, 26 Oct)",
+        "Given I am on the 'Identification details' page, when I select 'Change' next to a commodity, then I am taken to 'What are you importing?', I see the commodities I have already chosen, I can add or remove commodities, and after I select 'Save and continue' I return to the 'Identification details' page. (BA, 26 Oct)",
+        "Given I reach 'What are you importing?' in the opening run, when I select 'Save and continue', then I go to the next step of the run as now.",
+        "Given I reach 'What are you importing?' from a Change link on the review, when I select 'Save and continue', then I go where a review Change goes today.",
+        "The same holds without JavaScript.",
+        "openspec commodity-selection, consignment details and identification details specs gain these scenarios; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug report 26 Oct (Add another commodity and Change land on purpose); origin/main flow/run.js RUN_STEPS, consignment-details.controller.js addHref, animal-identification.controller.js addHref"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
     }
   ]
 }

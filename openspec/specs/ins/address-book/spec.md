@@ -196,7 +196,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 ### Requirement: The address book list shows each address's key details, with a way to view, and a way to add one
 **ID**: REQ-INS-ADDR-012
-The system MUST head the list 'Address book' with the intro 'Manage your addresses for use across all your import notifications', then offer a way to add a new address, then the filter (REQ-INS-ADDR-028). It MUST list each address's name, stored postal address lines and country, MUST offer a way to open that address's own details, and MUST make the list reachable from the service's navigation.
+The system MUST head the list 'Address book' with the intro 'Manage your addresses for use across all your import notifications', then offer a way to add a new address, then the filter (REQ-INS-ADDR-028). It MUST list each address's name, stored postal address lines and country, MUST offer a way to open that address's own details, and MUST make the list reachable from the service's navigation. When the address book cannot be loaded, the system MUST respond with a server error and still show the heading, intro, add action and filter, with the message 'Sorry, there is a problem with the service. Try again in a few minutes.', and MUST show no results line and no table.
 
 #### Scenario: The list renders each address's details, with columns and an add action
 **ID**: SCN-INS-ADDR-012-A
@@ -231,6 +231,14 @@ The system MUST head the list 'Address book' with the intro 'Manage your address
 - **GIVEN** the user is signed in
 - **WHEN** they follow the Address book link in the navigation
 - **THEN** the address book list opens
+
+#### Scenario: The list cannot be loaded
+**ID**: SCN-INS-ADDR-012-F
+- **GIVEN** the address book cannot be reached
+- **WHEN** the user views the address book
+- **THEN** the page responds with a server error and shows 'Sorry, there is a problem with the service. Try again in a few minutes.'
+- **AND** the heading 'Address book', the intro, the action to add a new address and the filter are still shown
+- **AND** no results line and no table are shown
 
 ### Requirement: The list is paged once it holds more than one page of addresses
 **ID**: REQ-INS-ADDR-013

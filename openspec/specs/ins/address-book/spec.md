@@ -560,7 +560,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 
 ### Requirement: The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'
 **ID**: REQ-INS-ADDR-028
-The system MUST hold the address book search in a 'Filter addresses' disclosure, collapsed when the list loads, with a field labelled 'Search' and an icon-only button named 'Search'. The button, or Enter in the field, MUST submit the search and list the matches, with or without JavaScript.
+The system MUST hold the address book search in a 'Filter addresses' disclosure, collapsed when the list loads, with a field labelled 'Search' and hinted 'Search by name, address or country', and an icon-only button named 'Search'. The button, or Enter in the field, MUST submit the search and list the matches, with or without JavaScript. While a search is active, the list MUST offer 'Clear search' under the results line, which returns to the whole address book.
 
 #### Scenario: The filter disclosure is collapsed on load and opens and closes
 **ID**: SCN-INS-ADDR-028-A
@@ -573,12 +573,11 @@ The system MUST hold the address book search in a 'Filter addresses' disclosure,
 - **THEN** the Search field is hidden again
 - **AND** this works with JavaScript switched off
 
-#### Scenario: The search field is labelled Search, with a placeholder, no hint and an icon-only button
+#### Scenario: The search field is labelled Search, with a hint and an icon-only button
 **ID**: SCN-INS-ADDR-028-B
 - **GIVEN** the user has opened the 'Filter addresses' disclosure
 - **WHEN** they look at the search controls
-- **THEN** the field is labelled 'Search' and shows the placeholder 'Search by name, address or country'
-- **AND** the field has no hint
+- **THEN** the field is labelled 'Search' and described by the hint 'Search by name, address or country'
 - **AND** the only button is named 'Search' and shows an icon with no visible text
 
 #### Scenario: Submitting a search lists the matches
@@ -586,7 +585,7 @@ The system MUST hold the address book search in a 'Filter addresses' disclosure,
 - **GIVEN** the address book holds one address that matches the search term
 - **WHEN** the user enters the term and presses the Search button, or presses Enter in the field
 - **THEN** the list reads 'Showing 1-1 of 1' and shows that address
-- **AND** the only link below the filter is that address's View link
+- **AND** the only links below the filter are 'Clear search' and that address's View link
 - **AND** this works with JavaScript switched off
 
 #### Scenario: A search matching nothing shows an empty table
@@ -595,7 +594,14 @@ The system MUST hold the address book search in a 'Filter addresses' disclosure,
 - **WHEN** the user submits the search
 - **THEN** the list reads 'Showing 0 of 0'
 - **AND** the table shows the column headers Name, Address, Country and Action with no rows
-- **AND** no link is offered below the filter
+- **AND** the only link below the filter is 'Clear search'
+
+#### Scenario: Clear search returns to the whole address book
+**ID**: SCN-INS-ADDR-028-E
+- **GIVEN** the user has searched the address book
+- **WHEN** they follow 'Clear search'
+- **THEN** the whole address book is listed, with no search applied
+- **AND** the Search field is empty
 
 ### Requirement: The success banner after an add, edit or delete stays until the user leaves or reloads the page
 **ID**: REQ-INS-ADDR-029

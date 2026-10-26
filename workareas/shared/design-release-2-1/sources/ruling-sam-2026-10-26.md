@@ -24,3 +24,14 @@ Sam, 26 October, on a documents-only fix:
 2. No page is an exception. Upload documents follows the same rule: a part-filled document is refused on every save
    button with an error for each missing detail, and a complete document is saved, never dropped. Built as inc-232 in
    themes/design-snagging-followups. New.
+
+Sam, 26 October, on the two held engineering-review questions, after a recommendation for each:
+
+> happy with recommendations on both
+
+3. On Identification details, pressing Enter in a field of a card for several animals saves that card, as its own
+   Save and add another button does, and the trader stays on the page with the entry kept. What a trader typed is
+   never dropped. Replaces the "safe default" the snagging build pinned in a unit test. Built as inc-224. New.
+4. Notification submitted lists the ITAHC as still to upload whenever no ITAHC was uploaded, whatever other documents
+   were. Restores the confirmation spec's original requirement, narrowed to match the code during the snagging build.
+   Built as inc-230. New.

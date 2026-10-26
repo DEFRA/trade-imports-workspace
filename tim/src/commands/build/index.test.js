@@ -400,6 +400,46 @@ describe('renderGateText for a held stack', () => {
   })
 })
 
+describe('renderGateText for a repo whose dependencies it reinstalled', () => {
+  const outcomeWith = (dependency) => ({
+    green: true,
+    logs: '/logs',
+    rungs: [{ repo: 'tests', name: 'lint', phase: 'unit', ok: true }],
+    dependencies: [dependency],
+    stack: { wasUp: false, startedForE2e: false, stoppedAfter: false }
+  })
+
+  test('says which repo it reinstalled and which dependencies differed', () => {
+    expect(
+      renderGateText(
+        outcomeWith({
+          repo: 'tests',
+          stale: '@playwright/test 1.63.0 (locked 1.64.1)',
+          installed: true,
+          reason: null
+        })
+      ).split('\n')[2]
+    ).toBe(
+      'Reinstalled tests’s dependencies from its lockfile: @playwright/test 1.63.0 (locked 1.64.1).'
+    )
+  })
+
+  test('says why a reinstall failed', () => {
+    expect(
+      renderGateText(
+        outcomeWith({
+          repo: 'tests',
+          stale: '@playwright/test 1.63.0 (locked 1.64.1)',
+          installed: false,
+          reason: 'npm ci exited 1 in tests. Read /logs/gate-tests-install.log.'
+        })
+      ).split('\n')[2]
+    ).toBe(
+      'Could not reinstall tests’s dependencies (@playwright/test 1.63.0 (locked 1.64.1)): npm ci exited 1 in tests. Read /logs/gate-tests-install.log.'
+    )
+  })
+})
+
 describe('renderGateText for a stack its holder already leased', () => {
   test('says which services it rebuilt, restarted and left, and how long each phase took', () => {
     expect(

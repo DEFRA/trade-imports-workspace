@@ -202,23 +202,40 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 
 - **Ticket:** [EUDPA-724](https://eaflood.atlassian.net/browse/EUDPA-724) (stub, raised 22 October under epic
   EUDPA-328; filled in per domain once the loop drains).
-- **Branch:** `feat/EUDPA-724-design-release-2-1-documents`, cut from `main` in the animals frontend, the animals backend
-  and the tests repo. Not cut yet.
-- **Starts after design snagging merges.** Sam reviews and merges design snagging (animals frontend #421, plants
-  frontend #113, tests #42) once its Back links row, inc-218, lands. Only then does this theme start, from `main`, on
-  another machine.
-- **Rows:** 5, split off the main backlog on 22 October.
-  - 4 ready: inc-031 (open Upload documents once the origin is answered), inc-033 (punctuation in references, no Health
-    certificate), inc-034 (return to where the trader came from), inc-035 (save without waiting for scans).
-  - 1 blocked: inc-036, files up to 50MB, waits on CDP's request size limit (EUDPA-518).
-  - inc-032 went to design snagging inc-215 on 19 October.
+- **Branch:** `feat/EUDPA-724-design-release-2-1-documents`, cut from `main` in the animals frontend, the tests repo
+  **and this workspace repo**. The animals backend is no longer in the theme.
+- **The workspace builds on the theme branch, not a `NO_JIRA` branch.** Unlike design snagging, this theme's openspec
+  changes go on `feat/EUDPA-724-design-release-2-1-documents` in the workspace too, so every repo it touches carries
+  the same branch name. `workspace` is in the backlog envelope's `repos` and in `build-args.json`.
+- **Starts after design snagging merges — satisfied.** Sam merged design snagging (animals frontend #421, plants
+  frontend #113, tests #42), its documents page tidy inc-223 is `done`, and journey foundation inc-001 and inc-002,
+  which inc-034 waits on, are both `done`. Nothing outside the theme holds the build up.
+- **Rows:** 8 after the 26 October re-analysis, of which 5 are `todo`:
+  - inc-031, Upload documents opens as soon as the origin is answered — test-and-spec work only, the behaviour is
+    already on `main`, so no gate is built for it
+  - inc-034, the page returns the trader to where they came from
+  - inc-037, the document type list drops Health certificate (replaces inc-033)
+  - inc-038, a document still being scanned no longer holds the trader (replaces inc-035)
+  - inc-039, the spec states the file size and reference rules the service now applies (workspace only)
+
+  and 3 are set aside: inc-033 and inc-035 `merged-into` the rows above, inc-036 `dropped`. inc-032 went to design
+  snagging inc-215 on 19 October.
+- **What the 26 October re-analysis changed:** inc-036 (files up to 50MB) is `dropped` — EUDPA-296 delivered it and
+  CDP's managed nginx gives `/upload-and-scan` a 2304M body limit, so the request-size blocker is gone rather than
+  lifted and **EUDPA-518 is not on this path**. inc-033's reference-characters half is done and tested on `main`,
+  leaving only the document type list, and the backend drops out of the theme because it keeps `HEALTH_CERTIFICATE`
+  on purpose. inc-035's Save and return half moved to **inc-232 in `themes/design-snagging-followups`** under Sam's
+  26 October ruling, and its Save and continue criterion was withdrawn: EUDPA-296 made it impossible on purpose.
+  inc-039 is new, raised by the re-analysis rather than by a source. Full detail is in the rows' own notes and in the
+  handover.
 - **Shared code:** this theme owns `features/documents`. The design snagging rows still to come (identification
-  details, the review page, the declaration, the CPH number, the final tidy) don't touch it. Design snagging inc-223,
-  the documents page tidy, does, and lands before the merge. inc-034 extends inc-218's `runBackLink` helper rather than
-  writing a second Back-target rule.
-- **Workspace branch:** both machines would otherwise write to `feat/NO_JIRA-design-release-2-1`. The documents
-  machine works on a short workspace branch, `feat/NO_JIRA-design-release-2-1-documents`, as laptop B did. It pulls the
-  main workspace branch in before every launch and after every landed row, and merges back at the end.
+  details, the review page, the declaration, the CPH number, the final tidy) don't touch it. inc-034 extends
+  inc-218's `runBackLink` helper in `frontend:src/server/app/shared/kit.js` rather than writing a second Back-target
+  rule.
+- **The one clash to watch:** inc-038 and inc-232 both change what leaving Upload documents checks — inc-038 the scan
+  branch of `leavePage`, inc-232 the hub-exit branch, on another branch in another theme. Whichever lands second
+  updates the other's tests, so Save and return inherits the same rule: a document still scanning holds neither
+  button, a rejected one holds both. The report says which order it happened in.
 - **Handover:** [`documents/HANDOVER.md`](documents/HANDOVER.md), with the paste-in prompt. Loop args:
   [`documents/build-args.json`](documents/build-args.json).
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/documents, branch lifecycle on

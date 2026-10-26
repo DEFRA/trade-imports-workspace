@@ -24,19 +24,19 @@ The system MUST group the page under three numbered section headings — About t
 
 ### Requirement: Cards that do not apply to the commodity type are omitted
 **ID**: REQ-PLANTS-CYA-002
-The system MUST omit the consignor-or-exporter card for a potatoes notification, and MUST show it when the commodity type is plants for planting or wood and cut trees.
+The system MUST omit the consignor card for a potatoes notification, and MUST show it when the commodity type is plants for planting or wood and cut trees.
 
 #### Scenario: A potatoes notification omits the consignor card
 **ID**: SCN-PLANTS-CYA-002-A
 - **GIVEN** a potatoes notification is open on check-your-answers
 - **WHEN** the user reads the Consignment parties section
-- **THEN** no "Consignor or exporter" card is shown
+- **THEN** no "Consignor" card is shown
 
 #### Scenario: A plants-for-planting notification shows the consignor card
 **ID**: SCN-PLANTS-CYA-002-B
 - **GIVEN** a plants-for-planting notification has a consignor selected
 - **WHEN** the user views check-your-answers after submission
-- **THEN** the "Consignor or exporter" card shows that party's name
+- **THEN** the "Consignor" card shows that party's name
 
 ### Requirement: The contact card shows the selected party's details
 **ID**: REQ-PLANTS-CYA-003
@@ -129,15 +129,33 @@ The system MUST offer "Cancel amend" in the status bar of check-your-answers whi
 - **AND** a success banner explains the amendment was cancelled
 - **AND** the discarded edit is not shown
 
-### Requirement: A back link and a save-and-return action open Overview
+### Requirement: A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list
 **ID**: REQ-PLANTS-CYA-010
-The system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers.
+The system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers for a draft or an amendment, and MUST take them to the plants notification list when they follow the back link from a submitted notification's read-only view.
 
 #### Scenario: Back and save-and-return open Overview
 **ID**: SCN-PLANTS-CYA-010-A
-- **GIVEN** the user is on check-your-answers
+- **GIVEN** the user is on check-your-answers for a draft
 - **WHEN** they follow the back link, or choose save and return
 - **THEN** Overview is shown
+
+#### Scenario: The submitted view's back link opens the notification list
+**ID**: SCN-PLANTS-CYA-010-B
+- **GIVEN** a submitted notification's read-only view is open
+- **WHEN** the user follows the back link
+- **THEN** the plants notification list is shown
+
+#### Scenario: An amendment's review back link opens Overview
+**ID**: SCN-PLANTS-CYA-010-C
+- **GIVEN** a notification being amended
+- **WHEN** the user follows the back link from its review
+- **THEN** Overview is shown
+
+#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the notification list
+**ID**: SCN-PLANTS-CYA-010-D
+- **GIVEN** the submitted view shown after an amendment is cancelled
+- **WHEN** the user follows the back link
+- **THEN** the plants notification list is shown
 
 ### Requirement: A draft that would be late shows a warning; a submitted late notification shows a banner
 **ID**: REQ-PLANTS-CYA-011
@@ -158,7 +176,7 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 
 ### Requirement: Each party card offers Change and, once an address is held, Edit details
 **ID**: REQ-PLANTS-CYA-012
-The system MUST offer, on a draft's consignor-or-exporter, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
+The system MUST offer, on a draft's consignor, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
 
 #### Scenario: An answered party card offers Change and Edit details; an unanswered one only Change
 **ID**: SCN-PLANTS-CYA-012-A

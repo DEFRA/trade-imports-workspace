@@ -20,13 +20,13 @@ The system MUST confirm a completed submission on its own page, showing the refe
 
 ### Requirement: The confirmation page is not shown for a notification that has not yet been submitted
 **ID**: REQ-CONFIRM-002
-The system MUST redirect a request for the confirmation page to Overview when the notification it names has not been submitted.
+The system MUST redirect a request for the confirmation page to the notification's overview when the notification it names has not been submitted.
 
-#### Scenario: Requesting confirmation for an unsubmitted notification redirects to Overview
+#### Scenario: Requesting confirmation for an unsubmitted notification opens its overview
 **ID**: SCN-CONFIRM-002-A
 - **GIVEN** a notification has been started but not submitted
 - **WHEN** its confirmation page is requested directly
-- **THEN** Overview is shown instead
+- **THEN** the notification's overview, headed "Notification tasklist", is shown instead
 
 ### Requirement: The page tells the user how the consignment must be transported
 **ID**: REQ-CONFIRM-003
@@ -40,18 +40,18 @@ The system MUST tell the user that the consignment must go directly to its place
 
 ### Requirement: The page tells the user how to view or amend the notification later
 **ID**: REQ-CONFIRM-004
-The system MUST tell the user they can view or amend the notification from their dashboard and resubmit it, and MUST offer a way back to the dashboard.
+The system MUST tell the user 'You can view or change this notification from your dashboard.' and MUST offer a way back to the dashboard.
 
 #### Scenario: The confirmation page offers a route back to the dashboard
 **ID**: SCN-CONFIRM-004-A
 - **GIVEN** a notification has just been submitted
 - **WHEN** the user reads the confirmation page
-- **THEN** it explains they can view or amend the notification from their dashboard and resubmit it
+- **THEN** it reads 'You can view or change this notification from your dashboard.'
 - **AND** a link back to the dashboard is offered
 
 ### Requirement: The page tells the user where to get help
 **ID**: REQ-CONFIRM-005
-The system MUST offer the user routes to help — where to email about import notifications, how to reach the Animal and Plant Health Agency for technical help with the service including its opening hours, and where to go for help with a customs declaration.
+The system MUST offer the user routes to help — where to email about import notifications, how to reach the Animal and Plant Health Agency for technical help with the service including its opening hours, and where to go for help with a customs declaration. The 'contact HMRC' and 'Find out about call charges' links MUST open in a new tab, keeping that link text. Each link MUST tell screen-reader users that it opens in a new tab, without changing its visible text.
 
 #### Scenario: The confirmation page carries the help routes
 **ID**: SCN-CONFIRM-005-A
@@ -59,15 +59,28 @@ The system MUST offer the user routes to help — where to email about import no
 - **WHEN** the user reads the confirmation page
 - **THEN** it gives an email address for help with import notifications, a telephone number and opening hours for technical help, and a route to help with a customs declaration
 
+#### Scenario: The HMRC links open in a new tab
+**ID**: SCN-CONFIRM-005-B
+- **GIVEN** a notification has just been submitted
+- **WHEN** the user reads the help section
+- **THEN** 'contact HMRC' and 'Find out about call charges' each open in a new tab
+- **AND** each link tells screen-reader users it opens in a new tab, while its visible text stays 'contact HMRC' / 'Find out about call charges'
+
 ### Requirement: The page tells the user what they still owe when documents are outstanding
 **ID**: REQ-CONFIRM-006
-The system MUST show a section telling the user what they still need to do before the consignment is imported, listing the health certificate and any other required documents, whenever the submitted notification carries no recorded documents, and MUST NOT show this section once documents have been recorded.
+The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', when the notification was submitted with no document, and MUST NOT show it when any document was uploaded.
 
 #### Scenario: A submission with no documents carries the outstanding-work section
 **ID**: SCN-CONFIRM-006-A
 - **GIVEN** a notification was submitted with no documents recorded
 - **WHEN** the user reads the confirmation page
-- **THEN** a "Before the consignment is imported" section tells them they still need to upload the health certificate and any other required documents
+- **THEN** a "Before the consignment is imported" section tells them they still need to 'upload the ITAHC and any other required documents'
+
+#### Scenario: A submission with a document carries no outstanding-work section
+**ID**: SCN-CONFIRM-006-C
+- **GIVEN** a notification was submitted with a document
+- **WHEN** the user reads the confirmation page
+- **THEN** the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
 
 ### Requirement: The page offers a way to start a new notification directly
 **ID**: REQ-CONFIRM-007

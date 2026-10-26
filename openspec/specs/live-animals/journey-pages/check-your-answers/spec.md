@@ -41,33 +41,65 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** they view check-your-answers
 - **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
 
-### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
-**ID**: REQ-CYA-002
-The system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose copied address breaks the address book's rules (REQ-ADDR-005).
+#### Scenario: The arrival details card names the means of transport as the arrival page offers it
+**ID**: SCN-CYA-001-G
+- **GIVEN** a notification whose means of transport is road
+- **WHEN** the user views the review
+- **THEN** the "Means of transport to the port of entry" row reads "Road"
+- **AND** an air arrival reads "Air"
 
-#### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
+### Requirement: A blank is written out as "Not applicable" on a settled card and left blank on one still outstanding
+**ID**: REQ-CYA-002
+On a notification's review, the system MUST draw a blank by the card it sits in: "Not applicable" on a card with nothing further owed; visibly blank, with "Missing" announced for a screen reader, on a card still holding outstanding answers. It MUST treat every blank row in a marked card alike, optional or not, and MUST NOT raise a role error against a party role nobody has reached yet; REQ-ADDR-005 reserves that error for a copied address that breaks the address book's rules.
+
+#### Scenario: A blank row is written out on a settled card and left blank on an outstanding one
 **ID**: SCN-CYA-002-A
 - **GIVEN** the user has answered only the entry page of a notification
 - **WHEN** they view the review
 - **THEN** a blank row on a card with nothing further owed reads "Not applicable"
-- **AND** a blank row on a card still holding outstanding answers carries no text at all, with "Missing" announced in its place
-- **AND** every blank row in that marked card is drawn the same way, the optional ones included
+- **AND** a blank row on a card still holding outstanding answers is visibly blank, with "Missing" announced in its place for a screen reader
+- **AND** every blank row in that marked card is left blank in the same way, the optional ones included
 
-#### Scenario: An unanswered party role is marked missing, with no role error shown
+#### Scenario: An unanswered party role is left blank, with no role error shown
 **ID**: SCN-CYA-002-B
 - **GIVEN** a new notification whose party roles have not yet been answered
 - **WHEN** the user views the review
-- **THEN** each unanswered role is marked missing, and no role error is raised against it
+- **THEN** each unanswered role is left visibly blank with "Missing" announced for a screen reader, and no role error is raised against it
 
-### Requirement: A back link returns to Overview
+#### Scenario: A refused Continue leaves an unfinished card's blank answers blank, marked only by the card
+**ID**: SCN-CYA-002-C
+- **GIVEN** the user has answered only the entry page of a notification
+- **WHEN** they choose Continue on the review and it is refused
+- **THEN** each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
+- **AND** the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
+
+### Requirement: A back link returns to Overview from a draft's or an amendment's review, and to the notification list from a submitted notification's view
 **ID**: REQ-CYA-003
-The system MUST return the user to Overview when they follow the back link from check-your-answers.
+The system MUST return the user to Overview when they follow the back link from the review of a draft or of an amendment, and MUST take them to the live-animals notification list when they follow it from a submitted notification's view.
 
-#### Scenario: The back link opens Overview
+#### Scenario: A draft's review back link opens Overview
 **ID**: SCN-CYA-003-A
-- **GIVEN** the user is on check-your-answers
+- **GIVEN** the user is on the review of a draft notification
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The submitted view's back link opens the notification list
+**ID**: SCN-CYA-003-B
+- **GIVEN** the user is on a submitted notification's view
+- **WHEN** they follow the back link
+- **THEN** the live-animals notification list is shown
+
+#### Scenario: An amendment's review back link opens Overview
+**ID**: SCN-CYA-003-C
+- **GIVEN** the user is on the review of a notification being amended
+- **WHEN** they follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the notification list
+**ID**: SCN-CYA-003-D
+- **GIVEN** the user has just cancelled an amendment and the submitted notification's view is shown with its cancelled message
+- **WHEN** they follow the back link
+- **THEN** the live-animals notification list is shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-CYA-004
@@ -78,6 +110,18 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **GIVEN** the user is on check-your-answers
 - **WHEN** they follow a Change link, edit the answer, and save it
 - **THEN** they return to check-your-answers, showing the new value
+
+#### Scenario: Changing the contact address from its card returns to the review
+**ID**: SCN-CYA-004-B
+- **GIVEN** the user is on the review of a draft
+- **WHEN** they follow the Contact address card's Change link, choose a contact address and save
+- **THEN** the contact address page opens, and after saving they return to the review showing that address
+
+#### Scenario: Changing documents from a document card returns to the review
+**ID**: SCN-CYA-004-C
+- **GIVEN** a notification with a document uploaded
+- **WHEN** the user follows a document card's Change link and continues from the upload documents page
+- **THEN** they are back on the review
 
 ### Requirement: A draft notification offers submission and none of the post-submission actions
 **ID**: REQ-CYA-005
@@ -99,6 +143,13 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **GIVEN** a draft notification is open on check-your-answers, with every task ready
 - **WHEN** the user continues
 - **THEN** the declaration page opens
+
+#### Scenario: Transit countries are not owed for submission
+**ID**: SCN-CYA-006-B
+- **GIVEN** a draft arriving by road or rail with every task ready and no transit countries added
+- **WHEN** the user views the review and continues
+- **THEN** no "Complete transit countries" message or transit error is shown
+- **AND** the declaration page opens
 
 ### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
@@ -127,6 +178,12 @@ The system MUST offer copy-as-new and delete actions on the read-only view of a 
 - **WHEN** the user views it
 - **THEN** copy-as-new and delete actions are offered, and no cancel-amendment action is shown
 - **AND** no submit or continue action is shown
+
+#### Scenario: Delete opens the delete confirmation
+**ID**: SCN-CYA-008-C
+- **GIVEN** a submitted notification's view
+- **WHEN** the user chooses "Delete"
+- **THEN** the delete confirmation opens
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009

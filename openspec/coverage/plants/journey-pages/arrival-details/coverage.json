@@ -153,6 +153,60 @@
               "notes": ""
             }
           ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-002-B",
+          "name": "The place of landing is hinted as the animals port of entry is",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/arrival.spec.ts",
+              "test": "a potato notification hints the place of landing and shows Select a place of landing in its empty search box",
+              "strength": "partial",
+              "notes": "asserts the hint text and the search box text on the running stack; not probed against a reverted line"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+              "test": "asks for the expected date of arrival, the time and the place of landing",
+              "strength": "partial",
+              "notes": "reads the hint from the copy"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.test.js",
+              "test": "Should pin the exact English place-of-landing label, hint, select text, search placeholder and no-results text",
+              "strength": "full",
+              "notes": "pins the hint sentence exactly"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-002-C",
+          "name": "The place of landing search shows \"Select a place of landing\" until a port is chosen",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js",
+              "test": "carries the configured search placeholder and no value",
+              "strength": "full",
+              "notes": "runs for the Proposed place of landing type-ahead; red when the template stops passing the placeholder"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/arrival.spec.ts",
+              "test": "a potato notification hints the place of landing and shows Select a place of landing in its empty search box",
+              "strength": "partial",
+              "notes": "asserts the search box placeholder and an empty value on the running stack; not probed against a reverted line"
+            }
+          ]
         }
       ]
     },
@@ -180,13 +234,13 @@
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
               "test": "saves all three answers, reaches the destination and shows them again on return",
               "strength": "full",
-              "notes": "round-trip keeps port choice"
+              "notes": "round-trip keeps port choice; asserts the select keeps GB DVR"
             },
             {
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
-              "test": "Should offer the ports the service holds behind a placeholder",
+              "test": "Should offer the ports the service holds behind the select text",
               "strength": "full",
               "notes": "pins the '<port name> - <port code>' label, e.g. 'Port of Dover - GB DVR'"
             }
@@ -261,7 +315,7 @@
               "type": "fit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
-              "test": "accepts a past date, because a late notification is recorded not refused",
+              "test": "accepts a past date",
               "strength": "full",
               "notes": "plants/wood date-only path"
             },
@@ -534,22 +588,22 @@
         },
         {
           "id": "SCN-PLANTS-ARRIVAL-DETAILS-010-C",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
-              "test": "renders the caption, the heading and the three save controls",
-              "strength": "partial",
-              "notes": "asserts three save controls including Back; dedicated Back-to-overview asserted in unit"
+              "test": "sends Back to the overview when opened from the overview",
+              "strength": "full",
+              "notes": ""
             },
             {
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
-              "test": "Should send Back to the overview",
+              "test": "Should send Back to the overview when the page is opened from the overview",
               "strength": "full",
               "notes": ""
             }
@@ -575,6 +629,69 @@
               "test": "Should return the arrival details to the overview, not on to the place of destination",
               "strength": "full",
               "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-010-E",
+          "name": "In the opening sequence, the back link opens arrival status, or origin for potatoes",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "fit/journey-smoke.fit.spec.js",
+              "test": "woodWithoutBark: Back on the commodities list, arrival details, identification numbers and contact opens the step the opening run came from",
+              "strength": "full",
+              "notes": "the arrival-status half; red with arrival status dropped from the arrival details' Back candidates"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "fit/journey-smoke.fit.spec.js",
+              "test": "warePotatoes: Back on the commodities list, arrival details, identification numbers and contact opens the step the opening run came from",
+              "strength": "full",
+              "notes": "the potato half; red with origin dropped from the arrival details' Back candidates"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+              "test": "renders the caption, the heading and the three save controls",
+              "strength": "partial",
+              "notes": "asserts the potato case: Back opens origin"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "fit/journey-smoke.fit.spec.js",
+              "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview",
+              "strength": "partial",
+              "notes": "potato case only: Back from the arrival details opens origin"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should send Back to arrival status for plants or wood while the opening run is on",
+              "strength": "partial",
+              "notes": "href only"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should send Back to origin for potatoes while the opening run is on",
+              "strength": "partial",
+              "notes": "href only"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should send the arrival details back to arrival status for plants or wood, and to origin for potatoes",
+              "strength": "partial",
+              "notes": "the run policy's answer only"
             }
           ]
         }
@@ -607,6 +724,73 @@
               "notes": "plants/wood path also completes the row"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-DETAILS-012",
+      "name": "Every arrival question is set in the medium label size",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-012-A",
+          "name": "A potatoes notification's arrival questions read at medium size",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+              "test": "sets the arrivalDate question label in the medium GOV.UK label size",
+              "strength": "full",
+              "notes": "the same test runs for arrivalTime and proposedPlaceOfLanding"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should set the date label in the medium GOV.UK label size for potatoes",
+              "strength": "full",
+              "notes": "one case per arrival state"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-012-B",
+          "name": "A plants or wood notification's date question reads at medium size",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+              "test": "sets the arrival date label in the medium GOV.UK label size when the status is not-yet-arrived",
+              "strength": "full",
+              "notes": "the same test runs for already-arrived"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should set the date label in the medium GOV.UK label size for a consignment on its way",
+              "strength": "full",
+              "notes": "the same test runs for a consignment already here"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-DETAILS-013",
+      "name": "The place-of-landing field works without client-side JavaScript",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-DETAILS-013-A",
+          "name": "A potatoes notification chooses its place of landing from an ordinary list",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
         }
       ]
     }

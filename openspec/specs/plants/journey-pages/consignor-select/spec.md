@@ -2,34 +2,34 @@
 
 ## Purpose
 
-Asks which address-book record is the consignor or exporter. The page is titled "Consignor or exporter".
+Asks which address-book record is the consignor. The page is titled "Consignor".
 
 ## Requirements
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, with save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.
+The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
-- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification
+- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification that is not being amended
 - **WHEN** the page loads
-- **THEN** it shows the parties section caption, the heading "Consignor or exporter", the sender description, and a search box
+- **THEN** it shows the parties section caption, the heading "Consignor", the sender description, and a search box
 - **AND** the three save controls are offered
 
 ### Requirement: The page is reachable from Overview's consignor task row
 **ID**: REQ-PLANTS-CONSIGNOR-002
-The system MUST open this page when the user follows Overview's consignor or exporter task row.
+The system MUST open this page when the user follows Overview's consignor task row.
 
 #### Scenario: Overview's consignor row opens the page
 **ID**: SCN-PLANTS-CONSIGNOR-002-A
 - **GIVEN** a wood or plants-for-planting notification on Overview
-- **WHEN** the user opens the consignor or exporter task row
+- **WHEN** the user opens the consignor task row
 - **THEN** the consignor page is shown
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
 
 #### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A
@@ -46,14 +46,14 @@ The system MUST accept a chosen address, continue to identification numbers on s
 
 #### Scenario: Save and return to overview saves without continuing
 **ID**: SCN-PLANTS-CONSIGNOR-003-C
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Cancel and return to overview reaches Overview without saving
 **ID**: SCN-PLANTS-CONSIGNOR-003-D
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen
@@ -64,25 +64,20 @@ The system MUST accept a chosen address, continue to identification numbers on s
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** Overview is shown, with the consignor task Completed
 
-### Requirement: Saving with nothing chosen while no consignor is held is refused with focused recovery
+### Requirement: Saving with nothing chosen moves on without an error, and a value not in the book is refused
 **ID**: REQ-PLANTS-CONSIGNOR-004
-The system MUST refuse save-and-continue when nothing is chosen and no consignor is held yet, focusing the first address row when the user follows the error, or the search field when a search matched nothing. Choosing an address after the error MUST recover. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A consignor already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
+The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST continue to identification numbers in the opening sequence, or return to Overview when the page was opened from it, with no error and no consignor saved. A consignor already held MUST be kept, as governed by `plants/addresses`. A submitted value that is not an address in the book MUST be refused as governed by `plants/addresses`, and choosing an address after that refusal MUST recover.
 
-#### Scenario: Saving with nothing chosen shows the error and focuses the first row
+#### Scenario: Saving with nothing chosen continues without an error
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
-- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
-- **WHEN** they save and continue and follow the error
-- **THEN** the first address row is focused
+- **GIVEN** the user is on the consignor page in the opening sequence with nothing chosen and no consignor held yet
+- **WHEN** they save and continue
+- **THEN** they reach identification numbers, with no error
+- **AND** Overview shows the consignor task not yet started
 
-#### Scenario: Saving after a no-match search focuses the search field
-**ID**: SCN-PLANTS-CONSIGNOR-004-B
-- **GIVEN** the user has searched for a term that matched nothing, with no consignor held yet
-- **WHEN** they save and continue and follow the error
-- **THEN** the search field is focused
-
-#### Scenario: Choosing an address after the error recovers
+#### Scenario: Choosing an address after a refused value recovers
 **ID**: SCN-PLANTS-CONSIGNOR-004-C
-- **GIVEN** the consignor page, reached in the opening sequence, is showing the nothing-chosen error
+- **GIVEN** the consignor page, reached in the opening sequence, is showing the refusal of a value that is not an address in the book
 - **WHEN** the user chooses an address and saves
 - **THEN** they continue to identification numbers
 
@@ -92,15 +87,21 @@ The system MUST refuse save-and-continue when nothing is chosen and no consignor
 - **WHEN** they select save and return to overview
 - **THEN** Overview is shown, with no error and no consignor saved
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to the place of destination in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONSIGNOR-005
-The system MUST return the user to Overview when they follow the back link from the consignor page.
+The system MUST return the user to the place of destination page when they follow the back link from the consignor page during the opening sequence, and to Overview when the page was opened from Overview.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONSIGNOR-005-A
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the opening sequence has ended and the user is on the consignor page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens the place of destination
+**ID**: SCN-PLANTS-CONSIGNOR-005-B
+- **GIVEN** the user is in the opening sequence and reached the consignor page from the place of destination
+- **WHEN** they follow the back link
+- **THEN** the place of destination page is shown
 
 ### Requirement: When consignor is out of scope the page is not served
 **ID**: REQ-PLANTS-CONSIGNOR-006

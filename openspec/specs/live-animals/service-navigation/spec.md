@@ -41,3 +41,14 @@ The system MUST return the user to the dashboard when they follow the dashboard 
 - **GIVEN** the user is working on a notification
 - **WHEN** they follow the dashboard item in the navigation
 - **THEN** the dashboard is shown
+
+### Requirement: The Address book item opens the Import Notification Service address book
+**ID**: REQ-NAV-006
+The system MUST open the Import Notification Service's address book when the user follows the Address book item.
+
+#### Scenario: Following Address book opens the INS address book
+**ID**: SCN-NAV-006-A
+- **GIVEN** the user is signed in and on the live animals dashboard
+- **WHEN** they follow Address book in the navigation
+- **AND** they complete sign-in to the Import Notification Service if it asks
+- **THEN** the Import Notification Service address book is shown

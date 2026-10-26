@@ -96,7 +96,8 @@
           "name": "The commodity-code help explains the code and links to the Trade Tariff tool",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "explains commodity codes and links out to the Trade Tariff tool", "strength": "full", "notes": "asserts href, target=_blank and rel" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "explains commodity codes and links out to the Trade Tariff tool", "strength": "full", "notes": "asserts href, target=_blank and rel, and the link name carrying '(opens in a new tab)' on its own line" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "explains commodity codes and links out to the Trade Tariff tool", "strength": "partial", "notes": "asserts the link's full name, href and target; does not assert the explanatory text" }
           ]
         }
       ]
@@ -128,15 +129,26 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-007",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to the origin of the import in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-007-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-007-B",
+          "name": "In the opening sequence, the back link opens origin of the import",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "follows Back from what are you importing to the origin page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to the origin of the import while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the commodities page back to the origin page", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]
@@ -167,8 +179,8 @@
           "name": "Saving with nothing chosen shows an error summary",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "validation: no commodity links to and focuses the search box", "strength": "full", "notes": "stronger than E2E: names focus on the search box" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "shows an error on the search box when submitted empty", "strength": "full", "notes": "asserts the error summary heading, the one summary link, the search box's description and focus" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "validation: no commodity links to and focuses the search box", "strength": "full", "notes": "stronger than E2E: names focus on the search box and the error in its description" }
           ]
         },
         {
@@ -176,8 +188,28 @@
           "name": "Save and return to overview with nothing chosen returns to Overview without an error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "what are you importing: when nothing is chosen, returns to the overview without an error", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "what are you importing: when nothing is chosen, returns to the overview without an error", "strength": "full", "notes": "asserts the task reads To do" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go to the overview with nothing chosen on Save and return to overview", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-009-C",
+          "name": "With results listed, the error still sits on the search field",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "with results listed, keeps the \"Select a commodity\" error on the search box", "strength": "full", "notes": "asserts the one summary link, the search box's description, the listed group and focus" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "validation: with results listed, the error stays on the search box", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should key the error to the search box even with results listed, keeping the query and the results", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-009-D",
+          "name": "Save and return to overview after clearing a saved selection empties it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "shows the commodity task as To do", "strength": "full", "notes": "clears a saved selection, saves and returns to Overview, and asserts the task reads To do" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "refuses save and continue with \"Select a commodity\" on reopening the page", "strength": "full", "notes": "reopening the page and saving is refused with the one summary link, which happens only when nothing is saved" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should empty a saved selection on Save and return to overview with nothing chosen", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -185,14 +217,46 @@
     {
       "id": "REQ-COMMODITY-SELECT-010",
       "name": "A notification must carry at least one commodity line",
-      "coverage": "full",
+      "coverage": "none",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-010-A",
           "name": "A notification with no commodity line cannot be submitted",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-011",
+      "name": "The page says one notification is needed per ITAHC and how to search",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-011-A",
+          "name": "The page explains the ITAHC rule and the ways to search",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses submit of a notification with no commodity line and names the missing species details", "strength": "full", "notes": "Continue on review is the submit gate. copy.errors.cards.species names the missing line — not the empty-page save in 009." }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "shows the ITAHC inset and the search hint", "strength": "full", "notes": "asserts the exact inset and the exact search hint" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers a search box and lists nothing until it is used", "strength": "partial", "notes": "asserts the inset and the hint text read from the copy module, so the exact wording is pinned by the copy tests" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js", "test": "Should hint searching by common name, commodity code or Latin name", "strength": "full", "notes": "exact English and Welsh hint" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js", "test": "Should tell the user to submit one notification per ITAHC and one for goods that need none", "strength": "full", "notes": "exact English and Welsh inset" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-012",
+      "name": "The page ends with Save and continue, Save and return to overview and Cancel and return to overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-012-A",
+          "name": "The opening sequence offers all three controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "full", "notes": "" }
           ]
         }
       ]

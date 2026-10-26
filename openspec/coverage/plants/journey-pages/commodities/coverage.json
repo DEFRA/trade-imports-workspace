@@ -93,7 +93,7 @@
     },
     {
       "id": "REQ-PLANTS-COMMODITIES-006",
-      "name": "The page ends with its primary action alone, and continuing leaves the section for origin",
+      "name": "The page ends with its primary action alone, and continuing during the opening sequence leaves the section for origin",
       "coverage": "full",
       "scenarios": [
         {
@@ -106,7 +106,7 @@
         },
         {
           "id": "SCN-PLANTS-COMMODITIES-006-B",
-          "name": "Continuing with at least one line leaves the section for origin",
+          "name": "Continuing with at least one line during the opening sequence leaves the section for origin",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "leaves the section for the origin page on Save and continue", "strength": "full", "notes": "" },
@@ -117,15 +117,25 @@
     },
     {
       "id": "REQ-PLANTS-COMMODITIES-007",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to commodity type in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-COMMODITIES-007-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the list was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the overview", "strength": "full", "notes": "asserts backLink is the hub path; no fit/e2e follows the link in the browser" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the overview when the page is opened from the overview", "strength": "full", "notes": "asserts backLink is the hub path; no fit/e2e follows the link in the browser" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITIES-007-B",
+          "name": "In the opening sequence, the back link opens commodity type",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "warePotatoes: Back on the commodities list, arrival details, identification numbers and contact opens the step the opening run came from", "strength": "full", "notes": "the same test runs for woodWithoutBark; red with the commodities list's Back candidates removed from the run" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the commodity type while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js", "test": "Should send the commodities list back to the commodity type", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]

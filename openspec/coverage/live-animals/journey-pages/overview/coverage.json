@@ -200,6 +200,40 @@
       ]
     },
     {
+      "id": "REQ-OVERVIEW-010",
+      "name": "Overview marks its commodity summary, the task list and each numbered section as named regions",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-010-A",
+          "name": "The two total cards are named regions",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "the two total cards are regions named Animals summary and Packages summary", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub marks the commodity summary, its two cards, the task list and each numbered section as named regions", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-010-B",
+          "name": "The task list and each section are regions named by their heading",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "the commodity summary, the task list and each numbered section are regions named by their own heading", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub marks the commodity summary, its two cards, the task list and each numbered section as named regions", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-010-C",
+          "name": "A task link carries its status, and Roles and addresses its hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "each task link still reads its status, and Roles and addresses its hint, with the link", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub marks the commodity summary, its two cards, the task list and each numbered section as named regions", "strength": "partial", "notes": "only the Roles and addresses link" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "REQ-OVERVIEW-011",
       "name": "The third task of About the consignment is Main import reason",
       "coverage": "full",
@@ -218,13 +252,27 @@
     {
       "id": "REQ-OVERVIEW-012",
       "name": "The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-012-A",
+          "name": "No commodity chosen means no Transit countries task",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) for an overland means while no commodity is chosen", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should leave the transit row off an overland notification with no commodity chosen", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: with no commodity chosen, saving overland arrival details leaves the transit countries row off", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "partial", "notes": "not probed against a reverted line" }
+          ]
+        },
         {
           "id": "SCN-OVERVIEW-012-B",
           "name": "A chosen commodity travelling by rail or road shows the task in its place",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the transit row between arrival and transport details, reading Complete once a country is saved", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: with a commodity chosen and overland arrival details saved, transit countries sits between arrival and transport details as To do", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "partial", "notes": "not probed against a reverted line" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "Rail: the row reads To do with no country saved; not probed against a reverted line" }
           ]
         },
@@ -234,6 +282,8 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the transit row between arrival and transport details, reading Complete once a country is saved", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "partial", "notes": "not probed against a reverted line" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "not probed against a reverted line" }
           ]
         },
@@ -243,7 +293,8 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should show the conditional transit row only for an overland means of transport", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "a cat consignment travelling by air has no Transit countries task, before or after arrival details are saved", "strength": "partial", "notes": "not probed against a reverted line" }
           ]
         }
       ]
@@ -251,21 +302,24 @@
     {
       "id": "REQ-OVERVIEW-013",
       "name": "Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past",
-      "coverage": "none",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OVERVIEW-013-A",
           "name": "A saved arrival date more than 7 days in the past reads To do",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should read To do for Arrival details once its saved arrival date is more than 7 days in the past", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/stale-arrival-date.spec.ts", "test": "overview: when the saved arrival date is now more than 7 days in the past, Arrival details reads To do and the page names the date", "strength": "full", "notes": "the date is made stale through the backend after a frontend-seeded draft reads Complete" }
+          ]
         },
         {
           "id": "SCN-OVERVIEW-013-B",
           "name": "A saved arrival date exactly 7 days in the past still reads Complete",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should read Complete for Arrival details while its saved arrival date is exactly 7 days in the past", "strength": "full", "notes": "" }
+          ]
         }
       ]
     }

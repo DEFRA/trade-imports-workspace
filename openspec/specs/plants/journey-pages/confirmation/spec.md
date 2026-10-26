@@ -25,15 +25,21 @@ The system MUST confirm a completed submission on its own page, showing the refe
 - **THEN** in summer the date of notification is the next day, as it was already past midnight in the UK, for example "12 August 2026" for 23:30 UTC on 11 August 2026
 - **AND** in winter it is the same day, for example "11 January 2026" for 23:30 UTC on 11 January 2026
 
-### Requirement: The confirmation page is not shown for a notification that has not yet been submitted
+### Requirement: The confirmation page is not shown for a notification that is not currently submitted
 **ID**: REQ-PLANTS-CONFIRMATION-002
-The system MUST redirect a request for the confirmation page to check-your-answers when the notification it names has not been submitted.
+The system MUST redirect a request for the confirmation page to the declaration page when the notification it names is not currently submitted, whether it is a draft or an amendment still to be re-submitted.
 
-#### Scenario: Requesting confirmation for an unsubmitted notification redirects to check-your-answers
+#### Scenario: Requesting confirmation for an unsubmitted notification opens the declaration
 **ID**: SCN-PLANTS-CONFIRMATION-002-A
 - **GIVEN** a notification has been started but not submitted
 - **WHEN** its confirmation page is requested directly
-- **THEN** check-your-answers is shown instead
+- **THEN** the declaration page is shown instead
+
+#### Scenario: Requesting confirmation while a notification is being amended opens the declaration
+**ID**: SCN-PLANTS-CONFIRMATION-002-B
+- **GIVEN** a submitted notification is being amended and has not been re-submitted
+- **WHEN** its confirmation page is requested directly
+- **THEN** the declaration page is shown instead
 
 ### Requirement: The page offers routes to view the notification and return to the dashboard
 **ID**: REQ-PLANTS-CONFIRMATION-003

@@ -52,12 +52,18 @@ The system MUST NOT offer any way to change a submitted notification's answers u
 
 ### Requirement: Amending a submitted notification re-enters it at Overview
 **ID**: REQ-PLANTS-LIFECYCLE-005
-The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
+The system MUST let the user start an amendment on a submitted notification from the dashboard or from the notification's read-only view, re-entering the notification at Overview with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
 
 #### Scenario: Starting an amendment opens Overview with editing enabled
 **ID**: SCN-PLANTS-LIFECYCLE-005-A
 - **GIVEN** a submitted notification exists
 - **WHEN** the user starts an amendment on it from the dashboard
+- **THEN** they land on Overview, with the notification's status shown as "Amend"
+
+#### Scenario: Starting an amendment from the read-only view opens Overview
+**ID**: SCN-PLANTS-LIFECYCLE-005-B
+- **GIVEN** a submitted notification's read-only view is open
+- **WHEN** the user chooses "Amend this notification"
 - **THEN** they land on Overview, with the notification's status shown as "Amend"
 
 #### Scenario: An amendment can be started in a later browser session than the one that submitted the notification
@@ -88,14 +94,15 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-PLANTS-LIFECYCLE-007
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself and on the declaration page, which shows no status bar at all.
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself, on the declaration page, which shows no status bar at all, and on check-your-answers, which offers its own "Cancel amend" button beside Continue.
 
 #### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-PLANTS-LIFECYCLE-007-A
 - **GIVEN** a notification is being amended
 - **WHEN** the user views it on the dashboard, Overview, check-your-answers or any question page
 - **THEN** the dashboard shows a "Cancel amendment" action alongside its "Amend" status
-- **AND** on Overview, check-your-answers and any question page a status bar above the caption and heading shows "Amend", the reference number and "Cancel amend"
+- **AND** on Overview and any question page a status bar above the caption and heading shows "Amend", the reference number and "Cancel amend"
+- **AND** on check-your-answers "Cancel amend" is a button beside Continue
 
 #### Scenario: Choosing to cancel asks for confirmation before discarding anything
 **ID**: SCN-PLANTS-LIFECYCLE-007-B
@@ -137,7 +144,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 
 ### Requirement: A draft or submitted notification can be deleted after confirmation
 **ID**: REQ-PLANTS-LIFECYCLE-008
-The system MUST let the user delete a draft from the dashboard, and a submitted notification from its read-only view, each after confirming, removing it from the dashboard listing. While an amendment is in progress, check-your-answers MUST NOT offer delete.
+The system MUST let the user delete a draft from the dashboard or from its check answers, and a submitted notification from its read-only view, each after confirming, removing it from the dashboard listing. While an amendment is in progress, check-your-answers MUST NOT offer delete.
 
 #### Scenario: Deleting a draft removes it from the dashboard
 **ID**: SCN-PLANTS-LIFECYCLE-008-A
@@ -152,6 +159,13 @@ The system MUST let the user delete a draft from the dashboard, and a submitted 
 - **WHEN** the user confirms its deletion
 - **THEN** they return to the dashboard with a deletion confirmation
 - **AND** searching for its reference number shows no card
+
+#### Scenario: Deleting a draft from its check answers removes it from the dashboard
+**ID**: SCN-PLANTS-LIFECYCLE-008-C
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user selects "Delete notification" and confirms its deletion
+- **THEN** a message confirms the notification has been deleted
+- **AND** searching the dashboard for its reference number shows no card
 
 #### Scenario: An amendment's check answers offers no delete
 **ID**: SCN-PLANTS-LIFECYCLE-008-D

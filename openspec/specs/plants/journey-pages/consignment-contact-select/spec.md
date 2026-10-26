@@ -79,7 +79,7 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-D
 - **GIVEN** a wood notification in its opening sequence, on the contact page, with arrival details still outstanding
 - **WHEN** the user chooses an address and saves and continues
-- **THEN** check your answers is shown
+- **THEN** check your answers is shown, headed by the notification's reference
 - **AND** its error summary names the outstanding arrival answer
 
 ### Requirement: Saving with nothing chosen is allowed, keeping any contact already held

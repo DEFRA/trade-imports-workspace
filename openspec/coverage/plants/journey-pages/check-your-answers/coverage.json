@@ -58,16 +58,34 @@
     },
     {
       "id": "REQ-PLANTS-CYA-003",
-      "name": "The contact card shows the selected party's details",
+      "name": "The party cards read the address line by line, with no telephone number or email address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-003-A",
-          "name": "Contact details appear on the Contact card",
+          "name": "The Contact card reads the contact's address line by line",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "name, address, phone, email on Contact card" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows name/address/phone/email" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Contact Address row exact innerText; phone and email absent; terms Name, Address" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows Name and Address, address lines joined by <br>" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "Contact card terms Name, Address; Address innerText line by line; no email" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-003-B",
+          "name": "The Place of destination card reads the address line by line",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Place of destination Address row exact innerText; terms Name, Address" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "destination card rows Name and Address, address lines joined by <br>" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-003-C",
+          "name": "The Consignor card has no telephone or email row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the consignor card as name and address lines only for plants", "strength": "full", "notes": "row keys exactly Name, Address; Address html line by line" }
           ]
         }
       ]
@@ -106,16 +124,26 @@
     },
     {
       "id": "REQ-PLANTS-CYA-006",
-      "name": "A draft notification invites submission and withholds post-submission actions",
-      "coverage": "partial",
+      "name": "A draft notification invites submission and offers Delete notification in its header",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-006-A",
-          "name": "The draft view invites submission and withholds delete and cancel-amendment",
-          "coverage": "partial",
+          "name": "The draft view invites submission and offers delete in its header",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "partial", "notes": "completeNotification asserts Now submit heading and body; does not assert delete/cancelAmend absent" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "partial", "notes": "submitted and amending branches prove delete vs cancelAmend; draft withhold is implied by readOnly false → deleteHref null in controller, not asserted on a draft GET" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Back, Save and return and Cancel to Overview, with Delete notification in its header and not beside Continue", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, offers Delete notification in its header and no Copy as new, and keeps Continue, Save and return and Cancel", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer delete in a draft's header and not at its foot", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-006-B",
+          "name": "Delete notification on a draft opens the delete page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete notification on a draft's check answers opens the delete page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, offers Delete notification in its header and no Copy as new, and keeps Continue, Save and return and Cancel", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -139,7 +167,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-008",
-      "name": "A submitted notification is read-only and offers delete",
+      "name": "A submitted notification is read-only and offers Amend this notification and Delete notification in its header",
       "coverage": "full",
       "scenarios": [
         {
@@ -149,7 +177,10 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; Edit details absence not asserted; delete offer covered by sibling delete test and unit" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions, so neither Change nor Edit details" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref set; no cancelAmend in the strip" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref null (Delete is in the header); no cancelAmend in the strip" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "header actions" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -158,6 +189,15 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "full", "notes": "Delete → confirm → dashboard deleted banner; card gone — outcome also owned by lifecycle" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-008-C",
+          "name": "Amend this notification starts an amendment",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "the Amend click" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "the Amend click" }
           ]
         }
       ]
@@ -172,8 +212,9 @@
           "name": "Cancel amendment is offered only while amending",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: strip cancelAmend href set, deleteHref null" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "partial", "notes": "Amend tag and Cancel amend in the status bar on CYA; delete absence not asserted" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: cancelAmendHref set, no foot Delete, no strip cancelAmend" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Overview offers Cancel amend in the status bar and the review offers it as a button beside Continue, with no delete", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "an amendment's check answers offers Cancel amend beside Continue and no delete", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -321,7 +362,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on opening an incomplete amend review", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on opening an incomplete amend review", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test; asserts no summary on open" }
           ]
         },
         {
@@ -331,7 +373,9 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the outstanding task", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete amend with the error summary, naming what is outstanding", "strength": "full", "notes": "400, focus on the summary, still amending" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete amend with the error summary, naming what is outstanding", "strength": "full", "notes": "400, focus on the summary, still amending" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test" }
           ]
         }
       ]
@@ -355,6 +399,122 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name a territory of origin with its country", "strength": "full", "notes": "ES-CN reads 'Canary Islands (Spain)'" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-016",
+      "name": "A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-016-A",
+          "name": "The submitted view is headed by its reference with a Submitted tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view is headed by its reference with a Submitted tag and the date submitted, titled by its reference, with Back to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's read-only view is headed by its reference with the date submitted, and Back goes to the plants notification list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-B",
+          "name": "The submitted view's browser title starts with its reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view is headed by its reference with a Submitted tag and the date submitted, titled by its reference, with Back to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's read-only view is headed by its reference with the date submitted, and Back goes to the plants notification list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-C",
+          "name": "The submitted view shows the date it was submitted",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "pins 23:30 UTC on 21 July as 22 July" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view is headed by its reference with a Submitted tag and the date submitted, titled by its reference, with Back to the notification list", "strength": "partial", "notes": "format only; the exact day is pinned by the unit test" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's read-only view is headed by its reference with the date submitted, and Back goes to the plants notification list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-D",
+          "name": "A draft's check answers is headed by its reference with a Draft tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a draft's check answers with its reference, a Draft tag and the date created, with no status bar, and Back to Overview", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, titled by its reference, with no status bar and no Copy as new, keeping its Change links and Continue", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, offers Delete notification in its header and no Copy as new, and keeps Continue, Save and return and Cancel", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-E",
+          "name": "A draft's check answers shows the date it was created",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a draft's check answers with its reference, a Draft tag and the date created, with no status bar, and Back to Overview", "strength": "full", "notes": "pins 23:30 UTC on 21 July as 22 July" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, titled by its reference, with no status bar and no Copy as new, keeping its Change links and Continue", "strength": "partial", "notes": "format only; the exact day is pinned by the unit test" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-F",
+          "name": "An amendment's check answers keeps its heading and status bar",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep an amendment's check answers titled Check your answers with the status bar", "strength": "full", "notes": "page title is Check your answers, no view header, status bar present" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-017",
+      "name": "Opening the view of a notification that does not exist goes to the notification list",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-017-A",
+          "name": "An unknown notification's view opens the notification list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send a notification that cannot be found to the notification list", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js", "test": "Should leave a notification it cannot find to the page it asked for", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "opening the view of a notification that does not exist goes to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "an unknown notification's view goes to the plants notification list", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-018",
+      "name": "A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-018-A",
+          "name": "The submitted view shows its notification reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view shows its notification reference as text, with no customs document code and no Copy button", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "importReferences" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-018-B",
+          "name": "Without JavaScript the reference reads as plain text, with no customs document code and no Copy button",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view shows its notification reference as plain text without JavaScript, with no customs document code and no Copy button", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-018-C",
+          "name": "A draft's check answers shows its notification reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, offers Delete notification in its header and no Copy as new, and keeps Continue, Save and return and Cancel", "strength": "full", "notes": "asserts the warning, the Notification reference row, no Customs document code row and no Copy button" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, titled by its reference, with no status bar and no Copy as new, keeping its Change links and Continue", "strength": "full", "notes": "asserts the warning, the Notification reference row, no Customs document code row and no Copy button" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a draft's check answers with its reference, a Draft tag and the date created, with no status bar, and Back to Overview", "strength": "full", "notes": "importReferences" }
           ]
         }
       ]

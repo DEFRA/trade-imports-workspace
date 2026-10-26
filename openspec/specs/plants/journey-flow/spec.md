@@ -175,7 +175,7 @@ The system MUST walk a newly created notification through an opening sequence of
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008
-The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds any answer the user has entered. The commodity-type page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
+The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds an answer the user entered. Exempt MUST be: the commodity-type page and those beneath it, so the redirect cannot loop; the dashboard's actions on a notification (amend, cancel an amendment, copy, delete); and a notification that does not exist, which the page asked for answers (for the view, REQ-PLANTS-CYA-017).
 
 #### Scenario: A deep link to an unknown journey lands on the entry page
 **ID**: SCN-PLANTS-FLOW-008-A

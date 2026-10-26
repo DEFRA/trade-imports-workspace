@@ -55,3 +55,15 @@ The system MUST NOT show running totals of animals, packages or similar commodit
 - **GIVEN** the user has started a notification
 - **WHEN** they view Overview
 - **THEN** no commodity totals panel is shown
+
+### Requirement: Overview's numbered groups are named regions inside one task list region
+**ID**: REQ-PLANTS-OVERVIEW-005
+The system MUST mark each numbered task group on Overview, with its heading and task list, as a region named by that heading, MUST hold the groups together in one region named "Notification tasklist", and MUST NOT show "Notification tasklist" as a visible heading.
+
+#### Scenario: Each group is a named region inside the Notification tasklist region
+**ID**: SCN-PLANTS-OVERVIEW-005-A
+- **GIVEN** a new notification has just been started
+- **WHEN** the user views Overview
+- **THEN** the four numbered groups are each a region named by their heading, for example "1. About the consignment"
+- **AND** all four sit inside one region named "Notification tasklist"
+- **AND** no "Notification tasklist" text or heading is shown on the page

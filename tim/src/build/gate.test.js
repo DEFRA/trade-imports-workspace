@@ -90,6 +90,8 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
 
 const leasePath = () => join(root, 'state', 'stack-lease.json')
 
+const machineConfigPath = () => join(root, 'machine.json')
+
 const GATE_HOLDER = 'ibl-20261001T090000Z inc-001 ladder'
 
 const gate = (env, options = {}) =>
@@ -99,6 +101,7 @@ const gate = (env, options = {}) =>
     env,
     holder: GATE_HOLDER,
     leasePath: leasePath(),
+    machineConfigPath: machineConfigPath(),
     ...options
   })
 
@@ -1180,5 +1183,87 @@ describe('runGate — the duplication rung', () => {
     const outcome = await gate(env, { phase: 'unit' })
 
     expect(outcomeOf(outcome.rungs)).toEqual(['frontend:duplication:pass'])
+  })
+})
+
+describe("runGate — this machine's own settings", () => {
+  const machineGate = (fitRung = {}) =>
+    workspaceWith({
+      gates: {
+        frontend: {
+          rungs: [
+            { name: 'unit', phase: 'unit', run: 'test' },
+            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ...fitRung }
+          ]
+        }
+      },
+      repos: {
+        frontend: { test: 'echo tested', 'test:fit:ci': 'echo fit' }
+      }
+    })
+
+  const writeMachineConfig = (config) =>
+    writeFileSync(machineConfigPath(), JSON.stringify(config))
+
+  test('passes a FIT rung the worker count this machine gives it, after its scope', async () => {
+    const env = machineGate({ scope: ['--project=features'] })
+    writeMachineConfig({ workers: { 'frontend/fit': 4 } })
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    expect({
+      logged: readFileSync(outcome.rungs[0].log, 'utf8').includes(
+        'fit --project=features --workers=4'
+      ),
+      workers: outcome.rungs[0].workers,
+      config: outcome.machine.config
+    }).toEqual({ logged: true, workers: 4, config: machineConfigPath() })
+  })
+
+  test('never passes a worker count to a unit rung, even when the file names it', async () => {
+    const env = machineGate()
+    writeMachineConfig({ workers: { 'frontend/unit': 4 } })
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(readFileSync(outcome.rungs[0].log, 'utf8')).not.toContain(
+      '--workers'
+    )
+  })
+
+  test('runs repos one at a time when this machine sets parallelRepos to 1, over gates.json', async () => {
+    const env = workspaceWith({
+      gates: {
+        alpha: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] },
+        beta: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      },
+      repos: { alpha: { test: 'sleep 0.3' }, beta: { test: 'sleep 0.3' } }
+    })
+    writeMachineConfig({ parallelRepos: 1 })
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(outcome.durationMs).toBeGreaterThanOrEqual(600)
+  })
+
+  test('refuses a file that names a rung in the wrong shape, naming the file', async () => {
+    const env = machineGate()
+    writeMachineConfig({ workers: { fit: 4 } })
+
+    await expect(gate(env, { phase: 'fit' })).rejects.toThrow(
+      `${machineConfigPath()} has problems`
+    )
+  })
+
+  test('leaves every rung to its own script on a machine without the file', async () => {
+    const env = machineGate()
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    expect({
+      logged: readFileSync(outcome.rungs[0].log, 'utf8').includes('--workers'),
+      workers: outcome.rungs[0].workers,
+      machine: outcome.machine
+    }).toEqual({ logged: false, workers: null, machine: null })
   })
 })

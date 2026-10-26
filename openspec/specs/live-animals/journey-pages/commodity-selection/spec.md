@@ -67,13 +67,14 @@ The system MUST group the species a search matches under a heading of their comm
 
 ### Requirement: The page explains what a commodity code is and links out to look one up
 **ID**: REQ-COMMODITY-SELECT-005
-The system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab.
+The system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab, reading "Trade Tariff tool" with "(opens in a new tab)" on its own line after it, both part of the link's name.
 
 #### Scenario: The commodity-code help explains the code and links to the Trade Tariff tool
 **ID**: SCN-COMMODITY-SELECT-005-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they open the commodity-code help
 - **THEN** it explains what the code is and offers a link to look one up, which opens the Trade Tariff tool in a new tab
+- **AND** the link reads "Trade Tariff tool" with "(opens in a new tab)" on its own line after it, both part of the link's name
 
 ### Requirement: Species chosen under different searches are all kept, in a canonical order
 **ID**: REQ-COMMODITY-SELECT-006
@@ -94,15 +95,21 @@ The system MUST keep every species the user has chosen, whichever search brought
 - **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to the origin of the import in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to Overview when they follow the back link from the commodity selection page.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, and to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A
-- **GIVEN** the user is on the commodity selection page
+- **GIVEN** the opening sequence has ended and the user opened what are you importing from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens origin of the import
+**ID**: SCN-COMMODITY-SELECT-007-B
+- **GIVEN** the user is in the opening sequence and has saved origin of the import
+- **WHEN** they follow the back link from what are you importing
+- **THEN** the origin of the import page is shown
 
 ### Requirement: The tally counts what has been chosen and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
@@ -118,20 +125,35 @@ The system MUST report how many species have been chosen and name them, and MUST
 
 ### Requirement: Saving and continuing without choosing a commodity is rejected
 **ID**: REQ-COMMODITY-SELECT-009
-The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing an error summary that names what is needed, and MUST NOT refuse the page for that on save and return to overview.
+The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. On save and return to overview the system MUST NOT check the choice: it saves the selection as it stands, an empty one included, and the Overview shows the commodity selection task as "To do" when nothing is chosen.
 
 #### Scenario: Saving with nothing chosen shows an error summary
 **ID**: SCN-COMMODITY-SELECT-009-A
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and continue
 - **THEN** an error summary headed "There is a problem" is shown, telling the user to select a commodity
+- **AND** the same error shows inline on the search field, and the summary link goes to the search field
 
 #### Scenario: Save and return to overview with nothing chosen returns to Overview without an error
 **ID**: SCN-COMMODITY-SELECT-009-B
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and return to overview
 - **THEN** they return to Overview with no error shown
-- **AND** the commodity selection task does not read "Complete"
+- **AND** the commodity selection task reads "To do"
+
+#### Scenario: With results listed, the error still sits on the search field
+**ID**: SCN-COMMODITY-SELECT-009-C
+- **GIVEN** the user has searched, so species are listed, and has chosen none
+- **WHEN** they save and continue
+- **THEN** "Select a commodity" shows in the error summary and inline on the search field, not on the listed species
+- **AND** the summary link goes to the search field
+
+#### Scenario: Save and return to overview after clearing a saved selection empties it
+**ID**: SCN-COMMODITY-SELECT-009-D
+- **GIVEN** the user has a saved selection and clears it on the commodity selection page
+- **WHEN** they save and return to overview
+- **THEN** they return to Overview with no error shown and the commodity selection task reads "To do"
+- **AND** reopening the page shows nothing chosen
 
 ### Requirement: A notification must carry at least one commodity line
 **ID**: REQ-COMMODITY-SELECT-010
@@ -143,12 +165,33 @@ The system MUST require every notification to carry at least one commodity line,
 - **WHEN** the user tries to submit it
 - **THEN** the submission is refused, and the missing commodity line is reported
 
-### Requirement: One search lists no more than a hundred species
+### Requirement: The page says one notification is needed per ITAHC and how to search
 **ID**: REQ-COMMODITY-SELECT-011
+The system MUST show the inset "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC." and the search hint "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).", with no sentence about a minimum search length.
+
+#### Scenario: The page explains the ITAHC rule and the ways to search
+**ID**: SCN-COMMODITY-SELECT-011-A
+- **GIVEN** the user has reached the commodity selection page
+- **WHEN** the page loads
+- **THEN** the inset reads "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC."
+- **AND** the search hint reads "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus)." with no sentence about a minimum number of characters
+
+### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
+**ID**: REQ-COMMODITY-SELECT-012
+Outside an amendment the system MUST end the commodity selection page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+
+#### Scenario: The opening sequence offers all three controls
+**ID**: SCN-COMMODITY-SELECT-012-A
+- **GIVEN** the user is in the opening sequence on what are you importing
+- **WHEN** the page is shown
+- **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: One search lists no more than a hundred species
+**ID**: REQ-COMMODITY-SELECT-013
 The system MUST list no more than a hundred species for one search.
 
 #### Scenario: A search matching more than a hundred species lists a hundred
-**ID**: SCN-COMMODITY-SELECT-011-A
+**ID**: SCN-COMMODITY-SELECT-013-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a commodity code holding more than a hundred species
 - **THEN** a hundred species are listed

@@ -60,11 +60,23 @@
           ]
         },
         {
+          "id": "SCN-COMMODITY-DETAILS-003-D",
+          "name": "Each row's Species cell lists the Latin names chosen under it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "lists the selected commodity with its code and species", "strength": "partial", "notes": "proves the Species column with one species per commodity, not two Latin names under one commodity" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "lists both species' Latin names, one per line, in the commodity's Species cell", "strength": "full", "notes": "finds the Cow row by its code and asserts the Species cell's exact innerText, one Latin name per line" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "lists every Latin name chosen under a commodity in its Species cell", "strength": "full", "notes": "adds Bison bison under Cow and asserts both Latin names in the Cow row's Species cell" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "partial", "notes": "asserts the column headings and the Cow and Cat Species cells; proves the Species column with one species per commodity, not two Latin names under one commodity" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js", "test": "Should give a commodity one row keyed to its group index, listing the Latin name of every species under it", "strength": "partial", "notes": "pins the row data (both Latin names on the Cow row), not the rendered cell" }
+          ]
+        },
+        {
           "id": "SCN-COMMODITY-DETAILS-003-C",
           "name": "A commodity under code 01061900 lists each species as its own removable row",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "lists a commodity on code 01061900 as a species row whose remove drops that species alone", "strength": "full", "notes": "Cow row carries remove:0 (commodity-level), Cat row remove-species:1" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "keeps the commodity-level remove for Cow and gives each species on code 01061900 its own remove", "strength": "full", "notes": "Cow row carries remove:0 (commodity-level), Cat row remove-species:1" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one species row without changing another quantity", "strength": "full", "notes": "removes the Cat species row, Cow count 25 kept" }
           ]
         }
@@ -158,22 +170,66 @@
           "name": "Removing the last two species returns to commodity selection",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removing the last commodity returns to the commodity question", "strength": "full", "notes": "removes both then reopens details URL and bounces to selection again" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removing the last commodity returns to the commodity question, as does reopening the page with nothing selected", "strength": "full", "notes": "removes both then reopens details URL and bounces to selection again" }
           ]
         }
       ]
     },
     {
       "id": "REQ-COMMODITY-DETAILS-009",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-DETAILS-009-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to the overview the hub task came from", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to the overview the hub task came from", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-009-B",
+          "name": "In the opening sequence, the back link opens what are you importing, with the choice kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "in the opening run, Back from Commodity details opens What are you importing? with the species still chosen", "strength": "full", "notes": "red with the consignment details' Back candidates removed from the run" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should go Back to What are you importing? while the opening run is on", "strength": "partial", "notes": "href only; the page it opens is not followed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should keep Back on What are you importing? when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the consignment details page back to the commodities page, not to the import reason page", "strength": "partial", "notes": "the run policy's answer only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-010",
+      "name": "The error summary lists errors by question",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-010-A",
+          "name": "Two species with blank counts and invalid package counts list both animals errors first",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "validation: lists every number of animals error before any number of packages error", "strength": "partial", "notes": "asserts the order of all four summary links and that the third focuses the first packages box; does not follow the other three links" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: lists every number of animals error before any number of packages error", "strength": "partial", "notes": "order only; hrefs pinned by the unit test and focus by the e2e test" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should list every number of animals error before any number of packages error", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-011",
+      "name": "The page ends with Save and continue, Save and return to overview and Cancel and return to overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-011-A",
+          "name": "The opening sequence offers all three controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "full", "notes": "" }
           ]
         }
       ]

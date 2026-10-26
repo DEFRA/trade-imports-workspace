@@ -1,0 +1,273 @@
+{
+  "area": "notification-hub",
+  "rows": [
+    {
+      "title": "A page opened from an overview task returns to the overview when saved",
+      "detail": "Design Release 2.1 sends a trader who opens a page from its task on the Overview back to the Overview on 'Save and continue', so the trader chooses what to do next, rather than on through the rest of the section. Today, from the live-animals Overview, the main import reason runs on to Additional details, Arrival details runs on to Transit countries and Transport details, and the consignment addresses page runs on to the CPH number page. Only the flow's own fallback changes: no marker is added to the row links or the forms (9 October ruling, c-243). The 9 October afternoon ruling makes the same change reach the high-risk plants Overview in the same increment, keyed to the task row: a plants row made of more than one page still moves through its own pages first, then returns to the Overview.",
+      "acceptanceCriteria": [
+        "Opened from its Overview task, the main import reason page goes to the Overview on 'Save and continue', not on to 'Additional details' (prototype:dr2-1-specs p4-080; trace:animals-fit p4-030; ruling:sam-2026-10-09 p1-196)",
+        "Opened from its Overview task, 'Arrival details' goes to the Overview on 'Save and continue', not on to 'Transit countries' or 'Transport details' (trace:prototype-dr2-1 p11-050; trace:animals-fit p4-046; trace:e2e p13-041)",
+        "Opened from its Overview task, the consignment addresses page goes to the Overview on 'Save and continue', not on to the CPH number page, including for a consignment that needs a CPH number (trace:e2e p13-041; ruling:sam-2026-10-09 p1-197)",
+        "A page opened from its Overview task has the same address as when it is reached in the opening run, with nothing added to the link or the form to mark that it came from the Overview, and still returns to the Overview on 'Save and continue' (ruling:sam-2026-10-09 p1-198; trace:e2e p13-041-m1; c-243)",
+        "After returning, the task just saved reads 'Complete' on the Overview when its answers pass their page's rules (repo:frontend p4-030; prototype:dr2-1-specs p4-080)",
+        "In the high-risk plants frontend, arrival details opened from the Overview returns to the Overview on 'Save and continue' instead of going on to the place of destination, with no marker on the row links (repo:plantsfrontend p2-026; ruling:sam-2026-10-09-pm p3-013, p3-026; c-243)",
+        "In the high-risk plants frontend, a task row made of more than one page still moves through its own pages first, commodity type to the commodities list and details, and arrival status to arrival details, before returning to the Overview (repo:plantsfrontend p2-027, p2-028, p2-030; ruling:sam-2026-10-09-pm p3-026)"
+      ],
+      "requirements": ["req-808", "req-1934"],
+      "sources": [
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-080 (hub task return)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p11-050, p12-148" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p4-030, p4-036, p4-046, p4-056" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p13-040, p13-041, p13-041-m1, p13-042" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-028 (features/hub/controller.js:90)" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p2-026 to p2-030 (flow/run.js, flow/flow.js, flow/task-rows.js)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-196 to p1-198 (c-243)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-001, p3-007, p3-013, p3-026" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the live return (req-808) and the plants return (req-1934): the ruling builds both by the same flow-fallback change in one increment. existingRow inc-002 already holds both, merged with req-1615 (journey-flow area, the same change). The combiner keeps inc-002's id, theme (journey-foundation), dependsOn and the journey-flow criteria, and merges these in, removing repeats. Overruled from=hub marker claims (c-243) are not named.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/flow",
+        "plantsfrontend:src/server/app/shared/kit.js",
+        "tests:flows/animals",
+        "tests:flows/plants"
+      ],
+      "existingRow": "inc-002"
+    },
+    {
+      "title": "In high-risk plants, 'Save and return to overview' saves without the page's required-answer checks",
+      "detail": "Sam's 9 October afternoon ruling makes the lenient 'Save and return to overview' (exit=hub) reach the high-risk plants frontend in the same increment as live animals: what was entered is saved and the trader goes to the Overview, even with a required answer missing. An answer that fails its own format rule is still refused with its error. 'Continue' keeps today's checks; which blank answers it refuses stays with EUDPA-667.",
+      "acceptanceCriteria": [
+        "In the high-risk plants frontend, on arrival status and arrival details, 'Save and return to overview' with the arrival status, date, time or place of landing left blank shows no error, saves what was entered and goes to the Overview (ruling:sam-2026-10-09-pm p3-027, p3-027-m1; c-313)",
+        "After such a save, reopening the page shows the answers that were entered, and the page's Overview task does not read 'Complete' (ruling:sam-2026-10-09-pm p3-027; ruling:sam-2026-10-07 p1-010)",
+        "In the high-risk plants frontend, 'Save and return to overview' still refuses, with that answer's error, a date that is not real, a future date once arrived, a time not on the 24-hour clock, a port not on the list or a quantity that is not a whole number, and saves nothing (ruling:sam-2026-10-07 p1-010; ruling:sam-2026-10-09-pm p3-063; c-313)",
+        "In the high-risk plants frontend, 'Continue' with a required answer missing still shows the page's error, as today (ruling:sam-2026-10-09-pm p3-063)"
+      ],
+      "requirements": ["req-1935"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-027, p3-027-m1, p3-063 (c-313)" }
+      ],
+      "repos": ["plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "existingRow inc-003 already holds req-1935 with req-1625 (the live-animals lenient save, journey-flow area); the ruling builds both in one increment, so the combiner keeps inc-003's id, theme, gate and repos (frontend, plantsfrontend, tests) and merges these criteria in. Overlaps EUDPA-667's mandatory-to-submit work, which keeps 'Continue''s blank-answer rules.",
+      "touches": [
+        "plantsfrontend:src/server/app/shared/kit.js",
+        "plantsfrontend:src/server/app/shared/save-actions.njk"
+      ],
+      "shared": [
+        "plantsfrontend:src/server/app/shared",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details"
+      ],
+      "existingRow": "inc-003"
+    },
+    {
+      "title": "Hub regions for assistive technology and the 'Main import reason' row",
+      "detail": "Screen-reader users move around the live-animals Overview by region, as Design Release 2.1 marks it up: each commodity total card, the 'Your commodities' block, the task list and each numbered section becomes a named region. The task list stays the GOV.UK Task list (c-129). The 9 October afternoon ruling makes the same change reach the high-risk plants Overview, as an accessible name only: plants gains no visible task list heading. The third task in section 1 of the live-animals Overview is renamed 'Main import reason', in English and Welsh.",
+      "acceptanceCriteria": [
+        "On the live-animals Overview the 'Animals' card is a region named 'Animals summary' and the 'Packages/boxes' card is a region named 'Packages summary' (trace:prototype-dr2-1 p11-012, p11-013-m1)",
+        "On the live-animals Overview the 'Your commodities' block, the task list and each numbered section are regions named by their own heading, for example 'Your commodities', 'Notification tasklist' and '1. About the consignment' (trace:prototype-dr2-1 p11-013-m1)",
+        "Each task still reads its status, and 'Roles and addresses' its hint, to a screen reader moving by links (c-129; repo:frontend p4-026)",
+        "The third row of section 1 of the live-animals Overview reads 'Main import reason', not 'Main reason for import' (prototype:dr2-1-source p12-023; prototype:dr2-1-specs p4-042; trace:animals-fit p4-028)",
+        "With Welsh chosen, the same row shows the Welsh for 'Main import reason', no longer the Welsh for 'Main reason for import' (repo:frontend p4-053; prototype:dr2-1-source p12-023)",
+        "On the high-risk plants Overview, each numbered task group, with its heading and its task list, is a region named by that group's heading, and the groups sit together in one region named 'Notification tasklist', with no visible task list heading added (ruling:sam-2026-10-09-pm p3-044, p3-015; repo:plantsfrontend p2-057, p2-060)",
+        "With Welsh chosen, the plants task list region's name is in Welsh (ruling:sam-2026-10-09-pm p3-044; repo:plantsfrontend p2-058)",
+        "The live-animals Overview with only the origin answered and with commodity totals entered, and the plants Overview on first render, have no serious or critical WCAG 2 A or AA accessibility violations once the regions are added (repo:frontend p4-067, p4-068; repo:plantsfrontend p2-083)"
+      ],
+      "requirements": ["req-791", "req-794", "req-1979"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p11-012, p11-013-m1, p11-015, p11-024" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-023" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-042" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-025, p4-026, p4-053, p4-067, p4-068 (features/hub)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p4-028" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p2-057, p2-058, p2-060, p2-083 (features/hub)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-015, p3-044" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the live hub's named regions (req-791), the plants Overview's regions (req-1979, which the ruling builds in the same increment) and the row rename (req-794): the same hub pages, copy files and ladder. existingRow inc-098 already holds all three; the combiner keeps its id and theme (overview-and-review). The germinal hub's regions (req-1837) are in the germinal hub row. The rename is the hub row only; end-to-end and accessibility specs reading 'Main reason for import' from the hub change with it.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/hub",
+        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
+      ],
+      "shared": [],
+      "existingRow": "inc-098"
+    },
+    {
+      "title": "The Overview for a germinal products notification",
+      "detail": "Each germinal products notification gets its own Overview page in the germinal products set, a copy of the live-animals Overview taken once this programme has built it, plus the germinal differences. Germinal products are counted by packages and weight, not by animals, so 'Your commodities' shows a packages card and a 'Kilograms' card in place of the animals card, totalling the gross weight entered (c-022). Screen-reader users get the same named regions as on the live-animals Overview, with the weight card named 'Gross weight summary' (c-244).",
+      "acceptanceCriteria": [
+        "A germinal products notification has its own Overview page under /germinal-products/notifications/, keyed by the notification as the live-animals Overview is, with the 'Overview' heading, the notification's status tag and reference, the task list and the 'Review and submit' and 'Return to dashboard' buttons (ruling:sam-2026-10-09 p1-006, p1-008, p1-009; repo:frontend p4-001; c-128)",
+        "On the germinal Overview, 'Your commodities' shows the 'Packages/boxes' card and a card labelled 'Kilograms' with the caption 'Total weight of packages in this consignment', and no 'Animals' card (prototype:dr2-1-source p12-013; trace:prototype-dr2-1 p12-147, p11-105)",
+        "The 'Kilograms' card reads '0' before any gross weight is entered, and whenever the total is not a positive number (prototype:dr2-1-source p12-016)",
+        "The 'Kilograms' card totals the gross weight in kilograms entered for the consignment, showing a whole-number total as entered, for example '12' for 5 and 7, and any other total rounded to 3 decimal places, for example '2.5' for 1.25 and 1.25 (prototype:dr2-1-source p12-016; ruling:sam-2026-10-09 p1-022)",
+        "On the germinal Overview the 'Packages/boxes' card is a region named 'Packages summary' and the 'Kilograms' card a region named 'Gross weight summary', and the 'Your commodities' block, the task list and each numbered section are regions named by their own heading (trace:prototype-dr2-1 p11-013-m1; prototype:dr2-1-source p12-013; c-244)",
+        "The live-animals Overview still shows the 'Animals' and 'Packages/boxes' cards and no 'Kilograms' card (trace:animals-fit p4-008)",
+        "The germinal Overview with zero totals, and with packages and weights entered, has no serious or critical WCAG 2 A or AA accessibility violations (repo:frontend p4-067, p4-068)"
+      ],
+      "requirements": ["req-788", "req-789", "req-1836", "req-1837"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-013, p12-016" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p11-013-m1, p11-105, p12-147" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, p1-008, p1-009, p1-011, p1-012, p1-014, p1-022, p1-023 (c-022, c-128, c-244)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-056" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-001, p4-067, p4-068 (features/hub)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p4-001, p4-008" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the germinal hub copy (req-1836) with its differences: the swapped cards (req-788), the gross weight display rule (req-789) and the germinal regions (req-1837). One page copy, one set-up, one review. existingRow inc-099 also holds req-1763 (commodities area, the germinal Commodity details Complete rule) and its criteria; the combiner keeps inc-099's id, theme (germinal-products), dependencies and its 'Return to dashboard' criterion. The copy is taken after the live hub rows (inc-098, inc-100) land, per req-1836. c-022 and c-244 ruled: gross weight held as a decimal, region 'Gross weight summary'.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub",
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:tests/animals/a11y/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-099"
+    },
+    {
+      "title": "The live-animals Transit countries task shows only when transit countries are required",
+      "detail": "Design Release 2.1 shows the Transit countries task only when the notification owes transit countries. Today the live-animals Overview shows it once arrival details are saved, even with no commodity chosen and the transit page skipped. The rule that says when transit countries are required belongs to the arrival-and-transit area; this row makes the live-animals Overview follow it.",
+      "acceptanceCriteria": [
+        "With poultry chosen, section 3 of the live-animals Overview shows 'Transit countries' between 'Arrival details' and 'Transport details' (prototype:dr2-1-source p12-030; trace:prototype-dr2-1 p13-131)",
+        "With pet cats chosen, section 3 does not show 'Transit countries', whether or not arrival details are saved (trace:prototype-dr2-1 p13-130; prototype:dr2-1-source p12-030)",
+        "With no commodity chosen and arrival details saved, section 3 does not show 'Transit countries' (trace:animals-fit p4-047, p4-048)",
+        "Where shown, 'Transit countries' reads 'To do' until at least one transit country is selected, then 'Complete' (prototype:dr2-1-source p12-030; ruling:sam-2026-10-09 p1-057)"
+      ],
+      "requirements": ["req-800"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-030" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p13-130, p13-131" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p4-043, p4-047, p4-048, p4-049" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-037, p4-038 (flow/task-rows.js:75, 89-97)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p13-025" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-057 (claim 13 splits live and germinal halves)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "The live half only (ruling:sam-2026-10-09 claim 13); the germinal half, req-1839, is in the germinal journey row. existingRow inc-100; the combiner keeps its id, theme and its dependency on inc-028 (arrival-and-transit, the rule for when transit countries are required). The row's applies rule sits in the journey's task-rows file, in journey-foundation's flow folder, so it is listed as shared.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js"
+      ],
+      "existingRow": "inc-100"
+    },
+    {
+      "title": "The Overview's status line offers 'Cancel amend' during an amendment, in every set",
+      "detail": "While a submitted notification is being amended, Design Release 2.1's shared status line shows a 'Cancel amend' control beside the 'Amend' tag and reference. It goes to the cancel-amendment confirmation page the review page uses, a page and never a pop-up (9 October afternoon ruling, c-127). It comes from the shared status strip, the one change the ruling allows to that strip, so every set's Overview shows it: live animals, germinal products once that set copies the Overview, and high-risk plants, whose own copy of the shared strip takes the same change in the same increment.",
+      "acceptanceCriteria": [
+        "While a submitted live-animals notification is being amended, the Overview's status line shows the 'Amend' tag, the reference and a link-styled 'Cancel amend' control (prototype:dr2-1-source p12-009; ruling:sam-2026-10-09-pm p2-064, p2-066)",
+        "'Cancel amend' on the Overview opens the cancel-amendment confirmation page the review page uses, as a page and not a pop-up, and works with JavaScript turned off (ruling:sam-2026-10-09-pm p1-078, p1-082; c-127)",
+        "A draft notification's Overview shows the 'Draft' tag and reference and no 'Cancel amend' (repo:frontend p4-004)",
+        "While a submitted high-risk plants notification is being amended, its Overview's status line shows the 'Amend' tag, the reference and 'Cancel amend', which opens plants' own cancel-amendment confirmation page (ruling:sam-2026-10-09-pm p2-065, p3-060; repo:plantsfrontend p2-076)",
+        "A draft high-risk plants notification's Overview shows its draft tag and reference and no 'Cancel amend' (repo:plantsfrontend p2-076)",
+        "With the service in Welsh, 'Cancel amend' on the Overview shows Welsh text, in animals and in plants (repo:frontend p4-053; repo:plantsfrontend p2-074)"
+      ],
+      "requirements": ["req-782"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-009" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-078, p1-082, p2-064, p2-065, p2-066, p3-060 (c-127)" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-004, p4-053 (features/hub/controller.js:168)" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p2-074, p2-076" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "existingRow inc-122 already holds req-782 with the manage-notifications area's Amend bar on every page (req-1397, req-1398, req-2061): one shared-strip change. The combiner keeps inc-122's id and theme (journey-foundation) and merges these criteria in, removing repeats. Decision: 'no plants-specific work' is read as no change to plants' Overview page itself; plants keeps its own copy of the shared strip, which takes the same change in this increment. The germinal Overview inherits the bar once it copies the Overview; it gets no criterion here because a germinal amendment needs the germinal submit and amend rows.",
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/shared",
+        "plantsfrontend:src/server/app/shared",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js"
+      ],
+      "existingRow": "inc-122"
+    },
+    {
+      "title": "The germinal Overview's 'Roles and addresses' row covers the consignment addresses only",
+      "detail": "On a germinal products notification, section 'Consignment parties' of the Overview holds the single row 'Roles and addresses' with the same hint as live animals. The germinal set has no CPH number or permanent address page (ruling:sam-2026-10-09 claim 3), so the row reads 'Complete' once the consignment addresses are complete.",
+      "acceptanceCriteria": [
+        "On the germinal Overview, section 'Consignment parties' holds the single row 'Roles and addresses' with the hint 'Consignor or Exporter, Consignee, Importer and Place of Destination' (prototype:dr2-1-source p12-034, p12-035; trace:prototype-dr2-1 p12-152)",
+        "The germinal 'Roles and addresses' row reads 'Complete' once all five consignment addresses are chosen, with no CPH number or permanent address asked for, and 'To do' while any is missing (prototype:dr2-1-source p12-034; ruling:sam-2026-10-09 p1-017, p1-018; repo:frontend p4-046)"
+      ],
+      "requirements": ["req-1840"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-034, p12-035" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-152" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-017, p1-018" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-046 (flow/task-rows.js:79)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "existingRow inc-181 already holds req-1840 with the germinal roles and addresses page and pickers (consignment-parties and cph-permanent-and-contact areas), whose completion rule the row observes; building it apart would copy the page twice. The combiner keeps inc-181's id, theme (germinal-products) and text, which already carry these criteria, and removes repeats.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow/task-rows.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub"
+      ],
+      "existingRow": "inc-181"
+    },
+    {
+      "title": "The germinal Overview's 'Transit countries' task shows only when transit countries are required",
+      "detail": "On a germinal products notification, the Overview shows 'Transit countries' in section 3 when transit countries are required, as Design Release 2.1 shows for germinal products, and the task reads 'Complete' once a transit country is chosen. The rule for when they are required belongs to the arrival-and-transit area; the task needs the germinal set's own Transit countries page.",
+      "acceptanceCriteria": [
+        "When transit countries are required for a germinal products notification, section 3 of its Overview shows 'Transit countries' between 'Arrival details' and 'Transport details' (prototype:dr2-1-source p12-030; trace:prototype-dr2-1 p12-150)",
+        "When transit countries are not required for a germinal products notification, section 3 of its Overview does not show 'Transit countries' (prototype:dr2-1-source p12-030; ruling:sam-2026-10-09 p1-057)",
+        "Where shown, the germinal 'Transit countries' task reads 'To do' until at least one transit country is selected, then 'Complete' (prototype:dr2-1-source p12-030)"
+      ],
+      "requirements": ["req-1839"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-030" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-150" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-014, p1-057 (claim 13)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "existingRow inc-182 already holds req-1839 with the rest of the germinal journey (req-1898, req-182), because the task needs that row's germinal Transit countries page. The combiner keeps inc-182's id, theme (germinal-products), dependencies and text, which already carry these criteria.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow/task-rows.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub"
+      ],
+      "existingRow": "inc-182"
+    }
+  ],
+  "unobservable": [],
+  "splitOff": []
+}

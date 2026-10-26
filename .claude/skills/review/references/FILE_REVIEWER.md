@@ -216,14 +216,19 @@ end state as the Must, not as a question.
 
 #### Naming: predict, then compare
 
-For every function, method, variable, constant, flag and test helper
+For every function, method, parameter, variable, constant, flag and test helper
 the diff adds or renames, and every name a changed line calls:
 
-1. Read the name alone. Write down what you predict it returns and
-   what it changes (state, session, database, redirect, log).
+1. Read the name alone. Write down the value you predict it returns
+   and what it changes (state, session, database, redirect, log).
 2. Read the body. Compare.
-3. A mismatch is a finding. So is a name that needs its comment to be
-   understood.
+3. A value the name's value word does not cover (a name that can
+   return a code) or a change it hides is a finding. So is a name that
+   needs its comment to be understood. Nothing (null or undefined) and
+   an expected error such as not found are not mismatches, and a
+   suffix that names them or a fallback (`…OrNull`, `…OrNotFound`) is
+   itself a finding. A name that predicts the value and the change is
+   not a finding, even when another name would read better.
 
 Examples from this codebase:
 
@@ -336,6 +341,19 @@ The only reason to drop one is that it is factually wrong: the copies
 differ, the name does predict what the code returns and changes, or
 the comment is accurate and describes only its own lines. Quote the
 code that shows it.
+
+Copy, layout or a component is a `design` finding when its design
+source (the prototype, a design release, the ticket's acceptance
+criteria) is disagreed with by a guide such as the GDS style guide,
+sets two different things for one element, or does not show the case
+the code had to handle. Read the design source before you add one:
+the ticket names it, and a programme workarea's `sources.json` gives
+a prototype's location and commit. The issue quotes the design source
+at file:line (a permalink at that commit for a public repo), the code
+at file:line, and the guide rule with a link when a guide disagrees.
+The fix is the question for the designer, with the options it leaves.
+It is never fixed in code. Code that differs from its design source
+is `correctness`, not `design`.
 
 Functional findings (`correctness`, `security`, `error-handling`,
 `coverage-gap`) are the other way round: raise one only with evidence,
@@ -457,6 +475,7 @@ Give every finding exactly one `--category` from the fixed list in
   `coverage-gap`.
 - Code quality: `naming`, `comments`, `structure`, `duplication`,
   `logging`, `test-readability`, `history`.
+- Design: `design`, for the designer.
 
 The step 5 dimensions map onto them: Naming is `naming`. Structure is
 `structure`, except one rule in two homes and copied test set-up, which

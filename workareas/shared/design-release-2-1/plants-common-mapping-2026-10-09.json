@@ -1,0 +1,1634 @@
+{
+  "themes": [
+    {
+      "theme": "journey-foundation",
+      "rows": [
+        {
+          "id": "inc-001",
+          "what": "The opening run follows the Design Release 2.1 step order: import reason before commodity details, no CPH step in the run, a skip to the overview when everything is already complete, and the run always ends on the review page, which names anything outstanding. Also rewrites the tests repo's cattle-by-air walk.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/docs/journey-flow-and-gates.md"
+          ],
+          "plantsWork": "Only the run ending changes in plants. After the last step (consignment-contact-select), the run goes to the review page (notification-view) instead of the overview, even when the notification is incomplete, and the review names what is outstanding. Plants keeps its own step order. The step reorder, the CPH removal and the cattle walk are animals only.",
+          "why": "Plants on origin/main has the same opening-run mechanism (RUN_STEPS/nextRunTarget in sets/high-risk-plants/journeys/linear/flow/run.js), but it always falls through to hubPath after consignment-contact-select and has no review step. Animals already has a reviewTarget step. Most of the row is the animals step order (import reason, CPH, identification), which plants does not share."
+        },
+        {
+          "id": "inc-002",
+          "what": "A page opened from its overview task returns to the overview on 'Save and continue' instead of running on to the next page in its section. The address stays the same and no from=hub marker is added. The opening run from the dashboard still chains page to page.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/kit.js",
+            "src/server/app/flow/navigation.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js"
+          ],
+          "plantsWork": "Change the fallback in plants' kit.nextTarget (outside the opening run) from moving to the next page in the section to returning to the overview, so a hub-opened page such as consignor-select no longer runs on into identification-numbers. Plants' multi-page task rows (commodities: type to list; arrival: status to details) must still move within their own row.",
+          "why": "Plants' shared/kit.js nextTarget has the same fallback as animals: exitTarget(runTarget ?? nextInSection). Its 'parties' section in flow/flow.js puts two separate overview rows (consignor, identificationNumbers) in one section, so a hub-opened consignor page chains to identification numbers. Animals' Roles and addresses to CPH chain is the same pattern."
+        },
+        {
+          "id": "inc-003",
+          "what": "'Save and return to overview' saves what was entered without the page's required-answer checks and goes to the overview. The task does not read Complete, but format errors are still refused. A named few pages keep their required checks.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/kit.js",
+            "src/server/app/shared/save-actions.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js"
+          ],
+          "plantsWork": "Plants' question pages that carry exit=hub (origin, commodity-type, arrival-status, arrival-details, place-of-destination, consignor, identification numbers) skip the required-answer check when 'Save and return to overview' is pressed, but still refuse malformed answers. The same exit=hub branch is used. This overlaps EUDPA-667's mandatory-to-proceed versus mandatory-to-submit work, which already makes plants default to mandatory to submit.",
+          "why": "Plants on origin/main has the same exit=hub button (shared/save-actions.njk) and hubExitTarget in shared/kit.js. Its controllers, for example features/origin/controller.js, validate required answers before checking exit=hub, so a blank 'Save and return to overview' is refused today, as in animals."
+        },
+        {
+          "id": "inc-004",
+          "what": "While amending, pages end with 'Save and return' (to the amend review), 'Save and continue' and 'Save and return to overview', with no cancel link. Party pickers have two buttons only. Back links stay unchanged. Continue on the amend review is silently held while anything is incomplete or invalid.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/save-actions.njk",
+            "src/server/app/shared/kit.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk"
+          ],
+          "plantsWork": "Give plants' save-actions partial the same three amend-mode controls, using exit=hub and ?change=1 with no new field, and the same two-button ending on its party pickers (consignor, place of destination, contact). Plants' check-answers POST in AMEND stays on the review with no error summary when incomplete. Today it redirects to the hub or shows errors.",
+          "why": "Plants on origin/main supports amendment (AMEND status, features/cancel-amend, the amend action on the dashboard, cancelAmendHref on check-answers). It uses an identical shared/save-actions.njk with no amend mode, and its check-answers POST shows errors or redirects to the hub when the notification is incomplete."
+        },
+        {
+          "id": "inc-005",
+          "what": "A tests-only end-to-end walk of a horse-by-sea notification under temporary admission, from create to submitted.",
+          "plants": "animals-only-data",
+          "why": "The walk uses horse, temporary admission, microchip and passport, and the registered equine answer. These are live-animal content with no plants equivalent; the plants journey on origin/main (sets/high-risk-plants) has its own commodity types and happy path."
+        }
+      ],
+      "summary": "Plants runs on the same journey engine as animals: the same kit.nextTarget fallback, opening-run RUN_STEPS, exit=hub save-actions partial, amend status and check-answers review. So the run ending on the review page, the return to the overview, lenient 'Save and return to overview' and the amend-mode page endings all apply to both frontends in the same increments. Plants keeps its own step order, so the animals step reorder, the CPH removal and both animal end-to-end walks (cattle, horse) do not apply to it. Lenient 'Save and return to overview' overlaps the EUDPA-667 mandatory-to-submit work."
+    },
+    {
+      "theme": "reference-lists",
+      "rows": [
+        {
+          "id": "inc-006",
+          "what": "The transhipment and transit 'Destination country' selects offer the same countries and subdivisions as the country of origin page, labelled '<territory> (<parent>)', in one A to Z list, with existing saved answers still shown selected.",
+          "plants": "no-equivalent",
+          "why": "Plants on origin/main has no import-reason page, no transhipment or transit reason and no destination-country select. A grep of src/server/app/sets/high-risk-plants for transhipment, transit, destinationCountry and port of exit finds only spec JSON and unrelated test text. The change sits in the animals import-reason feature folder only."
+        },
+        {
+          "id": "inc-007",
+          "what": "Reference data returns each port's type from MDM's traffic field, and the port of entry list is ordered airports, then seaports, then rail. Each group is A to Z ignoring letter case and treating odd spaces as single spaces. Both port of exit selects take the same order and the same label as the port of entry options.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/services/_capture/fixtures/ports-of-entry.json",
+            "src/server/app/services/ports/index.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js"
+          ],
+          "plantsWork": "Plants' port of landing autocomplete on arrival details lists reference data's /ports-of-entry in the order it arrives (services/ports/index.js portOptions), so in real mode the new order arrives without a code change. The captured ports fixture is byte-identical to animals' and needs recapturing in the new order in the same increment. If the shared port label changes from 'name (code)' to 'name - code', plants' displayName in services/ports/index.js changes the same way. Plants has no port of exit, so that half is animals-only.",
+          "why": "Plants has the same ports service: src/server/app/services/ports/client.js fetches /ports-of-entry, and arrival-details/controller.js offers ports.portOptions(). Its fixture src/server/app/services/_capture/fixtures/ports-of-entry.json is the same blob as animals' (b71bea2). The criteria say the port of entry label is '<name> - <code>', but both frontends label ports '<name> (<code>)' on origin/main. The build should settle which label is meant before matching plants."
+        },
+        {
+          "id": "inc-173",
+          "what": "The stub tidy-up. The stub serves MDM's real countries (250, or 32 for GBNAG_SPS_EX) and real ports, each record whole. Every frontend's captured country and port fixtures are recaptured from it, stub-mode lists match what reference data serves, and the end-to-end specs take names and counts from the recaptured fixture.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/services/_capture/fixtures/countries.json",
+            "src/server/app/services/_capture/fixtures/countries-origin.json",
+            "src/server/app/services/_capture/fixtures/ports-of-entry.json",
+            "src/server/app/services/_capture/fixtures.test.js",
+            "src/server/app/services/run-mode.test.js"
+          ],
+          "plantsWork": "Rerun plants' capture script against the tidied stub and commit the regenerated countries.json, countries-origin.json and ports-of-entry.json, so plants' stub mode offers the same lists as reference data. Then fix any plants unit, fit or tests-repo plants specs that pin the old names or counts. Plants' capture.js already treats every target as a built endpoint, so the 'waiting on an endpoint' change is animals-only.",
+          "why": "Plants has the same _capture layer on origin/main (src/server/app/services/_capture/capture.js, fixtures/*.json), feeding the stub-mode countries and ports services. Its countries.json and ports-of-entry.json are byte-identical to animals' (bff57be, b71bea2), so they go stale in the same way. Its countries-origin.json is a copy of the unfiltered 31-country list, which a recapture would also correct. The 'not built' marking exists only in the animals capture.js (optional: true on ports-of-entry)."
+        }
+      ],
+      "summary": "Plants shares the reference-data layer: its countries and ports services and captured fixtures are the same as the animals frontend's, and its arrival-details port of landing autocomplete reads the same /ports-of-entry list. So the stub tidy-up's fixture recapture and the port of entry order also land in plants in the same increments. Plants has no import-reason page, no transhipment or transit destination country and no port of exit, so the destination-country row and the port of exit half of the port row stay animals-only. One open point: the port row says port of entry options read 'name - code', but both frontends show 'name (code)' today, so which label is meant needs settling before plants is matched."
+    },
+    {
+      "theme": "origin-page",
+      "rows": [
+        {
+          "id": "inc-009",
+          "what": "Country of origin becomes a search box: no hint, a 'Search for a country' placeholder, no list on focus, a search icon in place of the drop-down arrow, matching on letters anywhere in the name with the matches in bold, screen-reader labels and announcements, and Welsh for all of it.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
+            "src/server/common/components/accessible-autocomplete/macro.njk",
+            "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+            "src/client/javascripts/components/accessible-autocomplete.js"
+          ],
+          "plantsWork": "Give the plants 'Country of origin' control the same search-box behaviour: drop the 'Start typing to search for a country.' hint, use the 'Search for a country' placeholder with JavaScript (keep the blank 'Select a country' option without it), turn off showAllValues, add the search icon and remove the arrow, use contains-matching with bold matches, and add the results label and announcements in English and Welsh. Plants keeps its own country list, its narrowing guidance and its errors; change the copy of the autocomplete component in plants the same way as in animals.",
+          "why": "Plants has the same origin page on origin/main. src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk uses the same appAccessibleAutocomplete macro for countryOfOrigin with showAllValues: true, and copy.en.js has the hint and the 'Select a country' placeholder this row removes or replaces."
+        },
+        {
+          "id": "inc-010",
+          "what": "Finishing the origin page: the region of origin code hint, a 5-character limit, the live country prefix, clearing the code when the answer changes to No, and the completeness rule for the 'where from' task. Also the shorter internal reference hint, the Welsh pass and a new visual baseline.",
+          "plants": "animals-only-data",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/spec/journey-spec.json"
+          ],
+          "why": "Almost all of the row is the region of origin code from the animal health certificate. The plants origin page collects countryOfOrigin and nothing else, and journey-spec.json records that region code is deliberately not copied to plants. The one shared part, the internal reference hint, is already done: plants keeps its optional reference as consignmentNumber on the identification-numbers page, and that hint ('Any reference you use to identify this consignment, or leave blank.') has no 58-character sentence."
+        },
+        {
+          "id": "inc-175",
+          "what": "The country of origin list shows each subdivision with its parent country, for example 'Canary Islands (Spain)'. The list is sorted by the label shown, and searching for the parent country finds the subdivision too.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/services/countries/index.js"
+          ],
+          "why": "In plants, originCountries (src/server/app/services/countries/index.js on origin/main) maps only the GBNAG_SPS_EX countries and never reads subDivisions, so the plants origin list has no subdivisions to label. Animals' subdivisions come with its region code handling (originCountryOptions, parentCountryCode). Whether plants should offer subdivisions at all, for example for the Balearic Islands exclusion on ware potatoes, is a question for the plants requirements, not part of this change."
+        }
+      ],
+      "summary": "Only one of the three rows needs a change in plants. The plants origin page uses the same country type-ahead, with a hint, a 'Select a country' placeholder and the full list on focus, so the country search box change (inc-009) should be made to both frontends in the same increment. The region of origin code row is animal-health content plants does not collect, and its only shared part, the internal reference hint, already matches in plants. The subdivision label row has no plants equivalent because the plants country list has no subdivisions."
+    },
+    {
+      "theme": "commodities-and-reason",
+      "summary": "Plants shares almost nothing in this theme. Its commodities are an add-another list (commodity type, then a list page, then a details sub-page per line, with category, genus by autocomplete and quantity). There is no search page, no species chips, no live-animal catalogue, no packages, no main import reason page, no additional details page and no transport. Every row is either animal content or a page and behaviour plants does not have, so no row needs to change plants. Two general patterns sit in other themes' rows, not these: whether a \"Save and return to overview\" with nothing entered should still validate (the shared soft-save foundation), and whether back links follow the journey order rather than going to the hub (the journey-foundation order).",
+      "rows": [
+        {
+          "id": "inc-011",
+          "what": "Wording on the commodity search page and Commodity details: the ITAHC inset text, the live-animals search hint, the Trade Tariff 'opens in a new tab' line, the 'Description of the goods' caption, a Species column in the Selected commodities table, error summary ordered question by question across species, and Welsh drafts.",
+          "plants": "animals-only-data",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js"
+          ],
+          "why": "The changes are about ITAHCs, species, Latin names and animal and package counts for each species. On origin/main, plants' features/commodities has no search page, no inset, no 'Help with commodity codes' details and no table of species for each line. Its details page edits one line at a time, so there is no error order across lines. Its caption comes from section-captions/index.js ('About the consignment'), and plants keeps its own section names."
+        },
+        {
+          "id": "inc-012",
+          "what": "The live-animal commodity catalogue: the commodities and species DR2.1 adds, Cow renamed to Cattle, germinal lines removed, which commodities ask for packages, and the k6 search term.",
+          "plants": "animals-only-data",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/services/commodities/index.js"
+          ],
+          "why": "This is the live-animal catalogue in the animals commodity service. Plants has its own catalogue of categories and genera in services/commodities/index.js, which this row does not touch."
+        },
+        {
+          "id": "inc-013",
+          "what": "Commodity search results are sorted and show the match in bold. The selected panel shows each species as a Latin-name chip with a remove button. The 'Select a commodity' error moves. 'Save and return to overview' saves without checking. Saving clears the unweaned answer for 01061900. All of this still works without JavaScript.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk"
+          ],
+          "why": "Plants has no commodity search, no results, no chips and no unweaned answer. features/commodities/list is a table of added lines with Change and Remove. One part looks related: plants' list POST refuses an empty list whichever button is pressed. Whether that stays is the shared soft-save foundation row's call, not this row's."
+        },
+        {
+          "id": "inc-014",
+          "what": "The commodity search lists results as the trader types (with JavaScript), fetched from the service, with a live region, tick-to-add, Escape to close, and the no-JavaScript fallback kept.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk"
+          ],
+          "why": "Plants has no commodity search component. Its only type-ahead is the accessible-autocomplete genus select on details.njk, which works from a short list already in the page. That is a different component with a different need."
+        },
+        {
+          "id": "inc-015",
+          "what": "The commodity page and Commodity details become steps in the journey around the main import reason page: back links go to origin or to the commodity page, the next steps go to reason, identification, additional details and arrival, and the k6 walk changes to match.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js"
+          ],
+          "why": "The order is built around animals' main import reason, identification and additional details pages, and flow.js on plants origin/main has none of them (commodity type, then commodities, then details, then origin). Plants' list page links back to the hub. Whether plants' back links should follow its own journey order is a journey-foundation decision, not part of this row."
+        },
+        {
+          "id": "inc-018",
+          "what": "Two required answers that block saving: means of transport on arrival details (with the other arrival fields optional), and number of packages on the commodity lines that ask for it.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js"
+          ],
+          "why": "Plants collects no transport details (journey-spec.json says no transport section exists in any plants source), and arrival.js holds date, time and landing as statutory mandatory answers. Plants commodity lines have no number of packages; quantity is already required."
+        },
+        {
+          "id": "inc-019",
+          "what": "A tests-only end-to-end walk of a poultry-by-rail transit notification.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "A live-animals journey (chicken, transit, rail, transporter, CPH) that only exists in the animals tests. Plants has no transit or transport."
+        },
+        {
+          "id": "inc-020",
+          "what": "Wording on the main import reason page and the additional details page: the 'Main import reason' heading and title, 'Select one' as the first option of each select with no divider, the ITAHC certification hint, review labels, and Welsh.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js"
+          ],
+          "why": "Plants has no reason or additional details page (services.md and journey-spec.json say no plants source asks a reason-for-import question). Plants' own selects (origin, place of landing, genus) are type-aheads with their own placeholders and already have no divider. This row does not change them."
+        },
+        {
+          "id": "inc-021",
+          "what": "Where the main import reason and additional details pages sit in the journey, with their back links and next steps.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js"
+          ],
+          "why": "Neither page exists in plants. flow.js on origin/main has no reason or additional details section."
+        },
+        {
+          "id": "inc-022",
+          "what": "The main import reason task completes on its own answers, and 'Save and return to overview' on the reason and additional details pages saves without the required-answer checks.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js"
+          ],
+          "why": "Plants has neither page or task. The general soft-save rule belongs to the shared soft-save foundation row (inc-003), which is not part of this theme."
+        },
+        {
+          "id": "inc-023",
+          "what": "The unweaned animals question is asked for pigs as well as cattle.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "Unweaned animals is animal content, and plants has no additional details page."
+        }
+      ]
+    },
+    {
+      "theme": "arrival-and-transit",
+      "rows": [
+        {
+          "id": "inc-025",
+          "what": "Move the animals arrival details page from the port-of-entry address to an arrival-details address (dropped by the 9 October ruling).",
+          "plants": "already-matches",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/page.js"
+          ],
+          "why": "Dropped, so nothing to build. For the record, plants already serves its arrival details page at the 'arrival-details' slug (arrival-details/page.js on origin/main)."
+        },
+        {
+          "id": "inc-026",
+          "what": "Arrival details wording: question labels go up to the medium label size, new port hint ('...search by port or airport name or code'), a 'Select a port' placeholder, means of transport options relabelled Air/Rail/Road/Sea, and a new lead-in for the transport identification hint.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.cy.js",
+            "src/server/app/shared/kit.js"
+          ],
+          "plantsWork": "Plants' arrival details labels (date, the potato time and place of landing) move from govuk-label--s to govuk-label--m to match. The place of landing hint follows the same 'Start typing to search by port or airport name or code.' pattern while keeping its own lead sentence. Plants has no means of transport or transport identification, so those parts are animals only. Its 'Select a place of landing' placeholder already follows the placeholder pattern.",
+          "why": "Plants has the same page on origin/main (sets/high-risk-plants/.../arrival-details/template.njk): a date picker, plus a port autocomplete for potatoes built on the same appAccessibleAutocomplete component, also using small bold labels and a 'Start typing to search by port name or code' hint. kit.dateField sets the date label size, so the date label change touches plants' shared/kit.js."
+        },
+        {
+          "id": "inc-027",
+          "what": "Port and transit country searches: options read 'name - code', the chosen port shows as 'name - code', a 'Search' button sits beside the box, and the typed text shows in bold in the matches. Without JavaScript the native selects stay.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/services/ports/index.js",
+            "src/server/common/components/accessible-autocomplete/macro.njk",
+            "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+            "src/client/javascripts/components/accessible-autocomplete.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk"
+          ],
+          "plantsWork": "Plants' ports service displayName changes from 'Name (CODE)' to 'Name - CODE', and plants' own copy of the accessible-autocomplete component gets the same Search button and bold match, so the potato place of landing search (and the other searches that use the component) behave as they do in animals. Plants has no transit countries page, so that part is animals only.",
+          "why": "Plants on origin/main has its own copy of services/ports/index.js, with the same `${name} (${code})` display, and its own accessible-autocomplete macro and client script. The place of landing search on plants' arrival-details page was copied from animals' portOfEntry (journey-spec.json widgetDetail)."
+        },
+        {
+          "id": "inc-028",
+          "what": "Arrival details requires a means of transport. Arrival details and transit countries return to the overview or the review depending on where the user came from. 'Save and return to overview' skips required checks but keeps the format checks.",
+          "plants": "unsure",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+            "src/server/app/shared/kit.js"
+          ],
+          "plantsWork": "",
+          "why": "The means of transport error and the transit countries parts are animals only. Plants' arrival-details controller and kit.nextTarget/exitTarget on origin/main have the same Save and continue / Save and return shape: everything is validated before the exit=hub check. Two things would settle it. First, whether inc-002 (journey-foundation) builds return-to-overview into both frontends' shared kit; if it does, plants arrival details gets it from there. Second, whether 'Save and return skips required checks' is a page rule here or a platform rule owned by the mandatory-to-proceed work (EUDPA-667). If it is a page rule, plants' date-only arrival details page should follow it."
+        },
+        {
+          "id": "inc-029",
+          "what": "Transit countries page: page title, a Back link that depends on where the user came from, no empty-state sentence, and a redirect to the overview when the means of transport is Air, Sea or not given.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no transit countries page and no means of transport question. Under src/server/app/sets/high-risk-plants on origin/main, the only arrival features are arrival-status and arrival-details."
+        },
+        {
+          "id": "inc-030",
+          "what": "With JavaScript, transit countries are added and removed in place, with 'Added' and 'Removed' screen reader announcements. The no-JavaScript fallback and the duplicate and 12-country limits stay.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no transit countries page or other add-and-remove country list on origin/main. Its status-announcer.js exists but has no matching page to use it here."
+        },
+        {
+          "id": "inc-174",
+          "what": "The transit country search offers the GBNAG_SPS_EX countries and their subdivisions, with subdivisions labelled '<territory> (<parent country>)'.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no transit countries page on origin/main. Its country of origin list (features/origin) belongs to the origin and reference-lists themes, not this row."
+        }
+      ],
+      "summary": "Plants has an arrival details page of its own: a date, plus a time and a place of landing search for potatoes. It uses the same autocomplete component and a copy of the same ports service, so the label-size and hint wording row (inc-026) and the port search display row (inc-027) should change both frontends in the same increment. Plants has no means of transport question and no transit countries page, so the transit rows (inc-029, inc-030, inc-174) have no plants equivalent. The return-and-validation row (inc-028) is unsure until we know whether journey-foundation and EUDPA-667 bring that behaviour to plants. The dropped address move (inc-025) already matches: plants already uses the 'arrival-details' address."
+    },
+    {
+      "theme": "documents",
+      "rows": [
+        {
+          "id": "inc-031",
+          "what": "Let the trader open the Upload documents page from the overview as soon as the origin is answered, without first finishing the commodity or later sections.",
+          "plants": "no-equivalent",
+          "why": "Plants has no documents page or documents task row. origin/main src/server/app/sets/high-risk-plants/journeys/linear/features/ has no documents folder, and sets/high-risk-plants/docs/services.md says there is no document-upload service and a page that attaches a file is out of scope.",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ]
+        },
+        {
+          "id": "inc-032",
+          "what": "Update the Upload documents page to match the new design: guidance table wording, the document reference and date of issue hints, the attachment size and file-type bullets, the added-documents table headings, removing the empty-state text, and showing the 15-file maximum error inline on the Attachment field.",
+          "plants": "no-equivalent",
+          "why": "The page exists only in animals (sets/live-animals/journeys/linear/features/documents). Plants on origin/main has no upload page, table or attachment field (sets/high-risk-plants/docs/services.md, 'Out of scope').",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ]
+        },
+        {
+          "id": "inc-033",
+          "what": "Let document references include punctuation such as hyphens, slashes and spaces (a backend check), and reorder the document type list, removing Health certificate.",
+          "plants": "no-equivalent",
+          "why": "Plants has no document entry, document type select or document-upload backend call on origin/main (sets/high-risk-plants/docs/services.md). The type list is also animal-specific, for example ITAHC and veterinary health certificate.",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ]
+        },
+        {
+          "id": "inc-034",
+          "what": "Make the Upload documents page remember where the trader opened it from (the journey, the overview, the review page or amending a notification), and send its Back link and Save and continue back there, including after adding, removing or a validation error.",
+          "plants": "no-equivalent",
+          "why": "The change is to the documents page's own return handling. Plants has no documents page (no features/documents under sets/high-risk-plants on origin/main). Any shared change-context fallback is owned by the journey-foundation rows, not this one.",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features"
+          ]
+        },
+        {
+          "id": "inc-035",
+          "what": "Stop Save and continue waiting for virus scans, while still blocking a document that has a virus, and make Save and return to overview save a fully filled-in document or show its errors.",
+          "plants": "no-equivalent",
+          "why": "Plants has no uploads, virus scanning or documents controller. sets/high-risk-plants/docs/services.md on origin/main rules out uploads entirely.",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ]
+        },
+        {
+          "id": "inc-036",
+          "what": "Raise the attachment size limit to 50MB, with the matching guidance and errors with and without JavaScript. Blocked by a platform limit.",
+          "plants": "no-equivalent",
+          "why": "Blocked. Plants has no file attachment on origin/main (sets/high-risk-plants/docs/services.md). The only other set the row names is germinal products, not plants.",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ]
+        }
+      ],
+      "summary": "Plants has nothing in common with this theme. Its origin/main has no Upload documents page, no documents task on the overview, no virus scanning and no document-upload service, and its services doc lists file attachment as out of scope. All six rows change animals only, so none needs a matching change in plants."
+    },
+    {
+      "theme": "transporters",
+      "rows": [
+        {
+          "id": "inc-008",
+          "what": "The private transporter's Country select offers reference-data's GBNAG_SPS_EX countries plus the United Kingdom, exactly as MDM serves them.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants has no transporter pages or transporter service. Its services.md on origin/main says the transport and transporter services were removed because the journey collects no transport details (behaviour customs-no-sps-hold-or-matching). Plants' own country selects use a different list and are not affected."
+        },
+        {
+          "id": "inc-037",
+          "what": "The transporter list is brought in line with DR2.1: a 'Select a transporter' sub-heading, an icon search button with in-page filtering and a server-side fallback, search by type and status, 'Not applicable' when there is no approval number, the DR2.1 shipped commercial and private transporters, and accessibility checks on the error and empty-search states.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants on origin/main has no transporter list or transporter register: a grep under src/ finds the word only in docs, specs and a status-structure comment. The shipped records are also animal transporter data."
+        },
+        {
+          "id": "inc-038",
+          "what": "The 'Choose a transporter type' page gets DR2.1 copy, refuses a blank or invalid choice, sends the add forms back to it when no type is chosen, and drops the status strip on this page and the private form.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants has no transporter-type page or add-transporter forms on origin/main, so there is nothing to mirror."
+        },
+        {
+          "id": "inc-039",
+          "what": "Saving an added transporter goes back to the list with that transporter chosen and a one-time success banner. Both add forms get 'Save and continue' and 'Cancel and return to dashboard', unsaved values are kept, and added transporters stay with the organisation.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants has no add-a-transporter forms and no organisation transporter register. Its consignor and other parties come from the INS address-book picker, which has no inline add form (rulings.json c-026 parks a typed consignor fallback)."
+        },
+        {
+          "id": "inc-040",
+          "what": "'Add a private transporter' gets the DR2.1 heading and title, loses its intro paragraph, and gets a Country select that defaults to the UK with no placeholder and alphabetical order. A blank save lists the required-field errors in order.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "There is no private transporter form in plants on origin/main. The country default and order apply only to this form's select."
+        },
+        {
+          "id": "inc-041",
+          "what": "'Add a commercial transporter' gets the DR2.1 heading and title, an 'Important' authorisation banner, 'Postcode or Zip code' copy and messages, an authorisation-number message, and blank-form validation in order.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants has no commercial transporter form, and the authorisation guidance applies only to animal transporters."
+        },
+        {
+          "id": "inc-042",
+          "what": "(Blocked) Adds an address search to the commercial transporter form that is limited to Northern Ireland BT postcodes. Picking a result fills the empty address fields, and with JavaScript the manual fields stay hidden until the trader reveals them.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md",
+            "src/server/app/sets/high-risk-plants/spec/panel/rulings.json"
+          ],
+          "why": "The row is blocked. Plants has no commercial transporter form, and on origin/main it fills addresses only from the address-book picker, never from a postcode lookup (rulings.json, consignor-typed-fallback)."
+        },
+        {
+          "id": "inc-043",
+          "what": "'Save and continue' on the transporter list goes to 'Upload documents' during the journey run, or back to the overview when the trader opened the list from its task.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants has no transporter list. Its services.md also says it has no document-upload service, so neither end of this step exists there."
+        },
+        {
+          "id": "inc-044",
+          "what": "Removes the unlinked commercial transporter register page (/transporters/select), and commercial transporters picked from the list still save with their type.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/docs/services.md"
+          ],
+          "why": "Plants never had a transporters-select page. Only the animals live-animals set has features/transport/transporters-select."
+        }
+      ],
+      "summary": "Plants has no transporter pages or behaviour. On origin/main, trade-imports-plants-frontend removed its transport and transporter services because the high-risk plants journey collects no transport details (sets/high-risk-plants/docs/services.md). Every row in this theme changes only the animals frontend, and none needs a matching plants change in the same increment."
+    },
+    {
+      "theme": "identification-and-permanent-address",
+      "rows": [
+        {
+          "id": "inc-045",
+          "what": "Places the animal identification page in the linear journey straight after Commodity details. It covers the back link from each entry point, skipping the page when no species needs identifiers, and continuing to Additional details or Arrival details.",
+          "plants": "animals-only-data",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js"
+          ],
+          "why": "The page records each animal's identifiers and appears only when a species has identifier fields. Plants has no per-commodity identification step. Its 'identification-numbers' page is about supplier and producer registration numbers and sits in the parties section of src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js, so it is not the same page or flow position."
+        },
+        {
+          "id": "inc-046",
+          "what": "Adds a Species column to the 'Selected commodities' summary, and groups identification as one section per commodity with one panel per species.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is the summary and per-species panel structure of the animal identification page (species, number of animals). Plants has no species-level identification panels; its commodities list/details pages under src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/ are a separate pattern."
+        },
+        {
+          "id": "inc-047",
+          "what": "Each species panel's 'Save and add another' or 'Save and finish' saves only that species' current animal. The saved-animals table moves below the form, the panel shows only the table once every animal is entered, and the panel button becomes primary.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is the per-animal record entry inside species panels. Plants has no per-animal or per-species record panels anywhere under src/server/app/sets/high-risk-plants/journeys/linear/features/."
+        },
+        {
+          "id": "inc-048",
+          "what": "A species panel saved with every identifier blank is refused on that panel's own save, even when another panel is filled. One identifier is enough to save.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This validates the per-animal identifier panel, which plants does not have. The plants identification-numbers page validates its own fixed fields with ordinary required and length rules (features/identification-numbers/controller.js)."
+        },
+        {
+          "id": "inc-049",
+          "what": "Dropped. Would have made identification count as complete only when every animal is entered, and required one entry per species before submitting.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "Dropped because the 9 October ruling adopted what the service does today. It was about counting animal identification entries anyway, and plants has no per-animal entries."
+        },
+        {
+          "id": "inc-050",
+          "what": "Identifier labels and hints follow DR2.1: 'Microchip' instead of 'Microchip number' and no hint text. Length errors say '58 characters or less', and values are trimmed before the length check, with matching Welsh drafts.",
+          "plants": "animals-only-data",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js",
+            "src/server/app/lib/validate/validators.js"
+          ],
+          "why": "The labels and hints are animal identifiers (microchip, passport, tattoo, ear tag, horse name). The shared wording pattern is already in plants: identification-numbers/copy/copy.en.js says 'must be 58 characters or less', and lib/validate/validators.js trims with Joi before the length check. Plants needs no change."
+        },
+        {
+          "id": "inc-051",
+          "what": "Pigs, sheep and goats are identified by ear tag only, with an Animal / Ear tag / Remove saved-animals table.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is species-specific identifier content. Plants has no animal species or ear tags."
+        },
+        {
+          "id": "inc-054",
+          "what": "A new permanent address page for cats, dogs and ferrets. It has one card per animal with a 'Same as the place of destination' or 'Enter a new address' choice, a permanent address section on the consignment addresses page, storage, and removal of the address from the identification page.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "A permanent address applies only to pet species that need one. Plants has no permanent address and no consignment addresses hub page: its parties section is consignor-select and identification-numbers, and place-of-destination is its own section, per src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js."
+        },
+        {
+          "id": "inc-055",
+          "what": "Validation on the permanent address page: required address fields, error summary entries that name the animal, a guard on the same-as-destination choice, keeping what was typed, and an empty state when no animals are counted.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is the error behaviour of the animals-only permanent address page. Plants has no equivalent page."
+        },
+        {
+          "id": "inc-056",
+          "what": "Saved permanent addresses are summarised on the consignment addresses page and listed per animal on the review page.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "It reads back per-animal permanent addresses. The plants check-answers page (features/check-answers/) has no per-animal rows or permanent address."
+        },
+        {
+          "id": "inc-057",
+          "what": "Removes the permanent address block, its validation and its table column from the cat and dog identification panels.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "It removes animal-specific content from the animal identification page. Plants never had it."
+        },
+        {
+          "id": "inc-058",
+          "what": "Tests-repo end-to-end walk of a pet-cats-by-air notification with permanent addresses, from creation to submission.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "It is a live-animals journey proof (cats, microchips, permanent addresses). The plants journey has no such content."
+        }
+      ],
+      "summary": "None of this theme's rows needs a matching change in plants. Every row is about animal content: per-species identification panels, animal identifiers, permanent addresses for pets and a cats-by-air end-to-end walk. Plants' only similar page, 'Identification numbers', is about supplier and producer registration numbers in the parties section, not an animal identification step. Plants already uses the '58 characters or less' wording and trims values before the length check (shared lib/validate), so the one shared pattern in inc-050 needs no plants change."
+    },
+    {
+      "theme": "address-book",
+      "summary": "Almost every row in this theme changes the INS address book itself (in the INS frontend and the address book API), and neither the animals nor the plants frontend owns those pages, so no row needs a matching plants change. Plants reads the address book in its own pickers (consignor, consignment contact, place of destination) and links to it from the service navigation. It has no 'Add a new address' hand-over to INS, no address-return page and no transporter pages. The four rows that touch the animals frontend (return links, the hand-over and transporters) are either live-animals only or, for the return allow-list, deliberately leave plants out.",
+      "rows": [
+        {
+          "id": "inc-059",
+          "what": "The address book record stores an address type and its allowed uses (API, contract, validation).",
+          "plants": "no-equivalent",
+          "why": "This changes the address book service only. Plants reads records through src/server/app/services/address-book/client.js and has no create or update path, so no plants page or behaviour changes."
+        },
+        {
+          "id": "inc-060",
+          "what": "Address validation messages on the INS form and in the API match Design Release 2.1.",
+          "plants": "no-equivalent",
+          "why": "Plants has no address entry form. Its pickers under src/server/app/sets/high-risk-plants/journeys/linear/features/*-select only select existing address book records."
+        },
+        {
+          "id": "inc-061",
+          "what": "Adding an address to the address book starts with a 'Choose an address type' step.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend page. Plants on origin/main has no add-address page or hand-over to one: there is no add link in consignor-select/template.njk and no address-return feature."
+        },
+        {
+          "id": "inc-062",
+          "what": "A redesigned add-details form for an address entered by hand.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend page. Plants has no address entry form under src/server/app."
+        },
+        {
+          "id": "inc-063",
+          "what": "The address book list gets the new intro, filter disclosure, search, table cells, empty state and a persistent banner.",
+          "plants": "no-equivalent",
+          "why": "The list page lives in the INS frontend. Plants only links to it from the service navigation (shared/layout.njk addressBookUrl). Plants' own picker tables (features/address-book-picker) are a different page."
+        },
+        {
+          "id": "inc-064",
+          "what": "The address view page gets GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend page with no plants counterpart under src/server/app/sets/high-risk-plants."
+        },
+        {
+          "id": "inc-065",
+          "what": "The delete-address confirmation page gets the new copy, a 'No, cancel' link, stale deletes as no-ops and a new banner.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend page. Plants has no address delete page."
+        },
+        {
+          "id": "inc-066",
+          "what": "Address view and delete pages honour a return link back to where the user opened them, including absolute links to the animals frontend.",
+          "plants": "no-equivalent",
+          "why": "The row's notes say the allow-list is exactly the animals frontend origin and 'never the plants frontend'. Plants on origin/main has no links into address view pages that would need a return."
+        },
+        {
+          "id": "inc-067",
+          "what": "The address book list is split into four category tabs with a Type column.",
+          "plants": "no-equivalent",
+          "why": "This changes the INS frontend list and the address book API. Plants has no address book list of its own."
+        },
+        {
+          "id": "inc-068",
+          "what": "A type filter within each category tab, with tab and pagination links that keep the user's filters.",
+          "plants": "no-equivalent",
+          "why": "This is the INS frontend list only. Plants' picker pagination (address-book-picker/pagination.js) is a separate journey page and the row does not touch it."
+        },
+        {
+          "id": "inc-069",
+          "what": "Address book search covers the whole row, shows 8 per page and filters live as the user types.",
+          "plants": "no-equivalent",
+          "why": "This changes INS list search and the address book API search. Plants' pickers call addressBook.search for their own page and the row says nothing about pickers. If the API's paging default changes, the plants picker should get a regression check, but it needs no change."
+        },
+        {
+          "id": "inc-070",
+          "what": "Saving a new address to the address book along with its uses.",
+          "plants": "no-equivalent",
+          "why": "This is the INS frontend add flow. Plants has no add-address flow."
+        },
+        {
+          "id": "inc-071",
+          "what": "Destination, Consignee or Importer and Branch addresses entered by hand, with the country fixed to the UK.",
+          "plants": "no-equivalent",
+          "why": "This is the INS frontend add form. Plants has no address entry."
+        },
+        {
+          "id": "inc-072",
+          "what": "(Blocked) UK address search-as-you-type once the real address lookup exists.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend add-page feature. Plants has no add page."
+        },
+        {
+          "id": "inc-073",
+          "what": "Editing an address matches Design Release 2.1.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend edit page. Plants has no address edit page."
+        },
+        {
+          "id": "inc-074",
+          "what": "Choosing Transporter in the address book hands over to the add-a-transporter pages, then returns to the address book.",
+          "plants": "animals-only-data",
+          "why": "The transporter add pages live in the animals frontend's live-animals transport feature (services/transporters). Plants on origin/main has no transporter pages, only spec and doc mentions."
+        },
+        {
+          "id": "inc-075",
+          "what": "The address book's transporter tab lists transporters with approval number and type, filtered and searched.",
+          "plants": "animals-only-data",
+          "why": "Transporter records are animals-only. Plants has no transporter service or pages under src/server/app."
+        },
+        {
+          "id": "inc-076",
+          "what": "Each transporter on the journey's transporter list links to its details page.",
+          "plants": "animals-only-data",
+          "why": "The transporter list is a live-animals journey page. Plants has no transporter list."
+        },
+        {
+          "id": "inc-077",
+          "what": "The INS add page reached from a journey shows the 'Add address and contact details' page.",
+          "plants": "no-equivalent",
+          "why": "Only the live-animals journey hands over to INS (live-animals features/addresses/ins-handshake.js). Plants has no handshake or add link."
+        },
+        {
+          "id": "inc-078",
+          "what": "The journey-mode add page splits origin-side and destination-side roles, with a new country placeholder and messages.",
+          "plants": "no-equivalent",
+          "why": "This is an INS frontend journey-mode page reached only from animals. Plants does not hand over to it."
+        },
+        {
+          "id": "inc-079",
+          "what": "A new address added from a journey can also be saved for the other roles on its side.",
+          "plants": "no-equivalent",
+          "why": "This is the INS journey-mode add page. Plants has no hand-over to it."
+        },
+        {
+          "id": "inc-080",
+          "what": "A journey's 'Add a new address' opens the INS add page in journey mode, with 'Save and select', 'Save and return to address page' and 'Cancel and return to hub' landings back in the journey.",
+          "plants": "no-equivalent",
+          "why": "The animals side is live-animals features/addresses (ins-handshake.js, address-return). Plants' pickers (consignor-select, consignment-contact-select, place-of-destination) have no add link and no address-return on origin/main, so adding them would be new plants scope, not a consistency change."
+        },
+        {
+          "id": "inc-081",
+          "what": "(Blocked) Destination-side journey add pages find UK addresses by search.",
+          "plants": "no-equivalent",
+          "why": "This is the INS journey-mode add page. Plants does not hand over to it."
+        },
+        {
+          "id": "inc-082",
+          "what": "The journey add page's Country select offers the MDM countries from reference data.",
+          "plants": "no-equivalent",
+          "why": "This is the INS frontend add page. Plants has no address entry with a country select."
+        },
+        {
+          "id": "inc-083",
+          "what": "Welsh for the redesigned address book list, view and delete pages.",
+          "plants": "no-equivalent",
+          "why": "This is INS frontend copy only. Plants has no counterpart pages."
+        },
+        {
+          "id": "inc-084",
+          "what": "Welsh drafts for the new add and edit copy.",
+          "plants": "no-equivalent",
+          "why": "This is INS frontend copy only. Plants has no add or edit address pages."
+        }
+      ]
+    },
+    {
+      "theme": "consignment-parties",
+      "rows": [
+        {
+          "id": "inc-085",
+          "what": "Roles and addresses page copy and rows: intro paragraph, fraud warning without full stop, 'Consignor or exporter' renamed to 'Consignor' on the row and the consignor picker, named 'Add a ...' links, full multi-line addresses on answered rows, Welsh drafts.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js"
+          ],
+          "plantsWork": "Only the Consignor rename carries over: the plants consignor picker's heading and page title (and its check answers label) change from 'Consignor or exporter' to 'Consignor', in English and Welsh, with the picker's address unchanged. Plants has no roles and addresses page, so the intro, warning, add links and address rows do not apply.",
+          "why": "Plants has no roles and addresses summary page: each party is its own hub task (plants hub/copy/copy.en.js rows). But plants consignor-select/copy/copy.en.js has title 'Consignor or exporter', and check-answers/copy/copy.en.js uses the same label, so the rename is the same change."
+        },
+        {
+          "id": "inc-086",
+          "what": "Party picker layout: add button beside the heading, search label as a medium heading, search icon button that still works without JavaScript, 'Select an address' heading above a 'Showing X out of Y results' count, fieldset with hidden legend, address lines on separate lines, and a blank save that returns without an error.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk"
+          ],
+          "plantsWork": "The plants consignor, place of destination and contact pickers get the same search control (medium-heading label, icon submit button), the 'Select an address' heading and results count out of the table caption, the fieldset with a hidden legend, and address lines on separate lines. Consignor and destination stop raising 'Select a ... from the list' on a blank save. Plants has no add control, so the add button does not apply; it keeps the refusal of a record that is not in the book.",
+          "why": "Plants pickers share the animals picker surface through address-book-picker/render.js: a 'Search' label, a secondary 'Search' button, a 'Showing X of Y addresses' table caption and comma-joined addresses (consignor-select/template.njk, copy.en.js). consignor-select/controller.js errors on a blank save, while consignment-contact-select already lets a blank save through."
+        },
+        {
+          "id": "inc-087",
+          "what": "Pickers list only the addresses carrying their party's role (untyped records show everywhere), all on one page with no pagination, a JavaScript live filter that updates the count, and no 'Selected address:' inset.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/services/address-book/index.js",
+            "src/server/app/services/address-book/client.js",
+            "src/server/app/services/address-book/stub/index.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk"
+          ],
+          "plantsWork": "The plants address-book service asks for one role and gets an unpaginated list back. The consignor picker asks for consignor or exporter and the destination picker for place of destination; untyped records still show on every picker, and the stub records carry roles. The pickers drop pagination and the 'Selected address:' inset and gain the same live filter.",
+          "why": "Plants services/address-book/index.js pages five rows at a time and says that addresses have no type ('D3'), so no function there takes a role. That premise is the one this row overturns in the shared trade-imports-address-book. Plants consignor-select/template.njk has the same 'Selected address:' inset and govukPagination as animals."
+        },
+        {
+          "id": "inc-088",
+          "what": "'Same as place of origin' and 'Same as consignee' buttons on the roles and addresses page that copy one party's address to another.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no roles and addresses page and no place of origin, consignee or importer parties. Its party tasks are only consignor-select and place-of-destination, each linked straight from the hub (hub/copy/copy.en.js)."
+        },
+        {
+          "id": "inc-089",
+          "what": "The place of origin picker searches by country, with its own label, hint, placeholder and country filter.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no place of origin party picker. features/origin is the 'Where is this consignment coming from?' question, not an address-book picker, and the plants pickers on origin/main are only consignor-select, place-of-destination and consignment-contact-select."
+        },
+        {
+          "id": "inc-090",
+          "what": "Each picker row gets a 'View' link to the address in the INS address book, replacing the 'View details' expander, and the INS back control returns to the same picker.",
+          "plants": "unsure",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk"
+          ],
+          "why": "Plants pickers have the same 'View details' expander, but plants has no INS handshake or address-return route (git grep finds none). The INS frontend's address-book/journey-registry.js registers only live-animals. To settle it, decide whether plants pickers should link out to the INS address book now; if so, this row also adds a plants entry to the INS registry."
+        },
+        {
+          "id": "inc-091",
+          "what": "The CPH number page: which live-animal commodities are asked, help and hint copy, box attributes, blank save, and back and continue to the consignment addresses page.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "A CPH number is about animal holdings. Plants on origin/main has no CPH page or field (no cph match in the src/server/app listing)."
+        },
+        {
+          "id": "inc-092",
+          "what": "The consignment addresses page shows the CPH section as 12/345/6789 and continues to the contact address page on the first pass.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is CPH display on the animals roles and addresses page. Plants has neither a CPH number nor that page."
+        },
+        {
+          "id": "inc-093",
+          "what": "With JavaScript, the CPH boxes block non-digits and one paste fills all three boxes.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is a client script for the CPH boxes only. Plants has no CPH page."
+        },
+        {
+          "id": "inc-094",
+          "what": "Contact address page: a new intro, a 'Select an address' sub-heading with a hidden legend, address hints, no current-contact card, a required choice, review navigation on the first pass, a submit block without a contact, and 'Error: ' titles with HTTP 400 on the CPH, permanent address and contact pages.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk"
+          ],
+          "plantsWork": "The plants 'Contact address for consignment' picker swaps the hint 'Selecting a contact copies their name and address into this notification.' for the new intro ('This is the contact address of the person responsible...') and adds the 'Select an address' sub-heading, in English and Welsh. Plants keeps its picker table and its blank save, which follows the plants submit-time rule. The CPH, permanent address and roles-page navigation parts do not apply.",
+          "why": "Plants consignment-contact-select is the same page with the same title and the same hint copy as animals contact/copy/copy.en.js. It is a table picker rather than radios, has no current-contact card, and already lets a blank save through (controller.js)."
+        },
+        {
+          "id": "inc-095",
+          "what": "The contact page offers only the trader's own branch addresses, plus an 'add a new branch address' link that runs through the INS address book and returns with a success banner.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no add path into the INS address book: no handshake, no address-return route, and the address book is read-only per services/address-book/index.js. The INS journey-registry.js has no plants entry. A branch-only filter for the plants contact picker would need the same typed records but has no source asking for it."
+        },
+        {
+          "id": "inc-096",
+          "what": "Roles and addresses page sections, task completion and continue destination: the permanent address section for 01061900 species, completion counting CPH and permanent address, and continuing to the contact page.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "The permanent address and CPH sections depend on animal commodities and species, and the page itself has no plants equivalent. The plants party tasks are separate hub rows, each with its own completion (obligations/sections/parties.js)."
+        },
+        {
+          "id": "inc-097",
+          "what": "Amend-mode endings ('Save and return' plus 'Save and continue') on pages reached from roles and addresses (the party pickers, CPH and permanent address pages) and on the contact page.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This row covers pages reached from another page. Every plants party and contact page is linked straight from the hub (hub/copy/copy.en.js rows), so the journey-flow theme's overview-linked amend ending covers them, not this variant. shared/save-actions.njk is identical in both repos and has no amend ending yet."
+        },
+        {
+          "id": "inc-180",
+          "what": "The INS address book accepts adds from germinal products notifications and returns to the germinal set's address-return page.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is an INS frontend registry entry for the germinal set. Plants has no INS add handshake or address-return route on origin/main, and the INS registry lists only live-animals."
+        }
+      ],
+      "summary": "Plants has no roles and addresses page. Its consignor, place of destination and contact pickers are separate hub tasks, but they share the animals address-book picker surface. So the consignor rename, the picker layout, the role-filtered one-page picker with a live filter and the contact page's new copy should change both frontends in the same increment. CPH and permanent address rows are animal-only. Same-as shortcuts, the place of origin picker, the branch add-path, the roles-reached amend endings and the germinal INS handshake have no plants equivalent. The INS 'View' link is unsure, because plants has no INS round trip today."
+    },
+    {
+      "theme": "overview-and-review",
+      "summary": "Plants has its own copy of every page in this theme (overview hub, check answers, which is also the submitted view, declaration, confirmation) and uses the same shared layout and journey strip. So the general page changes apply to both frontends in the same increment: the view header (reference, status, dates, Amend and Delete, import reference numbers), how the review ends and how amendments behave, how party addresses read back, the declaration checkbox and hidden status strip, the confirmation page's guard and dashboard link, and the hub's named regions. Plants has no import reason, region code, transit countries, transporter, documents, species, identification details, CPH, totals cards or health-certificate action-required state, so the rows about those stay animals only. Plants has already parked Copy as new on purpose, so that action is left out of the plants half wherever it appears.",
+      "rows": [
+        {
+          "id": "inc-098",
+          "what": "The overview gets named regions for screen readers (totals cards, Your commodities, the task list, each numbered task section), and the third row of section 1 is renamed 'Main import reason'.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js"
+          ],
+          "plantsWork": "Wrap each numbered task group on the plants hub in a region named by its own caption (for example '1. About the consignment'), and wrap the task list in a region the same way, keeping the GOV.UK task list inside. No totals cards and no row rename in plants.",
+          "why": "The plants hub (origin/main …/features/hub/template.njk) has the same numbered task groups with no regions. The totals cards, 'Your commodities' and the 'Main reason for import' row exist only in animals (plants hub copy has no import reason row)."
+        },
+        {
+          "id": "inc-100",
+          "what": "The Transit countries task on the overview shows only when transit countries are needed for the chosen commodity.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no transit countries task. Its task rows (…/flow/task-rows.js) are commodities, origin, arrival, destination, consignor, identification numbers and contact."
+        },
+        {
+          "id": "inc-101",
+          "what": "Review sections and cards take Design Release 2.1's section headings and card titles, the subsection headings above cards go, and the unfinished-card messages are renamed to match.",
+          "plants": "already-matches",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk"
+          ],
+          "why": "Plants check answers (…/check-answers/template.njk) already puts each card straight under its numbered h2, with level 3 card titles and no subsection headings. The renamed sections and cards (Uploaded documents, Origin of import, Main import reason, Additional details) are animals' own. Plants has no per-card 'Complete …' messages to rename."
+        },
+        {
+          "id": "inc-102",
+          "what": "Review rows for region of origin code, import reason (transit exit), additional details, arrival date label, means of transport, transit countries inside the arrival card, and the transporter card follow Design Release 2.1.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants check answers (…/check-answers/view-model/index.js) has no region code, import reason, additional details, means of transport, transit or transporter rows. Its arrival card uses plants' own date labels."
+        },
+        {
+          "id": "inc-103",
+          "what": "Overview statuses for a stale arrival date and for transit countries, and transit countries read back on the review.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no transit countries. Its arrival timing rules are the plants lateness windows (…/features/timing-windows.js, …/review/lateness.js), not a 7-day stale-date rule."
+        },
+        {
+          "id": "inc-104",
+          "what": "The review reads the commodity selection back in a 'What are you importing?' card and groups species blocks under one card per commodity, with species names title-cased.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is about animal species blocks and 'other live mammals' codes. Plants commodity cards (…/check-answers/view-model/index.js commodityCards) hold category, genus and species. Title-casing would also be wrong for botanical names."
+        },
+        {
+          "id": "inc-106",
+          "what": "Identification details table on the review: heading, per-animal labels, its own Change link and per-species unfinished messages.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "Animal identification is live-animal content. Plants' 'Identification numbers' card is a set of supplier, producer and crop identifiers, not a per-animal table."
+        },
+        {
+          "id": "inc-107",
+          "what": "Each uploaded document has its own card on the review with its file name, and the empty-state sentence goes.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no documents feature or documents section (no documents folder under origin/main …/high-risk-plants/journeys/linear/features)."
+        },
+        {
+          "id": "inc-108",
+          "what": "Addresses card: pets' permanent addresses, CPH format with slashes, header link only, CPH return to the review, and one summary entry for a deleted consignor address.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "Permanent addresses and CPH are live-animal content. Plants shows each party in its own card (…/check-answers/view-model/index.js partyCard) with no combined Addresses card or 'Edit details' links, so the one-entry summary for that card has nothing to match."
+        },
+        {
+          "id": "inc-109",
+          "what": "The review reads each party's copied address back as name, address lines and country, one per line, with GB shown as United Kingdom and no telephone or email.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "plantsWork": "Plants partyCard drops the Telephone number and Email address rows and reads the address back as name, each non-empty line, town or city, postcode and country name (GB shown as United Kingdom), one per line, for the place of destination, consignor and contact cards.",
+          "why": "Plants check answers (…/check-answers/view-model/index.js partyCard) reads back the same address-book parties, but as Name, a comma-joined Address with the raw country code, Telephone number and Email address."
+        },
+        {
+          "id": "inc-110",
+          "what": "The review ends with Continue and a red Delete. An amendment's review has a 'Cancel amend' button instead of a link, its heading switches to 'Review before re-submitting' once answers change, it opens with no errors, and an incomplete amendment cannot be submitted.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "plantsWork": "Plants check answers adds a red Delete beside Continue on a draft. On an amendment it replaces the 'Cancel amendment' link with a secondary 'Cancel amend' button next to Continue and Delete, opens without an error summary, and switches its heading once answers differ from the submitted version. That last part needs trade-imports-plants-backend to expose the same 'answers changed' signal.",
+          "why": "Plants check answers (…/check-answers/template.njk and controller.js) offers Delete only when read-only, shows Cancel amendment as a link, and works out errors on every GET, including for an amendment."
+        },
+        {
+          "id": "inc-111",
+          "what": "A submitted notification's view gets a header: the reference as h1 with a Submitted tag, the page title, 'Date submitted', a Back link to the overall INS dashboard, and a redirect there for a missing notification.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "plantsWork": "Plants' read-only check answers shows the reference as h1 with the status tag (in place of 'Check your answers' and the journey strip), uses the reference as the page title, shows 'Date submitted' from journey.submittedAt, and its Back link goes to the INS front-door dashboard instead of the hub. This links to the INS dashboard; it does not change it.",
+          "why": "Plants serves the submitted view from check answers (…/check-answers/controller.js, readOnly when SUBMITTED), titled 'Check your answers', with the layout journey strip and a Back link to the hub. Plants already stores submittedAt, which the confirmation page reads."
+        },
+        {
+          "id": "inc-112",
+          "what": "The view header offers Amend this notification, Copy as new and Delete, and shows the import reference numbers (notification reference and customs document code C640), each with a Copy button.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "plantsWork": "The plants submitted view header gets a primary 'Amend this notification' button (posting to the existing amend route) and the red Delete, plus the Import reference numbers section with its warning and the notification reference with a Copy button. Leave out Copy as new, which plants has parked. The customs document code row uses plants' own code, which needs confirming because C640 is the animals code.",
+          "why": "Plants already has Amend (a POST to /amend) and Delete, but only on the dashboard (…/dashboard/view-model/row/actions.js), and its view has no header actions. That same file records Copy as new as parked with reuse-previous-consignment."
+        },
+        {
+          "id": "inc-113",
+          "what": "Submitting records the date and outstanding items, and a notification with no health certificate shows 'Submitted action required' with a warning, an inline documents error and a Continue that starts an amendment.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Plants has no documents upload and no ITAHC or health-certificate state (no documents feature on origin/main). The 'Date submitted' part is covered for plants under the view header row (inc-111)."
+        },
+        {
+          "id": "inc-114",
+          "what": "Declaration page: a small checkbox inside a fieldset with a visually hidden 'Declaration confirmation' legend, and no status strip above the heading.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js"
+          ],
+          "plantsWork": "The plants declaration checkbox becomes a GOV.UK small checkbox in a fieldset with a visually hidden 'Declaration confirmation' legend (Welsh too), and the page stops passing a journey strip, for both a draft and an amendment.",
+          "why": "The plants declaration (…/declaration/template.njk) uses the same plain govukCheckboxes with no fieldset. It shows the journey strip through kit.base and the shared layout (src/server/app/shared/kit.js journeyStrip, shared/layout.njk), just as animals does."
+        },
+        {
+          "id": "inc-115",
+          "what": "Confirmation page: a notification not yet submitted goes to the declaration, the outstanding-ITAHC bullet wording and rule change, the 'view or change from your dashboard' copy changes, 'Return to your dashboard' goes to the INS dashboard, and the HMRC links open in a new tab.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js"
+          ],
+          "plantsWork": "The plants confirmation sends a notification that is not yet submitted to the declaration page (today it goes to check answers), and its 'Return to dashboard' link goes to the INS front-door dashboard. The ITAHC bullet, the view-or-amend section and the HMRC help links are animals copy that plants does not have.",
+          "why": "Plants has the same confirmation page and the same guard (…/confirmation/controller.js redirects a non-submitted notification to the check answers slug, and dashboardHref is the set's own dashboardPath). Its content is plants' own provisional copy, with no outstanding-documents, help or HMRC sections."
+        },
+        {
+          "id": "inc-116",
+          "what": "A completed notification shows a completed status and no Amend button (blocked on a real source of completion).",
+          "plants": "unsure",
+          "plantsPaths": [],
+          "why": "Blocked. Plants has no completed status either (its row actions in …/dashboard/view-model/row/actions.js cover only DRAFT, SUBMITTED and AMEND). Whether plants follows depends on whether the source of completion, once ruled, covers plants notifications."
+        },
+        {
+          "id": "inc-117",
+          "what": "Tests for review, declaration and confirmation paths that no test covers today: multi-commodity review, party address errors, rejected and scanning documents, header buttons, confirmation with an ITAHC, declaration refusal, and failed, stale and incomplete submits.",
+          "plants": "already-matches",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js"
+          ],
+          "why": "Most criteria test animals-only behaviour (species blocks, documents, ITAHC). The general declaration paths are already proved for plants in …/declaration/controller.test.js (an incomplete submission returns to check answers, a failed finalise shows the recoverable banner, a submitted notification redirects). The plants header and cancel-amend tests belong to the rows that change them (inc-110, inc-112)."
+        },
+        {
+          "id": "inc-118",
+          "what": "Overview totals count only positive numbers (dropped).",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Dropped. The plants hub (…/hub/template.njk) has no Animals or Packages totals."
+        },
+        {
+          "id": "inc-119",
+          "what": "Fallback warning for an action-required notification's other outstanding items (dropped).",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "Dropped. Plants has no action-required state."
+        },
+        {
+          "id": "inc-187",
+          "what": "A draft's review shows the view header with a Draft tag, 'Date created', Copy as new, Delete and the import reference numbers, stays editable with Change links and its error summary, ends with Continue, and has a Back link to the INS dashboard. Draft rows on the dashboard still open the overview.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "plantsWork": "A plants draft's check answers uses the same header as its submitted view: the reference as h1 with a Draft tag, 'Date created', Delete and the import reference numbers, and a Back link to the INS front-door dashboard, while keeping its Change links, error summary and Continue. Leave out Copy as new (parked in plants). Plants dashboard draft rows already go to the hub.",
+          "why": "Plants' draft check answers (…/check-answers/controller.js) shows 'Check your answers' under the journey strip, with a Back link to the hub. Plants dashboard draft rows already resume at the hub (…/dashboard/view-model/row/actions.js resumeAction)."
+        }
+      ]
+    },
+    {
+      "theme": "manage-notifications",
+      "rows": [
+        {
+          "id": "inc-120",
+          "what": "'Amend this notification' asks for confirmation in a modal dialog (with a no-JavaScript confirmation page), then lands on the amend review rather than the overview. Amend from the list card also lands on the review. A stale or unknown amend returns to the overall dashboard. Includes Welsh text and the k6 amendment check.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
+            "src/server/app/shared/layout.njk"
+          ],
+          "plantsWork": "Plants' amendPost is identical to animals'. Like animals, it lands on hubPath, and on a refusal it goes to its own dashboard. Point the landing at the plants review page, add the same confirmation dialog and no-JS confirmation page (both in plants' shared layer), and add Welsh. A refused amend goes to plants' own fallback (its dashboard, or the INS front door where one is configured), not /live-animals. The k6 change is animals only.",
+          "why": "On origin/main, plants' dashboard/controller.js has the same POST /amend route, and it redirects to hubPath just as animals' does. Plants' dashboard row actions also post Amend for Submitted cards. Plants' check-answers has no 'Amend this notification' button yet, and neither does animals': the view-header row adds that button, so it must land first in both frontends."
+        },
+        {
+          "id": "inc-121",
+          "what": "Cancel amendment becomes a dialog over the current page, with new wording ('Are you sure you want to cancel this amendment?', a 'Go back' link-button and no description line) and a stripped-down no-JS confirmation page. It returns to the read-only submitted view with ?cancelled=1 and no success banner.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js"
+          ],
+          "plantsWork": "Change plants' cancel-amend copy and template the same way, reusing the dialog from the amend row. Drop the 'amendment cancelled' success banner from plants' check-answers template, keep the ?cancelled=1 redirect, and add the guard redirect to the dashboard and the Welsh strings.",
+          "why": "Plants' cancel-amend feature on origin/main has the same controller logic (redirects to the review page with ?cancelled=1) and the same copy as animals ('Cancel this amendment?', the 'changes will be discarded' body). Its check-answers template shows the same amendmentCancelled success banner."
+        },
+        {
+          "id": "inc-122",
+          "what": "While a notification is being amended, the status bar on the overview, the review and every question page shows an 'Amend' tag (not 'Amending'), the reference and a link-styled 'Cancel amend' button that opens the cancel dialog. A draft shows no Cancel amend.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/kit.js",
+            "src/server/app/shared/layout.njk",
+            "src/server/app/shared/copy.en.js",
+            "src/server/app/shared/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js"
+          ],
+          "plantsWork": "Change plants' shared journey strip the same way: copy 'Amending' to 'Amend', plus a 'Cancel amend' link-button when the status is AMEND that opens the cancel-amendment dialog or page, with Welsh. Plants' hub and question pages pick the bar up through kit.base, which passes the journey to the strip.",
+          "why": "On origin/main, plants' shared/kit.js builds the same STRIP_STATUS journeyStrip, and its layout.njk renders it above the heading. Plants' shared/copy.en.js has journeyStrip.amend: 'Amending', just as animals does. Plants' hub controller passes the journey to kit.base, so the strip shows on the overview and on the question pages."
+        },
+        {
+          "id": "inc-123",
+          "what": "Copy as new carries over exactly the Design Release 2.1 field list, from the submitted version of an amendment. It keeps origin, commodity, species, import reason and certified-for, maps certified-for values, and clears identification, arrival, transport, contact, transit countries and totals.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js"
+          ],
+          "why": "Plants has no Copy as new. Its dashboard/view-model/row/actions.js says the action is parked, and dashboard/controller.test.js asserts that no status offers it. Most of the carried fields are also animals data: species, unweaned animals, certified-for and identification."
+        },
+        {
+          "id": "inc-124",
+          "what": "A stale Copy as new (the notification changed since the page opened) copies nothing. From the view page it returns to the view page with 'The notification has been updated', not to the dashboard, and no new draft appears.",
+          "plants": "no-equivalent",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js"
+          ],
+          "why": "The fix is in animals' notification-actions/controller.js copy route (copyOrigin and staleAction redirect). Plants has no notification-actions feature and no copy route on origin/main, because Copy as new is parked there."
+        },
+        {
+          "id": "inc-125",
+          "what": "The delete confirmation page gets a summary list (Reference number, Commodity, Number, Origin, with list-derived fallbacks and 'Not applicable') and new wording: 'Confirm that you want to delete this notification.', 'This action cannot be undone.', 'Yes, delete' and a 'No, cancel' link. The Back link and 'No, cancel' return to the view page, and the page has no journey strip. Includes Welsh.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.en.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js"
+          ],
+          "plantsWork": "Give plants' delete page the same summary-list structure, wording and buttons, and point Back and 'No, cancel' at the view page (check-answers) instead of the dashboard. Drop the journey strip, and add Welsh. Plants fills the rows with its own data: the commodity and origin that its dashboard row already formats, and its own quantity for Number, or 'Not applicable'. The animal-specific Commodity format (species Latin names) and the total number of animals do not carry over.",
+          "why": "Plants' delete-notification feature on origin/main is a copy of animals': same copy ('Yes, delete notification', 'This cannot be undone.', 'No, return to dashboard'), backLink and noHref set to the dashboard, and kit.base given the journey, so it renders the strip. Only the Commodity and Number values are animal content."
+        }
+      ],
+      "summary": "Plants has the same amend route, cancel-amendment page, shared journey strip and delete confirmation page as animals. So the amend dialog, the cancel-amendment dialog, the 'Amend' status bar and the delete page should each change both frontends in the same increment. Plants keeps its own commodity and quantity values, and its own fallback in place of /live-animals. The k6 change and the INS front-door redirect stay animals-side, or depend on other rows. Plants has no Copy as new (it is parked on origin/main), so the copy carry-over row and the stale-copy row have no plants equivalent."
+    },
+    {
+      "theme": "ins-dashboard",
+      "rows": [
+        {
+          "id": "inc-126",
+          "what": "After a delete the trader lands on the overall dashboard with the message 'Notification has been deleted', and a notification being amended can be deleted.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/copy.en.js",
+            "src/server/app/shared/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js"
+          ],
+          "plantsWork": "Change only the deletion message in the shared copy. 'The notification has been deleted.' becomes 'Notification has been deleted' on the plants list's ?deleted=1 banner, in English and Welsh. Plants keeps landing on its own list, because it has no INS page to land on.",
+          "why": "Plants already lets an AMEND notification be deleted and already redirects to its list with ?deleted=1 (high-risk-plants/.../delete-notification/controller.js). Its list banner reads notificationActions.delete.successBody, the same shared string as animals, so the wording change applies to both. The move to the INS dashboard is animals-only."
+        },
+        {
+          "id": "inc-127",
+          "what": "INS front-door page titles follow the GOV.UK title pattern.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This changes only the INS frontend, so the plants frontend has nothing to change. The theme is blocked anyway, because the INS dashboard requirements are still at an early stage."
+        },
+        {
+          "id": "inc-128",
+          "what": "The INS front door's home becomes the Design Release 2.1 overall dashboard.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is an INS frontend page only. No plants frontend path renders the INS home, and the INS dashboard work is blocked."
+        },
+        {
+          "id": "inc-129",
+          "what": "The live animals notification list moves from the animals frontend to the INS frontend, scoped to the trader's organisation, with the Design Release 2.1 page frame (Dashboard caption, Create new, Use template, a 'Notifications' heading).",
+          "plants": "unsure",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js"
+          ],
+          "why": "Plants has the same set-root list page as animals (high-risk-plants/.../dashboard), with the old frame: intro paragraph, 'Start a new notification' and 'Your notifications'. There is no plants list on the INS frontend to move it to, and the plants section of the INS home (inc-146) is blocked. One decision settles this: is the plants list moving to the INS frontend now, or is it reframed in place in a separate 'make the dashboard match the prototype' theme? If it is reframed in place, plants should change in the same increment as animals."
+        },
+        {
+          "id": "inc-130",
+          "what": "Notification cards on the INS list show the Design Release 2.1 facts and status styles.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "The cards are built in the INS frontend from the INS read model. The plants frontend's own cards (high-risk-plants/.../dashboard/template.njk) are untouched, and the INS work is blocked."
+        },
+        {
+          "id": "inc-131",
+          "what": "A submitted notification with no ITAHC shows an 'Action required' tag and 'ITAHC is missing' on the list and on the dashboard.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "The flag comes from the animal health certificate (ITAHC). Plants has no ITAHC, and its list (high-risk-plants/.../dashboard) has no action-required derivation."
+        },
+        {
+          "id": "inc-132",
+          "what": "An 'Action needed' drill-down lists the organisation's notifications that need action.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is a new INS frontend page with no plants frontend counterpart, and the INS work is blocked."
+        },
+        {
+          "id": "inc-133",
+          "what": "Search and sort on the 'Action needed' list.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS 'Action needed' drill-down only, and the INS work is blocked."
+        },
+        {
+          "id": "inc-134",
+          "what": "An 'Action needed' glance card in the Live animals section of the INS home.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS home only. The plants glance cards are inc-146, which is blocked."
+        },
+        {
+          "id": "inc-135",
+          "what": "The INS live animals list gets 'In progress', 'Draft' and 'Completed' tabs.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is built on the INS frontend list after the move. The plants list in the plants frontend stays where it is, and the INS work is blocked."
+        },
+        {
+          "id": "inc-136",
+          "what": "Search and sort become one form that really searches and sorts, on the INS list.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is built on the INS frontend list. Plants still has separate search and sort forms on its own list (high-risk-plants/.../dashboard/template.njk), but this row does not change the plants frontend. A plants change would belong in a separate in-place dashboard theme."
+        },
+        {
+          "id": "inc-137",
+          "what": "The INS list gets 'Additional filters' for arrival date, date range and status.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS frontend list only, and the INS work is blocked."
+        },
+        {
+          "id": "inc-138",
+          "what": "The INS list shows 8 notifications a page, with numbered pages and no results line or empty messages.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS frontend list. The plants list keeps its own pagination and results line in the plants frontend, outside this row."
+        },
+        {
+          "id": "inc-139",
+          "what": "The INS list's Summary shows 'Action needed' and 'Status updated' glance cards.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS frontend only, and the INS work is blocked."
+        },
+        {
+          "id": "inc-140",
+          "what": "The list's success banner is titled 'Success', not 'Notification deleted' or 'Notification copied'.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
+            "src/server/app/shared/copy.en.js",
+            "src/server/app/shared/copy.cy.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js"
+          ],
+          "plantsWork": "Retitle the plants list's ?deleted=1 success banner to 'Success' (Welsh 'Llwyddiant', as check-answers already uses), keeping role alert and no banner without the flag. Plants has no copy-as-new banner.",
+          "why": "The plants list (high-risk-plants/.../dashboard/template.njk) shows a GOV.UK success banner titled sharedCopy.notificationActions.delete.successTitle, 'Notification deleted'. It is the same component and the same shared title that animals is changing."
+        },
+        {
+          "id": "inc-141",
+          "what": "A germinal products notification list on the INS frontend.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is for germinal products only, on the INS frontend. It has nothing to do with plants."
+        },
+        {
+          "id": "inc-142",
+          "what": "Cards show the authorities' outcomes (delayed, completed, inspection) and their actions. This row is blocked.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "These are INS frontend and INS backend cards only, and the row is blocked."
+        },
+        {
+          "id": "inc-143",
+          "what": "Status update cards and the 'Status updated' drill-down. This row is blocked.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS frontend only, and the row is blocked."
+        },
+        {
+          "id": "inc-144",
+          "what": "An 'Inspection required' drill-down. This row is blocked.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is on the INS frontend only, and the row is blocked."
+        },
+        {
+          "id": "inc-145",
+          "what": "A germinal products section on the INS home.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is germinal-only content on the INS home."
+        },
+        {
+          "id": "inc-146",
+          "what": "Glance cards for the plants section of the INS home. This row is blocked.",
+          "plants": "no-equivalent",
+          "plantsPaths": [],
+          "why": "This is about plants, but it is built in the INS frontend, not the plants frontend. It is blocked, so the plants frontend has nothing to change."
+        },
+        {
+          "id": "inc-147",
+          "what": "Outstanding items driven by animal identifiers: header warnings, an inline error, a confirmation bullet and the dashboard message 'Information is missing'.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is driven by the identifiers of each animal species and by the ITAHC. Plants has no animal identifier records."
+        },
+        {
+          "id": "inc-172",
+          "what": "Germinal products notifications on their own list and cards.",
+          "plants": "animals-only-data",
+          "plantsPaths": [],
+          "why": "This is germinal-only, on the INS frontend and backend."
+        }
+      ],
+      "summary": "Two rows need plants changing at the same time as animals. The plants list already has the same delete success banner, so inc-140 retitles it 'Success' and inc-126 changes the shared deletion message to 'Notification has been deleted'. Plants already deletes a notification being amended and already lands on its own list with ?deleted=1. Everything else in this theme is either built only in the INS frontend and backend (and blocked, since the INS dashboard requirements are still early) or is animal or germinal content (ITAHC, identifiers, germinal). inc-129, which moves the animals list off the animals frontend, is unsure: plants has the same set-root list with the same old frame, so it should change with animals if the dashboard is reframed in place in a separate theme rather than moved to INS."
+    },
+    {
+      "theme": "type-question-and-templates",
+      "summary": "Only 3 of the 24 rows should change plants as well, all in the same increment. The new Templates item goes into the service navigation, Back links start following where a page was opened from, and plants gets the same way in from the INS 'What are you importing?' question that live animals gets. Two more rows touch plants but are not clear-cut: the commodity row's check-answers return already works in plants, and inc-150's Back link to the type question is unsure because plants already asks 'What are you importing?' on its own first page. Everything about templates is animals-only: the ruling (c-220) limits templates to live animals and germinal products, and the INS home rows (inc-149, inc-153) change only the INS front door, not the plants frontend.",
+      "rows": [
+        {
+          "id": "inc-148",
+          "what": "The INS front door asks 'What are you importing?' before any draft exists, then hands the user to the right service: live animals creates a draft and lands on its first page; plants types land on the start of the high-risk plants journey.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/paths.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js"
+          ],
+          "plantsWork": "Give plants the same 'start from the INS type question' entry that animals gets. It creates a plants draft and lands on plants' first page, commodity-type, with the Draft tag and reference showing. Whether the INS choice (Plants for planting, Potatoes or Wood products) also pre-answers commodity-type is for the plan to say.",
+          "why": "On origin/main plants starts a notification the same way animals does: a POST to createRoutePath() in sets/high-risk-plants/journeys/linear/features/dashboard/controller.js, and shared/paths.js is identical in both repos. So 'lands on the start of the plants journey' needs the same cross-service start entry animals is getting. The option labels differ: the INS question says 'Potatoes (seed and ware)' and 'Wood products', plants' commodity-type copy says 'Potatoes (seed or ware)' and 'Wood and cut trees'."
+        },
+        {
+          "id": "inc-149",
+          "what": "The INS home's 'Create new' button opens the type question.",
+          "plants": "no-equivalent",
+          "why": "This changes only the INS front door's home page. Plants' own set dashboard (sets/high-risk-plants/journeys/linear/features/dashboard) is not affected, and per the owner the INS dashboard work is blocked anyway."
+        },
+        {
+          "id": "inc-150",
+          "what": "The first journey page's Back link follows where the notification was started (the type question, the set's own list, or the overview), and going back to the type question picks the same notification back up.",
+          "plants": "unsure",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js"
+          ],
+          "why": "Plants' first page, commodity-type, has the same Back link rule as the animals origin page (overview once answered, dashboard otherwise: backLinkFor in commodity-type/controller.js). But that page is itself a 'What are you importing?' question with its own three options. A ruling is needed: should Back from plants' first page go to the INS type question, and which of the three plants options should show as selected? Settle that alongside inc-148."
+        },
+        {
+          "id": "inc-151",
+          "what": "An empty Manage templates page, backed by stored templates.",
+          "plants": "no-equivalent",
+          "why": "Templates cover live animals and germinal products only (ruling claim 24, c-220). Plants on origin/main has no templates feature or store under src/server/app."
+        },
+        {
+          "id": "inc-152",
+          "what": "A Templates item in the service navigation (Dashboard, Templates, Address book, Manage account, Log out), shown as current on every templates page.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/layout.njk",
+            "src/server/app/shared/copy.en.js",
+            "src/server/app/shared/copy.cy.js"
+          ],
+          "plantsWork": "Add the same fifth item, Templates, between Dashboard and Address book in plants' shared/layout.njk, with English and Welsh labels. It links across to the animals frontend's Manage templates page, the way Address book links across to INS. Plants' four-item navigation tests become five.",
+          "why": "Plants' shared/layout.njk on origin/main builds the same four-item service navigation as animals (dashboard, addressBook, manageAccount, logOut). The navigation is shared across the whole service, and the INS frontend gets the item even though it has no templates of its own."
+        },
+        {
+          "id": "inc-153",
+          "what": "A 'Use template' button on the INS home.",
+          "plants": "no-equivalent",
+          "why": "This changes only the INS home page; nothing in the plants frontend is touched."
+        },
+        {
+          "id": "inc-154",
+          "what": "Starting a template: the type question in template mode (live animals and germinal products only), the template name page, and origin in template mode.",
+          "plants": "no-equivalent",
+          "why": "Template mode leaves out every plants type (c-220), and plants has no templates on origin/main."
+        },
+        {
+          "id": "inc-155",
+          "what": "A template's task list and pages: the Template tag, the 'Template tasklist' heading, no Documents section, and Review template.",
+          "plants": "no-equivalent",
+          "why": "This is template mode only. Plants' overview (sets/high-risk-plants/journeys/linear/features/hub) has no template mode and needs none."
+        },
+        {
+          "id": "inc-156",
+          "what": "Review your template page with Save template.",
+          "plants": "no-equivalent",
+          "why": "Templates are animals and germinal only; plants has no template review."
+        },
+        {
+          "id": "inc-157",
+          "what": "Save a template; success banner and template cards on Manage templates.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-158",
+          "what": "View a saved template's page.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-159",
+          "what": "Change one section of a saved template, with Save and return or Cancel.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-160",
+          "what": "Use a template to start a live-animals notification already filled in from the template.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates, and the pre-filled answers are live-animal fields."
+        },
+        {
+          "id": "inc-161",
+          "what": "Template card answers, category label and party addresses.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-162",
+          "what": "A 'Sort by' select on Manage templates.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-163",
+          "what": "Edit a whole saved template on its own task list (dropped).",
+          "plants": "no-equivalent",
+          "why": "Dropped by ruling claim 82 (c-261); plants has no templates in any case."
+        },
+        {
+          "id": "inc-164",
+          "what": "Discard a template that is being created.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-165",
+          "what": "The template review's Delete button, and deleting a saved template.",
+          "plants": "no-equivalent",
+          "why": "Plants has no templates."
+        },
+        {
+          "id": "inc-166",
+          "what": "Commodity pages return to where the trader came from: check answers, the overview, or a template.",
+          "plants": "already-matches",
+          "plantsPaths": [
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/links.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+          ],
+          "why": "Plants' commodity loop already carries ?change=1 through details, the list and back to check answers (commodities/links.js uses kit.changeContext; check-answers.fit.spec.js asserts the round trip). The template criteria have no plants equivalent. The overview criterion depends on animals' page structure, since plants goes details then list."
+        },
+        {
+          "id": "inc-167",
+          "what": "The main import reason page edits a template from its review.",
+          "plants": "no-equivalent",
+          "why": "This is template mode on an animals page; plants has neither templates nor a main import reason page."
+        },
+        {
+          "id": "inc-168",
+          "what": "Arrival details while creating or editing a template (no arrival date).",
+          "plants": "no-equivalent",
+          "why": "Plants has arrival-details but no template mode for it to change."
+        },
+        {
+          "id": "inc-169",
+          "what": "Template creation skips Upload documents.",
+          "plants": "no-equivalent",
+          "why": "This is template mode only; plants has no templates."
+        },
+        {
+          "id": "inc-170",
+          "what": "The transporter list's closing buttons when amending a notification or editing a template.",
+          "plants": "animals-only-data",
+          "why": "The transporter list is an animals-only feature (features/transport); plants on origin/main has no transporter pages."
+        },
+        {
+          "id": "inc-171",
+          "what": "Back links follow the context a page was opened in. From the overview they go to the overview. In the opening run they go to the previous page in the step order. From a review Change link they also go to the previous page, while Save and continue still returns to the review. From a template review they go to that review.",
+          "plants": "change-both",
+          "plantsPaths": [
+            "src/server/app/shared/kit.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js",
+            "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js"
+          ],
+          "plantsWork": "Apply the same rule to plants' question pages in the same increment, using plants' own step order. Back goes to the overview when a page was opened from it, otherwise to the previous page in the opening run or after a review Change link. The template-review and Roles and addresses criteria stay animals-only.",
+          "why": "Plants' question pages on origin/main hard-code the overview as their Back link, just as animals does: backLink: hubPath(...) in arrival-details, arrival-status, identification-numbers, address-book-picker and commodities/list. This is shared journey behaviour, not animal content."
+        }
+      ]
+    },
+    {
+      "theme": "germinal-products",
+      "rows": [
+        {
+          "id": "inc-016",
+          "what": "The germinal 'What are you importing?' search offers only the 18 germinal products, each with its species, and its own search hint.",
+          "plants": "animals-only-data",
+          "why": "The germinal commodity catalogue and species are animal content. Plants has its own commodity search under sets/high-risk-plants, and nothing about it changes here."
+        },
+        {
+          "id": "inc-017",
+          "what": "Germinal Commodity details asks total gross weight, number of packages and temperature per species, and the backend stores the answers.",
+          "plants": "animals-only-data",
+          "why": "These are germinal questions per species in the germinal set's own copy. On origin/main, plants has no germinal content under src/server/app/sets/high-risk-plants."
+        },
+        {
+          "id": "inc-024",
+          "what": "The germinal opening run and its main reason for import: two reasons and four purposes.",
+          "plants": "animals-only-data",
+          "why": "The reasons and purposes are germinal certification content, and they live in the germinal set. Plants keeps its own reason-for-import data."
+        },
+        {
+          "id": "inc-052",
+          "what": "Germinal identification asks once per species for donor, collection and production dates and identification number, and the backend stores them.",
+          "plants": "animals-only-data",
+          "why": "Animal identification for germinal species. Plants has no identification page."
+        },
+        {
+          "id": "inc-053",
+          "what": "Germinal identification date fields become single text inputs with the date picker, and the page gets the V4 date and length checks with ordered errors.",
+          "plants": "animals-only-data",
+          "why": "The rules and the picker apply only to the germinal identification page's own fields. Plants already has its own date handling (lib/validate/calendar.js and the arrival-details template on origin/main), and this row does not ask for a change to it."
+        },
+        {
+          "id": "inc-099",
+          "what": "The germinal set's own Overview: Packages/boxes and Kilograms cards in place of Animals, region names, and the Commodity details Complete rule.",
+          "plants": "animals-only-data",
+          "why": "This is a germinal copy of the hub carrying germinal commodity totals. The plants overview in sets/high-risk-plants keeps its own cards, and the row changes nothing shared."
+        },
+        {
+          "id": "inc-105",
+          "what": "The germinal set's own check-answers: germinal rows in each species block, messages for unfinished species, and no CPH or permanent address.",
+          "plants": "animals-only-data",
+          "why": "Germinal species blocks, CPH and permanent address are animal content in the germinal set's own review copy. The live-animals review is explicitly left unchanged, so the plants review has nothing to mirror."
+        },
+        {
+          "id": "inc-176",
+          "what": "A germinal products notification starts in its own set, with its own draft, category and origin page.",
+          "plants": "animals-only-data",
+          "why": "This creates a new animals set (sets/germinal-products), which is not on origin/main in animals yet. Plants is already its own set."
+        },
+        {
+          "id": "inc-177",
+          "what": "Germinal Commodity details validates weight and packages, and lists errors by question, species by species.",
+          "plants": "animals-only-data",
+          "why": "The validation is for germinal weight and package fields in the germinal set's copy only. Plants' commodity validation is separate and is not touched."
+        },
+        {
+          "id": "inc-178",
+          "what": "A germinal notification chooses its transporter from the germinal set's own copy of the transporter step.",
+          "plants": "animals-only-data",
+          "why": "The transporter step for animal consignments is copied into the germinal set. Nothing here changes how the transporter step behaves for plants."
+        },
+        {
+          "id": "inc-179",
+          "what": "Germinal notifications get their own copy of the Upload documents page, wired into the germinal flow.",
+          "plants": "animals-only-data",
+          "why": "The page is a straight copy of the live-animals documents page with no change in behaviour. Any changes to the documents page itself come from the documents rows (inc-031 to inc-036), not this one."
+        },
+        {
+          "id": "inc-181",
+          "what": "The germinal set gets its own roles and addresses page and party pickers.",
+          "plants": "animals-only-data",
+          "why": "This copies the animals roles and addresses page into the germinal set, without CPH or permanent address. The pattern does not change, so plants has nothing to mirror."
+        },
+        {
+          "id": "inc-183",
+          "what": "The germinal set has no Additional details step, and a germinal species counts as identified once it has one identifier.",
+          "plants": "animals-only-data",
+          "why": "These are germinal flow and obligation rules around animal identification. Plants has neither an identification step nor an Additional details step."
+        },
+        {
+          "id": "inc-182",
+          "what": "The rest of the germinal journey is copied into the germinal set in Design Release 2.1's step order: arrival details, transit countries, contact address, declaration and submission.",
+          "plants": "animals-only-data",
+          "why": "These are copies of existing live-animals pages into the germinal set, with no change in behaviour. The plants copies under sets/high-risk-plants are not affected."
+        },
+        {
+          "id": "inc-184",
+          "what": "An end-to-end test of a bovine semen germinal notification, from creation to submission.",
+          "plants": "animals-only-data",
+          "why": "This is a tests-only proof for the germinal set. Plants has its own E2E project."
+        },
+        {
+          "id": "inc-185",
+          "what": "Amend, cancel amend, copy as new and delete for germinal notifications.",
+          "plants": "animals-only-data",
+          "why": "This extends the existing notification actions to the new germinal set. The actions do not change in behaviour, so plants has nothing to mirror."
+        },
+        {
+          "id": "inc-186",
+          "what": "Germinal templates are answered on the germinal set's own pages, and using a template starts a germinal notification.",
+          "plants": "animals-only-data",
+          "why": "Template mode is wired for the germinal set only. The template behaviour stays as it is everywhere else."
+        }
+      ],
+      "summary": "Every row in this theme builds or fills the new germinal products set in the animals frontend. That set is not on origin/main yet: the only germinal mentions there are in services and live-animals copy. The rows copy live-animals pages into the germinal set and add germinal-only questions, validation, cards and obligations, so none changes a page or behaviour that plants shares. Plants needs no change for this theme, and no row should touch trade-imports-plants-frontend."
+    }
+  ],
+  "missing": []
+}

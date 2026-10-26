@@ -83,6 +83,8 @@ To make one change across several repos, services or environments, apply it to o
 
 When `tim` or a `tools/` script lacks an option you need, add it (with its `--help` and tests) and commit it. Do not reach for a one-off `curl`, `jq` or raw API call.
 
+GitHub is the exception. Use the GitHub CLI (`gh`) directly for pull requests, checks, Actions runs and the GitHub API (`gh api`). Never wrap `gh` or the GitHub API in `tim` or a new `tools/` script.
+
 ### 9. Workspace config is committed and portable
 
 Config at the workspace root (MCP servers, hooks, settings) goes in a committed file with no machine-specific paths, so every clone gets it. Not in local scope (`~/.claude.json`).
@@ -123,9 +125,14 @@ Run `make help` from this directory to see all cross-repo commands.
 ## `tim` CLI (alternative to Make + tools/)
 
 [`tim/`](tim/) is a Node.js CLI that mirrors the Makefile + read-only
-parts of `tools/`. Library-first integrations (octokit, REST clients —
+parts of `tools/`. Library-first integrations (REST clients —
 no shell-out to `gh`/`jq`), behaviourally tested, deterministic
 `--json` output for skill use. Dual-runs with the bash; pick whichever.
+
+tim has no GitHub commands. For pull requests, checks, Actions runs and
+GitHub auth, use the GitHub CLI directly: `gh search prs EUDPA-X --owner
+DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
+`gh auth status` (see rule 8).
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
@@ -133,9 +140,7 @@ tim --help                # full surface
 tim workspace status      # equivalent of `make status` + jq-friendly --json
 tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
-tim auth                  # equivalent of tools/auth.sh
-tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
-tim github create-pr|checks|run-log   # open a PR (idempotent), watch its checks (--watch exits 0/1/2), read a failed job's log
+tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
@@ -171,7 +176,7 @@ See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary
 mocking via nock) and [`tim/README.md`](tim/README.md) for usage and
 the env-var contract (the same `JIRA_USER`/`JIRA_TOKEN`/`JIRA_BASE_URL`
-/ `GITHUB_TOKEN` the bash uses — seamless pickup).
+the bash uses — seamless pickup).
 
 Skills should prefer `tim <cmd> --json` over bare bash once a surface
 is covered by tim — the JSON envelope is schema-versioned and stable.
@@ -218,7 +223,8 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
 - `docs/testing/` — how this project tests, and the general theory behind it:
   - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, profile, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
-  - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
+  - [`config/e2e-tests-pr-scope.json`](config/e2e-tests-pr-scope.json) — the suites and service tags each repo's PR-triggered GitHub Actions e2e run covers.
+  - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — how a PR run applies that scope file, what it leaves out, the scheduled runs, and why.
   - [`docs/testing/e2e-tests-cdp.md`](docs/testing/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.
   - [`docs/testing/theory/`](docs/testing/theory/) — general testing theory (pyramid, classification, doubles, flaky tests and so on), not specific to this project.
 - `docs/analysis/` — point-in-time, cross-repo investigation write-ups (not
@@ -239,6 +245,10 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 - **Secrets scanning** — `UserPromptSubmit` and `PreToolUse(Read)` hooks block prompts/reads containing API keys or tokens.
 - **MCP server** — query SonarCloud issues, quality gate status and rules via the repo's `sonar-*` MCP server (e.g. `mcp__sonar-gateway__search_sonar_issues_in_projects` for `trade-imports-dynamics-gateway`). Only loaded in a session opened **inside that repo**: the workspace root registers none, because each one is a ~0.5–0.8 GiB docker container started at session start whether used or not. From the workspace root, use the `sonar` CLI instead (`sonar list issues --project DEFRA_<repo>`). Nothing automated depends on these servers — the push gate below uses the CLI and scanners.
 - **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running one shared check, [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh), by one of two routes. A session opened at the workspace root runs [`scripts/sonar/sonar-push-gate.sh`](scripts/sonar/sonar-push-gate.sh) from this repo's `.claude/settings.json`; it works out which repo the push targets and runs the check there. A session opened inside a repo runs the check directly from that repo's `.claude/settings.json`. The check runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
+
+  For Node repos the check runs the cheap gates before the expensive ones — `npm ci`, then `format:check`, then `lint` (both via `npm run --if-present`, so repos lacking those scripts are unaffected), and only then `npm test` and the scanner. A formatting slip therefore fails in seconds rather than after a production build and the full suite, and a lint-dirty branch never reaches SonarCloud as an uploaded analysis. `npm ci` has to stay first because format and lint need the devDependencies it installs.
+
+  Once all three pass it writes `.cache/prepush-verified` (gitignored) containing the verified SHA, but only when the tree is clean — a dirty tree means what ran is not what HEAD will push. A repo whose own git `pre-push` hook reads that marker skips outright rather than repeating any of it. `trade-imports-animals-frontend` is the first repo wired up this way (see rule 7, canary first): its slow gate moved off `pre-commit` and onto `pre-push`, because a commit is private and cheap to amend while a push is the first point the work reaches anyone else, and a per-commit suite is what drives people to `--no-verify`. Its `pre-commit` is now cheap instead of absent — `lint-staged` formatting and auto-fixing the staged files only, so fixes land in the commit that caused them. Auto-fix cannot live on `pre-push`: by then the code is committed, so a fixer writes changes the commit does not contain and leaves a dirty tree. The other Node repos still run the whole gate on `pre-commit`; move them once this one has been lived with.
 
 **Why not the server-side "Agentic Analysis" (Vortex) feature** the `sonar` CLI also offers (`sonar analyze agentic`, or `sonar analyze --staged`'s quality-check half): this DEFRA SonarCloud organization does not have that feature licensed (`403 Vortex Analysis is not available for this organization`) — confirmed by direct testing, not a config problem. The secrets-scanning half of the `sonar` CLI integration above is unaffected and still works. Don't reach for `sonar analyze agentic`/`--staged` expecting a working quality check; use the pre-push hook or run its script manually instead.
 

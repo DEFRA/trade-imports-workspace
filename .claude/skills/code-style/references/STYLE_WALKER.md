@@ -12,10 +12,18 @@ Items schema: `assets/items-table.md`.
 
 ## Default: fix
 
-Every style item is a code-quality item, with a category from the list
+A style item is a code-quality item, with a category from the list
 the review skill and the build loop's verifier share (`naming`,
 `comments`, `structure`, `duplication`, `logging`, `test-readability`,
-`history`). It is fixed unless the code proves it wrong. Won't Fix only
+`history`), or a design item (`design`).
+
+A design item is never fixed in code. Mark it Discuss with the note
+`For the designer: <the question and its options>`, carrying the
+item's evidence (the design source and the code at file:line, and the
+guide rule's link), and list it under "For the designer" in the batch
+summary.
+
+A code-quality item is fixed unless the code proves it wrong. Won't Fix only
 with a note that quotes the code, with its file:line, showing the
 finding is factually wrong. These never justify Won't Fix: taste,
 "pre-existing", "out of scope", "a nearby file does it", "feature

@@ -65,7 +65,7 @@ The system MUST refuse to save and continue from the page when no type has been 
 
 ### Requirement: The page offers a full set of save controls, being reached directly from Overview
 **ID**: REQ-PLANTS-COMMODITY-TYPE-005
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview commodities task row as well as from creating a new notification.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview commodities task row as well as from creating a new notification. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview commodities row
 **ID**: SCN-PLANTS-COMMODITY-TYPE-005-A

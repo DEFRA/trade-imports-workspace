@@ -21,6 +21,12 @@ const journeyTrace = join(
   '__fixtures__',
   'journey-trace.zip'
 )
+const timPlaywrightVersion = JSON.parse(
+  readFileSync(
+    join(here, '..', '..', 'node_modules', 'playwright', 'package.json'),
+    'utf8'
+  )
+).version
 
 let workspace
 
@@ -116,7 +122,9 @@ describe('runTrace', () => {
     withTraceSource()
 
     await expect(trace(['actions'])).rejects.toThrow(
-      /^playwright trace actions failed with exit 1, using Playwright 1\.63\.0 \(tim\): Error: No trace opened\./
+      new RegExp(
+        `^playwright trace actions failed with exit 1, using Playwright ${timPlaywrightVersion.replaceAll('.', '\\.')} \\(tim\\): Error: No trace opened\\.`
+      )
     )
   })
 
@@ -156,7 +164,10 @@ describe('runTrace', () => {
 
     const result = await trace(['open', journeyTrace])
 
-    expect(result.playwright).toEqual({ version: '1.63.0', origin: 'tim' })
+    expect(result.playwright).toEqual({
+      version: timPlaywrightVersion,
+      origin: 'tim'
+    })
   })
 })
 
@@ -232,7 +243,7 @@ describe('runTrace, for a trace recorded by a newer Playwright than tim', () => 
 
     await expect(traceIn(['open', zip])).rejects.toMatchObject({
       code: 'MISSING_DEP',
-      message: `${zip} was recorded by Playwright 100.0.0, which is newer than any Playwright tim can open it with: tim's own is 1.63.0, and the workspace repos have 99.1.0 (repos/newer). Update tim's: npm --prefix ${join(workspace.root, 'tim')} install playwright@100.0.0 @playwright/test@100.0.0 --save-exact`
+      message: `${zip} was recorded by Playwright 100.0.0, which is newer than any Playwright tim can open it with: tim's own is ${timPlaywrightVersion}, and the workspace repos have 99.1.0 (repos/newer). Update tim's: npm --prefix ${join(workspace.root, 'tim')} install playwright@100.0.0 @playwright/test@100.0.0 --save-exact`
     })
   })
 })
@@ -260,12 +271,8 @@ describe('the Playwright tim installs', () => {
   }
 
   test('is at least as new as the Playwright every workspace repo records traces with', () => {
-    const timVersion = readJson(
-      join(workspaceRoot, 'tim', 'node_modules', 'playwright', 'package.json')
-    ).version
-
     const newer = recordingVersions().filter(
-      ({ version }) => compareVersions(version, timVersion) > 0
+      ({ version }) => compareVersions(version, timPlaywrightVersion) > 0
     )
 
     expect(newer).toEqual([])

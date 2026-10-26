@@ -1,0 +1,501 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 3 of trace:animals-fit: the delete-notification and cancel-amend features of the live-animals frontend. Read in full: cancel-amend.fit.spec.js (5 tests) and delete-notification.fit.spec.js (4 tests in 'delete-notification feature', 1 in 'delete-notification feature (submitted)'), plus all 10 trace zips the partition names. The bundled `playwright trace open` refused these zips (TraceVersionError: created by a newer Playwright), so each zip was unpacked into the part3 working folder (c1-c5 = cancel-amend tests :68, :82, :95, :111, :117; d1-d5 = delete tests :29, :45, :58, :77, :118, confirmed against each trace's context title) and mined with jq: every test step from test.trace, every request from the *.network files, and rendered DOM from frame snapshots. Refs below cite '<spec>:<line> trace' plus the test-step id (pw:api@N / expect@N) or the snapshot call id. Pages and order. Delete (draft): dashboard card (Resume, Copy as new, Delete links) -> GET /notifications/{ref}/delete 'Delete this notification?' (Draft tag strip, Back to /live-animals) -> 'No, return to dashboard' (link to /live-animals, notification kept) or 'Yes, delete notification' (POST, 302 to /live-animals?deleted=1, success banner 'Notification deleted', card gone). Delete (submitted): full journey submitted, dashboard card (View, Amend, Copy as new, Delete) -> same confirmation page with Submitted tag strip -> confirm -> /live-animals?deleted=1 banner. Cancel-amend: submitted notification -> dashboard 'Amend' (POST /amend, 302 to the hub, Amending tag) -> edit origin internal reference to DiscardMe99 (save returns to hub) -> 'Review and submit' -> review page with Amending strip and 'Cancel amendment' link -> GET /cancel-amend 'Cancel this amendment?' (Back to notification-view) -> 'No, return to notification' (link back to review, amendment and changed value kept) or 'Yes, cancel amendment' (POST, 302 to notification-view?cancelled=1: Submitted strip, success banner, original reference Imports456GB restored, read-only: no Change links, Copy as new and Delete buttons). Three axe checks (delete page, cancel page, restored review) each recorded an empty violations list. Conditional: the Draft/Submitted/Amending tag on the strip follows notification state; the Cancel amendment link appears only while amending. Not reached by any trace in this part: error states (stale concurrency token, failed delete), cancelling with no changes, direct URL access in the wrong state, Welsh copy, and the backend calls behind delete and cancel (the trace records only browser-to-frontend traffic).",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p3-001",
+      "statement": "Each notification card on the dashboard has a Delete action link that opens the delete confirmation page for that notification.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) pw:api@44; snapshot call@2613",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-2Y12DM/delete\">Delete<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-2Y12DM</span></a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-002",
+      "statement": "The dashboard Delete link's accessible name is 'Delete notification <reference>', the reference part being visually hidden.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) pw:api@44",
+      "quote": "getByRole('link', { name: 'Delete notification GBN-AG-26-2Y12DM' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-003",
+      "statement": "A draft notification's dashboard card offers Resume, Copy as new and Delete actions.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) dashboard before delete (d1-dash.html)",
+      "quote": "Resume<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-2Y12DM</span> ... Copy as new<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-2Y12DM</span> ... Delete<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-2Y12DM</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-004",
+      "statement": "A submitted notification's dashboard card offers View, Amend, Copy as new and Delete actions, so a submitted notification can be deleted from the dashboard.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:118 trace (d5) dashboard before delete (d5-dash.html); pw:api@132",
+      "quote": "View<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-3WE4AJ</span> ... Amend<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-3WE4AJ</span> ... Copy as new ... Delete<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-3WE4AJ</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-005",
+      "statement": "The delete confirmation page lives at /live-animals/notifications/{reference}/delete and is reached by GET from the dashboard link.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) network",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-RDDPT4/delete 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-006",
+      "statement": "The delete confirmation page heading is 'Delete this notification?'.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) expect@45; snapshot call@2613",
+      "quote": "Delete this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-007",
+      "statement": "The delete confirmation page warns, in one body paragraph, that deletion is permanent.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) expect@46",
+      "quote": "This cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-008",
+      "statement": "The delete confirmation page's primary action is a warning-style submit button labelled 'Yes, delete notification'.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) expect@47; snapshot call@2613",
+      "quote": "<button type=\"submit\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\">Yes, delete notification</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-009",
+      "statement": "The delete confirmation page's secondary action is 'No, return to dashboard', a link styled as a secondary button that points to the dashboard (/live-animals).",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) expect@48; snapshot call@2613",
+      "quote": "<a href=\"/live-animals\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">No, return to dashboard</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-010",
+      "statement": "The delete confirmation page's Back link points to the dashboard (/live-animals).",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) expect@49; snapshot call@2613",
+      "quote": "<a href=\"/live-animals\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-011",
+      "statement": "The delete confirmation page shows a strip above the heading with the notification's status tag and its reference; for a draft the tag is a blue 'Draft'.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) snapshot call@2613",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">Draft</strong><span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-2Y12DM</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-012",
+      "statement": "For a submitted notification the delete confirmation page's strip shows a green 'Submitted' tag with the reference.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:118 trace (d5) delete page (d5-delete.html)",
+      "quote": "<strong class=\"govuk-tag govuk-tag--green\">Submitted</strong><span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-3WE4AJ</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-013",
+      "statement": "The same delete confirmation page, with the same heading, body and buttons, serves both draft and submitted notifications.",
+      "kind": "rule",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) call@2613 and :118 trace (d5) d5-delete.html",
+      "quote": "Delete this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-014",
+      "statement": "Confirming deletion submits a form POST to /live-animals/notifications/{reference}/delete carrying a CSRF crumb and a concurrencyToken hidden field.",
+      "kind": "data",
+      "ref": "delete-notification.fit.spec.js:118 trace (d5) network POST .../delete",
+      "quote": "\"params\":[{\"name\":\"crumb\",\"value\":\"[REDACTED]\"},{\"name\":\"concurrencyToken\",\"value\":\"0\"}]",
+      "confidence": "verbatim",
+      "note": "The crumb value is a CSRF token and is redacted."
+    },
+    {
+      "id": "trace-animals-fit-p3-015",
+      "statement": "The delete form's concurrencyToken suggests deletion is guarded by optimistic concurrency: the page carries the version it was rendered against, so a stale page could be refused.",
+      "kind": "rule",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) snapshot call@2613",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"0\">",
+      "confidence": "inferred",
+      "note": "No trace drives a stale-token delete; see the gap claim on delete error states."
+    },
+    {
+      "id": "trace-animals-fit-p3-016",
+      "statement": "After a confirmed delete the frontend redirects to the dashboard with ?deleted=1.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) network; expect@46",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-RDDPT4/delete 302 http://localhost:3000/live-animals?deleted=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-017",
+      "statement": "After a confirmed delete the dashboard shows a success notification banner titled 'Notification deleted'.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) expect@47; d3-deleted.html",
+      "quote": "<h2 class=\"govuk-notification-banner__title\" id=\"govuk-notification-banner-title\">Notification deleted</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-018",
+      "statement": "The delete success banner's body reads 'The notification has been deleted.'.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) expect@48; d3-deleted.html",
+      "quote": "The notification has been deleted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-019",
+      "statement": "The delete success banner is a GOV.UK success notification banner with role alert, shown above the dashboard caption and heading.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) d3-deleted.html",
+      "quote": "<div class=\"govuk-notification-banner govuk-notification-banner--success\" role=\"alert\" aria-labelledby=\"govuk-notification-banner-title\" data-module=\"govuk-notification-banner\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-020",
+      "statement": "After a confirmed delete the deleted notification no longer appears on the dashboard.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) expect@49",
+      "quote": "getByRole('heading', { name: 'GBN-AG-26-RDDPT4', exact: true }) toHaveCount",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-021",
+      "statement": "When the user's only notification has been deleted, the dashboard list shows 'No Results' and an empty-state message.",
+      "kind": "copy",
+      "ref": "delete-notification.fit.spec.js:58 trace (d3) d3-deleted.html",
+      "quote": "<p class=\"govuk-label govuk-label--s notification-list__results\">No Results</p> ... <p class=\"govuk-body\">You have not started any notifications in this session.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-022",
+      "statement": "Choosing 'No, return to dashboard' returns the user to the dashboard URL with the notification still listed.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:45 trace (d2) pw:api@45, expect@46, expect@47",
+      "quote": "getByRole('heading', { name: 'GBN-AG-26-D7FE6M', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-023",
+      "statement": "A submitted notification that carries address-book parties (consignor, consignee, importer, place of origin, place of destination, contact address) can be deleted, landing on the dashboard with the 'Notification deleted' banner.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:118 trace (d5) pw:api@133, expect@134, expect@135",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-3WE4AJ/delete ... getByText('Notification deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-024",
+      "statement": "Deleting a submitted notification with address-book parties emits a NotificationSubmissionDeleted event whose party resolution needs the acting user's organisationId, which the frontend forwards to the backend; the trace cannot show this because it records only browser traffic.",
+      "kind": "integration",
+      "ref": "delete-notification.fit.spec.js lines 94-97 (comment above the submitted describe); trace d5 network shows only the browser POST",
+      "quote": "Deleting a submitted notification carrying real address-book parties emits a NotificationSubmissionDeleted event that has to resolve those parties, so the backend requires the acting user's organisationId. This flow proves the frontend forwards it (EUDPA-389).",
+      "confidence": "inferred",
+      "note": "The claim comes from the spec's comment, not from the trace; the sign-in in every trace uses organisationId=stub-org-1."
+    },
+    {
+      "id": "trace-animals-fit-p3-025",
+      "statement": "The delete confirmation page has no axe violations at WCAG 2 A and AA: the recorded violations list is empty.",
+      "kind": "non-functional",
+      "ref": "delete-notification.fit.spec.js:77 trace (d4) expect@56",
+      "quote": "Delete notification has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-026",
+      "statement": "The delete and cancel-amend confirmation pages use only GOV.UK Frontend components (back link, heading, body, button group, warning, primary and secondary buttons, tag) apart from the app-journey-strip wrapper that holds the status tag and reference.",
+      "kind": "constraint",
+      "ref": "delete-notification.fit.spec.js:29 trace (d1) call@2613; cancel-amend.fit.spec.js:68 trace (c1) c1-885.html",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a layout wrapper around a govuk-tag and govuk-body span; a standard tag plus caption could replace it."
+    },
+    {
+      "id": "trace-animals-fit-p3-027",
+      "statement": "Choosing Amend on a submitted notification's dashboard card POSTs to /live-animals/notifications/{reference}/amend and redirects to the notification's task list hub.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) pw:api@132; network",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y/amend 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-028",
+      "statement": "The dashboard Amend action is a form button whose accessible name is 'Amend notification <reference>'.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@861",
+      "quote": "getByRole('button', { name: 'Amend notification GBN-AG-26-SRKTJY' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-029",
+      "statement": "While a submitted notification is being amended, the hub, review page and cancel page show a yellow 'Amending' tag with the reference above the heading.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) c1-hub.html, c1-885.html",
+      "quote": "<strong class=\"govuk-tag govuk-tag--yellow\">Amending</strong><span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-SRKTJY</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-030",
+      "statement": "While amending, saving a task page (here 'Where is this consignment coming from?') returns the user to the hub instead of the next page in the journey.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) network after the amend POST",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y/origin 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y",
+      "confidence": "verbatim",
+      "note": "In the same trace the first-time origin save redirected to /commodities."
+    },
+    {
+      "id": "trace-animals-fit-p3-031",
+      "statement": "While amending, the hub's 'Review and submit' button opens the review page at /notification-view.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@883; c1-hub.html",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-SRKTJY/notification-view\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Review and submit</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-032",
+      "statement": "While amending, the review page 'Review your notification' shows a 'Cancel amendment' link directly under the heading.",
+      "kind": "rule",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@885; c1-885.html",
+      "quote": "<h1 class=\"govuk-heading-l\">Review your notification</h1><p class=\"govuk-body\"><a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-SRKTJY/cancel-amend\">Cancel amendment</a></p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-033",
+      "statement": "While amending, the review page shows the amended values with Change links on every summary card and Edit details links on each party, and a Continue button.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) c1-885.html",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-SRKTJY/origin?change=1\">Change<span class=\"govuk-visually-hidden\"> import details (Import details)</span></a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-034",
+      "statement": "While amending, the review page's Back link points to the notification's hub.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) c1-885.html",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-SRKTJY\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-035",
+      "statement": "The cancel-amend confirmation page lives at /live-animals/notifications/{reference}/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) c1-885.html second snapshot",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-SRKTJY/cancel-amend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-036",
+      "statement": "The cancel-amend confirmation page heading is 'Cancel this amendment?'.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@887",
+      "quote": "Cancel this amendment?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-037",
+      "statement": "The cancel-amend page explains that changes made since amending began will be discarded and the submitted version restored.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@889",
+      "quote": "Your changes since you started amending will be discarded and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-038",
+      "statement": "The cancel-amend page's primary action is a standard (not warning) submit button labelled 'Yes, cancel amendment'.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@891; c1-885.html",
+      "quote": "<button type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">Yes, cancel amendment</button>",
+      "confidence": "verbatim",
+      "note": "The delete page's equivalent button uses govuk-button--warning; this one does not."
+    },
+    {
+      "id": "trace-animals-fit-p3-039",
+      "statement": "The cancel-amend page's secondary action is 'No, return to notification', a secondary-button link back to the review page (/notification-view).",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@893; c1-885.html",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-SRKTJY/notification-view\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">No, return to notification</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-040",
+      "statement": "The cancel-amend page's Back link points to the review page (/notification-view).",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) call@895; c1-885.html",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-SRKTJY/notification-view\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-041",
+      "statement": "Confirming cancel-amend submits a form POST to /cancel-amend carrying a CSRF crumb and a concurrencyToken.",
+      "kind": "data",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) network POST .../cancel-amend",
+      "quote": "\"params\":[{\"name\":\"crumb\",\"value\":\"[REDACTED]\"},{\"name\":\"concurrencyToken\",\"value\":\"0\"}]",
+      "confidence": "verbatim",
+      "note": "The crumb value is a CSRF token and is redacted."
+    },
+    {
+      "id": "trace-animals-fit-p3-042",
+      "statement": "Choosing 'No, return to notification' returns to the review page with the amendment still in progress: Amending tag, the changed value DiscardMe99 and the Cancel amendment link all still shown.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:82 trace (c2) pw:api@152, expect@153-156; c2-after-no.html",
+      "quote": "<strong class=\"govuk-tag govuk-tag--yellow\">Amending</strong> ... DiscardMe99 ... <a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-4A7BWD/cancel-amend\">Cancel amendment</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-043",
+      "statement": "Confirming cancel-amend redirects to the review page with ?cancelled=1.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) network",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y/cancel-amend 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-5B6N3Y/notification-view?cancelled=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-044",
+      "statement": "After cancelling, the review page shows a success notification banner titled 'Success'.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) c3-restored.html",
+      "quote": "<h2 class=\"govuk-notification-banner__title\" id=\"govuk-notification-banner-title\">Success</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-045",
+      "statement": "The cancel-amend success banner's heading reads 'The amendment has been cancelled and the submitted version restored.'.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) expect@144",
+      "quote": "The amendment has been cancelled and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-046",
+      "statement": "After cancelling, the notification is back to Submitted: the strip shows a green 'Submitted' tag with the reference.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) expect@145; c3-restored.html",
+      "quote": "<strong class=\"govuk-tag govuk-tag--green\">Submitted</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-047",
+      "statement": "Cancelling discards the amended value and restores the submitted one: the internal reference shows Imports456GB again and DiscardMe99 is gone.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) expect@146, expect@147; c3-restored.html Import details card",
+      "quote": "Internal reference number ... Imports456GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-048",
+      "statement": "The restored submitted review is read-only: no Change links, no Edit details links and no Continue button.",
+      "kind": "rule",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) expect@148; c3-restored.html",
+      "quote": "getByRole('link', { name: /^Change/ }) toHaveCount",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-049",
+      "statement": "The restored submitted review offers a 'Copy as new' secondary button (form POST to /copy with copyOrigin notification-view) and a 'Delete' warning button linking to the delete page.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) c3-restored.html",
+      "quote": "<form method=\"post\" action=\"/live-animals/notifications/GBN-AG-26-5B6N3Y/copy\" class=\"app-form-inline\"> ... <button type=\"submit\" class=\"govuk-button govuk-button--secondary\" ... Copy as new ... <a href=\"/live-animals/notifications/GBN-AG-26-5B6N3Y/delete\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" ... Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-050",
+      "statement": "The restored submitted review's Back link points to the notification's hub.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) c3-restored.html",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-5B6N3Y\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-051",
+      "statement": "The restored submitted review keeps the 'Review your notification' heading and the same six numbered sections.",
+      "kind": "copy",
+      "ref": "cancel-amend.fit.spec.js:95 trace (c3) c3-restored.html",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Documents ... 5. Consignment parties ... 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-052",
+      "statement": "The cancel-amend confirmation page has no axe violations at WCAG 2 A and AA: the recorded violations list is empty.",
+      "kind": "non-functional",
+      "ref": "cancel-amend.fit.spec.js:111 trace (c4) expect@154",
+      "quote": "Cancel amendment has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-053",
+      "statement": "The restored read-only submitted review has no axe violations at WCAG 2 A and AA: the recorded violations list is empty.",
+      "kind": "non-functional",
+      "ref": "cancel-amend.fit.spec.js:117 trace (c5) expect@156",
+      "quote": "Read-only submitted check answers has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-054",
+      "statement": "The cancel-amend confirmation page shows the yellow Amending tag strip with the reference, as the review page does.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68 trace (c1) c1-885.html second snapshot",
+      "quote": "<strong class=\"govuk-tag govuk-tag--yellow\">Amending</strong><span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-SRKTJY</span></div><h1 class=\"govuk-heading-l\">Cancel this amendment?</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p3-055",
+      "statement": "No trace in this part shows the backend calls behind delete, amend or cancel-amend (which service is called, the method and payload, or how the snapshot is restored); the trace records only browser-to-frontend requests.",
+      "kind": "integration",
+      "ref": "all 10 traces' network files: only localhost:3000 requests",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-056",
+      "statement": "No trace shows what happens when a delete or cancel-amend fails, for example a stale concurrencyToken or a backend error; no error page or message was rendered.",
+      "kind": "rule",
+      "ref": "delete-notification and cancel-amend traces: no failed action, no error summary",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-057",
+      "statement": "No trace shows deleting a notification that is mid-amendment, or what the dashboard card actions are while a notification is in the Amending state.",
+      "kind": "behaviour",
+      "ref": "delete-notification traces delete only Draft (d1-d4) and Submitted (d5) notifications",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-058",
+      "statement": "No trace shows the cancel-amend page reached by direct URL when the notification is not being amended, or the delete page for a notification the user does not own or that no longer exists.",
+      "kind": "rule",
+      "ref": "all 10 traces reach the pages only through their links",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-059",
+      "statement": "No trace shows cancelling an amendment after making no changes, or after changing more than one section.",
+      "kind": "behaviour",
+      "ref": "cancel-amend traces c1-c5 all change only the origin internal reference",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-060",
+      "statement": "No trace in this part renders the delete or cancel-amend pages or banners in Welsh.",
+      "kind": "copy",
+      "ref": "all 10 traces render English only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p3-061",
+      "statement": "No trace shows whether the 'deleted=1' or 'cancelled=1' success banner reappears on a later visit, or is dismissed after first view.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js:58 (d3) and cancel-amend.fit.spec.js:95 (c3) end on the first render",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

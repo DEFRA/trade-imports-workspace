@@ -28,11 +28,13 @@ repos/trade-imports-ins-tests/
     └── ui.ts                            ← test.extend() with animalsPages, plantsPages, animalsJourney, …
 ```
 
-Not every domain has every folder. Each domain has a local script per suite,
-`test:docker-compose:<domain>[:a11y|:security]`, and a CDP profile per suite,
+Not every domain has every folder. Each domain has a local script,
+`test:docker-compose:<domain>`. Some domains also have `:a11y`, `:security` or
+`:visual` variants; `package.json` lists them. Each suite has a CDP profile,
 `<domain>:<suite>`.
 
 Tags used in this project. Tags select the suite; the path selects the domain (`tests/<domain>/`).
+The tests repo's README and `config/service-tags.ts` hold the full lists.
 
 | Tag | Purpose |
 |-----|---------|
@@ -40,6 +42,11 @@ Tags used in this project. Tags select the suite; the path selects the domain (`
 | `@active` | ZAP active-scan suite (destructive, docker-compose only) |
 | `@compose` | Requires the full workspace stack |
 | `@visual` | Visual regression snapshots |
+| `@dynamics` | Dynamics checks, run by the CDP `dynamics` profile; pull-request runs leave them out |
+| `@mongodb` | Reads Mongo directly, so skips itself outside the compose stack |
+| `@smoke` | Broad and shallow: touches the app's critical paths to show the build works at all, not that any feature is right |
+| `@auth` | Sign-in specs, one set per domain |
+| Service tags (`@ins-backend`, …) | A spec another service's pull request should also run. See [Test and spec vocabulary](../../testing/test-and-spec-vocabulary.md); add them with the `service-tag` skill, not by hand |
 
 Fixtures are named per domain, as in `fixtures/ui.ts`: `animalsPages`,
 `plantsPages` and so on for page objects, `animalsJourney` and
@@ -329,7 +336,7 @@ export class PlantsJourney {
 
   async toArrivalStatus(country: string): Promise<void> {
     await this.plantsPages.origin.selectCountry(country)
-    await this.plantsPages.origin.btnSaveAndContinue.click()
+    await this.plantsPages.origin.saveAndContinue.click()
     await this.plantsPages.arrivalStatus.heading.waitFor()
   }
 }
@@ -615,7 +622,7 @@ await page.getByText('Done').click()
 ```typescript
 // Wrong — the same clicks copied into every spec that needs the page
 await plantsPages.origin.selectCountry('Germany')
-await plantsPages.origin.btnSaveAndContinue.click()
+await plantsPages.origin.saveAndContinue.click()
 await plantsPages.arrivalStatus.heading.waitFor()
 
 // Correct — one to* method on the journey flow
@@ -689,7 +696,7 @@ Each test creates the notification it needs, so tests can run in any order and i
 ```typescript
 // Wrong — the test is about the opening run, but the run is seeded
 test('walks a notification through every opening-run task', async ({ animalsSeededJourney }) => {
-  await animalsSeededJourney.createDraftNotification('readyToSubmit')
+  await animalsSeededJourney.createDraftNotification()
   // ...
 })
 

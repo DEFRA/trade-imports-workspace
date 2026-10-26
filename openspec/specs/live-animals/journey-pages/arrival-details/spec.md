@@ -56,7 +56,7 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 
 ### Requirement: Choosing a port submits and keeps its code
 **ID**: REQ-ARRIVAL-003
-The system MUST submit the chosen port's code rather than the text the user typed, and MUST still hold that code when the user returns to the page.
+The system MUST submit the chosen port's code rather than the text the user typed, MUST show the chosen port in the search field as "<port name> - <port code>", and MUST still hold that code when the user returns to the page.
 
 #### Scenario: The chosen port's code is what the notification keeps
 **ID**: SCN-ARRIVAL-003-A
@@ -74,13 +74,15 @@ The system MUST submit the chosen port's code rather than the text the user type
 
 ### Requirement: The port field works without client-side JavaScript
 **ID**: REQ-ARRIVAL-004
-The system MUST keep an ordinary port list underneath the searchable field, so a user without JavaScript can still choose a port, and MUST have that underlying list carry the code the page submits.
+The system MUST keep an ordinary, labelled port list underneath the searchable field, so a user without JavaScript can still choose a port, MUST have each port in that list read "<port name> - <port code>", and MUST have that underlying list carry the code the page submits.
 
 #### Scenario: An ordinary port list remains available beneath the searchable field
 **ID**: SCN-ARRIVAL-004-A
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the page is examined without relying on the searchable field
 - **THEN** an ordinary port list is present, carrying the code that is submitted
+- **AND** the list is labelled as the port of entry question
+- **AND** each port in it reads "<port name> - <port code>"
 
 ### Requirement: A complete set of arrival details is accepted
 **ID**: REQ-ARRIVAL-005
@@ -105,7 +107,7 @@ The system MUST NOT refuse to save the arrival details page when nothing has bee
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
-The system MUST confine the arrival date to a window running from one week in the past to six months in the future, MUST offer that window as the range of the date picker, and MUST reject a date typed outside it with an error naming the allowed range, keeping the user on the page and saving nothing.
+The system MUST confine the arrival date to a window from one week back to six months ahead, MUST offer that window as the date picker's range, MUST reject a date typed outside it with an error naming the range (saving nothing), and MUST name a saved arrival date that has since fallen outside the window when the page is reopened, with the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 #### Scenario: The date picker offers only the allowed window
 **ID**: SCN-ARRIVAL-007-A
@@ -141,6 +143,12 @@ The system MUST confine the arrival date to a window running from one week in th
 - **GIVEN** the user has had an arrival date rejected for falling outside the allowed window
 - **WHEN** they leave the page and return to it on the same notification
 - **THEN** the arrival date does not hold the rejected value
+
+#### Scenario: A saved arrival date that has fallen out of the window is named when the page is reopened
+**ID**: SCN-ARRIVAL-007-F
+- **GIVEN** an arrival date was saved and is now more than 7 days in the past
+- **WHEN** the user opens the arrival details page
+- **THEN** an error summary is shown, linking to the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 ### Requirement: The transport identification and document reference are each capped at 58 characters
 **ID**: REQ-ARRIVAL-008
@@ -187,3 +195,78 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: Only the means of transport is needed to continue
+**ID**: REQ-ARRIVAL-011
+The system MUST let the user save and continue once a means of transport is chosen, even with the arrival date, port of entry, transport identification and transport document reference left blank.
+
+#### Scenario: A means of transport alone lets the page go on
+**ID**: SCN-ARRIVAL-011-A
+- **GIVEN** the user has chosen a means of transport and left the arrival date, port of entry, transport identification and document reference blank
+- **WHEN** they save and continue
+- **THEN** the next page is shown and no error summary is shown
+
+### Requirement: The port search is hinted and shows a placeholder
+**ID**: REQ-ARRIVAL-012
+The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen, and MUST begin the ordinary port list with a blank "Select a port" entry.
+
+#### Scenario: The port search is hinted and shows "Select a port"
+**ID**: SCN-ARRIVAL-012-A
+- **GIVEN** the user is on the arrival details page with no port chosen
+- **WHEN** the page loads
+- **THEN** the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
+- **AND** the port search shows "Select a port"
+
+#### Scenario: Without JavaScript, the port list begins with "Select a port"
+**ID**: SCN-ARRIVAL-012-B
+- **GIVEN** the user has reached the arrival details page without JavaScript
+- **WHEN** the page loads
+- **THEN** the port of entry list begins with its blank "Select a port" entry
+
+### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code
+**ID**: REQ-ARRIVAL-013
+The system MUST offer the means of transport as "Air", "Rail", "Road" and "Sea", in that order, after "Select one", and MUST keep the choice in the notification as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively.
+
+#### Scenario: The means of transport options read Air, Rail, Road and Sea
+**ID**: SCN-ARRIVAL-013-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the means of transport options read "Select one", "Air", "Rail", "Road", "Sea" in that order
+
+#### Scenario: Each option is kept as the code other services read
+**ID**: SCN-ARRIVAL-013-B
+- **GIVEN** the user is on the arrival details page
+- **WHEN** they choose Air, Rail, Road or Sea and save
+- **THEN** the notification keeps AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively
+
+### Requirement: The transport identification hint opens "Enter one of the following:"
+**ID**: REQ-ARRIVAL-014
+The system MUST open the transport identification hint with "Enter one of the following:" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number), with the lead-in and the list shown in the same grey as the page's other hints.
+
+#### Scenario: The transport identification hint leads with its instruction
+**ID**: SCN-ARRIVAL-014-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the transport identification hint opens with "Enter one of the following:"
+- **AND** it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)
+- **AND** the lead-in and the list are shown in the same grey as the page's other hints
+
+### Requirement: Each arrival question is set in the medium label size
+**ID**: REQ-ARRIVAL-015
+The system MUST set each of the five arrival questions (arrival date, port of entry, means of transport, transport identification and transport document reference) in the GOV.UK medium label size.
+
+#### Scenario: The arrival questions read at medium size
+**ID**: SCN-ARRIVAL-015-A
+- **GIVEN** a user on the arrival details page
+- **WHEN** the page loads
+- **THEN** the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size
+
+### Requirement: The arrival date hint gives a fixed example
+**ID**: REQ-ARRIVAL-016
+The system MUST hint the arrival date with "The expected date of arrival at the port of entry. For example, 27/3/2026", whatever the day.
+
+#### Scenario: The arrival date hint reads the same on every day
+**ID**: SCN-ARRIVAL-016-A
+- **GIVEN** a user on the arrival details page
+- **WHEN** the page loads
+- **THEN** the arrival date hint reads exactly "The expected date of arrival at the port of entry. For example, 27/3/2026"

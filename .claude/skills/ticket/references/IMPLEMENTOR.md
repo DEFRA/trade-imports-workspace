@@ -161,6 +161,12 @@ If a behaviour has no E2E cover, add or extend a spec in
 ~/git/defra/trade-imports-workspace/tools/github-actions/wait-for-run.sh <repo-name> <run-id> 1800
 ```
 
+A red e2e check on the PR comes from the repo's `e2e-tests.yml`, which runs
+after Publish Branch Image, not from `ci.yml`. Read it against the repo's
+entry in `~/git/defra/trade-imports-workspace/config/e2e-tests-pr-scope.json`
+and `~/git/defra/trade-imports-workspace/docs/testing/e2e-tests-gh-actions.md`.
+PR runs leave out `@a11y`, `@active` and `@dynamics`.
+
 ## Completion Checklist
 
 - [ ] All AC met

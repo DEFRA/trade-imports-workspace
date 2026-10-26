@@ -1,0 +1,430 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 13, CPH number: the live-animals CPH number page (/live-animals/notifications/<ref>/cph-number) as the animals frontend renders it today. Read cph-number.fit.spec.js in full (2 describe blocks: 'cph-number feature', 8 tests; 'cph-number validation', 7 tests) and opened all 15 trace zips, one per test (folders copy, boxes, hint, details, primary, back, save, axe, vreq, vshort, vmiss, vdig, vall, vmark, vaxe in the part's working folder). Every trace signs in with the stub, creates a notification, answers origin, picks Bos taurus on commodities, then goes straight to cph-number. Mined the DOM snapshots of the page clean, after save-and-revisit, and in each of the five error states (whole number missing, short parish, missing holding, non-digit holding, all three parts too short), the network log of the save trace (form POST body, 302 to the contact select page) and of the validation traces (POST answers 400 and re-renders), the back-link landing (hub, 200) and the page reached after saving (Contact address for consignment). Claims cover heading, caption, title, details help, legend, hint, three labelled part boxes and their widths/maxlength/inputmode, the button, back link, journey strip, persistence and routing, every error message seen, how errors are placed, and axe checks; gaps record the validation branches no trace walked.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p13-001",
+      "statement": "The CPH number page is served at /live-animals/notifications/<notification reference>/cph-number.",
+      "kind": "behaviour",
+      "ref": "every trace in the part, GET http://localhost:3000/live-animals/notifications/GBN-AG-26-H5NKXJ/cph-number (save trace network log)",
+      "quote": "GET\thttp://localhost:3000/live-animals/notifications/GBN-AG-26-H5NKXJ/cph-number\t200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-002",
+      "statement": "The page's main heading (the only h1) is 'Add the county parish holding number (CPH)'.",
+      "kind": "copy",
+      "ref": "copy trace (cph-number.fit.spec.js:71 renders the CPH copy), cph-number page DOM, h1.govuk-heading-l",
+      "quote": "<H1 class=\"govuk-heading-l\">Add the county parish holding number (CPH)</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-003",
+      "statement": "Directly above the heading is the caption 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "copy trace, cph-number page DOM, span.govuk-caption-l immediately before the h1",
+      "quote": "<SPAN class=\"govuk-caption-l\">Consignment parties</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-004",
+      "statement": "The browser page title is 'Add the county parish holding number (CPH) - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "copy/save traces, cph-number page <title>",
+      "quote": "<TITLE>Add the county parish holding number (CPH) - Import notification service - GOV.UK</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-005",
+      "statement": "When the page shows validation errors, its browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "vmark trace (cph-number.fit.spec.js:296), error-state cph-number page <title>",
+      "quote": "<TITLE>Error: Add the county parish holding number (CPH) - Import notification service - GOV.UK</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-006",
+      "statement": "The question is a group (fieldset) whose legend is 'CPH number', shown as a small legend rather than as the page heading, so the page has exactly one h1 and no heading named 'CPH number'.",
+      "kind": "copy",
+      "ref": "copy trace, cph-number page DOM, fieldset role=group legend.govuk-fieldset__legend--s; spec lines 79-88",
+      "quote": "<LEGEND class=\"govuk-fieldset__legend govuk-fieldset__legend--s\">\n    CPH number\n  </LEGEND>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-007",
+      "statement": "The group carries the hint 'For example, 12/345/6789.', which is the group's accessible description (the hint sits on the whole group, not on any one box).",
+      "kind": "copy",
+      "ref": "hint trace (cph-number.fit.spec.js:130), cph-number page DOM, #cph-hint and fieldset aria-describedby",
+      "quote": "<FIELDSET class=\"govuk-fieldset\" role=\"group\" aria-describedby=\"cph-hint\"> ... <DIV id=\"cph-hint\" class=\"govuk-hint\">\n  For example, 12/345/6789.\n</DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-008",
+      "statement": "The example in the hint uses the real CPH grouping of 2/3/4 digits; the page never shows the example '123/456/789'.",
+      "kind": "rule",
+      "ref": "hint trace, spec line 138 asserts getByText('123/456/789') has count 0",
+      "quote": "describes the whole number once, in the real 2/3/4 grouping",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-009",
+      "statement": "A CPH number is a 9-digit number made of three parts: county (2 digits), parish (3 digits) and holding number (4 digits).",
+      "kind": "data",
+      "ref": "boxes trace (cph-number.fit.spec.js:91); cph-number page DOM maxlength on #cphCounty, #cphParish, #cphHolding; details help text",
+      "quote": "A county parish holding (CPH) number is a unique 9-digit number",
+      "confidence": "inferred",
+      "note": "The 2/3/4 split follows from the box maxlengths (2, 3, 4) and the error messages 'County must be 2 digits', 'Parish must be 3 digits', 'Holding number must be 4 digits'."
+    },
+    {
+      "id": "trace-animals-fit-p13-010",
+      "statement": "The CPH number is entered in three separate text boxes in one row, laid out with the GOV.UK date-input pattern.",
+      "kind": "behaviour",
+      "ref": "boxes trace, cph-number page DOM, div.govuk-date-input with three govuk-date-input__item",
+      "quote": "<DIV class=\"govuk-date-input\">\n        <DIV class=\"govuk-date-input__item\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-011",
+      "statement": "The first box is labelled 'County' (field name cphCounty), is 2 characters wide and accepts at most 2 characters.",
+      "kind": "data",
+      "ref": "boxes trace, cph-number page DOM, #cphCounty",
+      "quote": "<LABEL class=\"govuk-label govuk-date-input__label\" for=\"cphCounty\">\n    County\n  </LABEL>\n  <INPUT class=\"govuk-input govuk-input--width-2\" id=\"cphCounty\" name=\"cphCounty\" type=\"text\" spellcheck=\"false\" value=\"\" inputmode=\"numeric\" maxlength=\"2\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-012",
+      "statement": "The second box is labelled 'Parish' (field name cphParish), is 3 characters wide and accepts at most 3 characters.",
+      "kind": "data",
+      "ref": "boxes trace, cph-number page DOM, #cphParish",
+      "quote": "<LABEL class=\"govuk-label govuk-date-input__label\" for=\"cphParish\">\n    Parish\n  </LABEL>\n  <INPUT class=\"govuk-input govuk-input--width-3\" id=\"cphParish\" name=\"cphParish\" type=\"text\" spellcheck=\"false\" value=\"\" inputmode=\"numeric\" maxlength=\"3\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-013",
+      "statement": "The third box is labelled 'Holding number' (field name cphHolding), is 4 characters wide and accepts at most 4 characters.",
+      "kind": "data",
+      "ref": "boxes trace, cph-number page DOM, #cphHolding",
+      "quote": "<LABEL class=\"govuk-label govuk-date-input__label\" for=\"cphHolding\">\n    Holding number\n  </LABEL>\n  <INPUT class=\"govuk-input govuk-input--width-4\" id=\"cphHolding\" name=\"cphHolding\" type=\"text\" spellcheck=\"false\" value=\"\" inputmode=\"numeric\" maxlength=\"4\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-014",
+      "statement": "All three boxes ask for a numeric keyboard (inputmode numeric) and have spellcheck turned off, but are plain text inputs.",
+      "kind": "constraint",
+      "ref": "boxes trace, cph-number page DOM, the three inputs",
+      "quote": "type=\"text\" spellcheck=\"false\" value=\"\" inputmode=\"numeric\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-015",
+      "statement": "The three part labels (County, Parish, Holding number) are visible on screen, not visually hidden, so the boxes are not left unlabelled under one legend.",
+      "kind": "constraint",
+      "ref": "boxes trace, spec lines 109-127 (label visible, not govuk-visually-hidden, bounding width > 1)",
+      "quote": "the labels have to be on screen, not just announced",
+      "confidence": "verbatim",
+      "note": "The spec comment says design release 1 clipped these labels out of sight and the service deliberately departs from that picture."
+    },
+    {
+      "id": "trace-animals-fit-p13-016",
+      "statement": "Above the form, and before the question it explains, is a collapsed details component with the summary 'What is a CPH number?'.",
+      "kind": "copy",
+      "ref": "details trace (cph-number.fit.spec.js:141), cph-number page DOM, details.govuk-details before the form",
+      "quote": "<SPAN class=\"govuk-details__summary-text\">\n      What is a CPH number?\n    </SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-017",
+      "statement": "When opened, the help's first paragraph reads 'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'",
+      "kind": "copy",
+      "ref": "details trace, cph-number page DOM, .govuk-details__text first p",
+      "quote": "A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-018",
+      "statement": "When opened, the help's second paragraph reads 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'",
+      "kind": "copy",
+      "ref": "details trace, cph-number page DOM, .govuk-details__text second p",
+      "quote": "You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-019",
+      "statement": "The CPH help is collapsed by default (both paragraphs hidden) and both paragraphs become visible when the user clicks the summary.",
+      "kind": "behaviour",
+      "ref": "details trace, spec lines 147-162",
+      "quote": "keeps the CPH help collapsed above the field until it is opened",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-020",
+      "statement": "The page has a single button, 'Save and continue', and no 'Save and return to overview' button or 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "primary trace (cph-number.fit.spec.js:165) and every cph-number DOM snapshot, div.govuk-button-group",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Save and continue\n</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-021",
+      "statement": "The page ends with the primary button alone because it is reached from the addresses page (the Consignment parties task).",
+      "kind": "rule",
+      "ref": "primary trace, test title cph-number.fit.spec.js:165",
+      "quote": "ends with the primary alone, being reached from the addresses page",
+      "confidence": "inferred",
+      "note": "The trace itself reaches the page by direct navigation, not from the addresses page; the link to the addresses page is the test title's own reasoning. The contact-address page reached after saving does carry all three save actions, so the primary-alone rule is specific to this page's position."
+    },
+    {
+      "id": "trace-animals-fit-p13-022",
+      "statement": "The page has a 'Back' link to the notification's overview hub (/live-animals/notifications/<ref>), and following it lands on the hub.",
+      "kind": "behaviour",
+      "ref": "back trace (cph-number.fit.spec.js:171), a.govuk-back-link and GET /live-animals/notifications/GBN-AG-26-ZS72WA 200",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-H5NKXJ\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-023",
+      "statement": "The page shows a journey strip with a blue 'Draft' tag and the notification reference in bold above the content.",
+      "kind": "copy",
+      "ref": "every cph-number DOM snapshot, div.app-journey-strip",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">\n  Draft\n</STRONG>\n\n          <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-H5NKXJ</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-024",
+      "statement": "The form posts back to the same cph-number URL with fields crumb, concurrencyToken, cphCounty, cphParish and cphHolding, and has browser validation turned off (novalidate).",
+      "kind": "integration",
+      "ref": "save trace network log, POST /live-animals/notifications/GBN-AG-26-H5NKXJ/cph-number postData; form method=post novalidate",
+      "quote": "{\"name\": \"cphCounty\", \"value\": \"12\"}, {\"name\": \"cphParish\", \"value\": \"345\"}, {\"name\": \"cphHolding\", \"value\": \"6789\"}",
+      "confidence": "verbatim",
+      "note": "crumb is a CSRF token; its value is not copied here."
+    },
+    {
+      "id": "trace-animals-fit-p13-025",
+      "statement": "On a valid save the service joins the three parts and stores the nine digits as one CPH number.",
+      "kind": "behaviour",
+      "ref": "save trace, test title cph-number.fit.spec.js:179",
+      "quote": "joins the parts, saves the nine digits, continues the run and comes back split",
+      "confidence": "inferred",
+      "note": "The browser trace shows the three parts posted separately and shown again separately; the joined nine-digit storage is stated by the test title only, no backend call is visible in the trace."
+    },
+    {
+      "id": "trace-animals-fit-p13-026",
+      "statement": "After a valid save during the opening run (the notification was created in this session), 'Save and continue' redirects (302) to the next question, the contact address select page at /consignment/contact/select, rather than back to the hub.",
+      "kind": "behaviour",
+      "ref": "save trace network log, POST cph-number 302 -> /live-animals/notifications/GBN-AG-26-H5NKXJ/consignment/contact/select; spec lines 187-192",
+      "quote": "POST\thttp://localhost:3000/live-animals/notifications/GBN-AG-26-H5NKXJ/cph-number\t302\thttp://localhost:3000/live-animals/notifications/GBN-AG-26-H5NKXJ/consignment/contact/select",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-027",
+      "statement": "The page reached after the CPH number in the opening run has the heading 'Contact address for consignment'.",
+      "kind": "copy",
+      "ref": "save trace, DOM snapshot of /consignment/contact/select after the CPH save",
+      "quote": "<H1 class=\"govuk-fieldset__heading\">\n      Contact address for consignment\n    </H1>",
+      "confidence": "verbatim",
+      "note": "That page's own content belongs to the contact-address part; recorded here only as the CPH page's next step."
+    },
+    {
+      "id": "trace-animals-fit-p13-028",
+      "statement": "Returning to the CPH number page after saving shows the saved number split back into its three boxes: County 12, Parish 345, Holding number 6789.",
+      "kind": "behaviour",
+      "ref": "save trace, second GET cph-number DOM snapshot",
+      "quote": "<INPUT __playwright_value_=\"12\" ... id=\"cphCounty\" ... <INPUT __playwright_value_=\"345\" ... id=\"cphParish\" ... <INPUT __playwright_value_=\"6789\" ... id=\"cphHolding\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-029",
+      "statement": "The CPH form carries a hidden concurrencyToken, which was 0 both before and after the CPH number was saved.",
+      "kind": "data",
+      "ref": "save trace, cph-number DOM before save and on return",
+      "quote": "<INPUT __playwright_value_=\"0\" type=\"hidden\" name=\"concurrencyToken\" value=\"0\"></INPUT>",
+      "confidence": "verbatim",
+      "note": "Recorded as observed; whether the token should move after a save is not something this trace shows."
+    },
+    {
+      "id": "trace-animals-fit-p13-030",
+      "statement": "An invalid submission is answered with HTTP 400 and the CPH page re-rendered with errors, at the same URL (no redirect).",
+      "kind": "behaviour",
+      "ref": "vreq and vall traces network log, POST cph-number 400",
+      "quote": "POST\thttp://localhost:3000/live-animals/notifications/GBN-AG-26-1B7X2K/cph-number\t400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-031",
+      "statement": "Errors are shown in an error summary at the top of the page titled 'There is a problem', with role alert, each error a link to the box it concerns.",
+      "kind": "copy",
+      "ref": "every validation trace, div.govuk-error-summary",
+      "quote": "<DIV role=\"alert\">\n    <H2 class=\"govuk-error-summary__title\">\n      There is a problem\n    </H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-032",
+      "statement": "Submitting the page with all three boxes empty shows the single error 'Enter a CPH number'.",
+      "kind": "copy",
+      "ref": "vreq trace (cph-number.fit.spec.js:212), error summary and #cph-error",
+      "quote": "<A href=\"#cphCounty\">Enter a CPH number</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-033",
+      "statement": "The 'Enter a CPH number' error links to the County box; following it focuses the County box, which is still empty.",
+      "kind": "behaviour",
+      "ref": "vreq trace, error summary link href #cphCounty; spec lines 221-225",
+      "quote": "CPH validation: an untouched page asks the whole question at the first box",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-034",
+      "statement": "When the whole number is missing, only the County box is styled as in error; the Parish and Holding number boxes are not.",
+      "kind": "behaviour",
+      "ref": "vreq trace DOM: #cphCounty has govuk-input--error, #cphParish and #cphHolding do not",
+      "quote": "<INPUT __playwright_value_=\"\" class=\"govuk-input govuk-input--width-2 govuk-input--error\" id=\"cphCounty\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-035",
+      "statement": "A parish part with fewer than 3 digits shows the error 'Parish must be 3 digits', linked to the Parish box.",
+      "kind": "copy",
+      "ref": "vshort trace (cph-number.fit.spec.js:228), county 12, parish 34, holding 6789",
+      "quote": "<A href=\"#cphParish\">Parish must be 3 digits</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-036",
+      "statement": "When one part is wrong, every typed value is kept in its box on the error page and only the wrong part's box is styled as in error; following the error link focuses that box.",
+      "kind": "behaviour",
+      "ref": "vshort trace DOM: cphCounty 12, cphParish 34 (govuk-input--error), cphHolding 6789; spec lines 240-244",
+      "quote": "<INPUT __playwright_value_=\"34\" class=\"govuk-input govuk-input--width-3 govuk-input--error\" id=\"cphParish\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-037",
+      "statement": "A county part with fewer than 2 digits shows the error 'County must be 2 digits', linked to the County box.",
+      "kind": "copy",
+      "ref": "vall and vmark traces (cph-number.fit.spec.js:278, :296), county 1",
+      "quote": "<A href=\"#cphCounty\">County must be 2 digits</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-038",
+      "statement": "A holding part with fewer than 4 digits shows the error 'Holding number must be 4 digits', linked to the Holding number box.",
+      "kind": "copy",
+      "ref": "vall and vmark traces, holding 678",
+      "quote": "<A href=\"#cphHolding\">Holding number must be 4 digits</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-039",
+      "statement": "When the county and parish are filled but the holding number is empty, the error names the missing part, 'Enter the holding number', not the whole number; following it focuses the Holding number box.",
+      "kind": "copy",
+      "ref": "vmiss trace (cph-number.fit.spec.js:247), county 12, parish 345, holding empty",
+      "quote": "<A href=\"#cphHolding\">Enter the holding number</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-040",
+      "statement": "A holding part containing a non-digit shows the error 'Holding number must only contain numbers', and the box keeps what was typed (678a); following the link focuses the Holding number box.",
+      "kind": "copy",
+      "ref": "vdig trace (cph-number.fit.spec.js:261), holding 678a",
+      "quote": "<A href=\"#cphHolding\">Holding number must only contain numbers</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-041",
+      "statement": "When several parts are wrong, every wrong part is reported at once: the error summary lists one error per part, in county, parish, holding order.",
+      "kind": "rule",
+      "ref": "vall trace (cph-number.fit.spec.js:278), county 1, parish 34, holding 678",
+      "quote": "<A href=\"#cphCounty\">County must be 2 digits</A> ... <A href=\"#cphParish\">Parish must be 3 digits</A> ... <A href=\"#cphHolding\">Holding number must be 4 digits</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-042",
+      "statement": "The inline error sits once on the whole question (the fieldset's form group gets the error bar), not under individual boxes; with several errors it lists them all in one message separated by line breaks.",
+      "kind": "behaviour",
+      "ref": "vmark trace (cph-number.fit.spec.js:296), div.govuk-form-group--error directly in the form, p#cph-error; no error message inside .govuk-date-input__item",
+      "quote": "<P id=\"cph-error\" class=\"govuk-error-message\">\n  <SPAN class=\"govuk-visually-hidden\">Error:</SPAN> County must be 2 digits<BR></BR>Parish must be 3 digits<BR></BR>Holding number must be 4 digits\n</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-043",
+      "statement": "In the error state the group's accessible description includes the error message as well as the hint (aria-describedby 'cph-hint cph-error').",
+      "kind": "constraint",
+      "ref": "vmark trace, fieldset aria-describedby",
+      "quote": "<FIELDSET class=\"govuk-fieldset\" role=\"group\" aria-describedby=\"cph-hint cph-error\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-044",
+      "statement": "When every part is wrong, all three boxes are styled as in error.",
+      "kind": "behaviour",
+      "ref": "vmark trace DOM, govuk-input--error on #cphCounty, #cphParish, #cphHolding",
+      "quote": "class=\"govuk-input govuk-input--width-2 govuk-input--error\" id=\"cphCounty\" ... class=\"govuk-input govuk-input--width-3 govuk-input--error\" id=\"cphParish\" ... class=\"govuk-input govuk-input--width-4 govuk-input--error\" id=\"cphHolding\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-045",
+      "statement": "The CPH number is required: the page cannot be saved without one.",
+      "kind": "rule",
+      "ref": "vreq trace, empty submit returns 400 with 'Enter a CPH number'",
+      "quote": "Enter a CPH number",
+      "confidence": "inferred",
+      "note": "Follows from the empty submit being rejected rather than saved; the trace does not show whether a blank 'save and return' would be allowed, because the page has no such button."
+    },
+    {
+      "id": "trace-animals-fit-p13-046",
+      "statement": "The CPH number page has no serious or critical axe (WCAG 2 A/AA) violations in its clean state.",
+      "kind": "non-functional",
+      "ref": "axe trace (cph-number.fit.spec.js:201)",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-047",
+      "statement": "The CPH number page has no serious or critical axe (WCAG 2 A/AA) violations in its error state (after an empty submit).",
+      "kind": "non-functional",
+      "ref": "vaxe trace (cph-number.fit.spec.js:319)",
+      "quote": "has no serious or critical axe violations in the error state",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p13-048",
+      "statement": "No trace shows the error for a missing county or a missing parish when the other parts are filled (only a missing holding was walked), so the wording for those cases is unknown.",
+      "kind": "copy",
+      "ref": "cph-number validation traces: vmiss covers holding only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p13-049",
+      "statement": "No trace shows the error for a non-digit county or parish part (only a non-digit holding was walked).",
+      "kind": "copy",
+      "ref": "cph-number validation traces: vdig covers holding only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p13-050",
+      "statement": "No trace shows where saving the CPH number goes when the page is reached outside the opening run (for example from the hub on a notification created in an earlier session); only the opening-run continuation was walked.",
+      "kind": "behaviour",
+      "ref": "save trace only; spec lines 187-192 limit the redirect to a notification created in this session",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p13-051",
+      "statement": "No trace shows the CPH number displayed anywhere else after saving (hub status, check-answers or notification view), nor how it is sent onward to the backend.",
+      "kind": "integration",
+      "ref": "cph-number traces: only the cph-number page is revisited after save",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p13-052",
+      "statement": "No trace shows a CPH number that is partly filled with only the county (other parts empty), or a mix of missing and too-short parts, so how missing-part and length errors combine is unknown.",
+      "kind": "rule",
+      "ref": "cph-number validation traces",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

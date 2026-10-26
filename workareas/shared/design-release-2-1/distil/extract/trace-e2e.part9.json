@@ -1,0 +1,856 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 9 mined all 15 trace zips its read names, from four spec files in the tests repo's animals project (tests/animals/e2e/features/address-book/), all of which were read in full: address-book-navigation.spec.ts (1: follows the Address book item from the animals journey to the INS address book and back [c4eb9]); addresses-add-handshake.spec.ts (2: saving a new address in INS returns to the picker with it selected and committed [bcd17]; cancelling INS add returns to the picker without saving an address [55254]); addresses-picker.spec.ts (1: the picker searches and pages the address book, and the row selected on a later page is the one that saves [98845]); addresses-read-only.spec.ts (11: per role, Consignor or exporter, Place of origin, Consignee, Importer, Place of destination, 'links to INS to add an address when the full stack is running' [6173e, feeb7, 8b5e4, fd6b1, 8ab82, all passed] and 'offers no INS add link in stub mode' [9a7a6, 20282, 0200a, 1bc3e, c3c13, all skipped after their beforeEach ran]; plus 'the create-address page is no longer served' [9baa5]). The bundled trace viewer refused every zip (TraceVersionError: the traces were recorded by a newer Playwright), so each zip was read from its unzipped copy in this part's work folder with jq: test.trace (test steps, locators and assertions), N-trace.trace (frame snapshots rendered back to HTML) and N-trace.network (resource snapshots, with request and response bodies under resources/). Refs name the trace by its folder hash fragment, then the call id of the snapshot or the request URL. The corpus ran against the compose stack (animals frontend on :3000, INS frontend on :3002, Defra ID stub on :3007, address-book API on :8089), not stub mode, which is why the five stub-mode tests skipped and their traces still show the INS add link. Pages in this slice, in the order a user meets them: (1) the Consignment addresses hub at /live-animals/notifications/{ref}/addresses, mined only for each role row's Add, Change and Edit details links and the value it shows before and after a pick; (2) the address picker, one per role, at /consignors/select, /place-of-origin/select, /consignees/select, /importers/select and /destinations/select: journey strip, caption Consignment parties, the role as h1, a one-line description, an Add a new address link to INS, a Search field with hint, a table of address-book rows each with a small radio and a View details disclosure, a 'Showing 5 of N addresses' caption, GOV.UK pagination at five rows a page, an inset showing the carried selection, and Save and continue; its variants are unfiltered page 1, page 2, searched to one row, searched to two rows, cleared, returned from INS with ?selected=, and re-entered after a save; (3) the Defra ID stub sign-in (Sign in using Government Gateway), met when the journey first crosses to INS; (4) the INS Add address details page at :3002/address-book/add with the handshake query, its fields and its two buttons, saved and cancelled; (5) the animals return endpoint /address-return, seen only as a redirect; (6) the create-address URL /addresses/create?for=consignor, which answers 404 Page not found; (7) the service navigation on both frontends, the INS Address book list at /address-book and the INS Dashboard at /, reached from the Address book item and left by the INS dashboard's Start a new notification link back to /live-animals. Snapshots of the picker itself are missing from two skipped traces (Consignor or exporter 9a7a6 and Place of destination c3c13): their network logs show the picker GET, but the trace closed before a snapshot. What is conditional: the INS add link (compose or CDP only, per the spec; stub mode never traced), the selected-address inset and the selected= parameter on pagination (only when a selection exists), the pagination block (only when results exceed one page), and the hub row actions (Add before a pick, Change and Edit details after). Seeding went straight to the address-book API (POST /organisation/5900001/addresses), so the network logs also show its request and response shape.",
+  "claims": [
+    {
+      "id": "trace-e2e-p9-001",
+      "statement": "Each operator role row on the Consignment addresses hub has an Add link that opens that role's address picker: Place of origin at /place-of-origin/select, Consignor or exporter at /consignors/select, Consignee at /consignees/select, Importer at /importers/select and Place of destination at /destinations/select.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@88 (/live-animals/notifications/GBN-AG-26-9X4DXN/addresses)",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/place-of-origin/select\">Add<SPAN class=\"govuk-visually-hidden\"> place of origin</SPAN></A> ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/consignors/select\">Add ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/consignees/select\">Add ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/importers/select\">Add ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/destinations/select\">Add",
+      "confidence": "verbatim",
+      "note": "The hub page itself belongs to another part; it is claimed here only as the picker's entry and return point."
+    },
+    {
+      "id": "trace-e2e-p9-002",
+      "statement": "Before any address is picked, each role row on the hub shows 'Not added yet'.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@88; trace 55254 assertion expect toContainText on the Consignor or exporter row",
+      "quote": "<DD class=\"govuk-summary-list__value\"> Not added yet </DD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-003",
+      "statement": "After a picker save, the hub row shows the chosen address's name and offers two actions in place of Add: Change, which reopens the picker, and Edit details, which goes to /consignors/edit?return=addresses.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@147 (/addresses), Consignor or exporter row",
+      "quote": "<DD class=\"govuk-summary-list__value\"> Handshake Farm 1791394803511 </DD> ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/consignors/select\">Change<SPAN class=\"govuk-visually-hidden\"> consignor or exporter</SPAN></A> ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/consignors/edit?return=addresses\">Edit details<SPAN class=\"govuk-visually-hidden\"> consignor or exporter</SPAN></A>",
+      "confidence": "verbatim",
+      "note": "The Edit details page itself is not reached in this slice."
+    },
+    {
+      "id": "trace-e2e-p9-004",
+      "statement": "Every role picker opens under the journey strip (a blue Draft tag and the notification reference), with the caption 'Consignment parties' and the role name as its h1.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@90; trace feeb7 call@199; trace 8b5e4 call@233; trace fd6b1 call@212; trace 8ab82 call@227",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\"> Draft </STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-9X4DXN</SPAN> </DIV> <SPAN class=\"govuk-caption-l\">Consignment parties</SPAN> <H1 class=\"govuk-heading-l\">Consignor or exporter</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-005",
+      "statement": "The Consignor or exporter picker's h1 is 'Consignor or exporter' and its description reads 'This is the sender of the consignment.'",
+      "kind": "copy",
+      "ref": "trace 6173e call@155 (/consignors/select)",
+      "quote": "<H1 class=\"govuk-heading-l\">Consignor or exporter</H1> <P class=\"govuk-body\">This is the sender of the consignment.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-006",
+      "statement": "The Place of origin picker's h1 is 'Place of origin' and its description reads 'The address where the animals begin their journey to Great Britain', with no closing full stop.",
+      "kind": "copy",
+      "ref": "trace feeb7 call@199 (/place-of-origin/select)",
+      "quote": "<H1 class=\"govuk-heading-l\">Place of origin</H1> <P class=\"govuk-body\">The address where the animals begin their journey to Great Britain</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-007",
+      "statement": "The Consignee picker's h1 is 'Consignee' and its description reads 'This is the receiver or buyer of the consignment being shipped or transported.'",
+      "kind": "copy",
+      "ref": "trace 8b5e4 call@233 (/consignees/select)",
+      "quote": "<H1 class=\"govuk-heading-l\">Consignee</H1> <P class=\"govuk-body\">This is the receiver or buyer of the consignment being shipped or transported.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-008",
+      "statement": "The Importer picker's h1 is 'Importer' and its description reads 'This is usually the same as the consignee. You can select a different person if needed.'",
+      "kind": "copy",
+      "ref": "trace fd6b1 call@212 (/importers/select)",
+      "quote": "<H1 class=\"govuk-heading-l\">Importer</H1> <P class=\"govuk-body\">This is usually the same as the consignee. You can select a different person if needed.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-009",
+      "statement": "The Place of destination picker's h1 is 'Place of destination' and its description reads 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'",
+      "kind": "copy",
+      "ref": "trace 8ab82 call@227 (/destinations/select)",
+      "quote": "<H1 class=\"govuk-heading-l\">Place of destination</H1> <P class=\"govuk-body\">This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-010",
+      "statement": "Each picker's description repeats, word for word, the hint shown under that role's name on the hub.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@88 against the five picker snapshots above",
+      "quote": "<SPAN>Consignor or exporter</SPAN><SPAN class=\"govuk-hint govuk-!-display-block govuk-!-margin-bottom-0\">This is the sender of the consignment.</SPAN>",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the hub hints and the picker descriptions for all five roles; they match exactly."
+    },
+    {
+      "id": "trace-e2e-p9-011",
+      "statement": "When the full stack is running, every one of the five role pickers shows an 'Add a new address' link, as a plain link inside a paragraph under the description, not a button.",
+      "kind": "behaviour",
+      "ref": "trace 6173e, feeb7, 8b5e4, fd6b1, 8ab82: assertions expect toBeVisible getByRole('link', { name: 'Add a new address' }) passed",
+      "quote": "<P class=\"govuk-body\"> <A class=\"govuk-link\" href=\"http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-RDK5N2&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]\">Add a new address</A> </P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-012",
+      "statement": "No picker offers a button for adding an address: the journey has no in-service create action, only the link out to INS.",
+      "kind": "rule",
+      "ref": "trace 6173e, feeb7, 8b5e4, fd6b1, 8ab82: assertion expect toHaveCount(0) on getByRole('button', { name: /add.*address/i }) passed",
+      "quote": "Expect \"toHaveCount\" getByRole('button', { name: /add.*address/i })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-013",
+      "statement": "The Add a new address link goes to the INS frontend's /address-book/add page, carrying four query parameters: journey-type, notification-id, fulfilment-id and handshake-token.",
+      "kind": "integration",
+      "ref": "trace bcd17 call@90 (/consignors/select); spec addresses-read-only.spec.ts asserts href matches /\\/address-book\\/add\\?journey-type=gbn-ag/",
+      "quote": "href=\"http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-9X4DXN&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-014",
+      "statement": "The handshake's journey-type is 'gbn-ag' for the live-animals journey, and notification-id is the notification's reference.",
+      "kind": "data",
+      "ref": "trace bcd17 call@90; trace 6173e, feeb7, 8b5e4, fd6b1, 8ab82",
+      "quote": "journey-type=gbn-ag&notification-id=GBN-AG-26-9X4DXN",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-015",
+      "statement": "The fulfilment-id in the add link is different for each role and the same for a role across notifications, so it identifies which role the new address will fill: Consignor or exporter 9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d, Place of origin 89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c, Consignee abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e, Importer bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f, Place of destination cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60.",
+      "kind": "data",
+      "ref": "trace 6173e call@155; trace feeb7 call@199; trace 8b5e4 call@233; trace fd6b1 call@212; trace 8ab82 call@227; trace bcd17 and 55254 for consignor on other notifications",
+      "quote": "fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d ... fulfilment-id=89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c ... fulfilment-id=abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e ... fulfilment-id=bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f ... fulfilment-id=cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60",
+      "confidence": "inferred",
+      "note": "Inferred from the consignor value being identical on four different notifications (9X4DXN, AX7ZE1, ZAQEWW, RDK5N2) while each role has its own value."
+    },
+    {
+      "id": "trace-e2e-p9-016",
+      "statement": "The handshake-token in the add link is a fresh value on every render of the picker, even for the same notification and role.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@90, call@137, call@143; trace 98845 call@125, call@137, call@155",
+      "quote": "handshake-token=[REDACTED] (three different values across three renders of /consignors/select for GBN-AG-26-9X4DXN)",
+      "confidence": "inferred",
+      "note": "Token values are redacted; they differ on each snapshot. What INS or animals does with an expired or reused token is not shown."
+    },
+    {
+      "id": "trace-e2e-p9-017",
+      "statement": "The picker has a Search text field labelled 'Search' with the hint 'Name, address or country', followed by a secondary Search button.",
+      "kind": "data",
+      "ref": "trace bcd17 call@90; trace feeb7, 8b5e4, fd6b1, 8ab82 picker snapshots",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"q\"> Search </LABEL> <DIV id=\"q-hint\" class=\"govuk-hint\"> Name, address or country </DIV> <INPUT ... class=\"govuk-input govuk-!-width-two-thirds\" id=\"q\" name=\"q\" type=\"text\" value=\"\" aria-describedby=\"q-hint\"></INPUT> </DIV> <BUTTON type=\"submit\" value=\"search\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Search </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-018",
+      "statement": "Search and Save and continue sit in one POST form and are told apart by the button's action value (search or save); a search posts back to the same picker URL and re-renders it with HTTP 200 rather than redirecting.",
+      "kind": "behaviour",
+      "ref": "trace 98845 request POST /live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select (200, three times)",
+      "quote": "<BUTTON type=\"submit\" value=\"search\" name=\"action\" ...> Search </BUTTON> ... <BUTTON type=\"submit\" value=\"save\" name=\"action\" class=\"govuk-button\" ...> Save and continue </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-019",
+      "statement": "The picker form carries hidden fields for the CSRF crumb, a concurrency token and the current page number.",
+      "kind": "data",
+      "ref": "trace bcd17 call@90",
+      "quote": "type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\" ... type=\"hidden\" name=\"concurrencyToken\" value=\"\" ... type=\"hidden\" name=\"page\" value=\"1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-020",
+      "statement": "The picker lists the organisation's address book in a GOV.UK table with columns Select (visually hidden), Name, Address, Country and Actions (visually hidden).",
+      "kind": "data",
+      "ref": "trace bcd17 call@90",
+      "quote": "<TH class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Select</SPAN></TH> <TH class=\"govuk-table__header\">Name</TH> <TH class=\"govuk-table__header\">Address</TH> <TH class=\"govuk-table__header\">Country</TH> <TH class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Actions</SPAN></TH>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-021",
+      "statement": "Each table row's first cell is a small GOV.UK radio named 'party' whose value is the address-book record id, with a visually hidden label 'Select <name>'.",
+      "kind": "data",
+      "ref": "trace bcd17 call@90",
+      "quote": "<DIV class=\"govuk-radios govuk-radios--small\" data-module=\"govuk-radios\"> <DIV class=\"govuk-radios__item\"> <INPUT ... class=\"govuk-radios__input\" id=\"party\" name=\"party\" type=\"radio\" value=\"6ac683f36bdb2fc53f128616\"></INPUT> <LABEL class=\"govuk-label govuk-radios__label\" for=\"party\"> <SPAN class=\"govuk-visually-hidden\">Select Newer Than Target 1791394803707 4</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-022",
+      "statement": "Each row's radio sits in its own govuk-radios group inside its own form group, so the page has one radio group per row rather than one fieldset with a legend for the whole choice.",
+      "kind": "constraint",
+      "ref": "trace bcd17 call@90",
+      "quote": "<TD class=\"govuk-table__cell\"> <DIV class=\"govuk-form-group\"> <DIV class=\"govuk-radios govuk-radios--small\" data-module=\"govuk-radios\">",
+      "confidence": "inferred",
+      "note": "Inferred from the markup: no fieldset or legend wraps the radios. A standard Radios component with a legend, or a table with one fieldset, would replace it."
+    },
+    {
+      "id": "trace-e2e-p9-023",
+      "statement": "Radio ids on a later page do not run on from 'party': page 2's rows are party, party-7, party-8, party-9 and party-10, so party-6 never appears.",
+      "kind": "constraint",
+      "ref": "trace 98845 call@155 (/consignors/select?page=2)",
+      "quote": "id=\"party\" name=\"party\" type=\"radio\" value=\"6ac683f36bdb2fc53f128612\" ... id=\"party-7\" ... id=\"party-8\" ... id=\"party-9\" ... id=\"party-10\"",
+      "confidence": "verbatim",
+      "note": "An id quirk only; no duplicate ids on one page were seen."
+    },
+    {
+      "id": "trace-e2e-p9-024",
+      "statement": "The Address column joins the address lines, town, county where given, and postcode with commas; the Country column shows the country's name, not its code.",
+      "kind": "data",
+      "ref": "trace 98845 call@155 (Prefilled Farm row); trace bcd17 call@90",
+      "quote": "<TD class=\"govuk-table__cell\">12 Copy Street, Unit 4, Carlisle, Cumbria, CA1 5EE</TD> <TD class=\"govuk-table__cell\">United Kingdom</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-025",
+      "statement": "Each row's last cell holds a GOV.UK Details disclosure 'View details' (with visually hidden 'for <name>') that is closed by default.",
+      "kind": "data",
+      "ref": "trace 98845 call@125; assertion expect toBeHidden on .govuk-details__text passed",
+      "quote": "<DETAILS class=\"govuk-details\"> <SUMMARY class=\"govuk-details__summary\"> <SPAN class=\"govuk-details__summary-text\">View details<SPAN class=\"govuk-visually-hidden\"> for Tech Imports Ltd</SPAN></SPAN> </SUMMARY>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-026",
+      "statement": "Opening View details expands the row in place, with no page load, and lists the whole record one item a line: name, each address line, town, county where given, postcode, country, phone and email.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@125 and steps pw:api@87, expect@88, expect@89 (toContainText 'London')",
+      "quote": "<DIV class=\"govuk-details__text\"> <UL class=\"govuk-list\"> <LI>Tech Imports Ltd</LI> <LI>18 Dockside Road</LI> <LI>London</LI> <LI>E14 9GE</LI> <LI>United Kingdom</LI> <LI>+44 1234 567890</LI> <LI>contact@example.com</LI> </UL> </DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-027",
+      "statement": "The table caption counts what is shown against the total, as 'Showing 5 of N addresses', not as a range.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@90; trace 98845 call@155",
+      "quote": "<CAPTION class=\"govuk-table__caption govuk-table__caption--s\">Showing 5 of 27 addresses</CAPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-028",
+      "statement": "The caption uses the plural 'addresses' even when there is one result.",
+      "kind": "copy",
+      "ref": "trace 98845 call@125; trace bcd17 call@143",
+      "quote": "<CAPTION class=\"govuk-table__caption govuk-table__caption--s\">Showing 1 of 1 addresses</CAPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-029",
+      "statement": "The picker shows five addresses a page.",
+      "kind": "rule",
+      "ref": "trace bcd17 call@90 (5 rows, 27 addresses, 6 pages); trace 98845 call@155",
+      "quote": "Showing 5 of 27 addresses ... aria-label=\"Page 6\"> 6 </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-030",
+      "statement": "The picker lists the address book newest first: the five most recently created records fill page one, and an older record is pushed to a later page.",
+      "kind": "rule",
+      "ref": "trace 98845: eight records created through the API in order (Danish, Jutland, Paged Consignor, Newer Than Target 0 to 4), then call@117 page 1 lists Newer Than Target 4, 3, 2, 1, 0 and call@155 page 2 lists Newer Than Target 0, Paged Consignor, Prefilled Farm, Jutland, Danish",
+      "quote": "Select Newer Than Target 1791394803707 4 ... Select Newer Than Target 1791394803707 0 ... Select Paged Consignor 1791394803707",
+      "confidence": "verbatim",
+      "note": "Page 2 opens with the record page 1 closed on (Newer Than Target 0), because another worker added a record between the two loads; the book is shared across tests."
+    },
+    {
+      "id": "trace-e2e-p9-031",
+      "statement": "After the INS add handshake, the newly created address appears first on page one of the picker.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@137 (/consignors/select?selected=6ac683f86bdb2fc53f128617)",
+      "quote": "<CAPTION class=\"govuk-table__caption govuk-table__caption--s\">Showing 5 of 28 addresses</CAPTION> ... <SPAN class=\"govuk-visually-hidden\">Select Handshake Farm 1791394803511</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-032",
+      "statement": "When the results run past one page, the picker shows GOV.UK pagination: numbered page links with an ellipsis for skipped pages, the current page marked with aria-current, and a Next link.",
+      "kind": "data",
+      "ref": "trace bcd17 call@90",
+      "quote": "<NAV class=\"govuk-pagination\" aria-label=\"Pagination\"> ... aria-label=\"Page 1\" aria-current=\"page\"> 1 </A> ... aria-label=\"Page 2\"> 2 </A> </LI> <LI class=\"govuk-pagination__item govuk-pagination__item--ellipsis\"> ⋯ </LI> ... aria-label=\"Page 6\"> 6 </A> ... rel=\"next\"> <SPAN class=\"govuk-pagination__link-title\"> Next<SPAN class=\"govuk-visually-hidden\"> page</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-033",
+      "statement": "On page 2 the pagination shows Previous, pages 1, 2 (current) and 3, an ellipsis, page 6 and Next.",
+      "kind": "data",
+      "ref": "trace 98845 call@155 (/consignors/select?page=2)",
+      "quote": "rel=\"prev\"> <SPAN class=\"govuk-pagination__link-title\"> Previous<SPAN class=\"govuk-visually-hidden\"> page</SPAN> ... aria-label=\"Page 1\"> 1 ... aria-label=\"Page 2\" aria-current=\"page\"> 2 ... aria-label=\"Page 3\"> 3 ... govuk-pagination__item--ellipsis\"> ⋯ ... aria-label=\"Page 6\"> 6 ... rel=\"next\"> ... Next",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-034",
+      "statement": "Pagination links are plain GET links to the picker URL with ?page=N, so paging works without JavaScript and loads a fresh page.",
+      "kind": "behaviour",
+      "ref": "trace 98845 request GET /live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select?page=2 (200), step pw:api@101 click Next",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select?page=2\" rel=\"next\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-035",
+      "statement": "A page other than the first carries its number in the form's hidden page field.",
+      "kind": "data",
+      "ref": "trace 98845 call@155",
+      "quote": "<INPUT __playwright_value_=\"2\" type=\"hidden\" name=\"page\" value=\"2\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-036",
+      "statement": "Searching is a server round trip over the whole address book: a search for a name returns only the matching records, here 'Tech Imports Ltd' narrowed to one row.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@125, steps pw:api@84 fill 'Tech Imports Ltd' and pw:api@85 click Search",
+      "quote": "<INPUT __playwright_value_=\"Tech Imports Ltd\" ... id=\"q\" name=\"q\" type=\"text\" value=\"Tech Imports Ltd\" ...> ... Showing 1 of 1 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-037",
+      "statement": "A search matches part of a name: 'Kolding1791394803707' found both 'Danish Meat Export Kolding1791394803707' and 'Jutland Swine Kolding1791394803707'.",
+      "kind": "rule",
+      "ref": "trace 98845 call@137, assertions expect@92 'Showing 2 of 2 addresses' and expect@93 radio 'Select Jutland Swine Kolding1791394803707' passed",
+      "quote": "Showing 2 of 2 addresses ... Select Jutland Swine Kolding1791394803707 ... Select Danish Meat Export Kolding1791394803707",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-038",
+      "statement": "When the search results fit on one page the pagination block is not shown.",
+      "kind": "rule",
+      "ref": "trace 98845 call@137; assertion expect@94 toHaveCount(0) on link 'Page 2' passed",
+      "quote": "Expect \"toHaveCount\" getByRole('link', { name: 'Page 2' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-039",
+      "statement": "The search term stays in the Search field after the results load.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@137; trace bcd17 call@143",
+      "quote": "<INPUT __playwright_value_=\"Kolding1791394803707\" class=\"govuk-input govuk-!-width-two-thirds\" id=\"q\" name=\"q\" type=\"text\" value=\"Kolding1791394803707\" aria-describedby=\"q-hint\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-040",
+      "statement": "Searching with an empty field restores the whole address book and its pagination.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@147, steps pw:api@95 fill '' and pw:api@96 click Search, assertion expect@97 /Showing 5 of \\d+ addresses/ passed",
+      "quote": "Showing 5 of 28 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-041",
+      "statement": "Search matched on name only in this trace; the hint promises address and country matching too, but no search by address or country was driven.",
+      "kind": "rule",
+      "ref": "trace 98845 steps pw:api@84 and pw:api@90 (both name terms); hint 'Name, address or country'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-042",
+      "statement": "A search that matches nothing was never driven, so the picker's no-results message is not in the corpus.",
+      "kind": "copy",
+      "ref": "trace 98845 (searches drove one and two results only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-043",
+      "statement": "The user can select a record that is only on a later page: paging to it, ticking its radio and pressing Save and continue saves that record to the role.",
+      "kind": "behaviour",
+      "ref": "trace 98845 steps pw:api@101 click Next, pw:api@105 check 'Select Paged Consignor 1791394803707', pw:api@106 Save and continue; request POST /consignors/select?page=2 302 to /addresses; call@167 hub row value",
+      "quote": "<DD class=\"govuk-summary-list__value\"> Paged Consignor 1791394803707",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-044",
+      "statement": "Save and continue on the picker posts the form and redirects to the Consignment addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace 98845 request POST /live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select?page=2; trace bcd17 request POST /consignors/select?selected=6ac683f86bdb2fc53f128617",
+      "quote": "POST 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select?page=2 -> /live-animals/notifications/GBN-AG-26-ZAQEWW/addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-045",
+      "statement": "Save and continue is the picker's only primary button; there is no 'Save and return to overview' or cancel link on the picker.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@90; trace feeb7, 8b5e4, fd6b1, 8ab82",
+      "quote": "<DIV class=\"govuk-button-group\"> <BUTTON type=\"submit\" value=\"save\" name=\"action\" class=\"govuk-button\" data-module=\"govuk-button\"> Save and continue </BUTTON> </DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-046",
+      "statement": "The picker's back link returns to the Consignment addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace 55254 picker snapshots (back link) and step linkBack.click, then hub at call@121",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-AX7ZE1/addresses\" class=\"govuk-back-link\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-047",
+      "statement": "Reopening a picker for a role that already has an address opens on page one with an inset 'Selected address: <name>', even when that record is not on page one.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@173 (re-entry via Change), assertions expect@110 toHaveText 'Selected address: Paged Consignor 1791394803707' and expect@111 toHaveCount(0) on its radio passed",
+      "quote": "Selected address: Paged Consignor 1791394803707",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-048",
+      "statement": "The current selection is carried in a hidden 'selected' form field and appended as &selected=<id> to every pagination link, so it survives paging without JavaScript.",
+      "kind": "behaviour",
+      "ref": "trace 98845 call@173 (Next href); trace bcd17 call@137 (hidden input and pagination hrefs)",
+      "quote": "<INPUT __playwright_value_=\"6ac683f86bdb2fc53f128617\" type=\"hidden\" name=\"selected\" value=\"6ac683f86bdb2fc53f128617\"></INPUT> ... href=\"/live-animals/notifications/GBN-AG-26-9X4DXN/consignors/select?page=2&selected=6ac683f86bdb2fc53f128617\" rel=\"next\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-049",
+      "statement": "Pressing Save and continue on a picker page where the already-saved record is not shown keeps that record: the role still shows it on the hub.",
+      "kind": "rule",
+      "ref": "trace 98845 step pw:api@112 Save and continue at call@173, then call@179 hub and assertion expect@114 toContainText 'Paged Consignor 1791394803707' passed",
+      "quote": "<DD class=\"govuk-summary-list__value\"> Paged Consignor 1791394803707",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-050",
+      "statement": "Pressing Save and continue with no address selected and none saved was never driven, so the picker's error message for a missing choice is not in the corpus.",
+      "kind": "rule",
+      "ref": "trace 55254 left the picker by its back link; no trace saved an empty picker",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-051",
+      "statement": "Apart from the journey strip, the picker uses only GOV.UK Frontend components: Table, small Radios, Details, Pagination, Inset text, Input, Hint and secondary and primary Buttons.",
+      "kind": "constraint",
+      "ref": "class scan of the picker snapshots in traces bcd17, 98845, 8ab82",
+      "quote": "govuk-table govuk-radios govuk-radios--small govuk-details govuk-pagination govuk-inset-text govuk-input govuk-hint govuk-button--secondary app-journey-strip",
+      "confidence": "verbatim",
+      "note": "The only non-govuk class on the picker is app-journey-strip, the draft tag and reference strip above the caption."
+    },
+    {
+      "id": "trace-e2e-p9-052",
+      "statement": "Following Add a new address from the journey when the user has no INS session sends them through INS sign-in first: INS redirects to /auth/sign-in?redirect=<the add URL>, then to the Defra ID stub's authorise endpoint, and after sign-in back to the add URL with the handshake query intact.",
+      "kind": "integration",
+      "ref": "trace bcd17 requests: GET :3002/address-book/add?... 302; GET :3002/auth/sign-in?redirect=... 302; GET :3007/.../oauth2/v2.0/authorize 302; POST :3007/.../oauth2/authresp 302 /organisations; GET :3007/organisations 302 :3002/auth/sign-in-oidc; GET :3002/auth/sign-in-oidc 302 /address-book/add?journey-type=gbn-ag&...",
+      "quote": "GET 302 http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-9X4DXN&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED] -> /auth/sign-in?redirect=%2Faddress-book%2Fadd%3Fjourney-type%3Dgbn-ag%26notification-id%3DGBN-AG-26-9X4DXN%26...",
+      "confidence": "verbatim",
+      "note": "The animals and INS frontends do not share a session in this stack: the user signed in to animals still meets a sign-in page on crossing to INS."
+    },
+    {
+      "id": "trace-e2e-p9-053",
+      "statement": "The sign-in page met on crossing to INS is headed 'Sign in using Government Gateway' and asks for a 'Government Gateway user ID' (hint 'This could be up to 12 characters.') and a 'Password', with a Sign in button.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@92 (:3007/dcidmtest.onmicrosoft.com/oauth2/authresp)",
+      "quote": "<H1 class=\"govuk-heading-l\">Sign in using Government Gateway</H1> ... <LABEL class=\"govuk-label\" for=\"crn\"> Government Gateway user ID </LABEL> <DIV id=\"crn-hint\" class=\"govuk-hint\"> This could be up to 12 characters. </DIV> ... <LABEL class=\"govuk-label\" for=\"password\"> Password </LABEL> ... Sign in </BUTTON>",
+      "confidence": "verbatim",
+      "note": "This is the Defra ID stub, not a real service page. Credentials typed in the trace are not copied."
+    },
+    {
+      "id": "trace-e2e-p9-054",
+      "statement": "After sign-in the stub's /organisations step redirected straight back to INS, so no 'Choose your organisation' page was shown in this slice.",
+      "kind": "behaviour",
+      "ref": "trace bcd17, 55254, c4eb9 requests GET :3007/organisations 302 to :3002/auth/sign-in-oidc",
+      "quote": "GET 302 http://localhost:3007/organisations -> http://localhost:3002/auth/sign-in-oidc?code=[REDACTED]&state=[REDACTED]",
+      "confidence": "verbatim",
+      "note": "The test checks for a 'Choose your organisation' heading but it never appeared here; a user with several organisations is not traced."
+    },
+    {
+      "id": "trace-e2e-p9-055",
+      "statement": "The INS add page reached from the journey is headed 'Add address details', with no caption and no back link.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@102 (:3002/address-book/add?journey-type=gbn-ag&...); trace 55254 call@102",
+      "quote": "<H1 class=\"govuk-heading-l\">Add address details</H1>",
+      "confidence": "verbatim",
+      "note": "No govuk-back-link was rendered on the INS add page in either handshake trace."
+    },
+    {
+      "id": "trace-e2e-p9-056",
+      "statement": "The INS add page carries the handshake into its form as hidden fields journey-type, notification-id, fulfilment-id and handshake-token, beside the CSRF crumb.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102",
+      "quote": "type=\"hidden\" name=\"journey-type\" value=\"gbn-ag\" ... type=\"hidden\" name=\"notification-id\" value=\"GBN-AG-26-9X4DXN\" ... type=\"hidden\" name=\"fulfilment-id\" value=\"9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d\" ... type=\"hidden\" name=\"handshake-token\" value=\"[REDACTED]\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-057",
+      "statement": "The INS add page groups its fields under two h2 headings: 'Enter address details' then 'Enter contact details'.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@102",
+      "quote": "<H2 class=\"govuk-heading-m\">Enter address details</H2> ... <H2 class=\"govuk-heading-m\">Enter contact details</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-058",
+      "statement": "The INS add page asks for 'Name or organisation name' in a full-width text input.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field name",
+      "quote": "<LABEL class=\"govuk-label\" for=\"name\"> Name or organisation name </LABEL> <INPUT ... class=\"govuk-input\" id=\"name\" name=\"name\" type=\"text\" value=\"\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-059",
+      "statement": "The INS add page asks for 'Address line 1' in a full-width text input.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field addressLine1",
+      "quote": "<LABEL class=\"govuk-label\" for=\"addressLine1\"> Address line 1 </LABEL> <INPUT ... class=\"govuk-input\" id=\"addressLine1\" name=\"addressLine1\" type=\"text\" value=\"\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-060",
+      "statement": "The INS add page offers 'Address line 2 (optional)', which the user may leave blank.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field addressLine2; step pw:api@86 fill ''",
+      "quote": "<LABEL class=\"govuk-label\" for=\"addressLine2\"> Address line 2 (optional) </LABEL>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-061",
+      "statement": "The INS add page asks for 'Town or city' in a half-width text input.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field townOrCity",
+      "quote": "<LABEL class=\"govuk-label\" for=\"townOrCity\"> Town or city </LABEL> <INPUT ... class=\"govuk-input govuk-!-width-one-half\" id=\"townOrCity\" name=\"townOrCity\" type=\"text\" value=\"\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-062",
+      "statement": "The INS add page offers 'County (optional)', which the user may leave blank.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field county; step pw:api@88 fill ''",
+      "quote": "<LABEL class=\"govuk-label\" for=\"county\"> County (optional) </LABEL>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-063",
+      "statement": "The INS add page asks for 'Postcode or Zip code' in a half-width text input.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field postcode",
+      "quote": "<LABEL class=\"govuk-label\" for=\"postcode\"> Postcode or Zip code </LABEL> <INPUT ... class=\"govuk-input govuk-!-width-one-half\" id=\"postcode\" name=\"postcode\" type=\"text\" value=\"\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-064",
+      "statement": "The INS add page asks for 'Country' from a select whose first option is 'Select a country' and whose 32 countries are United Kingdom first, then EU and EFTA countries alphabetically: Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands (the), Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland. The submitted value is the two-letter country code.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, select countryCode",
+      "quote": "<SELECT class=\"govuk-select govuk-!-width-one-half\" id=\"countryCode\" name=\"countryCode\"> <OPTION value=\"\">Select a country</OPTION> <OPTION value=\"GB\">United Kingdom</OPTION> <OPTION value=\"AT\">Austria</OPTION> ... <OPTION value=\"NL\">Netherlands (the)</OPTION> ... <OPTION value=\"CH\">Switzerland</OPTION> </SELECT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-065",
+      "statement": "The INS add page asks for 'Email address' in a text input with autocomplete set to email.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field email",
+      "quote": "<LABEL class=\"govuk-label\" for=\"email\"> Email address </LABEL> <INPUT ... class=\"govuk-input\" id=\"email\" name=\"email\" type=\"text\" value=\"\" autocomplete=\"email\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-066",
+      "statement": "The INS add page asks for 'Phone number' with the hint 'For international numbers include the country code', after the email field.",
+      "kind": "data",
+      "ref": "trace bcd17 call@102, field phone",
+      "quote": "<LABEL class=\"govuk-label\" for=\"phone\"> Phone number </LABEL> <DIV id=\"phone-hint\" class=\"govuk-hint\"> For international numbers include the country code </DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-067",
+      "statement": "The INS add page ends with a primary 'Save and continue' button and a secondary 'Cancel and return to address page' button, both submitting the form; the cancel button sends cancel=true.",
+      "kind": "copy",
+      "ref": "trace bcd17 call@102; trace 55254 call@102",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\"> Save and continue </BUTTON> <BUTTON type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Cancel and return to address page </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-068",
+      "statement": "The INS add page uses only GOV.UK Frontend components: Input, Select, Hint and Button.",
+      "kind": "constraint",
+      "ref": "trace bcd17 call@102",
+      "quote": "govuk-form-group govuk-label govuk-input govuk-select govuk-hint govuk-button govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-069",
+      "statement": "Which INS add-page fields are mandatory, and the error messages for a blank or invalid name, address, postcode, country, email or phone, were never driven: the corpus only submits a valid address.",
+      "kind": "rule",
+      "ref": "trace bcd17 (one valid save); trace 55254 (cancel only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-070",
+      "statement": "Saving on the INS add page creates the address and redirects the browser straight back to the animals frontend's /notifications/{ref}/address-return endpoint, carrying fulfilment-id, handshake-token and the new record's id as addressId.",
+      "kind": "integration",
+      "ref": "trace bcd17 request POST :3002/address-book/add?journey-type=gbn-ag&... 302",
+      "quote": "POST 302 http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-9X4DXN&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED] -> http://localhost:3000/live-animals/notifications/GBN-AG-26-9X4DXN/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]&addressId=6ac683f86bdb2fc53f128617",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-071",
+      "statement": "The animals /address-return endpoint redirects to the picker for the role the handshake started from, with the new record preselected through ?selected=<addressId>.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 request GET :3000/live-animals/notifications/GBN-AG-26-9X4DXN/address-return?... 302",
+      "quote": "GET 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-9X4DXN/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]&addressId=6ac683f86bdb2fc53f128617 -> /live-animals/notifications/GBN-AG-26-9X4DXN/consignors/select?selected=6ac683f86bdb2fc53f128617",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-072",
+      "statement": "Back on the picker after an INS save, the new address's radio is already checked and the inset reads 'Selected address: <name>'.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@137 and call@143; assertion expect@99 toBeChecked on 'Select Handshake Farm 1791394803511' passed",
+      "quote": "<DIV class=\"govuk-inset-text\"> Selected address: Handshake Farm 1791394803511 </DIV> ... type=\"radio\" value=\"6ac683f86bdb2fc53f128617\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-073",
+      "statement": "The preselected address is not yet saved to the notification: the user must still press Save and continue on the picker to commit it to the role, after which the hub shows it.",
+      "kind": "rule",
+      "ref": "trace bcd17 step pw:api@100 Save and continue; request POST /consignors/select?selected=... 302 /addresses; call@147 hub; assertion expect@102 toContainText 'Handshake Farm 1791394803511' passed",
+      "quote": "POST 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-9X4DXN/consignors/select?selected=6ac683f86bdb2fc53f128617 -> /live-animals/notifications/GBN-AG-26-9X4DXN/addresses",
+      "confidence": "inferred",
+      "note": "Inferred from the test flow: the selection is shown as checked, then a separate save writes it. Whether leaving the picker without saving discards the INS-created selection was not traced."
+    },
+    {
+      "id": "trace-e2e-p9-074",
+      "statement": "The address created in INS is kept in the shared address book and appears in the picker's whole-book count, which rose from 27 to 28.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 call@90 ('Showing 5 of 27 addresses') and call@137 ('Showing 5 of 28 addresses')",
+      "quote": "Showing 5 of 28 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-075",
+      "statement": "Cancelling on the INS add page saves nothing and redirects back to the animals /address-return endpoint with fulfilment-id and handshake-token but no addressId.",
+      "kind": "integration",
+      "ref": "trace 55254 request POST :3002/address-book/add?... 302",
+      "quote": "POST 302 http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-AX7ZE1&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED] -> http://localhost:3000/live-animals/notifications/GBN-AG-26-AX7ZE1/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-076",
+      "statement": "On a cancelled handshake, /address-return redirects to the role's picker with no selection, and the role stays 'Not added yet' on the hub.",
+      "kind": "behaviour",
+      "ref": "trace 55254 request GET /address-return?... 302 /consignors/select; call@117 picker; call@121 hub; assertion toContainText 'Not added yet' passed",
+      "quote": "GET 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-AX7ZE1/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED] -> /live-animals/notifications/GBN-AG-26-AX7ZE1/consignors/select",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-077",
+      "statement": "The add handshake's save and cancel round trips were only driven from the Consignor or exporter picker; the return to the other four role pickers is not in the corpus.",
+      "kind": "behaviour",
+      "ref": "addresses-add-handshake.spec.ts (both tests use addParty('Consignor or exporter'))",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-078",
+      "statement": "What happens when the handshake-token is missing, expired, reused or does not match (on the INS add page or at /address-return) is not in the corpus.",
+      "kind": "rule",
+      "ref": "traces bcd17 and 55254 (only valid tokens)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p9-079",
+      "statement": "In stub mode the pickers should offer no INS add link, but all five stub-mode tests were skipped because the corpus ran on the compose stack, so stub-mode rendering is not in the corpus.",
+      "kind": "rule",
+      "ref": "traces 9a7a6, 20282, 0200a, 1bc3e, c3c13 (test.trace: beforeEach steps only, no assertions); spec skipIfNonStubStackEnvironment",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The traces of the skipped tests for Place of origin, Consignee and Importer still show the Add a new address link, confirming the stack was not in stub mode."
+    },
+    {
+      "id": "trace-e2e-p9-080",
+      "statement": "The animals journey no longer serves its own create-address page: a GET to /notifications/{ref}/addresses/create?for=consignor answers HTTP 404.",
+      "kind": "rule",
+      "ref": "trace 9baa5 request GET /live-animals/notifications/GBN-AG-26-G2RC32/addresses/create?for=consignor 404; assertion response status 404",
+      "quote": "GET 404 http://localhost:3000/live-animals/notifications/GBN-AG-26-G2RC32/addresses/create?for=consignor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-081",
+      "statement": "The 404 page shows the h1 '404' and the body 'Page not found'.",
+      "kind": "copy",
+      "ref": "trace 9baa5 call@215",
+      "quote": "<H1 class=\"govuk-heading-l\">404</H1> <P class=\"govuk-body\">Page not found</P>",
+      "confidence": "verbatim",
+      "note": "The GOV.UK pattern for a page not found uses the heading 'Page not found'; this page uses the bare status code as its heading."
+    },
+    {
+      "id": "trace-e2e-p9-082",
+      "statement": "The animals frontend's service navigation has the service name 'Import notification service' linking to /live-animals, then the items Dashboard (/live-animals), Address book, Manage account (href '#') and Log out (/auth/sign-out).",
+      "kind": "copy",
+      "ref": "trace c4eb9 snapshot at call@30 (:3000/live-animals)",
+      "quote": "<A href=\"/live-animals\" class=\"govuk-service-navigation__link\"> Import notification service </A> ... <A class=\"govuk-service-navigation__link\" href=\"/live-animals\" aria-current=\"true\"> <STRONG class=\"govuk-service-navigation__active-fallback\">Dashboard</STRONG> </A> ... <A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\"> Address book </A> ... <A class=\"govuk-service-navigation__link\" href=\"#\"> Manage account </A> ... <A class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\"> Log out </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-083",
+      "statement": "The Dashboard item stays marked current on every journey page, including the address pickers and the hub.",
+      "kind": "behaviour",
+      "ref": "trace 55254 full snapshots of /addresses and /consignors/select",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"/live-animals\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-084",
+      "statement": "The animals Address book navigation item is an absolute link to the INS frontend's /address-book, leaving the animals service.",
+      "kind": "integration",
+      "ref": "trace c4eb9 call@30; step pw:api@47 click link 'Address book'",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\"> Address book </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-085",
+      "statement": "Following the Address book item without an INS session goes through INS sign-in and lands on the INS /address-book page.",
+      "kind": "behaviour",
+      "ref": "trace c4eb9 requests GET :3002/address-book 302 /auth/sign-in?redirect=%2Faddress-book ... GET :3002/auth/sign-in-oidc 302 /address-book; GET :3002/address-book 200",
+      "quote": "GET 302 http://localhost:3002/address-book -> /auth/sign-in?redirect=%2Faddress-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-086",
+      "statement": "The INS frontend's service navigation has the service name 'Import notification service' linking to /, then Dashboard (/), Address book (/address-book), Manage account (href '#') and Log out (/auth/sign-out), with Address book marked current on the address book page.",
+      "kind": "copy",
+      "ref": "trace c4eb9 snapshot at call@56 (:3002/address-book)",
+      "quote": "<A href=\"/\" class=\"govuk-service-navigation__link\"> Import notification service </A> ... <A class=\"govuk-service-navigation__link\" href=\"/\"> Dashboard </A> ... <A class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\"> <STRONG class=\"govuk-service-navigation__active-fallback\">Address book</STRONG> </A> ... href=\"#\"> Manage account ... href=\"/auth/sign-out\"> Log out",
+      "confidence": "verbatim",
+      "note": "Both frontends carry the same service name and the same four items, so the user meets one navigation across the two services; only the Dashboard targets differ (/live-animals versus INS /)."
+    },
+    {
+      "id": "trace-e2e-p9-087",
+      "statement": "Manage account is a placeholder link (href '#') on both frontends.",
+      "kind": "behaviour",
+      "ref": "trace c4eb9 call@30 and call@56",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"#\"> Manage account </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-088",
+      "statement": "The INS address book page is headed 'Address book' with the lead 'Manage addresses used across import and export services.'",
+      "kind": "copy",
+      "ref": "trace c4eb9 call@56",
+      "quote": "<H1 class=\"govuk-heading-xl\">Address book</H1> <P class=\"govuk-body\">Manage addresses used across import and export services.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-089",
+      "statement": "The INS address book page has a GET search form with a search-type field labelled 'Search addresses' and a primary Search button.",
+      "kind": "data",
+      "ref": "trace c4eb9 call@56",
+      "quote": "<FORM method=\"get\" action=\"/address-book\" class=\"govuk-!-margin-bottom-6\"> <DIV class=\"govuk-form-group\"> <LABEL class=\"govuk-label\" for=\"q\"> Search addresses </LABEL> <INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"q\" name=\"q\" type=\"search\" value=\"\"></INPUT> </DIV> <BUTTON type=\"submit\" class=\"govuk-button govuk-!-margin-left-2\" data-module=\"govuk-button\"> Search </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-090",
+      "statement": "The INS address book page has an 'Add a new address' button-styled link to /address-book/add, with no handshake query when opened from INS itself.",
+      "kind": "behaviour",
+      "ref": "trace c4eb9 call@56",
+      "quote": "<A href=\"/address-book/add\" role=\"button\" class=\"govuk-button\" data-module=\"govuk-button\"> Add a new address </A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-091",
+      "statement": "The INS address book lists 25 addresses a page newest first, with the count as a range ('Showing 1-25 of 27') and GOV.UK pagination.",
+      "kind": "data",
+      "ref": "trace c4eb9 call@56",
+      "quote": "<P class=\"govuk-body govuk-!-margin-bottom-4\"> Showing 1-25 of 27 </P> ... <NAV class=\"govuk-pagination\" aria-label=\"Pagination\"> ... href=\"/address-book?page=2\" aria-label=\"Page 2\"> 2",
+      "confidence": "verbatim",
+      "note": "The INS list counts as a range ('Showing 1-25 of 27') while the journey picker counts as 'Showing 5 of 27 addresses'."
+    },
+    {
+      "id": "trace-e2e-p9-092",
+      "statement": "The INS address book table has columns Name, Address, Country and a visually hidden Action column holding a 'View' link to /address-book/{id} per row.",
+      "kind": "data",
+      "ref": "trace c4eb9 call@56",
+      "quote": "<TH class=\"govuk-table__header\">Name</TH> <TH class=\"govuk-table__header\">Address</TH> <TH class=\"govuk-table__header\">Country</TH> <TH class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Action</SPAN></TH> ... <A class=\"govuk-link\" href=\"/address-book/6ac683f36bdb2fc53f128616\">View<SPAN class=\"govuk-visually-hidden\"> Newer Than Target 1791394803707 4</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-093",
+      "statement": "The picker in the journey and the INS address book list show the same organisation's records: the 27 records in INS are the 27 the picker counted.",
+      "kind": "integration",
+      "ref": "trace c4eb9 call@56 ('Showing 1-25 of 27', same record names) against trace bcd17 call@90 ('Showing 5 of 27 addresses')",
+      "quote": "Showing 1-25 of 27",
+      "confidence": "inferred",
+      "note": "Inferred from matching names and totals across traces run against the same shared book; both read address-book organisation 5900001."
+    },
+    {
+      "id": "trace-e2e-p9-094",
+      "statement": "The INS Dashboard at / is headed 'Dashboard' and has a search labelled 'Search by notification reference' with a Search button.",
+      "kind": "copy",
+      "ref": "trace c4eb9 call@83 (:3002/)",
+      "quote": "<H1 class=\"govuk-heading-xl\">Dashboard</H1> ... <LABEL class=\"govuk-label\" for=\"referenceNumber\"> Search by notification reference </LABEL> <INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"referenceNumber\" name=\"referenceNumber\" type=\"search\" value=\"\"></INPUT> ... Search </BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-095",
+      "statement": "With no notifications, the INS Dashboard says 'There are no notifications yet.' and shows a 'Start a new notification' button-styled link to the animals frontend's /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace c4eb9 call@83; step pw:api@60 click a[href^='http://localhost:3000'] then expect URL on the animals origin under /live-animals passed",
+      "quote": "<P class=\"govuk-body\">There are no notifications yet.</P> <A href=\"http://localhost:3000/live-animals\" role=\"button\" class=\"govuk-button\" data-module=\"govuk-button\"> Start a new notification </A>",
+      "confidence": "verbatim",
+      "note": "This is the only link back to the animals journey that the INS dashboard showed in this trace."
+    },
+    {
+      "id": "trace-e2e-p9-096",
+      "statement": "No link on the INS address book page leads straight back to the animals journey: the round trip goes INS Dashboard, then Start a new notification.",
+      "kind": "behaviour",
+      "ref": "trace c4eb9 steps pw:api@58 click 'Dashboard' and pw:api@60 click the animals link; call@56 has no :3000 link",
+      "quote": "Click getByRole('link', { name: 'Dashboard', exact: true }) ... Click locator('a[href^=\"http://localhost:3000\"]').first()",
+      "confidence": "inferred",
+      "note": "Inferred from the address-book snapshot, whose only cross-service-looking links are within INS."
+    },
+    {
+      "id": "trace-e2e-p9-097",
+      "statement": "The animals dashboard's empty state in this trace read 'No Results' in the toolbar and 'You have not started any notifications in this session.'",
+      "kind": "copy",
+      "ref": "trace c4eb9 call@30 (:3000/live-animals)",
+      "quote": "<P class=\"govuk-label govuk-label--s notification-list__results\">No Results</P> ... <P class=\"govuk-body\">You have not started any notifications in this session.</P>",
+      "confidence": "verbatim",
+      "note": "The animals dashboard belongs to another part; recorded only as the start of the navigation round trip."
+    },
+    {
+      "id": "trace-e2e-p9-098",
+      "statement": "The address-book API creates a record for an organisation with POST /organisation/{organisationId}/addresses and a JSON body of name, addressLine1, townOrCity, postcode, countryCode, phone and email, answering 201 with a Location header for the new record.",
+      "kind": "integration",
+      "ref": "trace 98845 request POST http://localhost:8089/organisation/5900001/addresses (201), body resources/b5b7cf61e8c7408caa9b54a1d5c91675ff98e433.json",
+      "quote": "{\"name\":\"Danish Meat Export Kolding1791394803707\",\"addressLine1\":\"Havnegade 21\",\"townOrCity\":\"Copenhagen\",\"postcode\":\"1058\",\"countryCode\":\"DK\",\"phone\":\"01228 555 0197\",\"email\":\"searchable@example.co.uk\"} -> 201 Location: http://localhost:8089/organisation/5900001/addresses/6ac683f36bdb2fc53f12860e",
+      "confidence": "verbatim",
+      "note": "Called by the test to seed records, not by a page; it shows the system of record behind the picker."
+    },
+    {
+      "id": "trace-e2e-p9-099",
+      "statement": "An address-book record carries id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, a deleted flag, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "trace 98845 response resources/37151daa53aa135a95d29ed6960eff5f646e0657.json",
+      "quote": "{\"id\":\"6ac683f36bdb2fc53f12860e\",\"name\":\"Danish Meat Export Kolding1791394803707\",\"addressLine1\":\"Havnegade 21\",\"addressLine2\":null,\"townOrCity\":\"Copenhagen\",\"county\":null,\"postcode\":\"1058\",\"countryCode\":\"DK\",\"phone\":\"01228 555 0197\",\"email\":\"searchable@example.co.uk\",\"organisationId\":\"5900001\",\"deleted\":false,\"createdAt\":\"2026-10-07T17:40:03.716445678Z\",\"modifiedAt\":\"2026-10-07T17:40:03.716445678Z\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-100",
+      "statement": "The picker's radio value and the selected= parameter are the address-book record id, the same id INS hands back as addressId.",
+      "kind": "data",
+      "ref": "trace bcd17 /address-return addressId=6ac683f86bdb2fc53f128617 and call@137 radio value 6ac683f86bdb2fc53f128617",
+      "quote": "addressId=6ac683f86bdb2fc53f128617 ... type=\"radio\" value=\"6ac683f86bdb2fc53f128617\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p9-101",
+      "statement": "The picker's data calls from the animals frontend to the address book are server-side: the browser's network log shows only page requests to the animals frontend, never a call to the address-book API.",
+      "kind": "integration",
+      "ref": "trace 98845 and bcd17 network logs (browser requests to :3000 only during the picker)",
+      "quote": "GET 200 http://localhost:3000/live-animals/notifications/GBN-AG-26-ZAQEWW/consignors/select",
+      "confidence": "inferred",
+      "note": "The server-to-server call shape from the animals frontend to the address book is not visible in a browser trace."
+    },
+    {
+      "id": "trace-e2e-p9-102",
+      "statement": "Snapshots of the stub-mode test's picker are missing for Consignor or exporter and Place of destination: their network logs show the picker GET, but each trace ended before a snapshot of it was taken.",
+      "kind": "behaviour",
+      "ref": "trace 9a7a6 (last snapshot call@88 /addresses; network GET /consignors/select); trace c3c13 (last snapshot call@224 /addresses; network GET /destinations/select)",
+      "quote": "\"url\":\"http://localhost:3000/live-animals/notifications/GBN-AG-26-3KERKM/consignors/select\"",
+      "confidence": "gap",
+      "note": "Their passing full-stack siblings (6173e, 8ab82) carry those pickers instead."
+    },
+    {
+      "id": "trace-e2e-p9-103",
+      "statement": "To reach the address pickers, each test first started a notification and completed origin and commodity before opening 'Roles and addresses' from the overview, so the Roles and addresses task is reached once those sections are unlocked.",
+      "kind": "behaviour",
+      "ref": "trace bcd17 steps pw:api@50 to pw:api@73 (Start a new notification, Origin of the import, What are you importing?, Commodity details, Roles and addresses)",
+      "quote": "Click getByRole('link', { name: 'Roles and addresses', exact: true })",
+      "confidence": "inferred",
+      "note": "The helper is called unlockSections; whether Roles and addresses is locked before origin and commodity are done is not shown in this slice."
+    }
+  ]
+}

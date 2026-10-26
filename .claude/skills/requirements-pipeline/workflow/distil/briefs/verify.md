@@ -34,6 +34,9 @@ For each claim, one verdict: `{ "id", "holds", "reason" }`.
 - An `inferred` claim holds when the inference is sound and the statement says why.
 - `reason` says what you found: where the quote is, or what the statement claims that the quote does not say.
 - A claim that is right but has the wrong `kind` or a loose `ref` still holds. Say so in `reason`.
+- A claim that is a mechanism, handler or formatter code ([`extract-repo.md`](extract-repo.md)) or user-entered data
+  shown differently from how it was entered (`TRACE_EXTRACTOR.md`), but whose `note` does not start with
+  `mechanism:`, still holds. Say in `reason` that it needs the note: reconcile treats a mechanism differently.
 - Every claim in your range gets exactly one verdict. No verdict for a claim outside your range.
 
 ## What the extract missed

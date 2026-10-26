@@ -323,13 +323,22 @@ const STARTED_AT_FORMAT = /^\d{8}T\d{6}Z$/
 
 const WORKSPACE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'tilde', 'startedAt', 'summary'],
+  required: ['ok', 'abs', 'tilde', 'startedAt', 'machineConfig', 'workers', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
     tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
     canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
     startedAt: { type: 'string', description: 'Exactly what `date -u +%Y%m%dT%H%M%SZ` printed, such as 20261001T091500Z' },
+    machineConfig: {
+      type: ['string', 'null'],
+      description: '`result.config` from `tim build workers --json`, exactly as printed: a path, or null'
+    },
+    workers: {
+      type: 'object',
+      additionalProperties: { type: 'integer' },
+      description: '`result.workers` from `tim build workers --json`, copied key for key: {} when it printed {}'
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -344,6 +353,9 @@ tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash 
 Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
+Then run \`tim build workers --workspace <the candidate path you used> --json\` and copy its \`result.config\` as
+\`machineConfig\` and its \`result.workers\` as \`workers\`, every key and number exactly as printed. If it exits
+non-zero, report ok:false and quote its error message in your summary.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
 No Grep/Glob tools. One command per Bash call.
 ${RUN_WITH_BASH}`,
@@ -367,8 +379,22 @@ if (!workspace.canonical) {
   log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
 }
 
+const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
+const badWorkerEntries = Object.entries(workspace.workers ?? {}).filter(
+  ([rung, count]) => !RUNG_KEY.test(rung) || !Number.isInteger(count) || count < 1
+)
+if (typeof workspace.workers !== 'object' || workspace.workers === null || badWorkerEntries.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: the workspace agent relayed this machine's worker counts in the wrong shape — got ${JSON.stringify(workspace.workers)}. Run \`tim build workers --json\` by hand to see what it should have copied`
+  )
+}
+const MACHINE_WORKERS = workspace.workers
+
 const RUN_ID = `ibl-${workspace.startedAt}`
 log(`${WORKFLOW_NAME}: run ${RUN_ID}`)
+log(
+  `${WORKFLOW_NAME}: this machine's worker counts, from ${workspace.machineConfig ?? 'no settings file'}: ${JSON.stringify(MACHINE_WORKERS)}`
+)
 
 const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
 const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
@@ -514,6 +540,7 @@ const HOUSE_RULES = `**Comments**
 - Rationale goes in the repo's \`docs/\` or the behaviour spec, never in code.
 - A comment that explains a name means the name is wrong. Rename, then delete the comment in the same change.
 - When a comment is stale, delete it. Do not reword it.
+- A marker that a test or tool reads is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
 - Bad: \`// Hapi validates the full payload before route handlers run, so the token is guaranteed present.\` Good: no comment. The route's \`validate.payload\` schema already says it.
 
@@ -526,6 +553,10 @@ const HOUSE_RULES = `**Comments**
 **Names**
 
 - A name predicts what the code returns and what it changes. Read the body, then check the name told you both.
+- A name's value word covers every value the code can return. Bad: \`countryNameOf(countries, code)\`, which can return a code. Good: \`countryLabelOf\`, the label shown: the name, else the code.
+- Nothing (null or undefined) and an expected error, such as not found, are not part of a name. No suffix names them or a fallback: not \`…OrNull\`, \`…OrUndefined\`, \`…OrNotFound\` or \`…OrAddressBook\`. Bad: \`addressFieldTextOrNull\`, \`liveAddressOrNotFound\`. Good: \`addressFieldText\`, \`loadLiveAddress\`.
+- Rename only when the name mispredicts. A name whose value word covers what the code returns, and that says what it changes, stays, even when another name would read better.
+- Name a parameter or local for what it holds at that point. Bad: \`id\` and \`returnTo\` for an address id and a return that has passed its checks. Good: \`addressId\` and \`honouredReturn\`.
 - Bad: \`// c-201: an amendment opens with no errors; Continue refused shows them.\` above \`const holdsSilently = readOnly || (isAmend && !refused)\`. Good: no comment, and a name that says the page hides answer errors for submitted, template and unrefused amend states.
 - Bad: \`linesDroppedBy(lines, type)\` returning \`{ kept, removed }\`. Good: \`keepLinesAllowedBy(lines, type)\`.
 - Bad: \`report()\` that also clears expired faults. Good: clear them where a name says so, and let \`report()\` only read.
@@ -540,6 +571,16 @@ const HOUSE_RULES = `**Comments**
 - Extend the mechanism that exists. Do not add a second one beside it. When a new class or path mirrors one you are editing, extract the shared part in the same change.
 - A pipeline whose callbacks branch or take several steps gets named helpers, so the top function reads as a few named steps.
 - Build only what this change makes reachable.
+- A literal value used by one function lives in that function. Module scope is for values the module shares, and for module set-up such as a logger, a template path or a value a test imports.
+- A scope you are given limits which files you open, never which lines of an opened file you fix. Every file you touch meets these rules in full.
+
+**Design**
+
+- Build copy, layout and components as the design source sets them: the prototype, a design release or a ticket's acceptance criteria. Code that differs from its design source is a correctness finding.
+- A review raises a \`design\` finding, the question for the designer and never a code fix, when a guide such as the GDS style guide disagrees with what the design source sets, when the design source sets two different things for one element (two labels for one field on two pages), or when the code had to choose copy, layout or a component for a case the design source does not show.
+- Read the design source before you raise or judge a \`design\` finding. A backlog row's \`sources\` name it and the workarea's \`sources.json\` gives its location and the commit to read it at. "I could not confirm what the design source sets" never raises one and never refutes one: read it.
+- A \`design\` finding carries everything the designer decides from: the design source quoted at file:line, as a permalink at the commit read when it is a public repo; the code quoted at file:line; the guide's rule with a link, when a guide disagrees; and the question with the options it leaves, such as "keep 'X', or change to 'Y'?".
+- Bad: "The edit label may differ from the prototype. I could not confirm which label it sets." Good: "The prototype labels the name field 'Name or organisation' on the add page (\`consignment-manual-address-fields.html:9\`) and 'Name or organisation name' on the edit page (\`address-book-manual-address-fields.html:9\`), and the code copies both (\`copy.en.js:54\`, \`:36\`). For the designer: should both pages use one label, and which?"
 
 **Tests**
 
@@ -551,7 +592,7 @@ const HOUSE_RULES = `**Comments**
 
 **Logging and errors**
 
-- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by.
+- Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by. A user's own input error shown back on the form is not one: do not log it. Another service refusing what this one accepted is: log it at warn.
 - Log the throwable (Java) or \`{ err }\` (pino), never only its message. Bad: \`log.warn("Retryable error, message left for retry: {}", classified.getMessage())\`. Good: \`log.warn("Retryable error, message {} left for retry", messageId, classified)\`.
 - No request or response bodies at INFO.
 - No empty catch. \`.catch(() => undefined)\` hides the failure it swallows.`
@@ -695,7 +736,7 @@ PROBES AND DOCS — two more lines in notes, each on a line of its own, whatever
   you have inverted the production line its test depends on, seen the test fail, restored the line and seen it pass,
   by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe". The leased stack holds each frontend's
   default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`, never
-  \`test:fit\`.
+  \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.
 - \`Docs updated: <paths>\`, or \`Docs updated: none — searched <terms> in <dirs>\`. Search the changed repos' \`docs/\`,
   the recipes, the JSDoc and Javadoc of every function you changed, comments within ten lines of every hunk, and
   convention test names, for the behaviour you changed. Every one that now states the old way is part of this change:
@@ -1175,7 +1216,8 @@ in a denied form cannot run, so the ladder stops the increment red with nothing 
 The workspace stack is up for every check, and its frontends hold their own ports (3000 for animals, 3003 for plants
 and so on), so a check that starts a frontend on its default port cannot run. A FIT check therefore runs the script
 gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
-\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`.
+\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`. Write no worker count into
+a plan: whoever runs the check adds this machine's \`--workers\` from GUARD RAILS.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1183,9 +1225,27 @@ none does, add a small test or npm script that makes it to the plan's own work (
 or the performance-tests repo) and name that as the check. To prove a script runs, run the npm script that calls it.
 To vary a script's behaviour, use an npm script or a flag the script takes, never a variable prefix.`
 
+const workerCountLines = Object.entries(MACHINE_WORKERS).map(
+  ([rung, count]) => `    ${rung.replace(/\/(\w+)$/, ' $1')}: \`--workers=${count}\``
+)
+
+const TEST_WORKERS_LINE =
+  workerCountLines.length === 0
+    ? ''
+    : `- THIS MACHINE'S TEST WORKERS. Every FIT or E2E command you run yourself, outside \`tim build gate\` (a probe, a
+  plan check, a reviewer's or fixer's check, a single spec), ends with this machine's worker count, after the spec
+  files, so it drives the machine no harder than the gate does. The scripts' own default can start a browser per core
+  and push this machine into swap. Per repo and rung:
+${workerCountLines.join('\n')}
+  So: \`npm --prefix ${TILDE}/repos/<repo> run test:fit:ci -- <spec file> --workers=<n>\` for FIT, and
+  \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file> --workers=<n>\` for E2E. A repo not listed keeps its
+  script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
+`
+
 const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
 ${RUN_WITH_BASH}
+${TEST_WORKERS_LINE}
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
 - In Bash ALWAYS use tilde paths \`${TILDE}/...\` — a literal /Users/... path in Bash is DENIED.
@@ -1482,10 +1542,16 @@ const CI_FIX_SCHEMA = {
 
 const FUNCTIONAL_CATEGORIES = ['correctness', 'security', 'error-handling', 'coverage-gap']
 const CODE_QUALITY_CATEGORIES = ['naming', 'comments', 'structure', 'duplication', 'logging', 'test-readability', 'history']
-const FINDING_CATEGORIES = [...FUNCTIONAL_CATEGORIES, ...CODE_QUALITY_CATEGORIES]
+const DESIGN_CATEGORIES = ['design']
+const FINDING_CATEGORIES = [...FUNCTIONAL_CATEGORIES, ...CODE_QUALITY_CATEGORIES, ...DESIGN_CATEGORIES]
 
 const isCodeQuality = (finding) => CODE_QUALITY_CATEGORIES.includes(finding.category)
-const kindOf = (finding) => (isCodeQuality(finding) ? 'code quality' : 'functional')
+const isDesign = (finding) => DESIGN_CATEGORIES.includes(finding.category)
+const kindOf = (finding) => {
+  if (isCodeQuality(finding)) return 'code quality'
+  if (isDesign(finding)) return 'design'
+  return 'functional'
+}
 const quotedList = (words) => words.map((word) => `\`${word}\``).join(', ')
 
 const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
@@ -1495,10 +1561,21 @@ const CATEGORY_RULE = `CATEGORY. Give every finding exactly one \`category\`:
 - code quality: ${quotedList(CODE_QUALITY_CATEGORIES)}. Formatting, idiom, convention and the wrong layer are
   \`structure\`; a test title that claims more than its assertions prove is \`test-readability\`; an id, ticket key or
   before-and-after narration in code is \`history\`.
+- design: ${quotedList(DESIGN_CATEGORIES)}. Copy, layout or a component where the design source (the prototype, a design
+  release, the acceptanceCriteria) is disagreed with by a guide such as the GDS style guide, sets two different things
+  for one element, or does not show the case the code had to handle. Read the design source first: the row's
+  \`sources\` name it, and the workarea's \`sources.json\` gives its location and commit. In \`why\`, quote the design
+  source at file:line (a permalink at that commit for a public repo), the code at file:line, and the guide's rule with
+  a link when a guide disagrees. In \`fix\`, write the question for the designer with the options it leaves. Code that
+  differs from its design source is \`correctness\`, not \`design\`.
 `
 
-const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, variable and test the change adds or alters, read its
-  name, predict what it returns and what it changes, then read its body. Any mismatch is a \`naming\` finding.
+const CODE_REVIEW_LENS = `- NAMING, predict then compare: for each function, method, parameter, variable and test the change adds or alters, read its
+  name, predict the value it returns and what it changes, then read its body. A value its value word does not cover (a
+  name that can return a code) or a change it hides is a \`naming\` finding. Nothing (null or undefined) and an expected
+  error such as not found are not mismatches, and a suffix that names them or a fallback (…OrNull, …OrNotFound) is
+  itself a \`naming\` finding. A name that predicts the value and the change is not a finding, even when another name
+  would read better.
 - OPERABILITY: a branch that changes an outcome (a refusal, a redirect, a retry, a fallback, a state switch) with no
   log, or with a log support cannot search by: no ids, no cause, only an error's message. "Support cannot tell
   <what> during an incident" is a full failure scenario for a \`logging\` finding.
@@ -1588,7 +1665,13 @@ accurate and describes only the lines below it, the branch does log once with th
 code in \`quote\`, with its file:line. A refutation with no quote leaves the finding standing. "Taste", "pre-existing",
 "out of the increment's scope", "a comparable file does it", "feature folders are independent" and the like are never
 grounds to refute one. A tool call that failed is not evidence: when you could not read the code, the finding is real.
-A house-rule breach is never taste and never out of scope, whatever its kind.`
+A house-rule breach is never taste and never out of scope, whatever its kind.
+DESIGN (${quotedList(DESIGN_CATEGORIES)}): read the design source the finding cites, and the row's \`sources\` and the
+workarea's \`sources.json\` when it cites none. The finding is real when the source does set what it says and a guide
+rule does disagree, when the source sets two different things for one element, or when the source does not show the
+case the code handles. Quote the source at file:line in \`reasoning\`. A source you did not read, or a finding that did
+not read it, is never grounds to refute: read it. A real finding that lacks its evidence (the source and code at
+file:line, the guide rule, the question and its options) is real: add the missing evidence in \`reasoning\`.`
 
 const describeFindingKind = (finding) => `[${finding.category ?? 'no category'}, ${kindOf(finding)}]`
 
@@ -1768,6 +1851,9 @@ FOR EACH finding decide exactly one of:
   it is never silently dropped:
   \`${setRow(id, "--open-question '<the question, and the finding that raised it>'")}\`.
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
+  Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
+  its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design
+  source and the code at file:line (permalinks where the verifier gave them) and the guide rule's link.
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.
@@ -2609,6 +2695,9 @@ ${BOUNDED_TIDY_UP}
       belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
       repo's script that takes that project down, as a check of its own. "None" is an answer.
+      Sections 5 and 6 check behaviour: what a page, a test or the spec does. Never a check that a file stays
+      untouched or unchanged: scope is a decision (section 0 or 7), not a test, and a later stage may depart from it
+      for a stated reason.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions. Then
       "Follow-ups:", each wider clean-up you noticed outside the row's footprint as one line a backlog row could be
       written from. "None" is an answer.
@@ -2655,6 +2744,36 @@ const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test n
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
+const OPEN_QUOTE = `["“\`']`
+
+const QUOTED_TEXT = '(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])\'[A-Za-z]+ [A-Za-z][^\']*\')'
+
+const SOURCE_REFERENCE =
+  '(\\S+\\.(md|js|mjs|ts|java|njk|json|ya?ml)(:\\d+(-\\d+)?)?`?|§ ?\\d+\\w*`?|\\b(house rules?|rules?|guides?|standards?|best[- ]practices?)\\b)'
+
+const CITED_QUOTE = new RegExp(
+  `${SOURCE_REFERENCE}([^"“”.;]{0,40}?([:(—–]|\\b(says|states|exempts|reads))\\s*|\\s+)["“][^"”]*["”]`,
+  'gi'
+)
+
+const CHECK_COMMAND_SPAN =
+  /`(\$ )?(grep|rg|jq|tim|npm|npx|node|git|mvn|\.\/mvnw|sed|awk|curl|find|bash|docker|make|wc|head|tail|cat)\b[^`]*`/g
+
+const CHECK_COMMAND_LINE = /^([-*]|\d+\.|\|)?\s*(\$\s*)?(grep|rg|jq|tim|npm|npx|node|git|mvn|curl|docker|bash)\s/
+
+const EXISTING_TEST_REFERENCE =
+  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+
+const DICTATED_TITLE = new RegExp(
+  `\\b(rename|renames|renamed|renaming|retitle|retitles|retitled|retitling)\\b[^.;"“]{0,80}?\\s*:?\\s*${OPEN_QUOTE}|\\b(new|added)\\b[^.;"“]{0,40}?\\b(titled|named|called)\\b|\\b(should|must|will|to) be (titled|named|called)\\b`,
+  'i'
+)
+
+const SENTENCE_BREAK = /(?<=[.;!?])\s+/
+
+const describesAnExistingTest = (sentence) =>
+  EXISTING_TEST_REFERENCE.test(sentence) && !DICTATED_TITLE.test(sentence)
+
 const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a comment or doc comment to add, keep, copy or reword',
@@ -2673,31 +2792,61 @@ const CODE_TEXT_DIRECTIVES = [
   { kind: 'Arrange/Act/Assert comments or a dictated test body', pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i },
   {
     kind: 'a prescribed test title',
-    pattern: /\b(it|test|describe)\(\s*["'`]|\b(titled|test title|test name)\s*:?\s*["“`']|["“`']should [a-z]+ [a-z]+/i
+    pattern: new RegExp(
+      `\\b(it|test|describe)\\(\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,20}?\\b(titled|named|called|retitled|renamed)( to)?\\s*:?\\s*${OPEN_QUOTE}|\\b(retitle|retitles)\\b[^.;"“]{0,60}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(rename|renames)\\b[^.;"“]{0,60}?\\b(tests?|specs?|scenarios?|cases?|titles?)\\b[^.;"“]{0,40}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(tests?|specs?|scenarios?|cases?)\\b[^.;"“]{0,40}?\\b(rename|renames)\\b[^.;"“]{0,20}?\\bto\\s*:?\\s*${OPEN_QUOTE}|\\b(test title|test name)\\s*:?\\s*${OPEN_QUOTE}|\\b(add|adds|adding|write|writes|writing|new|rename|renames|retitle|retitles|titled|named|called)\\b[^.;"“]{0,40}?${OPEN_QUOTE}should [a-z]+ [a-z]+`,
+      'i'
+    ),
+    excusedIn: describesAnExistingTest
   },
   {
     kind: 'a quoted log message',
-    pattern:
-      /\b(logger|log|logs|logged|warn|warns)\b.{0,60}?(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])'[A-Za-z]+ [A-Za-z][^']*')/i
+    pattern: new RegExp(
+      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
+      'i'
+    )
   }
 ]
 
 const DELETION_DIRECTIVE =
   /\b(delete|deletes|deleting|deleted|remove|removes|removing|removed|drop|drops|strip|strips|never|without)\b|\bno (comments?|jsdoc|javadoc|doc comments?)\b/i
 
-const codeTextDirectiveOf = (grepLine) => {
+const NEGATED_COMMENT_WORDS = new RegExp(
+  `\\b(none|no|not|nothing|nor|don't|doesn't|do not|does not)\\b( [^ .;:]+){0,5} ${COMMENT_WORDS}\\b`,
+  'i'
+)
+
+const isInstructionNotToWrite = (text) => DELETION_DIRECTIVE.test(text) || NEGATED_COMMENT_WORDS.test(text)
+
+const withoutCheckCommands = (text, checkCommands) =>
+  checkCommands
+    .filter(Boolean)
+    .reduce((remaining, command) => remaining.replaceAll(command, ' '), text)
+    .replace(CHECK_COMMAND_SPAN, ' ')
+
+const withoutCitedQuotes = (text) => text.replace(CITED_QUOTE, (cited) => cited.replace(/["“][^"”]*["”]$/, '"…"'))
+
+const proseOf = (text, checkCommands) => withoutCitedQuotes(withoutCheckCommands(text, checkCommands))
+
+const writesCodeText = ({ pattern, excusedIn }, prose) =>
+  excusedIn
+    ? prose.split(SENTENCE_BREAK).some((sentence) => pattern.test(sentence) && !excusedIn(sentence))
+    : pattern.test(prose)
+
+const codeTextDirectiveOf = (grepLine, checkCommands) => {
   const [, lineNumber, text] = grepLine.match(/^(\d+):(.*)$/) ?? [null, '?', grepLine]
-  if (DELETION_DIRECTIVE.test(text)) return null
-  const directive = CODE_TEXT_DIRECTIVES.find(({ pattern }) => pattern.test(text))
+  if (CHECK_COMMAND_LINE.test(text.trim())) return null
+  const prose = proseOf(text, checkCommands)
+  if (isInstructionNotToWrite(prose)) return null
+  const directive = CODE_TEXT_DIRECTIVES.find((candidate) => writesCodeText(candidate, prose))
   return directive ? { lineNumber, kind: directive.kind, text: text.trim() } : null
 }
 
-const codeTextDirectivesIn = (stdout) =>
+const codeTextDirectivesIn = (stdout, checkCommands = []) =>
   String(stdout ?? '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map(codeTextDirectiveOf)
+    .map((line) => codeTextDirectiveOf(line, checkCommands))
     .filter(Boolean)
 
 const planLintCommand = (id) => `grep -n -i -E ${shellQuoted(PLAN_LINT_PREFILTER)} ${WORKAREA_TILDE}/plans/${id}.md`
@@ -2714,17 +2863,20 @@ The loop reads the lines itself.`,
     light({ label, phase: 'Plan', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-const codeTextOf = async (id, label) => {
+const codeTextOf = async (id, label, plan) => {
   const answer = await readPlanLintLines(id, label)
   if (!answer) return null
   if (answer.exitCode === GREP_FOUND_NONE) return []
   if (answer.exitCode !== 0) return null
-  return codeTextDirectivesIn(answer.stdout)
+  return codeTextDirectivesIn(
+    answer.stdout,
+    (plan?.checks ?? []).map((check) => check.command)
+  )
 }
 
 const planProblemsOf = async (id, plan, lintLabel) => ({
   deniedChecks: deniedChecksOf(plan),
-  codeText: await codeTextOf(id, lintLabel)
+  codeText: await codeTextOf(id, lintLabel, plan)
 })
 
 const hasPlanProblems = ({ deniedChecks, codeText }) => deniedChecks.length > 0 || codeText.length > 0
@@ -4864,6 +5016,10 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
    A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
    the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
+   The plan states decisions, not a script. A plan check that only fails because the implementor or fixer departed
+   from the plan for a stated reason (a review finding, a red rung) — a file the plan said stays untouched, a home
+   it moved — is a note, not a failure: say so in your summary, with the departure and its reason, and leave it out
+   of failures[]. A check of behaviour (the page does X, the spec says Y) stays pass or fail.
 ${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
 ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
@@ -4911,7 +5067,8 @@ ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
 ${RUN_STACK_RULE}
 In ran[], list every gate rung as \`<repo> <name>\`, every plan check and every spec check you ran. In failures[], one
 line per red rung or check, with its reason and its log.
-Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
+Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it. A
+plan check noted as a stated departure counts as passed: it never by itself turns a green gate red.
 Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
   ))

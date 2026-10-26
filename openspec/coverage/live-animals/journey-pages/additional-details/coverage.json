@@ -30,7 +30,7 @@
           "name": "Answering both questions saves without error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/additional-details.spec.ts", "test": "accepts valid additional details", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/additional-details.spec.ts", "test": "accepts valid additional details and returns to the overview", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves both answers, redirects and persists them", "strength": "full", "notes": "also covers persistence (002-B)" }
           ]
         },
@@ -69,15 +69,37 @@
     },
     {
       "id": "REQ-ADDL-DETAILS-004",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to the page before it in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDL-DETAILS-004-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "set-up visits the overview, so the run has ended" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-004-B",
+          "name": "In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "in the opening run, Back from Additional details opens Identification details when a chosen species needs identifiers", "strength": "full", "notes": "red with Identification details dropped from the run's Back candidates" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to identification in the opening run when a chosen species needs identifiers", "strength": "partial", "notes": "href only; the page it opens is not followed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should keep Back on identification when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the additional details page back to the animal identification page when a chosen species needs identifiers", "strength": "partial", "notes": "the run policy's answer only" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-004-C",
+          "name": "In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "in the opening run, Back from Additional details opens Commodity details when no chosen species needs identifiers", "strength": "full", "notes": "Atlantic salmon; red with Commodity details dropped from the run's Back candidates" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to the consignment details in the opening run when no chosen species needs identifiers", "strength": "partial", "notes": "href only; the page it opens is not followed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the additional details page back to the consignment details page when no chosen species needs identifiers", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]
@@ -94,6 +116,23 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "does not ask a horses-only consignment about unweaned animals", "strength": "full", "notes": "asserts the unweaned group is absent for a horses-only (Equus caballus) consignment" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves a horses-only consignment without an unweaned answer", "strength": "full", "notes": "save-and-continue succeeds with only the certification question answered" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDL-DETAILS-006",
+      "name": "The certification question names the ITAHC as where its answer is found",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-006-A",
+          "name": "The certification question carries the ITAHC hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/additional-details.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "asserts the certification question's description is exactly the ITAHC hint" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "renders service-backed certification options and conditional copy", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.test.js", "test": "Should name the ITAHC as the source of the certification purpose, in English and Welsh", "strength": "partial", "notes": "copy only, English and Welsh" }
           ]
         }
       ]

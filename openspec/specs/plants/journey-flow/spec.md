@@ -34,7 +34,7 @@ The system MUST treat the journey's flow sections and the Overview page's task r
 
 ### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
 **ID**: REQ-PLANTS-FLOW-003
-Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made from check your answers, the system MUST take the user, on continuing from a page, to the next page of that section in the same Overview task whose conditions are met, skipping any that are not, and MUST otherwise return them to Overview. It MUST add no marker to a page's address, link or form to tell such a save.
+Outside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check your answers, continuing from a page MUST go to the next in-scope page of that section in the same Overview task, and otherwise MUST return to Overview. A page in no Overview task (check your answers, the declaration) MUST go on to the next page of its section (REQ-PLANTS-FLOW-006). The system MUST NOT add a marker to a page's address, link or form to tell such a save.
 
 #### Scenario: Continuing skips a page that is not in scope
 **ID**: SCN-PLANTS-FLOW-003-A
@@ -64,7 +64,7 @@ Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made fro
 
 #### Scenario: Consignor opened from Overview returns to Overview, not identification numbers
 **ID**: SCN-PLANTS-FLOW-003-E
-- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor or exporter task opened from Overview
+- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor task opened from Overview
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** Overview is shown, not identification numbers, which has its own task
 
@@ -120,9 +120,9 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 - **WHEN** the journey reaches the arrival section
 - **THEN** arrival status is not offered, and arrival details is offered instead
 
-### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
+### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-PLANTS-FLOW-006
-The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification still owes, naming what is outstanding. The Overview's check-and-submit row MUST stay withheld until every task row is ready (see REQ-PLANTS-OB-REVIEW-001), and the system MUST withhold the declaration and the confirmation until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification owes, naming what is outstanding. Overview's check-and-submit row MUST stay withheld until every task row is ready (REQ-PLANTS-OB-REVIEW-001), a row being ready when fulfilled, not applicable or optional. Until then, continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-PLANTS-FLOW-006-A
@@ -139,7 +139,7 @@ The system MUST show check your answers at the end of the opening run, or by its
 
 ### Requirement: A notification created in this session runs an opening sequence ending on check your answers
 **ID**: REQ-PLANTS-FLOW-007
-The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence.
+The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence; following a back link MUST NOT.
 
 #### Scenario: A newly created notification is walked through the opening sequence to check your answers
 **ID**: SCN-PLANTS-FLOW-007-A
@@ -157,14 +157,21 @@ The system MUST walk a newly created notification through an opening sequence of
 #### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
 **ID**: SCN-PLANTS-FLOW-007-C
 - **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or check your answers
-- **WHEN** they open one of the opening sequence's own pages again and save it
-- **THEN** they return to Overview, not to whatever would be the next step of the sequence
+- **WHEN** they open origin again and save it
+- **THEN** they return to Overview, not to arrival status, the next step the sequence would have taken
+- **AND** a revisited page with a later page in its own Overview task, such as commodity type or arrival status, goes on only to that page (REQ-PLANTS-FLOW-003), never past the end of its task
 
 #### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
 **ID**: SCN-PLANTS-FLOW-007-D
 - **GIVEN** the user is in the opening sequence with tasks outstanding
 - **WHEN** they save the last step
 - **THEN** check your answers shows the unfinished notification and names every outstanding task
+
+#### Scenario: Following a back link and saving again carries the opening sequence on
+**ID**: SCN-PLANTS-FLOW-007-E
+- **GIVEN** the user is in the opening sequence on origin
+- **WHEN** they follow the back link to the commodities list and save it
+- **THEN** origin is shown, not Overview
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008
@@ -235,7 +242,7 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
 
 #### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
 **ID**: SCN-PLANTS-FLOW-014-A
@@ -256,9 +263,9 @@ While a notification is being amended, the system MUST end each page the hub lin
 #### Scenario: The address pickers offer two controls while amending, and Save and return goes back to the review
 **ID**: SCN-PLANTS-FLOW-014-C
 - **GIVEN** a notification being amended
-- **WHEN** the user opens the consignor or exporter, place of destination or consignment contact picker
+- **WHEN** the user opens the consignor, place of destination or consignment contact picker
 - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
-- **AND** "Save and return" on the consignor or exporter picker returns to the review
+- **AND** "Save and return" on the consignor picker returns to the review
 
 #### Scenario: The commodities list offers two controls while amending
 **ID**: SCN-PLANTS-FLOW-014-D

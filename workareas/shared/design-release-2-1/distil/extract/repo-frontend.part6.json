@@ -1,0 +1,1206 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 6, Animal identification, read in full at repos/trade-imports-animals-frontend main 4c2119da. Paths are under src/server/app/sets/live-animals/journeys/linear/features/commodities/: page.js (the page's id animalIdentification and slug commodities/identification), evaluation.js (how the page's per-animal fields bind to obligations), copy/copy.en.js and copy/copy.cy.js (only the identification block is this part's; the search and consignmentDetails blocks belong to part 5), the whole animal-identification folder (animal-identification.controller.js; the page template animal-identification.njk; the partials _identification-card.njk, _selected-commodities-summary.njk and _saved-animals-table.njk; fields.js; form/forms.js; remove/post-remove.js; records/append.js; card/error-summary.js; card/view-model.js; identifier/fields.js; identifier/table.js; address/fields.js; summary/selected-commodities.js), fit/identification.fit.spec.js (30 tests in 6 describe blocks, three of them parameterised over 5, 6 and 8 cases) and fit/axe.js. consignment-details/validation/count-drop.js was opened only to confirm that the count-drop error link lands on this page's card. The page (/commodities/identification, heading Identification details) shows a section caption, an inset, a Selected commodities summary table of every commodity line with a Change link per row, an Add another commodity link, then one card per commodity line whose commodity declares at least one identifier. Each card has a title, a Change number of animals link, a saved-animals table once a record exists, then either a counter-headed entry form for the next animal (the commodity's identifier fields in the commodity's own order and, where the commodity takes one, a permanent-address block with a fraud warning, a definition and eight fields) or an all-entered or over-count message, and an in-card save button whose wording depends on how many animals are left. The page ends on the shared Save and continue actions. A consignment with no identifiable line never sees the page. Claims cover the route, reach and redirects, every field with label, hint and when it is required, every validation message verbatim, add, remove and cap behaviour, what is saved and how it binds to obligations, the error summary, the Welsh copy and its status, and every test in the spec. Claim ids 001 to 129 keep the ids of this slice's earlier extract (same prefix, same HEAD), each re-checked against the files; 130 onwards are new. Unit tests (*.test.js) were not in the read list and are not claimed.",
+  "claims": [
+    {
+      "id": "repo-frontend-p6-001",
+      "statement": "The animal identification page lives at the journey path commodities/identification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:8-11",
+      "quote": "export const animalIdentificationPage = {\n  id: 'animalIdentification',\n  slug: 'commodities/identification'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-002",
+      "statement": "The page heading is \"Identification details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:57; animal-identification/animal-identification.njk:12",
+      "quote": "title: 'Identification details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-003",
+      "statement": "The page shows a section caption above the heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:11",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "verbatim",
+      "note": "The caption's text comes from the shared section-caption helper, outside this part."
+    },
+    {
+      "id": "repo-frontend-p6-004",
+      "statement": "Below the heading, inset text says: \"You must add all animal identification details before the consignment arrives at the port of entry.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-59; animal-identification/animal-identification.njk:14-16",
+      "quote": "'You must add all animal identification details before the consignment arrives at the port of entry.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-005",
+      "statement": "The page's back link goes to the journey hub (the Overview page).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:60-64",
+      "quote": "backLink: hubPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-006",
+      "statement": "A user reaches the page from the hub's animal identification task row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:60-69 (openIdentification)",
+      "quote": "await page\n    .getByRole('link', { name: hubCopy.rows.animalIdentification.title })\n    .click()",
+      "confidence": "verbatim",
+      "note": "The hub row's wording is in the hub copy, another part."
+    },
+    {
+      "id": "repo-frontend-p6-007",
+      "statement": "The page only asks about commodity lines whose commodity declares at least one identifier type; a line whose commodity declares none gets no identification card.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:33-40",
+      "quote": "// Design release 1 asks for identification only where the commodity has an\n// identifier type of its own. A line whose commodity declares none has nothing\n// to ask, so it gets no panel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-008",
+      "statement": "There is no free-text identifier fallback: a commodity with no declared identifiers is asked for none.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:20-26",
+      "quote": "// A commodity that declares no identifier is asked for none: design release 1\n// has no free-text fallback, so the list is empty and the line gets no panel.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-009",
+      "statement": "When no commodity line on the notification declares an identifier, the page does not exist for that user: both a GET and a POST to it redirect to the next step of the journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:79-101",
+      "quote": "// Nothing on this consignment carries an identifier, so the page does not\n// exist for this person: send them on rather than showing an empty one. The\n// guard sits on both handlers, so a stale form posting to it moves on too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-010",
+      "statement": "Which identifier fields a commodity shows, and in what order, is set by the commodity's own identifier list in the commodity catalogue, filtered by whether the obligation model says each identifier applies to that commodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:15-26",
+      "quote": "// The commodity sets the order of its own boxes — the copy block is a lookup\n// of labels and hints, not a running order (design 01-14/16/17). Applicability\n// still decides whether a listed identifier renders, so the obligation model\n// stays the one authority on what is in scope.",
+      "confidence": "verbatim",
+      "note": "The per-commodity identifier lists live in services/commodities, outside this part."
+    },
+    {
+      "id": "repo-frontend-p6-011",
+      "statement": "The identifier types the page can ask for are microchip, passport, tattoo, ear tag and horse name.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:82-100",
+      "quote": "typeFields: {\n      animalIdentifierMicrochip: {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-012",
+      "statement": "The microchip field is labelled \"Microchip number\" with the hint \"For example, 900123456789012\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:83-86",
+      "quote": "animalIdentifierMicrochip: {\n        label: 'Microchip number',\n        hint: 'For example, 900123456789012'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-013",
+      "statement": "The passport field is labelled \"Passport\" with the hint \"For example, UK123456789\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:87-90",
+      "quote": "animalIdentifierPassport: {\n        label: 'Passport',\n        hint: 'For example, UK123456789'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-014",
+      "statement": "The tattoo field is labelled \"Tattoo\" with the hint \"For example, AB1234\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:91-94",
+      "quote": "animalIdentifierTattoo: {\n        label: 'Tattoo',\n        hint: 'For example, AB1234'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-015",
+      "statement": "The ear tag field is labelled \"Ear tag\" with the hint \"For example, UK123456789012\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:95-98",
+      "quote": "animalIdentifierEarTag: {\n        label: 'Ear tag',\n        hint: 'For example, UK123456789012'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-016",
+      "statement": "The horse name field is labelled \"Horse name\" and has no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:99",
+      "quote": "horseName: { label: 'Horse name' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-017",
+      "statement": "Identifier fields are plain text inputs with a small bold label and a width of 20 characters.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:28-38",
+      "quote": "label: { text: field.label, classes: \"govuk-label--s\" },\n          hint: field.hint and { text: field.hint },\n          classes: \"govuk-input--width-20\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-018",
+      "statement": "Each field's id and name is the field key followed by a hyphen and the commodity line's index, so the first line's ear tag is animalIdentifierEarTag-0.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/fields.js:1",
+      "quote": "export const fieldName = (id, index) => `${id}-${index}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-019",
+      "statement": "No single identifier is mandatory: each is optional on its own, and the only identifier check besides length is that \"Save and add another\" with nothing entered anywhere on the page is refused.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:45-64, 122-135; identifier/fields.js:31-40",
+      "quote": "export const identifierChecksFor = (commodity, index) =>\n  compose(\n    ...scopedFields(commodity).map((field) =>\n      maxText(",
+      "confidence": "inferred",
+      "note": "Inferred because the only identifier validators are maxText checks plus the empty-form guard; there is no required check per identifier. Whether the obligation model makes any identifier mandatory for submit is outside this part."
+    },
+    {
+      "id": "repo-frontend-p6-020",
+      "statement": "Each identifier value can be at most 58 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:13",
+      "quote": "const IDENTIFIER_MAX_LENGTH = 58",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-021",
+      "statement": "A microchip longer than 58 characters shows the error \"Microchip must be 58 characters or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:141",
+      "quote": "animalIdentifierMicrochip: 'Microchip must be 58 characters or fewer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-022",
+      "statement": "A passport longer than 58 characters shows the error \"Passport must be 58 characters or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:142",
+      "quote": "animalIdentifierPassport: 'Passport must be 58 characters or fewer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-023",
+      "statement": "A tattoo longer than 58 characters shows the error \"Tattoo must be 58 characters or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:143",
+      "quote": "animalIdentifierTattoo: 'Tattoo must be 58 characters or fewer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-024",
+      "statement": "An ear tag longer than 58 characters shows the error \"Ear tag must be 58 characters or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:144",
+      "quote": "animalIdentifierEarTag: 'Ear tag must be 58 characters or fewer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-025",
+      "statement": "A horse name longer than 58 characters shows the error \"Horse name must be 58 characters or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:145",
+      "quote": "horseName: 'Horse name must be 58 characters or fewer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-026",
+      "statement": "Identifier and address values are trimmed of surrounding whitespace before they are checked and saved.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:42-48; address/fields.js:72-78",
+      "quote": "(payload[fieldName(field.id, index)] ?? '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-027",
+      "statement": "Pressing \"Save and add another\" on a card when nothing has been entered on any card shows the error \"Enter at least one identifier for this animal\", attached to that card's first identifier field, and saves nothing.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:122-135; copy/copy.en.js:166",
+      "quote": "atLeastOneIdentifier: 'Enter at least one identifier for this animal',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-028",
+      "statement": "Pressing the page's \"Save and continue\" with nothing entered on any card shows no error and saves no animal record before moving on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:124-128; records/append.js:40-43",
+      "quote": "if (addIndex === null || anyData || !forms.has(addIndex)) {\n    return errors\n  }",
+      "confidence": "inferred",
+      "note": "Inferred from the empty-form guard firing only for an add action, and append skipping forms that hold no data."
+    },
+    {
+      "id": "repo-frontend-p6-029",
+      "statement": "Some commodities also ask for each animal's permanent address; whether a commodity does is decided by the obligation model's applicability for permanentAddress.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:28-29",
+      "quote": "export const permanentAddressApplies = (commodity) =>\n  appliesForCommodity('permanentAddress', commodity)",
+      "confidence": "verbatim",
+      "note": "The spec shows cat and dog lines get the address block and a cow line does not; it does not check a horse line's address."
+    },
+    {
+      "id": "repo-frontend-p6-030",
+      "statement": "Above the permanent address fields, a warning says \"Providing a false address is an act of fraud\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:113; _identification-card.njk:44",
+      "quote": "warning: 'Providing a false address is an act of fraud',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-031",
+      "statement": "After the warning the page defines a permanent address: \"A permanent address is where an animal:\" followed by the bullets \"will permanently reside\" and \"can be checked by the Animal and Plant Health Agency (APHA)\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:114-118; _identification-card.njk:46-51",
+      "quote": "definitionLeadIn: 'A permanent address is where an animal:',\n      definitionItems: [\n        'will permanently reside',\n        'can be checked by the Animal and Plant Health Agency (APHA)'\n      ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-032",
+      "statement": "The address fields sit under a small heading \"Where will their permanent address be?\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:119; _identification-card.njk:53",
+      "quote": "question: 'Where will their permanent address be?'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-033",
+      "statement": "The fraud warning and definition come before the address question because the reason the address matters (APHA checks it) is what deters an invented one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:41-43",
+      "quote": "Design release 1 puts the fraud warning and the definition of a\n           permanent address above the question, because the reason the\n           address matters — APHA checks it — is what stops an invented one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-034",
+      "statement": "The permanent address asks for eight fields in this order: name or organisation name, address line 1, address line 2, town or city, county, postcode or Zip code, phone number, email address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:11-20",
+      "quote": "const ADDRESS_FIELD_ORDER = [\n  'nameOrOrganisationName',\n  'addressLine1',\n  'addressLine2',\n  'townOrCity',\n  'county',\n  'postalOrZipCode',\n  'telephoneNumber',\n  'emailAddress'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-035",
+      "statement": "The permanent address never asks for a country and has no select list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:320-330",
+      "quote": "permanent address asks for eight fields and never for a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-036",
+      "statement": "The first address field is labelled \"Name or organisation name\", with autocomplete name.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:124; address/fields.js:106-108",
+      "quote": "nameOrOrganisationName: 'Name or organisation name',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-037",
+      "statement": "The address line fields are labelled \"Address line 1\" and \"Address line 2 (optional)\", with autocomplete address-line1 and address-line2.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:125-126; address/fields.js:109-114",
+      "quote": "addressLine1: 'Address line 1',\n      addressLine2: 'Address line 2 (optional)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-038",
+      "statement": "The town field is labelled \"Town or city\", two-thirds width, with autocomplete address-level2.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:127; address/fields.js:115-118",
+      "quote": "townOrCity: 'Town or city',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-039",
+      "statement": "The county field is labelled \"County (optional)\", two-thirds width, with no autocomplete.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:128; address/fields.js:119-121",
+      "quote": "county: 'County (optional)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-040",
+      "statement": "The postcode field is labelled \"Postcode or Zip code\", 10 characters wide, with autocomplete postal-code.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:129; address/fields.js:122-125",
+      "quote": "postalOrZipCode: 'Postcode or Zip code',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-041",
+      "statement": "The phone field is labelled \"Phone number\", is a telephone input 20 characters wide with autocomplete tel, and has the hint \"For international numbers include the country code\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:130, 136-138; address/fields.js:126-131",
+      "quote": "telephoneNumber: 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-042",
+      "statement": "The phone field is the only address field with a hint, because a trader giving an address outside the UK would not otherwise know the number will be dialled from the UK.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:133-135",
+      "quote": "// A trader giving an address outside the UK has no way of knowing the\n    // number will be dialled from here unless the field says so, so the phone\n    // field is the one address field that carries a hint.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-043",
+      "statement": "The email field is labelled \"Email address\" and is an email input with autocomplete email.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:131; address/fields.js:132-135",
+      "quote": "emailAddress: 'Email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-044",
+      "statement": "The permanent address is all or nothing per animal: if any address field is filled in, name or organisation name, address line 1, town or city, postcode or Zip code, phone number and email address all become required; address line 2 and county stay optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:86-95; copy/copy.en.js:147-154",
+      "quote": "export const missingAddressErrors = (values, index) => {\n  if (!addressRecordProvided(values)) {\n    return {}\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-045",
+      "statement": "An animal on an address-bearing commodity can be saved with no permanent address at all, as long as no address field is filled in.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:86-89; records/append.js:11",
+      "quote": "if (form.showAddress && addressRecordProvided(form.addressValues)) {",
+      "confidence": "inferred",
+      "note": "Inferred: missing-field errors only fire when some address field is given, and the record is saved without a permanentAddress otherwise. Whether submit later demands the address is the obligation model's call, outside this part."
+    },
+    {
+      "id": "repo-frontend-p6-046",
+      "statement": "A missing name shows \"Enter a name or organisation name\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:148",
+      "quote": "nameOrOrganisationName: 'Enter a name or organisation name',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-047",
+      "statement": "A missing address line 1 shows \"Enter address line 1\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:149",
+      "quote": "addressLine1: 'Enter address line 1',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-048",
+      "statement": "A missing town or city shows \"Enter a town or city\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:150",
+      "quote": "townOrCity: 'Enter a town or city',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-049",
+      "statement": "A missing postcode shows \"Enter a postcode or Zip code\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:151",
+      "quote": "postalOrZipCode: 'Enter a postcode or Zip code',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-050",
+      "statement": "A missing phone number shows \"Enter a phone number\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:152",
+      "quote": "telephoneNumber: 'Enter a phone number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-051",
+      "statement": "A missing email address shows \"Enter an email address\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:153",
+      "quote": "emailAddress: 'Enter an email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-052",
+      "statement": "Name or organisation name, address line 1 and address line 2 are each limited to 255 characters, with the errors \"Name or organisation name must be 255 characters or less\", \"Address line 1 must be 255 characters or less\" and \"Address line 2 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:22, 30-44; copy/copy.en.js:156-159",
+      "quote": "nameOrOrganisationName:\n          'Name or organisation name must be 255 characters or less',\n        addressLine1: 'Address line 1 must be 255 characters or less',\n        addressLine2: 'Address line 2 must be 255 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-053",
+      "statement": "Town or city and county are each limited to 100 characters, with the errors \"Town or city must be 100 characters or less\" and \"County must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:23, 45-54; copy/copy.en.js:160-161",
+      "quote": "townOrCity: 'Town or city must be 100 characters or less',\n        county: 'County must be 100 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-054",
+      "statement": "Postcode or Zip code is limited to 12 characters, with the error \"Postcode or Zip code must be 12 characters or less\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:24, 55-59; copy/copy.en.js:162",
+      "quote": "postalOrZipCode: 'Postcode or Zip code must be 12 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-055",
+      "statement": "Phone number is limited to 20 characters, with the error \"Phone number must be 20 characters or less\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:25, 60-64; copy/copy.en.js:163",
+      "quote": "telephoneNumber: 'Phone number must be 20 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-056",
+      "statement": "Email address is limited to 254 characters, with the error \"Email address must be 254 characters or less\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:26, 65-69; copy/copy.en.js:164",
+      "quote": "emailAddress: 'Email address must be 254 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-057",
+      "statement": "The address checks only length: there is no format check on the postcode, phone number or email address.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:28-70",
+      "quote": "export const addressChecksFor = (index) =>\n  compose(\n    maxText(",
+      "confidence": "inferred",
+      "note": "Inferred: every address validator is maxText; the copy key is named addressFormat but holds only length messages."
+    },
+    {
+      "id": "repo-frontend-p6-058",
+      "statement": "Each card is headed with the commodity name, its commodity code in brackets, a dash and the species, such as \"Cow (0102) — Bos taurus\"; without a code or species those parts are left out.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:22-28",
+      "quote": "const commodity = code ? `${name} (${code})` : name\n  const species = speciesTextOf(entry)\n  return species ? `${commodity} — ${species}` : commodity",
+      "confidence": "verbatim",
+      "note": "The example is assembled from the spec's Cow / 0102 / Bos taurus data, not quoted."
+    },
+    {
+      "id": "repo-frontend-p6-059",
+      "statement": "Each card has an anchor id identification-card-N, where N is the commodity line's index.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:121",
+      "quote": "anchor: `identification-card-${index}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-060",
+      "statement": "Every card has a \"Change number of animals\" link, with the card title as visually hidden text, that goes to the consignment details page carrying the change context.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:13-17; animal-identification.controller.js:55-58; copy/copy.en.js:61",
+      "quote": "changeAnimalCount: 'Change number of animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-061",
+      "statement": "The Change number of animals link sits beside the counter because the counter is the only place on the page that mentions the number of animals the trader is held to.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:105-108",
+      "quote": "// The card counter is the only place the declared animal count appears, so\n// every card carries the route back to the page that sets it.",
+      "confidence": "verbatim",
+      "note": "The same comment says Design release 1 puts a bare link on every panel with no change context, but the controller's href does carry change context (kit.withChangeContext). Recorded as written; the reconciler should note the mismatch."
+    },
+    {
+      "id": "repo-frontend-p6-062",
+      "statement": "While the line still has animals to record, the card shows a counter heading \"Enter details for {species} {next} of {count}\", where next is the number of saved records plus one and count is the declared number of animals.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:102-103; card/view-model.js:30-33",
+      "quote": "counter: (species, next, cap) =>\n      `Enter details for ${species} ${next} of ${cap}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-063",
+      "statement": "When the line has no declared number of animals, the counter reads \"Enter details for {species}\" with no count.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:101; card/view-model.js:30-33",
+      "quote": "counterNoCap: (species) => `Enter details for ${species}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-064",
+      "statement": "The number of animal records a line can hold is capped at the line's declared number of animals.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:60-69; form/forms.js:94-96",
+      "quote": "// \"Save and add another\" pressed against a card already at its cap — a\n// stale form racing the engine-enforced cardinality link.",
+      "confidence": "inferred",
+      "note": "Inferred: the cap comes from state.collectionCapAt on animalIdentifiers, and the counter and spec tie it to the number of animals; the cardinality link itself is in the obligation model, another part."
+    },
+    {
+      "id": "repo-frontend-p6-065",
+      "statement": "When a line holds as many records as its declared number of animals, the card hides the entry form and shows \"You have entered details for all {count} {species} animals. Remove a record if you need to replace it.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:106-107; card/view-model.js:35-43; _identification-card.njk:23-24",
+      "quote": "allEntered: (cap, species) =>\n      `You have entered details for all ${cap} ${species} animals. Remove a record if you need to replace it.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-066",
+      "statement": "When a line holds more records than its declared number of animals, the card hides the entry form and shows \"This commodity line lists {count} {species} animals but you have entered details for {records}. Remove {excess} to continue.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:104-105; card/view-model.js:35-38",
+      "quote": "overCount: (cap, species, entered, overBy) =>\n      `This commodity line lists ${cap} ${species} animals but you have entered details for ${entered}. Remove ${overBy} to continue.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-067",
+      "statement": "The in-card save button reads \"Save and add another\" while more than one animal is still outstanding on the line, or when the line has no declared count.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:71-84; copy/copy.en.js:121",
+      "quote": "saveAndAddAnother: 'Save and add another',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-068",
+      "statement": "On the last animal still outstanding, the in-card save button reads \"Save and finish\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:83; copy/copy.en.js:122",
+      "quote": "return cap - records === 1 ? copy.saveAndFinish : copy.saveAndAddAnother",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-069",
+      "statement": "A line declaring one animal gets no in-card save button: the page's own Save and continue captures that one record.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:71-82",
+      "quote": "// A line of one animal gets no button of its own — there is nothing to add\n// after this record, so the page's own Save and continue captures it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-070",
+      "statement": "The in-card save button is a secondary button.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:73-80",
+      "quote": "classes: \"govuk-button--secondary\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-071",
+      "statement": "Pressing an in-card save button saves the animal and reloads the identification page (keeping any change context) rather than moving on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:149-156",
+      "quote": "if (addIndex !== null) {\n    return h.redirect(\n      kit.withChangeContext(\n        request,\n        pagePath(request.params.journeyId, page.slug)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-072",
+      "statement": "Any save on the page, whichever button is pressed, saves one new animal record for every card whose entry form holds data, not only the card whose button was pressed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:38-55",
+      "quote": "for (const [index, form] of forms) {\n    if (!form.holdsData) {\n      continue\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-073",
+      "statement": "Validation runs across every open card on any save, and if any card has an error nothing is saved and the page re-renders with every entered value kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:110-135",
+      "quote": "if (Object.keys(errors).length > 0) {\n    return render(request, h, journey, answers, evaluation, { forms, errors })\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-074",
+      "statement": "After a successful page save (not an in-card add), the user goes to the next step the journey flow gives for this page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:157-158",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, savedScope))",
+      "confidence": "verbatim",
+      "note": "Where nextTarget leads (hub or check answers in change mode) is the flow's business, another part. The spec shows Save and continue returns to the Overview."
+    },
+    {
+      "id": "repo-frontend-p6-075",
+      "statement": "The page ends on the shared journey save actions, whose primary button is \"Save and continue\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:35",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-076",
+      "statement": "Pressing Enter in a field submits the page as its default finish action, not as an in-card add, through a hidden \"Save and finish\" button placed first in the form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:29",
+      "quote": "<button type=\"submit\" name=\"action\" value=\"finish\" class=\"govuk-visually-hidden\" aria-hidden=\"true\" tabindex=\"-1\">{{ copy.saveAndFinish }}</button>",
+      "confidence": "inferred",
+      "note": "Inferred from a hidden first submit button with value finish: browsers use the first submit button for implicit submission."
+    },
+    {
+      "id": "repo-frontend-p6-077",
+      "statement": "The form carries a CSRF crumb and a concurrency token on every submission.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:26-27",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-078",
+      "statement": "If an add is submitted for a card already at its cap (for example from a stale form), nothing is saved and the page shows \"You have already entered details for all {count} animals — remove a record before adding another\", linked to that card.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:94-120; copy/copy.en.js:167-168",
+      "quote": "capReached: (cap) =>\n        `You have already entered details for all ${cap} animals — remove a record before adding another`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-079",
+      "statement": "If saving a record fails because the line has reached its cap at save time, the same cap-reached error is shown against that card and the page re-renders from the saved state.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:28-36, 50-52; animal-identification.controller.js:137-147",
+      "quote": "if (appended === null) {\n      cardErrors.push(await recordCapFailure(request, h, index))\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-080",
+      "statement": "The error summary uses the shared error-summary title, links each field error to its field id and each card-level error to the card's anchor.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/error-summary.js:7-21",
+      "quote": "...cardErrors.map(({ index, text }) => ({\n      text,\n      href: `#identification-card-${index}`\n    }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-081",
+      "statement": "Each animal record is saved under its commodity line with the identifier values entered for that commodity's fields.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:9-10, 44-49",
+      "quote": "['commodityLines', index, 'animalIdentifiers'],\n      unitFromForm(form)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-082",
+      "statement": "When a permanent address is given, it is saved on the animal record as a name plus an address holding address line 1, address line 2, town or city, county, postcode or Zip code, phone number and email address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:11-24",
+      "quote": "unit.permanentAddress = {\n      name: form.addressValues.nameOrOrganisationName,\n      address: {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-083",
+      "statement": "The animal record's microchip, passport, tattoo, ear tag, horse name and permanent address each feed their own obligation in the notification model, per animal within each commodity line.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js:27-31, 55-60",
+      "quote": "unitLeaf('animalIdentifierMicrochip', microchip),\n  unitLeaf('animalIdentifierPassport', passport),\n  unitLeaf('animalIdentifierTattoo', tattoo),\n  unitLeaf('animalIdentifierEarTag', earTag),\n  unitLeaf('horseName', horseName),\n  unitLeaf('permanentAddress', permanentAddress)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-084",
+      "statement": "Once a line has at least one saved animal, the card shows a table of saved animals above the entry form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:19-21",
+      "quote": "{% if card.hasUnits %}\n      {{ savedAnimalsTable(card, copy) }}\n    {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-085",
+      "statement": "The saved-animals table's columns are \"Animal\", then one column per identifier the commodity declares (whether filled in or not), then \"Permanent address\" where the commodity takes one, then a visually hidden \"Actions\" column.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/table.js:12-23; _saved-animals-table.njk:7-11; copy/copy.en.js:77-81",
+      "quote": "animalColumn: 'Animal',\n      permanentAddressColumn: 'Permanent address',\n      actionsHidden: 'Actions'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-086",
+      "statement": "The identifier column headings are \"Microchip\", \"Passport\", \"Tattoo\", \"Ear tag\" and \"Horse name\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:70-76",
+      "quote": "animalIdentifierMicrochip: 'Microchip',\n      animalIdentifierPassport: 'Passport',\n      animalIdentifierTattoo: 'Tattoo',\n      animalIdentifierEarTag: 'Ear tag',\n      horseName: 'Horse name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-087",
+      "statement": "The microchip entry label (\"Microchip number\") differs from its column heading (\"Microchip\"), while passport and ear tag use the same words for both; the spec records the microchip wording as not yet settled by Design release 1.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:298-304",
+      "quote": "// Cattle only: microchip's entry label still reads 'Microchip number', a\n  // wording Design release 1 has not settled here.",
+      "confidence": "verbatim",
+      "note": "An open ambiguity, recorded not resolved."
+    },
+    {
+      "id": "repo-frontend-p6-088",
+      "statement": "Each saved animal row is headed \"{species} {n}\", such as \"Bos taurus 1\", or \"Animal {n}\" when the line has no species, so rows are distinguishable across several commodity lines.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:108-109; card/view-model.js:45-49",
+      "quote": "animalRow: (number) => `Animal ${number}`,\n    animalRowNamed: (species, number) => `${species} ${number}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-089",
+      "statement": "A saved row's permanent address cell shows only the address's name or organisation name; an identifier not given shows an empty cell.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/table.js:25-26",
+      "quote": "(id === PERMANENT_ADDRESS ? unit.permanentAddress?.name : unit[id]) ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-090",
+      "statement": "Each saved row ends with a \"Remove\" button styled as a link, with visually hidden text \"animal {n}\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk:15-17; copy/copy.en.js:110-111",
+      "quote": "removeRow: 'Remove',\n    removeRowAria: (number) => `animal ${number}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-091",
+      "statement": "Removing an animal is a form POST, never a GET; it deletes that one record and reloads the identification page with the change context kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/remove/post-remove.js:20-41",
+      "quote": "// A removal deletes one identifier record, so it submits the card form — the\n// crumb travels with it and no GET can trigger it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-092",
+      "statement": "A remove request naming a line or record that does not exist is refused with a 400 Bad Request before anything is deleted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/remove/post-remove.js:21-28",
+      "quote": "if (!unitAt(answers, line, unit)) {\n    return h.response().code(HTTP_STATUS_BAD_REQUEST)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-093",
+      "statement": "Removing an animal from a full line reopens the entry form for that line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:853-885",
+      "quote": "blocks a count drop below saved records and reopens after removal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-094",
+      "statement": "Above the cards, a table captioned \"Selected commodities\" lists every commodity line on the consignment, including lines that get no identification card.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:51-54, 69; summary/selected-commodities.js:8-16",
+      "quote": "// The recap is the whole consignment, not just the lines with a panel: a\n  // line the page asks nothing of still exists, and hiding it invites the\n  // trader to add the commodity a second time.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-095",
+      "statement": "The Selected commodities table has columns \"Commodity code\", \"Common name\", \"Number of animals\" and a visually hidden \"Actions\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:62-69; _selected-commodities-summary.njk:20-30",
+      "quote": "caption: 'Selected commodities',\n      commodityCode: 'Commodity code',\n      commonName: 'Common name',\n      numberOfAnimals: 'Number of animals',\n      actionsHidden: 'Actions',\n      change: 'Change'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-096",
+      "statement": "Each Selected commodities row shows the commodity code, the species' common name and the line's declared number of animals, with the count blank when it has not been given.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js:3-24",
+      "quote": "// A line the user\n// has not counted yet shows nothing rather than \"undefined\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-097",
+      "statement": "Each Selected commodities row has a \"Change\" link, with the common name as visually hidden text, that goes to the commodity search question (What are you importing?) carrying the change context.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk:10-12; animal-identification.controller.js:70-73",
+      "quote": "<a class=\"govuk-link\" href=\"{{ changeHref }}\">{{ copy.change }}<span class=\"govuk-visually-hidden\"> {{ row.name }}</span></a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-098",
+      "statement": "Below the summary, an \"Add another commodity\" link goes to the commodity search question carrying the change context, and shows whenever the page shows.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:21-23; copy/copy.en.js:60",
+      "quote": "addAnotherCommodity: 'Add another commodity',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-099",
+      "statement": "A count drop on consignment details below the saved records links to the matching card on this page, where the user can remove records.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:28-31",
+      "quote": "pagePath(request.params.journeyId, animalIdentificationPage.slug)\n      )}#identification-card-${index}`",
+      "confidence": "verbatim",
+      "note": "The count-drop rule itself belongs to part 5; claimed here only for where its link lands."
+    },
+    {
+      "id": "repo-frontend-p6-100",
+      "statement": "The Welsh copy for this page exists with the same keys as the English but is a machine draft not reviewed by a translator, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:1, 64-177",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-101",
+      "statement": "The page's accessibility checks run axe against WCAG 2.0 A and AA, 2.1 A and AA and 2.2 AA, and fail on any serious or critical violation.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/axe.js:4-6",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-102",
+      "statement": "Proven end to end: a cow line shows ear tag and passport but no tattoo or microchip, a horse line shows microchip and horse name, a fish line gets no card, and a cow line has no permanent address fields.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'shows the identifier fields that apply to each commodity'",
+      "quote": "shows the identifier fields that apply to each commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-103",
+      "statement": "Proven end to end: a cattle line asks for ear tag then passport, and a horse line asks for microchip, passport, then horse name.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'asks a cattle line for its ear tag before its passport, and a horse for its microchip first'",
+      "quote": "asks a cattle line for its ear tag before its passport, and a horse for its microchip first",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-104",
+      "statement": "Proven end to end: on a cattle line the passport and ear tag entry labels use the same words as the saved-animals column headings.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'labels the passport and ear tag fields on a cattle line with the words the saved-animals table heads them with'",
+      "quote": "labels the passport and ear tag fields on a cattle line with the words the saved-animals table heads them with",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-105",
+      "statement": "Proven end to end: a cat line's permanent address shows all eight fields and no country field or select.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'permanent address asks for eight fields and never for a country'",
+      "quote": "permanent address asks for eight fields and never for a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-106",
+      "statement": "Proven end to end: the postcode field is labelled \"Postcode or Zip code\" and the phone field \"Phone number\", described by the country-code hint.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'permanent address names the postcode and phone fields as Design release 1 does'",
+      "quote": "permanent address names the postcode and phone fields as Design release 1 does",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-107",
+      "statement": "Proven end to end: the fraud warning, the definition lead-in, both definition bullets and the address question heading show on a cat line.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'permanent address warns that a false address is fraud and says APHA can check it'",
+      "quote": "permanent address warns that a false address is fraud and says APHA can check it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-108",
+      "statement": "Proven end to end: the page's save actions show \"Save and continue\" and never \"Save and finish\".",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'ends on the same Save and continue as every other journey page'",
+      "quote": "ends on the same Save and continue as every other journey page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-109",
+      "statement": "Proven end to end: the back link returns to the Overview.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'back link returns to the overview'",
+      "quote": "back link returns to the overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-110",
+      "statement": "Proven end to end: with two identified lines there are two Change number of animals links, and the first lands on Commodity details with that line's count filled in.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'offers Change number of animals on every card and lands on the consignment details page'",
+      "quote": "offers Change number of animals on every card and lands on the consignment details page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-111",
+      "statement": "Proven end to end: the page has no serious or critical axe violations for a cow line, for a cat line showing a microchip field, on the last outstanding animal, in the microchip error state and once an animal is saved.",
+      "kind": "non-functional",
+      "ref": "fit/identification.fit.spec.js: 'has no serious or critical axe violations' (and the four variants: with the microchip field rendered, on the last outstanding animal, in the microchip error state, once an animal is saved)",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-112",
+      "statement": "Proven end to end: the hub leaves the identification task off a fish-only consignment, and going to the page's address directly lands on the Overview instead.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'carries a consignment with nothing to identify past the page'",
+      "quote": "carries a consignment with nothing to identify past the page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-113",
+      "statement": "Proven end to end: on a line of two cows the in-card button reads \"Save and add another\"; after one record the counter reads \"Enter details for Bos taurus 2 of 2\" and the button reads \"Save and finish\"; after the second the all-entered message shows.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'invites another record while more than one animal is outstanding, then finishes the line on the last'",
+      "quote": "invites another record while more than one animal is outstanding, then finishes the line on the last",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-114",
+      "statement": "Proven end to end: a line of one cow shows the counter \"Enter details for Bos taurus 1 of 1\" with no in-card button, and an ear tag entered then saved with Save and continue appears in the saved row when the page is reopened from the hub.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'offers no in-card button on a line of one animal and saves it on Save and continue'",
+      "quote": "offers no in-card button on a line of one animal and saves it on Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-115",
+      "statement": "Proven end to end: the Selected commodities table shows the three headings, a Domestic cattle row with code 0102 and 2 animals and a Horse row with code 0101 and 3 animals, and comes before the first card.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'opens with a summary of what the consignment holds, one line per card'",
+      "quote": "opens with a summary of what the consignment holds, one line per card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-116",
+      "statement": "Proven end to end: a summary row's Change link opens the What are you importing? page.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'changes the commodity list from a summary row'",
+      "quote": "changes the commodity list from a summary row",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-117",
+      "statement": "Proven end to end: the Add another commodity link shows while there are commodities to identify and opens the What are you importing? page.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'offers Add another commodity while there are commodities to identify'",
+      "quote": "offers Add another commodity while there are commodities to identify",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-118",
+      "statement": "Proven end to end: Save and add another on an empty cat card shows the at-least-one-identifier error, whose summary link focuses the microchip field, which stays empty.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'validation: an empty record links to and focuses the first identifier'",
+      "quote": "validation: an empty record links to and focuses the first identifier",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-119",
+      "statement": "Proven end to end, for cat microchip, cat tattoo, cow passport, cow ear tag and horse name: a 59-character value on Save and continue shows that identifier's 58-character error, whose summary link focuses the field, which keeps the value entered.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'validation: {label} over 58 characters links to and focuses the preserved value' (5 cases)",
+      "quote": "validation: ${label} over ${MAX_IDENTIFIER_LENGTH} characters links to and focuses the preserved value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-120",
+      "statement": "Proven end to end, for each of the six required address fields: leaving it empty in an otherwise complete cat record shows its required error, whose summary link focuses the field, and the passport value entered is kept.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'permanent address validation: empty {name} links to and focuses the preserved field' (6 cases)",
+      "quote": "permanent address validation: empty ${name} links to and focuses the preserved field",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-121",
+      "statement": "Proven end to end, for each of the eight address fields: a value one character over its limit shows its length error, whose summary link focuses the field, which keeps the value, and the passport value is kept.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'permanent address validation: {name} links to and focuses the preserved value' (8 cases)",
+      "quote": "permanent address validation: ${name} links to and focuses the preserved value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-122",
+      "statement": "Proven end to end: a complete cat record saved with Save and add another appears as a row with Animal, Microchip, Passport, Tattoo and Permanent address headings, its microchip and passport values and the address name \"Pet Owner\".",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'adds a complete record and reads it back as a row of the saved-animals table'",
+      "quote": "adds a complete record and reads it back as a row of the saved-animals table",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-123",
+      "statement": "Proven end to end: a cow saved with only an ear tag gets a table headed with both Passport and Ear tag columns.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'heads the table with every identifier the commodity declares, not only the ones filled in'",
+      "quote": "heads the table with every identifier the commodity declares, not only the ones filled in",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-124",
+      "statement": "Proven end to end: a dog identified only by its microchip (with an address) saves, and the number reads back after a page reload.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'saves a dog identified only by its microchip and reads the number back'",
+      "quote": "// Microchipping is how a dog is identified in law, so a chip number on its\n  // own has to be enough to save the animal.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-125",
+      "statement": "Proven end to end: removing a saved cat record removes its row.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'removes an added record'",
+      "quote": "removes an added record",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-126",
+      "statement": "Proven end to end: after both of two cows are saved, a stale add submission shows the cap-reached error for 2 animals, whose summary link goes to #identification-card-0.",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'rejects a stale add action after the animal-count cap is reached'",
+      "quote": "rejects a stale add action after the animal-count cap is reached",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-127",
+      "statement": "Proven end to end: with two cows saved, the entry form is gone; dropping the count to 1 on consignment details is blocked by the count-drop error, whose link leads to the card, and removing Bos taurus 2 brings back the counter \"Enter details for Bos taurus 2 of 2\".",
+      "kind": "behaviour",
+      "ref": "fit/identification.fit.spec.js: 'blocks a count drop below saved records and reopens after removal'",
+      "quote": "blocks a count drop below saved records and reopens after removal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-128",
+      "statement": "No test proves the over-count message (more records than the declared count), the no-count counter wording, the 400 response to a bad remove request, or the save-every-card behaviour of a single save.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for these across all 30 tests in the spec; unit tests (*.test.js) are out of scope for this extract."
+    },
+    {
+      "id": "repo-frontend-p6-129",
+      "statement": "The code does not say whether identifiers or the permanent address are required before the notification can be submitted; this page enforces neither.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/ (whole folder); evaluation.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in every file of this part; whether these obligations are mandatory for submit is decided in obligations/, part 2. The inset copy says all details must be added before arrival at the port of entry, not before submission."
+    },
+    {
+      "id": "repo-frontend-p6-130",
+      "statement": "In Welsh the page heading is \"Manylion adnabod\" and the inset reads \"Rhaid i chi ychwanegu holl fanylion adnabod yr anifeiliaid cyn i’r llwyth gyrraedd y porthladd mynediad.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:65-67",
+      "quote": "title: 'Manylion adnabod',\n    inset:\n      'Rhaid i chi ychwanegu holl fanylion adnabod yr anifeiliaid cyn i’r llwyth gyrraedd y porthladd mynediad.',",
+      "confidence": "verbatim",
+      "note": "Machine-draft Welsh (see repo-frontend-p6-100)."
+    },
+    {
+      "id": "repo-frontend-p6-131",
+      "statement": "In Welsh the links read \"Ychwanegu nwydd arall\" (Add another commodity) and \"Newid nifer yr anifeiliaid\" (Change number of animals), and the in-card buttons read \"Cadw ac ychwanegu un arall\" (Save and add another) and \"Cadw a gorffen\" (Save and finish).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:68-69, 129-130",
+      "quote": "addAnotherCommodity: 'Ychwanegu nwydd arall',\n    changeAnimalCount: 'Newid nifer yr anifeiliaid',",
+      "confidence": "verbatim",
+      "note": "Button strings at copy.cy.js:129-130: saveAndAddAnother: 'Cadw ac ychwanegu un arall', saveAndFinish: 'Cadw a gorffen'."
+    },
+    {
+      "id": "repo-frontend-p6-132",
+      "statement": "In Welsh the Selected commodities table is captioned \"Nwyddau a ddewiswyd\" with columns \"Cod nwyddau\", \"Enw cyffredin\", \"Nifer yr anifeiliaid\", a hidden \"Camau gweithredu\" and the row link \"Newid\"; the saved-animals table columns are \"Anifail\" and \"Cyfeiriad parhaol\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:9, 70-89",
+      "quote": "caption: 'Nwyddau a ddewiswyd',\n      commodityCode: 'Cod nwyddau',\n      commonName: 'Enw cyffredin',\n      numberOfAnimals: 'Nifer yr anifeiliaid',\n      actionsHidden: ACTIONS_HIDDEN,\n      change: 'Newid'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-133",
+      "statement": "In Welsh the identifier column headings are \"Microsglodyn\", \"Pasbort\", \"Tatŵ\", \"Tag clust\" and \"Enw’r ceffyl\", and the entry fields are labelled \"Rhif microsglodyn\", \"Pasbort\", \"Tatŵ\", \"Tag clust\" and \"Enw’r ceffyl\" with hints beginning \"Er enghraifft,\" and the same example values as the English.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:78-108",
+      "quote": "animalIdentifierMicrochip: {\n        label: 'Rhif microsglodyn',\n        hint: 'Er enghraifft, 900123456789012'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-134",
+      "statement": "In Welsh the counter reads \"Rhowch fanylion ar gyfer {species} {next} o {count}\" (or \"Rhowch fanylion ar gyfer {species}\" with no count), and saved rows are labelled \"Anifail {n}\" or \"{species} {n}\" with the Remove button reading \"Tynnu\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:109-119",
+      "quote": "counter: (species, next, cap) =>\n      `Rhowch fanylion ar gyfer ${species} ${next} o ${cap}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-135",
+      "statement": "In Welsh the all-entered and over-count messages are \"Rydych wedi nodi manylion ar gyfer pob un o’r {count} anifail {species}. Tynnwch gofnod os oes angen i chi ei ddisodli.\" and \"Mae’r llinell nwyddau hon yn rhestru {count} anifail {species} ond rydych wedi nodi manylion ar gyfer {records}. Tynnwch {excess} i barhau.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:112-115",
+      "quote": "allEntered: (cap, species) =>\n      `Rydych wedi nodi manylion ar gyfer pob un o’r ${cap} anifail ${species}. Tynnwch gofnod os oes angen i chi ei ddisodli.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-136",
+      "statement": "In Welsh the permanent-address guidance reads \"Mae darparu cyfeiriad ffug yn weithred o dwyll\", \"Cyfeiriad parhaol yw lle bydd anifail:\" with two bullets, and the question \"Ble bydd eu cyfeiriad parhaol?\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:120-128",
+      "quote": "warning: 'Mae darparu cyfeiriad ffug yn weithred o dwyll',\n      definitionLeadIn: 'Cyfeiriad parhaol yw lle bydd anifail:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-137",
+      "statement": "In Welsh the eight address fields are labelled \"Enw neu enw’r sefydliad\", \"Llinell gyfeiriad 1\", \"Llinell gyfeiriad 2 (dewisol)\", \"Tref neu ddinas\", \"Sir (dewisol)\", \"Cod post neu god zip\", \"Rhif ffôn\" and \"Cyfeiriad e-bost\", and the phone hint is \"Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:131-143",
+      "quote": "telephoneNumber: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-138",
+      "statement": "Every identifier, address and card error message has a Welsh version, such as \"Rhowch o leiaf un dynodwr ar gyfer yr anifail hwn\" for the at-least-one-identifier error and \"Rhaid i’r microsglodyn fod yn 58 nod neu lai\" for the microchip length error.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:144-176",
+      "quote": "atLeastOneIdentifier: 'Rhowch o leiaf un dynodwr ar gyfer yr anifail hwn',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-139",
+      "statement": "A cat line asks for microchip, passport and tattoo, with the microchip first, plus a permanent address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:625-631, 723-762",
+      "quote": "// The microchip heads a cat's identifiers, so it is the field the\n    // at-least-one-identifier error names.",
+      "confidence": "inferred",
+      "note": "Inferred from the spec: the at-least-one error lands on the microchip, the saved table for a cat line is headed Microchip, Passport, Tattoo and Permanent address, and the cat record fills an address. The cat's identifier list itself lives in services/commodities, part 2."
+    },
+    {
+      "id": "repo-frontend-p6-140",
+      "statement": "A dog line takes a permanent address as well as a microchip.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:795-801",
+      "quote": "await page.locator(MICROCHIP_FIELD).fill(MICROCHIP_NUMBER)\n    await fillAddress(page)",
+      "confidence": "inferred",
+      "note": "Inferred because the dog test fills the address fields, which only render where permanentAddress applies. The spec does not show the dog's other identifiers."
+    },
+    {
+      "id": "repo-frontend-p6-141",
+      "statement": "Each card's title is a medium (h2) heading and its counter is a small (h3) heading; the Selected commodities caption is medium size.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:11, 26; _selected-commodities-summary.njk:22",
+      "quote": "<h2 class=\"govuk-heading-m govuk-!-margin-bottom-2\">{{ card.title }}</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-142",
+      "statement": "The browser page title is built from the page heading, Identification details.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:59-64",
+      "quote": "...kit.base(copy.title, {",
+      "confidence": "inferred",
+      "note": "Inferred: the title pattern itself is in shared/kit.js, part 1."
+    },
+    {
+      "id": "repo-frontend-p6-143",
+      "statement": "Every Change link in the Selected commodities table goes to the same place, the commodity search question, whichever row it sits on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:19",
+      "quote": "{{ selectedCommoditiesSummary(selectedCommodities, addHref, copy.summary) }}",
+      "confidence": "verbatim",
+      "note": "The summary macro receives one href, the same addHref the Add another commodity link uses."
+    },
+    {
+      "id": "repo-frontend-p6-144",
+      "statement": "After a record is saved, the card's entry form comes back empty for the next animal.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:115-116",
+      "quote": "const values = form?.values ?? blankValuesFor(commodity)\n  const addressValues = form?.addressValues ?? blankAddress()",
+      "confidence": "inferred",
+      "note": "Inferred: a successful save redirects to a fresh GET, which builds cards with no form, so the values are blank."
+    },
+    {
+      "id": "repo-frontend-p6-145",
+      "statement": "The saved-animals table has no caption of its own; it is named only by the card heading above it.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk:26",
+      "quote": "{{ govukTable({ head: head, rows: rows }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-146",
+      "statement": "Each in-card save button submits the page with the action add:{line index}, and each Remove button with the action remove:{line index}:{record index}, so the server knows which card or record was meant.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:77-78; _saved-animals-table.njk:16",
+      "quote": "value: \"add:\" ~ card.index",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-147",
+      "statement": "The Change number of animals link is shown on every card, including a card already at its maximum, above the saved-animals table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:13-23",
+      "quote": "<a class=\"govuk-link\" href=\"{{ card.changeCountHref }}\">{{ copy.changeAnimalCount }}<span class=\"govuk-visually-hidden\"> {{ card.title }}</span></a>",
+      "confidence": "verbatim"
+    }
+  ]
+}

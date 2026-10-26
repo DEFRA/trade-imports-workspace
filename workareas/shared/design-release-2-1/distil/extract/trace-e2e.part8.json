@@ -1,0 +1,822 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 8, copied addresses (animals journey and the INS address book behind it). Read in full: the three spec files addresses-copied.spec.ts (4 tests), addresses-edit.spec.ts (6 tests) and addresses-submit-freeze.spec.ts (2 tests) under repos/trade-imports-ins-tests/tests/animals/e2e/features/address-book/, and all 12 trace zips the partition names, every one passed. tim distil trace 'open' refused the traces (TraceVersionError: recorded by a newer Playwright), so, as the partition structure directs, each zip was read already unzipped in the part folder (trace-e2e.work/part8/<hash>/): every browser action from the N-trace.trace files (before events: goto, click, fill, check, selectOption, reload, expect), the rendered <main> of every frame snapshot (rendered to <hash>.main.html), the address book API calls and bodies in N-trace.network and resources/, and the test steps in test.trace. Refs below name the trace by its folder hash (b00d3, 0db17, 8eb85, 7de00 from addresses-copied; 923fb, e4503, 435a1, ecf01, bb8eb, 5c999 from addresses-edit; 4d3c6, db5da from addresses-submit-freeze) and the browser call id. Pages reached, in journey order: dashboard (/live-animals) and start of a notification (b00d3, 0db17 only, unseeded); Overview task list; Consignment addresses hub (/addresses, caption 'Consignment parties'), one summary-list row per role (Place of origin, Consignor or exporter, Consignee, Importer, Place of destination, County parish holding (CPH) number) with Add, or Change plus Edit details; the role picker (/consignors/select, /place-of-origin/select; heading = role name, search, a 5-per-page table of book records, pagination, 'Selected address:' inset); the edit-address form (/<role>/edit?return=addresses|notification-view, /consignment/contact/edit?return=consignment%2Fcontact%2Fselect; caption = role, heading 'Edit address details'); Contact address for consignment (/consignment/contact/select: radios of every book record plus a 'Current contact address' card); Review your notification (/notification-view) in Draft, Submitted and Amending states, incl. its error summary and per-row error; Declaration; Import notification submitted confirmation; dashboard search and Amend notification; Overview in Amending; Cancel this amendment? (/cancel-amend); review after cancelling (?cancelled=1 with a success banner). Conditional surface: Edit details only for a role holding a copy; Add only for an unanswered role; review error summary only when a copy breaks the rules or a section is incomplete; Change/Edit links and Continue absent on a submitted notification. Seeded tests (createDraftNotification) built the draft over HTTP form posts in a separate request context; only the UI part is browser-walked. Not reached: the contact edit form's error state, any validation other than name, postcode length, email format and country, a no-results picker search page render, editing a copy during an amendment, and what reaches the backend (server-side calls are not in a browser trace).",
+  "claims": [
+    {
+      "id": "trace-e2e-p8-001",
+      "statement": "An address picked from the address book is copied onto the notification: after the book record is renamed and moved (name, town and postcode changed in the address book), the draft notification's hub row still shows the name as it was when picked.",
+      "kind": "behaviour",
+      "ref": "trace b00d3 (addresses-copied.spec.ts:4) actions call@113-call@117; book PUT at test step pw:api@82",
+      "quote": "editing the record in the address book leaves the copy on a draft notification unchanged",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-002",
+      "statement": "After the book record is edited, the review page's Consignor row still shows the copied name, town and postcode (Carlisle, CA1 1AA) and none of the edited values (Renamed Holding, Penrith, CA11 7AA).",
+      "kind": "behaviour",
+      "ref": "trace b00d3 actions call@119-call@133 (notification-view)",
+      "quote": "The full details on check-your-answers are still the ones copied at selection.",
+      "confidence": "verbatim",
+      "note": "Quote is the spec's comment; the rendered row was asserted to contain Carlisle and CA1 1AA and not Penrith or CA11 7AA."
+    },
+    {
+      "id": "trace-e2e-p8-003",
+      "statement": "Picking a record for an empty role copies every field of the record onto the notification, and the review page's role row shows all of them: name, address line 1, address line 2, town or city, county, postcode, country name, phone and email.",
+      "kind": "data",
+      "ref": "trace 0db17 (addresses-copied.spec.ts:67) actions call@108-call@128; 0db17.main.html Consignor row",
+      "quote": "Full Detail Farm 1791394803568 / 12 Primary Row / Secondary Wing / Kendal / Westmorland / LA9 4QQ / United Kingdom / 01539 555 0105 / full.detail@example.co.uk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-004",
+      "statement": "On the review page an address row shows the copy as a block: the name in bold on its own line, then each non-empty field on its own line in the order address line 1, address line 2, town or city, county, postcode, country, phone, email; empty optional fields are left out.",
+      "kind": "copy",
+      "ref": "trace 923fb action call@185 (notification-view) Roles and addresses card; trace 0db17 Consignor row",
+      "quote": "<STRONG>Edited Holding 1791394803412</STRONG><BR>12 Copy Street<BR>Unit 4<BR>Penrith<BR>Cumbria<BR>CA11 9ZZ<BR>United Kingdom<BR>01228 555 0110<BR>edit-copy@example.co.uk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-005",
+      "statement": "The review page shows the country of a copied address as the country name (United Kingdom), not the stored code (GB).",
+      "kind": "data",
+      "ref": "trace 0db17 action call@124 (expect 'United Kingdom' on Consignor row); record created with countryCode GB",
+      "quote": "United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-006",
+      "statement": "Soft-deleting a book record after it was copied onto a draft leaves the hub row showing the copied name, never 'Not added yet', and the row keeps Change rather than Add.",
+      "kind": "behaviour",
+      "ref": "trace 8eb85 (addresses-copied.spec.ts:110) actions call@125-call@131; 8eb85.main.html call@125 after",
+      "quote": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-007",
+      "statement": "After the book record is deleted, the review page still shows the copied consignor in full and shows no error summary, and Continue goes on to the Declaration page.",
+      "kind": "behaviour",
+      "ref": "trace 8eb85 actions call@133-call@145",
+      "quote": "Doomed Farm 1791394803447 / 7 Gone Street / Carlisle / CA1 2BB / United Kingdom / 01228 555 0103 / doomed@example.co.uk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-008",
+      "statement": "After the copied record is deleted from the book, opening the role picker again shows no 'Selected address:' inset and no pre-selected record, and searching for the deleted record's name does not offer it.",
+      "kind": "behaviour",
+      "ref": "trace 8eb85 actions call@147-call@157 (consignors/select); 8eb85.main.html call@149 after has no hidden 'selected' input",
+      "quote": "The picker neither pre-selects nor offers the deleted record.",
+      "confidence": "verbatim",
+      "note": "Quote is the spec comment; the trace shows the inset and the hidden 'selected' field gone, and the radio 'Select Doomed Farm 1791394803447' count 0 after search."
+    },
+    {
+      "id": "trace-e2e-p8-009",
+      "statement": "Before deletion the picker shows the role's current copy as an inset 'Selected address: <name>' and carries the selected record's id in a hidden field and in every pagination link.",
+      "kind": "copy",
+      "ref": "trace 8eb85 action call@107 (consignors/select)",
+      "quote": "Selected address: Astra Rosales",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-010",
+      "statement": "The address book soft-deletes: a deleted record disappears from list and search, but a get by id still returns it with deleted set to true.",
+      "kind": "integration",
+      "ref": "trace 8eb85 network: DELETE http://localhost:8089/organisation/5900001/addresses/6ac683f36bdb2fc53f12860a -> 204; GET same -> 200",
+      "quote": "\"deleted\":true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-011",
+      "statement": "The address book API is organisation-scoped REST: POST /organisation/{organisationId}/addresses creates (201), GET ...?q=<text> searches, GET .../{id} reads, PUT .../{id} replaces (200) and DELETE .../{id} soft-deletes (204).",
+      "kind": "integration",
+      "ref": "traces 8eb85, 7de00, 4d3c6, 5c999 N-trace.network (test fixture addressBookApi)",
+      "quote": "PUT http://localhost:8089/organisation/5900001/addresses/6ac683fa6bdb2fc53f128618 200",
+      "confidence": "verbatim",
+      "note": "These calls were made by the test fixture, not the journey; they show the address book's own API shape."
+    },
+    {
+      "id": "trace-e2e-p8-012",
+      "statement": "An address book record holds id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, deleted, createdAt and modifiedAt; optional fields are null when unset.",
+      "kind": "data",
+      "ref": "trace 8eb85 resources 73b52b1f... .json (GET by id response)",
+      "quote": "{\"id\":\"6ac683f36bdb2fc53f12860a\",\"name\":\"Doomed Farm 1791394803447\",\"addressLine1\":\"7 Gone Street\",\"addressLine2\":null,\"townOrCity\":\"Carlisle\",\"county\":null,\"postcode\":\"CA1 2BB\",\"countryCode\":\"GB\",\"phone\":\"01228 555 0103\",\"email\":\"doomed@example.co.uk\",\"organisationId\":\"5900001\",\"deleted\":false,...}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-013",
+      "statement": "The address book accepts a record whose country is a free-text name rather than a listed country code (countryCode 'United Kingdom' was created with 201), so a book record can break the notification's address rules.",
+      "kind": "rule",
+      "ref": "trace 7de00 network POST http://localhost:8089/organisation/5900001/addresses -> 201",
+      "quote": "The address book checks only that a country is present, so a record can hold a country name rather than a listed code.",
+      "confidence": "verbatim",
+      "note": "Quote is the spec comment; the 201 is in the trace."
+    },
+    {
+      "id": "trace-e2e-p8-014",
+      "statement": "Picking a book record that breaks the notification's address rules is allowed: the picker saves it and returns to the hub with no error.",
+      "kind": "behaviour",
+      "ref": "trace 7de00 (addresses-copied.spec.ts:169) actions call@105-call@115",
+      "quote": "Its copy breaks the notification's rules from the moment it is picked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-015",
+      "statement": "When a copied address breaks the address rules, the review page shows an error summary 'There is a problem' with one entry per broken role, naming the role.",
+      "kind": "rule",
+      "ref": "trace 7de00 action call@117 after (notification-view) error summary",
+      "quote": "Correct the address details for the consignor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-016",
+      "statement": "The review error summary entry for a broken copy links straight to that role's edit-address form with return=notification-view.",
+      "kind": "behaviour",
+      "ref": "trace 7de00 action call@117 after; click at call@137 -> consignors/edit?return=notification-view",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-FX72MK/consignors/edit?return=notification-view\">Correct the address details for the consignor</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-017",
+      "statement": "The same message is shown as an inline error inside the role's own row on the review page, above the copied address, which is still shown in full.",
+      "kind": "rule",
+      "ref": "trace 7de00 action call@117 after, Roles and addresses card, Consignor row",
+      "quote": "<P class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Correct the address details for the consignor</P><STRONG>Unlisted Country Farm 1791394803570</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-018",
+      "statement": "A copy whose country is the free-text 'United Kingdom' displays that text in the review row as its country.",
+      "kind": "data",
+      "ref": "trace 7de00 action call@117 after, Consignor row",
+      "quote": "9 Swap Street / Carlisle / CA1 3CC / United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-019",
+      "statement": "On first opening the review page with a broken copy, the error summary is rendered with auto-focus disabled; after a refused Continue it is rendered with auto-focus enabled (tabindex -1).",
+      "kind": "behaviour",
+      "ref": "trace 7de00 call@117 after vs call@131 after",
+      "quote": "data-disable-auto-focus=\"true\" ... data-disable-auto-focus=\"false\" data-govuk-error-summary-init=\"\" tabindex=\"-1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-020",
+      "statement": "Continue on the review page is refused while a copy breaks the rules: the user stays on 'Review your notification' with the same error summary.",
+      "kind": "rule",
+      "ref": "trace 7de00 actions call@129-call@133",
+      "quote": "Continuing past the review page is refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-021",
+      "statement": "Submitting the declaration directly while a copy breaks the rules is refused: the POST to the declaration answers 302 back to the review page and the notification is not submitted.",
+      "kind": "rule",
+      "ref": "trace 7de00 request context 3-trace.trace call@135: POST /live-animals/notifications/GBN-AG-26-FX72MK/declaration -> 302 location /notification-view",
+      "quote": "And so is the submit itself: the declaration hands back to the review page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-022",
+      "statement": "The edit form opened for a copy with an unlisted country shows no country selected (only 'Select a country'), and shows no error until saved.",
+      "kind": "behaviour",
+      "ref": "trace 7de00 action call@139 (consignors/edit?return=notification-view) Country select",
+      "quote": "<OPTION value=\"\">Select a country</OPTION> <OPTION value=\"GB\">United Kingdom</OPTION>",
+      "confidence": "verbatim",
+      "note": "No option carries selected; there is no error summary on this render."
+    },
+    {
+      "id": "trace-e2e-p8-023",
+      "statement": "Correcting the copy on the edit form (choosing United Kingdom) and saving returns to the review page, where the error summary has gone and the role row still shows the copy.",
+      "kind": "behaviour",
+      "ref": "trace 7de00 actions call@141-call@149",
+      "quote": "The message leads to the edit page, which hands back to the review once corrected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-024",
+      "statement": "Once the copy is corrected, Continue reaches the Declaration, and confirming submits the notification to the 'Import notification submitted' confirmation.",
+      "kind": "behaviour",
+      "ref": "trace 7de00 actions call@151-call@159",
+      "quote": "Import notification submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-025",
+      "statement": "The confirmation page is a GOV.UK confirmation panel headed 'Import notification submitted' that shows the reference number.",
+      "kind": "copy",
+      "ref": "trace 7de00 action call@159 after (confirmation)",
+      "quote": "Import notification submitted ... Your reference number GBN-AG-26-FX72MK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-026",
+      "statement": "The Declaration page has heading 'Declaration', three statement headings with body copy and bullets, a single required-to-tick checkbox and the date of declaration, then Continue.",
+      "kind": "copy",
+      "ref": "trace 7de00 action call@153 after (declaration)",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim",
+      "note": "Full page copy: 'I am the contact for the authorities and located in the UK.'; 'I confirm I am responsible for this consignment.'; 'I confirm that I am accountable for:'; 'Date of declaration: 7 October 2026'. Owned by another part; recorded as seen here."
+    },
+    {
+      "id": "trace-e2e-p8-027",
+      "statement": "Editing a copied address from the hub changes only this notification: the hub row and the review row show the edited name, town and postcode, and the old town is gone.",
+      "kind": "behaviour",
+      "ref": "trace 923fb (addresses-edit.spec.ts:28) actions call@169-call@195",
+      "quote": "editing a copied address changes only this notification, not the address book record or another notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-028",
+      "statement": "Editing a copy on one notification leaves the address book record unchanged (name, town and postcode as created, deleted false).",
+      "kind": "behaviour",
+      "ref": "trace 923fb test step pw:api@124 GET http://localhost:8089/organisation/5900001/addresses/6ac683f36bdb2fc53f128609",
+      "quote": "The address book record is as it was created.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-029",
+      "statement": "Editing a copy on one notification leaves another notification holding a copy of the same record unchanged.",
+      "kind": "behaviour",
+      "ref": "trace 923fb actions call@200-call@210 (other notification GBN-AG-26-0NQMRH)",
+      "quote": "The other notification holding a copy of the same record is untouched.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-030",
+      "statement": "After saving an edit started from the hub, the user returns to the Consignment addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace 923fb actions call@179-call@181 (edit?return=addresses -> addresses)",
+      "quote": "Consignment addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-031",
+      "statement": "The edit-address form is reached at /<role path>/edit with a return parameter naming where it was started (addresses, notification-view, or consignment/contact/select).",
+      "kind": "behaviour",
+      "ref": "traces 923fb call@171, ecf01 call@108, 5c999 call@104",
+      "quote": "/consignors/edit?return=notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-032",
+      "statement": "The edit-address form shows the role as its caption above the heading 'Edit address details'.",
+      "kind": "copy",
+      "ref": "trace 923fb action call@171 after; trace 435a1 call@104 after; trace 5c999 call@104",
+      "quote": "<SPAN class=\"govuk-caption-l\">Consignor or exporter</SPAN> <H1 class=\"govuk-heading-l\">Edit address details</H1>",
+      "confidence": "verbatim",
+      "note": "Captions seen: 'Consignor or exporter', 'Place of origin', 'Contact address for consignment'."
+    },
+    {
+      "id": "trace-e2e-p8-033",
+      "statement": "The edit-address form tells the user that changes apply to this notification only, in a body paragraph under the heading.",
+      "kind": "copy",
+      "ref": "trace e4503 action call@123; 923fb call@171 after",
+      "quote": "Changes apply to this notification only. Your address book is not changed.",
+      "confidence": "verbatim",
+      "note": "The spec calls it a hint, but it renders as <P class=\"govuk-body\">, not govuk-hint."
+    },
+    {
+      "id": "trace-e2e-p8-034",
+      "statement": "The edit-address form opens prefilled with every copied field, including the county, and the country select preselected to the copy's country code.",
+      "kind": "behaviour",
+      "ref": "trace e4503 (addresses-edit.spec.ts:73) actions call@125-call@141",
+      "quote": "the edit form opens with the copied details, including the county",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-035",
+      "statement": "Edit form field 1: 'Name or organisation name', a text input (name 'name').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-036",
+      "statement": "Edit form field 2: 'Address line 1', a text input (name 'addressLine1').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #addressLine1",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-037",
+      "statement": "Edit form field 3: 'Address line 2 (optional)', an optional text input (name 'addressLine2').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-038",
+      "statement": "Edit form field 4: 'Town or city', a text input (name 'townOrCity').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #townOrCity",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-039",
+      "statement": "Edit form field 5: 'County (optional)', an optional text input (name 'county').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-040",
+      "statement": "Edit form field 6: 'Postcode or Zip code', a text input sized width-10 (name 'postcode').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #postcode",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-041",
+      "statement": "Edit form field 7: 'Country', a select (name 'countryCode') with a blank 'Select a country' first, then 31 countries with their codes as values: United Kingdom (GB) first, then EEA states, Switzerland, Iceland, Liechtenstein and Norway in alphabetical order.",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #countryCode",
+      "quote": "Select a country | GB=United Kingdom | AT=Austria | BE=Belgium | BG=Bulgaria | HR=Croatia | CY=Cyprus | CZ=Czechia | DK=Denmark | EE=Estonia | FI=Finland | FR=France | DE=Germany | GR=Greece | HU=Hungary | IS=Iceland | IE=Ireland | IT=Italy | LV=Latvia | LI=Liechtenstein | LT=Lithuania | LU=Luxembourg | MT=Malta | NL=Netherlands (the) | NO=Norway | PL=Poland | PT=Portugal | RO=Romania | SK=Slovakia | SI=Slovenia | ES=Spain | SE=Sweden | CH=Switzerland",
+      "confidence": "verbatim",
+      "note": "Full list, not truncated: 32 options including the blank one. The list is a plain govuk-select, not an autocomplete."
+    },
+    {
+      "id": "trace-e2e-p8-042",
+      "statement": "Edit form field 8: 'Phone number', a tel input (name 'phone') with the hint about international numbers.",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #phone, #phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-043",
+      "statement": "Edit form field 9: 'Email address', an email input (name 'email').",
+      "kind": "data",
+      "ref": "trace 923fb action call@171 after, #email",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-044",
+      "statement": "Only address line 2 and county are labelled optional on the edit form; name, address line 1, town or city, postcode, country, phone and email carry no '(optional)'.",
+      "kind": "rule",
+      "ref": "trace 923fb action call@171 after, labels",
+      "quote": "Address line 2 (optional) ... County (optional)",
+      "confidence": "inferred",
+      "note": "Inferred from the labels; only name, postcode length, email format and country were driven to an error."
+    },
+    {
+      "id": "trace-e2e-p8-045",
+      "statement": "The edit form's buttons are 'Save changes' (primary) and 'Cancel' (secondary button posting cancel=true).",
+      "kind": "copy",
+      "ref": "trace 923fb action call@171 after, button group",
+      "quote": "Save changes ... <BUTTON type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\">Cancel</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-046",
+      "statement": "The edit form has no back link and no error summary on first render; it is entirely govuk-* components (caption, heading, body, inputs, select, hint, button group) apart from the app journey strip above it.",
+      "kind": "constraint",
+      "ref": "trace 923fb action call@171 after (<main> classes)",
+      "quote": "govuk-caption-l govuk-heading-l govuk-body govuk-form-group govuk-label govuk-input govuk-select govuk-hint govuk-button-group",
+      "confidence": "inferred",
+      "note": "Back link would sit outside <main>, which was not rendered; its absence inside <main> is all that is shown."
+    },
+    {
+      "id": "trace-e2e-p8-047",
+      "statement": "Saving an edit that breaks the rules is refused: the form re-renders with the heading 'Edit address details', an error summary 'There is a problem' at the top and an error against each field, and nothing is saved.",
+      "kind": "rule",
+      "ref": "trace 435a1 (addresses-edit.spec.ts:99) actions call@118-call@136; 435a1.main.html call@120 after",
+      "quote": "an edit that breaks the address book rules is refused with its messages, at the top and against each field, and nothing is saved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-048",
+      "statement": "A blank name on the edit form is refused with 'Enter a name', in the summary (linking to #name) and on the field.",
+      "kind": "rule",
+      "ref": "trace 435a1 call@120 after, #name-error",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-049",
+      "statement": "A postcode longer than 12 characters is refused with 'Postcode must be 12 characters or fewer', in the summary (linking to #postcode) and on the field.",
+      "kind": "rule",
+      "ref": "trace 435a1 call@120 after, #postcode-error (value 'CA11 9ZZ 1234')",
+      "quote": "Postcode must be 12 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-050",
+      "statement": "An email not in a valid format is refused with 'Enter an email address in the correct format', in the summary (linking to #email) and on the field.",
+      "kind": "rule",
+      "ref": "trace 435a1 call@120 after, #email-error (value 'not-an-email')",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-051",
+      "statement": "A country that is not one of the listed codes (the test injected an option 'XX') is refused with 'Enter a country', in the summary (linking to #countryCode) and on the select.",
+      "kind": "rule",
+      "ref": "trace 435a1 calls call@112-call@116 (option XX injected and selected), call@120 after #countryCode-error",
+      "quote": "Enter a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-052",
+      "statement": "The edit form's error summary lists errors in form order (name, postcode, country, email) and each links to its field id.",
+      "kind": "behaviour",
+      "ref": "trace 435a1 call@120 after, govuk-error-summary__list",
+      "quote": "<A href=\"#name\">Enter a name</A> <A href=\"#postcode\">Postcode must be 12 characters or fewer</A> <A href=\"#countryCode\">Enter a country</A> <A href=\"#email\">Enter an email address in the correct format</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-053",
+      "statement": "On a refused edit the form keeps what was typed (blank name, long postcode, bad email, unchanged fields), but the country select re-renders with no country selected rather than the invalid value.",
+      "kind": "behaviour",
+      "ref": "trace 435a1 call@120 after: name value '', postcode 'CA11 9ZZ 1234', email 'not-an-email', no selected option and no XX option",
+      "quote": "<INPUT ... id=\"postcode\" ... value=\"CA11 9ZZ 1234\"> ... <SELECT class=\"govuk-select govuk-select--error\" id=\"countryCode\" name=\"countryCode\"><OPTION value=\"\">Select a country</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-054",
+      "statement": "Each errored field uses the standard GOV.UK error pattern: govuk-form-group--error, a govuk-error-message with a visually hidden 'Error:' prefix, and the input or select in its error modifier.",
+      "kind": "constraint",
+      "ref": "trace 435a1 call@120 after",
+      "quote": "<P id=\"name-error\" class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter a name</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-055",
+      "statement": "After a refused edit, the review page still shows the copy as it was (Origin Farm, V95 X7P2) and not the refused postcode.",
+      "kind": "behaviour",
+      "ref": "trace 435a1 actions call@138-call@146",
+      "quote": "Origin Farm / 1 Farm Lane / Ennis / V95 X7P2 / Ireland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-056",
+      "statement": "Place of origin can be edited like any other copied role; its edit form has the caption 'Place of origin' and is reached from the hub at /place-of-origin/edit?return=addresses.",
+      "kind": "behaviour",
+      "ref": "trace 435a1 actions call@102-call@104",
+      "quote": "<SPAN class=\"govuk-caption-l\">Place of origin</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-057",
+      "statement": "Cancelling an edit started on the review page returns to the review page and discards what was typed.",
+      "kind": "behaviour",
+      "ref": "trace ecf01 (addresses-edit.spec.ts:130) actions call@104-call@118",
+      "quote": "cancelling an edit returns to where it was started and leaves the copy as it was",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-058",
+      "statement": "Cancelling an edit started on the contact address page returns to the contact address page, and the current contact keeps its old town.",
+      "kind": "behaviour",
+      "ref": "trace ecf01 actions call@120-call@136",
+      "quote": "From the contact page, back to the contact page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-059",
+      "statement": "On the hub, a role holding a copied address offers two actions: 'Change' (to the role picker) and 'Edit details' (to the edit form, return=addresses), each with the role in visually hidden text.",
+      "kind": "behaviour",
+      "ref": "trace bb8eb (addresses-edit.spec.ts:162) actions call@102-call@106; 923fb call@167 after",
+      "quote": "<A href=\".../consignors/select\">Change<SPAN class=\"govuk-visually-hidden\"> consignor or exporter</SPAN></A> <A href=\".../consignors/edit?return=addresses\">Edit details<SPAN class=\"govuk-visually-hidden\"> consignor or exporter</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-060",
+      "statement": "On the hub, an unanswered role shows 'Not added yet' and offers only 'Add' (to the role picker); no Change and no Edit details.",
+      "kind": "rule",
+      "ref": "trace bb8eb actions call@140-call@148; bb8eb.main.html call@140 after",
+      "quote": "Not added yet ... Add<SPAN class=\"govuk-visually-hidden\"> consignor or exporter</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-061",
+      "statement": "The CPH number row on the hub is not an address: it offers a single 'Change' (or 'Add' when empty) to /cph-number?return=addresses and never 'Edit details'.",
+      "kind": "rule",
+      "ref": "trace 923fb call@167 after; trace bb8eb call@140 after",
+      "quote": "County parish holding (CPH) number ... Change<SPAN class=\"govuk-visually-hidden\"> county parish holding (cph) number</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-062",
+      "statement": "The Consignment addresses hub has caption 'Consignment parties', heading 'Consignment addresses', a warning 'Providing a false address is an act of fraud.', the role summary list, and buttons 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "trace 923fb action call@167 after",
+      "quote": "Providing a false address is an act of fraud.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-063",
+      "statement": "Each hub role row carries a hint under the role name explaining the role.",
+      "kind": "copy",
+      "ref": "trace 923fb action call@167 after, summary-list keys",
+      "quote": "Place of origin: The address where the animals begin their journey to Great Britain | Consignor or exporter: This is the sender of the consignment. | Consignee: This is the receiver or buyer of the consignment being shipped or transported. | Importer: This is usually the same as the consignee. You can select a different person if needed. | Place of destination: This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address. | County parish holding (CPH) number: The county parish holding (CPH) number identifies the holding where the animals will be kept.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-064",
+      "statement": "The hub row value shows only the copy's name, not the full address.",
+      "kind": "copy",
+      "ref": "trace 923fb action call@167 after, Consignor or exporter value",
+      "quote": "Editable Farm 1791394803412",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-065",
+      "statement": "On the review page (Draft), the Roles and addresses card keeps one card-level 'Change' (to /addresses?change=1) and gives each copied role row its own 'Edit details' (return=notification-view); the CPH row has no action.",
+      "kind": "behaviour",
+      "ref": "trace bb8eb actions call@122-call@124; 923fb call@185 after",
+      "quote": "Change<SPAN class=\"govuk-visually-hidden\"> roles and addresses (Roles and addresses)</SPAN> ... Edit details<SPAN class=\"govuk-visually-hidden\"> consignor (Roles and addresses)</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-066",
+      "statement": "On the review page, the role rows are labelled Place of origin, Consignor, Consignee, Importer, Place of destination and County parish holding (CPH) number (the hub's 'Consignor or exporter' becomes 'Consignor').",
+      "kind": "copy",
+      "ref": "trace 923fb action call@185 after, Roles and addresses card keys",
+      "quote": "Place of origin / Consignor / Consignee / Importer / Place of destination / County parish holding (CPH) number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-067",
+      "statement": "On the review page, the 'Contact address for this consignment' card has a card-level 'Change' (to /consignment/contact/select?change=1) and an 'Edit details' on its Contact address row (return=notification-view).",
+      "kind": "behaviour",
+      "ref": "trace bb8eb actions call@126-call@128; 923fb call@185 after",
+      "quote": "Change<SPAN class=\"govuk-visually-hidden\"> contact address for this consignment (Contact address for this consignment)</SPAN> ... Edit details<SPAN class=\"govuk-visually-hidden\"> contact address (Contact address for this consignment)</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-068",
+      "statement": "The review page groups cards under numbered sections: '5. Consignment parties' (H3 'Roles and addresses') and '6. Contact address' (H3 'Contact address for this consignment').",
+      "kind": "copy",
+      "ref": "trace 923fb action call@185 after",
+      "quote": "5. Consignment parties ... 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-069",
+      "statement": "On an incomplete notification's review page, a copied role row offers 'Edit details' while every empty role row is marked missing with no action, and the Roles and addresses card carries the error 'Complete roles and addresses'.",
+      "kind": "rule",
+      "ref": "trace 0db17 action call@108 after (notification-view), roles-and-addresses card",
+      "quote": "Complete roles and addresses",
+      "confidence": "verbatim",
+      "note": "Missing values render as <SPAN class=\"app-summary-list__value--missing\"><SPAN class=\"govuk-visually-hidden\">Missing</SPAN></SPAN>; the card gets app-summary-card--error. The error summary lists 'Complete reason for import', 'Complete additional animal details', 'Complete arrival details', 'Complete transport details', 'Complete roles and addresses', 'Complete contact address for this consignment'."
+    },
+    {
+      "id": "trace-e2e-p8-070",
+      "statement": "The review page's incomplete-card treatment uses classes outside the design system: app-summary-card--error on the card and app-summary-list__value--missing for an empty value; standard summary card plus govuk-error-message could carry the same meaning.",
+      "kind": "constraint",
+      "ref": "trace 0db17 action call@108 after",
+      "quote": "<DIV class=\"govuk-summary-card app-summary-card--error\" id=\"roles-and-addresses\" tabindex=\"-1\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-071",
+      "statement": "The contact address page offers, for a copied contact, an 'Edit details' on a 'Current contact address' summary card below the list of book records, apart from the radios that choose a different contact.",
+      "kind": "behaviour",
+      "ref": "trace bb8eb actions call@108-call@114; ecf01 call@120 after",
+      "quote": "The list below chooses a different contact; the current one is edited apart from it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-072",
+      "statement": "The 'Current contact address' card shows the contact's name as the row key and the address on one line, comma-separated, ending with the country name.",
+      "kind": "copy",
+      "ref": "trace ecf01 action call@120 after",
+      "quote": "Animal and Plant Health Agency | Woodham Lane, Addlestone, KT15 3NB, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-073",
+      "statement": "When no contact address has been chosen, the contact address page shows no 'Current contact address' card.",
+      "kind": "rule",
+      "ref": "trace bb8eb actions call@150-call@154",
+      "quote": "await expect(animalsPages.contactAddress.currentContact).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-074",
+      "statement": "The contact address page is a radios fieldset whose legend is the H1 'Contact address for consignment', hinted 'Selecting a contact copies their name and address into this notification.', listing every book record (28 here) with its address as the item hint, unpaginated.",
+      "kind": "copy",
+      "ref": "trace ecf01 action call@120 after (consignment/contact/select)",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-075",
+      "statement": "On the contact address page the 'Add a new address' link sits above the heading, before the fieldset.",
+      "kind": "copy",
+      "ref": "trace ecf01 action call@120 after",
+      "quote": "Add a new address",
+      "confidence": "verbatim",
+      "note": "On the role picker the same link sits under the heading and description instead."
+    },
+    {
+      "id": "trace-e2e-p8-076",
+      "statement": "While the contact copy still matches a book record, that record's radio is checked on the contact address page.",
+      "kind": "behaviour",
+      "ref": "trace ecf01 action call@120 after (Animal and Plant Health Agency radio checked); trace 5c999 call@98 after",
+      "quote": "value=\"6ac683ef6bdb2fc53f1285ff\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-077",
+      "statement": "Editing the contact address from the contact page changes only this notification: the page returns to the contact address page, the current contact shows the edited name and address, and no book record radio is checked any more.",
+      "kind": "behaviour",
+      "ref": "trace 5c999 (addresses-edit.spec.ts:195) actions call@102-call@120; 5c999.main.html call@114 after",
+      "quote": "APHA Weybridge 1791394803635 | New Haw, Weybridge, KT15 3NB, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-078",
+      "statement": "After the contact edit, the review page's Contact address row shows the edited name and town and not the old town.",
+      "kind": "behaviour",
+      "ref": "trace 5c999 actions call@122-call@130",
+      "quote": "editing the contact address from the contact page changes only this notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-079",
+      "statement": "Editing the contact copy neither changes the book record (still Woodham Lane, Addlestone) nor creates a new book record with the edited name.",
+      "kind": "behaviour",
+      "ref": "trace 5c999 test steps pw:api@92 and pw:api@94 (GET ?q=Animal and Plant Health Agency; GET ?q=APHA Weybridge 1791394803635)",
+      "quote": "expect(await addressBookApi.listAddresses(editedName)).toHaveLength(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-080",
+      "statement": "The contact address edit form has the caption 'Contact address for consignment', opens prefilled with the contact's name, and is reached at /consignment/contact/edit?return=consignment%2Fcontact%2Fselect.",
+      "kind": "copy",
+      "ref": "trace 5c999 actions call@104-call@106; ecf01 call@126 after",
+      "quote": "<SPAN class=\"govuk-caption-l\">Contact address for consignment</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-081",
+      "statement": "A copy picked for Place of origin before submit stays the same on the submitted notification after the book record is renamed and moved: the submitted review shows the original name and town, not the new ones.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 (addresses-submit-freeze.spec.ts:4) actions call@270-call@282",
+      "quote": "renaming the book after submit changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-082",
+      "statement": "Starting an amendment after the book was renamed still shows the original copy on the amending review page.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 actions call@302-call@318",
+      "quote": "Frozen Origin 1791394810919 / 8 Freeze Street / Carlisle / CA1 4DD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-083",
+      "statement": "Cancelling the amendment returns to the submitted review (?cancelled=1, status Submitted) with the original copy still shown.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 actions call@320-call@332",
+      "quote": "The amendment has been cancelled and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-084",
+      "statement": "Deleting the book record after submit changes neither the submitted review nor the amending review: both still show the copy and neither shows an error summary.",
+      "kind": "behaviour",
+      "ref": "trace db5da (addresses-submit-freeze.spec.ts:81) actions call@280-call@322",
+      "quote": "deleting the book record after submit changes neither the submitted view nor the amendment, and shows no error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-085",
+      "statement": "The submitted review page shows status 'Submitted' (green tag) with buttons 'Copy as new' and 'Delete', and no Change links, no Edit details links and no Continue button.",
+      "kind": "rule",
+      "ref": "trace 4d3c6 action call@270 after (notification-view)",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Submitted</STRONG> ... Copy as new ... Delete",
+      "confidence": "verbatim",
+      "note": "Absence of the action links is read from the render of every card on that page."
+    },
+    {
+      "id": "trace-e2e-p8-086",
+      "statement": "During an amendment the review page shows status 'Amending' (yellow tag), a 'Cancel amendment' link under the heading, and the same Change and Edit details links and Continue as a draft.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 action call@308 after",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-T00M74/cancel-amend\">Cancel amendment</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-087",
+      "statement": "The cancel-amendment page asks 'Cancel this amendment?', explains the changes will be discarded, and offers 'Yes, cancel amendment' and 'No, return to notification'.",
+      "kind": "copy",
+      "ref": "trace 4d3c6 action call@320 after (cancel-amend)",
+      "quote": "Cancel this amendment? Your changes since you started amending will be discarded and the submitted version restored. Yes, cancel amendment No, return to notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-088",
+      "statement": "An amendment is started from the dashboard: searching by reference and pressing 'Amend notification <reference>' on the result card opens the Overview with status 'Amending', whose 'Review and submit' button goes to the review page.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 actions call@284-call@308",
+      "quote": "Amend notification GBN-AG-26-T00M74",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-089",
+      "statement": "The review page's 'Change roles and addresses' opens the hub with ?change=1; from there each role's Change opens its picker with ?change=1, and saving the hub returns to the review page.",
+      "kind": "behaviour",
+      "ref": "trace 4d3c6 actions call@235-call@253",
+      "quote": "/addresses?change=1 ... /place-of-origin/select?change=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-090",
+      "statement": "Every journey page shows a journey strip above the content with the status tag (Draft blue, Submitted green, Amending yellow) and the notification reference in bold; it is an app-specific component (app-journey-strip) built from govuk-tag and govuk-body.",
+      "kind": "constraint",
+      "ref": "traces 923fb call@167, 4d3c6 call@270, 4d3c6 call@304",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"><STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG><SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-0TXX5N</SPAN></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-091",
+      "statement": "The role picker and the contact page link out to the INS address book frontend to add a new address, passing the journey type, notification id, a fulfilment id and a handshake token.",
+      "kind": "integration",
+      "ref": "trace 8eb85 action call@107 ('Add a new address' href); ecf01 call@120 after",
+      "quote": "http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-AQ2R7S&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p8-092",
+      "statement": "Every journey form posts a hidden concurrencyToken (a version number of the notification) alongside the CSRF crumb, so saves carry the version they were read at.",
+      "kind": "behaviour",
+      "ref": "trace 923fb call@167 after and call@171 after (concurrencyToken 17), call@185 after (18)",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"17\">",
+      "confidence": "inferred",
+      "note": "Inferred from the field name and that it rises after a save; no conflict was driven. Crumb values redacted by omission."
+    },
+    {
+      "id": "trace-e2e-p8-093",
+      "statement": "The picker lists book records five per page with a caption 'Showing 5 of N addresses', a table of Name, Address and Country, a small radio per row labelled 'Select <name>' (visually hidden) and a 'View details' disclosure with every field.",
+      "kind": "copy",
+      "ref": "trace 8eb85 action call@107 (consignors/select)",
+      "quote": "Showing 5 of 27 addresses",
+      "confidence": "verbatim",
+      "note": "Picker detail belongs to the picker part; recorded because the deleted-record behaviour is read through it."
+    },
+    {
+      "id": "trace-e2e-p8-094",
+      "statement": "No trace shows the picker's search results when the search matches nothing (after the deleted record is searched for), so the no-results copy is unknown.",
+      "kind": "copy",
+      "ref": "trace 8eb85 actions call@153-call@157: no frame snapshot after the search",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-095",
+      "statement": "The contact address edit form's error state is never driven, so whether it uses the same messages as the role edit form is not shown.",
+      "kind": "rule",
+      "ref": "traces ecf01, 5c999: contact edit saved valid or cancelled only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-096",
+      "statement": "No trace drives a blank address line 1, blank town or city, blank postcode, blank phone, blank email or an over-long field on the edit form, so whether those are required and their messages are not shown.",
+      "kind": "rule",
+      "ref": "trace 435a1: only name, postcode length, email format and country driven",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-097",
+      "statement": "No trace edits a copied address during an amendment and then cancels the amendment, so whether the edit is discarded with the amendment is not shown.",
+      "kind": "behaviour",
+      "ref": "traces 4d3c6, db5da: amendment opened and cancelled without edits",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-098",
+      "statement": "No trace shows which address rules a copy can break other than an unlisted country, nor the review message for more than one broken role.",
+      "kind": "rule",
+      "ref": "trace 7de00: one broken role, country only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-099",
+      "statement": "No trace shows whether the picker pre-selects the source record after its copy has been edited on the notification.",
+      "kind": "behaviour",
+      "ref": "traces 923fb, e4503: picker not reopened after an edit",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p8-100",
+      "statement": "The traces do not show the calls the frontend makes to the backend or the address book when copying or editing an address (they are server-side), so how the copy is stored is not shown.",
+      "kind": "integration",
+      "ref": "all 12 traces: only browser and test-fixture traffic recorded",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

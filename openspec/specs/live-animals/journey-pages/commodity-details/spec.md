@@ -30,13 +30,13 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list the chosen commodities in a table with a code column and a name column — one row per commodity, except under commodity code 01061900, where each chosen species has its own row — naming each row by the common name of each species chosen under it, or its scientific name where it has none, and MUST let the user remove a row on its own: removing a commodity row drops every species of that commodity, removing a species row drops that one species and leaves the rest of its commodity, and neither affects another row's saved counts. Removing the last species under a commodity removes that commodity's row too.
+The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species" — one row per commodity code, except under commodity code 01061900, where each chosen species has its own row — the Species cell listing the Latin name of each species chosen under that row, and MUST let the user remove a row on its own: removing a commodity row drops every species under that code, removing a species row drops that one species and leaves the rest of its code, and neither affects another row's saved counts. Removing the last species under a code removes that code's row too.
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
-- **THEN** the table lists each commodity by its code and, for the species chosen under it, the common name of each, or its scientific name where it has none; one row per commodity except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
+- **THEN** the table lists each commodity by its code and the Latin name of each species chosen under it; one row per code except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B
@@ -48,8 +48,16 @@ The system MUST list the chosen commodities in a table with a code column and a 
 **ID**: SCN-COMMODITY-DETAILS-003-C
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, cats) alongside one under another code
 - **WHEN** they view the commodity details page
-- **THEN** the 01061900 species has its own row, named by the species (its common name, or its scientific name where it has none), with the commodity's code
+- **THEN** the 01061900 species has its own row, with the commodity's code and the species' Latin name
 - **AND** removing that row drops only that species, while a row under any other code removes its whole commodity
+- **AND** removing the last species under a commodity removes that commodity's row too
+
+#### Scenario: Each row's Species cell lists the Latin names chosen under it
+**ID**: SCN-COMMODITY-DETAILS-003-D
+- **GIVEN** the user has chosen two species under commodity code 0102
+- **WHEN** they view the commodity details page
+- **THEN** the table has the columns "Commodity code" and "Species"
+- **AND** the 0102 row reads 0102 and the Latin name of each of the two species
 
 ### Requirement: A number of animals or a number of packages must be a positive whole number
 **ID**: REQ-COMMODITY-DETAILS-004
@@ -120,12 +128,39 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to Overview when they follow the back link from commodity details, the page the hub task row links straight to.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
-- **GIVEN** the user is on the commodity details page
+- **GIVEN** the opening sequence has ended and the user opened commodity details from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept
+**ID**: SCN-COMMODITY-DETAILS-009-B
+- **GIVEN** the user is in the opening sequence and reached commodity details from main import reason
+- **WHEN** they follow the back link
+- **THEN** "What are you importing?" is shown, with the species they chose still chosen
+
+### Requirement: The error summary lists errors by question
+**ID**: REQ-COMMODITY-DETAILS-010
+The system MUST list every number of animals error in the error summary before any number of packages error, each linking to its own field.
+
+#### Scenario: Two species with blank counts and invalid package counts list both animals errors first
+**ID**: SCN-COMMODITY-DETAILS-010-A
+- **GIVEN** the user has two species on the commodity details page, each missing its number of animals and each with a number of packages that is not a whole number
+- **WHEN** they save and continue
+- **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species
+- **AND** each error links to its own field
+
+### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
+**ID**: REQ-COMMODITY-DETAILS-011
+Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+
+#### Scenario: The opening sequence offers all three controls
+**ID**: SCN-COMMODITY-DETAILS-011-A
+- **GIVEN** the user is in the opening sequence on commodity details
+- **WHEN** the page is shown
+- **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"

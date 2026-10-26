@@ -1,0 +1,517 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 11 mined all 21 traces of identification.fit.spec.js's two validation describes: 'animal identification identifier validation' (7 tests: the empty-record test at line 619, the five 58-character identifier tests at line 636 for Microchip, Tattoo, Passport, Ear tag and Horse name, and the microchip error-state axe test at line 653) and 'animal identification address validation' (14 tests: six empty-mandatory-field tests at line 681 and eight over-length tests at line 700). The spec file was read in full for test titles and assertions. The traces were written by a newer Playwright than tim's trace viewer supports (tim distil trace open fails with TraceVersionError), so each zip's already-unpacked contents in the part11 working folder were read with jq: the test.trace action list, the page's final frame snapshot holding the error summary, and the network log's POST to the identification page. Every trace walks the same set-up (stub sign-in, start a notification, country of origin, 'What are you importing?', species, animal count on consignment details, then the overview's 'Identification details' link) to one page, /live-animals/notifications/{reference}/commodities/identification, headed 'Identification details', which re-renders with an error summary after a POST. Three commodity cards appear across the traces: Cat (01061900) — Felis catus (microchip, passport, tattoo, plus the permanent address block of eight fields), Cow (0102) — Bos taurus (ear tag, passport, no address block) and Horse (0101) — Equus caballus (microchip, passport, horse name, no address block). Conditional surface: the in-card 'Save and add another' button appears only when the line's count is above one (count 2 cat traces) and is absent on count-1 lines; the address block appears only on the cat card. Every error page showed exactly one error. All 21 tests passed; the axe test recorded no serious or critical violations. No network call other than the page's own GET and POST is visible in the browser's log.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p11-001",
+      "statement": "Submitting the identification page with a validation error re-renders the same page (HTTP 200 on the POST, no redirect) at the identification URL.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 network POST /live-animals/notifications/GBN-AG-26-RR2J3A/commodities/identification; same in all 21 traces",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-RR2J3A/commodities/identification -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-002",
+      "statement": "On a validation failure the page title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 frame snapshot call@1587 TITLE",
+      "quote": "Error: Identification details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-003",
+      "statement": "On a validation failure a GOV.UK error summary titled 'There is a problem' appears at the top of main, above the caption and heading.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 frame snapshot call@1587 main",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-004",
+      "statement": "Each error summary entry is a link whose href is the id of the field in error on that card (for example #animalIdentifierMicrochip-0), and clicking it moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 actions pw:api@63 (click summary link) and expect@64 (toBeFocused #animalIdentifierMicrochip-0)",
+      "quote": "<A href=#animalIdentifierMicrochip-0>Enter at least one identifier for this animal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-005",
+      "statement": "Each field in error gets an inline error message above its input, with a visually hidden 'Error:' prefix, the error modifier on its form group and input, and the error message id added to the input's aria-describedby after any hint.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 frame snapshot call@1587 #animalIdentifierMicrochip-0-error",
+      "quote": "animalIdentifierMicrochip-0-error ' Error: Enter at least one identifier for this animal ' ... govuk-input govuk-input--width-20 govuk-input--error ... describedby=animalIdentifierMicrochip-0-hint animalIdentifierMicrochip-0-error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-006",
+      "statement": "Pressing 'Save and add another' on a cat card with every identifier and every address field empty fails with one error asking for at least one identifier.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-6ecc5 (identification.fit.spec.js:619) call@1587 error summary",
+      "quote": "Enter at least one identifier for this animal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-007",
+      "statement": "The at-least-one-identifier error links to and focuses the first identifier field on the card; for a cat that is the microchip number field.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 expect@64 toBeFocused locator('#animalIdentifierMicrochip-0')",
+      "quote": "#animalIdentifierMicrochip-0 'Enter at least one identifier for this animal'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-008",
+      "statement": "With the record wholly empty, the at-least-one-identifier error is the only error shown: no address-field errors appear although every mandatory address field was blank, so the empty-address checks are not reported alongside the missing-identifier error.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 SUMMARY and ERRGROUPS (1 error group)",
+      "quote": "SUMMARY: #animalIdentifierMicrochip-0 'Enter at least one identifier for this animal'",
+      "confidence": "inferred",
+      "note": "Inferred from one error summary entry and one error form group while nameOrOrganisationName-0, addressLine1-0, townOrCity-0, postalOrZipCode-0, telephoneNumber-0 and emailAddress-0 were all posted empty."
+    },
+    {
+      "id": "trace-animals-fit-p11-009",
+      "statement": "After the at-least-one-identifier error the microchip field is still empty.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 expect@65 toHaveValue('') on #animalIdentifierMicrochip-0",
+      "quote": "animalIdentifierMicrochip-0=(0)[govuk-input govuk-input--width-20 govuk-input--error]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-010",
+      "statement": "A microchip number over 58 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-4ee49 (identification.fit.spec.js:636, Microchip) call@863 error summary",
+      "quote": "Microchip must be 58 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-011",
+      "statement": "A tattoo over 58 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-9f957 (identification.fit.spec.js:636, Tattoo) call@1599 error summary",
+      "quote": "Tattoo must be 58 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-012",
+      "statement": "A passport number over 58 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-515ca (identification.fit.spec.js:636, Passport) call@1745 error summary",
+      "quote": "Passport must be 58 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-013",
+      "statement": "An ear tag over 58 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-422d3 (identification.fit.spec.js:636, Ear tag) call@1263 error summary",
+      "quote": "Ear tag must be 58 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-014",
+      "statement": "A horse name over 58 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-823bf (identification.fit.spec.js:636, Horse name) call@1513 error summary",
+      "quote": "Horse name must be 58 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-015",
+      "statement": "Each over-length identifier error links to and focuses its own identifier field, and the field keeps the 59-character value the user entered.",
+      "kind": "behaviour",
+      "ref": "traces 4ee49, 9f957, 515ca, 422d3, 823bf: INPUTS show the 59-character value with govuk-input--error; spec line 644-649 expectErrorFocus then toHaveValue(invalid)",
+      "quote": "animalIdentifierEarTag-0=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX(59)[govuk-input govuk-input--width-20 govuk-input--error]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-016",
+      "statement": "The identifier length rule is checked when the page is submitted with the page's own 'Save and continue' button, which posts the card's fields with no action value.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-4ee49 POST params (no action=) and actions Click getByRole('button', { name: 'Save and continue', exact: true })",
+      "quote": "animalIdentifierMicrochip-0=XXXXXXXXXXXXXXXXXXXX(59), animalIdentifierPassport-0=(0), animalIdentifierTattoo-0=(0), nameOrOrganisationName-0=(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-017",
+      "statement": "When 'Save and continue' is pressed on a cat card with an over-long microchip and an empty permanent address, only the microchip length error is shown; no mandatory-address errors appear, so either the address is not required on 'Save and continue' or its errors are withheld while an identifier error stands.",
+      "kind": "rule",
+      "ref": "traces commodities-fit-identifica-4ee49 call@863 and commodities-fit-identifica-2ede8 call@1645: one summary entry, ERRGROUPS 1, all address fields posted empty",
+      "quote": "SUMMARY: #animalIdentifierMicrochip-0 'Microchip must be 58 characters or fewer'",
+      "confidence": "inferred",
+      "note": "Ambiguous: the trace cannot tell which of the two explanations holds. The mandatory-address errors were only ever driven through 'Save and add another'."
+    },
+    {
+      "id": "trace-animals-fit-p11-018",
+      "statement": "The identification page in the microchip error state (cat line of 2, over-long microchip) has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace commodities-fit-identifica-2ede8 (identification.fit.spec.js:653) expect@75",
+      "quote": "Animal identification with a microchip error has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim",
+      "note": "The expect title is the assertion's failure message template; the recorded violations list is empty and the test passed."
+    },
+    {
+      "id": "trace-animals-fit-p11-019",
+      "statement": "Pressing 'Save and add another' on a cat card with an identifier but no name or organisation name fails with an error asking for one.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-41968 (identification.fit.spec.js:681) call@1597 error summary",
+      "quote": "Enter a name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-020",
+      "statement": "Address line 1 of the permanent address is mandatory.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-06502 (identification.fit.spec.js:681) call@1705 error summary",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-021",
+      "statement": "Town or city of the permanent address is mandatory.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-73186 (identification.fit.spec.js:681) call@981 error summary",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-022",
+      "statement": "Postcode or Zip code of the permanent address is mandatory.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-444b5 (identification.fit.spec.js:681) call@1719 error summary",
+      "quote": "Enter a postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-023",
+      "statement": "Phone number of the permanent address is mandatory.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-1ecc5 (identification.fit.spec.js:681) call@1863 error summary",
+      "quote": "Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-024",
+      "statement": "Email address of the permanent address is mandatory.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-b646d (identification.fit.spec.js:681) call@1381 error summary",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-025",
+      "statement": "Each empty-mandatory-address error links to and focuses its own address field, which stays empty, while every other value the user entered on the card (identifiers and the rest of the address) is kept.",
+      "kind": "behaviour",
+      "ref": "traces 41968, 06502, 73186, 444b5, 1ecc5, b646d: INPUTS show the other fields refilled (e.g. animalIdentifierPassport-0=UK123456789); spec lines 689-695",
+      "quote": "animalIdentifierPassport-0=UK123456789(11)[govuk-input govuk-input--width-20]{animalIdentifierPassport-0-hint}\n    nameOrOrganisationName-0=(0)[govuk-input govuk-input--error]{nameOrOrganisationName-0-error}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-026",
+      "statement": "Address line 2 and county are optional: their labels carry '(optional)' and no empty-field test drives an error for either.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 labels for addressLine2-0 and county-0; spec requiredAddressValidations lists neither",
+      "quote": "Address line 2 (optional) ... County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-027",
+      "statement": "A name or organisation name over 255 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-5deb1 (identification.fit.spec.js:700) call@1629 error summary",
+      "quote": "Name or organisation name must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-028",
+      "statement": "Address line 1 over 255 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-5b673 (identification.fit.spec.js:700) call@1715 error summary",
+      "quote": "Address line 1 must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-029",
+      "statement": "Address line 2 over 255 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-32f66 (identification.fit.spec.js:700) call@1823 error summary",
+      "quote": "Address line 2 must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-030",
+      "statement": "Town or city over 100 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-c844e (identification.fit.spec.js:700) call@1777 error summary",
+      "quote": "Town or city must be 100 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-031",
+      "statement": "County over 100 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-f0699 (identification.fit.spec.js:700) call@1099 error summary",
+      "quote": "County must be 100 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-032",
+      "statement": "Postcode or Zip code over 12 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-54437 (identification.fit.spec.js:700) call@1837 error summary",
+      "quote": "Postcode or Zip code must be 12 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-033",
+      "statement": "Phone number over 20 characters fails validation.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-5d77e (identification.fit.spec.js:700) call@1981 error summary",
+      "quote": "Phone number must be 20 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-034",
+      "statement": "Email address over 254 characters fails validation (a 255-character address ending @example.com was rejected).",
+      "kind": "rule",
+      "ref": "trace commodities-fit-identifica-a5e0b (identification.fit.spec.js:700) call@1499 error summary; POST emailAddress-0 length 255",
+      "quote": "Email address must be 254 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-035",
+      "statement": "Each over-length address error links to and focuses its own address field, which keeps the over-long value entered, while the card's other values (including the passport number) are kept.",
+      "kind": "behaviour",
+      "ref": "traces 5deb1, 5b673, 32f66, c844e, f0699, 54437, 5d77e, a5e0b; e.g. a5e0b expect@74 toBeFocused #emailAddress-0, expect@75 and expect@76 toHaveValue",
+      "quote": "emailAddress-0=eeeeeeeeeeeeeeeeeeeeeeeeeeeeee(255)[govuk-input govuk-input--error]{emailAddress-0-error}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-036",
+      "statement": "The service words its length errors two ways: identifier errors say 'characters or fewer' while permanent-address errors say 'characters or less'.",
+      "kind": "copy",
+      "ref": "traces 4ee49 (identifier) and 5deb1 (address) error summaries",
+      "quote": "Microchip must be 58 characters or fewer ... Name or organisation name must be 255 characters or less",
+      "confidence": "verbatim",
+      "note": "Recorded as the source shows it; not reconciled."
+    },
+    {
+      "id": "trace-animals-fit-p11-037",
+      "statement": "Every validation response in this part showed exactly one error, even where the test left other fields untouched; no trace shows more than one error at once.",
+      "kind": "behaviour",
+      "ref": "all 21 traces: SUMMARY lists one link and ERRGROUPS is 1",
+      "quote": "ERRGROUPS: 1",
+      "confidence": "inferred",
+      "note": "Every test changed one field from a valid record, so the traces do not show whether several simultaneous errors are all listed."
+    },
+    {
+      "id": "trace-animals-fit-p11-038",
+      "statement": "'Save and add another' posts the card's fields with action=add:<card index> (add:0 for the first card).",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-41968 POST params",
+      "quote": "emailAddress-0=owner@example.co.uk(19), action=add:0(5)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-039",
+      "statement": "The form posts a hidden concurrencyToken (0 on a fresh notification) and a hidden CSRF crumb with every submission.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 FORM hidden inputs",
+      "quote": "<INPUT name=crumb value=[REDACTED] type=hidden>\n<INPUT name=concurrencyToken value=0 type=hidden>",
+      "confidence": "verbatim",
+      "note": "Crumb value redacted."
+    },
+    {
+      "id": "trace-animals-fit-p11-040",
+      "statement": "The form opens with a visually hidden submit button 'Save and finish' (action=finish) ahead of every other control, so it is the form's default submit when the user presses Enter in a field.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 FORM first BUTTON; present in all 21 traces",
+      "quote": "<BUTTON .govuk-visually-hidden name=action value=finish type=submit>Save and finish",
+      "confidence": "inferred",
+      "note": "The Enter-key effect is inferred from the button being the first submit button in the form; no trace pressed Enter."
+    },
+    {
+      "id": "trace-animals-fit-p11-041",
+      "statement": "The in-card secondary button 'Save and add another' appears on a card whose line has two animals still to enter (Felis catus 1 of 2), and is absent on a line of one animal (1 of 1), where the card has no in-card button.",
+      "kind": "rule",
+      "ref": "traces 6ecc5/2ede8 (count 2) BUTTONS include 'Save and add another'(action=add:0); traces 4ee49, 422d3, 823bf (count 1) do not",
+      "quote": "BUTTONS: ' Menu ', 'Save and finish'(action=finish), ' Save and continue ', ' Save and return to overview '(exit=hub)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-042",
+      "statement": "The page's own actions sit below a visible section break in a button group: 'Save and continue' (primary), 'Save and return to overview' (secondary, exit=hub) and the link 'Cancel and return to overview'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 govuk-button-group",
+      "quote": "Save and continue ... Save and return to overview ... Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-043",
+      "statement": "The identification page has the caption 'About the consignment' and the heading 'Identification details'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 main",
+      "quote": "<SPAN .govuk-caption-l>About the consignment\n<H1 .govuk-heading-l>Identification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-044",
+      "statement": "An inset under the heading tells the user identification details must all be added before arrival.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 govuk-inset-text",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-045",
+      "statement": "Above the cards, a 'Selected commodities' table lists each commodity with columns Commodity code, Common name, Number of animals and a 'Change' link (visually hidden suffix naming the commodity) back to the commodities page; below it an 'Add another commodity' link goes to the same page.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-422d3 call@1263 govuk-table and following paragraph",
+      "quote": "Selected commodities ... Commodity code ... Common name ... Number of animals ... 0102 ... Domestic cattle ... 1 ... Change Domestic cattle ... Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-046",
+      "statement": "Each commodity card is headed '<common name> (<commodity code>) — <species>' and offers a 'Change number of animals' link to the consignment details page.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 #identification-card-0",
+      "quote": "Cat (01061900) — Felis catus ... Change number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-047",
+      "statement": "Each card's entry form is headed 'Enter details for <species> <n> of <count>', counting the animal being entered against the line's number of animals.",
+      "kind": "copy",
+      "ref": "traces 6ecc5 (1 of 2) and 4ee49 (1 of 1)",
+      "quote": "Enter details for Felis catus 1 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-048",
+      "statement": "A cat card asks, in order, for Microchip number, Passport and Tattoo, each a 20-character-width text input with an example hint.",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 labels and hints",
+      "quote": "Microchip number / For example, 900123456789012 ... Passport / For example, UK123456789 ... Tattoo / For example, AB1234",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-049",
+      "statement": "A cattle card asks, in order, for Ear tag and Passport, with no tattoo, no microchip and no permanent address block.",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-422d3 call@1263 #identification-card-0",
+      "quote": "Ear tag / For example, UK123456789012 ... Passport / For example, UK123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-050",
+      "statement": "A horse card asks, in order, for Microchip number, Passport and Horse name; Horse name has no hint, and the card has no permanent address block.",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-823bf call@1513 #identification-card-0",
+      "quote": "Microchip number ... Passport ... Horse name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-051",
+      "statement": "The permanent address block (shown on the cat card) opens with a warning that a false address is fraud.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 govuk-warning-text",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-052",
+      "statement": "The permanent address block defines a permanent address in a bulleted list.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 govuk-list--bullet",
+      "quote": "A permanent address is where an animal:\nwill permanently reside\ncan be checked by the Animal and Plant Health Agency (APHA)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-053",
+      "statement": "The permanent address question is a small heading followed by eight text inputs and no country field.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 H3 and form groups",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-054",
+      "statement": "The permanent address fields, in order, are Name or organisation name (autocomplete name), Address line 1 (address-line1), Address line 2 (optional) (address-line2), Town or city (address-level2, two-thirds width), County (optional) (two-thirds width), Postcode or Zip code (postal-code, width 10), Phone number (type tel, autocomplete tel, width 20) and Email address (type email, autocomplete email).",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 address form groups",
+      "quote": "Name or organisation name ... Address line 1 ... Address line 2 (optional) ... Town or city ... County (optional) ... Postcode or Zip code ... Phone number ... Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-055",
+      "statement": "The phone number field has a hint telling international callers to include the country code.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 #telephoneNumber-0-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-056",
+      "statement": "Field ids and names carry the card index as a suffix (for example animalIdentifierMicrochip-0, nameOrOrganisationName-0), so error links target a field on a specific card.",
+      "kind": "data",
+      "ref": "trace commodities-fit-identifica-6ecc5 POST params and INPUT ids",
+      "quote": "animalIdentifierMicrochip-0=(0), animalIdentifierPassport-0=(0), animalIdentifierTattoo-0=(0), nameOrOrganisationName-0=(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-057",
+      "statement": "A journey strip at the top of main shows a blue 'Draft' tag and the notification reference in bold; it uses a service-specific app-journey-strip class rather than a GOV.UK component, while the rest of the page is govuk-* classes only.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-identifica-6ecc5 call@1587 .app-journey-strip",
+      "quote": "<DIV .app-journey-strip govuk-!-margin-bottom-4>\n<STRONG .govuk-tag govuk-tag--blue>\n  Draft\n<SPAN .govuk-body govuk-!-font-weight-bold>GBN-AG-26-RR2J3A",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-058",
+      "statement": "The user reaches the identification page from the overview's 'Identification details' link after entering the animal count on consignment details.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-identifica-6ecc5 actions pw:api@59 and expect@60",
+      "quote": "Click getByRole('link', { name: 'Identification details' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p11-059",
+      "statement": "No browser-side call other than the identification page's own GET and POST is visible, so whatever backend persists or validates the record is not seen in these traces.",
+      "kind": "integration",
+      "ref": "network logs of all 21 traces (resource snapshots filtered to the identification URL)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p11-060",
+      "statement": "No trace drives a format check on the email address, phone number or postcode (only empty and over-length values), so whether an invalid format is rejected, and with what message, is not shown.",
+      "kind": "rule",
+      "ref": "identification.fit.spec.js addressFormatValidations (lengths only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p11-061",
+      "statement": "No trace drives the mandatory-address errors through 'Save and continue' or 'Save and return to overview', nor the identifier length errors through 'Save and add another', so whether each rule fires on every save path is not shown.",
+      "kind": "rule",
+      "ref": "identification.fit.spec.js lines 680-715 (submitAdd only) and 635-651 (saveAndContinue only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p11-062",
+      "statement": "No trace shows the validation of a second or later card (index 1 and on) or of a dog or ferret card, so error linking beyond the first card is not shown.",
+      "kind": "behaviour",
+      "ref": "all 21 traces use a single card, #identification-card-0",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p11-063",
+      "statement": "No trace shows several validation errors at once, so the order of entries in the error summary is not shown.",
+      "kind": "behaviour",
+      "ref": "all 21 traces show one error",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -44,9 +44,9 @@ FAIL / WARN counts derive from `todos` — not stored.
 
 ## Category values
 
-Every style finding is a code-quality finding, so `category` is one of
-the code-quality categories the review skill and the build loop's
-verifier use (`tools/review/finding-categories.sh`).
+A style finding is a code-quality or design finding, so `category` is
+one of the code-quality or design categories the review skill and the
+build loop's verifier use (`tools/review/finding-categories.sh`).
 `file-style-add-item.sh` refuses any other word, including the
 functional ones.
 
@@ -59,9 +59,10 @@ functional ones.
 | `logging` | A log line without its ids, a lost cause, a body at INFO, `console.log` |
 | `test-readability` | A test title that claims more than its assertions prove |
 | `history` | A ticket key, backlog or ruling id, release name, or before-and-after narration in code |
+| `design` | Copy, layout or a component where a guide such as the GDS style guide disagrees with the design source, the design source sets two different things for one element, or it does not show the case the code handles. Carries the design source and the code at file:line, the guide rule's link, and the question with its options. Never fixed in code: it goes to the designer |
 
 A code-quality finding is fixed unless the code shows it is factually
-wrong.
+wrong. A design finding is marked Discuss, for the designer.
 
 ## Lifecycle
 

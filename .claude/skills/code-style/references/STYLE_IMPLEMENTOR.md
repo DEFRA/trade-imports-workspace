@@ -263,6 +263,12 @@ For each item in `skipped_items`:
   --disposition Auto-Resolved --note "violation not found"
 ```
 
+Each item is the one finding it names. Every line you change still meets
+the house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`.
+A breach elsewhere in the file that no item covers goes in your summary as
+a new finding, with its file:line; another item's finding stays for that
+item.
+
 If during Step 1 you decided an item is a **per-item judgement won't-fix**
 because the code shows the finding is factually wrong, or the suggested
 fix would harm correctness, quote that code with its file:line in the

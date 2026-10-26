@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks why the consignment is being imported, and — for the internal market reason — what it is for. The page is titled "Main reason for import", asking "What is the main reason for importing the animals?" as its (visually hidden) question.
+Asks why the consignment is being imported, and — for the internal market reason — what it is for. The page is titled "Main import reason", asking "What is the main reason for importing the animals?" as its (visually hidden) question.
 
 ## Requirements
 
@@ -19,9 +19,9 @@ The system MUST ask the user their reason for importing the consignment, offerin
 
 ### Requirement: A chosen reason that asks nothing further is accepted
 **ID**: REQ-IMPORT-REASON-002
-The system MUST accept a chosen import reason that needs no follow-up question, saving it without error.
+The system MUST accept a chosen import reason whose own questions, if it reveals any, are answered, saving it without error.
 
-#### Scenario: Choosing a reason that opens no follow-up saves without error
+#### Scenario: Choosing a reason that asks nothing more saves without error
 **ID**: SCN-IMPORT-REASON-002-A
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose the "Re-entry" reason and save and continue
@@ -29,7 +29,7 @@ The system MUST accept a chosen import reason that needs no follow-up question, 
 
 ### Requirement: The internal market reason reveals a follow-up purpose question
 **ID**: REQ-IMPORT-REASON-003
-The system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, MUST accept the reason and purpose together, and MUST refuse to save the internal market reason while its purpose is unanswered, showing an error that links to and focuses the first purpose option, keeping the reveal open with the reason still chosen.
+The system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, MUST accept the reason and purpose together, and MUST refuse Save and continue from the internal market reason while its purpose is unanswered, keeping the reveal open and focusing the first purpose.
 
 #### Scenario: Choosing internal market reveals the purpose question and accepts an answer to it
 **ID**: SCN-IMPORT-REASON-003-A
@@ -39,16 +39,16 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 - **WHEN** they choose a purpose and save and continue
 - **THEN** both answers are saved and no error summary is shown
 
-#### Scenario: Internal market without a purpose is rejected, keeping the reveal open
+#### Scenario: Internal market without a purpose is refused on save and continue
 **ID**: SCN-IMPORT-REASON-003-B
 - **GIVEN** the user is on the import reason page
-- **WHEN** they choose the "Internal market" reason and save and continue without choosing a purpose
-- **THEN** an error summary headed "There is a problem" asks them to select a purpose in the internal market, and the same error is shown inside the open reveal
+- **WHEN** they choose "Internal market", leave the purpose unanswered and save and continue
+- **THEN** an error reading "Select a purpose in the internal market" is shown, with the purpose question still open under Internal market
 - **AND** following the error focuses the first purpose option, with "Internal market" still chosen
 
 ### Requirement: The port of exit is chosen from the same list as the port of entry
 **ID**: REQ-IMPORT-REASON-004
-The system MUST offer, for the port of exit under each reason that asks it, the same ports as the port of entry, in the same order, after the placeholder "Select port of exit", each reading "<port name> - <port code>", and MUST save the chosen port's code and show it as chosen when the page is reopened.
+The system MUST offer, for the port of exit under each reason that asks it, the same ports as the port of entry, in the same order, after the placeholder "Select one", each reading "<port name> - <port code>", and MUST save the chosen port's code and show it as chosen when the page is reopened.
 
 #### Scenario: The port of exit offers the port of entry's list
 **ID**: SCN-IMPORT-REASON-004-A
@@ -60,7 +60,7 @@ The system MUST offer, for the port of exit under each reason that asks it, the 
 **ID**: SCN-IMPORT-REASON-004-B
 - **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
 - **WHEN** the port of exit list is read in full
-- **THEN** after the placeholder "Select port of exit" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
+- **THEN** after the placeholder "Select one" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
 - **AND** each reads "<port name> - <port code>", for example "Aberdeen Harbour - GB ABD"
 
 #### Scenario: A chosen port of exit is kept and offered back
@@ -120,25 +120,31 @@ The system MUST refuse to save when the submitted import reason is not one of th
 - **WHEN** they submit a reason that is not one of the available options and save
 - **THEN** the save is refused, an error links to and focuses the reason question, with no reason shown as chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-IMPORT-REASON-008
-The system MUST return the user to Overview when they follow the back link from the import reason page.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-IMPORT-REASON-008-A
-- **GIVEN** the user is on the import reason page
+- **GIVEN** the opening sequence has ended and the user opened main import reason from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
+#### Scenario: In the opening sequence, the back link opens what are you importing
+**ID**: SCN-IMPORT-REASON-008-B
+- **GIVEN** the user is in the opening sequence and reached main import reason from what are you importing
+- **WHEN** they follow the back link
+- **THEN** "What are you importing?" is shown
+
 ### Requirement: The destination country is chosen from the origin countries and their territories, each territory named with its country
 **ID**: REQ-IMPORT-REASON-009
-The system MUST offer, for the destination country under both Transit and Transhipment or onward travel, a placeholder and then the origin countries and their territories that the reference data service serves, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name.
+The system MUST offer, for the destination country under both Transit and Transhipment or onward travel, the placeholder "Select one" and then the origin countries and their territories that the reference data service serves, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name.
 
 #### Scenario: The transhipment destination country offers the origin countries and their territories
 **ID**: SCN-IMPORT-REASON-009-A
 - **GIVEN** the user has chosen "Transhipment or onward travel"
 - **WHEN** the destination country list is read in full
-- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
+- **THEN** after the placeholder "Select one" it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
 
 #### Scenario: The transit destination country offers the same places
 **ID**: SCN-IMPORT-REASON-009-B
@@ -168,3 +174,62 @@ The system MUST save a territory chosen as the destination country without an er
 - **GIVEN** the notification holds a destination country from the country list
 - **WHEN** the user reopens the page
 - **THEN** that country is shown as chosen
+
+### Requirement: The page is headed and titled Main import reason
+**ID**: REQ-IMPORT-REASON-011
+The system MUST head the page "Main import reason" and give it the browser title "Main import reason - Import notification service - GOV.UK".
+
+#### Scenario: The page reads Main import reason in its heading and browser title
+**ID**: SCN-IMPORT-REASON-011-A
+- **GIVEN** the user opens the import reason page
+- **WHEN** it loads
+- **THEN** its heading reads "Main import reason"
+- **AND** the browser title reads "Main import reason - Import notification service - GOV.UK"
+
+### Requirement: Each destination country and port of exit select and search box opens on Select one, with no divider
+**ID**: REQ-IMPORT-REASON-012
+The system MUST start every destination country and port of exit select on the page with an empty option reading "Select one", selected while nothing is chosen, followed straight by the places or ports with no divider line, and MUST read "Select one" in each such search box with JavaScript while nothing is chosen.
+
+#### Scenario: A destination country select opens on Select one
+**ID**: SCN-IMPORT-REASON-012-A
+- **GIVEN** the user has chosen "Transhipment or onward travel" or "Transit"
+- **WHEN** the destination country list is read
+- **THEN** its first option reads "Select one" and is selected
+- **AND** the next option is the first place, with no divider line between
+
+#### Scenario: A port of exit select opens on Select one
+**ID**: SCN-IMPORT-REASON-012-B
+- **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
+- **WHEN** the port of exit list is read
+- **THEN** its first option reads "Select one" and is selected
+- **AND** the next option is the first port, with no divider line between
+
+#### Scenario: Each destination country and port of exit search box reads Select one while empty
+**ID**: SCN-IMPORT-REASON-012-C
+- **GIVEN** the user has chosen a reason that reveals a destination country or a port of exit
+- **WHEN** the page has JavaScript and nothing is chosen
+- **THEN** each such search box reads "Select one"
+
+### Requirement: Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format
+**ID**: REQ-IMPORT-REASON-013
+The system MUST, on Save and return to overview, save the reason and whatever of its questions were answered without refusing the page for an unanswered question, MUST clear the answers of a reason no longer chosen, and MUST still refuse an exit date that is not a real date with "Enter a real date".
+
+#### Scenario: Transit without a port of exit saves and keeps the country
+**ID**: SCN-IMPORT-REASON-013-A
+- **GIVEN** the user has chosen "Transit" and given a destination country but no port of exit
+- **WHEN** they save and return to overview
+- **THEN** no error is shown and Overview is shown
+- **AND** when they reopen the page, Transit is chosen with the destination country given
+
+#### Scenario: Changing the reason clears the saved purpose
+**ID**: SCN-IMPORT-REASON-013-B
+- **GIVEN** the user has saved "Internal market" with a purpose
+- **WHEN** they change the reason to "Transit" and save and return to overview
+- **THEN** choosing "Internal market" again shows no purpose chosen
+
+#### Scenario: An exit date that is not a real date is refused
+**ID**: SCN-IMPORT-REASON-013-D
+- **GIVEN** the user has chosen "Temporary admission horses" and entered the exit date 31/2/2026
+- **WHEN** they save and return to overview
+- **THEN** the page stays open and the exit date shows "Enter a real date"
+- **AND** nothing is saved

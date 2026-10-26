@@ -1,0 +1,399 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 2, Dashboard search and sort (animals). Read both specs in full (tests/animals/e2e/features/notification-dashboard-search.spec.ts, 7 tests; notification-dashboard-sort.spec.ts, 6 tests) and mined all 13 trace zips the part names, none sampled: c7374 (search form shown), 12d83 (complete reference returns one match), 861a9 (View after search opens notification view), b4432 (no matches), 0b7b1 (free text), c23e0 (sort after search keeps reference), 4da5f (page param keeps reference), 00377 (default sort), 6c8f9 (four sort options), 3fd8a / 6f16e / 73232 / fc4b8 (submit each sort option). The trace CLI that tim installs refuses these zips (TraceVersionError: the traces were recorded by a newer Playwright), so each zip was unpacked into the part's working folder (t01..t13, in read order, matched to its test by its recorded actions and query strings) and read directly: the test.trace step log (every Navigate, Fill, Click, Select option and Expect, with locators and values), the browser-context network log, and the frame snapshots of the dashboard rendered to HTML. One page is in scope, the live-animals dashboard at /live-animals (caption 'Dashboard', H1 'Import notification service', H2 'Your notifications'). Its left third is an aside headed 'Filter notifications' holding a GET search form (hidden sort, 'Keyword or reference' text input, 'Search' button); its right two thirds open with a toolbar holding the results label and a GET sort form ('Sort by' select with four options, hidden referenceNumber when a search is active, 'Update sort' secondary button). States seen: unfiltered (Showing 1 to 25 of N Results), one match (Showing 1 Result), no match and free text (No notifications found, no cards, no pagination, no error summary), each of the four sorts selected, and a referenceNumber plus page=2 URL. One page outside the slice is reached: the notification view ('Review your notification') via a card's View link. Cards, their actions, pagination and delete belong to part 3 and are claimed here only where they carry the search or sort state in a URL. Everything is server-rendered: the browser made only full-page GETs to /live-animals, so the search and sort calls behind the page never appear in the traces.",
+  "claims": [
+    {
+      "id": "trace-e2e-p2-001",
+      "statement": "The live-animals dashboard shows a section headed 'Filter notifications' (a level 3 heading) beside the notification list.",
+      "kind": "copy",
+      "ref": "trace c7374 (search-form) expect@38; t01 snapshot of /live-animals, aside.notification-list__filters",
+      "quote": "<H3 class=\"govuk-heading-m\" id=\"filter-notifications-heading\">Filter notifications</H3>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-002",
+      "statement": "The filter section is an aside landmark labelled by the 'Filter notifications' heading and sits in the left one-third column, with the results in the right two-thirds column.",
+      "kind": "constraint",
+      "ref": "trace b4432 (no-matches) snapshot call@470, main > .notification-list__layout",
+      "quote": "<ASIDE class=\"notification-list__filters\" aria-labelledby=\"filter-notifications-heading\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-003",
+      "statement": "The search form submits with GET to /live-animals, so a search is expressed entirely in the dashboard's query string.",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshot call@470, form[data-testid=notification-search-form]",
+      "quote": "<FORM method=\"get\" action=\"/live-animals\" class=\"notification-list__search-form\" data-testid=\"notification-search-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-004",
+      "statement": "The search form has one text field labelled 'Keyword or reference', named referenceNumber, empty when no search is active.",
+      "kind": "data",
+      "ref": "trace c7374 expect@40; trace b4432 snapshot call@470, #referenceNumber",
+      "quote": "Keyword or reference",
+      "confidence": "verbatim",
+      "note": "Rendered as <INPUT class=\"govuk-input\" id=\"referenceNumber\" name=\"referenceNumber\" type=\"text\" value=\"\">. The label uses govuk-label--s. No hint, no character limit and no autocomplete attribute are rendered."
+    },
+    {
+      "id": "trace-e2e-p2-005",
+      "statement": "The search field has no hint text explaining what can be searched for or in what format a reference should be entered.",
+      "kind": "copy",
+      "ref": "trace b4432 snapshot call@470, .govuk-form-group around #referenceNumber",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"referenceNumber\">\n    Keyword or reference\n  </LABEL>\n  <INPUT class=\"govuk-input\" id=\"referenceNumber\" name=\"referenceNumber\" type=\"text\" value=\"\"></INPUT>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any .govuk-hint in the form group in every dashboard snapshot of the part."
+    },
+    {
+      "id": "trace-e2e-p2-006",
+      "statement": "The search form's submit button reads 'Search' and is a standard (primary) GOV.UK button.",
+      "kind": "copy",
+      "ref": "trace c7374 expect@41; trace b4432 snapshot call@470",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Search\n</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-007",
+      "statement": "The search form carries the current sort as a hidden field, so a search keeps whatever sort is in force (arrivalDate,desc when none has been chosen).",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshot call@470 and call@490, input[type=hidden][name=sort]; trace c23e0 snapshot call@615",
+      "quote": "<INPUT type=\"hidden\" name=\"sort\" value=\"arrivalDate,desc\"></INPUT>",
+      "confidence": "verbatim",
+      "note": "After a sort to createdAt,desc the search form's hidden sort reads value=\"createdAt,desc\" (c23e0 call@615)."
+    },
+    {
+      "id": "trace-e2e-p2-008",
+      "statement": "Submitting a search loads the dashboard at /live-animals?sort=<current sort>&referenceNumber=<entered text>.",
+      "kind": "behaviour",
+      "ref": "trace b4432 network/snapshot call@490; trace 12d83 snapshot call@501",
+      "quote": "http://localhost:3000/live-animals?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-ZZZZZZ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-009",
+      "statement": "After a search, the search field is pre-filled with the text that was searched for.",
+      "kind": "behaviour",
+      "ref": "trace 12d83 snapshot call@501, #referenceNumber",
+      "quote": "<INPUT class=\"govuk-input\" id=\"referenceNumber\" name=\"referenceNumber\" type=\"text\" value=\"GBN-AG-26-RSJ36G\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-010",
+      "statement": "Searching by a submitted notification's complete reference number returns exactly that one notification as the only card.",
+      "kind": "behaviour",
+      "ref": "trace 12d83 (complete-reference) pw:api@74 fill, expect@78, expect@79",
+      "quote": "Fill \"GBN-AG-26-RSJ36G\" ... Expect \"toHaveCount\" locator('.govuk-summary-card') expected 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-011",
+      "statement": "When a search returns one notification the results label reads 'Showing 1 Result'.",
+      "kind": "copy",
+      "ref": "trace 12d83 expect@80; snapshot call@501, .notification-list__results",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-012",
+      "statement": "Without a search the results label reads 'Showing 1 to 25 of N Results', giving the range shown and the total.",
+      "kind": "copy",
+      "ref": "trace b4432 snapshot call@470, .notification-list__results",
+      "quote": "Showing 1 to 25 of 54 Results",
+      "confidence": "verbatim",
+      "note": "The total varied between traces (52 to 59) as the shared stack accumulated notifications."
+    },
+    {
+      "id": "trace-e2e-p2-013",
+      "statement": "When a search matches nothing the results label reads 'No notifications found' and no notification cards are shown.",
+      "kind": "copy",
+      "ref": "trace b4432 (no-matches) expect@42, expect@43; snapshot call@490",
+      "quote": "No notifications found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-014",
+      "statement": "A well-formed reference that matches no notification (GBN-AG-26-ZZZZZZ) gives the no-results state, not an error.",
+      "kind": "rule",
+      "ref": "trace b4432 pw:api@38 fill, expect@41..43",
+      "quote": "Fill \"GBN-AG-26-ZZZZZZ\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-015",
+      "statement": "Free text that is not a reference ('not-a-valid-reference') is accepted without validation: the URL carries it, no cards show, the label reads 'No notifications found' and no error summary appears.",
+      "kind": "rule",
+      "ref": "trace 0b7b1 (free-text) pw:api@38, expect@41..44; snapshot call@451",
+      "quote": "Expect \"not toBeVisible\" locator('.govuk-error-summary')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-016",
+      "statement": "The field is labelled 'Keyword or reference' but free text matched nothing, so it is unclear whether any keyword search exists beyond matching a reference number.",
+      "kind": "behaviour",
+      "ref": "trace 0b7b1 snapshot call@451; trace c7374 expect@40",
+      "quote": "Keyword or reference",
+      "confidence": "inferred",
+      "note": "An ambiguity recorded, not settled: the only free-text value tried ('not-a-valid-reference') matches no notification's data either way, so the trace cannot tell 'keyword search unsupported' from 'no keyword match'."
+    },
+    {
+      "id": "trace-e2e-p2-017",
+      "statement": "No trace searches with a partial reference, a lower-case reference or surrounding spaces, so whether matching is exact, partial or case-insensitive is not shown.",
+      "kind": "rule",
+      "ref": "notification-dashboard-search.spec.ts (all 7 tests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p2-018",
+      "statement": "No trace submits an empty search, so what a blank search does (clears the filter, or sends referenceNumber= empty) is not shown.",
+      "kind": "behaviour",
+      "ref": "notification-dashboard-search.spec.ts (all 7 tests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p2-019",
+      "statement": "In a search result, the card's View link is named 'View notification <reference>' and opens /live-animals/notifications/<reference>/notification-view.",
+      "kind": "behaviour",
+      "ref": "trace 861a9 (view-after-search) pw:api@78 click, expect@79; snapshot call@508 card",
+      "quote": "getByRole('link', { name: 'View notification GBN-AG-26-QNYV7A' })",
+      "confidence": "verbatim",
+      "note": "Card href /live-animals/notifications/GBN-AG-26-QNYV7A/notification-view. Card actions and how they vary by status are part 3's."
+    },
+    {
+      "id": "trace-e2e-p2-020",
+      "statement": "The notification view reached from a searched result is headed 'Review your notification' and shows the notification's reference and a 'Submitted' status tag in a strip above the heading.",
+      "kind": "copy",
+      "ref": "trace 861a9 expect@80, expect@81; snapshot call@512, .app-journey-strip",
+      "quote": "Review your notification",
+      "confidence": "verbatim",
+      "note": "Strip renders <STRONG class=\"govuk-tag govuk-tag--green\">Submitted</STRONG> then the bold reference GBN-AG-26-QNYV7A. The view page itself belongs to another part."
+    },
+    {
+      "id": "trace-e2e-p2-021",
+      "statement": "The notification view reached from search does not carry the search back: its URL has no referenceNumber or sort, and no trace shows a way back to the filtered dashboard.",
+      "kind": "behaviour",
+      "ref": "trace 861a9 snapshot call@512 URL",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-QNYV7A/notification-view",
+      "confidence": "inferred",
+      "note": "Inferred from the URL; the trace never navigates back, so whether a back link restores the search is a gap."
+    },
+    {
+      "id": "trace-e2e-p2-022",
+      "statement": "The sort control is a select labelled 'Sort by', named sort.",
+      "kind": "data",
+      "ref": "trace 00377 (default-sort) expect@38; trace b4432 snapshot call@470, .notification-list__sort-form",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"sort\">Sort by</LABEL>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-023",
+      "statement": "The sort select has exactly four options, in this order: 'Arrival (newest to oldest)', 'Arrival (oldest to newest)', 'Date created (newest to oldest)', 'Date created (oldest to newest)'.",
+      "kind": "data",
+      "ref": "trace 6c8f9 (four-options) expect@38, expect@39",
+      "quote": "[Arrival (newest to oldest), Arrival (oldest to newest), Date created (newest to oldest), Date created (oldest to newest)]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-024",
+      "statement": "The four sort options submit the values arrivalDate,desc, arrivalDate,asc, createdAt,desc and createdAt,asc respectively.",
+      "kind": "data",
+      "ref": "trace b4432 snapshot call@470, select#sort options",
+      "quote": "<OPTION value=\"arrivalDate,desc\" selected=\"\">Arrival (newest to oldest)</OPTION>\n                <OPTION value=\"arrivalDate,asc\">Arrival (oldest to newest)</OPTION>\n                <OPTION value=\"createdAt,desc\">Date created (newest to oldest)</OPTION>\n                <OPTION value=\"createdAt,asc\">Date created (oldest to newest)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-025",
+      "statement": "The default sort, with no sort in the URL, is 'Arrival (newest to oldest)'.",
+      "kind": "rule",
+      "ref": "trace 00377 expect@38; snapshot of /live-animals",
+      "quote": "Expect \"toHaveText\" getByLabel('Sort by').locator('option:checked') expected \"Arrival (newest to oldest)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-026",
+      "statement": "The sort is applied by a separate 'Update sort' secondary button, not by changing the select; the select alone does not submit.",
+      "kind": "behaviour",
+      "ref": "traces 3fd8a / 6f16e / 73232 / fc4b8 pw:api@38 select option then pw:api@39 click; snapshot .notification-list__sort-form",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Update sort\n</BUTTON>",
+      "confidence": "verbatim",
+      "note": "That the select does not auto-submit is inferred: every test clicks 'Update sort' after selecting, and the page shows no script hook on the select."
+    },
+    {
+      "id": "trace-e2e-p2-027",
+      "statement": "The sort form submits with GET to /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshot call@470, form.notification-list__sort-form",
+      "quote": "<FORM method=\"get\" action=\"/live-animals\" class=\"notification-list__sort-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-028",
+      "statement": "Choosing 'Arrival (newest to oldest)' and pressing 'Update sort' reloads /live-animals?sort=arrivalDate%2Cdesc with the dashboard heading shown and that option still selected.",
+      "kind": "behaviour",
+      "ref": "trace 3fd8a expect@40, expect@41; snapshot call@525",
+      "quote": "http://localhost:3000/live-animals?sort=arrivalDate%2Cdesc",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-029",
+      "statement": "Choosing 'Arrival (oldest to newest)' and pressing 'Update sort' reloads /live-animals?sort=arrivalDate%2Casc with that option selected.",
+      "kind": "behaviour",
+      "ref": "trace 6f16e expect@40, expect@41; snapshot call@545",
+      "quote": "<OPTION value=\"arrivalDate,asc\" selected=\"\">Arrival (oldest to newest)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-030",
+      "statement": "Choosing 'Date created (newest to oldest)' and pressing 'Update sort' reloads /live-animals?sort=createdAt%2Cdesc with that option selected.",
+      "kind": "behaviour",
+      "ref": "trace 73232 expect@40, expect@41; snapshot call@489",
+      "quote": "<OPTION value=\"createdAt,desc\" selected=\"\">Date created (newest to oldest)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-031",
+      "statement": "Choosing 'Date created (oldest to newest)' and pressing 'Update sort' reloads /live-animals?sort=createdAt%2Casc with that option selected.",
+      "kind": "behaviour",
+      "ref": "trace fc4b8 expect@40, expect@41; snapshot call@493",
+      "quote": "<OPTION value=\"createdAt,asc\" selected=\"\">Date created (oldest to newest)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-032",
+      "statement": "No trace checks that the cards are actually reordered by the chosen sort; the sort spec checks only that each option submits and the page reloads.",
+      "kind": "behaviour",
+      "ref": "notification-dashboard-sort.spec.ts line 26 test body",
+      "quote": "// Sort order correctness is covered by lower-level tests; this spec validates sort option submission only.",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p2-033",
+      "statement": "When a search is active the sort form carries the search as a hidden referenceNumber field, and no such field is rendered when there is no search.",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshots call@470 (no hidden field) and call@490 (hidden field)",
+      "quote": "<INPUT type=\"hidden\" name=\"referenceNumber\" value=\"GBN-AG-26-ZZZZZZ\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-034",
+      "statement": "Changing the sort after a search keeps the search: the dashboard reloads at ?referenceNumber=<ref>&sort=createdAt%2Cdesc, the search field still holds the reference and the one match is still shown.",
+      "kind": "behaviour",
+      "ref": "trace c23e0 (sort-after-search) pw:api@77, pw:api@78, expect@79..81; snapshot call@615",
+      "quote": "http://localhost:3000/live-animals?referenceNumber=GBN-AG-26-WRW8HT&sort=createdAt%2Cdesc",
+      "confidence": "verbatim",
+      "note": "Snapshot call@615 still shows 'Showing 1 Result' and the single card GBN-AG-26-WRW8HT."
+    },
+    {
+      "id": "trace-e2e-p2-035",
+      "statement": "Loading the dashboard at /live-animals?referenceNumber=<ref>&page=2 keeps the reference in the URL and pre-fills the search field with it.",
+      "kind": "behaviour",
+      "ref": "trace 4da5f (page-param) pw:api@41 navigate, expect@44, expect@45; snapshot call@501 (second)",
+      "quote": "/live-animals?referenceNumber=GBN-AG-26-ZZZZZZ&page=2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-036",
+      "statement": "With a referenceNumber and page=2 but no sort in the URL, the dashboard falls back to the default sort: the hidden sort field reads arrivalDate,desc and that option is selected.",
+      "kind": "rule",
+      "ref": "trace 4da5f snapshot of /live-animals?referenceNumber=GBN-AG-26-ZZZZZZ&page=2",
+      "quote": "<INPUT type=\"hidden\" name=\"sort\" value=\"arrivalDate,desc\"></INPUT>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-037",
+      "statement": "Neither the search form nor the sort form carries the page number, so a new search or a sort change starts the list again from the first page.",
+      "kind": "behaviour",
+      "ref": "trace 4da5f snapshot of ?referenceNumber=GBN-AG-26-ZZZZZZ&page=2: forms hold only hidden sort / referenceNumber",
+      "quote": "<INPUT type=\"hidden\" name=\"referenceNumber\" value=\"GBN-AG-26-ZZZZZZ\"></INPUT>",
+      "confidence": "inferred",
+      "note": "Inferred from the forms' fields on a page=2 URL; no trace submits either form from page 2."
+    },
+    {
+      "id": "trace-e2e-p2-038",
+      "statement": "Going to / redirects to the set's dashboard but drops the query string on the way, so a search or sort cannot be carried through the root URL.",
+      "kind": "behaviour",
+      "ref": "notification-dashboard-search.spec.ts, test 'preserves referenceNumber in the URL when a page param is present', comment",
+      "quote": "// Straight to the set's dashboard: `/` redirects to it but drops the query\n    // string on the way, which is the very thing this test is asserting survives.",
+      "confidence": "inferred",
+      "note": "Stated by the spec's comment; the trace navigates straight to /live-animals and never exercises the root redirect."
+    },
+    {
+      "id": "trace-e2e-p2-039",
+      "statement": "The pagination 'Next' link carries a non-default sort (/live-animals?page=2&sort=createdAt%2Cdesc) but omits the default sort (/live-animals?page=2), even after the default was chosen explicitly.",
+      "kind": "behaviour",
+      "ref": "trace 73232 snapshot call@489 .govuk-pagination__link; trace 3fd8a snapshot call@525 .govuk-pagination__link",
+      "quote": "href=\"/live-animals?page=2&sort=createdAt%2Cdesc\"",
+      "confidence": "verbatim",
+      "note": "Also /live-animals?page=2&sort=arrivalDate%2Casc (6f16e) and /live-animals?page=2&sort=createdAt%2Casc (fc4b8); after ?sort=arrivalDate%2Cdesc the link is href=\"/live-animals?page=2\"."
+    },
+    {
+      "id": "trace-e2e-p2-040",
+      "statement": "No trace shows a search whose results run to more than one page, so whether the pagination links carry referenceNumber is not shown.",
+      "kind": "behaviour",
+      "ref": "all 13 traces: every search returned 0 or 1 result",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p2-041",
+      "statement": "When a search returns no notifications, no pagination is rendered.",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshot call@490: no nav.govuk-pagination after the toolbar",
+      "quote": "<P class=\"govuk-label govuk-label--s notification-list__results\">No notifications found</P>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the pagination nav in the no-results snapshot."
+    },
+    {
+      "id": "trace-e2e-p2-042",
+      "statement": "There is no way shown to clear a search: no 'Clear' or 'Remove filter' link or button appears in the filter section or the toolbar.",
+      "kind": "behaviour",
+      "ref": "trace b4432 snapshot call@490, aside.notification-list__filters and .notification-list__toolbar",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Search\n</BUTTON>\n        </FORM>\n      </ASIDE>",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered filter section and toolbar holding only the Search and Update sort buttons."
+    },
+    {
+      "id": "trace-e2e-p2-043",
+      "statement": "Search and sort are server-rendered full-page loads: the browser's only data requests were GETs of /live-animals with the query string, each answered 200.",
+      "kind": "integration",
+      "ref": "trace c23e0 browser-context network log (2-trace.network)",
+      "quote": "GET http://localhost:3000/live-animals?referenceNumber=GBN-AG-26-WRW8HT&sort=createdAt%2Cdesc -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p2-044",
+      "statement": "The call the frontend makes to the backend to search and sort notifications is never visible in the traces, so its endpoint, parameters and page size are not shown.",
+      "kind": "integration",
+      "ref": "all 13 traces' network logs (browser side only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p2-045",
+      "statement": "The results label is a paragraph styled with GOV.UK label classes (govuk-label govuk-label--s) plus a custom notification-list__results class, not a GOV.UK component.",
+      "kind": "constraint",
+      "ref": "trace b4432 snapshot call@490, .notification-list__toolbar",
+      "quote": "<P class=\"govuk-label govuk-label--s notification-list__results\">No notifications found</P>",
+      "confidence": "verbatim",
+      "note": "A label class on a non-label element; a govuk-body-s or govuk-heading-s paragraph would be the standard alternative."
+    },
+    {
+      "id": "trace-e2e-p2-046",
+      "statement": "The filter and sort area uses GOV.UK Text input, Select and Button components arranged by custom layout classes (notification-list__layout, __filters, __search-form, __toolbar, __sort-form) that are outside the design system.",
+      "kind": "constraint",
+      "ref": "trace b4432 snapshot call@470, main",
+      "quote": "<DIV class=\"govuk-grid-row notification-list__layout\">",
+      "confidence": "verbatim",
+      "note": "No GOV.UK filter pattern (e.g. MOJ filter) is used; the custom classes only place the forms."
+    },
+    {
+      "id": "trace-e2e-p2-047",
+      "statement": "No error state for the search or sort forms was rendered in any trace, so whether an unknown sort value in the URL is rejected or silently replaced is not shown.",
+      "kind": "rule",
+      "ref": "all 13 traces: no .govuk-error-summary rendered",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

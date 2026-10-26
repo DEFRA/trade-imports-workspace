@@ -1,0 +1,235 @@
+h3. Background
+
+Design Release 2.1 changes how a live animals notification moves through its journey: the order its pages come in, where a page sends the user once it is saved, what happens when someone saves a page without finishing it, and how pages end while a submitted notification is being amended.
+
+This is the foundation the rest of Design Release 2.1 sits on. Nine other themes change pages that follow these rules, so the rules changed first and everything else is built on top of them.
+
+This ticket covers the *live animals journey only*. The same increments changed the high-risk plants journey and the Import notification service front door, each of which has its own ticket under the same epic. *This work is merged to {{main}}.*
+
+h3. What changes for the user
+
+h4. Creating a notification asks its questions in a new order
+
+The main reason for import is now asked before the commodity details. The County Parish Holding number page has left the opening run altogether — it is now opened from its own row on the consignment addresses page. The opening run always ends on "Check your answers", even when the notification is unfinished, and that page names what is still outstanding.
+
+h4. A page opened from Overview goes back to Overview
+
+Before, saving a page opened from a task on Overview carried the user on through the rest of that task's pages. Now it returns them to Overview, so a task opened to change one answer does not reopen the whole section.
+
+h4. A page can be left unfinished
+
+"Save and return to overview" now saves whatever has been entered without insisting on the page's required answers, so someone can come back to it. A badly formatted answer is still refused — a date that names no day, a region code that is too long — because saving it would lose what they typed. Commodity details is the exception: it still checks every answer before saving.
+
+h4. Amending a submitted notification has its own page endings
+
+While amending, pages end with "Save and return", "Save and continue" and "Save and return to overview". A status bar across the journey shows "Amend" and offers "Cancel amend". Opening the review of an incomplete amendment shows no error, but continuing from it keeps the trader there under an error summary naming what is missing. Where the two save buttons sit side by side, the third control sits on its own line below them.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 23 scenarios carry the change's core behaviour. The live animals specification gained *40 scenarios across 7 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+
+h4. The order of the opening run
+
+h5. The main import reason is asked before the commodity details
+
+* *GIVEN* the user is in the opening sequence on what are you importing
+* *WHEN* they save a selection
+* *THEN* main import reason is shown
+* *WHEN* they save the reason
+* *THEN* commodity details is shown
+
+h5. The CPH number page is never a step of the opening sequence
+
+* *GIVEN* the user is in the opening sequence for a consignment that needs a CPH number
+* *WHEN* they save roles and addresses
+* *THEN* contact address for this consignment is shown, not the CPH number page
+
+h5. The opening sequence ends on check your answers even when tasks are outstanding
+
+* *GIVEN* the user is in the opening sequence with tasks outstanding
+* *WHEN* they save the contact address
+* *THEN* check your answers is shown, naming every unfinished card
+
+h5. Roles and addresses goes to Overview when nothing is outstanding
+
+* *GIVEN* the user is in the opening sequence with every task already complete
+* *WHEN* they save roles and addresses
+* *THEN* Overview is shown
+
+h5. Saving the CPH number from its row returns to the consignment addresses page
+
+* *GIVEN* the user opened the CPH number page from its row on the consignment addresses page
+* *WHEN* they save a valid CPH number
+* *THEN* the consignment addresses page is shown
+* *AND* the CPH number row shows the nine digits
+
+h5. Continuing from check your answers is refused while a task row is outstanding
+
+* *GIVEN* a notification with a task row still outstanding
+* *WHEN* the user continues from check your answers
+* *THEN* they stay on check your answers, which names what is outstanding
+* *AND* the declaration is not opened
+
+h4. A page opened from Overview returns to Overview
+
+h5. A page opened from its Overview task returns to Overview rather than running on into the next task
+
+* *GIVEN* the opening sequence has ended and the user opens what are you importing, main import reason, arrival details or transit countries from its task on Overview
+* *WHEN* they save and continue
+* *THEN* Overview is shown, not commodity details, additional details, transit countries or the transporter list
+
+h5. Roles and addresses opened from Overview returns to Overview, even for a consignment that needs a CPH number
+
+* *GIVEN* a consignment that needs a CPH number and roles and addresses opened from its task on Overview
+* *WHEN* the user saves and continues
+* *THEN* Overview is shown, not the CPH number page
+
+h5. Upload documents keeps its add-another round trip before returning to Overview
+
+* *GIVEN* upload documents opened from Overview
+* *WHEN* the user adds a document with "Save and add another"
+* *THEN* they stay on upload documents with the document listed
+* *WHEN* they save and continue
+* *THEN* Overview is shown
+
+h5. Arrival details opened from Overview returns to Overview, not the place of destination
+
+* *GIVEN* the opening sequence has ended and arrival details opened from its task on Overview
+* *WHEN* the user saves it
+* *THEN* Overview is shown
+
+h5. A task saved from Overview reads Complete on return
+
+* *GIVEN* a task opened from Overview and fully answered
+* *WHEN* the user saves and continues
+* *THEN* Overview is shown with that task reading "Complete"
+
+h4. Leaving a page unfinished
+
+h5. Save and return to overview saves a page with a required answer missing
+
+* *GIVEN* the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they return to Overview with no error shown
+* *AND* the Main import reason task does not read "Complete"
+* *AND* re-opening the page shows "Transit" chosen
+
+h5. An answer that breaks its own rule is refused on save and return
+
+* *GIVEN* the Arrival details page with an arrival date that names no day
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows "Enter a real arrival date"
+* *AND* nothing is saved
+
+h5. Commodity details keeps its checks on save and return
+
+* *GIVEN* the Commodity details page with the number of animals left blank
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows "Enter the number of animals"
+* *AND* nothing is saved
+
+The same "save and return to overview" behaviour is specified page by page for the origin of import, commodity selection and import reason pages.
+
+h4. Page endings while amending
+
+h5. A page opened from Overview while amending ends with the three amend controls
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Arrival details from Overview
+* *THEN* it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview"
+* *AND* no "Cancel and return to overview" is offered
+* *AND* its Back link goes to Overview
+
+h5. Save and return from a Change link goes back to the review showing the changed answer
+
+* *GIVEN* the review of a notification being amended
+* *WHEN* the user follows "Change origin of import", changes the internal reference and selects "Save and return"
+* *THEN* the review is shown with the new internal reference
+* *AND* the origin page's Back link went to Overview, not the review
+
+h5. Save and continue while amending goes on, not back to the review
+
+* *GIVEN* the origin page opened from the review's Change link while amending
+* *WHEN* the user selects "Save and continue"
+* *THEN* Overview is shown, not the review
+
+h5. An incomplete amendment's review opens with no error
+
+* *GIVEN* a notification being amended whose arrival date has been cleared and saved
+* *WHEN* the user opens the review
+* *THEN* no error summary and no error message is shown
+
+h5. Continuing from an incomplete amendment stays on the review, naming what is missing
+
+* *GIVEN* a notification being amended whose arrival date has been cleared and saved
+* *WHEN* the user continues
+* *THEN* they stay on the review, under an error summary titled "There is a problem" that names the arrival details and takes focus
+* *AND* the notification is still being amended
+* *AND* the declaration is not opened
+
+h5. Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it
+
+* *GIVEN* a notification being amended whose arrival date at port has been changed to more than 6 months ahead
+* *WHEN* the user continues on the review
+* *THEN* they stay on the review, under an error summary that names the arrival details
+* *AND* the notification is still being amended
+* *AND* the declaration is not opened
+
+h4. Where the buttons sit
+
+h5. Cancel and return to overview sits on its own line below the two buttons
+
+* *GIVEN* a notification that is not being amended
+* *WHEN* the user opens Commodity details from Overview
+* *THEN* "Save and continue" and "Save and return to overview" sit side by side
+* *AND* "Cancel and return to overview" sits on its own line below them
+
+h5. While amending, Save and return to overview sits on its own line below the two save buttons
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Arrival details from Overview
+* *THEN* "Save and return" and "Save and continue" sit side by side
+* *AND* "Save and return to overview" sits on its own line below them
+
+h4. The amend status bar
+
+h5. Cancel amend on a question page opens the confirmation page
+
+* *GIVEN* a notification is being amended and the user is on a question page
+* *WHEN* the user selects "Cancel amend" in the status bar
+* *THEN* the cancel-amendment confirmation page opens
+* *AND* declining returns to the notification, still "Amend"
+
+h5. A draft offers no Cancel amend
+
+* *GIVEN* a draft notification
+* *WHEN* the user views Overview or a question page
+* *THEN* the status bar shows "Draft" and the reference, and no "Cancel amend"
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-001|Opening run follows the Design Release 2.1 step order and ends on the review page|Done|
+|inc-002|A page opened from an overview task returns to the overview when saved|Done|
+|inc-003|"Save and return to overview" saves without the page's required-answer checks|Done|
+|inc-004|During an amendment, pages end with Save and return, Save and continue and Save and return to overview|Done|
+|inc-122|An amendment shows an "Amend" status bar with Cancel amend on every page that amends|Done|
+
+All five are built. A sixth row in this theme changed only the test suite — an end-to-end walk of a horse by sea under temporary admission, proving the new order from creation to submitted — so it changes nothing for a user and is not listed here.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 40 scenarios across these 7 files. Each link opens the file as it stands on {{main}}.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]|23|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-lifecycle/spec.md]|4|
+|[CPH number|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/cph-number/spec.md]|3|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|6|
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|2|
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|1|
+|[Commodity selection|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]|1|
+
+Three further live animals files were reworded without gaining scenarios: addresses, notification dashboard, and notification status and reference.
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

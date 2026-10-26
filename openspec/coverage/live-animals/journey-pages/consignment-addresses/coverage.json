@@ -5,31 +5,45 @@
   "requirements": [
     {
       "id": "REQ-CONSIGN-ADDR-001",
-      "name": "The page lists each party role the notification needs an address for",
+      "name": "The page sets out each party role the notification needs an address for as its own section",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-001-A",
-          "name": "The page lists the party roles with a way to add each",
+          "name": "The page shows a headed section for each party role with a named link to add its address",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "renders all five party rows and feature copy", "strength": "full", "notes": "asserts every PARTIES row with hint, Not added yet, Add link and Continue; picker/search/validation tests in the same file belong under live-animals/addresses and are not linked here" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "renders the intro, the warning and a headed section per party with its hint and named add link", "strength": "full", "notes": "asserts the intro paragraph, the five level-2 headings in order, each section's hint and its single link named exactly as shown, and Continue; picker/search/validation tests in the same file belong under live-animals/addresses and are not linked here" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list the five parties in order, each with its heading, hint and named add link and no chosen address", "strength": "full", "notes": "sections only; the rendered markup is the fit test's" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js", "test": "Should name each party in its add link", "strength": "full", "notes": "the five add-link texts exactly" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js", "test": "Should introduce the page and warn about false addresses without a closing full stop", "strength": "full", "notes": "the intro paragraph exactly" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-001-B",
+          "name": "Following the consignor link opens the consignor picker",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "following the consignor add link opens the picker headed Consignor", "strength": "full", "notes": "asserts the level-1 heading and the browser title" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js", "test": "Should call the consignor Consignor in English and Anfonwr in Welsh", "strength": "full", "notes": "the title the picker heading and browser title read from" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CONSIGN-ADDR-002",
-      "name": "A role's row offers to change an address once one has been chosen",
+      "name": "A role's section shows the chosen address and offers to change it once an address has been chosen",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-002-A",
-          "name": "A row switches from Add to Change once an address is chosen",
+          "name": "A section shows the chosen address with Change and Edit details once an address is chosen",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Consignor or exporter selection saves and persists", "strength": "full", "notes": "representative of the per-party loop; asserts hub row shows the chosen name and a Change link. Same claim for each other party title in sibling tests." },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "after save, consignor row holds the chosen name and Change re-opens the picker; picker search/pagination itself is addresses ownership" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows each chosen party in its section as the bold name, its address lines and the country, with Change and Edit details naming the party", "strength": "full", "notes": "after picking all five from the stub book: bold name in each inset, the consignor's inset text exactly, each section's links exactly Change and Edit details with the role in their accessible names" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Consignor selection saves and persists", "strength": "full", "notes": "representative of the per-party loop; asserts the section holds the chosen name and exactly the Change and Edit details links. Same claim for each other party title in sibling tests." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show a chosen consignor as its name and address lines, ending with the locality, postcode and country, offering Change and Edit details", "strength": "full", "notes": "the name, the street lines, the joined last line with the country, and the Change and Edit details hrefs" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "after save, the consignor section's inset reads exactly the name, street line and 'Carlisle, CA1 1AA, United Kingdom', and Change re-opens the picker headed Consignor; picker search/pagination itself is addresses ownership" }
           ]
         }
       ]
@@ -66,25 +80,27 @@
     },
     {
       "id": "REQ-CONSIGN-ADDR-005",
-      "name": "The page also lists a CPH number row when a commodity on the notification requires one",
+      "name": "The page also sets out a CPH number section when a commodity on the notification requires one",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-005-A",
-          "name": "A CPH-eligible commodity brings the CPH row into the list, empty",
+          "name": "A CPH-eligible commodity brings the CPH section into the page, empty",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of ostriches for a CPH number", "strength": "full", "notes": "ostriches are on no other commodity list, so it rules out an accidental allow-list explanation" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "adds cattle after cats and asserts the row appears, empty state, then fills/changes it" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of ostriches for a CPH number", "strength": "full", "notes": "ostriches are on no other commodity list, so it rules out an accidental allow-list explanation; asserts the section's hint and its single link 'Add a CPH number'" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should end with an empty CPH section offering the add link into cph-number when a CPH-triggering commodity line exists", "strength": "full", "notes": "sections only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "adds cattle after cats and asserts the section appears offering exactly 'Add a CPH number', then fills/changes it" }
           ]
         },
         {
           "id": "SCN-CONSIGN-ADDR-005-B",
-          "name": "No CPH-eligible commodity leaves the row off the list",
+          "name": "No CPH-eligible commodity leaves the section off the page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "commodity code 0101 is one of the two design release 1 lets off" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the CPH row is hidden for a cats-only consignment" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "commodity code 0101 is one of the two design release 1 lets off; asserts the five party headings and no other" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list only the five party sections when no CPH-triggering commodity line exists", "strength": "full", "notes": "sections only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the CPH section is hidden for a cats-only consignment" }
           ]
         }
       ]
@@ -99,7 +115,32 @@
           "name": "The consignment addresses page carries the fraud warning",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "renders all five party rows and feature copy", "strength": "full", "notes": "asserts page.getByText(copy.hub.warning) is visible" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "renders the intro, the warning and a headed section per party with its hint and named add link", "strength": "full", "notes": "asserts the warning's text exactly" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js", "test": "Should introduce the page and warn about false addresses without a closing full stop", "strength": "full", "notes": "the English and Welsh warnings exactly, neither ending in a full stop" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-007",
+      "name": "The page works without JavaScript and has no serious or critical accessibility violations",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-007-A",
+          "name": "The empty page works without JavaScript and has no serious or critical accessibility violations",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "hub page has no serious or critical axe violations empty and complete, at desktop and phone width", "strength": "full", "notes": "the empty stage, at 1280px and 375px" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "renders its sections and opens the consignor picker from the add link", "strength": "full", "notes": "JavaScript off" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-007-B",
+          "name": "The complete page has no serious or critical accessibility violations",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "hub page has no serious or critical axe violations empty and complete, at desktop and phone width", "strength": "full", "notes": "the complete stage after picking all five, at 1280px and 375px" }
           ]
         }
       ]

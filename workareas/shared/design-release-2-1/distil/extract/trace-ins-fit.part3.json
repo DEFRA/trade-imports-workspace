@@ -1,0 +1,578 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "Part 3, address-book edit and delete. Read in full: edit.fit.spec.js (7 tests) and delete.fit.spec.js (4 tests) in trade-imports-ins-frontend, plus axe.js for the axe tags, and all 11 trace zips the part names. The tim trace CLI refused every zip (TraceVersionError: trace created by a newer Playwright than tim's viewer), so each trace was mined from its unzipped raw files in this part's work folder (edit-prefill 759a1, edit-axe dafdd, edit-rejected af334, edit-email e9676, edit-erraxe dd003, edit-save de4e5, edit-cancel 36446, del-confirm 967cd, del-cancel d5c0d, del-yes fe6bc, del-axe 7d4d4): the test.trace step list (every navigate, fill, click and expect with its locator), the 1-trace.network log (method, URL, status, Location, form body) and the rendered HTML resources. Action ids in refs are the test.trace callIds (pw:api@N, expect@N). Pages, in order: (1) Edit address details, /address-book/{id}/edit, always reached by direct navigation after stub sign-in; its validation error state (HTTP 400 re-render, same URL), driven by an empty name and by a malformed email; save (302 to /address-book with a success banner) and Cancel (302 to /address-book, nothing saved). (2) Delete address, /address-book/{id}/delete, a confirmation with a warning button and Cancel; Cancel 302s to the details page /address-book/{id}, confirming 302s to /address-book with a success banner and, for the only address, the empty state. The address book list and details pages appear only as landing pages; part 2 owns them. Every surface is entirely govuk-* inside main. Axe runs on the edit page, its error state and the delete page, each with no violations of any impact. Gaps recorded: other edit validation messages, unknown or foreign ids, downstream failure, the entry controls, editing country and optional fields, and the effect of deleting an address in use.",
+  "claims": [
+    {
+      "id": "trace-ins-fit-p3-001",
+      "statement": "A signed-in user reaches the edit address page at /address-book/{id}/edit for an address in their organisation's address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 action pw:api@30; network GET /address-book/000000000000000000000001/edit 200",
+      "quote": "/address-book/000000000000000000000001/edit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-002",
+      "statement": "The edit page's h1 heading is 'Edit address details'.",
+      "kind": "copy",
+      "ref": "trace edit 759a1 action expect@31; resources/152b104b.html h1",
+      "quote": "Edit address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-003",
+      "statement": "The edit page's browser title is 'Edit address details | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace edit 759a1 resources/152b104b.html title",
+      "quote": "Edit address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-004",
+      "statement": "The edit page has a Back link to the address's details page, /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 action expect@42; resources/152b104b.html govuk-back-link",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-005",
+      "statement": "The edit form shows the same nine fields as the add form, in this order: Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country, Phone number, Email address.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html form; actions expect@32 to expect@40",
+      "quote": "Name or organisation name / Address line 1 / Address line 2 (optional) / Town or city / County (optional) / Postcode or Zip code / Country / Phone number / Email address",
+      "confidence": "verbatim",
+      "note": "That they match the add form rests on the shared fieldLabels helper in address-form.js; the add page itself is another part's."
+    },
+    {
+      "id": "trace-ins-fit-p3-006",
+      "statement": "Every edit field is prefilled from the stored address: name, address line 1, town or city, postcode, country, phone and email carry the stored values, and the optional address line 2 and county are empty when nothing is stored.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 actions expect@32 to expect@40",
+      "quote": "getByLabel('Name or organisation name') expected \"Stub Farm 1\"; getByLabel('Address line 1') expected \"1 Stub Way\"; getByLabel('Town or city') expected \"Stubton\"; getByLabel('Postcode or Zip code') expected \"ST1 1UB\"; getByLabel('Country') expected \"GB\"; getByLabel('Phone number') expected \"01234567890\"; getByLabel('Email address') expected \"stub-farm-1@example.com\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-007",
+      "statement": "Name or organisation name is a text input with id and name 'name', two-thirds width, and no hint.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #name",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"name\" name=\"name\" type=\"text\" value=\"Stub Farm 1\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-008",
+      "statement": "Address line 1 is a text input named 'addressLine1', two-thirds width, with no hint.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #addressLine1",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"addressLine1\" name=\"addressLine1\" type=\"text\" value=\"1 Stub Way\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-009",
+      "statement": "Address line 2 is an optional text input named 'addressLine2', labelled 'Address line 2 (optional)'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-010",
+      "statement": "Town or city is a text input named 'townOrCity', two-thirds width.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #townOrCity",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"townOrCity\" name=\"townOrCity\" type=\"text\" value=\"Stubton\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-011",
+      "statement": "County is an optional text input named 'county', labelled 'County (optional)'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-012",
+      "statement": "Postcode is a text input named 'postcode', labelled 'Postcode or Zip code', at the fixed width of 10 characters.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #postcode",
+      "quote": "<input class=\"govuk-input govuk-input--width-10\" id=\"postcode\" name=\"postcode\" type=\"text\" value=\"ST1 1UB\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-013",
+      "statement": "Country is a select named 'countryCode' with a 'Select a country' placeholder and four countries: United Kingdom (GB), France (FR), Germany (DE) and Ireland (IE); the stored country is preselected.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #countryCode",
+      "quote": "<option value=\"\">Select a country</option> <option value=\"GB\" selected>United Kingdom</option> <option value=\"FR\">France</option> <option value=\"DE\">Germany</option> <option value=\"IE\">Ireland</option>",
+      "confidence": "verbatim",
+      "note": "Four options looks like a short list from stub or fixed data rather than a full country reference list; this trace does not show where the list comes from."
+    },
+    {
+      "id": "trace-ins-fit-p3-014",
+      "statement": "Phone number is a text input named 'phone' with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 action expect@41; resources/152b104b.html #phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-015",
+      "statement": "Email address is a plain text input (type text, not email) named 'email', with autocomplete set to email.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #email",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"email\" name=\"email\" type=\"text\" value=\"stub-farm-1@example.com\" autocomplete=\"email\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-016",
+      "statement": "No edit field carries an autocomplete attribute apart from Email address.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html form",
+      "quote": "autocomplete=\"email\"",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered inputs: only #email has autocomplete; name, address, postcode and phone have none."
+    },
+    {
+      "id": "trace-ins-fit-p3-017",
+      "statement": "The edit form posts back to its own URL, has browser validation turned off (novalidate) and carries a hidden CSRF crumb field.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 resources/152b104b.html form",
+      "quote": "<form method=\"post\" novalidate> <input type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-018",
+      "statement": "The edit page's primary button is 'Save changes'.",
+      "kind": "copy",
+      "ref": "trace edit de4e5 action pw:api@33; resources/152b104b.html govuk-button-group",
+      "quote": "Save changes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-019",
+      "statement": "The edit page's Cancel control is a secondary submit button inside the form (name 'cancel', value 'true'), not a link, so Cancel posts the whole form.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 action pw:api@32; network POST /address-book/000000000000000000000001/edit form fields",
+      "quote": "<button type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-020",
+      "statement": "The edit page uses only GOV.UK Frontend components inside main: Back link, Input (with width-two-thirds and width-10 modifiers), Select, Hint, Button and Button group with a secondary button.",
+      "kind": "constraint",
+      "ref": "trace edit 759a1 resources/152b104b.html main classes",
+      "quote": "govuk-back-link govuk-heading-l govuk-form-group govuk-label govuk-input govuk-!-width-two-thirds govuk-input--width-10 govuk-select govuk-hint govuk-button-group govuk-button govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-021",
+      "statement": "The edit page shows the service navigation with 'Address book' marked as the current item.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 resources/152b104b.html govuk-service-navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-022",
+      "statement": "Saving the edit form with a required field cleared is rejected: the server answers the POST with HTTP 400 and re-renders the edit page at the same /address-book/{id}/edit URL.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@33, expect@34; network POST /address-book/000000000000000000000001/edit 400",
+      "quote": "POST http://localhost:3002/address-book/000000000000000000000001/edit 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-023",
+      "statement": "Clearing Name or organisation name and saving shows the error 'Enter a name'.",
+      "kind": "rule",
+      "ref": "trace edit af334 actions pw:api@32, expect@35; resources/4be36055.html #name-error",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-024",
+      "statement": "A rejected save keeps every value the user typed, not the stored address: the town edited to 'Fort William' stays 'Fort William' and the cleared name stays empty.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@31, expect@38, expect@39; resources/4be36055.html #townOrCity",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"townOrCity\" name=\"townOrCity\" type=\"text\" value=\"Fort William\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-025",
+      "statement": "In the error state the browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace edit af334 resources/4be36055.html title",
+      "quote": "Error: Edit address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-026",
+      "statement": "In the error state an error summary titled 'There is a problem' appears above the h1, inside a role=alert container.",
+      "kind": "copy",
+      "ref": "trace edit af334 action expect@35; resources/4be36055.html govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-027",
+      "statement": "Each error summary entry links to the field in error by its id (#name, #email), and following the link moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@36, expect@37; trace edit e9676 actions pw:api@35, expect@36",
+      "quote": "<a href=\"#name\">Enter a name</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-028",
+      "statement": "The field in error shows its message inline above the input, prefixed by visually hidden 'Error:', with the error modifiers on the form group and input and the input described by the message.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 resources/4be36055.html #name-error",
+      "quote": "<p id=\"name-error\" class=\"govuk-error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Enter a name </p> <input class=\"govuk-input govuk-!-width-two-thirds govuk-input--error\" id=\"name\" name=\"name\" type=\"text\" value=\"\" aria-describedby=\"name-error\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-029",
+      "statement": "Saving the edit form with a malformed email shows 'Enter an email address in the correct format', re-renders the edit page with HTTP 400 and keeps the typed value 'not-an-email'.",
+      "kind": "rule",
+      "ref": "trace edit e9676 actions pw:api@31, pw:api@32, expect@34, expect@37; resources/713f64f6.html #email-error; network POST 400",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-030",
+      "statement": "When only the email is invalid, the error summary lists only that one error and the other fields keep their stored values.",
+      "kind": "behaviour",
+      "ref": "trace edit e9676 resources/713f64f6.html govuk-error-summary__list and form",
+      "quote": "<a href=\"#email\">Enter an email address in the correct format</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-031",
+      "statement": "The edit page's Back link and its Save changes and Cancel buttons are unchanged in the error state.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 resources/4be36055.html back link and govuk-button-group",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-032",
+      "statement": "The edit page's other validation errors were not driven: clearing address line 1, town or city, postcode, country, phone or email, and over-length values, are never submitted on the edit page, so whether edit shows the same messages as add is not shown.",
+      "kind": "rule",
+      "ref": "edit.fit.spec.js; address-form.js requiredValidations and maxLengthValidations",
+      "quote": "",
+      "confidence": "gap",
+      "note": "address-form.js lists the add form's messages (Enter address line 1, Enter a town or city, Enter a postcode, Enter a country, Enter a telephone number, Enter an email address, and the 'must be N characters or fewer' set); only Enter a name and the email format error are exercised against edit."
+    },
+    {
+      "id": "trace-ins-fit-p3-033",
+      "statement": "The edit form submits every field as a URL-encoded form: crumb, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email.",
+      "kind": "data",
+      "ref": "trace edit de4e5 network POST /address-book/000000000000000000000001/edit postData",
+      "quote": "application/x-www-form-urlencoded: name=Glen Tanar Estate, addressLine1=1 Stub Way, addressLine2=, townOrCity=Aboyne, county=, postcode=ST1 1UB, countryCode=GB, phone=01234567890, email=stub-farm-1@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-034",
+      "statement": "Saving valid changes redirects (HTTP 302) to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 actions pw:api@33, expect@34; network POST /address-book/000000000000000000000001/edit 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/edit 302 location: /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-035",
+      "statement": "After saving, the address book shows a success notification banner titled 'Success' with the heading '<name> updated in your address book', using the new name.",
+      "kind": "copy",
+      "ref": "trace edit de4e5 action expect@35; resources/22f20bd3.html #address-book-success-banner",
+      "quote": "Glen Tanar Estate updated in your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-036",
+      "statement": "The success banner is the GOV.UK success notification banner with role=alert and id address-book-success-banner.",
+      "kind": "constraint",
+      "ref": "trace edit de4e5 resources/22f20bd3.html govuk-notification-banner",
+      "quote": "<div class=\"govuk-notification-banner govuk-notification-banner--success\" role=\"alert\" aria-labelledby=\"govuk-notification-banner-title\" data-module=\"govuk-notification-banner\" id=\"address-book-success-banner\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-037",
+      "statement": "After saving, the address book list shows the edited values: the row's name is the new name and its address shows the new town, and no row has the old name.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 actions expect@36, expect@37; resources/22f20bd3.html govuk-table",
+      "quote": "<td class=\"govuk-table__cell\">Glen Tanar Estate</td> <td class=\"govuk-table__cell\">1 Stub Way, Aboyne, ST1 1UB</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-038",
+      "statement": "Saving an edit updates the existing address in place rather than adding a new one: the list still holds one address, with the same id.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 resources/22f20bd3.html results label and View link",
+      "quote": "Showing 1-1 of 1 ... href=\"/address-book/000000000000000000000001\"",
+      "confidence": "inferred",
+      "note": "Inferred from the count staying at 1 and the View link keeping id 000000000000000000000001."
+    },
+    {
+      "id": "trace-ins-fit-p3-039",
+      "statement": "Cancel on the edit page redirects (HTTP 302) to the address book list at /address-book, not to the address details page the Back link points at.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 actions pw:api@32, expect@33; network POST /address-book/000000000000000000000001/edit 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/edit 302 location: /address-book",
+      "confidence": "verbatim",
+      "note": "Back goes to /address-book/{id}; Cancel goes to /address-book. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-ins-fit-p3-040",
+      "statement": "Cancel on the edit page discards the typed changes: the address keeps its stored name and the typed name appears nowhere on the address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 actions pw:api@31, expect@34, expect@35; resources/fa8e5dea.html govuk-table",
+      "quote": "<td class=\"govuk-table__cell\">Stub Farm 1</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-041",
+      "statement": "Cancel on the edit page shows no success banner on the address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 resources/fa8e5dea.html main",
+      "quote": "<h1 class=\"govuk-heading-xl\">Address book</h1>",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered list page having no notification banner; the spec does not assert it."
+    },
+    {
+      "id": "trace-ins-fit-p3-042",
+      "statement": "Edit Cancel skips validation: the cancel POST carries the edited form fields plus cancel=true, and the server redirects without saving them.",
+      "kind": "rule",
+      "ref": "trace edit 36446 network POST /address-book/000000000000000000000001/edit postData",
+      "quote": "name=Should not be saved ... cancel=true",
+      "confidence": "inferred",
+      "note": "Inferred: the cancel button submits the whole form and the server answers 302 rather than validating or saving. Cancel was only driven with valid-looking data, so cancel with invalid data is not shown."
+    },
+    {
+      "id": "trace-ins-fit-p3-043",
+      "statement": "The edit page has no serious or critical axe violations against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace edit dafdd action expect@42; axe.js TAGS",
+      "quote": "Edit address has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-044",
+      "statement": "The edit page's validation error state has no serious or critical axe violations; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace edit dd003 actions expect@33, expect@45",
+      "quote": "Edit address validation error has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-045",
+      "statement": "A signed-in user reaches the delete address confirmation at /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd action pw:api@30; network GET /address-book/000000000000000000000001/delete 200",
+      "quote": "/address-book/000000000000000000000001/delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-046",
+      "statement": "The delete confirmation's h1 heading is 'Delete address'.",
+      "kind": "copy",
+      "ref": "trace delete 967cd action expect@31; resources/aa74722c.html h1",
+      "quote": "Delete address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-047",
+      "statement": "The delete confirmation's browser title is 'Delete address | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace delete 967cd resources/aa74722c.html title",
+      "quote": "Delete address | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-048",
+      "statement": "The delete confirmation asks 'Are you sure you want to delete <name> from your address book?', naming the address in bold.",
+      "kind": "copy",
+      "ref": "trace delete 967cd action expect@32; resources/aa74722c.html govuk-body",
+      "quote": "Are you sure you want to delete <strong>Stub Farm 1</strong> from your address book?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-049",
+      "statement": "The delete confirmation has a Back link to the address's details page, /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd action expect@33; resources/aa74722c.html govuk-back-link",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-050",
+      "statement": "The delete confirmation's primary button is a warning button labelled 'Yes, delete this address'.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action pw:api@31; resources/aa74722c.html govuk-button--warning",
+      "quote": "<button type=\"submit\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\"> Yes, delete this address </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-051",
+      "statement": "The delete confirmation's Cancel is a secondary submit button (name 'cancel', value 'true') in the same POST form as the delete button, which carries a CSRF crumb.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d action pw:api@40; resources/aa74722c.html form; network POST /address-book/000000000000000000000001/delete form fields",
+      "quote": "<button type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Cancel </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-052",
+      "statement": "The delete confirmation uses only GOV.UK Frontend components inside main: Back link, body text, and a Button group with a warning and a secondary button; it has no radios or yes/no question.",
+      "kind": "constraint",
+      "ref": "trace delete 967cd resources/aa74722c.html main classes",
+      "quote": "govuk-back-link govuk-heading-l govuk-body govuk-button-group govuk-button govuk-button--warning govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-053",
+      "statement": "Cancel on the delete confirmation redirects (HTTP 302) to the address's details page, /address-book/{id}, which shows the address's name as its h1.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d actions pw:api@40, expect@41, expect@42; network POST /address-book/000000000000000000000001/delete 302 Location /address-book/000000000000000000000001",
+      "quote": "POST /address-book/000000000000000000000001/delete 302 location: /address-book/000000000000000000000001",
+      "confidence": "verbatim",
+      "note": "Delete Cancel returns to the details page, whereas edit Cancel returns to the list. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-ins-fit-p3-054",
+      "statement": "Cancel on the delete confirmation deletes nothing: the address is still listed on the address book afterwards.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d actions pw:api@43, expect@44",
+      "quote": "getByRole('link', { name: 'View Stub Farm 1' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-055",
+      "statement": "Cancel on the delete confirmation shows no banner on the details page or on the address book.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d resources/e179597b.html and resources/0d00cbd8.html",
+      "quote": "<h1 class=\"govuk-heading-l\">Stub Farm 1</h1>",
+      "confidence": "inferred",
+      "note": "Inferred from neither rendered page carrying a notification banner; the spec does not assert it."
+    },
+    {
+      "id": "trace-ins-fit-p3-056",
+      "statement": "Confirming the delete redirects (HTTP 302) to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace delete fe6bc actions pw:api@31, expect@32; network POST /address-book/000000000000000000000001/delete 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/delete 302 location: /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-057",
+      "statement": "After a delete, the address book shows a success notification banner titled 'Success' with the heading '<name> deleted from your address book'.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action expect@33; resources/41e0792b.html #address-book-success-banner",
+      "quote": "Stub Farm 1 deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-058",
+      "statement": "Confirming the delete removes the address from the address book: it is no longer listed.",
+      "kind": "behaviour",
+      "ref": "trace delete fe6bc action expect@34",
+      "quote": "getByRole('link', { name: 'View Stub Farm 1' }) toHaveCount 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-059",
+      "statement": "Deleting the only address leaves the address book on its empty state, 'You have no addresses yet.', shown under the success banner.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action expect@35; resources/41e0792b.html main",
+      "quote": "You have no addresses yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-060",
+      "statement": "The delete confirmation has no serious or critical axe violations against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace delete 7d4d4 action expect@42; axe.js TAGS",
+      "quote": "Delete address has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-061",
+      "statement": "Edit and delete are scoped to the signed-in user's organisation: each test signs in as its own organisation id through the stub sign-in, and the same address id 000000000000000000000001 resolves in every organisation's own store.",
+      "kind": "rule",
+      "ref": "every part 3 trace action pw:api@29 Navigate /auth/stub-sign-in?organisationId=...; edit.fit.spec.js lines 114-116",
+      "quote": "Saving mutates the stub's per-organisation store, which is shared across parallel workers, so this test needs an organisation of its own.",
+      "confidence": "inferred",
+      "note": "Inferred from the spec comments and per-test organisation ids; the browser never sees the store."
+    },
+    {
+      "id": "trace-ins-fit-p3-062",
+      "statement": "The address-book API calls behind edit and delete (reading the stored address, updating it, deleting it) happen server side and never appear in the browser's network log, so their shape is not shown.",
+      "kind": "integration",
+      "ref": "network logs of traces de4e5 and fe6bc: only frontend routes /address-book/{id}/edit, /address-book/{id}/delete and /address-book",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-063",
+      "statement": "No trace opens edit or delete for an address id that does not exist or belongs to another organisation, so the not-found or forbidden behaviour is not shown.",
+      "kind": "behaviour",
+      "ref": "edit.fit.spec.js, delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-064",
+      "statement": "No trace shows what happens when the save or delete fails downstream (the address-book service erroring or unavailable).",
+      "kind": "behaviour",
+      "ref": "edit.fit.spec.js, delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-065",
+      "statement": "No trace reaches the edit or delete page by its Edit or Delete control on the address details page: every test navigates straight to the URL, so the entry points themselves are not shown in this slice.",
+      "kind": "behaviour",
+      "ref": "every part 3 trace action pw:api@30 Navigate",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Part 2's view traces cover the Edit and Delete controls on the details page."
+    },
+    {
+      "id": "trace-ins-fit-p3-066",
+      "statement": "No trace changes the Country select or the optional address line 2 and county on the edit page, so editing those fields and clearing the country are not shown.",
+      "kind": "data",
+      "ref": "edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-067",
+      "statement": "No trace shows that deleting an address affects any notification that uses it, or any warning about addresses in use.",
+      "kind": "rule",
+      "ref": "delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-068",
+      "statement": "Confirming the delete posts only the CSRF crumb: the delete form carries no other field.",
+      "kind": "data",
+      "ref": "trace delete fe6bc action pw:api@31; network POST /address-book/000000000000000000000001/delete postData params",
+      "quote": "application/x-www-form-urlencoded params: crumb=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-069",
+      "statement": "The delete confirmation shows the service navigation with 'Address book' marked as the current item.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd resources/aa74722c.html govuk-service-navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-070",
+      "statement": "The edit and delete pages use the h1 size govuk-heading-l, inside a two-thirds grid column.",
+      "kind": "constraint",
+      "ref": "trace edit 759a1 resources/152b104b.html main; trace delete 967cd resources/aa74722c.html main",
+      "quote": "<div class=\"govuk-grid-column-two-thirds\"> ... <h1 class=\"govuk-heading-l\">",
+      "confidence": "verbatim"
+    }
+  ]
+}

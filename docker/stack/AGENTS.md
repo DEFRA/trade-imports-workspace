@@ -90,11 +90,32 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `infrastructure.compose.yml` | `mssql`, `servicebus-emulator` (Azure Service Bus emulator the dynamics-gateway talks to), `toxiproxy` (sits in front of servicebus-emulator; lets you sever/restore the gateway's ASB connection for DLQ testing) | `servicebus` |
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend`, `trade-imports-plants-backend` | `backend` |
-| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend` | `frontend` |
+| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend`, `animals-frontend-nginx` | `frontend` |
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `monitoring.compose.yml` | `prometheus` (:9090), `grafana` (:3030) — local view of Micrometer meters | `monitoring` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 | `perf.compose.yml` (--perf only) | sets `STUB_LATENCY_PROFILE=${STUB_PROFILE:-sla}` on `trade-imports-stub` and `trade-imports-defra-id-stub` | — |
+
+## The nginx sidecar in front of the animals frontend
+
+`animals-frontend-nginx` holds host port 3000, so the browser reaches
+`trade-imports-animals-frontend` through it rather than directly. It reproduces
+the CDP `nginx-upstreams` sidecar that every deployed service gets, which is two
+body-size caps:
+
+- **10M on every path except `/upload-and-scan`.** An oversized POST to an
+  ordinary route comes back as a bare nginx 413 before the app sees it, so a
+  local 413 with nothing in the frontend's log is this cap, not hapi's
+  `payload.maxBytes`.
+- **2304M on `/upload-and-scan`**, proxied straight to `cdp-uploader:7337`. That
+  is how the browser's file POST gets past both the 10M cap and the frontend
+  itself.
+
+Config is `config/nginx/animals-frontend.conf`; the full upload sequence is in
+[`workareas/shared/document-upload-flow.md`](../../workareas/shared/document-upload-flow.md).
+
+Excluding the frontend takes the sidecar with it, leaving neither the cap nor
+the bypass — see [`--exclude` (`-e`) labels](#--exclude--e-labels).
 
 ## Choosing between `-d`, `-e`, and `--profile`
 
@@ -118,6 +139,20 @@ Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defr
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
 `host.docker.internal:<port>`.
+
+**Excluding a service also removes its sidecar**, so one label can take two
+services out. `run-stack.sh`'s `sidecars` array holds the pairings and the run
+prints each removal in its startup summary.
+
+| Service label | Sidecar removed with it | What a host-side run loses |
+|---|---|---|
+| `frontend` | `animals-frontend-nginx` | host port 3000 is the natively-run frontend's, and `/upload-and-scan` is no longer proxied to `cdp-uploader` (so neither the 10M cap nor the 2304M bypass applies) |
+
+So `-e frontend` cannot upload a document in real mode: the page hands the
+browser the same-origin path `/upload-and-scan/{uploadId}` and hapi has no
+route for it, so the POST 404s. Run the native frontend with `STUB_MODE=true`,
+which serves `/stub-upload-and-scan/{uploadId}` from the app itself, or leave
+the frontend in the stack whenever the journey under test uploads a document.
 
 Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002,
 plants-frontend 3003, defra-id-stub 3007, backend 8085, reference-data 8086,
@@ -245,7 +280,7 @@ cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:plants      # one domain: animals, animals-admin, ins or plants
 ```
-Which domain(s) a service's own PR runs in GitHub Actions: [`docs/testing/e2e-tests-gh-actions.md`](../../docs/testing/e2e-tests-gh-actions.md).
+To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json). How the suites and tags are applied: [`docs/testing/e2e-tests-gh-actions.md`](../../docs/testing/e2e-tests-gh-actions.md).
 
 ## Lifecycle scripts live in `scripts/stack/`
 
@@ -375,7 +410,7 @@ The two files disagree on purpose.
 
 ## Hostname rules — no `/etc/hosts` edits required
 
-Two hostnames, used for different audiences:
+Three hostnames, used for different audiences:
 
 - **Browser-visible URLs** use `localhost`. Playwright base URLs,
   `DEFRA_ID_REDIRECT_URL`, `DEFRA_ID_SIGN_OUT_REDIRECT_URL`, and the
@@ -384,7 +419,14 @@ Two hostnames, used for different audiences:
 - **Inter-container URLs** use `host.docker.internal` (auto-injected
   inside containers by Docker Desktop). Mongo, redis, floci, the
   cdp-uploader, the frontend's server-side `DEFRA_ID_OIDC_CONFIGURATION_URL`
-  fetch.
+  fetch. This is the default, because it resolves whether the service at the
+  other end runs in docker or natively under `-e`.
+- **Hops that never leave the compose network** use the compose service name:
+  the animals frontend's `CDP_UPLOADER_BASE_URL`, and both upstreams in
+  `config/nginx/animals-frontend.conf`. Reach for this only where neither end
+  can be run on the host — `cdp-uploader` has no `-e` label, and the nginx
+  sidecar is removed when the frontend is excluded. Wherever `-e` could put one
+  end natively, use `host.docker.internal` instead.
 
 The OIDC token endpoint sits across both audiences. The
 `trade-imports-defra-id-stub` handles this itself: when
@@ -408,6 +450,8 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 | defra-id-stub | `WELL_KNOWN_HOST_OVERRIDE` | `http://localhost:3007` (browser endpoints; token endpoint auto-rewrites to h.d.i.) |
 | animals / plants frontend | `TRADE_IMPORTS_INS_FRONTEND_URL` | `http://localhost:3002` (browser follows the Address book link) |
 | ins frontend | `TRADE_IMPORTS_{ANIMALS,PLANTS}_FRONTEND_URL` | `http://localhost:{3000,3003}` (browser follows the dashboard's journey links) |
+| animals frontend | `CDP_UPLOADER_BASE_URL` | `http://cdp-uploader:7337` (compose DNS — the initiate and status calls never leave the network, and cdp-uploader has no `-e` label) |
+| animals frontend | `CDP_UPLOADER_CALLBACK_URL` | `http://host.docker.internal:8085/document-uploads/pending/scan-results` (cdp-uploader resolves it from inside its own container, so it needs the backend's published port) |
 
 ## Files in this folder
 
@@ -417,6 +461,12 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 - `perf.compose.yml` — stub latency overlay for `--perf`.
 - `shared.env` — env vars loaded by multiple services (mongo URIs, AWS test
   creds, floci endpoints, the truststore cert blob).
+- `config/nginx/` — nginx config mounted by the frontend sidecar
+  (`animals-frontend.conf`).
+- `monitoring/` — Prometheus scrape config and the Grafana dashboards and
+  provisioning the `monitoring` profile mounts.
+- `toxiproxy/` — the proxy definition that sits in front of the ASB emulator
+  (`toxiproxy.json`).
 - `scripts/mongodb/` — workspace-owned mongo replica-set init (`10-database-setup.js`).
 - `.staged/` — generated by `scripts/stack/lib/init-scripts.sh` on every
   stack start / mongo bounce; gitignored. Contains staged mongo seed fixtures,

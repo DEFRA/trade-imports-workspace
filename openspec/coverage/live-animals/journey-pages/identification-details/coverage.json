@@ -5,24 +5,44 @@
   "requirements": [
     {
       "id": "REQ-IDENT-001",
-      "name": "The page opens with a summary of every commodity the notification holds, above one card per commodity",
+      "name": "The page opens with a summary of every commodity the notification holds, above one section per commodity",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IDENT-001-A",
-          "name": "The summary lists every commodity with a change link, ahead of the cards",
+          "name": "The summary lists every commodity with its species and a change link, ahead of the sections",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "opens with a summary of what the consignment holds, one line per card", "strength": "full", "notes": "code/common name/count headers and rows; caption precedes identification-card-0" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "heads the summary with the code, species and number of animals", "strength": "partial", "notes": "asserts the five column headings in order; not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "sums two cattle species into one row and gives each species of an 01061900 commodity its own row", "strength": "partial", "notes": "summary precedes the commodity section; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "changes the commodity list from a summary row", "strength": "full", "notes": "Change link opens commodity selection" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should summarise every line with its code, common name and declared count", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should summarise each commodity code with every Latin name and the total declared count", "strength": "full", "notes": "red when the per-commodity total is replaced by one line's count" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-001-B",
+          "name": "Two species of one commodity share a row listing both Latin names and their total",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.test.js", "test": "Should give a commodity one row listing every species under it and the total of their animals", "strength": "full", "notes": "Bos taurus 2 and Bison bison 5 give one Cow row totalling 7" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "sums two cattle species into one row and gives each species of an 01061900 commodity its own row", "strength": "partial", "notes": "Cow row lists both Latin names with 5 animals; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "summarises cattle in one row listing both species with their total, and the cat on its own row", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-001-C",
+          "name": "Each species under commodity code 01061900 has its own row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.test.js", "test": "Should give each species of a commodity on code 01061900 its own row counted on its own", "strength": "full", "notes": "Dog and Cat rows asserted whole (code, name, Latin names, count); red when a row takes the commodity name as its Latin name" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "summarises cattle in one row listing both species with their total, and the cat on its own row", "strength": "partial", "notes": "the cat has its own row with its own count; not probed" }
           ]
         }
       ]
     },
     {
       "id": "REQ-IDENT-002",
-      "name": "The page asks for one animal's identifiers per card, and the card's save button says what is left on the line",
+      "name": "The page asks for one animal's identifiers per species card, and the card's save button says what is left on the line",
       "coverage": "full",
       "scenarios": [
         {
@@ -31,7 +51,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "invites another record while more than one animal is outstanding, then finishes the line on the last", "strength": "full", "notes": "Save and add another on 2 of 2 outstanding, Save and finish on the last, add-another gone" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "full", "notes": "saveAndAddAnother then saveAndFinish on the second record" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "full", "notes": "saveAndAddAnother then saveAndFinish on the second record" }
           ]
         },
         {
@@ -47,7 +67,7 @@
     },
     {
       "id": "REQ-IDENT-003",
-      "name": "Each card offers a way to change that commodity's declared animal count, and a way to add a further commodity",
+      "name": "Each card offers a way to change that species' declared animal count, and a way to add a further commodity",
       "coverage": "full",
       "scenarios": [
         {
@@ -55,7 +75,7 @@
           "name": "Change number of animals opens commodity details on that line",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "offers Change number of animals on every card and lands on the consignment details page", "strength": "full", "notes": "two cards each have the link; first lands with numberOfAnimalsQuantity-0 = 2" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "offers Change number of animals on every card, naming its species, and lands on the consignment details page", "strength": "full", "notes": "each card's link is named for its species; the first lands with numberOfAnimalsQuantity-0 = 2" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should point every card at the consignment-details page to change the animal count", "strength": "full", "notes": "" }
           ]
         },
@@ -122,25 +142,25 @@
           "name": "A commodity with no identifier of its own earns no panel",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no panel, while the lines that have one keep theirs", "strength": "full", "notes": "mixed cattle+ostrich consignment, the ostrich line has no card while the cattle line's still shows" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identification-card-2 (ostrich) has count 0 — no panel at all, not a free-text one" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while the lines that have one keep theirs", "strength": "full", "notes": "mixed cattle+ostrich consignment, the ostrich line has no card while the cattle line's still shows" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identification-card-2 (ostrich) has count 0 — no card at all, not a free-text one" }
           ]
         }
       ]
     },
     {
       "id": "REQ-IDENT-007",
-      "name": "Identifier records for a commodity line are capped at its declared animal count",
+      "name": "Identifier records for a species are capped at its declared animal count",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IDENT-007-A",
-          "name": "Reaching the declared count replaces the entry form with a completion message",
+          "name": "Reaching the declared count leaves only the saved-animals table",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "full", "notes": "allEntered message, form/save-and-add-another gone, remove reopens entry" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "blocks a count drop below saved records and reopens after removal", "strength": "partial", "notes": "asserts allEntered and form gone at N=M; remove half of the count-drop walk" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should replace the entry form with the maximum-reached state at N = M, keeping the rows removable", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "full", "notes": "card holds two rows, only Remove buttons and no text box; remove reopens entry" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "blocks a count drop below saved records and reopens after removal", "strength": "partial", "notes": "asserts the card holds its heading and Remove buttons only at N=M; remove half of the count-drop walk" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should leave only the saved animals on a card once every animal is entered", "strength": "full", "notes": "red when the counter is shown at the count" }
           ]
         },
         {
@@ -148,8 +168,8 @@
           "name": "Lowering the declared count below the number of identifier records is blocked",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "full", "notes": "error names Bos taurus, link opens identifiers, remove then count 1 saves" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "blocks a count drop below saved records and reopens after removal", "strength": "partial", "notes": "blocks and follows error, remove reopens — does not re-save the lower count" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "full", "notes": "error names Bos taurus, link opens that species' card in the Cow section, remove then count 1 saves" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "blocks a count drop below saved records and reopens after removal", "strength": "partial", "notes": "blocks and follows error to the species card, remove reopens — does not re-save the lower count" }
           ]
         }
       ]
@@ -172,7 +192,7 @@
     },
     {
       "id": "REQ-IDENT-009",
-      "name": "Saving a record with no identifier given at all is refused, focusing the commodity's first identifier field",
+      "name": "Saving a record with no identifier given at all is refused, focusing the species' first identifier field",
       "coverage": "full",
       "scenarios": [
         {
@@ -196,7 +216,17 @@
           "name": "An over-length identifier value blocks the save with the value preserved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Microchip over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "same pattern for Passport, Tattoo, Ear tag, Horse name, Identification details, Description" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Microchip over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "same pattern for Passport, Tattoo, Ear tag, Horse name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the length error text for an over-long microchip", "strength": "full", "notes": "message read through the copy object; red when the microchip field takes the Ear tag message, restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should refuse a 59-character identifier with the field-named message", "strength": "partial", "notes": "exact Ear tag message on the field; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-010-B",
+          "name": "A 58-character value typed with surrounding spaces saves without them",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save a 58-character identifier typed with spaces around it without them", "strength": "full", "notes": "red when the trim is removed" }
           ]
         }
       ]
@@ -212,7 +242,7 @@
           "coverage": "partial",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address asks for eight fields and never for a country", "strength": "partial", "notes": "all eight #field-0 visible, no country — does not assert Address line 2 / County labelled optional" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address names the postcode and phone fields as Design release 1 does", "strength": "partial", "notes": "phone accessible description includes country-code hint — optional marking still unasserted" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address labels the postcode and phone fields and hints the country code", "strength": "partial", "notes": "phone accessible description includes country-code hint — optional marking still unasserted" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "partial", "notes": "no Country; fills mandatory address fields — does not assert optional labels" }
           ]
         }
@@ -268,8 +298,16 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "heads the table with every identifier the commodity declares, not only the ones filled in", "strength": "full", "notes": "cattle ear-tag-only row still heads Passport and Ear tag" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "partial", "notes": "asserts Animal / Ear tag / Passport columns after one ear-tag save" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "partial", "notes": "asserts Animal / Ear tag / Passport columns after one ear-tag save" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should head the table with every identifier the commodity declares, not only the ones filled in", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-014-B",
+          "name": "The saved-animals table sits below the entry form and the card button",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "puts the entry form and its button above the saved animals while animals remain", "strength": "full", "notes": "red when the table is moved above the form" }
           ]
         }
       ]
@@ -301,14 +339,14 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "rejects a stale add action after the animal-count cap is reached", "strength": "full", "notes": "error names declared count; following it lands on #identification-card-0" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should surface the engine cap rejection as a card-level error when a stale form posts at N = M", "strength": "full", "notes": "href #identification-card-0" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should surface the engine cap rejection as a card-level error when a stale form posts once every animal is entered", "strength": "full", "notes": "href #identification-card-0" }
           ]
         }
       ]
     },
     {
       "id": "REQ-IDENT-017",
-      "name": "A heading reports progress toward the declared count for a commodity still being entered",
+      "name": "A heading reports progress toward the declared count for a species still being entered",
       "coverage": "full",
       "scenarios": [
         {
@@ -316,7 +354,7 @@
           "name": "The heading reports progress and updates as records are added or removed",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "full", "notes": "1 of 2 → 2 of 2 → remove reopens 2 of 2" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "full", "notes": "1 of 2 → 2 of 2 → remove reopens 2 of 2" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "blocks a count drop below saved records and reopens after removal", "strength": "full", "notes": "counter 1 of 2 then after remove 2 of 2" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render one card per species line with the N-of-M counter driven by the declared count", "strength": "partial", "notes": "counter shape only — not add/remove updates" }
           ]
@@ -350,6 +388,73 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "carries a consignment with nothing to identify past the page", "strength": "full", "notes": "direct request returns Overview, identification heading absent" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a consignment where no commodity has an identifier type never reaches the identification page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IDENT-020",
+      "name": "Identification is shown as one section per commodity holding one card per species",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IDENT-020-A",
+          "name": "A commodity with two species shows one section holding two cards",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should group the cards into one section per commodity code, headed by the code", "strength": "full", "notes": "red when the heading text changes" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "groups a commodity code into a section headed by the code holding one card per species in the order the species are listed for selection", "strength": "partial", "notes": "heading outline H1, commodity, species, counter; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "holds the cattle species cards under the 0102 section", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-020-B",
+          "name": "A species with no number of animals has no card",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should give a line with identifier fields and no number of animals no card while the summary still lists it", "strength": "full", "notes": "red when a line without a count is given a card" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IDENT-021",
+      "name": "A card's button saves only its own species, and the page's save buttons save only species of one animal",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IDENT-021-A",
+          "name": "A card button saves only its own species and shows no error for another",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save only the pressed card's animal and show no error for another species' over-long value", "strength": "full", "notes": "red when a card button submits every card's form" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves only the pressed card's species and reloads with its form empty", "strength": "partial", "notes": "without JavaScript; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "saves only the pressed card, shows no error for another species, and leaves that species empty", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-021-B",
+          "name": "Save and continue saves a species of one animal and not a species of several",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save the one-animal line and leave a multi-animal line unsaved when both hold typed values", "strength": "full", "notes": "red when the one-animal test accepts larger counts" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "leaves a species of more than one animal unsaved when Save and continue is pressed", "strength": "partial", "notes": "reopened card asks for its first animal with an empty field; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IDENT-022",
+      "name": "The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag and Horse name, with no hint text",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IDENT-022-A",
+          "name": "The identifier fields carry their names and no hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the identifier fields in regular weight with no hint", "strength": "full", "notes": "red when a hint is added to the fields" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the passport and ear tag fields on a cattle line with the words the saved-animals table heads them with", "strength": "partial", "notes": "labels read through the copy object; not probed" }
           ]
         }
       ]

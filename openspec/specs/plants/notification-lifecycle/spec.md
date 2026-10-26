@@ -88,7 +88,7 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-PLANTS-LIFECYCLE-007
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself.
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself and on the declaration page, which shows no status bar at all.
 
 #### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-PLANTS-LIFECYCLE-007-A
@@ -137,7 +137,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 
 ### Requirement: A draft or submitted notification can be deleted after confirmation
 **ID**: REQ-PLANTS-LIFECYCLE-008
-The system MUST let the user delete a draft from the dashboard, and a submitted notification from check-your-answers, each after confirming, removing it from the dashboard listing.
+The system MUST let the user delete a draft from the dashboard, and a submitted notification from its read-only view, each after confirming, removing it from the dashboard listing. While an amendment is in progress, check-your-answers MUST NOT offer delete.
 
 #### Scenario: Deleting a draft removes it from the dashboard
 **ID**: SCN-PLANTS-LIFECYCLE-008-A
@@ -152,3 +152,9 @@ The system MUST let the user delete a draft from the dashboard, and a submitted 
 - **WHEN** the user confirms its deletion
 - **THEN** they return to the dashboard with a deletion confirmation
 - **AND** searching for its reference number shows no card
+
+#### Scenario: An amendment's check answers offers no delete
+**ID**: SCN-PLANTS-LIFECYCLE-008-D
+- **GIVEN** a notification is being amended
+- **WHEN** the user views it on check-your-answers
+- **THEN** no "Delete notification" is offered

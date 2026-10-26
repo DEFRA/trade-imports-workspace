@@ -23,15 +23,15 @@
     {
       "id": "REQ-IMPORT-REASON-002",
       "name": "A chosen reason that asks nothing further is accepted",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-002-A",
-          "name": "Choosing a reason that opens no follow-up saves without error",
-          "coverage": "full",
+          "name": "Choosing a reason that asks nothing more saves without error",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason", "strength": "full", "notes": "Re-entry opens no reveal, so nothing else is owed" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "partial", "notes": "saves Internal market with a purpose and asserts persistence — proves the save/persist, not the no-follow-up reason the scenario names" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason and returns to the overview", "strength": "partial", "notes": "Re-entry, which opens no reveal; asserts the save lands on Overview but not that the answer is saved" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "partial", "notes": "saves and persists Internal market with a purpose, not a reason that asks nothing more" }
           ]
         }
       ]
@@ -53,11 +53,11 @@
         },
         {
           "id": "SCN-IMPORT-REASON-003-B",
-          "name": "Internal market without a purpose is rejected, keeping the reveal open",
+          "name": "Internal market without a purpose is refused on save and continue",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "refuses an unanswered internal-market purpose, links to the first radio and keeps the reveal open", "strength": "full", "notes": "asserts the error link, the error inside the open reveal, focus on the first purpose radio and Internal market still checked" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "refuses an unanswered purpose under the internal market reason", "strength": "partial", "notes": "asserts the error summary, the purpose link and that the page stays — not focus or the open reveal" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "refuses an unanswered internal-market purpose, links to the first radio and keeps the reveal open", "strength": "full", "notes": "asserts the error link, the reveal open with the error, focus on the first purpose radio and Internal market still checked" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "refuses an unanswered purpose under the internal market reason", "strength": "partial", "notes": "asserts the error summary and its link only, not the open reveal or the focus" }
           ]
         }
       ]
@@ -72,8 +72,8 @@
           "name": "The port of exit offers the port of entry's list",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list labelled as the ports service labels it and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should start each list with an empty Select one option followed directly by the served places or ports", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
           ]
         },
         {
@@ -81,8 +81,8 @@
           "name": "Each port of exit reads its name, a dash and its code, in the port of entry's order",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer each served port as '<name> - <code>' valued by its code, in the order reference data serves them, matching its label", "strength": "partial", "notes": "label and served order, real mode" },
             { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java", "test": "getPortsOfEntry_returnsAirportsThenSeaportsThenRailThenUnknown_eachAToZIgnoringCaseAndSpacing", "strength": "full", "notes": "reference-data integration test (recorded as unit, the nearest type): the airports, seaports, rail order the port of exit keeps" }
@@ -150,7 +150,7 @@
           "name": "Save and return to overview saves a partly answered reveal and returns to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import: when a required answer is missing, saves, leaves the task not complete and keeps the answers", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main import reason: when a required answer is missing, saves, leaves the task not complete and keeps the answers", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should save a transit reason with its port and country left blank and go to the overview", "strength": "full", "notes": "" }
           ]
         }
@@ -173,15 +173,28 @@
     },
     {
       "id": "REQ-IMPORT-REASON-008",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-008-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "this requirement was absent from the spec until this pass" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "back link returns to the overview when the page is opened from the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-008-B",
+          "name": "In the opening sequence, the back link opens what are you importing",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "follows Back from the main import reason and finds the species still chosen" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "following Back from the main import reason and choosing Save and continue carries the run on to the main import reason, not the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to What are you importing? while the opening run is on", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should keep Back on What are you importing? when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the import reason page back to the commodities page", "strength": "partial", "notes": "the run policy's answer only" }
           ]
         }
       ]
@@ -196,7 +209,7 @@
           "name": "The transhipment destination country offers the origin countries and their territories",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "compose stack only; compares with the stub's MDM fixture" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list opens on Select one, then offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "compose stack only; compares with the stub's MDM fixture" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "partial", "notes": "stub mode, captured fixture" }
           ]
         },
@@ -205,7 +218,7 @@
           "name": "The transit destination country offers the same places",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "compose stack only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list opens on Select one, then offers the same places as the transhipment one", "strength": "full", "notes": "compose stack only" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" }
           ]
         },
@@ -214,9 +227,9 @@
           "name": "Each territory is named with its country",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer destination options as whatever reference data serves, each subdivision named with its parent, in one alphabetical list", "strength": "full", "notes": "real mode, labels and order" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list opens on Select one, then offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list opens on Select one, then offers the same places as the transhipment one", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer countries and subdivisions as whatever reference data serves, each subdivision named with its country, in one list sorted by label", "strength": "full", "notes": "real mode, labels and order" }
           ]
         }
       ]
@@ -243,6 +256,96 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "a destination country from the country list is still shown selected when the page is reopened", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer a stored destination country to both reveals that ask for it", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-011",
+      "name": "The page is headed and titled Main import reason",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-011-A",
+          "name": "The page reads Main import reason in its heading and browser title",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "heads the page and titles the browser tab Main import reason", "strength": "full", "notes": "asserts the heading and the exact browser title" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "titles the browser tab and heads the page with its name alone, keeping the question as a legend only a screen reader meets", "strength": "partial", "notes": "reads the wording from the copy module, so the copy unit test pins the words; asserts the page title is built from it and that the only heading is the page name" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should title the page in English and Welsh", "strength": "partial", "notes": "copy only, English and Welsh" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-012",
+      "name": "Each destination country and port of exit select and search box opens on Select one, with no divider",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-012-A",
+          "name": "A destination country select opens on Select one",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list opens on Select one, then offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list opens on Select one, then offers the same places as the transhipment one", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "partial", "notes": "stub mode, captured fixture; reads every option from the copy placeholder and that it is selected; the copy unit test pins the words Select one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture; reads every option of the destination country from the copy placeholder and that it is selected; the copy unit test pins the words Select one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js", "test": "is a native select named by its small label and described only by its hint, whose first option is the page select text and is selected, with no button", "strength": "partial", "notes": "without JavaScript; the first option's text, value and selection, not the whole list" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "opens every destination country and port of exit select on Select one", "strength": "partial", "notes": "without JavaScript; the first option's text only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should start each list with an empty Select one option followed directly by the served places or ports", "strength": "partial", "notes": "view model only" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-012-B",
+          "name": "A port of exit select opens on Select one",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture; reads every option of the port of exit from the copy placeholder and that it is selected; the copy unit test pins the words Select one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "partial", "notes": "stub mode, captured fixture; reads every option of the port of exit from the copy placeholder and that it is selected; the copy unit test pins the words Select one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js", "test": "is a native select named by its small label and described only by its hint, whose first option is the page select text and is selected, with no button", "strength": "partial", "notes": "without JavaScript; the first option's text, value and selection, not the whole list" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "opens every destination country and port of exit select on Select one", "strength": "partial", "notes": "without JavaScript; the first option's text only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should start each list with an empty Select one option followed directly by the served places or ports", "strength": "partial", "notes": "view model only" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-012-C",
+          "name": "Each destination country and port of exit search box reads Select one while empty",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "shows Select one in the empty search box of every destination country and port of exit", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js", "test": "shows the search placeholder and no value", "strength": "partial", "notes": "runs once for each of the four reason-page search boxes; reads the text from the copy module, so it proves the box is wired to it and the copy unit test pins the words" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-013",
+      "name": "Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-013-A",
+          "name": "Transit without a port of exit saves and keeps the country",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-B",
+          "name": "Changing the reason clears the saved purpose",
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-D",
+          "name": "An exit date that is not a real date is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a date that names no day and save nothing", "strength": "full", "notes": "" }
           ]
         }
       ]

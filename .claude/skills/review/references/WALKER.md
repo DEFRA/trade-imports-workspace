@@ -27,6 +27,11 @@ verifier and judge apply the same defaults.
   never justify Won't Fix: taste, "pre-existing", "out of scope", "a
   nearby file does it", "feature folders are independent", the plan,
   or an earlier decision.
+- **Design** (`design`): never fixed in code. Mark it Discuss with the
+  note `For the designer: <the question and its options>`, carrying
+  the item's evidence (the design source and the code at file:line,
+  and the guide rule's link), and list it under "For the designer" in
+  the batch summary.
 
 ---
 

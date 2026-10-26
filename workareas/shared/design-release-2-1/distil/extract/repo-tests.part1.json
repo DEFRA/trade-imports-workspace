@@ -1,0 +1,1492 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 1, Animals journey pages. Read in full: tests/animals/e2e/pages/README.md and the 14 one-page specs for the live-animals journey (origin 7 tests, commodities 7, animal-identification 3, consignment-details 3, import-reason 5, additional-details 3, cph-number 4, arrival-details 7, transited-countries 5, transporter 4, transporter-selection 3, transporter-add 3, contact-address 7, declaration 2: 63 tests in all, every one tagged @integration and @duplicated-in-frontend); the page objects they drive (page-objects/index.ts, shared/base-page.ts, shared/sets.ts, shared/index.ts, animals/index.ts and the 17 animals page objects from origin-of-import to declaration, including commercial- and private-transporter); the UI journey helper flows/animals/journey.ts and flows/shared/journey-context.ts; fixtures/ui.ts and fixtures/index.ts; every file in domain/animals/constants (journey-options, import-reasons, country-codes, point-of-entries, certification-purposes, document-types, commodity-types, means-of-transport, commodity-codes, sort-by-values, animals-dynamics-statuses, commodity-species); domain/shared/constants/yes-no-values.ts; domain/shared/types/date-time-input.ts; utils/date-utils.ts. Claims run page by page in journey order: for each page its route (the page object's slug under /live-animals/notifications/{id}/), heading, fields, options and error strings the page object locates, then one claim per test saying what it proves. After the pages come the journey order and default answers flows/animals/journey.ts walks, the shared chrome base-page.ts locates, the option values in the constants, and the date rules date-utils.ts gives the arrival-details tests. Gaps record validation messages or empty submits the specs leave unasserted.",
+  "claims": [
+    {
+      "id": "repo-tests-p1-001",
+      "statement": "A page test in the animals suite checks one page's rendering, interaction and validation and stays within that page.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/pages/README.md:7",
+      "quote": "A page test focuses on validating a single page’s behaviour (rendering, interaction, and validation) and stays within that page’s scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-002",
+      "statement": "Every one of the 14 live-animals page specs is tagged as an integration test and as duplicated in the frontend's own tests.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/pages/*.spec.ts test.describe tags",
+      "quote": "{ tag: ['@integration', '@duplicated-in-frontend'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-003",
+      "statement": "Live-animals notification pages live under /live-animals/notifications/{journeyId}/{page slug}; high-risk plants pages use the /high-risk-plants prefix instead.",
+      "kind": "data",
+      "ref": "page-objects/shared/sets.ts:1-4; page-objects/shared/base-page.ts:176-179",
+      "quote": "liveAnimals: '/live-animals',\n  highRiskPlants: '/high-risk-plants',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-004",
+      "statement": "A new notification is created from the dashboard's create-new-notification button, which lands the user on the Origin of the import page, and the journey id in the URL is used as the notification's reference.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:41-49 createNotificationAtOrigin",
+      "quote": "await this.animalsPages.dashboard.btnCreateNewNotification.click();\n    await this.animalsPages.originOfImport.heading.waitFor(pageLoadWait);\n    const journeyId = this.animalsPages.originOfImport.journeyIdFromUrl();\n    this.context.journeyId = journeyId;\n    this.context.referenceNumber = journeyId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-005",
+      "statement": "Most tasks on the notification overview are gated behind the origin answer; a brand-new notification's overview entry guard is satisfied by an opening-run marker set at creation rather than by answering origin.",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:51-73 startNotification / startNotificationAtOrigin",
+      "quote": "// Origin answered — most other tasks are gated behind it ... // Origin unanswered — the entry guard is satisfied by the opening-run\n  // marker set at creation, not by answering origin itself.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-006",
+      "statement": "The commodity section and everything downstream of it is gated behind origin, so a test reaching any page past origin answers origin and the commodity first.",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:226-228; unlockSections at 135-137",
+      "quote": "// The commodity section (and everything downstream) is gated behind origin,\n  // so any reach past origin runs unlockSections first.",
+      "confidence": "verbatim",
+      "note": "unlockSections() answers the commodity task (answerCommodity), so the helpers also treat the commodity answer as unlocking the later tasks."
+    },
+    {
+      "id": "repo-tests-p1-007",
+      "statement": "An overview task that has not been started shows the status \"Not yet started\".",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:57-59",
+      "quote": "the run then dies several steps later on\n    // a task stuck at \"Not yet started\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-008",
+      "statement": "The overview offers a task link \"Where is this consignment coming from?\" that opens the origin page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:97 answerOrigin",
+      "quote": "await this.animalsPages.overview.task('Where is this consignment coming from?').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-009",
+      "statement": "The overview offers a task link \"What are you importing?\" that opens the commodity selection page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:104 answerCommodity",
+      "quote": "await this.animalsPages.overview.task('What are you importing?').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-010",
+      "statement": "The overview offers a task link \"Identification details\" that opens the animal identification page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:115 answerAnimalIdentification",
+      "quote": "await this.animalsPages.overview.task('Identification details').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-011",
+      "statement": "The overview offers a task link \"Main reason for import\" that opens the import reason page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:122 answerReasonAndAdditionalDetails",
+      "quote": "await this.animalsPages.overview.task('Main reason for import').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-012",
+      "statement": "The overview offers a task link \"Upload documents\" that opens the accompanying documents page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:142 toAccompanyingDocuments",
+      "quote": "await this.animalsPages.overview.task('Upload documents').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-013",
+      "statement": "The overview offers a task link \"Roles and addresses\" that opens the addresses page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:147 fillAddressesToCph",
+      "quote": "await this.animalsPages.overview.task('Roles and addresses').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-014",
+      "statement": "The overview offers a task link \"Arrival details\" that opens the arrival details page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:185,196,273",
+      "quote": "await this.animalsPages.overview.task('Arrival details').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-015",
+      "statement": "The overview offers a task link \"Contact address for this consignment\" that opens the contact address page.",
+      "kind": "copy",
+      "ref": "flows/animals/journey.ts:210 answerContact",
+      "quote": "await this.animalsPages.overview.task('Contact address for this consignment').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-016",
+      "statement": "The Origin of the import page is at /live-animals/notifications/{id}/origin and is headed (h1) \"Origin of the import\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/origin-of-import-page.ts:7,11",
+      "quote": "super(page, 'origin');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Origin of the import' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-017",
+      "statement": "The origin page shows a status strip carrying the Draft tag and the notification reference, which is minted per notification.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/origin-of-import-page.ts:14-19 journeyStrip",
+      "quote": "// The status strip carries the Draft tag and the notification reference, both\n  // drawn from the first request. The reference is minted per notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-018",
+      "statement": "Country of origin is an accessible-autocomplete type-ahead enhancing a native select; without JavaScript the native select is the control, and either way the select named countryOfOrigin submits the country code.",
+      "kind": "non-functional",
+      "ref": "page-objects/animals/origin-of-import-page.ts:21-34",
+      "quote": "// Country of origin is an accessible-autocomplete type-ahead enhancing a\n  // native <select>. ... without\n  // JavaScript the select keeps the id and is the control.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-019",
+      "statement": "The origin page asks with Yes and No radios whether a region of origin code is required.",
+      "kind": "data",
+      "ref": "page-objects/animals/origin-of-import-page.ts:55-57 radioRequiresOriginCode",
+      "quote": "radioRequiresOriginCode(value: YesNoValue): Locator {\n    return this.page.getByRole('radio', { name: value, exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-020",
+      "statement": "The region of origin code is a text field labelled \"Enter the region of origin code\", shown when the user answers Yes.",
+      "kind": "copy",
+      "ref": "page-objects/animals/origin-of-import-page.ts:59-61; flows/animals/journey.ts:84-86",
+      "quote": "return this.page.getByLabel('Enter the region of origin code', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-021",
+      "statement": "The origin page has an optional field labelled \"Your internal reference for this consignment (optional)\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/origin-of-import-page.ts:63-65",
+      "quote": "return this.page.getByLabel('Your internal reference for this consignment (optional)');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-022",
+      "statement": "Every journey page in this part submits with a \"Save and continue\" button, except the declaration page, whose button is \"Continue\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/*-page.ts saveAndContinue; declaration-page.ts:17-19",
+      "quote": "return this.page.getByRole('button', { name: 'Save and continue' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-023",
+      "statement": "A page that refuses a submit shows an error summary headed (h2) \"There is a problem\", with each error as a link.",
+      "kind": "copy",
+      "ref": "page-objects/animals/origin-of-import-page.ts:71-73; specs assert getByRole('link', { name: <message> })",
+      "quote": "return this.page.getByRole('heading', { level: 2, name: 'There is a problem' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-024",
+      "statement": "Test 'renders the page controls' proves a brand-new notification's origin page shows its heading, the country of origin control, the region-code \"No\" radio and the Save and continue button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:10 'renders the page controls'",
+      "quote": "await expect(animalsPages.originOfImport.heading).toBeVisible();\n    await expect(animalsPages.originOfImport.countryOfOrigin).toBeVisible();\n    await expect(animalsPages.originOfImport.radioRequiresOriginCode('No')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-025",
+      "statement": "Test 'shows the country selector on load' proves the country of origin selector is visible when the origin page opens.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:17 'shows the country selector on load'",
+      "quote": "await expect(animalsPages.originOfImport.countryOfOrigin).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-026",
+      "statement": "Test 'accepts valid origin details' proves choosing France and answering No to the region code saves without an error summary.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:21 'accepts valid origin details'",
+      "quote": "await animalsPages.originOfImport.selectCountry('France');\n    await animalsPages.originOfImport.radioRequiresOriginCode('No').check();\n    await animalsPages.originOfImport.saveAndContinue.click();\n\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-027",
+      "statement": "Test 'saves what the user has when submitted without a country' proves origin saves with no country chosen, raises no error, sends the user to the overview, and on return keeps the country empty, the No answer and the internal reference.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:37 'saves what the user has when submitted without a country'",
+      "quote": "await expect(animalsPages.originOfImport.errorSummary).toHaveCount(0);\n    await expect(animalsPages.overview.heading).toBeVisible();\n\n    await animalsPages.originOfImport.open(journeyId);\n    await expect(animalsPages.originOfImport.countrySelect).toHaveValue('');\n    await expect(animalsPages.originOfImport.radioRequiresOriginCode('No')).toBeChecked();\n    await expect(animalsPages.originOfImport.internalReference).toHaveValue(INTERNAL_REFERENCE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-028",
+      "statement": "The country of origin does not block saving: the commodity search depends on the country, so with no country there is no next page and the user is set down on the overview.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:29-36 doc comment",
+      "quote": "The country does not block the save: a user who has the internal reference\n   * but is still waiting on the health certificate to confirm where the animal\n   * comes from records what they know and comes back to it. The commodity\n   * search is asked for by country of origin, so with the country unanswered\n   * there is no next page to offer and the user is set down on the overview.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-029",
+      "statement": "A missing country of origin is still shown as outstanding on the overview task row and again on the check page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:35-36 doc comment",
+      "quote": "The gap is held at the overview task row and again at the check page.",
+      "confidence": "verbatim",
+      "note": "Stated in the comment; this spec does not itself assert the overview row or check page."
+    },
+    {
+      "id": "repo-tests-p1-030",
+      "statement": "Test 'shows an error summary when a region of origin code is claimed but not given' proves answering Yes to the region code with no code entered is refused with an error summary.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:53 'shows an error summary when a region of origin code is claimed but not given'",
+      "quote": "await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();\n    await animalsPages.originOfImport.saveAndContinue.click();\n\n    await expect(animalsPages.originOfImport.errorSummary).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-031",
+      "statement": "The tests do not assert the error message shown when a region of origin code is claimed but not given; only the error summary's presence is proven.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:53-59; page-objects/animals/origin-of-import-page.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-032",
+      "statement": "Test 'persists a region of origin code selection' proves a Yes answer with region code 75 is saved and shown again when the origin page is reopened.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:61 'persists a region of origin code selection'",
+      "quote": "await expect(animalsPages.originOfImport.radioRequiresOriginCode('Yes')).toBeChecked();\n    await expect(animalsPages.originOfImport.regionCode).toHaveValue('75');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-033",
+      "statement": "With a country chosen, saving origin in the opening run carries the user on to the commodity page rather than the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:69",
+      "quote": "// With a country chosen the opening run carries on to commodities, not the overview.",
+      "confidence": "verbatim",
+      "note": "A comment; the test reopens origin by URL and does not assert the commodities page."
+    },
+    {
+      "id": "repo-tests-p1-034",
+      "statement": "Test 'persists a country subdivision selection' proves a country subdivision can be chosen as the country of origin: Canary Islands is saved with code ES-CN and shown again by name on return.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/origin.spec.ts:75 'persists a country subdivision selection'",
+      "quote": "await animalsPages.originOfImport.selectCountry('Canary Islands');\n...\n    await expect(animalsPages.originOfImport.countrySelect).toHaveValue('ES-CN');\n    await expect(animalsPages.originOfImport.countryOfOrigin).toHaveValue('Canary Islands');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-035",
+      "statement": "The commodity selection page is at /live-animals/notifications/{id}/commodities and is headed (h1) \"What are you importing?\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/commodity-selection-page.ts:6,10",
+      "quote": "super(page, 'commodities');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'What are you importing?' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-036",
+      "statement": "The commodity page has a search box labelled \"Search for a commodity\" and a \"Search\" button that submits the query.",
+      "kind": "copy",
+      "ref": "page-objects/animals/commodity-selection-page.ts:13-19,32-35",
+      "quote": "return this.page.getByLabel('Search for a commodity');\n...\nreturn this.page.getByRole('button', { name: 'Search', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-037",
+      "statement": "The commodity page lists nothing of its own accord; results appear only once a query of at least three characters is submitted, as species tick boxes.",
+      "kind": "rule",
+      "ref": "page-objects/animals/commodity-selection-page.ts:30-31,37-39",
+      "quote": "/** The page lists nothing of its own accord — results only appear once a\n   * query of at least three characters has been submitted. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-038",
+      "statement": "A panel lists the commodity-species pairs already on the notification, headed with a running count (\"N selected\"), with a \"Clear all\" button.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/commodity-selection-page.ts:21-28",
+      "quote": "/** The panel listing what is already on the notification, headed with its count. */\n  get selectionPanel(): Locator {\n    return this.page.locator('#commodity-selection');\n  }\n\n  get clearAll(): Locator {\n    return this.page.getByRole('button', { name: 'Clear all' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-039",
+      "statement": "Ticks made under an earlier commodity query are carried with the form, so they survive the next search.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/commodity-selection-page.ts:41-43",
+      "quote": "Ticks made under an earlier\n   * query ride back with the form, so they survive the next search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-040",
+      "statement": "Test 'offers a search box and lists nothing until it is used' proves the commodity page opens with its heading, search box and Save and continue button, no tick boxes and no selection panel.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:18 'offers a search box and lists nothing until it is used'",
+      "quote": "await expect(pages.page.getByRole('checkbox')).toHaveCount(0);\n    await expect(animalsPages.commoditySelection.selectionPanel).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-041",
+      "statement": "Test 'lists nothing for a query shorter than three characters' proves a two-character query (\"Bo\") returns no tick boxes.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:26 'lists nothing for a query shorter than three characters'",
+      "quote": "await animalsPages.commoditySelection.search('Bo');\n    await expect(pages.page.getByRole('checkbox')).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-042",
+      "statement": "Test 'groups the matching species under their commodity heading' proves search results are grouped as fieldsets whose legend is the commodity name and code, with one tick box per species, for each of five commodities searched by code.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:31 'groups the matching species under their commodity heading'",
+      "quote": "const group = pages.page.getByRole('group', { name: legend });\n      await expect(group).toBeVisible();\n      for (const name of species) {\n        await expect(group.getByRole('checkbox', { name })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-043",
+      "statement": "Searching 0102 lists the group \"Cow (0102)\" with species Bison bison, Bos spp., Bos taurus and Bubalus bubalis.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:6",
+      "quote": "['Cow (0102)', '0102', ['Bison bison', 'Bos spp.', 'Bos taurus', 'Bubalus bubalis']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-044",
+      "statement": "Searching 0101 lists the group \"Horse (0101)\" with species Equus caballus.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:7",
+      "quote": "['Horse (0101)', '0101', ['Equus caballus']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-045",
+      "statement": "Cat and Dog share commodity code 01061900, so searching it lists both groups: \"Cat (01061900)\" with Felis catus and \"Dog (01061900)\" with Canis lupus familiaris.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:3-4,8-9",
+      "quote": "// by its own code. Cat and Dog share 01061900, so that query returns both.\n...\n  ['Cat (01061900)', '01061900', ['Felis catus']],\n  ['Dog (01061900)', '01061900', ['Canis lupus familiaris']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-046",
+      "statement": "Searching 0301 lists the group \"Fish (0301)\" with species Salmo salar.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:10",
+      "quote": "['Fish (0301)', '0301', ['Salmo salar']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-047",
+      "statement": "Test 'says so when nothing matches' proves a query with no matches shows \"No results found\" and no tick boxes.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:42 'says so when nothing matches'",
+      "quote": "await animalsPages.commoditySelection.search('zzz');\n    await expect(pages.page.getByText('No results found')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-048",
+      "statement": "Test 'accepts and persists multiple commodity-species pairs found under different queries' proves Bos taurus and Felis catus, ticked under separate searches, save together, show in the panel as \"2 selected\" on return without a query, and are ticked again when their own query brings them back.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:48 'accepts and persists multiple commodity-species pairs found under different queries'",
+      "quote": "// Back on the page, both pairs are listed under the running count without\n    // any query — a choice made under an earlier query is never lost.\n    await expect(animalsPages.commoditySelection.selectionPanel).toContainText('2 selected');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-049",
+      "statement": "Saving the commodity selection leads to the Commodity details page; Commodity details is a hub task of its own, so its Back link returns to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:55-58",
+      "quote": "// Commodity details is a hub task of its own, so its back link returns to\n    // the overview. Reopen the selection from the row that owns it.\n    await animalsPages.consignmentDetails.linkBack.click();\n    await expect(animalsPages.overview.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-050",
+      "statement": "Test 'counts what has been chosen and clears it on request' proves one ticked species shows as \"1 selected\" in the panel on the next render, and \"Clear all\" removes the panel.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:74 'counts what has been chosen and clears it on request'",
+      "quote": "// The panel is written on the server, so it appears on the next render.\n...\n    await expect(animalsPages.commoditySelection.selectionPanel).toContainText('1 selected');\n...\n    await animalsPages.commoditySelection.clearAll.click();\n    await expect(animalsPages.commoditySelection.selectionPanel).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-051",
+      "statement": "Test 'shows an error summary when submitted empty' proves saving the commodity page with nothing chosen is refused with the error \"Select a commodity\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/commodities.spec.ts:85 'shows an error summary when submitted empty'",
+      "quote": "await expect(pages.page.getByRole('link', { name: 'Select a commodity' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-052",
+      "statement": "The Commodity details page is at /live-animals/notifications/{id}/consignment-details and is headed (h1) \"Commodity details\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/consignment-details-page.ts:6,10",
+      "quote": "super(page, 'consignment-details');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Commodity details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-053",
+      "statement": "The Commodity details page asks, per commodity line, for \"Number of animals\" and \"Number of packages (when required)\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/consignment-details-page.ts:13-19",
+      "quote": "return this.page.getByLabel('Number of animals');\n...\nreturn this.page.getByLabel('Number of packages (when required)');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-054",
+      "statement": "The number of animals blocks saving on every commodity line: a page with more than one line will not save until each line's count holds a number.",
+      "kind": "rule",
+      "ref": "page-objects/animals/consignment-details-page.ts:25-30 fillEveryAnimalCount",
+      "quote": "The\n   * count is save-blocking per line, so a page carrying more than one line\n   * will not save until each box holds a number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-055",
+      "statement": "Test 'renders the page controls' proves the Commodity details page shows its heading, the number of animals and number of packages fields and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/consignment-details.spec.ts:8 'renders the page controls'",
+      "quote": "await expect(animalsPages.consignmentDetails.numberOfAnimals).toBeVisible();\n    await expect(animalsPages.consignmentDetails.numberOfPackages).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-056",
+      "statement": "Test 'leaves the number of animals empty on load' proves the number of animals starts blank.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/consignment-details.spec.ts:15 'leaves the number of animals empty on load'",
+      "quote": "await expect(animalsPages.consignmentDetails.numberOfAnimals).toHaveValue('');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-057",
+      "statement": "Test 'accepts valid consignment details' proves 1 animal and 5 packages save without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/consignment-details.spec.ts:19 'accepts valid consignment details'",
+      "quote": "await animalsPages.consignmentDetails.numberOfAnimals.fill('1');\n    await animalsPages.consignmentDetails.numberOfPackages.fill('5');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-058",
+      "statement": "No page test proves the Commodity details validation: the error for a missing or non-numeric number of animals is not asserted anywhere in this part.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/consignment-details.spec.ts (3 tests, none submits invalid data)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-059",
+      "statement": "After the Commodity details page is saved, the user returns to the overview.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:103-112 answerCommodity",
+      "quote": "await this.animalsPages.consignmentDetails.saveAndContinue.click();\n    await this.animalsPages.overview.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-060",
+      "statement": "The animal identification page is at /live-animals/notifications/{id}/commodities/identification and is headed (h1) \"Identification details\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/animal-identification-page.ts:6,10",
+      "quote": "super(page, 'commodities/identification');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Identification details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-061",
+      "statement": "The identification page asks for an animal's \"Ear tag\" and \"Passport\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/animal-identification-page.ts:13-19",
+      "quote": "return this.page.getByLabel('Ear tag', { exact: true });\n...\nreturn this.page.getByLabel('Passport', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-062",
+      "statement": "Each saved animal is a row of the card's table, keyed by species and number (such as \"Bos taurus 1\"), under identifier column headers.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/animal-identification-page.ts:21-29",
+      "quote": "// A saved animal is one row of the card's table, keyed by its species and\n  // number — \"Bos taurus 1\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-063",
+      "statement": "The identification card's own button reads \"Save and add another\" while animals remain on the line, and \"Save and finish\" on the last outstanding animal.",
+      "kind": "copy",
+      "ref": "page-objects/animals/animal-identification-page.ts:31-39",
+      "quote": "// The in-card button names what is left on the line: it finishes the line on\n  // the last outstanding animal rather than inviting another.\n  get saveAndFinish(): Locator {\n    return this.page.getByRole('button', { name: 'Save and finish' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-064",
+      "statement": "Test 'renders the page controls' proves the identification page shows its heading, Ear tag, Passport and Save and continue, and that a line of one animal shows no \"Save and add another\" button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/animal-identification.spec.ts:8 'renders the page controls'",
+      "quote": "// A line of one animal has nothing to add after this record, so the card\n    // offers no button of its own — the page's Save and continue captures it.\n    await expect(animalsPages.animalIdentification.saveAndAddAnother).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-065",
+      "statement": "Test 'leaves the ear tag empty on load' proves the Ear tag field starts blank.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/animal-identification.spec.ts:18 'leaves the ear tag empty on load'",
+      "quote": "await expect(animalsPages.animalIdentification.earTag).toHaveValue('');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-066",
+      "statement": "Test 'accepts a valid ear tag' proves ear tag UK123456789012 saves without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/animal-identification.spec.ts:22 'accepts a valid ear tag'",
+      "quote": "await animalsPages.animalIdentification.earTag.fill('UK123456789012');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-067",
+      "statement": "The import reason page is at /live-animals/notifications/{id}/import-reason and is headed (h1) \"Main reason for import\"; the question \"What is the main reason for importing the animals?\" is the radio group's visually hidden legend, not a heading.",
+      "kind": "copy",
+      "ref": "page-objects/animals/import-reason-page.ts:6,9-17",
+      "quote": "// The page is headed with its name; the question it asks stays as the radio\n  // group's visually hidden legend, so it is a group name, not a heading.\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Main reason for import', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-068",
+      "statement": "The import reason page reveals follow-up fields by reason: a transit port of exit and destination country, a transhipment destination country, and a temporary admission port of exit and exit date; two reasons ask the destination country and two ask the port of exit.",
+      "kind": "data",
+      "ref": "page-objects/animals/import-reason-page.ts:27-48",
+      "quote": "// The reveals are addressed by id, not by label: two reasons ask the\n  // destination country and two ask the port of exit, so each label is on the\n  // page twice and only the id tells the branches apart.",
+      "confidence": "verbatim",
+      "note": "Field ids: transitPortOfExit, transitDestinationCountry, transhipmentDestinationCountry, temporaryAdmissionPortOfExit, temporaryAdmissionExitDate. The reason labels for transit, transhipment and temporary admission are not named in this part."
+    },
+    {
+      "id": "repo-tests-p1-069",
+      "statement": "Test 'renders the page controls' proves the import reason page shows its heading, the reason question as a group, an \"Internal market\" radio and Save and continue, and that the question is not rendered as a heading.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:8 'renders the page controls'",
+      "quote": "// The question is the radio group's legend, not the page heading — if it is\n    // ever promoted back to an h1 this fails, mirroring the frontend fit spec.\n    await expect(pages.page.getByRole('heading', { name: 'What is the main reason for importing the animals?' })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-070",
+      "statement": "Test 'leaves the import reason unchecked on load' proves no reason is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:18 'leaves the import reason unchecked on load'",
+      "quote": "await expect(animalsPages.importReason.reason('Internal market')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-071",
+      "statement": "Test 'accepts a valid import reason' proves the \"Re-entry\" reason, which opens no reveal, saves on its own without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:22-29 'accepts a valid import reason'",
+      "quote": "// Re-entry opens no reveal, so it is the reason that submits with nothing\n  // else owed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-072",
+      "statement": "Test 'reveals the import purpose under the internal market reason and accepts it' proves choosing \"Internal market\" reveals an unticked purpose choice including \"Breeding\", and Internal market with Breeding saves without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:31 'reveals the import purpose under the internal market reason and accepts it'",
+      "quote": "await animalsPages.importReason.reason('Internal market').check();\n\n    await expect(animalsPages.importReason.purpose('Breeding')).toBeVisible();\n    await expect(animalsPages.importReason.purpose('Breeding')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-073",
+      "statement": "Test 'refuses an unanswered purpose under the internal market reason' proves Internal market with no purpose is refused with the error \"Select a purpose in the internal market\" and the user stays on the page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts:43 'refuses an unanswered purpose under the internal market reason'",
+      "quote": "await expect(pages.page.getByRole('link', { name: 'Select a purpose in the internal market' })).toBeVisible();\n    await expect(animalsPages.importReason.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-074",
+      "statement": "No page test submits the import reason page with no reason chosen, so whether a reason is required, and its error message, is not proven.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/import-reason.spec.ts (5 tests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-075",
+      "statement": "Saving the import reason page leads to the Additional details page, and saving that returns to the overview.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:121-133 answerReasonAndAdditionalDetails",
+      "quote": "await this.animalsPages.importReason.saveAndContinue.click();\n    await this.animalsPages.additionalDetails.heading.waitFor(pageLoadWait);\n...\n    await this.animalsPages.additionalDetails.saveAndContinue.click();\n    await this.animalsPages.overview.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-076",
+      "statement": "The test data's import reason values are internalMarket and reEntry.",
+      "kind": "data",
+      "ref": "domain/animals/constants/import-reasons.ts:1-4",
+      "quote": "internalMarket: 'internalMarket',\n  reEntry: 'reEntry',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-077",
+      "statement": "The Additional details page is at /live-animals/notifications/{id}/additional-details and is headed (h1) \"Additional details\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/additional-details-page.ts:7,11",
+      "quote": "super(page, 'additional-details');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Additional details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-078",
+      "statement": "The Additional details page asks what the animals are certified for, as radios (including \"Slaughter\"), and \"Does the consignment contain any unweaned animals?\" with Yes and No.",
+      "kind": "copy",
+      "ref": "page-objects/animals/additional-details-page.ts:14-22",
+      "quote": ".getByRole('group', { name: 'Does the consignment contain any unweaned animals?' })\n      .getByRole('radio', { name: value, exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-079",
+      "statement": "The test data's certification purpose values are approvedBodies, breedingAndOrProduction and slaughter.",
+      "kind": "data",
+      "ref": "domain/animals/constants/certification-purposes.ts:1-5",
+      "quote": "approvedBodies: 'approvedBodies',\n  breedingAndOrProduction: 'breedingAndOrProduction',\n  slaughter: 'slaughter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-080",
+      "statement": "Test 'renders the page controls' proves the Additional details page shows its heading, a \"Slaughter\" option, an unweaned \"No\" option and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/additional-details.spec.ts:8 'renders the page controls'",
+      "quote": "await expect(animalsPages.additionalDetails.certifiedFor('Slaughter')).toBeVisible();\n    await expect(animalsPages.additionalDetails.containsUnweanedAnimals('No')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-081",
+      "statement": "Test 'leaves the additional details unchecked on load' proves neither the certified-for nor the unweaned answer is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/additional-details.spec.ts:15 'leaves the additional details unchecked on load'",
+      "quote": "await expect(animalsPages.additionalDetails.certifiedFor('Slaughter')).not.toBeChecked();\n    await expect(animalsPages.additionalDetails.containsUnweanedAnimals('No')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-082",
+      "statement": "Test 'accepts valid additional details' proves Slaughter with unweaned No saves without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/additional-details.spec.ts:20 'accepts valid additional details'",
+      "quote": "await animalsPages.additionalDetails.certifiedFor('Slaughter').check();\n    await animalsPages.additionalDetails.containsUnweanedAnimals('No').check();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-083",
+      "statement": "No page test submits Additional details empty, so whether its answers are required, and their error messages, is not proven.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/additional-details.spec.ts (3 tests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-084",
+      "statement": "Roles and addresses opens an addresses page listing five parties, each added by picking a saved address: Consignor or exporter, Place of destination, Place of origin, Consignee and Importer; each pick returns to the addresses page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:146-160 fillAddressesToCph",
+      "quote": "['Consignor or exporter', 'Astra Rosales', 'consignorSelection'],\n      ['Place of destination', 'Tech Imports Ltd', 'destinationSelection'],\n      ['Place of origin', 'Origin Farm', 'placeOfOriginSelection'],\n      ['Consignee', 'British Livestock Ltd', 'consigneeSelection'],\n      ['Importer', 'Import Co UK', 'importerSelection'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-085",
+      "statement": "Party pickers sit at consignors/select, destinations/select, place-of-origin/select, consignees/select and importers/select, with matching /edit pages for each party, and the contact address has its own edit page at consignment/contact/edit.",
+      "kind": "data",
+      "ref": "page-objects/animals/index.ts:39-48,58",
+      "quote": "consignorSelection: new AnimalsPartyPickerPage(page, 'consignors/select', 'Consignor or exporter'),\n...\n    contactAddressEdit: new AnimalsPartyEditPage(page, 'consignment/contact/edit', 'Contact address for consignment'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-086",
+      "statement": "The addresses page's Continue button leads to the CPH number page, and saving the CPH number returns to the overview.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:161-170",
+      "quote": "await this.animalsPages.addresses.continueButton.click();\n    await this.animalsPages.cphNumber.heading.waitFor(pageLoadWait);\n...\n    await this.animalsPages.cphNumber.saveAndContinue.click();\n    await this.animalsPages.overview.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-087",
+      "statement": "The CPH number page is at /live-animals/notifications/{id}/cph-number and is headed (h1) \"Add the county parish holding number (CPH)\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/cph-number-page.ts:6,10",
+      "quote": "super(page, 'cph-number');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Add the county parish holding number (CPH)' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-088",
+      "statement": "The CPH number is entered as three fields: \"County\", \"Parish\" and \"Holding number\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/cph-number-page.ts:13-23",
+      "quote": "return this.page.getByLabel('County', { exact: true });\n...\nreturn this.page.getByLabel('Parish', { exact: true });\n...\nreturn this.page.getByLabel('Holding number', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-089",
+      "statement": "Test 'renders the page controls' proves the CPH page shows its heading, the County, Parish and Holding number fields and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:8 'renders the page controls'",
+      "quote": "await expect(animalsPages.cphNumber.county).toBeVisible();\n    await expect(animalsPages.cphNumber.parish).toBeVisible();\n    await expect(animalsPages.cphNumber.holding).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-090",
+      "statement": "Test 'leaves the CPH number empty on load' proves all three CPH fields start blank.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:16 'leaves the CPH number empty on load'",
+      "quote": "await expect(animalsPages.cphNumber.county).toHaveValue('');\n    await expect(animalsPages.cphNumber.parish).toHaveValue('');\n    await expect(animalsPages.cphNumber.holding).toHaveValue('');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-091",
+      "statement": "Test 'accepts a valid CPH number' proves county 12, parish 345 and holding 6789 save without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:22 'accepts a valid CPH number'; page-objects/animals/cph-number-page.ts:25",
+      "quote": "async fillCphNumber(county = '12', parish = '345', holding = '6789'): Promise<void> {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-092",
+      "statement": "Test 'shows an error summary when submitted empty' proves the CPH page refuses an empty submit with an error summary.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:29 'shows an error summary when submitted empty'",
+      "quote": "await animalsPages.cphNumber.saveAndContinue.click();\n\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-093",
+      "statement": "The CPH page's empty-submit error message, and any format rule for the three CPH parts, is not asserted.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/cph-number.spec.ts:29-35",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-094",
+      "statement": "The arrival details page is at /live-animals/notifications/{id}/port-of-entry and is headed (h1) \"Arrival details\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/arrival-details-page.ts:6,10",
+      "quote": "super(page, 'port-of-entry');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'Arrival details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-095",
+      "statement": "\"Port of entry\" is an accessible-autocomplete type-ahead over a native select; its options read \"{name} ({code})\" and the hidden select submits the port code.",
+      "kind": "non-functional",
+      "ref": "page-objects/animals/arrival-details-page.ts:13-31",
+      "quote": "// Drive the type-ahead the way a user does: type to filter, then pick the\n  // matching option by its \"{name} ({code})\" label.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-096",
+      "statement": "Arrival details asks \"Means of transport to the port of entry\" as a select, plus \"Transport identification\" and \"Transport document reference\" text fields.",
+      "kind": "copy",
+      "ref": "page-objects/animals/arrival-details-page.ts:33-44",
+      "quote": "return this.page.getByLabel('Means of transport to the port of entry', { exact: true });\n...\nreturn this.page.getByLabel('Transport identification');\n...\nreturn this.page.getByLabel('Transport document reference');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-097",
+      "statement": "The arrival date is a date-picker field (MOJ date picker, input arrivalDateAtPort) typed as dd/mm/yyyy, with its own inline error under the field.",
+      "kind": "data",
+      "ref": "page-objects/animals/arrival-details-page.ts:46-56; utils/date-utils.ts:96-103",
+      "quote": "return this.page.locator('input[name=\"arrivalDateAtPort\"]');\n...\nreturn this.page.locator('#arrivalDateAtPort-error');\n...\nreturn this.page.locator('[data-module=\"moj-date-picker\"]');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-098",
+      "statement": "Test 'renders the page controls' proves the arrival details page shows its heading, Port of entry, Means of transport, Transport identification, Transport document reference and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:13 'renders the page controls'",
+      "quote": "await expect(animalsPages.arrivalDetails.portOfEntry).toBeVisible();\n    await expect(animalsPages.arrivalDetails.meansOfTransport).toBeVisible();\n    await expect(animalsPages.arrivalDetails.transportIdentification).toBeVisible();\n    await expect(animalsPages.arrivalDetails.transportDocumentReference).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-099",
+      "statement": "Test 'leaves the arrival details unanswered on load' proves the means of transport starts with no value.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:22 'leaves the arrival details unanswered on load'",
+      "quote": "await expect(animalsPages.arrivalDetails.meansOfTransport).toHaveValue('');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-100",
+      "statement": "Test 'accepts valid arrival details' proves a date one month ahead, port Aberdeen Harbour (GB ABD), Road Vehicle, identification FR-892-LK and document reference CMR-2026-884721 save without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:28 'accepts valid arrival details'; flows/animals/journey.ts:172-178",
+      "quote": "await this.animalsPages.arrivalDetails.fillArrivalDate(ARRIVAL_DATE);\n    await this.animalsPages.arrivalDetails.selectPort(PORT);\n    await this.animalsPages.arrivalDetails.meansOfTransport.selectOption({ label: means });\n    await this.animalsPages.arrivalDetails.transportIdentification.fill('FR-892-LK');\n    await this.animalsPages.arrivalDetails.transportDocumentReference.fill('CMR-2026-884721');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-101",
+      "statement": "Test 'saves a draft and moves on when submitted empty' proves an empty arrival details submit raises no error and moves on to the transporter page: arrival fields are checked for shape, not presence.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:35-49 'saves a draft and moves on when submitted empty'",
+      "quote": "// A draft may be saved with a blank arrival date, so the page itself raises nothing on an empty\n  // submit — the arrival fields are validated for shape, not for presence.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-102",
+      "statement": "Presence of the arrival details is a completeness rule enforced when the trader continues the notification, where the error summary shows \"Complete arrival details\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:36-39",
+      "quote": "Presence is a\n  // completeness rule, enforced when the trader continues the notification: see\n  // notification-view-states.spec.ts, which asserts the 'Complete arrival details' link in the\n  // error summary there.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-103",
+      "statement": "The frontend leaves a blank arrival date out of its save request rather than sending a malformed value the API would reject.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:41-43",
+      "quote": "It passed only because the frontend sent a\n  // malformed value for a blank date, which the API rejected — the summary was a 400, not page\n  // validation. The frontend now leaves a blank date out of the request.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-104",
+      "statement": "With no means of transport answered, saving arrival details skips the transited countries page and goes straight to the transporter page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:44-49; domain/animals/constants/means-of-transport.ts:10-12",
+      "quote": "await animalsPages.arrivalDetails.saveAndContinue.click();\n\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);\n    await expect(animalsPages.transporter.heading).toBeVisible();",
+      "confidence": "inferred",
+      "note": "Inferred: the empty submit lands on the transporter page, while a road vehicle answer leads to transited countries (journey.ts toTransitedCountries), so transited countries is in scope only for some means of transport."
+    },
+    {
+      "id": "repo-tests-p1-105",
+      "statement": "Test 'restricts the date picker to one week back and six months ahead' proves the date picker's minimum is today minus 7 days and its maximum today plus 6 months, in the app's d/m/yyyy form.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:51 'restricts the date picker to one week back and six months ahead'",
+      "quote": "await expect(animalsPages.arrivalDetails.datePicker).toHaveAttribute('data-min-date', EARLIEST_ALLOWED);\n    await expect(animalsPages.arrivalDetails.datePicker).toHaveAttribute('data-max-date', LATEST_ALLOWED);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-106",
+      "statement": "Test 'rejects a typed arrival date outside the allowed window' proves a date a year ago is refused with \"Arrival date at port of entry must be between {earliest} and {latest}\" in the summary and under the field, and the user stays on the page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:6,56 'rejects a typed arrival date outside the allowed window'",
+      "quote": "const OUT_OF_RANGE_MESSAGE = `Arrival date at port of entry must be between ${EARLIEST_ALLOWED} and ${LATEST_ALLOWED}`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-107",
+      "statement": "Test 'does not save an arrival date outside the allowed window' proves a refused out-of-window date is not saved: back to the overview and into the same notification's Arrival details task, the field does not hold it.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:67 'does not save an arrival date outside the allowed window'",
+      "quote": "// Same notification, or the empty field below proves nothing.\n    expect(pages.page.url()).toBe(notificationUrl);\n    await expect(animalsPages.arrivalDetails.arrivalDate).not.toHaveValue(rejected);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-108",
+      "statement": "The Back link on the arrival details page returns to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/arrival-details.spec.ts:75-78",
+      "quote": "// Back to the overview and in again\n...\n    await pages.page.locator('.govuk-back-link').click();\n    await animalsPages.overview.task('Arrival details').click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-109",
+      "statement": "The arrival-date window is anchored on today's civil date in Europe/London, and the app writes dates as d/m/yyyy with no leading zeros.",
+      "kind": "rule",
+      "ref": "utils/date-utils.ts:105,118-137 getRelativeAppDateText",
+      "quote": "Gets a date relative to today in the `d/m/yyyy` shape the app itself renders —\n * no leading zeros, and month arithmetic clamped to the last day of the target\n * month. Anchored on the Europe/London civil day, matching the frontend's\n * `arrivalWindow`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-110",
+      "statement": "Adding months to reach the window's limit clamps to the last day of the target month (for example 31 August plus 6 months is 28 or 29 February), before any day offset is applied.",
+      "kind": "rule",
+      "ref": "utils/date-utils.ts:129-134",
+      "quote": "// Day 0 of the following month is the last day of the target month.\n  const lastDayOfTargetMonth = new Date(Date.UTC(year, targetMonth + 1, 0)).getUTCDate();\n  const clamped = new Date(Date.UTC(year, targetMonth, Math.min(day, lastDayOfTargetMonth)));\n  clamped.setUTCDate(clamped.getUTCDate() + dayOffset);",
+      "confidence": "verbatim",
+      "note": "The example dates are the extractor's illustration of the code, not quoted."
+    },
+    {
+      "id": "repo-tests-p1-111",
+      "statement": "The app shows long dates in the form \"10 September 2026\" (en-GB, day numeric, month long, Europe/London).",
+      "kind": "copy",
+      "ref": "utils/date-utils.ts:153-164 getRelativeServiceDisplayDate",
+      "quote": "formatted the\n * way the app renders long dates (`10 September 2026`). The frontend builds\n * this with `toLocaleDateString('en-GB', { day: 'numeric', month: 'long',\n * year: 'numeric', timeZone: 'Europe/London' })`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-112",
+      "statement": "The animals backend stores a date-only field as YYYY-MM-DD.",
+      "kind": "integration",
+      "ref": "utils/date-utils.ts:166-177 toIsoDate",
+      "quote": "Converts a DateInput into the `YYYY-MM-DD` string the animals backend stores\n * for a date-only field.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-113",
+      "statement": "The default test arrival date is one month ahead, which sits inside the one-week-back to six-months-ahead window whatever the date.",
+      "kind": "data",
+      "ref": "flows/animals/journey.ts:19-23",
+      "quote": "// Inside the arrival-date window (1 week back to 6 months ahead) wherever the\n// wall clock happens to be ...\nexport const ARRIVAL_DATE = getRelativeAppDateText({ monthOffset: 1 });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-114",
+      "statement": "Means of transport values are Airplane (AIRPLANE), Railway (RAILWAY), Road vehicle (ROAD_VEHICLE) and Vessel (VESSEL).",
+      "kind": "data",
+      "ref": "domain/animals/constants/means-of-transport.ts:1-6",
+      "quote": "airplane: { value: 'AIRPLANE', display: 'Airplane' },\n  railway: { value: 'RAILWAY', display: 'Railway' },\n  roadVehicle: { value: 'ROAD_VEHICLE', display: 'Road vehicle' },\n  vessel: { value: 'VESSEL', display: 'Vessel' },",
+      "confidence": "verbatim",
+      "note": "The UI journey selects the option by the label 'Road Vehicle' (capital V) while this constant displays 'Road vehicle'; the two disagree on the label's case."
+    },
+    {
+      "id": "repo-tests-p1-115",
+      "statement": "Transited countries are needed only when the means of transport is railway or road vehicle.",
+      "kind": "rule",
+      "ref": "domain/animals/constants/means-of-transport.ts:10-12 requiresTransitedCountries",
+      "quote": "return meansOfTransport.value === 'RAILWAY' || meansOfTransport.value === 'ROAD_VEHICLE';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-116",
+      "statement": "Ports of entry in the test data are Aberdeen Airport (GB DYC), East Midlands Airport (GB EMA) and Edinburgh Airport (GB EDI).",
+      "kind": "data",
+      "ref": "domain/animals/constants/point-of-entries.ts:1-5",
+      "quote": "aberdeen: { value: 'GB DYC', display: 'Aberdeen Airport (GB DYC)' },\n  eastMidlandsAirport: { value: 'GB EMA', display: 'East Midlands Airport (GB EMA)' },\n  edinburgh: { value: 'GB EDI', display: 'Edinburgh Airport (GB EDI)' },",
+      "confidence": "verbatim",
+      "note": "The UI journey picks a different port, 'Aberdeen Harbour (GB ABD)', which is not in this constant."
+    },
+    {
+      "id": "repo-tests-p1-117",
+      "statement": "With a road vehicle, saving arrival details leads to the transited countries page, then the transporter list, then back to the overview once a transporter is picked.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:195-207 answerTransport",
+      "quote": "await this.animalsPages.arrivalDetails.saveAndContinue.click();\n    await this.animalsPages.transitedCountries.heading.waitFor(pageLoadWait);\n...\n    await this.animalsPages.transporter.heading.waitFor(pageLoadWait);\n    await this.animalsPages.transporter.transporter('García Livestock Transport SL').check();\n    await this.animalsPages.transporter.saveAndContinue.click();\n    await this.animalsPages.overview.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-118",
+      "statement": "The transited countries page is at /live-animals/notifications/{id}/transit-countries and is headed (h1) \"Which countries will the consignment travel through?\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/transited-countries-page.ts:6,9-14",
+      "quote": "super(page, 'transit-countries');\n...\n      name: 'Which countries will the consignment travel through?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-119",
+      "statement": "A transited country is chosen in an accessible-autocomplete type-ahead over a native select (the select alone without JavaScript) and added with an \"Add country\" button; each added country is a table row with a \"Remove {country}\" button.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/transited-countries-page.ts:16-61",
+      "quote": "return this.page.getByRole('button', { name: 'Add country', exact: true });\n...\nreturn this.page.getByRole('button', { name: `Remove ${name}` });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-120",
+      "statement": "Test 'renders the country search and an empty list' proves the transited countries page shows its heading, the country field, the Add country button and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:8 'renders the country search and an empty list'",
+      "quote": "await expect(animalsPages.transitedCountries.countryField).toBeVisible();\n    await expect(animalsPages.transitedCountries.addCountryButton).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-121",
+      "statement": "Test 'accepts and persists multiple transited countries' proves France and Belgium can both be added, save without an error and are listed again on return.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:15 'accepts and persists multiple transited countries'",
+      "quote": "await expect(animalsPages.transitedCountries.row('France')).toBeVisible();\n    await expect(animalsPages.transitedCountries.row('Belgium')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-122",
+      "statement": "Test 'removes a country from the list, leaving the others' proves Remove France takes France off the list and leaves Belgium.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:27 'removes a country from the list, leaving the others'",
+      "quote": "await animalsPages.transitedCountries.removeCountry('France').click();\n\n    await expect(animalsPages.transitedCountries.row('France')).toHaveCount(0);\n    await expect(animalsPages.transitedCountries.row('Belgium')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-123",
+      "statement": "Test 'transit countries are optional: continuing with none saves and goes on' proves saving with no countries goes to the transporter page with no error, and on return shows \"You have not added any countries yet.\" with no rows.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:36 'transit countries are optional: continuing with none saves and goes on'",
+      "quote": "await expect(animalsPages.transporter.heading).toBeVisible();\n...\n    await expect(pages.page.getByText('You have not added any countries yet.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-124",
+      "statement": "Test 'shows an error summary when Add country is pressed with no country chosen' proves Add country with nothing chosen shows \"Enter a country to add\" both in the error summary and as the field's own error.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:47 'shows an error summary when Add country is pressed with no country chosen'",
+      "quote": "// The message is on the page twice — the summary link and the field's own\n    // error — so the summary link is what this asserts, by role.\n    await expect(pages.page.getByRole('link', { name: 'Enter a country to add' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-125",
+      "statement": "The transporter list page is at /live-animals/notifications/{id}/transporters and is headed (h1) \"Transporter details\"; it lists every transporter the trader can use, commercial and private together.",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-page.ts:4-12",
+      "quote": "/** The transporter list — every transporter the trader can use, commercial and\n * private together. Adding one that is not listed is a route off this page. */\n...\n    super(page, 'transporters');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Transporter details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-126",
+      "statement": "The transporter list is a table with a radio in the leading column whose visually hidden label is \"Select {name}\", the name showing in the Name column, the same shape as the party picker's results table.",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-page.ts:15-21",
+      "quote": "/** The list is a table with a radio in the leading column, so the radio's own\n   * label is a visually hidden \"Select <name>\" — the name itself is the cell in\n   * the Name column, not the control's accessible name. Same shape as the party\n   * picker's results table. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-127",
+      "statement": "The transporter list has an \"Add a transporter\" link styled as a button, for a transporter not on the list.",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-page.ts:23-26",
+      "quote": "/** The govuk button macro renders the href as role=button. */\n  get addTransporter(): Locator {\n    return this.page.getByRole('button', { name: 'Add a transporter' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-128",
+      "statement": "The transporter list page saves even with no transporter chosen.",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:180-183",
+      "quote": "// unlocked journey. The page itself saves through unfilled",
+      "confidence": "verbatim",
+      "note": "Stated in a helper comment; no page test in this part submits the list empty."
+    },
+    {
+      "id": "repo-tests-p1-129",
+      "statement": "Test 'renders the page controls' proves the transporter list shows its heading, Add a transporter and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter.spec.ts:8 'renders the page controls'",
+      "quote": "await expect(animalsPages.transporter.heading).toBeVisible();\n    await expect(animalsPages.transporter.addTransporter).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-130",
+      "statement": "Test 'lists both a commercial and a private transporter' proves the one list holds both a commercial transporter (García Livestock Transport SL) and a private one (Aberdeen Livestock Ltd), so a trader with a private transporter can pick a row rather than fill a form.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter.spec.ts:14-19 'lists both a commercial and a private transporter'",
+      "quote": "// Both kinds on the one list is the point of the page: a trader whose\n  // transporter is private has a row to pick rather than a form to fill.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-131",
+      "statement": "Test 'leaves every transporter unchecked on load' proves no transporter is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter.spec.ts:21 'leaves every transporter unchecked on load'",
+      "quote": "await expect(animalsPages.transporter.transporter('García Livestock Transport SL')).not.toBeChecked();\n    await expect(animalsPages.transporter.transporter('Aberdeen Livestock Ltd')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-132",
+      "statement": "Test 'accepts a transporter picked from the list' proves picking García Livestock Transport SL saves without an error and returns to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter.spec.ts:26 'accepts a transporter picked from the list'",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);\n    await expect(animalsPages.overview.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-133",
+      "statement": "The transporter type page is at /live-animals/notifications/{id}/transporters/add, reached only through \"Add a transporter\" by a trader who could not find theirs on the list, and is headed (h1) \"Choose a transporter type\" with the question as a visually hidden legend.",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-add-page.ts:4-15; tests/animals/e2e/pages/transporter-add.spec.ts:3-4",
+      "quote": "/** The type question — asked only of a trader who could not find their\n * transporter on the list, as the first step of adding one. */\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Choose a transporter type' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-134",
+      "statement": "The transporter type options are \"Commercial\" and \"Private transporter\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-add-page.ts:17-23",
+      "quote": "Commercial: 'Commercial',\n    Private: 'Private transporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-135",
+      "statement": "Test 'renders the page controls' proves the type page shows its heading, the Commercial and Private transporter radios and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-add.spec.ts:12 'renders the page controls'",
+      "quote": "await expect(animalsPages.transporterAdd.transporterType('Commercial')).toBeVisible();\n    await expect(animalsPages.transporterAdd.transporterType('Private')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-136",
+      "statement": "Test 'leaves the transporter type unchecked on load' proves no type is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-add.spec.ts:19 'leaves the transporter type unchecked on load'",
+      "quote": "await expect(animalsPages.transporterAdd.transporterType('Commercial')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-137",
+      "statement": "Test 'accepts a valid transporter type' proves choosing Commercial saves without an error and leads to the Add commercial transporter form, where the trader types the transporter in rather than picking again.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-add.spec.ts:23 'accepts a valid transporter type'",
+      "quote": "// The commercial arm is the add-commercial form: a trader who could not\n    // find their transporter on the list types it in rather than picking again.\n    await expect(animalsPages.commercialTransporter.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-138",
+      "statement": "The Add commercial transporter page is at /live-animals/notifications/{id}/transporters/add/commercial, headed (h1) \"Add commercial transporter\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/commercial-transporter-page.ts:22,26",
+      "quote": "super(page, 'transporters/add/commercial');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Add commercial transporter' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-139",
+      "statement": "The commercial transporter form asks for \"Transporter authorisation number\", \"Name or organisation name\", \"Address line 1\", \"Town or city\", \"Postcode or zip code\", \"Email address\" and \"Phone number\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/commercial-transporter-page.ts:29-54",
+      "quote": "return this.page.getByLabel('Transporter authorisation number');\n...\n    await this.page.getByLabel('Address line 1').fill(details.addressLine1);\n    await this.page.getByLabel('Town or city').fill(details.townOrCity);\n    await this.page.getByLabel('Postcode or zip code').fill(details.postalOrZipCode);\n    await this.page.getByLabel('Email address').fill(details.emailAddress);\n    await this.page.getByLabel('Phone number').fill(details.telephoneNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-140",
+      "statement": "On the commercial transporter form the country is shown but fixed to Northern Ireland, as a disabled select, and never asked.",
+      "kind": "rule",
+      "ref": "page-objects/animals/commercial-transporter-page.ts:14-19,37-40",
+      "quote": "The country is fixed to Northern\n * Ireland rather than asked, so there is nothing to fill in for it.\n...\n  /** Shown and fixed, never asked — a disabled select carrying Northern Ireland. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-141",
+      "statement": "The Add private transporter page is at /live-animals/notifications/{id}/transporters/add/private, headed (h1) \"Add private transporter\", and is owed only when the transporter type is Private.",
+      "kind": "copy",
+      "ref": "page-objects/animals/private-transporter-page.ts:14-22",
+      "quote": "/** Keyed-in transporter details, owed only when the transporter type is Private. */\n...\n    super(page, 'transporters/add/private');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Add private transporter' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-142",
+      "statement": "The private transporter form asks for \"Name or organisation name\", \"Address line 1\", \"Town or city\", \"Postcode or Zip code\", a \"Country\" select, \"Phone number\" and \"Email address\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/private-transporter-page.ts:28-36",
+      "quote": "await this.page.getByLabel('Name or organisation name').fill(details.name);\n    await this.page.getByLabel('Address line 1').fill(details.addressLine1);\n    await this.page.getByLabel('Town or city').fill(details.townOrCity);\n    await this.page.getByLabel('Postcode or Zip code').fill(details.postalOrZipCode);\n    await this.page.getByLabel('Country').selectOption(details.country);\n    await this.page.getByLabel('Phone number').fill(details.telephoneNumber);\n    await this.page.getByLabel('Email address').fill(details.emailAddress);",
+      "confidence": "verbatim",
+      "note": "The private form's label is 'Postcode or Zip code' while the commercial form's is 'Postcode or zip code'; the two disagree on case."
+    },
+    {
+      "id": "repo-tests-p1-143",
+      "statement": "The approved commercial transporter register is at /live-animals/notifications/{id}/transporters/select, headed (h1) \"Search for an approved commercial transporter\"; nothing links to it any more, and it is reached only by its URL.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/transporter-selection-page.ts:6-13; tests/animals/e2e/pages/transporter-selection.spec.ts:3-6",
+      "quote": "// The approved commercial register. Nothing links to it now that the add\n// route's commercial arm is the add-commercial form and the transporter list\n// carries the register's rows itself, so the journey helper reaches it by its\n// own URL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-144",
+      "statement": "The register's commercial answer is in scope only once the transporter type has been answered (Commercial).",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:303-311 toTransporterSelection",
+      "quote": "It is reached by its own\n  // URL, through that arm so the transporter type is answered — which is what\n  // puts the commercial answer the register writes in scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-145",
+      "statement": "Test 'renders the page controls' proves the register shows its heading, a García Livestock Transport SL option and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-selection.spec.ts:12 'renders the page controls'",
+      "quote": "await expect(animalsPages.transporterSelection.transporter('García Livestock Transport SL')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-146",
+      "statement": "Test 'leaves the transporter unchecked on load' proves no register entry is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-selection.spec.ts:18 'leaves the transporter unchecked on load'",
+      "quote": "await expect(animalsPages.transporterSelection.transporter('García Livestock Transport SL')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-147",
+      "statement": "Test 'accepts a valid transporter' proves picking García Livestock Transport SL from the register saves without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-selection.spec.ts:22 'accepts a valid transporter'",
+      "quote": "await animalsPages.transporterSelection.transporter('García Livestock Transport SL').check();\n    await animalsPages.transporterSelection.saveAndContinue.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-148",
+      "statement": "The contact address page is at /live-animals/notifications/{id}/consignment/contact/select and is headed (h1) \"Contact address for consignment\", offering the saved addresses as radios by name.",
+      "kind": "copy",
+      "ref": "page-objects/animals/contact-address-page.ts:6-15",
+      "quote": "super(page, 'consignment/contact/select');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Contact address for consignment' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-149",
+      "statement": "The contact already copied onto the notification is shown apart from the list, in a region named \"Current contact address\" with an \"Edit details\" link.",
+      "kind": "copy",
+      "ref": "page-objects/animals/contact-address-page.ts:22-29",
+      "quote": "/** The contact already copied onto this notification, shown apart from the list. */\n  get currentContact(): Locator {\n    return this.page.getByRole('region', { name: 'Current contact address' });\n  }\n\n  get editCurrentContact(): Locator {\n    return this.currentContact.getByRole('link', { name: 'Edit details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-150",
+      "statement": "Test 'renders the page controls' proves the contact address page shows its heading, an \"Animal and Plant Health Agency\" option and Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:9 'renders the page controls'",
+      "quote": "await expect(animalsPages.contactAddress.address('Animal and Plant Health Agency')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-151",
+      "statement": "Test 'leaves the contact address unchecked on load' proves no contact address is preselected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:15 'leaves the contact address unchecked on load'",
+      "quote": "await expect(animalsPages.contactAddress.address('Animal and Plant Health Agency')).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-152",
+      "statement": "Test 'accepts a valid contact address' proves choosing Animal and Plant Health Agency saves without an error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:19 'accepts a valid contact address'",
+      "quote": "await animalsPages.contactAddress.address('Animal and Plant Health Agency').check();\n    await animalsPages.contactAddress.saveAndContinue.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-153",
+      "statement": "Test 'a chosen contact address is shown as the current contact on return, still chosen, and saving again keeps it' proves a saved contact returns to the overview, then on return shows as the current contact with Edit details, stays chosen in the list, and survives a second save.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:26 'a chosen contact address is shown as the current contact on return, still chosen, and saving again keeps it'",
+      "quote": "await expect(animalsPages.contactAddress.currentContact).toContainText(contact);\n    await expect(animalsPages.contactAddress.editCurrentContact).toBeVisible();\n    await expect(animalsPages.contactAddress.address(contact)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-154",
+      "statement": "Test 'saving with no contact address selected is allowed and exits to the hub' proves the contact address is optional to save: an empty submit returns to the overview with no error.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:47 'saving with no contact address selected is allowed and exits to the hub'",
+      "quote": "await animalsPages.contactAddress.saveAndContinue.click();\n\n    await expect(animalsPages.overview.heading).toBeVisible();\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-155",
+      "statement": "Test 'offers no way to add an address in stub mode' proves that when the animals frontend runs in stub mode the contact address page has no add-an-address link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:54 'offers no way to add an address in stub mode'",
+      "quote": "skipIfNonStubStackEnvironment('the INS add link is shown when animals-frontend runs outside stub mode (compose or CDP)');\n    await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-156",
+      "statement": "Test 'links to INS to add an address when the full stack is running' proves that outside stub mode the contact address page links to the INS address book's add page with journey-type=gbn-ag.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:59 'links to INS to add an address when the full stack is running'",
+      "quote": "await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveAttribute(\n      'href',\n      /\\/address-book\\/add\\?journey-type=gbn-ag/,\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-157",
+      "statement": "From the overview a \"Review and submit\" button opens the notification check page, whose Continue button leads to the Declaration page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:357-362 fromOverviewToDeclaration",
+      "quote": "await this.animalsPages.overview.reviewAndSubmitButton.click();\n    await this.animalsPages.notificationView.heading.waitFor(pageLoadWait);\n    await this.animalsPages.notificationView.continueButton.click();\n    await this.animalsPages.declaration.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim",
+      "note": "The button's visible label is held in the overview page object, outside this part; reviewAndSubmitButton is the helper's name for it."
+    },
+    {
+      "id": "repo-tests-p1-158",
+      "statement": "The Declaration page is at /live-animals/notifications/{id}/declaration, headed (h1) \"Declaration\", with a confirmation checkbox beginning \"I confirm that I have reviewed\" and a \"Continue\" button.",
+      "kind": "copy",
+      "ref": "page-objects/animals/declaration-page.ts:6-19",
+      "quote": "super(page, 'declaration');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Declaration' });\n...\n    return this.page.getByRole('checkbox', { name: /I confirm that I have reviewed/ });",
+      "confidence": "verbatim",
+      "note": "Only the start of the confirmation text is matched; the full wording is not in this part."
+    },
+    {
+      "id": "repo-tests-p1-159",
+      "statement": "Confirming the declaration and pressing Continue submits the notification and shows the heading \"Import notification submitted\".",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:364-368 confirmDeclaration",
+      "quote": "await this.animalsPages.declaration.confirmation.check();\n    await this.animalsPages.declaration.continueButton.click();\n    await this.pages.page.getByRole('heading', { name: 'Import notification submitted' }).waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-160",
+      "statement": "Test 'renders the page controls' proves that a draft seeded as ready to submit and resumed in the browser shows the Declaration heading, the confirmation checkbox and Continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:9 'renders the page controls'",
+      "quote": "const referenceNumber = await animalsSeededJourney.createDraftNotification('readyToSubmit');\n    await animalsSeededJourney.resumeInUi(referenceNumber, animalsPages.declaration);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-161",
+      "statement": "Test 'shows an error summary when submitted unconfirmed' proves the declaration is refused with an error summary when Continue is pressed without ticking the confirmation.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:15 'shows an error summary when submitted unconfirmed'",
+      "quote": "await animalsPages.declaration.continueButton.click();\n\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-162",
+      "statement": "The error message for an unconfirmed declaration is not asserted.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:15-19",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p1-163",
+      "statement": "When a document is added on the accompanying documents page with \"Save and add another\", its row shows \"Check completed\" once the virus scan finishes, and a submission carries the document only after that.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:338-355 submitNotificationWithDocument",
+      "quote": "// The same full journey with one accompanying document added, waiting for its\n  // virus scan so the submission carries it.\n...\n      .filter({ hasText: 'Check completed' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-164",
+      "statement": "An accompanying document is entered with a reference, an issue date typed as d/m/yyyy, a file and a document type submitted as a code such as VETERINARY_HEALTH_CERTIFICATE.",
+      "kind": "data",
+      "ref": "flows/animals/journey.ts:8-15 AccompanyingDocumentAnswer",
+      "quote": "reference: string;\n  /** As typed into the date field, d/m/yyyy. */\n  issueDate: string;\n  filePath: string;\n  /** The document-type code the select submits, e.g. VETERINARY_HEALTH_CERTIFICATE. */\n  type: string;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-165",
+      "statement": "Document types in the test data are ITAHC and VETERINARY_HEALTH_CERTIFICATE.",
+      "kind": "data",
+      "ref": "domain/animals/constants/document-types.ts:1-4",
+      "quote": "itahc: 'ITAHC',\n  veterinaryHealthCertificate: 'VETERINARY_HEALTH_CERTIFICATE',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-166",
+      "statement": "The full UI journey answers every section in this order: origin (France, region code Yes 75, internal reference Imports456GB), commodity (Bos taurus, 1 animal, 5 packages), identification (ear tag UK123456789012), reason (Internal market, Breeding) and additional details (Slaughter, unweaned No), addresses and CPH (12/345/6789), transport (road vehicle, transited France and Belgium, García Livestock Transport SL), then contact (Animal and Plant Health Agency).",
+      "kind": "data",
+      "ref": "flows/animals/journey.ts:216-224 completeAnswerSections",
+      "quote": "await this.answerOrigin({ requiresRegionCode: 'Yes', internalReference: 'Imports456GB' });\n    await this.answerCommodity();\n    await this.answerAnimalIdentification();\n    await this.answerReasonAndAdditionalDetails();\n    await this.answerAddresses();\n    await this.answerTransport();\n    await this.answerContact();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-167",
+      "statement": "The default test notification shared by the UI journey and the seeder is: country France, commodity Dog, type Domestic, species Bison bison and Bos spp., reason internal market, animals 5 and 19, packages 13 and 21, certification approvedBodies, port Aberdeen Airport, arrival 14 days ahead and means of transport Vessel.",
+      "kind": "data",
+      "ref": "domain/animals/constants/journey-options.ts:14-60 defaultJourneyOptions",
+      "quote": "countryCode: countryCodes.eu.france,\n...\n  commodityCode: commodityCodes.dog,\n  commodityType: commodityTypes.domestic,\n  species: [commoditySpecies.bisonBison, commoditySpecies.bosSpp],\n  importReason: importReasons.internalMarket,\n  noOfAnimals: [5, 19],\n  noOfPackages: [13, 21],\n  certificationPurpose: certificationPurposes.approvedBodies,\n...\n  pointOfEntry: pointOfEntries.aberdeen,\n  arrivalDate: getRelativeDateInput({ dayOffset: 14 }),\n  meansOfTransport: meansOfTransport.vessel,",
+      "confidence": "verbatim",
+      "note": "The default pairs a Dog commodity code with cattle species (Bison bison, Bos spp.); the UI journey helper does not use these defaults (it searches Bos taurus)."
+    },
+    {
+      "id": "repo-tests-p1-168",
+      "statement": "Named test parties are consignor Astra Rosales, place of destination Tech Imports Ltd, place of origin Origin Farm, consignee British Livestock Ltd, importer Import Co UK, transporter García Livestock Transport SL and contact Animal and Plant Health Agency; the CPH is 123456789, ear tags start FR and passports start FR-BOV-2024-.",
+      "kind": "data",
+      "ref": "domain/animals/constants/journey-options.ts:62-71",
+      "quote": "export const EAR_TAG_PREFIX = 'FR';\nexport const PASSPORT_PREFIX = 'FR-BOV-2024-';\nexport const PLACE_OF_ORIGIN_NAME = 'Origin Farm';\nexport const CONSIGNOR_NAME = 'Astra Rosales';\nexport const CONSIGNEE_NAME = 'British Livestock Ltd';\nexport const IMPORTER_NAME = 'Import Co UK';\nexport const DESTINATION_NAME = 'Tech Imports Ltd';\nexport const CPH_NUMBER = '123456789';\nexport const TRANSPORTER_NAME = 'García Livestock Transport SL';\nexport const CONTACT_ADDRESS_NAME = 'Animal and Plant Health Agency';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-169",
+      "statement": "The commodity codes in the test data are, for now, animal names (Cow, Cat, Dog, Fish) rather than real codes, pending commodity codes being implemented.",
+      "kind": "data",
+      "ref": "domain/animals/constants/commodity-codes.ts:1-7",
+      "quote": "// Temporary AC behavior: currently uses animal names; update when commodity codes are implemented.\n  cow: 'Cow',\n  cat: 'Cat',\n  dog: 'Dog',\n  fish: 'Fish',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-170",
+      "statement": "The only commodity type in the test data is Domestic.",
+      "kind": "data",
+      "ref": "domain/animals/constants/commodity-types.ts:1-3",
+      "quote": "domestic: 'Domestic',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-171",
+      "statement": "The species constants are Bison bison, Bos spp., Bos taurus and Bubalus bubalis.",
+      "kind": "data",
+      "ref": "domain/animals/constants/commodity-species.ts:1-6",
+      "quote": "bisonBison: 'Bison bison',\n  bosSpp: 'Bos spp.',\n  bosTaurus: 'Bos taurus',\n  bubalusBubalis: 'Bubalus bubalis',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-172",
+      "statement": "The test data lists 31 EU and EEA countries with ISO codes (Austria AT through Switzerland CH, including Iceland, Liechtenstein, Norway and Switzerland, with the Netherlands displayed as \"Netherlands (the)\").",
+      "kind": "data",
+      "ref": "domain/animals/constants/country-codes.ts:2-35",
+      "quote": "eu: {\n    // EU and EEA countries\n    austria: { value: 'AT', display: 'Austria' },\n...\n    netherlands: { value: 'NL', display: 'Netherlands (the)' },\n...\n    switzerland: { value: 'CH', display: 'Switzerland' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-173",
+      "statement": "The test data also lists rest-of-world countries with ISO codes (Afghanistan AF through Zimbabwe ZW, including United Kingdom GB and Kosovo XK), not yet used by any flow.",
+      "kind": "data",
+      "ref": "domain/animals/constants/country-codes.ts:36-202",
+      "quote": "row: {\n    // Rest of World countries not yet implemented in flows.\n    afghanistan: { value: 'AF', display: 'Afghanistan' },\n...\n    kosovo: { value: 'XK', display: 'Kosovo' },\n...\n    unitedKingdom: { value: 'GB', display: 'United Kingdom' },\n...\n    zimbabwe: { value: 'ZW', display: 'Zimbabwe' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-174",
+      "statement": "Yes and No answers are submitted as the values \"Yes\" and \"No\".",
+      "kind": "data",
+      "ref": "domain/shared/constants/yes-no-values.ts:1-4",
+      "quote": "yes: 'Yes',\n  no: 'No',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-175",
+      "statement": "The dashboard sort options are \"Arrival (newest to oldest)\", \"Arrival (oldest to newest)\", \"Date created (newest to oldest)\" and \"Date created (oldest to newest)\".",
+      "kind": "copy",
+      "ref": "domain/animals/constants/sort-by-values.ts:1-6",
+      "quote": "arrivalNewestToOldest: 'Arrival (newest to oldest)',\n  arrivalOldestToNewest: 'Arrival (oldest to newest)',\n  dateCreatedNewestToOldest: 'Date created (newest to oldest)',\n  dateCreatedOldestToNewest: 'Date created (oldest to newest)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-176",
+      "statement": "A submitted live-animals notification carries status code 714100001 in PIMS Dynamics (the defraimp_status option set).",
+      "kind": "integration",
+      "ref": "domain/animals/constants/animals-dynamics-statuses.ts:1-4",
+      "quote": "/** defraimp_status option-set codes in PIMS Dynamics. */\nexport const animalsDynamicsStatuses = {\n  submitted: 714100001,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-177",
+      "statement": "Every service page offers \"Home\", \"About\", \"Log out\", \"Address book\" and \"Dashboard\" links and shows the signed-in user's email.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:27-49",
+      "quote": "return this.page.getByRole('link', { name: 'Home' });\n...\n    return this.page.getByRole('link', { name: 'About' });\n...\n    return this.page.getByText(email);\n...\n    return this.page.getByRole('link', { name: 'Log out', exact: true });\n...\n    return this.page.getByRole('link', { name: 'Address book', exact: true });\n...\n    return this.page.getByRole('link', { name: 'Dashboard', exact: true });",
+      "confidence": "inferred",
+      "note": "Inferred from the shared base page offering these locators to every page object; whether each link appears on every journey page is not asserted in this part's specs."
+    },
+    {
+      "id": "repo-tests-p1-178",
+      "statement": "The service shows an alpha phase banner on every page that links \"give your feedback by email\", and journey pages carry a \"Back\" link.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:51-61",
+      "quote": "the service's\n   * alpha phase banner links \"give your feedback by email\" on every page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-179",
+      "statement": "If sign-in fails, the user sees \"Sorry, we are unable to sign you in.\" with a \"try again\" link.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:8,103-107",
+      "quote": "const SIGN_IN_ERROR_HEADING = 'Sorry, we are unable to sign you in.';\n...\n        this.page.getByRole('link', { name: 'try again' }).click(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-180",
+      "statement": "After signing in, a user who belongs to more than one organisation is asked to choose an organisation; a user with one organisation never sees that picker.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:87-91,147-157",
+      "quote": "defra-id-stub shows its \"Choose your organisation\" picker\n   * after sign-in exclusively for those, so single-org identities never hit it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-181",
+      "statement": "Opening a notification page while signed out redirects through the sign-in flow (server redirects) before the page is shown.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:95-102,208-211",
+      "quote": "// The OIDC chain is pure server 302s, so the caller's goto has already\n    // resolved: anywhere but the stub's sign-in form means this context is\n    // already authenticated",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-182",
+      "statement": "The suite signs each test worker in once and reuses that session across its tests when session reuse is on.",
+      "kind": "constraint",
+      "ref": "fixtures/ui.ts:55-75",
+      "quote": "workerAuthState: [\n    async ({ browser }, use, workerInfo) => {\n      if (!sessionReuseEnabled()) {\n        await use(undefined);\n        return;\n      }\n      await use(await createWorkerAuthState(browser, workerInfo));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-183",
+      "statement": "Calls from the suite that leave CDP for the internet go through the CDP proxy, while journey and service calls go direct.",
+      "kind": "constraint",
+      "ref": "fixtures/ui.ts:116-121",
+      "quote": "// Calls that leave CDP for the internet go through its proxy; the journey and service calls stay direct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p1-184",
+      "statement": "Each page spec reaches its page by driving the real UI from the dashboard through the earlier pages, except the declaration spec, which seeds a ready-to-submit draft through the frontend and resumes it in the browser.",
+      "kind": "constraint",
+      "ref": "flows/animals/journey.ts:226-318 reach helpers; tests/animals/e2e/pages/declaration.spec.ts:4-7",
+      "quote": "// Reach helpers — land on a page UNFILLED so a per-page spec can drive it.",
+      "confidence": "verbatim"
+    }
+  ]
+}

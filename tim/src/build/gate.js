@@ -21,6 +21,11 @@ import {
   TIM_DUPLICATION
 } from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
+import {
+  defaultMachineConfigPath,
+  readMachineConfig,
+  withMachineWorkers
+} from './machine-config.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
 
@@ -49,10 +54,25 @@ export const logPathFor = (logsDir, repo, name) =>
 
 const TIM_CLI = fileURLToPath(new URL('../cli.js', import.meta.url))
 
-const npmCommandFor = ({ run, scope }) => ({
-  command: 'npm',
-  args: ['run', run, ...(scope.length > 0 ? ['--', ...scope] : [])]
-})
+const workerArgs = ({ workers }) => (workers ? [`--workers=${workers}`] : [])
+
+const npmCommandFor = (rung) => {
+  const extra = [...rung.scope, ...workerArgs(rung)]
+  return {
+    command: 'npm',
+    args: ['run', rung.run, ...(extra.length > 0 ? ['--', ...extra] : [])]
+  }
+}
+
+const machineSummary = (machine) =>
+  machine
+    ? {
+        config: machine.path,
+        parallelRepos: machine.parallelRepos ?? null,
+        stackAfterLocal: machine.stackAfterLocal ?? null,
+        workers: machine.workers
+      }
+    : null
 
 const duplicationCommand = () => ({
   command: process.execPath,
@@ -60,7 +80,14 @@ const duplicationCommand = () => ({
   env: { TIM_NO_AUTO_PULL: '1' }
 })
 
-const commandFor = (rung) => {
+/**
+ * The command a planned rung runs: its npm script with its scope and worker
+ * count, `mvn -B verify`, or tim's duplication check.
+ *
+ * @param {{run: string, scope: string[], workers?: number}} rung
+ * @returns {{command: string, args: string[], env?: object}}
+ */
+export const rungCommand = (rung) => {
   if (rung.run === MVN_VERIFY) return { command: 'mvn', args: ['-B', 'verify'] }
   if (rung.run === TIM_DUPLICATION) return duplicationCommand()
   return npmCommandFor(rung)
@@ -101,7 +128,7 @@ export const cannotRunBecause = ({ repo, path, run }) => {
 /**
  * One rung's entry in the gate result.
  *
- * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null}}
+ * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null, workers: number|null}}
  */
 export const rungResult = ({
   rung,
@@ -118,7 +145,8 @@ export const rungResult = ({
   exitCode,
   log,
   durationMs,
-  reason
+  reason,
+  workers: rung.workers ?? null
 })
 
 const failed = (rung, reason, extra = {}) =>
@@ -128,7 +156,7 @@ const runRung = async (rung, { logsDir, env }) => {
   if (rung.refusal) return failed(rung, rung.refusal)
   const blocker = cannotRunBecause(rung)
   if (blocker) return failed(rung, blocker)
-  const { command, args, env: commandEnv } = commandFor(rung)
+  const { command, args, env: commandEnv } = rungCommand(rung)
   const logPath = logPathFor(logsDir, rung.repo, rung.name)
   try {
     const { exitCode, durationMs, log } = await runToLog(command, args, {
@@ -536,6 +564,7 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} [args.logsDir]
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
  * @param {string} [args.leasePath] - The stack lease file
+ * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos and stackAfterLocal
  * @param {object} [args.env] - Extra environment for every command the gate runs
  * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], stack: object}>}
  */
@@ -547,12 +576,14 @@ export const runGate = async ({
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
+  machineConfigPath = defaultMachineConfigPath(workspaceRoot),
   env
 }) => {
   const startedAt = performance.now()
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
-  const plan = planRungs({ gates, repos, phase })
+  const machine = readMachineConfig(machineConfigPath)
+  const plan = withMachineWorkers(planRungs({ gates, repos, phase }), machine)
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {
     workspaceRoot,
@@ -560,8 +591,9 @@ export const runGate = async ({
     holder,
     leasePath,
     env,
-    parallelRepos: gates.parallelRepos,
-    stackAfterLocal: gates.stackAfterLocal === true,
+    parallelRepos: machine?.parallelRepos ?? gates.parallelRepos,
+    stackAfterLocal:
+      (machine?.stackAfterLocal ?? gates.stackAfterLocal) === true,
     held: null
   }
 
@@ -579,6 +611,7 @@ export const runGate = async ({
     phases: phaseDurations(plan, ran),
     layers: layerDurations(startedAt, ran),
     rungs,
+    machine: machineSummary(machine),
     stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
   }
 }

@@ -1,5 +1,13 @@
 import { findCycle } from './graph.js'
-import { splitOffOf, splitOffProblems, splitOffThemeIds } from './split-off.js'
+import {
+  movedBackOf,
+  movedBackProblems,
+  movedOutOf,
+  movedOutProblems,
+  splitOffOf,
+  splitOffProblems,
+  splitOffThemeIds
+} from './split-off.js'
 
 /**
  * The statuses whose rows are still to build. Once a backlog has themes,
@@ -12,6 +20,8 @@ const WHOLE_REPO = '.'
 const isText = (value) => typeof value === 'string' && value.trim() !== ''
 
 const isTextList = (value) => Array.isArray(value) && value.every(isText)
+
+const asTextList = (value) => (Array.isArray(value) ? value.filter(isText) : [])
 
 const isPlainObject = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -325,6 +335,8 @@ const splitBacklogProblems = (backlog) => {
       : [
           `The backlog is theme "${backlog.theme}"'s split, so it cannot have "splitOff" of its own.`
         ]),
+    ...movedOutProblems(backlog),
+    ...movedBackProblems(backlog),
     ...rowsOf(backlog)
       .filter(
         (row) =>
@@ -337,7 +349,14 @@ const splitBacklogProblems = (backlog) => {
   ]
 }
 
+const MOVED_OUT_OF_SPLIT_ONLY =
+  'The backlog has "movedOut" but no "theme". Only a split backlog moves rows out to another theme.'
+
+const movedOutOutsideSplitProblems = (backlog) =>
+  backlog.movedOut === undefined ? [] : [MOVED_OUT_OF_SPLIT_ONLY]
+
 const unthemedBacklogProblems = (backlog) => [
+  ...movedOutOutsideSplitProblems(backlog),
   ...(backlog.splitOff === undefined
     ? []
     : [
@@ -361,7 +380,8 @@ const unthemedBacklogProblems = (backlog) => [
  * theme, directly or through another. A theme split off early (`splitOff`)
  * may be depended on, keeps its code to itself, and has no row left here. In
  * a split backlog (with `theme`): it has its `branch` and `parent`, no
- * `themes` or `splitOff`, and no row of another theme.
+ * `themes` or `splitOff`, no row of another theme, and no row reusing the id
+ * of one it moved out (`movedOut`). Only a split backlog has `movedOut`.
  *
  * @param {object} backlog - A parsed backlog with an increments list
  * @returns {string[]}
@@ -373,7 +393,10 @@ export const themeProblems = (backlog) => {
     : null
   if (isText(backlog.theme)) return splitBacklogProblems(backlog)
   if (Array.isArray(backlog.themes)) {
-    return themedBacklogProblems(backlog, repoKeys)
+    return [
+      ...movedOutOutsideSplitProblems(backlog),
+      ...themedBacklogProblems(backlog, repoKeys)
+    ]
   }
   return unthemedBacklogProblems(backlog)
 }
@@ -407,6 +430,22 @@ export const externalDependencyProblems = (backlog, readWorkareaBacklog) =>
           ]
         }
         if (rowsOf(other).some((candidate) => candidate.id === id)) return []
+        const moved = movedOutOf(other).find((pointer) =>
+          asTextList(pointer.increments).includes(id)
+        )
+        if (moved) {
+          return [
+            `${row.id} depends on ${id} in ${workarea}, which moved it to ${moved.workarea}. Point the externalDependsOn there.`
+          ]
+        }
+        const movedBack = movedBackOf(other).find((pointer) =>
+          asTextList(pointer.increments).includes(id)
+        )
+        if (movedBack) {
+          return [
+            `${row.id} depends on ${id} in ${workarea}, which moved it back to ${movedBack.workarea}. Point the externalDependsOn there.`
+          ]
+        }
         return [
           `${row.id} depends on ${id} in ${workarea}, which is not in that backlog.`
         ]

@@ -61,7 +61,7 @@ case "$SEVERITY" in
     *) echo "Invalid --severity: $SEVERITY (must be Critical|Major|Minor)" >&2; exit 1 ;;
 esac
 
-refuse_category_outside "$CATEGORY" "${FUNCTIONAL_CATEGORIES[@]}" "${CODE_QUALITY_CATEGORIES[@]}"
+refuse_category_outside "$CATEGORY" "${FUNCTIONAL_CATEGORIES[@]}" "${CODE_QUALITY_CATEGORIES[@]}" "${DESIGN_CATEGORIES[@]}"
 
 target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 

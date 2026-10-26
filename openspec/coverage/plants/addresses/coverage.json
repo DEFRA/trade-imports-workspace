@@ -32,9 +32,8 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the edit form opens from the picker with every field, including County", "strength": "full", "notes": "after picking the contact, the edit form shows every copied field: name, both lines, town, county, postcode, country, phone, email" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-copied.spec.ts", "test": "picking a record for a role with no address shows every field of that record on the review page", "strength": "full", "notes": "one record with every field distinct, picked for the destination and contact: both review cards show name, both lines, town, county, postcode, country, phone and email; the consignor is not driven" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "stored answer equals the picked-party copy of the record — mechanism" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the place of destination" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the contact address" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should commit a copy of the chosen record and move on to the overview", "strength": "partial", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should commit the chosen record’s name, contact details and address", "strength": "partial", "notes": "the stored contact holds the chosen record's name, phone, email and address; the page showing it is not rendered" }
           ]
         }
       ]
@@ -49,8 +48,9 @@
           "name": "The picker shows the first page with its count",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "opens on FULL_BOOK_CAPTION (Showing 5 of N)" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js; asserts the count paragraph under the results heading" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.test.js", "test": "Should put the count in the paragraph straight after the results heading, outside the table", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "partial", "notes": "opens on Showing 5 out of N results" }
           ]
         },
         {
@@ -59,7 +59,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "narrows the results to the search term", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "Showing 2 of 2 for token match" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/test-support.js", "test": "Should count the rows shown against the rows found", "strength": "full", "notes": "declared by describePickerViewModel; runs for the consignor, place of destination and contact pickers" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "partial", "notes": "Showing 2 out of 2 results for token match" }
           ]
         },
         {
@@ -68,7 +69,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "says so rather than showing an empty table when nothing matches", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "noMatches visible; resultsCaption count 0" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "partial", "notes": "the results summary reads the no-matches message" }
           ]
         },
         {
@@ -76,7 +77,29 @@
           "name": "Clearing the search restores the whole book",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "searchFor('') restores FULL_BOOK_CAPTION" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "clearing the search and searching with nothing entered lists the whole book, showing the first page and a link to the second", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js, so it runs for the consignor, place of destination and contact pickers; red with an empty search still filtering the stub book" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "partial", "notes": "searchFor('') restores the Showing 5 out of N results count" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-002-E",
+          "name": "Without JavaScript, Enter in the search box narrows the list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "pressing Enter in the consignor search box narrows the list on the server without JavaScript", "strength": "full", "notes": "declared by describeSubmittedSearchPicker in fit/high-risk-plants-journey.js" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "pressing Enter in the place of destination search box narrows the list on the server without JavaScript", "strength": "full", "notes": "declared by describeSubmittedSearchPicker in fit/high-risk-plants-journey.js" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "pressing Enter in the consignment contact search box narrows the list on the server without JavaScript", "strength": "full", "notes": "declared by describeSubmittedSearchPicker in fit/high-risk-plants-journey.js" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-002-F",
+          "name": "The listed addresses are one group named \"Select an address\"",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js; the radios sit inside the group named by the results heading" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.test.js", "test": "Should hold the table in one fieldset named by a visually hidden legend, after the count", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -100,7 +123,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "carries a saved address through the paging links", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "full", "notes": "reopen shows selected inset while target row absent from page one" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "partial", "notes": "reopen shows selected inset while target row absent from page one" }
           ]
         }
       ]
@@ -116,42 +139,44 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "replaces the address already saved rather than keeping both", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should replace a copy already held rather than keeping both", "strength": "full", "notes": "stored consignor equals the new record's copy" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should replace the copy already held rather than keeping both", "strength": "full", "notes": "stored contact equals the new record's copy" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should replace a copy already held rather than keeping both", "strength": "full", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js" }
           ]
         }
       ]
     },
     {
       "id": "REQ-PLANTS-ADDR-005",
-      "name": "Saving with nothing chosen and no address held, or a value not on the list, is refused and focuses the first row",
+      "name": "Saving with nothing chosen is not refused, and a value not on the list is refused and focuses the first row",
       "coverage": "full",
       "scenarios": [
-        {
-          "id": "SCN-PLANTS-ADDR-005-A",
-          "name": "Saving with nothing chosen shows the error and focuses the first row",
-          "coverage": "full",
-          "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "continuing with nothing chosen shows the error and focuses the first row", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "an address must be chosen before the notification moves on", "strength": "partial", "notes": "error summary only; no focus assert" }
-          ]
-        },
         {
           "id": "SCN-PLANTS-ADDR-005-B",
           "name": "A deleted or missing address-book id is rejected and the search preserved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "rejects a missing address-book id and preserves the search", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should refuse a save naming a consignor the organisation has deleted", "strength": "partial", "notes": "deleted-record branch: 400 with the consignor error, nothing stored; no search term in play" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "an address not in the book is refused, focusing the first row and keeping the search", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js; also runs for the place of destination picker" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/save-selection.test.js", "test": "Should refuse an id the organisation has deleted", "strength": "full", "notes": "real address book, soft-deleted record" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should refuse a save naming a record the organisation has deleted", "strength": "partial", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js; no search term in play" }
           ]
         },
         {
-          "id": "SCN-PLANTS-ADDR-005-C",
-          "name": "Saving after a no-match search focuses the search field",
+          "id": "SCN-PLANTS-ADDR-005-D",
+          "name": "Saving the consignor or place of destination picker with nothing chosen moves on",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "continuing with nothing found focuses the search box", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "continuing with nothing found focuses the search box", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "continuing with nothing chosen moves on without an error and leaves the overview row not yet started", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js; also runs for the place of destination picker" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should move on to the overview, committing nothing and raising no error", "strength": "full", "notes": "runs for the consignor, place of destination and contact pickers" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "saving with nothing chosen moves on to the consignor page and leaves the destination not yet started", "strength": "partial" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/parties.spec.ts", "test": "Plants for planting: a blank consignor save moves on to identification numbers, leaving the consignor not yet started", "strength": "partial" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-005-E",
+          "name": "An address-book id the book no longer holds is refused after a search that left the list empty",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "an address not in the book after a search that found nothing is refused, focusing the search box, which keeps the term", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js, so it runs for the consignor, place of destination and contact pickers; red with the error linking to the first row instead of the search box" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should point the refusal at the search box when the search found nothing", "strength": "partial", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js; asserts the error link targets the search field, not that it takes focus or still holds the term" }
           ]
         }
       ]
@@ -166,7 +191,8 @@
           "name": "A record found on a later page is chosen and saved",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "full", "notes": "page 2 select; Overview destination Completed; reopen inset" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js", "test": "an address chosen on a later page is saved, and reopening names it although its row is not on the first page", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js, so it runs for the consignor, place of destination and contact pickers; red with the reopened picker not told which record was ticked" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "partial", "notes": "page 2 select; Overview destination Completed; reopen inset" }
           ]
         }
       ]
@@ -266,7 +292,7 @@
           "name": "The picker shows the address held, with Edit details",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show the copy, as edited, with a link to edit its details", "strength": "full", "notes": "Current consignor or exporter card: edited name, address summary, Edit details href" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show the copy, as edited, with a link to edit its details", "strength": "full", "notes": "Current consignor card: edited name, address summary, Edit details href" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should show the copy with a link to edit its details", "strength": "partial", "notes": "unedited copy" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should show the copy held with a link to edit its details", "strength": "partial", "notes": "unedited copy" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "saves the edit to this notification and returns to the picker", "strength": "partial", "notes": "Current contact address card shows the edited name; its Edit details link is followed in beforeEach" }
@@ -317,9 +343,7 @@
           "name": "Reopening the picker names the record the address was chosen from",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "row checked and named as selected" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "partial", "notes": "reopen names the record in the selected inset; its row is not on page one, so no tick to assert" }
           ]
         },
@@ -328,9 +352,7 @@
           "name": "Saving with nothing ticked keeps the address already held",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "full", "notes": "edited copy, no pickedFromId: redirect onward, copy unchanged" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "partial", "notes": "copy unchanged; the redirect is not asserted" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should keep a copy already held, edited since it was picked", "strength": "full", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js" }
           ]
         },
         {
@@ -339,9 +361,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "deleting the chosen address from the address book leaves its copy on the notification", "strength": "full", "notes": "after deleteAddress: no selected inset; current address card shows name and PH1 5EX" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "runs for the consignor, place of destination and contact pickers through each controller.test.js; the current card is not asserted" }
           ]
         },
         {

@@ -70,7 +70,6 @@ describe('MainMenu', () => {
 
   test('selecting Auth drives the probe and renders the auth results', async () => {
     const probe = async () => [
-      { service: 'github', ok: true, user: { login: 'sam' } },
       { service: 'jira', ok: true, user: { displayName: 'Sam F' } },
       { service: 'confluence', ok: true, user: { user: 'sam' } }
     ]
@@ -86,7 +85,6 @@ describe('MainMenu', () => {
     stdin.write('\r')
 
     await vi.waitFor(() => expect(lastFrame()).toContain('signed in'))
-    expect(lastFrame()).toContain('github')
     expect(lastFrame()).toContain('jira')
     expect(lastFrame()).toContain('confluence')
   })

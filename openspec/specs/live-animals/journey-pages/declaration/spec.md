@@ -8,13 +8,19 @@ The last step before a notification is submitted, asking the user to confirm the
 
 ### Requirement: The page asks the user to confirm the declaration, having told them what they are agreeing to
 **ID**: REQ-DECLARATION-001
-The system MUST present the declaration's statements before asking the user to confirm it — that they are contactable in the UK, that they are responsible for the accuracy of the information given, what they are accountable for, that they are authorised to act, and that they are legally acting on behalf of who they represent — MUST show the date of declaration, and MUST offer a confirmation to agree to and a continue action.
+The system MUST present the declaration's statements before asking the user to confirm it — that they are contactable in the UK, that they are responsible for the accuracy of the information given, what they are accountable for, that they are authorised to act, and that they are legally acting on behalf of who they represent — MUST show the date of declaration in bold, and MUST offer a confirmation to agree to and a continue action.
 
 #### Scenario: The page presents the declaration's statements, the date, and its confirmation
 **ID**: SCN-DECLARATION-001-A
 - **GIVEN** the user has reached the declaration page
 - **WHEN** the page loads
 - **THEN** it presents the declaration's statements and the date of declaration, offering a confirmation to agree to and a continue action
+
+#### Scenario: The date of declaration is shown in bold
+**ID**: SCN-DECLARATION-001-B
+- **GIVEN** the user has reached the declaration page
+- **WHEN** the page loads
+- **THEN** the date after "Date of declaration:" is bold
 
 ### Requirement: Continuing without confirming the declaration is rejected, focusing the confirmation
 **ID**: REQ-DECLARATION-002
@@ -108,3 +114,20 @@ The system MUST submit a notification only if it is unchanged since the check yo
 - **GIVEN** the user has confirmed the declaration and the checks before submission have passed
 - **WHEN** another change to the notification lands before it is submitted
 - **THEN** the notification is not submitted, and check your answers is shown under the updated message
+
+### Requirement: The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar
+**ID**: REQ-DECLARATION-007
+The system MUST offer the confirmation as a small GOV.UK checkbox in a group whose legend "Declaration confirmation" is announced to screen-reader users but not shown on screen. It MUST NOT show a status bar above the heading — no "Draft" or "Amend" tag, no reference number and no "Cancel amend" — whether the notification is a draft being submitted for the first time or an amendment being re-submitted.
+
+#### Scenario: A draft's declaration offers a small confirmation in a hidden-legend group and no status bar
+**ID**: SCN-DECLARATION-007-A
+- **GIVEN** a draft notification ready to submit
+- **WHEN** the user opens the declaration
+- **THEN** the confirmation is a small checkbox in a group named "Declaration confirmation", whose name is not shown on screen
+- **AND** no status bar is shown above the heading
+
+#### Scenario: An amendment's declaration shows no status bar
+**ID**: SCN-DECLARATION-007-B
+- **GIVEN** a notification is being amended
+- **WHEN** the user continues from check your answers to the declaration
+- **THEN** no status bar, reference number or "Cancel amend" is shown above the heading

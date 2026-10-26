@@ -7,7 +7,7 @@ paths:
 
 ## Language
 
-All user-facing strings follow GDS plain English (see `@../docs/best-practices/gds/language.md` from `CLAUDE.md`). Address the user directly, active voice, plain words. "Can't connect to GitHub" not "Connection to GitHub could not be established".
+All user-facing strings follow GDS plain English (see `@../docs/best-practices/gds/language.md` from `CLAUDE.md`). Address the user directly, active voice, plain words. "Can't connect to Jira" not "Connection to Jira could not be established".
 
 ## Component shape
 

@@ -1,0 +1,886 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 4, Accompanying documents, read at trade-imports-animals-backend main 15ae53f. Read in full: accompanyingdocument/ (DocumentController 286 lines with the 7 document endpoints, DocumentService 327, AccompanyingDocument entity, AccompanyingDocumentDto, DocumentUploadRequest, DocumentUploadResponse, DocumentListResponse, DocumentType, ScanStatus, AccompanyingDocumentRepository), accompanyingdocument/file/ (FileStatus, UploadedFile, UploadedFileDto), cdp/uploader/ (CdpUploaderClient 147 lines, the initiate request and response, the scan-result payload, form and file), s3/S3DocumentService, and the cdp.uploader, cdp.s3, app and spring.servlet.multipart sections of application.yml. Tests read in full: DocumentTypeTest, AccompanyingDocumentDtoTest, DocumentControllerIT (14 tests), DocumentScanCallbackIT (5), AccompanyingDocumentRepositoryIT (9), DocumentInitiateProductionModeIT (2), and the complete and rejected scan-callback fixtures. GlobalExceptionHandler was consulted only for the status, title and detail each document refusal maps to; NotificationService:433 and OutboxService:87-91 were consulted only to see where this slice's cascade delete and COMPLETE-only query are used. Covered: the 7 endpoints (initiate, list, get, delete, scan-result callback, file upload proxy, file download) with request, response, status codes and every refusal message; the 3 request fields and their validation; all 14 DocumentType values; the 3 ScanStatus and 2 FileStatus values and the transitions between them; the cdp-uploader initiate and upload handshake and its configuration; the scan-result callback for complete, rejected, mixed and missing-count results; S3 download; storage and uniqueness rules; the base-URL, cdp-uploader and S3 endpoint configuration; and every test in the four document ITs as proof. Resumed pass: the repo was still at 15ae53f, every file in read was re-read in full, and claims 001-101 from the earlier extract of this slice were checked line by line against the code and tests and kept unchanged; 102-108 add the base-URL, cdp-uploader URL and S3 endpoint settings, the form-less and uploadStatus-blind scan callback, the ignored callback path segment and the undocumented callback refusals.",
+  "claims": [
+    {
+      "id": "repo-backend-p4-001",
+      "statement": "POST /notifications/{ref}/document-uploads starts an accompanying-document upload session for a notification and answers 201 Created with a body holding uploadId and uploadUrl.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:66-85; proved by DocumentControllerIT Initiate.shouldReturn201AndPersistPendingDocument",
+      "quote": "@PostMapping(\"/notifications/{ref}/document-uploads\")\n  @Operation(\n      summary = \"Initiate document upload\",\n      description = \"Creates a new upload session via cdp-uploader and returns the upload URL\")\n  @ApiResponse(responseCode = \"201\", description = \"Upload session created\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-002",
+      "statement": "The 201 response from initiating an upload carries a Location header of the backend base URL (trailing slash removed) followed by /document-uploads/{uploadId}.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:236-242; proved by DocumentControllerIT Initiate.shouldReturn201AndPersistPendingDocument",
+      "quote": "return URI.create(baseUrl + \"/document-uploads/\" + uploadId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-003",
+      "statement": "The uploadUrl returned on initiation points at the backend's own POST /document-uploads/{uploadId}/file endpoint, so the frontend uploads the file through the backend rather than straight to cdp-uploader.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:107-121; proved by DocumentControllerIT Initiate.shouldReturn201AndPersistPendingDocument",
+      "quote": "Points at this backend's own {@code POST /document-uploads/{uploadId}/file} endpoint so\n   * the frontend (and the IT test assertions) use the backend as the upload target rather than\n   * reaching cdp-uploader directly.",
+      "confidence": "verbatim",
+      "note": "The OpenAPI description of uploadUrl in DocumentUploadResponse still says 'URL of the cdp-uploader form to which the user should be redirected', which no longer matches the behaviour."
+    },
+    {
+      "id": "repo-backend-p4-004",
+      "statement": "The document type (documentType) is required when initiating an upload and must be one of the DocumentType values.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:15-19",
+      "quote": "@NotNull\n    @Schema(description = \"Type of accompanying document\",\n        requiredMode = Schema.RequiredMode.REQUIRED,\n        example = \"ITAHC\")\n    DocumentType documentType,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-005",
+      "statement": "The document reference (documentReference, the reference printed on the document) is required and must not be blank.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:21-27",
+      "quote": "@NotBlank\n    @Size(max = 100)\n    @Pattern(regexp = \"^[a-zA-Z0-9]*$\")\n    @Schema(description = \"Reference number printed on the document\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-006",
+      "statement": "The document reference may be at most 100 characters long.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:22",
+      "quote": "@Size(max = 100)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-007",
+      "statement": "The document reference may contain only letters and digits: no spaces, slashes, hyphens or other punctuation.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:23",
+      "quote": "@Pattern(regexp = \"^[a-zA-Z0-9]*$\")",
+      "confidence": "verbatim",
+      "note": "AccompanyingDocumentDtoTest builds an entity with documentReference \"ITAHC/2026/001\", which this API rule would refuse; the unit test bypasses validation."
+    },
+    {
+      "id": "repo-backend-p4-008",
+      "statement": "The date of issue (dateOfIssue, the date on the physical document) is required and is a calendar date in YYYY-MM-DD form.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:29-33",
+      "quote": "@NotNull\n    @Schema(description = \"Date of issue on the physical document\",\n        requiredMode = Schema.RequiredMode.REQUIRED,\n        example = \"2026-01-15\")\n    LocalDate dateOfIssue) {}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-009",
+      "statement": "The date of issue has no range check: the backend accepts any valid calendar date, past or future, because the request declares no past or future constraint.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java:29-33",
+      "quote": "@NotNull\n    @Schema(description = \"Date of issue on the physical document\",",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-010",
+      "statement": "A document-upload request that breaks a field rule is refused with 400, title \"Validation Error\", detail \"Validation failed for one or more fields\", and an errors map keyed by field name; the per-field messages are the validation framework's defaults because the request declares no custom messages.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:54-80 with DocumentUploadRequest.java",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n            HttpStatus.BAD_REQUEST,\n            \"Validation failed for one or more fields\"\n        );",
+      "confidence": "inferred",
+      "note": "No test in this slice drives a document validation failure; user-facing error copy for the document fields does not live in the backend."
+    },
+    {
+      "id": "repo-backend-p4-011",
+      "statement": "A document-upload request whose body cannot be read, such as a date of issue not in YYYY-MM-DD form or an unknown document type, is refused with 400, title \"Malformed Request\", and a fixed detail message.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:95-108",
+      "quote": "\"Request body could not be read. Check the JSON is well-formed, that each date-only \"\n                + \"field is a date, for example 2026-12-12, and that each timestamp is an \"\n                + \"RFC 3339 instant, for example 2026-12-12T00:00:00Z\"",
+      "confidence": "inferred",
+      "note": "That an unknown documentType lands here rather than in field validation is inferred from it being an enum bound by the JSON parser."
+    },
+    {
+      "id": "repo-backend-p4-012",
+      "statement": "Initiating an upload does not check that the notification exists: the OpenAPI annotation promises 404 \"Notification not found\", but the service never looks the notification up, and the IT gets 201 for a reference it never created.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:73 and DocumentService.java:78-105; DocumentControllerIT NOTIFICATION_REF \"GBN-AG-25-TC0001\"",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"Notification not found\", content = @Content)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-013",
+      "statement": "Initiating an upload is not idempotent: every call creates a new cdp-uploader session, and a notification may hold several PENDING documents at once so a user can add a second document while the first is still being scanned.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:65-67",
+      "quote": "This method is <strong>not idempotent</strong>. cdp-uploader is always called to create a\n   * new upload session. Multiple PENDING documents are deliberately permitted per notification —\n   * the UX supports adding a second document while the first is still being scanned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-014",
+      "statement": "A newly initiated document is saved against the notification reference with its type, reference and date of issue, scan status PENDING and an empty file list.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:257-272; proved by DocumentControllerIT Initiate.shouldReturn201AndPersistPendingDocument",
+      "quote": ".documentType(request.documentType())\n        .documentReference(request.documentReference())\n        .dateOfIssue(request.dateOfIssue())\n        .scanStatus(ScanStatus.PENDING)\n        .files(new ArrayList<>())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-015",
+      "statement": "If cdp-uploader hands back an uploadId that is already stored, initiation is refused with 409, title \"Resource Conflict\", and no record is saved for that session.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:274-289; GlobalExceptionHandler.java:233-244",
+      "quote": "throw new ConflictException(\n          \"Upload session with id \" + document.getUploadId() + \" already exists\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-016",
+      "statement": "If cdp-uploader answers the initiate call with a non-2xx status, initiation fails with 502, title \"Upstream Service Error\", detail \"cdp-uploader returned an error response: HTTP {status}\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:56-74; GlobalExceptionHandler.java:208-219",
+      "quote": "throw new ServiceUnavailableException(\n                    \"cdp-uploader returned an error response: HTTP \" + statusCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-017",
+      "statement": "If cdp-uploader cannot be reached during initiation (connection refused, timeout, DNS failure), initiation fails with 502 and detail beginning \"cdp-uploader is unreachable: \".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:76-83",
+      "quote": "throw new ServiceUnavailableException(\"cdp-uploader is unreachable: \" + e.getMessage(), e);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-018",
+      "statement": "Initiation calls cdp-uploader's /initiate endpoint with a redirect, a callback URL, the documents S3 bucket, an S3 path equal to the notification reference, the maximum file size, the allowed MIME types and a metadata map.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:87-97; cdp/uploader/CdpUploaderInitiateRequest.java; cdp/uploader/CdpUploaderClient.java:47-55",
+      "quote": "CdpUploaderInitiateRequest initiateRequest = new CdpUploaderInitiateRequest(\n        CDP_UPLOADER_REDIRECT_PATH,\n        buildCallbackUrl(),\n        cdpConfig.s3().documentsBucket(),\n        notificationRef,\n        cdpConfig.uploader().maxFileSize(),\n        cdpConfig.uploader().mimeTypes(),\n        buildMetadata(notificationRef, request, correlationId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-019",
+      "statement": "The scan-result callback URL given to cdp-uploader is fixed as the backend base URL followed by /document-uploads/pending/scan-results, with the literal word pending in place of an upload id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:233-240",
+      "quote": "return backendBaseUrl + \"/document-uploads/pending/scan-results\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-020",
+      "statement": "The metadata sent to cdp-uploader holds the notification reference, the document type, the document reference and a new random correlationId minted per upload; the date of issue is not sent.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:81-85, 248-255",
+      "quote": "return Map.of(\n        \"notificationReferenceNumber\", notificationRef,\n        \"documentType\", request.documentType().name(),\n        \"documentReference\", request.documentReference(),\n        \"correlationId\", correlationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-021",
+      "statement": "The redirect given to cdp-uploader is always the relative path \"/\" and is never shown to the user, because the file is posted to cdp-uploader by the server and cdp-uploader's redirect response is ignored.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:52-59",
+      "quote": "Our flow is server-proxied (the frontend POSTs the file to\n   * cdp-uploader on the user's behalf and ignores cdp-uploader's 302 response), so the value is\n   * never user-visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-022",
+      "statement": "The maximum file size passed to cdp-uploader defaults to 52428800 bytes (50 MB) and can be changed with CDP_UPLOADER_MAX_FILE_SIZE.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:52",
+      "quote": "max-file-size: ${CDP_UPLOADER_MAX_FILE_SIZE:52428800}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-023",
+      "statement": "The file types cdp-uploader is told to allow default to PDF, Word (.doc and .docx), JPEG, PNG and Excel (.xls and .xlsx), and can be changed with CDP_UPLOADER_MIME_TYPES.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:53",
+      "quote": "mime-types: ${CDP_UPLOADER_MIME_TYPES:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-024",
+      "statement": "Scanned documents are stored in the S3 bucket trade-imports-animals-documents by default, configurable with CDP_DOCUMENTS_BUCKET.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:54-55",
+      "quote": "documents-bucket: ${CDP_DOCUMENTS_BUCKET:trade-imports-animals-documents}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-025",
+      "statement": "The backend itself accepts multipart uploads of at most 50MB per file and 51MB per request by default.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:27-30",
+      "quote": "max-file-size: ${SPRING_MULTIPART_MAX_FILE_SIZE:50MB}\n      max-request-size: ${SPRING_MULTIPART_MAX_REQUEST_SIZE:51MB}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-026",
+      "statement": "GET /notifications/{ref}/document-uploads returns 200 with an items list of every accompanying document recorded for the notification, whatever its scan status.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:93-107; DocumentService.java:178-180; proved by DocumentControllerIT ListDocuments.shouldReturnDocumentsForNotification",
+      "quote": "summary = \"List document uploads\",\n      description = \"Returns all accompanying documents for a notification reference\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-027",
+      "statement": "Listing documents for a notification that does not exist returns 200 with an empty items list, not the 404 the OpenAPI annotation promises, because the list endpoint never looks the notification up.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:99-106",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"Notification not found\", content = @Content)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-028",
+      "statement": "Each accompanying document in an API response carries id, notificationReferenceNumber, uploadId, documentType, documentReference, dateOfIssue, scanStatus, files, created and updated.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocumentDto.java:15-25; proved by AccompanyingDocumentDtoTest FullFieldMapping",
+      "quote": "String id,\n    String notificationReferenceNumber,\n    String uploadId,\n    DocumentType documentType,\n    String documentReference,\n    LocalDate dateOfIssue,\n    ScanStatus scanStatus,\n    List<UploadedFileDto> files,\n    Instant created,\n    Instant updated)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-029",
+      "statement": "A document's dateOfIssue is returned on the wire as an ISO date string such as \"2026-01-15\".",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentControllerIT.java:287-294 (ListDocuments)",
+      "quote": ".jsonPath(\"$.items[0].dateOfIssue\").isEqualTo(\"2026-01-15\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-030",
+      "statement": "A document's dateOfIssue is stored in the accompanying_documents collection as a date string such as \"2026-01-15\", not as a date-time.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:70-71; proved by DocumentControllerIT DateOfIssue.shouldPersistDateOfIssueAsAnIsoDateString",
+      "quote": "/** Date of issue on the physical document, stored as a string such as {@code 2024-06-15}. */\n  private LocalDate dateOfIssue;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-031",
+      "statement": "Each file in a document response carries filename, contentType, contentLength, fileStatus, checksumSha256, detectedContentType, hasError and errorMessage.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/UploadedFileDto.java:14-38; proved by AccompanyingDocumentDtoTest FilesListMapping.from_shouldMapFilesToUploadedFileDtos",
+      "quote": "String filename,\n\n    @Schema(description = \"MIME content type declared by the uploader\")\n    String contentType,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-032",
+      "statement": "Document responses never expose where a file is stored in S3 (its key or bucket); callers download a file by upload id only.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/UploadedFileDto.java:9-10; UploadedFile.java:16-17; AccompanyingDocumentDtoTest from_filesDto_shouldNotExposeS3KeyOrS3Bucket",
+      "quote": "Deliberately omits {@code s3Key} and {@code s3Bucket} — these are internal S3 storage\n * coordinates that no API consumer requires and must not be exposed in responses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-033",
+      "statement": "A file's hasError in a response is always true or false: a missing value is returned as false.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/UploadedFileDto.java:40-48; AccompanyingDocumentDtoTest from_shouldNormaliseNullHasErrorToFalse",
+      "quote": "A {@code null} {@code hasError} is treated as {@code false} — i.e. no error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-034",
+      "statement": "A document response lists its files in the order they were recorded, and an empty list when no scan result has arrived; a missing created or updated time is returned as null.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocumentDtoTest.java:57-80, 139-176",
+      "quote": "assertThat(dto.files()).isNotNull();\n      assertThat(dto.files()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-035",
+      "statement": "GET /document-uploads/{upload-id} returns 200 with the one accompanying document for that upload id.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:115-129; proved by DocumentControllerIT GetByUploadId.shouldReturn200WithCorrectDto",
+      "quote": "summary = \"Get document upload\",\n      description = \"Returns an accompanying document by upload ID\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-036",
+      "statement": "Getting, deleting or uploading a file to an unknown upload id is refused with 404, title \"Resource Not Found\", detail \"No accompanying document found with uploadId: {id}\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:201-205; GlobalExceptionHandler.java:183-194; proved by DocumentControllerIT GetByUploadId.shouldReturn404_whenUnknownId and UploadFile.shouldReturn404_whenUnknownUploadId",
+      "quote": "new NotFoundException(\"No accompanying document found with uploadId: \" + uploadId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-037",
+      "statement": "DELETE /document-uploads/{upload-id} removes the accompanying document from the notification and answers 204 No Content.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:137-148; proved by DocumentControllerIT Delete.shouldReturn204AndRemoveDocument",
+      "quote": "summary = \"Delete document upload\",\n      description = \"Removes an accompanying document upload session from the notification\")\n  @ApiResponse(responseCode = \"204\", description = \"Document deleted\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-038",
+      "statement": "Deleting a document removes only its database record: the stored file is not deleted from S3, because the delete calls nothing but the repository.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:166-170",
+      "quote": "AccompanyingDocument document = findByUploadId(uploadId);\n    accompanyingDocumentRepository.delete(document);",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-039",
+      "statement": "POST /document-uploads/{upload-id}/file takes a multipart form with a field named file and answers 202 Accepted; the virus scan runs afterwards, and the caller polls GET /document-uploads/{upload-id} for the result.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:178-203",
+      "quote": "@return 202 Accepted — the scan is asynchronous; poll GET /document-uploads/{uploadId} for status",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-040",
+      "statement": "Uploading a file larger than 50 MB is refused with 413, title \"Payload Too Large\", detail \"Uploaded file exceeds the maximum permitted size\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:284-295; proved by DocumentControllerIT UploadFile.shouldReturn413_whenOversizeFile",
+      "quote": "HttpStatus.PAYLOAD_TOO_LARGE,\n            \"Uploaded file exceeds the maximum permitted size\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-041",
+      "statement": "The backend forwards an uploaded file to cdp-uploader's /upload-and-scan/{uploadId} as a multipart field named file, using application/octet-stream when no content type was given and the filename \"upload\" when none was given.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:95-130",
+      "quote": "String contentType = Objects.requireNonNullElse(file.getContentType(), \"application/octet-stream\");\n    partHeaders.setContentType(MediaType.parseMediaType(contentType));\n    String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : \"upload\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-042",
+      "statement": "If cdp-uploader answers a file upload with a 4xx or 5xx status, the upload fails with 502, detail \"cdp-uploader file upload returned error: HTTP {status}\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:109-111, 132-146",
+      "quote": "throw new ServiceUnavailableException(\n        \"cdp-uploader file upload returned error: HTTP \" + statusCode);",
+      "confidence": "verbatim",
+      "note": "A file type cdp-uploader refuses would surface here as a 502 rather than as a validation error, if cdp-uploader refuses it at upload time; the slice does not show which."
+    },
+    {
+      "id": "repo-backend-p4-043",
+      "statement": "If cdp-uploader cannot be reached during a file upload, the upload fails with 502, detail \"cdp-uploader file upload failed at transport level\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpUploaderClient.java:113-115",
+      "quote": "throw new ServiceUnavailableException(\"cdp-uploader file upload failed at transport level\", e);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-044",
+      "statement": "The backend does not check a file's type itself; the allowed-types list is only handed to cdp-uploader at initiation, so file-type refusal is left to cdp-uploader.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:131-134",
+      "quote": "public void proxyFileToUploader(String uploadId, MultipartFile file) {\n    findByUploadId(uploadId);\n    cdpUploaderClient.uploadFile(uploadId, file);\n  }",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-045",
+      "statement": "POST /document-uploads/{upload-id}/scan-results receives cdp-uploader's antivirus scan result and answers 204 No Content once it is recorded.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:160-176",
+      "quote": "summary = \"Handle scan result\",\n      description = \"Receives the cdp-uploader antivirus scan result callback\")\n  @ApiResponse(responseCode = \"204\", description = \"Scan result processed\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-046",
+      "statement": "A scan result is matched to its document by the correlationId in the callback's metadata, not by the upload id in the URL, so a callback to /document-uploads/pending/scan-results updates the right document.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:170-171; DocumentService.java:137-151; proved by DocumentScanCallbackIT scanResult_viaPendingAlias_shouldResolveByCorrelationId",
+      "quote": "// The path variable is always the literal \"pending\" set at initiate time; document identity\n    // is resolved from metadata.correlationId in the payload, not from the URL.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-047",
+      "statement": "A scan result with no correlationId in its metadata is refused with 400, title \"Bad Request\", detail \"Scan callback missing required correlationId in metadata\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:291-298; proved by DocumentScanCallbackIT scanResult_missingCorrelationId_shouldReturn400",
+      "quote": "throw new BadRequestException(\n          \"Scan callback missing required correlationId in metadata\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-048",
+      "statement": "A scan result whose correlationId matches no document is refused with 404, detail \"No accompanying document found with correlationId: {id}\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:300-305; proved by DocumentScanCallbackIT scanResult_unknownCorrelationId_shouldReturn404",
+      "quote": "\"No accompanying document found with correlationId: \" + correlationId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-049",
+      "statement": "Recording a scan result replaces the document's file list with every file in the callback's form, each with its filename, content type, size, S3 location, file status, checksum, detected content type, error flag and error message.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:153, 307-315; file/UploadedFile.java:57-70",
+      "quote": "document.setFiles(mapUploadedFiles(payload));\n    document.setScanStatus(resolveScanStatus(payload));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-050",
+      "statement": "A document's scan status becomes COMPLETE only when the scan result reports zero rejected files; any other count, or a missing count, makes it REJECTED (fail closed).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:317-326; proved by DocumentScanCallbackIT scanResult_nullNumberOfRejectedFiles_shouldSetStatusToRejected",
+      "quote": "Fail-closed: treat a missing or non-zero rejected count as REJECTED to avoid silently\n   * accepting a file when cdp-uploader omits the field.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-051",
+      "statement": "When one scan result holds both a clean and a rejected file, the document is REJECTED and both files are kept: the clean one with its S3 key, the rejected one with none.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentScanCallbackIT.java:154-220 (scanResult_mixedCompleteAndRejected_shouldSetAggregateStatusToRejected)",
+      "quote": "assertThat(persisted.getScanStatus()).isEqualTo(ScanStatus.REJECTED);\n        assertThat(persisted.getFiles()).hasSize(2);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-052",
+      "statement": "The scan-result callback endpoint does not authenticate its caller; adding callback authentication is a recorded follow-up.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:157-159",
+      "quote": "// Security note (EUDPA-35): callback is currently unauthenticated;",
+      "confidence": "verbatim",
+      "note": "Security finding, stated in general terms only."
+    },
+    {
+      "id": "repo-backend-p4-053",
+      "statement": "A document moves from PENDING to COMPLETE or REJECTED only when a scan result arrives; nothing checks the current status first, so a later scan result for the same document overwrites the earlier status and files, and nothing ever sets a document back to PENDING.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:149-158, 269",
+      "quote": "AccompanyingDocument document = findByCorrelationId(correlationId);\n\n    document.setFiles(mapUploadedFiles(payload));\n    document.setScanStatus(resolveScanStatus(payload));",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-054",
+      "statement": "Scan status PENDING means the file has been uploaded (or the session started) and is awaiting antivirus scanning.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/ScanStatus.java:8-9",
+      "quote": "@Schema(description = \"File has been uploaded and is awaiting antivirus scanning\")\n  PENDING,",
+      "confidence": "verbatim",
+      "note": "A document is PENDING from initiation, before any file has been uploaded, so the description overstates what PENDING guarantees."
+    },
+    {
+      "id": "repo-backend-p4-055",
+      "statement": "Scan status COMPLETE means the antivirus scan finished and the file is clean.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/ScanStatus.java:11-12",
+      "quote": "@Schema(description = \"Antivirus scan completed successfully — file is clean\")\n  COMPLETE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-056",
+      "statement": "Scan status REJECTED means the antivirus scan rejected the file (virus or malware detected).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/ScanStatus.java:14-15",
+      "quote": "@Schema(description = \"Antivirus scan rejected the file (virus or malware detected)\")\n  REJECTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-057",
+      "statement": "File status COMPLETE (sent by cdp-uploader as \"complete\") means the file was scanned and is clean.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/FileStatus.java:13-15",
+      "quote": "@JsonAlias(\"complete\")\n  @Schema(description = \"File was successfully scanned and is clean\")\n  COMPLETE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-058",
+      "statement": "File status REJECTED (sent by cdp-uploader as \"rejected\") means the antivirus scan rejected the file.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/FileStatus.java:17-19",
+      "quote": "@JsonAlias(\"rejected\")\n  @Schema(description = \"File was rejected by antivirus scan\")\n  REJECTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-059",
+      "statement": "A file's status is set once, from the scan result: there is no pending file status, because a file entry only exists after a scan result arrives.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/FileStatus.java; AccompanyingDocument.java:73-75",
+      "quote": "/** Individual file entries populated by cdp-uploader callbacks. Initialised to empty list. */",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-060",
+      "statement": "A rejected file is not kept in S3: its S3 key is empty, and only clean files have a key of the form {uploadId}/{fileId}.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/UploadedFile.java:14-17; proved by DocumentControllerIT VirusScan.shouldEndUpAsRejectedViaRealScan",
+      "quote": "{@code s3Key} follows the pattern {@code \"{uploadId}/{fileId}\"} for complete files and is\n * {@code null} for rejected files (the file was not persisted to S3).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-061",
+      "statement": "cdp-uploader's error message for a rejected file, as the backend's test fixture records it, is \"File rejected by antivirus scan\", and it is returned to callers as the file's errorMessage.",
+      "kind": "copy",
+      "ref": "src/test/resources/fixtures/cdp-scan-callback-rejected.json:19",
+      "quote": "\"errorMessage\": \"File rejected by antivirus scan\"",
+      "confidence": "inferred",
+      "note": "The text comes from cdp-uploader and is only pinned by a fixture, not by backend code."
+    },
+    {
+      "id": "repo-backend-p4-062",
+      "statement": "The scan result's overall uploadStatus (such as \"ready\") and cdp-uploader's fileId and status URL are not stored or returned by the backend.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/CdpScanResultPayload.java:9; CdpScanResultFile.java:12-13; CdpUploaderInitiateResponse.java:10-11",
+      "quote": "@param fileId              identifier assigned by cdp-uploader; retained for contract\n *                            completeness but not persisted",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-063",
+      "statement": "A clean upload, run end to end through a real cdp-uploader, ends with the document COMPLETE and one file recorded with its filename, content type, size, S3 key and the documents bucket.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentControllerIT.java:215-237 (CleanScan.shouldEndUpAsCompleteViaRealScan)",
+      "quote": "assertThat(persisted.getScanStatus()).isEqualTo(ScanStatus.COMPLETE);\n            assertThat(persisted.getFiles()).hasSize(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-064",
+      "statement": "An infected upload, run end to end through a real cdp-uploader, ends with the document REJECTED and its one file REJECTED with no S3 key.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentControllerIT.java:239-258 (VirusScan.shouldEndUpAsRejectedViaRealScan)",
+      "quote": "assertThat(persisted.getScanStatus()).isEqualTo(ScanStatus.REJECTED);\n            assertThat(persisted.getFiles()).hasSize(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-065",
+      "statement": "GET /document-uploads/{upload-id}/file downloads the scanned file, streamed from S3, with 200, the file's declared content type and a Content-Disposition of attachment with the original filename (UTF-8 encoded).",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:213-234, 279-285; proved by DocumentControllerIT DownloadFile.shouldStreamFileFromS3WithCorrectHeaders",
+      "quote": "headers.setContentDisposition(\n        ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-066",
+      "statement": "If a file's declared content type cannot be parsed, the download is served as application/octet-stream.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:269-277",
+      "quote": "falling back to application/octet-stream",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-067",
+      "statement": "Downloading the file of a document that has no file yet (still awaiting its scan result) is refused with 404, detail \"No file found for uploadId: {id}\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:219-225; proved by DocumentControllerIT DownloadFile.shouldReturn404_whenNoFilesPresent",
+      "quote": "new NotFoundException(\n                \"No file found for uploadId: \" + uploadId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-068",
+      "statement": "Downloading a file that the virus scan rejected is refused with 404, detail \"File for uploadId: {id} was rejected and is not available for download\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:226-229; proved by DocumentControllerIT DownloadFile.shouldReturn404_whenFileRejected",
+      "quote": "\"File for uploadId: \" + uploadId + \" was rejected and is not available for download\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-069",
+      "statement": "Each upload session holds one file, and the download serves the first file recorded for the session.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:210-222; DocumentController.java:208",
+      "quote": "<p>Each upload session contains exactly one file. The file is streamed directly from S3.",
+      "confidence": "verbatim",
+      "note": "In the mixed clean-and-rejected case the first file decides whether the download succeeds; the invariant is a workflow contract, not enforced."
+    },
+    {
+      "id": "repo-backend-p4-070",
+      "statement": "If a recorded clean file is missing from S3, the download fails with 500, title \"Internal Server Error\", detail \"An unexpected error occurred. Please try again later.\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:343-354; proved by DocumentControllerIT DownloadFile.shouldReturn500_whenS3ObjectMissing",
+      "quote": "HttpStatus.INTERNAL_SERVER_ERROR,\n            \"An unexpected error occurred. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-071",
+      "statement": "If S3 fails part-way through a download, the caller receives 200 with a truncated file and no error indication.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:249-253",
+      "quote": "Known limitation: if S3 throws mid-stream after response headers are committed, the\n   * client receives a 200 with a truncated body and no error indication",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-072",
+      "statement": "Files are always read from the configured documents bucket, whatever bucket the scan result recorded for the file.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/s3/S3DocumentService.java:38-51",
+      "quote": "String bucket = cdpConfig.s3().documentsBucket();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-073",
+      "statement": "Accompanying documents are stored in their own accompanying_documents collection, linked to a notification by its reference number, separate from the notification record.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:31-50",
+      "quote": "@Document(collection = \"accompanying_documents\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-074",
+      "statement": "Each upload id belongs to exactly one document: a second document with the same upload id is refused by a unique index.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:52-54; proved by AccompanyingDocumentRepositoryIT save_shouldThrowDuplicateKeyException_whenUploadIdAlreadyExists",
+      "quote": "/** Unique identifier assigned by cdp-uploader at initiation time. */\n  @Indexed(unique = true)\n  private String uploadId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-075",
+      "statement": "Each correlationId belongs to exactly one document: a second document with the same correlationId is refused by a unique index, so a scan result can never update the wrong document.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:56-64; proved by AccompanyingDocumentRepositoryIT save_shouldThrowDuplicateKeyException_whenCorrelationIdAlreadyExists",
+      "quote": "@Indexed(unique = true)\n  private String correlationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-076",
+      "statement": "Looking a document up by upload id or by correlationId returns it when it exists and nothing when it does not.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/AccompanyingDocumentRepositoryIT.java:49-120 (findByUploadId_shouldReturnDocument_whenUploadIdExists, findByUploadId_shouldReturnEmpty_whenUploadIdDoesNotExist, findByCorrelationId_shouldReturnDocument_whenCorrelationIdExists, findByCorrelationId_shouldReturnEmpty_whenCorrelationIdDoesNotExist)",
+      "quote": "Optional<AccompanyingDocument> findByUploadId(String uploadId);\n\n  Optional<AccompanyingDocument> findByCorrelationId(String correlationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-077",
+      "statement": "A document record carries an optimistic-locking version, so two simultaneous writes to the same document cannot both succeed; the loser gets 409 \"The record was modified by another request; refresh and try again.\".",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:45-47; GlobalExceptionHandler.java:258-269",
+      "quote": "/** Optimistic locking version managed by Spring Data MongoDB. */\n  @Version\n  private Long version;",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-078",
+      "statement": "When notifications are deleted, every accompanying document belonging to them is deleted too, documents of other notifications are left alone, and an empty list deletes nothing.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:182-192 (called from notification/NotificationService.java:433); proved by AccompanyingDocumentRepositoryIT deleteAllByNotificationReferenceNumberIn_shouldDeleteMatchingDocuments, _shouldDeleteAcrossMultipleRefs, _shouldDeleteNothing_whenListIsEmpty",
+      "quote": "Deletes all accompanying documents belonging to the given notification reference numbers.\n   * Called as part of cascade deletion when notifications are removed.",
+      "confidence": "verbatim",
+      "note": "When a notification is deleted belongs to part 3."
+    },
+    {
+      "id": "repo-backend-p4-079",
+      "statement": "Only documents whose scan is COMPLETE, oldest first, are referenced in the events the backend publishes about a notification.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocumentRepository.java:14-15 (used at outbox/OutboxService.java:87-91)",
+      "quote": "// Only documents that passed the virus scan are referenced; read inside the outbox write so\n        // the event and the documents it lists are consistent.",
+      "confidence": "verbatim",
+      "note": "The event payload itself belongs to parts 5 and 6."
+    },
+    {
+      "id": "repo-backend-p4-080",
+      "statement": "Documents can be added to, listed for or deleted from a notification whatever the notification's status (draft, submitted or in amendment): no document endpoint reads the notification.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java (no notification lookup in any method)",
+      "quote": "Orchestrates calls to the cdp-uploader service and persists the resulting\n * {@link AccompanyingDocument} entities.",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-081",
+      "statement": "There is no limit on how many accompanying documents a notification may hold.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:65-67",
+      "quote": "Multiple PENDING documents are deliberately permitted per notification",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-082",
+      "statement": "The document endpoints apply no per-user or per-organisation scoping: access is by notification reference or upload id alone.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java; integration tests call every endpoint with webClient(\"NoAuth\")",
+      "quote": "webClient(\"NoAuth\")",
+      "confidence": "inferred",
+      "note": "Security finding, stated in general terms only."
+    },
+    {
+      "id": "repo-backend-p4-083",
+      "statement": "There are 14 document types, in a fixed order aligned with the frontend's accompanying-document options (the complete V4 set), and each is sent and received by its code.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:5-9; proved by DocumentTypeTest shouldExposeTheCompleteOrderedV4SetAndParseEveryFrontendCode",
+      "quote": "<p>The complete V4 set is aligned with the frontend accompanying-document options.",
+      "confidence": "verbatim",
+      "note": "The backend holds no display label; the labels below are the OpenAPI descriptions."
+    },
+    {
+      "id": "repo-backend-p4-084",
+      "statement": "Document type ITAHC: Intra-Trade Animal Health Certificate (ITAHC).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:11-12",
+      "quote": "@Schema(description = \"Intra-Trade Animal Health Certificate (ITAHC)\")\n  ITAHC,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-085",
+      "statement": "Document type VETERINARY_HEALTH_CERTIFICATE: Veterinary health certificate issued by the country of origin.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:14-15",
+      "quote": "@Schema(description = \"Veterinary health certificate issued by the country of origin\")\n  VETERINARY_HEALTH_CERTIFICATE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-086",
+      "statement": "Document type AIR_WAYBILL: Air waybill.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:17-18",
+      "quote": "@Schema(description = \"Air waybill\")\n  AIR_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-087",
+      "statement": "Document type IMPORT_PERMIT: Import permit.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:20-21",
+      "quote": "@Schema(description = \"Import permit\")\n  IMPORT_PERMIT,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-088",
+      "statement": "Document type LETTER_OF_AUTHORITY: Letter of authority.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:23-24",
+      "quote": "@Schema(description = \"Letter of authority\")\n  LETTER_OF_AUTHORITY,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-089",
+      "statement": "Document type COMMERCIAL_INVOICE: Commercial invoice.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:26-27",
+      "quote": "@Schema(description = \"Commercial invoice\")\n  COMMERCIAL_INVOICE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-090",
+      "statement": "Document type SEA_WAYBILL: Sea waybill.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:29-30",
+      "quote": "@Schema(description = \"Sea waybill\")\n  SEA_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-091",
+      "statement": "Document type RAIL_WAYBILL: Rail waybill.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:32-33",
+      "quote": "@Schema(description = \"Rail waybill\")\n  RAIL_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-092",
+      "statement": "Document type BILL_OF_LADING: Bill of lading.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:35-36",
+      "quote": "@Schema(description = \"Bill of lading\")\n  BILL_OF_LADING,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-093",
+      "statement": "Document type CATCH_CERTIFICATE: Catch certificate.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:38-39",
+      "quote": "@Schema(description = \"Catch certificate\")\n  CATCH_CERTIFICATE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-094",
+      "statement": "Document type LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN: Laboratory sampling results for aflatoxin.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:41-42",
+      "quote": "@Schema(description = \"Laboratory sampling results for aflatoxin\")\n  LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-095",
+      "statement": "Document type HEALTH_CERTIFICATE: Health certificate.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:44-45",
+      "quote": "@Schema(description = \"Health certificate\")\n  HEALTH_CERTIFICATE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-096",
+      "statement": "Document type JOURNEY_LOG: Journey log.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:47-48",
+      "quote": "@Schema(description = \"Journey log\")\n  JOURNEY_LOG,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-097",
+      "statement": "Document type OTHER: Other accompanying document.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentType.java:50-51",
+      "quote": "@Schema(description = \"Other accompanying document\")\n  OTHER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-098",
+      "statement": "Choosing OTHER as the document type asks for no further description: the request has no free-text field to say what the other document is.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentUploadRequest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in DocumentUploadRequest, AccompanyingDocument and the cdp-uploader metadata: only documentType, documentReference and dateOfIssue are taken."
+    },
+    {
+      "id": "repo-backend-p4-099",
+      "statement": "Initiation works against cdp-uploader in production mode, where the redirect must be relative and the callback on the cdp-int.defra.cloud domain, and the uploadUrl returned is an absolute https URL.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentInitiateProductionModeIT.java:66-87 (initiate_shouldReturn201_withRelativeRedirectInProductionMode)",
+      "quote": "assertThat(body.uploadUrl()).startsWith(\"https://\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-100",
+      "statement": "cdp-uploader in production mode refuses an absolute redirect URL with 400 and the message '\"redirect\" must be a valid relative uri', which is why the backend always sends a relative redirect.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentInitiateProductionModeIT.java:89-130 (cdpUploaderInitiate_shouldReject400_whenRedirectIsAbsoluteUrl)",
+      "quote": "assertThat(body).contains(\"\\\\\\\"redirect\\\\\\\" must be a valid relative uri\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-101",
+      "statement": "Documents are indexed by notification reference together with scan status, for listing a notification's documents by status.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocument.java:31",
+      "quote": "@CompoundIndex(def = \"{'notificationReferenceNumber': 1, 'scanStatus': 1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-102",
+      "statement": "The backend's own public base URL, which every Location header, uploadUrl and scan-result callback URL is built from, comes from TRADE_IMPORTS_ANIMALS_BACKEND_BASE_URL and is empty by default, so it must be set in each environment for the document flow to give out usable URLs.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:58-59; used at DocumentController.java:56, 236-242 and DocumentService.java:48, 116-121, 238-240",
+      "quote": "base-url: ${TRADE_IMPORTS_ANIMALS_BACKEND_BASE_URL:}",
+      "confidence": "inferred",
+      "note": "That the URLs are unusable when it is empty is inferred: with no base URL the callback handed to cdp-uploader would be the bare path /document-uploads/pending/scan-results."
+    },
+    {
+      "id": "repo-backend-p4-103",
+      "statement": "The backend reaches cdp-uploader at CDP_UPLOADER_BASE_URL, http://localhost:7337 by default.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:50-51",
+      "quote": "base-url: ${CDP_UPLOADER_BASE_URL:http://localhost:7337}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-104",
+      "statement": "The S3 endpoint the backend reads documents from can be overridden with APP_AWS_ENDPOINT_OVERRIDE for local emulation; it is empty (the real AWS endpoint) by default, and local credentials are never set in the shared configuration.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:57-65",
+      "quote": "endpoint-override: ${APP_AWS_ENDPOINT_OVERRIDE:}\n    # Local development only — set via environment variables or application-local.yml.\n    # Do NOT set real credentials here; these keys are ignored in deployed environments.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-105",
+      "statement": "A scan result with no form section, or an empty one, is still recorded: the document's file list becomes empty and its status is set from the rejected-file count alone.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:307-315, 321-326",
+      "quote": "List<UploadedFile> files = new ArrayList<>();\n    if (payload.form() != null) {",
+      "confidence": "inferred",
+      "note": "So a callback reporting zero rejected files with no files would mark the document COMPLETE with nothing to download; the download then refuses with \"No file found for uploadId\". No test drives this shape."
+    },
+    {
+      "id": "repo-backend-p4-106",
+      "statement": "The scan result's overall uploadStatus is logged but never checked: a callback is recorded whatever uploadStatus it carries.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:172-174; DocumentService.java:149-158",
+      "quote": "log.info(\"POST /document-uploads/{}/scan-results uploadStatus={}\", uploadId,\n        payload.uploadStatus());\n    documentService.handleScanResult(uploadId, payload);",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-107",
+      "statement": "The upload id in the scan-result URL is not used to find the document: a callback posted to /document-uploads/{any value}/scan-results is matched by its correlationId alone, as the mixed-result and missing-count tests show by posting to the real upload id.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentService.java:143-144; DocumentScanCallbackIT.java:196-202, 252-258",
+      "quote": "@param uploadId the upload session identifier from the callback path; informational only\n   *                 (kept for log breadcrumbs — resolution is via {@code metadata.correlationId})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-108",
+      "statement": "The scan-result endpoint's API description names only its 204 response, though it can also refuse with 400 (no correlationId) and 404 (unknown correlationId).",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java:160-165",
+      "quote": "@ApiResponse(responseCode = \"204\", description = \"Scan result processed\", content = @Content)",
+      "confidence": "inferred"
+    }
+  ]
+}

@@ -18,6 +18,14 @@ The spec is maintained **per increment, by `frontend-change`** — no change pro
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
+### The spec on `main` matches the code on `main`
+
+The spec on workspace `main` says only what the service repos' `main` code does.
+
+- Spec changes for a code branch go on a workspace branch with the same name as that code branch.
+- That workspace branch merges to `main` when the code merges, never before.
+- Never put spec for unmerged code on workspace `main`.
+
 ### Where the spec write lands
 
 `frontend-change` writes into a **spec root its caller names**, and commits nothing itself. Who commits afterwards depends on which caller you are:

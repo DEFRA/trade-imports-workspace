@@ -151,6 +151,18 @@ comment and every name is in scope, changed or not:
 decision. Drop a finding only when the code shows it is factually
 wrong.
 
+Copy, layout or a component is a `design` finding, at WARN, when its
+design source (the prototype, a design release, the ticket's
+acceptance criteria) is disagreed with by a guide such as the GDS
+style guide, sets two different things for one element, or does not
+show the case the code had to handle. Read the design source before
+you add one: the ticket names it, and a programme workarea's
+`sources.json` gives a prototype's location and commit. `--issue`
+quotes the design source at file:line (a permalink at that commit for
+a public repo), the code at file:line, and the guide rule with a link
+when a guide disagrees. `--fix` is the question for the designer,
+with the options it leaves. It is never fixed in code.
+
 ### 3b. REFRESH mode — check old violations and new changes
 
 ```bash
@@ -186,9 +198,15 @@ against the rules in the `style-rules.{repo}.{topic}.md` bundle(s) you
 were given and the severity definitions above. Then walk every comment
 and every name in the whole file against the exception list in step 3a.
 
-For each name, predict first: read the name alone and write down what
-it returns and what it changes. Then read the body. A mismatch is a
-finding.
+For each name, every parameter and local included, predict first: read the name alone and write down
+the value it returns and what it changes. Then read the body. A value
+the name's value word does not cover (a name that can return a code)
+or a change it hides is a finding. Nothing (null or undefined) and an
+expected error such as not found are not mismatches, and a suffix that
+names them or a fallback (`…OrNull`, `…OrNotFound`) is itself a
+finding. A name that predicts the value and the change is not a
+finding, even when another name would read better: propose a rename
+only to fix a misprediction.
 
 Feature folders: production controllers under
 `sets/*/journeys/*/features/*` are independent by design, so
@@ -202,7 +220,7 @@ The per-file `.style.json` placeholder was initialised by
 `prepare-style.sh`. For every violation you decide to flag:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
+~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history|design} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
 ```
 
 `--category` is one of the code-quality categories the review skill

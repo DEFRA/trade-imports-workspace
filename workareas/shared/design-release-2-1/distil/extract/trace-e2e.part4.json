@@ -1,0 +1,1096 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 4 mined 16 trace zips from six spec files of the tests repo's animals project (all passed): features/country-of-origin-type-ahead.spec.ts (1), features/port-of-entry-select.spec.ts (1), features/reason-purpose-scope.spec.ts (1), pages/import-reason.spec.ts (5), pages/origin.spec.ts (7) and visual/origin-of-import.visual.spec.ts (1). All six spec files were read in full. The zips were written by a newer Playwright than the trace CLI tim installs (TraceVersionError on open), so each zip was read from its unpacked event files with jq: every action (before events), every network request (resource snapshots) and every full DOM snapshot of <main> and the page title and back link; the visual trace's screencast frame was viewed. Short names used in refs: T01 = animals-e2e-features-count-09462-ountry-code-and-persists-it-animals, T02 = animals-e2e-features-port--60da8-bmits-and-persists-the-code-animals, T03 = animals-e2e-features-reaso-187a4-ped-when-the-reason-changes-animals, T04 = animals-e2e-pages-import-r-bf303-e-renders-the-page-controls-animals, T05 = animals-e2e-pages-import-r-1dcd8-rt-reason-unchecked-on-load-animals, T06 = animals-e2e-pages-import-r-3f715-cepts-a-valid-import-reason-animals, T07 = animals-e2e-pages-import-r-1907f-arket-reason-and-accepts-it-animals, T08 = animals-e2e-pages-import-r-39ca5--the-internal-market-reason-animals, T09 = animals-e2e-pages-origin-O-bc0fa-e-renders-the-page-controls-animals, T10 = animals-e2e-pages-origin-O-556ac-he-country-selector-on-load-animals, T11 = animals-e2e-pages-origin-O-0d4b9-ccepts-valid-origin-details-animals, T12 = animals-e2e-pages-origin-O-44f41-submitted-without-a-country-animals, T13 = animals-e2e-pages-origin-O-9e670-de-is-claimed-but-not-given-animals, T14 = animals-e2e-pages-origin-O-5cbc4-on-of-origin-code-selection-animals, T15 = animals-e2e-pages-origin-O-d8fed-untry-subdivision-selection-animals, T16 = animals-e2e-visual-origin--55e4a-ge-appearance-on-first-load-animals. Page inventory in journey order: (1) Origin of the import, /live-animals/notifications/{ref}/origin, always the first page after Start a new notification on the dashboard, and re-entered from the overview task 'Where is this consignment coming from?' (pointers T01 call@288 first load, T13 call@1315 error state, T14 call@1161 and T15 call@1092 return visits, T12 call@1080 return visit with no country); (2) Main reason for import, /import-reason, reached from the overview task 'Main reason for import', with conditional reveals per reason (pointers T03 call@704 first load, call@720 and call@738 return visits, call@744 and T08 call@1082 error state); (3) Arrival details, /port-of-entry, reached from the overview task 'Arrival details', of which only the Port of entry type-ahead is in this slice (pointers T02 call@629, call@637 list open, call@659 return visit). Pages the traces pass through on the way (dashboard, commodity search, commodity details, overview, additional details, transporter details) appear only as navigation targets here and belong to other parts. Every trace except T16 and T09/T10 crosses the origin page through the shared start-notification setup (France, No, Save and continue).",
+  "claims": [
+    {
+      "id": "trace-e2e-p4-001",
+      "statement": "Starting a new notification from the dashboard creates it with a POST and sends the user straight to the origin page of the new notification: Origin of the import is the first page of the journey.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@286 (click Start a new notification) and request POST /live-animals/notifications",
+      "quote": "POST /live-animals/notifications 302 /live-animals/notifications/GBN-AG-26-QA45SC/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-002",
+      "statement": "Each new notification is given a reference of the form GBN-AG-26- followed by six letters and digits when it is created, and the reference is part of every journey URL.",
+      "kind": "data",
+      "ref": "trace T01 request POST /live-animals/notifications; T02, T03, T12 to T16 the same request",
+      "quote": "GBN-AG-26-QA45SC",
+      "confidence": "verbatim",
+      "note": "Other references seen: GBN-AG-26-R42PJ0, GBN-AG-26-TAG440, GBN-AG-26-GTFZAB, GBN-AG-26-RD5XQF, GBN-AG-26-G3RH4A, GBN-AG-26-9ZZGJS, GBN-AG-26-6H01GG."
+    },
+    {
+      "id": "trace-e2e-p4-003",
+      "statement": "The origin page, like the other journey pages in this slice, shows a status strip above the caption with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, main > div.app-journey-strip",
+      "quote": "Draft GBN-AG-26-QA45SC",
+      "confidence": "verbatim",
+      "note": "The strip is the non-govuk class app-journey-strip around a govuk-tag--blue and a bold govuk-body span. The visual spec masks it because the reference changes every run."
+    },
+    {
+      "id": "trace-e2e-p4-004",
+      "statement": "The origin page has the caption 'About the consignment' above its heading.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, span.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-005",
+      "statement": "The origin page's heading is 'Origin of the import'.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, h1.govuk-heading-l; T09 action call@1255 asserts it visible",
+      "quote": "Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-006",
+      "statement": "The origin page's browser title is 'Origin of the import - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, title",
+      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-007",
+      "statement": "On the first visit to the origin page, straight after starting a notification, the Back link goes to the dashboard; on a later visit from the overview it goes to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@288 (back href /live-animals) and call@314, call@358 (back href /live-animals/notifications/GBN-AG-26-QA45SC)",
+      "quote": "<a href=\"/live-animals\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim",
+      "note": "Also seen on the error re-render in T13 call@1315: Back still goes to /live-animals there."
+    },
+    {
+      "id": "trace-e2e-p4-008",
+      "statement": "The origin page asks for the country of origin, labelled 'Country of origin' as a medium label.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, label[for=countryOfOrigin].govuk-label--m",
+      "quote": "Country of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-009",
+      "statement": "The country of origin field has the hint 'Start typing to search for a country.'",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, #countryOfOrigin-hint",
+      "quote": "Start typing to search for a country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-010",
+      "statement": "With JavaScript on, the country of origin is a type-ahead combobox whose accessible name is 'Country of origin'; it enhances a native select that stays in the page.",
+      "kind": "behaviour",
+      "ref": "trace T01 actions call@318 (to.have.role combobox) and call@320 (to.have.accessible.name Country of origin); call@288 DOM shows input#countryOfOrigin role=combobox beside select#countryOfOrigin-select",
+      "quote": "<input ... class=\"autocomplete__input autocomplete__input--show-all-values\" id=\"countryOfOrigin\" ... role=\"combobox\"> ... <select class=\"govuk-select\" id=\"countryOfOrigin-select\" name=\"countryOfOrigin\" ... data-module=\"app-accessible-autocomplete\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-011",
+      "statement": "The native country select is the no-JavaScript fallback and is what carries the submitted value: before enhancement the server renders it as a plain select with id countryOfOrigin.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@314 (server-rendered DOM before the script ran) and features/country-of-origin-type-ahead.spec.ts comment",
+      "quote": "The select stays in the DOM as the no-JavaScript fallback and is what carries the code the form submits",
+      "confidence": "verbatim",
+      "note": "No trace runs with JavaScript off, so the fallback itself is never driven."
+    },
+    {
+      "id": "trace-e2e-p4-012",
+      "statement": "The country of origin list holds 41 options: the placeholder 'Select a country' first, then 40 places in alphabetical order.",
+      "kind": "data",
+      "ref": "trace T01 actions call@322 (first option has text Select a country) and call@324 (option count 41)",
+      "quote": "Select a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-013",
+      "statement": "The 40 places offered as country of origin, with the code each submits, are: Austria AT, Azores PT-20, Belgium BE, Bulgaria BG, Canary Islands ES-CN, Croatia HR, Cyprus CY, Czechia CZ, Denmark DK, Estonia EE, Finland FI, France FR, French Guiana FR-GF, Germany DE, Greece GR, Guadeloupe FR-GP, Hungary HU, Iceland IS, Ireland IE, Italy IT, Latvia LV, Liechtenstein LI, Lithuania LT, Luxembourg LU, Madeira PT-30, Malta MT, Martinique FR-MQ, Mayotte FR-YT, Netherlands (the) NL, Norway NO, Poland PL, Portugal PT, Reunion FR-LRE, Romania RO, Saint Martin (French part) FR-MF, Slovakia SK, Slovenia SI, Spain ES, Sweden SE, Switzerland CH.",
+      "kind": "data",
+      "ref": "trace T01 action call@288, select[name=countryOfOrigin] options",
+      "quote": "<option value=\"AT\">Austria</option> <option value=\"PT-20\">Azores</option> <option value=\"BE\">Belgium</option> ... <option value=\"CH\">Switzerland</option>",
+      "confidence": "verbatim",
+      "note": "The spec calls these 'the 31 SPS origin countries and nine journey subdivisions'."
+    },
+    {
+      "id": "trace-e2e-p4-014",
+      "statement": "Nine of the country of origin entries are subdivisions rather than countries, and they submit subdivision codes: Azores PT-20, Canary Islands ES-CN, French Guiana FR-GF, Guadeloupe FR-GP, Madeira PT-30, Martinique FR-MQ, Mayotte FR-YT, Reunion FR-LRE and Saint Martin (French part) FR-MF. They sit in alphabetical order among the countries.",
+      "kind": "data",
+      "ref": "trace T01 action call@288, select[name=countryOfOrigin] options; features/country-of-origin-type-ahead.spec.ts comment",
+      "quote": "the placeholder plus the 31 SPS origin countries and nine journey subdivisions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-015",
+      "statement": "The country of origin list has no divider entry: the scroll-only divider rule that other country lists keep has been dropped from this searchable list.",
+      "kind": "rule",
+      "ref": "trace T01 action call@288 (no disabled divider option); features/country-of-origin-type-ahead.spec.ts comment",
+      "quote": "The scroll-only divider rule is gone — a searchable list has no use for it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-016",
+      "statement": "Focusing the country of origin field opens the whole list of 40 places before anything is typed.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@298 (click #countryOfOrigin), listbox shows 40 options",
+      "quote": "aria-setsize=\"40\"",
+      "confidence": "verbatim",
+      "note": "The select carries data-min-length=\"0\" data-show-all-values=\"true\"."
+    },
+    {
+      "id": "trace-e2e-p4-017",
+      "statement": "Typing part of a country name filters the list: typing 'Belg' offers Belgium.",
+      "kind": "behaviour",
+      "ref": "trace T01 actions call@328 (fill Belg) and call@330 (option Belgium visible)",
+      "quote": "fill #countryOfOrigin Belg",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-018",
+      "statement": "Choosing a country from the type-ahead puts its name in the text box and sets the hidden select to the country's code: choosing Belgium shows 'Belgium' and sets BE.",
+      "kind": "behaviour",
+      "ref": "trace T01 actions call@344, call@346 (#countryOfOrigin has value Belgium) and call@348 (select has value BE)",
+      "quote": "expect select[name=\"countryOfOrigin\"] to.have.value BE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-019",
+      "statement": "The origin form submits the country of origin as its code in the field countryOfOrigin, not as the name.",
+      "kind": "data",
+      "ref": "trace T01 request POST /origin (second save); T15 request POST /origin",
+      "quote": "countryOfOrigin=BE",
+      "confidence": "verbatim",
+      "note": "T15 submits countryOfOrigin=ES-CN for Canary Islands."
+    },
+    {
+      "id": "trace-e2e-p4-020",
+      "statement": "A saved country of origin is shown again on return: the select holds the code and the chosen name sits visibly in the search box.",
+      "kind": "behaviour",
+      "ref": "trace T01 actions call@358 (select value BE) and call@360 (#countryOfOrigin value Belgium)",
+      "quote": "The chosen country is left sitting visibly in the search box on return.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-021",
+      "statement": "A saved subdivision is shown again on return in the same way: the select holds ES-CN and the search box shows 'Canary Islands'.",
+      "kind": "behaviour",
+      "ref": "trace T15 actions call@1094 (select value ES-CN) and call@1096 (#countryOfOrigin value Canary Islands)",
+      "quote": "expect #countryOfOrigin to.have.value Canary Islands",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-022",
+      "statement": "The country type-ahead is configured to say 'No countries found' when nothing matches; no trace typed a non-matching value, so the message was never shown.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, select data-no-results attribute",
+      "quote": "data-no-results=\"No countries found\"",
+      "confidence": "inferred",
+      "note": "Inferred from the configuration attribute only; the rendered no-results state is not in any trace."
+    },
+    {
+      "id": "trace-e2e-p4-023",
+      "statement": "The type-ahead gives screen-reader users an assistive hint on how to use the results list.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, span#countryOfOrigin__assistiveHint",
+      "quote": "When autocomplete results are available use up and down arrows to review and enter to select.  Touch device users, explore by touch or with swipe gestures.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-024",
+      "statement": "The country and port type-aheads are built with the accessible-autocomplete component (autocomplete__* classes, a service module app-accessible-autocomplete) rather than a govuk-frontend component; govuk-frontend has no type-ahead of its own.",
+      "kind": "constraint",
+      "ref": "trace T01 action call@288 and T02 action call@629, autocomplete__wrapper / autocomplete__input / autocomplete__menu classes and data-module=\"app-accessible-autocomplete\"",
+      "quote": "data-module=\"app-accessible-autocomplete\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-025",
+      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as a medium legend over Yes/No radios.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, fieldset legend.govuk-fieldset__legend--m",
+      "quote": "Does the consignment have a region of origin code?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-026",
+      "statement": "The region of origin code question has the hint 'If a region of origin code is required it will be shown on your health certificate.'",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, #regionOfOriginCodeRequirement-hint",
+      "quote": "If a region of origin code is required it will be shown on your health certificate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-027",
+      "statement": "The region of origin code question offers two radios, 'Yes' (submits yes) and 'No' (submits no), in the field regionOfOriginCodeRequirement.",
+      "kind": "data",
+      "ref": "trace T01 action call@288, input[name=regionOfOriginCodeRequirement]",
+      "quote": "<input ... name=\"regionOfOriginCodeRequirement\" type=\"radio\" value=\"yes\"> Yes ... value=\"no\"> No",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-028",
+      "statement": "On a new notification neither region of origin code radio is selected.",
+      "kind": "rule",
+      "ref": "trace T09 action call@1253 and T16 action call@40 (no checked radio on the origin page); T16 screencast frame",
+      "quote": "<input class=\"govuk-radios__input\" id=\"regionOfOriginCodeRequirement\" name=\"regionOfOriginCodeRequirement\" type=\"radio\" value=\"yes\" aria-controls=\"conditional-regionOfOriginCodeRequirement\" aria-expanded=\"false\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-029",
+      "statement": "Choosing Yes reveals a text field for the region of origin code beneath it; it is hidden while Yes is not chosen.",
+      "kind": "rule",
+      "ref": "trace T01 action call@288, div#conditional-regionOfOriginCodeRequirement.govuk-radios__conditional--hidden; T13 call@1315 shows it revealed with Yes checked",
+      "quote": "<div class=\"govuk-radios__conditional govuk-radios__conditional--hidden\" id=\"conditional-regionOfOriginCodeRequirement\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-030",
+      "statement": "The revealed region of origin code field is labelled 'Enter the region of origin code'.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, label[for=regionOfOriginCodeSuffix]",
+      "quote": "Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-031",
+      "statement": "The region of origin code field has the hint 'Enter up to 5 characters.' and is a 5-character-wide input.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, #regionOfOriginCodeSuffix-hint and input.govuk-input--width-5",
+      "quote": "Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-032",
+      "statement": "Once a country of origin has been saved, the region of origin code field shows that country's code as a fixed prefix in front of the box (FR for France), so the user types only the suffix.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@314 and T14 action call@1161, div.govuk-input__prefix",
+      "quote": "<div class=\"govuk-input__prefix\" aria-hidden=\"true\">FR</div>",
+      "confidence": "verbatim",
+      "note": "The prefix is rendered by the server from the saved country; on the first visit to a new notification (T01 call@288) the input has no prefix wrapper."
+    },
+    {
+      "id": "trace-e2e-p4-033",
+      "statement": "When the saved origin is a subdivision, the region code prefix is the parent country's code: for Canary Islands (ES-CN) the prefix shown is ES.",
+      "kind": "behaviour",
+      "ref": "trace T15 action call@1092, div.govuk-input__prefix",
+      "quote": "<div class=\"govuk-input__prefix\" aria-hidden=\"true\">ES</div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-034",
+      "statement": "With no country of origin saved, the region code field has no prefix.",
+      "kind": "behaviour",
+      "ref": "trace T12 action call@1080 (return visit after saving without a country): no govuk-input__prefix in the page",
+      "quote": "<input class=\"govuk-input govuk-input--width-5\" id=\"regionOfOriginCodeSuffix\" name=\"regionOfOriginCodeSuffix\" type=\"text\" value=\"\" aria-describedby=\"regionOfOriginCodeSuffix-hint\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-035",
+      "statement": "The region code is stored and submitted as a suffix on its own (regionOfOriginCodeSuffix), separately from the country code; the prefix is aria-hidden and not submitted.",
+      "kind": "data",
+      "ref": "trace T14 request POST /origin",
+      "quote": "countryOfOrigin=FR&regionOfOriginCodeRequirement=yes&regionOfOriginCodeSuffix=75",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-036",
+      "statement": "Answering Yes to the region of origin code question and leaving the code blank refuses the save: the server answers 400 and re-renders the origin page with an error summary titled 'There is a problem'.",
+      "kind": "rule",
+      "ref": "trace T13 action call@1313 and request POST /origin 400; action call@1315 error summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-037",
+      "statement": "The error summary entry for a missing region code reads 'Enter the region of origin code' and links to the region code field.",
+      "kind": "rule",
+      "ref": "trace T13 action call@1315, .govuk-error-summary__list",
+      "quote": "<a href=\"#regionOfOriginCodeSuffix\">Enter the region of origin code</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-038",
+      "statement": "The missing region code error also shows inline above the field, with a visually hidden 'Error:' prefix, and the field takes the error styling.",
+      "kind": "copy",
+      "ref": "trace T13 action call@1315, p#regionOfOriginCodeSuffix-error and input.govuk-input--error",
+      "quote": "<span class=\"govuk-visually-hidden\">Error:</span> Enter the region of origin code",
+      "confidence": "verbatim",
+      "note": "The error message copy is the same as the field's label."
+    },
+    {
+      "id": "trace-e2e-p4-039",
+      "statement": "When the origin page shows an error, its browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace T13 action call@1315, title",
+      "quote": "Error: Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-040",
+      "statement": "On the error re-render the origin page keeps what the user entered: France stays selected (with FR as the region code prefix) and Yes stays checked with the code field revealed.",
+      "kind": "behaviour",
+      "ref": "trace T13 action call@1315, option FR selected, radio yes checked, prefix FR",
+      "quote": "<option value=\"FR\" selected=\"\">France</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-041",
+      "statement": "A region of origin code answer persists: after saving France, Yes and code 75, returning to the origin page shows Yes checked and 75 in the code field.",
+      "kind": "behaviour",
+      "ref": "trace T14 actions call@1163 (Yes checked) and call@1165 (code has value 75)",
+      "quote": "<input class=\"govuk-input govuk-input--width-5\" id=\"regionOfOriginCodeSuffix\" name=\"regionOfOriginCodeSuffix\" type=\"text\" value=\"75\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-042",
+      "statement": "The origin page asks for 'Your internal reference for this consignment (optional)' as a medium label.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, label[for=internalReferenceNumber]",
+      "quote": "Your internal reference for this consignment (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-043",
+      "statement": "The internal reference field's hint says it can be left blank and can be up to 58 characters.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, #internalReferenceNumber-hint",
+      "quote": "Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-044",
+      "statement": "The internal reference is optional free text submitted as internalReferenceNumber; saves with it blank succeed.",
+      "kind": "data",
+      "ref": "trace T01 request POST /origin (internalReferenceNumber empty, 302)",
+      "quote": "internalReferenceNumber=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-045",
+      "statement": "An internal reference persists: Imports456GB saved on the origin page is shown in the field on return.",
+      "kind": "behaviour",
+      "ref": "trace T12 action call@1086; T15 action call@1092 shows value Imports456GB",
+      "quote": "expect internal:label=\"Your internal reference for this consignment (optional)\"i to.have.value Imports456GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-046",
+      "statement": "The origin page has three exits: a primary 'Save and continue' button, a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link to the notification overview.",
+      "kind": "copy",
+      "ref": "trace T01 action call@288, div.govuk-button-group",
+      "quote": "Save and continue ... Save and return to overview ... <a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-QA45SC\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-047",
+      "statement": "'Save and return to overview' is a second submit button of the same form that sends exit=hub, so it saves the page before going to the overview.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@288, button[name=exit][value=hub]",
+      "quote": "<button type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\"",
+      "confidence": "inferred",
+      "note": "Inferred from the markup; no trace in this part clicks it."
+    },
+    {
+      "id": "trace-e2e-p4-048",
+      "statement": "On a new notification, saving the origin page with a country chosen carries the user on to the commodity search page 'What are you importing?' (the opening run), not to the overview.",
+      "kind": "behaviour",
+      "ref": "trace T01 request POST /origin (first save) and action call@308; T14 request POST /origin; origin.spec.ts comment",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-QA45SC/origin 302 /live-animals/notifications/GBN-AG-26-QA45SC/commodities",
+      "confidence": "verbatim",
+      "note": "origin.spec.ts: 'With a country chosen the opening run carries on to commodities, not the overview.'"
+    },
+    {
+      "id": "trace-e2e-p4-049",
+      "statement": "The country of origin does not block the save: submitting the origin page with no country (No checked, internal reference given) saves without any error.",
+      "kind": "rule",
+      "ref": "trace T12 request POST /origin (countryOfOrigin empty, 302) and action call@1076 (no There is a problem heading)",
+      "quote": "countryOfOrigin=&regionOfOriginCodeSuffix=&regionOfOriginCodeRequirement=no&internalReferenceNumber=Imports456GB",
+      "confidence": "verbatim",
+      "note": "origin.spec.ts explains: a user waiting on the health certificate to confirm where the animal comes from records what they know and comes back to it."
+    },
+    {
+      "id": "trace-e2e-p4-050",
+      "statement": "Saving the origin page without a country sets the user down on the notification overview, because the next page, commodity search, needs the country of origin.",
+      "kind": "behaviour",
+      "ref": "trace T12 request POST /origin 302 to the overview and action call@1078 (Overview heading visible)",
+      "quote": "The commodity search is asked for by country of origin, so with the country unanswered there is no next page to offer and the user is set down on the overview.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-051",
+      "statement": "After saving without a country, the overview task 'Where is this consignment coming from?' shows the status 'To do', holding the gap open.",
+      "kind": "behaviour",
+      "ref": "trace T12 action call@1076, overview task list item about-the-consignment-1",
+      "quote": "Where is this consignment coming from? ... To do",
+      "confidence": "verbatim",
+      "note": "origin.spec.ts says the gap is also held at the check page; no trace here reaches it."
+    },
+    {
+      "id": "trace-e2e-p4-052",
+      "statement": "After saving without a country, the origin page on return shows the country empty, No still checked and the internal reference kept.",
+      "kind": "behaviour",
+      "ref": "trace T12 actions call@1082 (select value empty), call@1084 (No checked), call@1086 (reference Imports456GB)",
+      "quote": "expect select[name=\"countryOfOrigin\"] to.have.value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-053",
+      "statement": "After a country and No are saved, the overview task 'Where is this consignment coming from?' shows 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace T01 action call@310, overview task list item about-the-consignment-1",
+      "quote": "Where is this consignment coming from? ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-054",
+      "statement": "When the origin page is reopened from the overview of a notification that already has commodities started, saving it with a country returns the user to the overview rather than to commodities.",
+      "kind": "behaviour",
+      "ref": "trace T01 request POST /origin (second save, entered from the overview) 302 to /live-animals/notifications/GBN-AG-26-QA45SC, action call@354",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-QA45SC/origin 302 /live-animals/notifications/GBN-AG-26-QA45SC concurrencyToken=1&countryOfOrigin=BE",
+      "confidence": "verbatim",
+      "note": "The trace does not show why this save goes to the overview while the first goes to commodities: the opening run ending after one pass, or the commodities page having been visited, are both possible readings."
+    },
+    {
+      "id": "trace-e2e-p4-055",
+      "statement": "Accepting valid origin details (France and No) produces no error summary.",
+      "kind": "behaviour",
+      "ref": "trace T11 actions call@1235 to call@1243 and request POST /origin 302",
+      "quote": "expect internal:role=heading[name=\"There is a problem\"i] to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-056",
+      "statement": "The origin page always posts the same five fields: concurrencyToken, countryOfOrigin, regionOfOriginCodeSuffix, regionOfOriginCodeRequirement and internalReferenceNumber (plus a CSRF crumb).",
+      "kind": "data",
+      "ref": "trace T01, T12, T13, T14, T15 requests POST /origin",
+      "quote": "concurrencyToken=0&countryOfOrigin=FR&regionOfOriginCodeSuffix=&regionOfOriginCodeRequirement=no&internalReferenceNumber=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-057",
+      "statement": "Every journey form in this slice carries a hidden concurrency token that goes up by one with each save of the notification, so a save made against an older version can be detected.",
+      "kind": "behaviour",
+      "ref": "trace T03 requests POST /origin (concurrencyToken=0) through POST /additional-details (concurrencyToken=8); T01 call@288, call@314, call@358 (values 0, 1, 2)",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"1\">",
+      "confidence": "inferred",
+      "note": "The increment is observed; that it guards against stale saves is inferred from its name. No trace exercises a conflict."
+    },
+    {
+      "id": "trace-e2e-p4-058",
+      "statement": "Every journey form in this slice carries a hidden CSRF token named crumb.",
+      "kind": "constraint",
+      "ref": "trace T01 action call@288, input[name=crumb]",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-059",
+      "statement": "Journey forms in this slice switch off browser validation (novalidate) and validate on the server, answering a refused save with HTTP 400 and the re-rendered page.",
+      "kind": "constraint",
+      "ref": "trace T01 action call@288 form[novalidate]; T13 and T08 requests POST 400",
+      "quote": "<form method=\"post\" novalidate=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-060",
+      "statement": "The origin page on first load matches its stored full-page visual baseline (origin-of-import.png), with the status strip masked because the reference differs every run.",
+      "kind": "non-functional",
+      "ref": "trace T16 step expect@50 (toHaveScreenshot(origin-of-import.png), passed); visual/origin-of-import.visual.spec.ts",
+      "quote": "Expect \"toHaveScreenshot(origin-of-import.png)\"",
+      "confidence": "verbatim",
+      "note": "The baseline image itself is not in the trace; the screencast frame is the nearest record of what was compared."
+    },
+    {
+      "id": "trace-e2e-p4-061",
+      "statement": "On first load the origin page shows, in order: Back link, Draft strip with reference, caption 'About the consignment', heading 'Origin of the import', the Country of origin type-ahead with a drop-down arrow and empty box, the region of origin code question with unselected Yes and No, the optional internal reference field, then the green 'Save and continue' and grey 'Save and return to overview' buttons.",
+      "kind": "copy",
+      "ref": "trace T16 screencast frame page@da77b720f91837b4e63111ec1b57265f-1791394881357.jpeg (action call@44)",
+      "quote": "About the consignment / Origin of the import / Country of origin / Start typing to search for a country. / Does the consignment have a region of origin code? / Yes / No / Your internal reference for this consignment (optional) / Save and continue / Save and return to overview",
+      "confidence": "verbatim",
+      "note": "The page header around it shows the service name 'Import notification service' with Dashboard, Address book, Manage account and Log out links, and an Alpha phase banner."
+    },
+    {
+      "id": "trace-e2e-p4-062",
+      "statement": "Apart from the type-ahead and the status strip, the origin page is built from standard govuk-frontend components: caption, heading, radios with a conditional reveal, a text input with a prefix (govuk-input__prefix), a text input and a button group.",
+      "kind": "constraint",
+      "ref": "trace T01 action call@314, class list of main",
+      "quote": "govuk-radios__conditional ... govuk-input__wrapper ... govuk-input__prefix ... govuk-button-group",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-063",
+      "statement": "The Arrival details page is reached from the overview task 'Arrival details' at /port-of-entry, with the caption 'Transport and arrival' and the heading 'Arrival details'.",
+      "kind": "copy",
+      "ref": "trace T02 actions call@627, call@629; main span.govuk-caption-l and h1",
+      "quote": "Transport and arrival ... Arrival details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-064",
+      "statement": "The Arrival details page asks for the port of entry, labelled 'Port of entry' as a small label.",
+      "kind": "copy",
+      "ref": "trace T02 action call@629, label[for=portOfEntry].govuk-label--s",
+      "quote": "Port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-065",
+      "statement": "The port of entry field has a hint telling the user to choose where the transporter will enter and that they can search by name or code.",
+      "kind": "copy",
+      "ref": "trace T02 action call@629, #portOfEntry-hint",
+      "quote": "Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-066",
+      "statement": "With JavaScript on, the port of entry is a type-ahead combobox with the accessible name 'Port of entry', enhancing a native select named portOfEntry that carries the submitted value.",
+      "kind": "behaviour",
+      "ref": "trace T02 actions call@633 (to.have.role combobox) and call@635 (to.have.accessible.name Port of entry); call@629 DOM select#portOfEntry-select",
+      "quote": "<select class=\"govuk-select\" id=\"portOfEntry-select\" name=\"portOfEntry\" ... data-module=\"app-accessible-autocomplete\" data-min-length=\"0\" data-language=\"en\" data-show-all-values=\"true\" data-auto-select=\"false\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-067",
+      "statement": "Focusing the port of entry field opens the whole list of 78 ports before anything is typed.",
+      "kind": "behaviour",
+      "ref": "trace T02 actions call@637, call@639 and DOM at call@637 (listbox of 78 options)",
+      "quote": "Focusing shows the whole list (showAllValues) before any typing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-068",
+      "statement": "The port of entry list holds the placeholder 'Select port of entry' and 78 ports, each labelled 'Name (CODE)' and submitting the code. The first twenty are: Aberdeen Airport (GB DYC), Aberdeen Harbour (GB ABD), Avonmouth Docks (GB AVO), Ayr Port (GB AYR), Barking Port (GB BKG), Birmingham International Airport (GB BHM), Cambridge Airport (GB CBG), Chatham Docks (GB CTM), Coventry Airport (GB CVT), Dartford, Thames Europort (GB DFD), Dundee Port (GB DUN), East Midlands Airport (GB EMA), Edinburgh Airport (GB EDI), Farnborough Airport (GB FBO), Felixstowe Port (GB FXT), Fishguard Port (GB FIS), Folkestone (GB FOL), Fraserburgh Harbour (GB FRB), Gatwick Airport (GB LGW), Glasgow Airport (GB GLW).",
+      "kind": "data",
+      "ref": "trace T02 action call@629, select[name=portOfEntry] options",
+      "quote": "<option value=\"\">Select port of entry</option> <option value=\"GB DYC\">Aberdeen Airport (GB DYC)</option> <option value=\"GB ABD\">Aberdeen Harbour (GB ABD)</option>",
+      "confidence": "verbatim",
+      "note": "Truncated at twenty; treat the list as reference data. It ends with Tilbury Port (GB TILL)."
+    },
+    {
+      "id": "trace-e2e-p4-069",
+      "statement": "Ports can be found by their code because the code is part of each option's label: typing 'gb abd' in lower case offers Aberdeen Harbour (GB ABD).",
+      "kind": "behaviour",
+      "ref": "trace T02 actions call@641 (fill gb abd) and call@643 (option Aberdeen Harbour (GB ABD) visible)",
+      "quote": "Filtering by the port code works because the code is part of the label.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-070",
+      "statement": "Choosing a port puts its label in the type-ahead box and submits only the code: choosing Aberdeen Harbour (GB ABD) submits portOfEntry=GB ABD.",
+      "kind": "behaviour",
+      "ref": "trace T02 actions call@649, call@651 and request POST /port-of-entry",
+      "quote": "portOfEntry=GB ABD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-071",
+      "statement": "Saving Arrival details with a port of entry and arrival date carries the user on to the Transporter details page.",
+      "kind": "behaviour",
+      "ref": "trace T02 request POST /port-of-entry 302 /transporters and action call@657",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-R42PJ0/port-of-entry 302 /live-animals/notifications/GBN-AG-26-R42PJ0/transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-072",
+      "statement": "A saved port of entry persists: on return the select holds GB ABD and the type-ahead shows 'Aberdeen Harbour (GB ABD)'.",
+      "kind": "behaviour",
+      "ref": "trace T02 actions call@659, call@661 (select#portOfEntry-select has value GB ABD) and DOM at call@659",
+      "quote": "<option value=\"GB ABD\" selected=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-073",
+      "statement": "The port type-ahead is configured to say 'No ports found' when nothing matches; no trace typed a non-matching value, so it was never shown.",
+      "kind": "copy",
+      "ref": "trace T02 action call@629, select data-no-results attribute",
+      "quote": "data-no-results=\"No ports found\"",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p4-074",
+      "statement": "The port list contains two entries both labelled 'Pembroke Port', told apart only by their codes GB PED and GB PEM.",
+      "kind": "data",
+      "ref": "trace T02 action call@629, select[name=portOfEntry] options",
+      "quote": "<option value=\"GB PED\">Pembroke Port (GB PED)</option> <option value=\"GB PEM\">Pembroke Port (GB PEM)</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-075",
+      "statement": "The port list contains Port of Sheerness twice, once with the code written without a space (GBSHS) and once with it (GB SHS).",
+      "kind": "data",
+      "ref": "trace T02 action call@629, select[name=portOfEntry] options",
+      "quote": "<option value=\"GBSHS\">Port of Sheerness (GBSHS)</option> <option value=\"GB SHS\">Port of Sheerness (GB SHS)</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-076",
+      "statement": "Some port names in the list are rendered irregularly: 'Portsmouth  Port' has a double space, 'TILBURY' is in capitals, and 'Teestort' looks misspelt; the list is sorted with the capitalised TILBURY before Teesside.",
+      "kind": "data",
+      "ref": "trace T02 action call@629, select[name=portOfEntry] options",
+      "quote": "Portsmouth  Port (GB PME) ... TILBURY (GB TIL) ... Teesside International Airport (GB MME) ... Teestort (GB TEE)",
+      "confidence": "verbatim",
+      "note": "The same reference list, with the same irregularities, feeds the port of exit selects on the reason for import page."
+    },
+    {
+      "id": "trace-e2e-p4-077",
+      "statement": "Besides the port of entry, the Arrival details page also asks for the arrival date at port of entry (a date picker), means of transport to the port of entry, transport identification and transport document reference; they belong to another part of this source.",
+      "kind": "behaviour",
+      "ref": "trace T02 action call@629 and request POST /port-of-entry",
+      "quote": "arrivalDateAtPort=07/11/2026&portOfEntry=GB ABD&meansOfTransport=&transportIdentification=&transportDocumentReference=",
+      "confidence": "verbatim",
+      "note": "Recorded so the page is not mistaken for a single-question page; the other fields' detail is out of this part's scope."
+    },
+    {
+      "id": "trace-e2e-p4-078",
+      "statement": "The reason for import page is at /import-reason and is reached from the overview task 'Main reason for import'; its title is 'Main reason for import - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "trace T03 actions call@702, call@704 and title; T04 action call@877",
+      "quote": "Main reason for import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-079",
+      "statement": "The reason for import page has the caption 'About the consignment' and the heading 'Main reason for import'.",
+      "kind": "copy",
+      "ref": "trace T03 action call@704, span.govuk-caption-l and h1; T04 action call@881",
+      "quote": "About the consignment ... Main reason for import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-080",
+      "statement": "The question 'What is the main reason for importing the animals?' is the radio group's visually hidden legend, not a visible heading; the page heading 'Main reason for import' is what users see.",
+      "kind": "copy",
+      "ref": "trace T03 action call@704, legend.govuk-visually-hidden; T04 actions call@883 (group visible) and call@885 (no heading with that name)",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\"> What is the main reason for importing the animals? </legend>",
+      "confidence": "verbatim",
+      "note": "import-reason.spec.ts: 'if it is ever promoted back to an h1 this fails, mirroring the frontend fit spec.'"
+    },
+    {
+      "id": "trace-e2e-p4-081",
+      "statement": "The first reason is 'Internal market' (submits internalMarket), with the hint 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#reasonForImport",
+      "quote": "Internal market ... For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-082",
+      "statement": "The second reason is 'Transhipment or onward travel' (submits transhipmentOrOnwardTravel), with a hint about direct travel to a third country staying within the same port or airport.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#reasonForImport-2",
+      "quote": "Transhipment or onward travel ... For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-083",
+      "statement": "The third reason is 'Transit' (submits transit), with a hint about entering Great Britain at one port or airport and leaving from a different one.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#reasonForImport-3",
+      "quote": "Transit ... For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-084",
+      "statement": "The fourth reason is 'Re-entry' (submits reEntry), with the hint 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'; it has no reveal.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#reasonForImport-4 (no aria-controls)",
+      "quote": "Re-entry ... For animals authorised for re-entry, or rejected exports re-entering Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-085",
+      "statement": "The fifth reason is 'Temporary admission horses' (submits temporaryAdmissionHorses), with the hint 'For horses authorised for temporary entry.'",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#reasonForImport-5",
+      "quote": "Temporary admission horses ... For horses authorised for temporary entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-086",
+      "statement": "On a notification with no reason saved, no reason radio is selected when the page loads.",
+      "kind": "rule",
+      "ref": "trace T05 action call@809 (Internal market not checked) and DOM at call@807 (no checked input); T03 action call@704",
+      "quote": "expect internal:role=radio[name=\"Internal market\"s] to.be.checked NOT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-087",
+      "statement": "Choosing Internal market reveals a nested question 'Purpose in the internal market' (a medium legend over radios) beneath it; the purpose is asked only under Internal market.",
+      "kind": "rule",
+      "ref": "trace T03 action call@704, div#conditional-reasonForImport; T07 actions call@1063, call@1065 (Breeding visible after choosing Internal market)",
+      "quote": "Purpose in the internal market",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-088",
+      "statement": "Purpose option 1 is 'Transfer of ownership - Sale/gift' (submits transfer-of-ownership-sale-gift), with a hint covering sales, purchases from a breeder or shop overseas and moves to a new owner with no sale such as a gift.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket",
+      "quote": "Transfer of ownership - Sale/gift ... Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-089",
+      "statement": "Purpose option 2 is 'Transfer of ownership - Rescue' (submits transfer-of-ownership-rescue), with a hint about rehoming and adoption or fostering.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-2",
+      "quote": "Transfer of ownership - Rescue ... Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-090",
+      "statement": "Purpose option 3 is 'Breeding' (submits breeding), with a hint about animals for reproduction.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-3",
+      "quote": "Breeding ... Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-091",
+      "statement": "Purpose option 4 is 'Research' (submits research), with the hint 'Animals for use in scientific or medical research.'",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-4",
+      "quote": "Research ... Animals for use in scientific or medical research.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-092",
+      "statement": "Purpose option 5 is 'Racing, competition, show or training' (submits racing-competition-show-or-training), with the hint 'Animals to participate in competitive or training events.'",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-5",
+      "quote": "Racing, competition, show or training ... Animals to participate in competitive or training events.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-093",
+      "statement": "Purpose option 6 is 'Approved premises or body' (submits approved-premises-or-body), with a hint about exhibitions, zoos, collections or conservation needing a licence or approval.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-6",
+      "quote": "Approved premises or body ... Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-094",
+      "statement": "Purpose option 7 is 'Companion animal not for resale or rehoming' (submits companion-animal-not-for-resale-or-rehoming), with a hint about privately owned animals that cannot meet the non-commercial rules.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-7",
+      "quote": "Companion animal not for resale or rehoming ... Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-095",
+      "statement": "Purpose option 8 is 'Production' (submits production), with a hint about animals farmed for meat, milk, eggs, wool or other products.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-8",
+      "quote": "Production ... Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-096",
+      "statement": "Purpose option 9 is 'Slaughter' (submits slaughter), with a hint about slaughter shortly after arrival into Great Britain.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-9",
+      "quote": "Slaughter ... Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-097",
+      "statement": "Purpose option 10 is 'Fattening' (submits fattening), with the hint 'Animals to be fattened for meat production.'",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-10",
+      "quote": "Fattening ... Animals to be fattened for meat production.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-098",
+      "statement": "Purpose option 11 is 'Restocking' (submits restocking), with a hint about replenishing populations such as game or fish.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, input#purposeInInternalMarket-11",
+      "quote": "Restocking ... To replenish or enhance populations of species, for example, restocking of game or fish.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-099",
+      "statement": "When the purpose is first revealed, no purpose is pre-selected.",
+      "kind": "rule",
+      "ref": "trace T07 action call@1067 (Breeding not checked)",
+      "quote": "expect internal:role=radio[name=\"Breeding\"s] to.be.checked NOT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-100",
+      "statement": "Reason and purpose are answered on one page and sent in one submit: Internal market with Breeding saves and goes on to the Additional details page.",
+      "kind": "behaviour",
+      "ref": "trace T07 request POST /import-reason 302 /additional-details; T03 action call@710",
+      "quote": "reasonForImport=internalMarket&purposeInInternalMarket=breeding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-101",
+      "statement": "Choosing Internal market and saving with no purpose refuses the save (HTTP 400) and keeps the user on the reason page with an error summary 'There is a problem'.",
+      "kind": "rule",
+      "ref": "trace T08 request POST /import-reason 400 and actions call@1082, call@1086 (heading Main reason for import still visible)",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-102",
+      "statement": "The error for a missing purpose reads 'Select a purpose in the internal market', both in the error summary (linking to the purpose radios) and inline above the purpose options with a visually hidden 'Error:' prefix.",
+      "kind": "rule",
+      "ref": "trace T03 action call@744, .govuk-error-summary__list and p#purposeInInternalMarket-error; T08 action call@1084",
+      "quote": "<a href=\"#purposeInInternalMarket\">Select a purpose in the internal market</a> ... <span class=\"govuk-visually-hidden\">Error:</span> Select a purpose in the internal market",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-103",
+      "statement": "On the missing-purpose error the browser title is prefixed with 'Error: ', and Internal market stays checked with the purpose reveal open.",
+      "kind": "copy",
+      "ref": "trace T03 action call@744, title and input#reasonForImport checked aria-expanded=true",
+      "quote": "Error: Main reason for import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-104",
+      "statement": "Re-entry needs nothing else on the page: choosing it and saving gives no error and goes on to Additional details.",
+      "kind": "behaviour",
+      "ref": "trace T06 actions call@972 to call@976 and request POST /import-reason 302 /additional-details",
+      "quote": "reasonForImport=reEntry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-105",
+      "statement": "Choosing Transhipment or onward travel reveals a 'Destination country' select (field transhipmentDestinationCountry).",
+      "kind": "rule",
+      "ref": "trace T03 action call@704, div#conditional-reasonForImport-2",
+      "quote": "<label class=\"govuk-label govuk-label--s\" for=\"transhipmentDestinationCountry\"> Destination country </label>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-106",
+      "statement": "The destination country selects on the reason page start with 'Select a country' and a disabled divider line, then list 31 countries (Austria AT to Switzerland CH) with no subdivisions.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, select#transhipmentDestinationCountry and select#transitDestinationCountry",
+      "quote": "<option value=\"\">Select a country</option> <option value=\"\" disabled=\"\">──────────</option> <option value=\"AT\">Austria</option>",
+      "confidence": "verbatim",
+      "note": "These are plain govuk-select fields, not type-aheads, and keep the divider the origin list dropped."
+    },
+    {
+      "id": "trace-e2e-p4-107",
+      "statement": "Choosing Transit reveals two selects: 'Port of exit' (transitPortOfExit) and 'Destination country' (transitDestinationCountry).",
+      "kind": "rule",
+      "ref": "trace T03 action call@704, div#conditional-reasonForImport-3; reason-purpose-scope.spec.ts comment",
+      "quote": "the reason-gated exit details (port of exit + destination country) come into scope and reveal under the reason",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-108",
+      "statement": "The port of exit selects on the reason page start with 'Select port of exit' and a disabled divider, then list the same 78 ports as the port of entry, as a plain select rather than a type-ahead.",
+      "kind": "data",
+      "ref": "trace T03 action call@704, select#transitPortOfExit and select#temporaryAdmissionPortOfExit",
+      "quote": "<option value=\"\">Select port of exit</option> <option value=\"\" disabled=\"\">──────────</option> <option value=\"GB DYC\">Aberdeen Airport (GB DYC)</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-109",
+      "statement": "Choosing Temporary admission horses reveals an 'Exit date' date picker with the hint 'For example, 27/3/2026' and a 'Port of exit' select (temporaryAdmissionPortOfExit).",
+      "kind": "rule",
+      "ref": "trace T03 action call@704, div#conditional-reasonForImport-5",
+      "quote": "Exit date ... For example, 27/3/2026 ... Port of exit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-110",
+      "statement": "The exit date uses the MOJ date picker (moj-datepicker, a 'Choose date' toggle opening a calendar dialog with Select and Close buttons), which is outside govuk-frontend; the GOV.UK date input is the standard alternative.",
+      "kind": "constraint",
+      "ref": "trace T03 action call@704, div.moj-datepicker[data-module=moj-date-picker]",
+      "quote": "<div class=\"moj-datepicker\" data-module=\"moj-date-picker\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-111",
+      "statement": "Transit with a port of exit and a destination country saves without a purpose and goes on to Additional details; after Additional details the overview row 'Main reason for import' shows 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace T03 request POST /import-reason (reasonForImport=transit) 302 /additional-details and actions call@728 to call@734",
+      "quote": "reasonForImport=transit&transitPortOfExit=GB DYC&transitDestinationCountry=FR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-112",
+      "statement": "After a reason and any purpose are saved, the overview row 'Main reason for import' is completed only once the Additional details page that follows has been saved too.",
+      "kind": "behaviour",
+      "ref": "trace T03 actions call@708 to call@716; reason-purpose-scope.spec.ts comment",
+      "quote": "reason + purpose go in on one submit and the tail page completes the row.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-113",
+      "statement": "A saved Internal market reason and purpose are shown again on return: Internal market checked with its reveal open and Breeding checked.",
+      "kind": "behaviour",
+      "ref": "trace T03 action call@720, input#reasonForImport checked and input#purposeInInternalMarket-3 checked",
+      "quote": "<input class=\"govuk-radios__input\" id=\"purposeInInternalMarket-3\" name=\"purposeInInternalMarket\" type=\"radio\" value=\"breeding\" checked=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-114",
+      "statement": "Changing the reason away from Internal market wipes the saved purpose: after switching to Transit and back, no purpose radio is pre-selected.",
+      "kind": "rule",
+      "ref": "trace T03 actions call@738, call@740 (purposeInInternalMarket:checked count 0) and DOM at call@738 (no purpose checked)",
+      "quote": "leaving scope wiped the saved purpose, so no purpose radio is pre-selected and the task is owed again.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-115",
+      "statement": "Once wiped, the purpose is owed again and enforced on the reason page: a save of Internal market with no purpose returns the page with the purpose error instead of going on to Additional details.",
+      "kind": "rule",
+      "ref": "trace T03 actions call@742 to call@748 and request POST /import-reason 400",
+      "quote": "The purpose is owed again, and it is now enforced where it is asked: a blank save returns the page with the error rather than walking on.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-116",
+      "statement": "Answering the newly owed purpose and saving Additional details completes the 'Main reason for import' row again.",
+      "kind": "behaviour",
+      "ref": "trace T03 actions call@750 to call@762",
+      "quote": "Answering the newly owed purpose completes the row again.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-117",
+      "statement": "A saved destination country and port of exit are shown pre-selected in every reveal that asks for them: after a Transit save with FR and GB DYC, the Transhipment destination country and the Temporary admission port of exit also show FR and GB DYC, and a later Internal market save posts those hidden values too.",
+      "kind": "behaviour",
+      "ref": "trace T03 action call@738 (FR selected in transhipmentDestinationCountry and transitDestinationCountry; GB DYC selected in transitPortOfExit and temporaryAdmissionPortOfExit) and request POST /import-reason (concurrencyToken=7)",
+      "quote": "reasonForImport=internalMarket&transhipmentDestinationCountry=FR&transitPortOfExit=GB DYC&transitDestinationCountry=FR&temporaryAdmissionExitDate=&temporaryAdmissionPortOfExit=GB DYC",
+      "confidence": "inferred",
+      "note": "Inferred that one stored destination country and one stored port of exit back all the reveals. The trace does not show whether these values are kept or wiped in the stored notification once Internal market is saved."
+    },
+    {
+      "id": "trace-e2e-p4-118",
+      "statement": "The reason page always posts reasonForImport plus every reveal's fields (purposeInInternalMarket when chosen, transhipmentDestinationCountry, transitPortOfExit, transitDestinationCountry, temporaryAdmissionExitDate, temporaryAdmissionPortOfExit), whichever reason is chosen.",
+      "kind": "data",
+      "ref": "trace T06 and T07 requests POST /import-reason",
+      "quote": "transhipmentDestinationCountry=&transitPortOfExit=&transitDestinationCountry=&reasonForImport=reEntry&temporaryAdmissionExitDate=&temporaryAdmissionPortOfExit=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-119",
+      "statement": "The reason page has the same three exits as the origin page: 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'; its Back link goes to the overview.",
+      "kind": "copy",
+      "ref": "trace T03 action call@704, div.govuk-button-group and back link href /live-animals/notifications/GBN-AG-26-TAG440",
+      "quote": "Save and continue ... Save and return to overview ... Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p4-120",
+      "statement": "The reason page is built from govuk-frontend radios with conditional reveals (one of them nesting a second radio group), govuk-select fields and the MOJ date picker.",
+      "kind": "constraint",
+      "ref": "trace T03 action call@704, class list of main",
+      "quote": "govuk-radios__conditional ... govuk-select ... moj-datepicker",
+      "confidence": "verbatim",
+      "note": "Nested conditional radios inside a conditional reveal go against GOV.UK design system guidance, which advises keeping conditional reveals simple."
+    },
+    {
+      "id": "trace-e2e-p4-121",
+      "statement": "No trace in this part submits the reason page with no reason chosen, so the error copy for a missing main reason is not shown.",
+      "kind": "rule",
+      "ref": "pages/import-reason.spec.ts and features/reason-purpose-scope.spec.ts: no blank-reason test",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-122",
+      "statement": "No trace submits Transhipment or onward travel or Temporary admission horses, so what those reasons need, their errors and where they go next are not shown.",
+      "kind": "rule",
+      "ref": "trace T03 and T04 to T08: reasons chosen are only Internal market, Transit and Re-entry",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-123",
+      "statement": "No trace submits Transit with the port of exit or destination country missing, so whether they are required and their error copy are not shown.",
+      "kind": "rule",
+      "ref": "trace T03 request POST /import-reason (transit always submitted with both)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-124",
+      "statement": "No trace enters a region of origin code longer than 5 characters or with unexpected characters, so length or format validation of the code is not shown.",
+      "kind": "rule",
+      "ref": "pages/origin.spec.ts: only blank and 75 are entered",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-125",
+      "statement": "No trace enters an internal reference longer than the 58 characters the hint promises, so whether the limit is enforced and its error copy are not shown.",
+      "kind": "rule",
+      "ref": "pages/origin.spec.ts: only Imports456GB is entered",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-126",
+      "statement": "No trace saves the origin page with no answer to the region of origin code question, so whether that question is required on save is not shown.",
+      "kind": "rule",
+      "ref": "pages/origin.spec.ts: every save checks Yes or No",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-127",
+      "statement": "No trace changes a saved region of origin code answer from Yes to No, so whether the saved code is wiped is not shown.",
+      "kind": "rule",
+      "ref": "pages/origin.spec.ts and T14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-128",
+      "statement": "No trace changes the country of origin after a region code has been saved, so what happens to the code and its prefix is not shown.",
+      "kind": "rule",
+      "ref": "pages/origin.spec.ts and features/country-of-origin-type-ahead.spec.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-129",
+      "statement": "No trace saves Arrival details with the port of entry missing or not on the list, so port of entry validation and its error copy are not shown.",
+      "kind": "rule",
+      "ref": "features/port-of-entry-select.spec.ts: one happy-path test",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-130",
+      "statement": "No trace runs with JavaScript off, so the country and port selects working as plain no-JavaScript fallbacks are not shown.",
+      "kind": "behaviour",
+      "ref": "all 16 traces run with JavaScript on",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-131",
+      "statement": "No trace clicks 'Save and return to overview' or 'Cancel and return to overview' on the origin, reason or arrival pages, so whether the first saves an incomplete page and the second discards changes is not shown.",
+      "kind": "behaviour",
+      "ref": "all 16 traces: every submit is Save and continue",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p4-132",
+      "statement": "No trace shows the overview row 'Main reason for import' between the purpose being wiped and being answered again, so the status the row takes while the purpose is owed is not shown.",
+      "kind": "behaviour",
+      "ref": "trace T03 actions call@732 to call@738",
+      "quote": "",
+      "confidence": "gap",
+      "note": "reason-purpose-scope.spec.ts says 'the task is owed again', but the row is not asserted at that point."
+    },
+    {
+      "id": "trace-e2e-p4-133",
+      "statement": "The visual baseline image origin-of-import.png is not inside the trace, so the exact pixels the page is held to are not part of this source.",
+      "kind": "non-functional",
+      "ref": "trace T16 step expect@50",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

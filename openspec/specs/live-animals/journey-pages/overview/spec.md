@@ -8,7 +8,7 @@ The task list a user works a notification from, listing every task under numbere
 
 ### Requirement: Overview groups the notification's tasks under six fixed, numbered sections
 **ID**: REQ-OVERVIEW-001
-The system MUST group the notification's tasks on the Overview page under six numbered section headings, in a fixed order, with one task list per section.
+For a notification, the system MUST group its tasks on the Overview page under six numbered section headings, in a fixed order, with one task list per section.
 
 #### Scenario: A fresh notification's Overview lists its always-present tasks under the six sections
 **ID**: SCN-OVERVIEW-001-A
@@ -19,7 +19,7 @@ The system MUST group the notification's tasks on the Overview page under six nu
 
 ### Requirement: Each task row shows one of two statuses, and Overview offers a review button open at any point
 **ID**: REQ-OVERVIEW-002
-The system MUST show each task row's status as one of two labels — Complete once it is answered, To do otherwise, never a third or blocked state — and MUST offer a fixed "Review and submit" button, not a task row, that opens the review page at any point in the journey however much of the notification remains outstanding.
+For a notification, the system MUST show each task row's status as one of two labels — Complete once it is answered, To do otherwise, never a third or blocked state — and MUST offer a fixed "Review and submit" button, not a task row, that opens the review page at any point in the journey however much of the notification remains outstanding.
 
 #### Scenario: A fresh notification shows an answered task as Complete and an unworked task as To do, both linked
 **ID**: SCN-OVERVIEW-002-A
@@ -37,7 +37,7 @@ The system MUST show each task row's status as one of two labels — Complete on
 
 ### Requirement: Overview's only route off the page is the Return to dashboard action — there is no back link
 **ID**: REQ-OVERVIEW-003
-The system MUST offer a return-to-dashboard action from Overview and take the user to the dashboard, and MUST NOT show a back link, since Overview is the top of the notification rather than a step within it.
+For a notification, the system MUST offer a return-to-dashboard action from Overview and take the user to the dashboard, and MUST NOT show a back link, since Overview is the top of the notification rather than a step within it.
 
 #### Scenario: The return action leads to the dashboard, with no back link present
 **ID**: SCN-OVERVIEW-003-A
@@ -104,3 +104,91 @@ The system MUST show every task row as a bare link with a status, except Roles a
 - **GIVEN** the user views Overview
 - **WHEN** the task rows are examined
 - **THEN** only the Roles and addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination
+
+### Requirement: Main import reason completes on the reason's own answers, apart from Additional details
+**ID**: REQ-OVERVIEW-008
+The system MUST mark the Main import reason task Complete once an allowed reason and the questions it opens are saved — Internal market with a purpose; Transhipment or onward travel with a destination country; Transit with a port of exit and a destination country; Temporary admission horses with an exit date and a port of exit; Re-entry alone — whether or not Additional details is answered, and MUST NOT mark it Complete while no reason is saved.
+
+#### Scenario: The reason task completes while Additional details is still to do
+**ID**: SCN-OVERVIEW-008-A
+- **GIVEN** an allowed reason and its questions are saved and Additional details is unanswered
+- **WHEN** the user views Overview
+- **THEN** Main import reason reads Complete
+- **AND** Additional details reads To do
+
+#### Scenario: The reason task is not complete with no reason saved
+**ID**: SCN-OVERVIEW-008-B
+- **GIVEN** no reason is saved
+- **WHEN** the user views Overview
+- **THEN** Main import reason reads To do
+
+### Requirement: Where is this consignment coming from? completes only once the country and the region code question are answered
+**ID**: REQ-OVERVIEW-009
+The system MUST mark the "Where is this consignment coming from?" task Complete only once a country is chosen and the region of origin code question is answered, with a code given when the answer is Yes, and MUST NOT mark it Complete while either is missing.
+
+#### Scenario: A country with the region question unanswered is not complete
+**ID**: SCN-OVERVIEW-009-A
+- **GIVEN** a country is saved and the region of origin code question is unanswered
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" does not read Complete
+
+#### Scenario: A country with No is complete
+**ID**: SCN-OVERVIEW-009-B
+- **GIVEN** a country is saved and the answer is that no region code is required
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" reads Complete
+
+#### Scenario: A country with Yes and a code is complete
+**ID**: SCN-OVERVIEW-009-C
+- **GIVEN** a country is saved, a region code is required and the code is given
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" reads Complete
+
+### Requirement: The third task of About the consignment is Main import reason
+**ID**: REQ-OVERVIEW-011
+The system MUST title the third task of "1. About the consignment" "Main import reason".
+
+#### Scenario: The first section lists Main import reason third
+**ID**: SCN-OVERVIEW-011-A
+- **GIVEN** a new notification has just been started
+- **WHEN** the user views Overview
+- **THEN** "1. About the consignment" lists "Where is this consignment coming from?", "What are you importing?" and "Main import reason", in that order
+
+### Requirement: The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details
+**ID**: REQ-OVERVIEW-012
+The system MUST show the "Transit countries" task in "3. Transport and arrival" only once the saved means of transport is Rail or Road, MUST list it after "Arrival details" and before "Transport details", and MUST show it To do until at least one transit country is saved, then Complete.
+
+#### Scenario: A chosen commodity travelling by rail or road shows the task in its place
+**ID**: SCN-OVERVIEW-012-B
+- **GIVEN** a commodity is chosen and Rail or Road is saved as the means of transport
+- **WHEN** the user views Overview
+- **THEN** the third section lists "Arrival details", "Transit countries" and "Transport details", in that order
+- **AND** "Transit countries" reads To do
+
+#### Scenario: The task completes once a country is saved
+**ID**: SCN-OVERVIEW-012-C
+- **GIVEN** a commodity is chosen, Rail or Road is saved and no transit country is saved
+- **WHEN** the user saves at least one transit country and views Overview
+- **THEN** "Transit countries" reads Complete
+
+#### Scenario: A consignment travelling by air has no Transit countries task
+**ID**: SCN-OVERVIEW-012-D
+- **GIVEN** a cat is chosen
+- **WHEN** the user views Overview before arrival details are saved, and again after Air is saved
+- **THEN** no "Transit countries" task is shown
+
+### Requirement: Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past
+**ID**: REQ-OVERVIEW-013
+The system MUST measure a saved arrival date against the allowed arrival window each time Overview is viewed, and MUST show "Arrival details" as To do once that date is more than 7 days in the past, however completely the task was answered when it was saved.
+
+#### Scenario: A saved arrival date more than 7 days in the past reads To do
+**ID**: SCN-OVERVIEW-013-A
+- **GIVEN** arrival details were saved complete, and the saved arrival date is now more than 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads To do
+
+#### Scenario: A saved arrival date exactly 7 days in the past still reads Complete
+**ID**: SCN-OVERVIEW-013-B
+- **GIVEN** arrival details were saved complete, and the saved arrival date is exactly 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads Complete

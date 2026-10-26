@@ -255,7 +255,15 @@ with commits of its own is left as it is. A failure names its step and its exact
    into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`. A
    branch-lifecycle row that owes only some phases runs those one per call. The
    implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts.
+   agent picks a repo's test scripts. How hard the gate drives this machine
+   (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
+   the machine's own gitignored `config/machine.json`, never from `gates.json`;
+   `tim build tune` writes it once per machine: see
+   [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
+   once at launch (`tim build workers`) and gives them to every stage, so a probe,
+   plan check or reviewer's FIT or E2E run outside the gate passes the same
+   `--workers`. A change to the file reaches the gate at its next run and the
+   stages at the next launch.
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also
@@ -744,6 +752,17 @@ To the user, from the returned list:
 inc-NNN  landed   <title>            PR #123 · EUDPA-4567
 ```
 
+Then list, under "For the designer", every open question starting "For the designer:" on
+the rows the run built. These are `design` findings: copy, layout or a component where a guide
+disagrees with the design source, the design source sets two different things for one element,
+or it does not show the case the code handles. The code keeps the design; the designer decides.
+Each question carries its evidence (the design source and the code at file:line, the guide
+rule's link): list it with that evidence, ready to share with the designer.
+
+```bash
+jq -r '.increments[] | select(.id == "inc-NNN") | .openQuestions[]? | select(startswith("For the designer:"))' <backlog>
+```
+
 Then the stop reason, then the handover prompt. Do not read the diffs and do not
 open the test logs. Everything worth reading already ran inside the workflow.
 
@@ -768,7 +787,7 @@ handover prompt.
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
 | `off-branch` | A repo left the run's branch and could not be moved back |
-| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
+| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
 | `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
 | `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
@@ -911,6 +930,21 @@ says a theme split off early waits on a row the parent no longer has, run
   every requirement it must pick up, every one that changed and every one no longer to build. Add or rewrite rows
   in the split backlog for them, then update the parent's pointer as
   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
+
+### Moving rows to a second machine
+
+To build some rows of a theme already building on one machine in parallel on another, move them into a new theme
+backlog with `tim backlog split <workarea>/themes/<theme id> --rows <ids> --to <new theme id> --write --json`
+([`DISTIL.md`](DISTIL.md#9-moving-rows-out-of-a-split-theme-to-a-second-machine)). It is safe while the loop runs
+on the old backlog: `tim backlog next` there no longer offers the moved rows, and the old backlog keeps a `movedOut`
+pointer to them.
+
+- **Cut the new branch from the old one's tip,** once the row in flight has landed, and open its draft pull requests.
+  The second machine runs the loop on `<workarea>/themes/<new theme id>` with that backlog's `repos` and `branch`.
+- **Bring it back with a merge row.** Add a `chore` row to the old backlog that waits for every moved row through
+  `externalDependsOn`, sets `merge` to `origin/<new branch>` for each repo, and says in its acceptance criteria
+  that both sets of behaviour survive the merge and the full gate is green. Make the old theme's final row depend
+  on it.
 
 ## Branch lifecycle
 

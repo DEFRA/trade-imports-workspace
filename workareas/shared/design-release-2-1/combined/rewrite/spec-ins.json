@@ -1,0 +1,217 @@
+{
+  "batch": "ins",
+  "changes": [
+    {
+      "capability": "ins/address-book",
+      "capabilityName": "Import notification service: Address book",
+      "requirementId": "REQ-INS-ADDR-005",
+      "requirementName": "The add and edit forms ask for the same Standard Address Block, with two fields optional",
+      "change": "changed",
+      "before": "### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional\n**ID**: REQ-INS-ADDR-005\nThe system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code.\n\n#### Scenario: The add form asks for every field, marking address line 2 and county optional\n**ID**: SCN-INS-ADDR-005-A\n- **GIVEN** the user opens the add address form\n- **WHEN** the page is shown\n- **THEN** every field is asked for, with address line 2 and county labelled optional\n- **AND** the country field offers a populated list of countries\n- **AND** a hint explains that an international phone number should include its country code",
+      "after": "### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional\n**ID**: REQ-INS-ADDR-005\nThe system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code, and MUST offer United Kingdom first in the country field, followed by every country the reference data service serves, in the order it serves them.\n\n#### Scenario: The add form asks for every field, marking address line 2 and county optional\n**ID**: SCN-INS-ADDR-005-A\n- **GIVEN** the user opens the add address form\n- **WHEN** the page is shown\n- **THEN** every field is asked for, with address line 2 and county labelled optional\n- **AND** the country field offers a populated list of countries\n- **AND** a hint explains that an international phone number should include its country code\n\n#### Scenario: The country field offers United Kingdom, then every country the reference data service serves\n**ID**: SCN-INS-ADDR-005-B\n- **GIVEN** the user opens the add address form\n- **WHEN** the country list is read in full\n- **THEN** after its placeholder it offers United Kingdom, then every country the reference data service serves, by their served names, in the order it serves them",
+      "summary": "The country list on the address form now starts with United Kingdom, then every country the reference data service serves, in its order. A new scenario checks this.",
+      "cards": [
+        "stub-lists"
+      ]
+    },
+    {
+      "capability": "ins/notification-dashboard",
+      "capabilityName": "Import notification service: Dashboard",
+      "requirementId": "REQ-INS-DASH-001",
+      "requirementName": "The dashboard lists notifications from every status, identifying each one",
+      "change": "changed",
+      "before": "### Requirement: The dashboard lists notifications from every status, identifying each one\n**ID**: REQ-INS-DASH-001\nThe system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, DRAFT and AMEND — each row showing its reference number and status, and MUST NOT show a notification that has been soft-deleted.\n\n#### Scenario: Notifications of every status appear together, deleted ones excluded\n**ID**: SCN-INS-DASH-001-A\n- **GIVEN** notifications exist in SUBMITTED, DRAFT, AMEND and soft-deleted states\n- **WHEN** a signed-in user opens the dashboard\n- **THEN** the SUBMITTED, DRAFT and AMEND notifications are all shown, each with its reference number and status\n- **AND** the soft-deleted notification does not appear",
+      "after": "### Requirement: The dashboard lists notifications from every status, identifying each one\n**ID**: REQ-INS-DASH-001\nThe system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT and AMEND — each row showing its reference number and status, and MUST NOT show a notification that has been soft-deleted.\n\n#### Scenario: Notifications of every status appear together, deleted ones excluded\n**ID**: SCN-INS-DASH-001-A\n- **GIVEN** notifications exist in SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT, AMEND and soft-deleted states\n- **WHEN** a signed-in user opens the dashboard\n- **THEN** the SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT and AMEND notifications are all shown, each with its reference number and status\n- **AND** the soft-deleted notification does not appear",
+      "summary": "The dashboard list now also shows notifications submitted with action required, alongside the other statuses.",
+      "cards": [
+        "action-required",
+        "q-ins-status-text"
+      ]
+    },
+    {
+      "capability": "ins/notification-dashboard",
+      "capabilityName": "Import notification service: Dashboard",
+      "requirementId": "REQ-INS-DASH-002",
+      "requirementName": "Opening a notification's link routes by its status",
+      "change": "changed",
+      "before": "### Requirement: Opening a notification's link routes by its status\n**ID**: REQ-INS-DASH-002\nThe system MUST link a submitted notification's row to its read-only notification-view page, and MUST link a draft notification's row to its journey hub rather than notification-view.\n\n#### Scenario: A submitted notification opens read-only\n**ID**: SCN-INS-DASH-002-A\n- **GIVEN** a submitted notification is listed on the dashboard\n- **WHEN** the user selects its View link\n- **THEN** the read-only notification-view page opens for that reference\n\n#### Scenario: A draft notification opens its journey hub, not the read-only view\n**ID**: SCN-INS-DASH-002-B\n- **GIVEN** a draft notification is listed on the dashboard\n- **WHEN** the user selects its View link\n- **THEN** the journey hub opens for that reference, not notification-view",
+      "after": "### Requirement: Opening a notification's link routes by its status\n**ID**: REQ-INS-DASH-002\nThe system MUST link a submitted notification's row, with or without action required, to its read-only notification-view page, and MUST link a draft notification's row to its journey hub rather than notification-view.\n\n#### Scenario: A submitted notification opens read-only\n**ID**: SCN-INS-DASH-002-A\n- **GIVEN** a submitted notification is listed on the dashboard\n- **WHEN** the user selects its View link\n- **THEN** the read-only notification-view page opens for that reference\n\n#### Scenario: A draft notification opens its journey hub, not the read-only view\n**ID**: SCN-INS-DASH-002-B\n- **GIVEN** a draft notification is listed on the dashboard\n- **WHEN** the user selects its View link\n- **THEN** the journey hub opens for that reference, not notification-view\n\n#### Scenario: A notification submitted with action required opens read-only\n**ID**: SCN-INS-DASH-002-C\n- **GIVEN** a SUBMITTED_ACTION_REQUIRED notification is listed on the dashboard\n- **WHEN** the user selects its View link\n- **THEN** the read-only notification-view page opens for that reference",
+      "summary": "A notification submitted with action required now opens the read-only view, like any submitted notification. A new scenario checks this.",
+      "cards": [
+        "action-required"
+      ]
+    },
+    {
+      "capability": "ins/notification-dashboard",
+      "capabilityName": "Import notification service: Dashboard",
+      "requirementId": "REQ-INS-DASH-004",
+      "requirementName": "The dashboard always offers Create new, opening the notification type question",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The dashboard always offers Create new, opening the notification type question\n**ID**: REQ-INS-DASH-004\nThe system MUST offer a \"Create new\" button under the dashboard heading, above the reference search and the notifications list, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing), or the notifications could not be loaded, and MUST NOT offer \"Start a new notification\". Choosing \"Create new\" MUST open the \"What are you importing?\" question (`ins/notification-type`) with no option selected, before any notification exists.\n\n#### Scenario: Starting from a dashboard that lists notifications asks what is being imported\n**ID**: SCN-INS-DASH-004-A\n- **GIVEN** notifications are listed on the dashboard\n- **WHEN** the user chooses \"Create new\"\n- **THEN** the question \"What are you importing?\" is shown\n- **AND** no option is selected and the second option is Germinal products (semen, ova, embryos)\n\n#### Scenario: Starting from an empty dashboard asks the same question\n**ID**: SCN-INS-DASH-004-B\n- **GIVEN** the organisation has no notifications\n- **WHEN** the dashboard is shown\n- **THEN** \"Create new\" is still offered\n- **AND** choosing it shows the question \"What are you importing?\"\n\n#### Scenario: Create new is still offered after a search that matches nothing\n**ID**: SCN-INS-DASH-004-C\n- **GIVEN** the user searches for a reference number that matches no notification\n- **WHEN** the \"No notifications found\" message is shown\n- **THEN** \"Create new\" is still offered\n- **AND** choosing it shows the question \"What are you importing?\"\n\n#### Scenario: Create new is still offered when the notifications cannot be loaded\n**ID**: SCN-INS-DASH-004-D\n- **GIVEN** the notifications list cannot be loaded\n- **WHEN** the dashboard is shown with \"Sorry, there is a problem with the service. Try again in a few minutes.\"\n- **THEN** \"Create new\" is still offered under the dashboard heading",
+      "summary": "New. The dashboard always offers Create new, which opens the question 'What are you importing?' before any notification exists.\n\nThe dashboard must not offer 'Start a new notification'.",
+      "cards": [
+        "t-type-question",
+        "t-ins-home-buttons"
+      ]
+    },
+    {
+      "capability": "ins/notification-dashboard",
+      "capabilityName": "Import notification service: Dashboard",
+      "requirementId": "REQ-INS-DASH-005",
+      "requirementName": "The dashboard always offers Use template, opening Manage templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The dashboard always offers Use template, opening Manage templates\n**ID**: REQ-INS-DASH-005\nThe system MUST offer a secondary \"Use template\" button beside \"Create new\", under the dashboard heading, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing), or the notifications could not be loaded. Following \"Use template\" MUST open the page headed \"Manage templates\" in the live animals service (`live-animals/notification-templates`).\n\n#### Scenario: Use template is offered beside Create new in every state of the dashboard\n**ID**: SCN-INS-DASH-005-A\n- **GIVEN** the user is signed in\n- **WHEN** the dashboard is shown with notifications, with none, or after a search that matches nothing\n- **THEN** \"Use template\" is offered beside \"Create new\"\n\n#### Scenario: Following Use template opens Manage templates\n**ID**: SCN-INS-DASH-005-B\n- **GIVEN** the user is signed in and on the dashboard\n- **WHEN** they follow \"Use template\"\n- **THEN** the page headed \"Manage templates\" is shown\n\n#### Scenario: Use template is still offered when the notifications cannot be loaded\n**ID**: SCN-INS-DASH-005-C\n- **GIVEN** the notifications list cannot be loaded\n- **WHEN** the dashboard is shown with \"Sorry, there is a problem with the service. Try again in a few minutes.\"\n- **THEN** \"Use template\" is still offered beside \"Create new\"",
+      "summary": "New. The dashboard always offers Use template beside Create new, even when the notifications cannot be loaded.\n\nIt opens Manage templates in the live animals service.",
+      "cards": [
+        "t-ins-home-buttons"
+      ]
+    },
+    {
+      "capability": "ins/notification-tracking",
+      "capabilityName": "Import notification service: Notification tracking",
+      "requirementId": "REQ-INS-TRACK-001",
+      "requirementName": "One record is kept per notification, updated in place as it changes",
+      "change": "changed",
+      "before": "### Requirement: One record is kept per notification, updated in place as it changes\n**ID**: REQ-INS-TRACK-001\nThe system MUST keep one record per notification once it exists, MUST keep that record up to date as the notification's status and detail change, and MUST NOT create a second record for the same notification when it is submitted.\n\n#### Scenario: An in-progress notification is tracked as Draft, with its detail\n**ID**: SCN-INS-TRACK-001-A\n- **GIVEN** a user has worked through a notification up to its declaration page, without submitting\n- **WHEN** the service is asked what it holds for that notification\n- **THEN** one record exists for it, showing a Draft status and reflecting the answers entered so far\n\n#### Scenario: Submitting the notification updates the same record to Submitted\n**ID**: SCN-INS-TRACK-001-B\n- **GIVEN** an in-progress notification is already tracked as Draft\n- **WHEN** the user submits the notification\n- **THEN** that same record updates to show a Submitted status\n- **AND** no second record is created for that notification",
+      "after": "### Requirement: One record is kept per notification, updated in place as it changes\n**ID**: REQ-INS-TRACK-001\nThe system MUST keep one record per notification once it exists, MUST keep that record up to date as the notification's status and detail change, and MUST NOT create a second record for the same notification when it is submitted.\n\n#### Scenario: An in-progress notification is tracked as Draft, with its detail\n**ID**: SCN-INS-TRACK-001-A\n- **GIVEN** a user has worked through a notification up to its declaration page, without submitting\n- **WHEN** the service is asked what it holds for that notification\n- **THEN** one record exists for it, showing a Draft status and reflecting the answers entered so far\n\n#### Scenario: Submitting the notification updates the same record to a submitted status\n**ID**: SCN-INS-TRACK-001-B\n- **GIVEN** an in-progress notification is already tracked as Draft\n- **WHEN** the user submits the notification\n- **THEN** that same record updates to show a submitted status: Submitted, or Submitted action required when no health certificate was uploaded\n- **AND** no second record is created for that notification",
+      "summary": "After submission, the single record can now show Submitted action required as well as Submitted, when no health certificate was uploaded.\n\nOnly a scenario changed; the requirement text is the same.",
+      "cards": [
+        "action-required"
+      ]
+    },
+    {
+      "capability": "ins/notification-type",
+      "capabilityName": "Import notification service: What are you importing? question",
+      "requirementId": "REQ-INS-NTYPE-001",
+      "requirementName": "The notification type question asks what is being imported before any notification exists",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The notification type question asks what is being imported before any notification exists\n**ID**: REQ-INS-NTYPE-001\nThe page MUST ask \"What are you importing?\" with five unselected options and a single \"Continue\" button, and MUST NOT create a notification, show a Draft tag or show a notification reference.\n\n#### Scenario: The question shows its title, options and single Continue button\n**ID**: SCN-INS-NTYPE-001-A\n- **GIVEN** a signed-in user has chosen to start a new notification\n- **WHEN** the question is shown\n- **THEN** the browser title is \"What are you importing? - Import notification service - GOV.UK\"\n- **AND** the heading is \"What are you importing?\" with the caption \"About the consignment\"\n- **AND** the options are, in order, Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products\n- **AND** no hint is shown and no option is selected\n- **AND** the page ends with a single \"Continue\" button, with no \"Save and return to overview\" and no cancel link\n\n#### Scenario: Back returns to the home and no notification is created\n**ID**: SCN-INS-NTYPE-001-B\n- **GIVEN** the question is shown\n- **WHEN** the user follows Back\n- **THEN** the Import Notification Service home is shown with Dashboard as the current service-navigation item\n- **AND** no notification has been created\n\n#### Scenario: The question shows no Draft tag and no reference\n**ID**: SCN-INS-NTYPE-001-C\n- **GIVEN** the question is shown\n- **WHEN** the user reads the page\n- **THEN** no Draft tag and no notification reference are shown\n\n#### Scenario: The question shows the Alpha phase banner with an email feedback link\n**ID**: SCN-INS-NTYPE-001-D\n- **GIVEN** the question is shown\n- **WHEN** the user reads the page\n- **THEN** the \"Alpha\" phase banner shows \"This is a new service. Help us improve it and give your feedback by email.\"\n- **AND** the feedback link opens an email to the service desk",
+      "summary": "New. The page asks 'What are you importing?' with five options and one Continue button.\n\nIt creates no notification and shows no Draft tag or reference.",
+      "cards": [
+        "t-type-question"
+      ]
+    },
+    {
+      "capability": "ins/notification-type",
+      "capabilityName": "Import notification service: What are you importing? question",
+      "requirementId": "REQ-INS-NTYPE-002",
+      "requirementName": "Choosing what is being imported hands the user to the journey that notifies it",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Choosing what is being imported hands the user to the journey that notifies it\n**ID**: REQ-INS-NTYPE-002\nThe system MUST, when the user chooses a type and continues, hand them to the journey that notifies it: Live animals to a new live-animals draft, Germinal products to the germinal products start address (/germinal-products/start) in the animals service, and Plants for planting, Potatoes (seed and ware) or Wood products to a new high-risk plants draft. It MUST NOT create a live-animals notification for any other choice.\n\n#### Scenario: Live animals opens a new live-animals draft\n**ID**: SCN-INS-NTYPE-002-A\n- **GIVEN** the question is shown\n- **WHEN** the user chooses Live animals and continues\n- **THEN** a new live-animals draft is created and its \"Origin of the import\" page is shown\n- **AND** the page shows the Draft tag and a new GBN-AG reference\n\n#### Scenario: Germinal products opens the germinal products start\n**ID**: SCN-INS-NTYPE-002-B\n- **GIVEN** the question is shown\n- **WHEN** the user chooses Germinal products (semen, ova, embryos) and continues\n- **THEN** the user is sent to the germinal products start address in the animals service\n- **AND** no live-animals notification is created\n\n#### Scenario: A plants type opens a new high-risk plants draft\n**ID**: SCN-INS-NTYPE-002-C\n- **GIVEN** the question is shown\n- **WHEN** the user chooses Plants for planting, Potatoes (seed and ware) or Wood products and continues\n- **THEN** a new high-risk plants draft is created and the high-risk plants journey's first page is shown\n- **AND** no live-animals notification is created",
+      "summary": "New. The type the user chooses sends them to the right journey: a live animals draft, the germinal products start, or a high-risk plants draft.",
+      "cards": [
+        "t-type-question",
+        "t-plants-first-page"
+      ]
+    },
+    {
+      "capability": "ins/notification-type",
+      "capabilityName": "Import notification service: What are you importing? question",
+      "requirementId": "REQ-INS-NTYPE-003",
+      "requirementName": "Continuing with nothing chosen is refused",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Continuing with nothing chosen is refused\n**ID**: REQ-INS-NTYPE-003\nThe system MUST, when the user continues with nothing chosen, show the question again with an error summary and an inline error, both \"Select what you are importing\", and MUST prefix the browser title with \"Error: \".\n\n#### Scenario: Continuing with nothing chosen shows the error\n**ID**: SCN-INS-NTYPE-003-A\n- **GIVEN** the question is shown with no option chosen\n- **WHEN** the user selects \"Continue\"\n- **THEN** the page is shown again with an error summary titled \"There is a problem\" listing \"Select what you are importing\", linked to the first option\n- **AND** the same message is shown on the options\n- **AND** the browser title starts \"Error: \"",
+      "summary": "New. Continuing with nothing chosen shows the error 'Select what you are importing'.",
+      "cards": [
+        "t-type-question"
+      ]
+    },
+    {
+      "capability": "ins/notification-type",
+      "capabilityName": "Import notification service: What are you importing? question",
+      "requirementId": "REQ-INS-NTYPE-004",
+      "requirementName": "Creating a template asks what is being imported, offering only the types templates cover",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Creating a template asks what is being imported, offering only the types templates cover\n**ID**: REQ-INS-NTYPE-004\nThe system MUST, when creating a template, ask the question under \"About the consignment\" offering only Live animals and Germinal products, none selected, with one \"Continue\" button, Back to Manage templates and Templates current. It MUST NOT show a Template tag, template name, Draft tag or reference, MUST refuse an empty choice as REQ-INS-NTYPE-003 does, and MUST return to a template already named when the user goes back and continues again.\n\n#### Scenario: Create new template asks the type question with two options\n**ID**: SCN-INS-NTYPE-004-A\n- **GIVEN** a signed-in user is on Manage templates\n- **WHEN** they select \"Create new template\"\n- **THEN** \"What are you importing?\" is shown under the caption \"About the consignment\"\n- **AND** the options are Live animals and Germinal products (semen, ova, embryos), with none selected\n- **AND** Plants for planting, Potatoes (seed and ware) and Wood products are not offered\n- **AND** the page ends with a single \"Continue\" button\n- **AND** no \"Template\" tag, no template name, no Draft tag and no notification reference are shown\n- **AND** Back leads to Manage templates and Templates is the current service-navigation item\n\n#### Scenario: Continuing with nothing chosen is refused\n**ID**: SCN-INS-NTYPE-004-B\n- **GIVEN** the question is shown while creating a template with no option chosen\n- **WHEN** the user selects \"Continue\"\n- **THEN** the page is shown again with an error summary titled \"There is a problem\" listing \"Select what you are importing\", linked to the first option\n- **AND** the browser title starts \"Error: \"\n\n#### Scenario: Continuing goes to the template name page\n**ID**: SCN-INS-NTYPE-004-C\n- **GIVEN** the question is shown while creating a template\n- **WHEN** the user chooses Live animals or Germinal products (semen, ova, embryos) and continues\n- **THEN** the template name page is shown\n- **AND** no origin page is shown and no draft notification is created\n\n#### Scenario: Coming back from the template name page shows the chosen type selected\n**ID**: SCN-INS-NTYPE-004-D\n- **GIVEN** the user has chosen Live animals and reached the template name page\n- **WHEN** they follow Back\n- **THEN** the question is shown with Live animals selected\n\n#### Scenario: Leaving before naming the template stores nothing\n**ID**: SCN-INS-NTYPE-004-E\n- **GIVEN** the user has chosen to create a template and reached the template name page\n- **WHEN** they leave without saving the name\n- **THEN** Manage templates shows the same count of templates as before\n- **AND** none of the user's draft notifications has changed\n\n#### Scenario: Continuing for a template already in progress returns to that template's name page\n**ID**: SCN-INS-NTYPE-004-F\n- **GIVEN** the user has named a template, reached \"Origin of the import\", followed Back to the template name page and Back again to the question\n- **WHEN** the question is shown\n- **THEN** the template's type is shown selected\n- **WHEN** they continue\n- **THEN** the template name page is shown with the name already entered\n\n#### Scenario: Continuing again returns to the same template with its name\n**ID**: SCN-INS-NTYPE-004-G\n- **GIVEN** the user has named a template, reached \"Origin of the import\" and followed Back twice to the type question\n- **WHEN** they choose Live animals or Germinal products (semen, ova, embryos) and continue, including after first continuing with nothing chosen\n- **THEN** the template name page shows the name already saved\n- **AND** Manage templates later shows only one new template",
+      "summary": "New. When creating a template, the same question offers only Live animals and Germinal products.\n\nGoing back and continuing returns to the template already named.",
+      "cards": [
+        "t-template-type-question",
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "ins/page-titles",
+      "capabilityName": "Import notification service: Page titles",
+      "requirementId": "REQ-INS-PAGE-TITLE-001",
+      "requirementName": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Every page's title names the page, then the service, then GOV.UK, joined by hyphens\n**ID**: REQ-INS-PAGE-TITLE-001\nThe system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order and joined by hyphens. The system MUST NOT separate them with a pipe. The home page is titled Dashboard.\n\n#### Scenario: A page's title reads page name, service name, GOV.UK\n**ID**: SCN-INS-PAGE-TITLE-001-A\n- **GIVEN** a signed-in trader is on a page of the front door that carries a name of its own, such as the address book\n- **WHEN** the page's title is read\n- **THEN** it reads that page's name, then the service name, then GOV.UK, joined by hyphens, such as `Address book - Import notification service - GOV.UK`\n\n#### Scenario: The parts are not separated by a pipe\n**ID**: SCN-INS-PAGE-TITLE-001-B\n- **GIVEN** a page of the front door\n- **WHEN** its title is built\n- **THEN** no pipe separates the page name, the service name and GOV.UK\n\n#### Scenario: The home is titled Dashboard - Import notification service - GOV.UK\n**ID**: SCN-INS-PAGE-TITLE-001-C\n- **GIVEN** a signed-in trader\n- **WHEN** they open the home\n- **THEN** the title reads `Dashboard - Import notification service - GOV.UK`",
+      "summary": "New. Every page title reads page name, service name, GOV.UK, joined by hyphens with no pipe.\n\nThe home page is titled Dashboard.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "ins/page-titles",
+      "capabilityName": "Import notification service: Page titles",
+      "requirementId": "REQ-INS-PAGE-TITLE-002",
+      "requirementName": "A page showing errors opens its whole title with an error prefix",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A page showing errors opens its whole title with an error prefix\n**ID**: REQ-INS-PAGE-TITLE-002\nThe system MUST open the title of a page showing errors with an error prefix, ahead of the page's own name, so the whole title — not only the page name — is marked as being in error.\n\n#### Scenario: The error prefix opens the title while errors are shown\n**ID**: SCN-INS-PAGE-TITLE-002-A\n- **GIVEN** the trader has submitted a page that answers back with an error summary, such as the add address page with nothing filled in\n- **WHEN** the page's title is read\n- **THEN** it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before, such as `Error: Add address details - Import notification service - GOV.UK`",
+      "summary": "New. A page showing errors opens its whole title with 'Error: '.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "ins/page-titles",
+      "capabilityName": "Import notification service: Page titles",
+      "requirementId": "REQ-INS-PAGE-TITLE-003",
+      "requirementName": "An error page's title follows the same pattern",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: An error page's title follows the same pattern\n**ID**: REQ-INS-PAGE-TITLE-003\nThe system MUST title its error pages with the error's name, then the service name, then the GOV.UK brand word, joined by hyphens, as it titles every other page.\n\n#### Scenario: A page that does not exist is titled Page not found - Import notification service - GOV.UK\n**ID**: SCN-INS-PAGE-TITLE-003-A\n- **GIVEN** a signed-in trader\n- **WHEN** they open a page that does not exist\n- **THEN** the title reads `Page not found - Import notification service - GOV.UK`",
+      "summary": "New. Error pages follow the same title pattern, for example 'Page not found - Import notification service - GOV.UK'.",
+      "cards": [
+        "page-titles"
+      ]
+    },
+    {
+      "capability": "ins/service-navigation",
+      "capabilityName": "Import notification service: Service navigation",
+      "requirementId": "REQ-INS-NAV-001",
+      "requirementName": "The navigation offers five items in a fixed order",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The navigation offers five items in a fixed order\n**ID**: REQ-INS-NAV-001\nThe system MUST offer Dashboard, Templates, Address book, Manage account and Log out, in that order, in the service navigation to a signed-in user, and MUST offer none to a visitor who is not signed in.\n\n#### Scenario: The navigation lists its five items on the dashboard\n**ID**: SCN-INS-NAV-001-A\n- **GIVEN** the user is signed in\n- **WHEN** they view the dashboard\n- **THEN** the navigation offers, in order, Dashboard, Templates, Address book, Manage account and Log out\n\n#### Scenario: A visitor who is not signed in is offered no navigation items\n**ID**: SCN-INS-NAV-001-B\n- **GIVEN** the visitor is not signed in\n- **WHEN** a page of the service is shown\n- **THEN** the service name is shown\n- **AND** no navigation item is offered",
+      "summary": "New. A signed-in user sees five navigation items in a fixed order.\n\nA visitor who is not signed in sees none.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "ins/service-navigation",
+      "capabilityName": "Import notification service: Service navigation",
+      "requirementId": "REQ-INS-NAV-002",
+      "requirementName": "The Templates item opens Manage templates in the live animals service",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The Templates item opens Manage templates in the live animals service\n**ID**: REQ-INS-NAV-002\nThe system MUST open the page headed \"Manage templates\" in the live animals journey when the user follows the Templates item.\n\n#### Scenario: Following Templates opens Manage templates\n**ID**: SCN-INS-NAV-002-A\n- **GIVEN** the user is signed in\n- **WHEN** they follow Templates in the navigation\n- **THEN** the page headed \"Manage templates\" is shown",
+      "summary": "New. The Templates item opens Manage templates in the live animals service.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    },
+    {
+      "capability": "ins/service-navigation",
+      "capabilityName": "Import notification service: Service navigation",
+      "requirementId": "REQ-INS-NAV-003",
+      "requirementName": "The navigation marks Dashboard, Templates or Address book as current on its own pages",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The navigation marks Dashboard, Templates or Address book as current on its own pages\n**ID**: REQ-INS-NAV-003\nThe system MUST mark Dashboard as the current section on the dashboard and on the type question when a notification is being started, Address book as the current section on the address book and its pages, and Templates as the current section on the type question while a template is being created. It MUST NOT mark Templates anywhere else in this service, since Manage templates is not part of it.\n\n#### Scenario: Dashboard is marked current on the dashboard and Templates is not\n**ID**: SCN-INS-NAV-003-A\n- **GIVEN** the user is on the dashboard\n- **WHEN** they view the navigation\n- **THEN** Dashboard is marked as the current section\n- **AND** Templates is not\n\n#### Scenario: Address book is marked current on the address book and Templates is not\n**ID**: SCN-INS-NAV-003-B\n- **GIVEN** the user is on the address book\n- **WHEN** they view the navigation\n- **THEN** Address book is marked as the current section\n- **AND** neither Templates nor Dashboard is\n\n#### Scenario: Templates is marked current while creating a template\n**ID**: SCN-INS-NAV-003-C\n- **GIVEN** the user is on the type question after choosing to create a template\n- **WHEN** they view the navigation\n- **THEN** Templates is marked as the current section\n- **AND** Dashboard is not\n\n#### Scenario: Dashboard is marked current on the type question when starting a notification\n**ID**: SCN-INS-NAV-003-D\n- **GIVEN** the user has chosen to start a new notification\n- **WHEN** the question \"What are you importing?\" is shown\n- **THEN** Dashboard is marked as the current section\n- **AND** Templates is not",
+      "summary": "New. The navigation marks Dashboard as current on the dashboard and on the type question when starting a notification.\n\nIt marks Address book as current on the address book pages.\n\nIn this service, Templates is marked only on the type question while a template is being created.",
+      "cards": [
+        "t-templates-navigation"
+      ]
+    }
+  ]
+}

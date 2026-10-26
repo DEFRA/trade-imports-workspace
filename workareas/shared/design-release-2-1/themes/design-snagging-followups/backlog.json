@@ -1,0 +1,371 @@
+{
+  "programme": "design-release-2-1-design-snagging-followups",
+  "generatedFrom": [
+    "review:engineering-2026-10-23"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, and JavaScript only enhances a page that already works.",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too.",
+    "Appearance is proved by screenshot tests in the tests repo, accessible names, or GOV.UK values read at run time, never by fixed colour, size or class assertions (Sam, 23 Oct engineering review).",
+    "A user's own input error shown back on the form is not logged (.claude/rules/code-quality.md, Logging and errors).",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
+    }
+  },
+  "theme": "design-snagging-followups",
+  "branch": "feat/EUDPA-720-design-release-2-1-design-snagging-followups",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 3,
+    "landsAfter": [
+      "design-snagging",
+      "design-snagging-b"
+    ]
+  },
+  "touches": [
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js",
+    "frontend:fit/live-animals-journey.js",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/search",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
+    "plantsfrontend:src/server/common/components/accessible-autocomplete",
+    "plantsfrontend:src/server/app/engine/test-support.js",
+    "plantsfrontend:src/server/app/shared/kit.js",
+    "tests:tests/animals/e2e/visual",
+    "tests:tests/plants/e2e/visual"
+  ],
+  "increments": [
+    {
+      "id": "inc-232",
+      "title": "Save and return to overview makes the same checks as Save and continue on every page, in animals and plants",
+      "detail": "Sam, 26 Oct, on the BA's find: Save and return to overview must behave consistently with Save and continue on every page. This replaces the 7 October soft-save ruling (c-211, and c-313 for plants), which let Save and return skip blank required answers. Today Save and return skips required-answer checks through allowMissing: kit.isHubExit(request) (lib/validate/run.js) and the plants equivalent, and the animals Upload documents page leaves through leavePage without checking at all (documents/controller.js:293-335), throwing away even a complete document. Change every page that ends with the save buttons so Save and return runs the same validation as Save and continue: on any error the trader stays on the page with the error summary and every answer they gave is kept; with no error the answers are saved and the trader goes to the overview. Upload documents follows the same rule: a document is started when any of its reference, type (offered or not), date of issue text or a file with content is given (today startsADocument in documents/form/payload.js:45-48 counts only an offered type, so Save and continue drops a part-filled document with no type), its all-or-nothing errors show on every save button, and a complete document is saved, not dropped. Unit tests that pin the old lenient behaviour (documents controller.test.js:582-614, the soft-save tests, save-actions tests) change with it. The transporter page already refuses a blank choice on Save and return; it now matches the rule rather than being the exception.",
+      "acceptanceCriteria": [
+        "Given I am on any page with Save and continue and Save and return to overview, when I select Save and return to overview with an answer missing or not valid, then I see an error message for each answer that is missing or not valid, I remain on that page, and what I entered is kept. (BA, 23 and 26 Oct)",
+        "Given every answer on the page is valid, when I select Save and return to overview, then my answers are saved and Overview is shown.",
+        "Given I am adding a document and have given some but not all of its reference, type, date of issue and attachment, when I select Save and add another, Save and continue or Save and return to overview, then I stay on Upload documents with an error for each detail not given, what I typed is kept, and no document is added.",
+        "Given a reference, date of issue and attachment but no document type, when I select Save and continue, then I see 'Select a document type' and no document is added.",
+        "Given every detail of a document is filled in, when I select Save and return to overview, then Overview is shown and reopening Upload documents lists the document.",
+        "The same holds in live animals and high-risk plants, and without JavaScript.",
+        "openspec journey-flow REQ-FLOW-004 and every page spec that states the lenient rule (origin, import reason, upload documents REQ-DOCS-016, the plants equivalents) say Save and return makes Save and continue's checks; the soft-save e2e specs prove it; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug reports 23 and 26 Oct (Save and return skips validation on upload, origin and main reason; documents dropped); Sam's ruling 26 Oct: consistent with Save and continue everywhere, replacing c-211 and c-313"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-233",
+      "title": "Add another commodity and Change return the trader to the page they came from",
+      "detail": "BA find, 26 Oct. 'Add another commodity' on Commodity details and 'Change' next to a commodity on Identification details both open 'What are you importing?', but its Save and continue then follows the opening run (flow/run.js RUN_STEPS: commodities, then importReason, then consignmentDetails), so the trader lands on the purpose page instead of going back. The links carry only the review's change context (kit.withChangeContext), never where they came from. Give these detours a return marker, as the addresses pages already do with their return-to-addresses entry context, so 'What are you importing?' sends the trader back to the page that opened it, with the counts already saved still filled in. A Change from the review keeps going to the review. Check plants' commodity pages for the same detour and fix it there too if it is present.",
+      "acceptanceCriteria": [
+        "Given I am on the 'Commodity details' page, when I select 'Add another commodity', then I am taken to 'What are you importing?', and after I select 'Save and continue' I return to the 'Commodity details' page, and the number of animals and number of packages I have already saved are still there. (BA, 26 Oct)",
+        "Given I am on the 'Identification details' page, when I select 'Change' next to a commodity, then I am taken to 'What are you importing?', I see the commodities I have already chosen, I can add or remove commodities, and after I select 'Save and continue' I return to the 'Identification details' page. (BA, 26 Oct)",
+        "Given I reach 'What are you importing?' in the opening run, when I select 'Save and continue', then I go to the next step of the run as now.",
+        "Given I reach 'What are you importing?' from a Change link on the review, when I select 'Save and continue', then I go where a review Change goes today.",
+        "The same holds without JavaScript.",
+        "openspec commodity-selection, consignment details and identification details specs gain these scenarios; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug report 26 Oct (Add another commodity and Change land on purpose); origin/main flow/run.js RUN_STEPS, consignment-details.controller.js addHref, animal-identification.controller.js addHref"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-224",
+      "title": "Identification details: pressing Enter in a card for several animals keeps what the trader typed",
+      "detail": "Pressing Enter in a field on a card for several animals fires the page's hidden 'finish' button, which reads only one-animal cards, so the trader lands on the overview and what they typed is dropped with no message. Before the snagging build, Enter saved the half-filled entry. Waits on Sam's decision: make Enter save the card being typed in (or keep the trader on the page), or accept the drop and say so in the spec. A unit test currently pins the drop as a 'safe default' (animal-identification.controller.test.js:683-705).",
+      "acceptanceCriteria": [
+        "Given a card for several animals with a value typed into one of its fields, when the trader presses Enter, then what happens matches Sam's decision, and the behaviour is written as a scenario in live-animals/journey-pages/identification-details spec.md. (review:engineering-2026-10-23 identification, medium)",
+        "The same holds without JavaScript. (invariant)",
+        "The unit test that pins the current drop is replaced by one that proves the decided behaviour. (review:engineering-2026-10-23)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Identification details card, medium: form/forms.js:71, animal-identification.njk:32, animal-identification.controller.test.js:683-705. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-ident"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Sam: pressing Enter in a card for several animals currently drops what was typed and moves to the overview. Change it (Enter saves the card being typed in, or keeps the trader on the page), or accept it and write it into the spec?"
+      ],
+      "gate": null,
+      "notes": [
+        "Sam, 26 Oct (ruling:sam-2026-10-26 claim 3), answering the open question above: pressing Enter in a field of a card for several animals saves that card, exactly as its own Save and add another button does, and the trader stays on Identification details with the entry kept. Nothing typed is ever dropped. Build that; the spec scenario says so."
+      ]
+    },
+    {
+      "id": "inc-225",
+      "title": "Animals type-ahead style tests compare against GOV.UK values read at run time, as plants does",
+      "detail": "The merge of the two snagging branches put the animals type-ahead style FIT tests (font, focus, error border) back on fixed rgb and pixel constants. Before the merge they compared with a real govuk-input and the focus token read in the page; the plants twin still does, through govukColourOf and govukInputStyleOf. Port those helpers to animals, use them in the three tests, and delete the fixed constants once nothing uses them.",
+      "acceptanceCriteria": [
+        "The animals 'country of origin type-ahead styles' tests compare the enhanced input's typography, focus outline and error border with a plain GOV.UK input and colour tokens read at run time, and none asserts a fixed rgb or pixel value. (review:engineering-2026-10-23 animals tidy and merge, medium; frontend type-ahead.fit.spec.js:347-403)",
+        "The input border and the error message share a colour, asserted against the GOV.UK error token. (review:engineering-2026-10-23)",
+        "fit/live-animals-journey.js exports no fixed GOV.UK colour or size constants that no test uses. (review:engineering-2026-10-23; frontend fit/live-animals-journey.js:91-99)",
+        "Each rewritten test is seen failing with the input's class changed, then passing. (house rule: a test must fail without its change)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Animals tidy and merge cards, medium: type-ahead.fit.spec.js:364; plants twin type-ahead.fit.spec.js:297-352. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-merge"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-226",
+      "title": "Appearance checks on the declaration, hub totals, identification and arrival pages move to screenshots and accessible names",
+      "detail": "Laptop B's rows and the tidy left FIT and e2e tests asserting exact colours, sizes and classes, with no screenshot test covering those pages: the declaration's hidden legend class, small-checkbox class and bold date (four places, both domains), hub totals (titled 'styled from govuk design tokens' but asserting fixed values), the identification card's green button and 400 weight, the arrival-transit hint grey (a relative check became a fixed value), the review page's refused-card classes and the save-controls helpers' button-group class. Prove each look with a screenshot test in the tests repo, following the origin-of-import visual spec (clock frozen or date masked), keep accessible-name checks, and delete the class and CSS assertions.",
+      "acceptanceCriteria": [
+        "The tests repo has screenshot tests for the declaration form in animals and plants, the animals hub totals panel, the identification card with one saved animal, and the refused review page at desktop and phone width, each with darwin and linux baselines and a frozen or masked date. (review:engineering-2026-10-23 declaration and merge cards, medium)",
+        "No FIT or e2e test asserts the declaration's legend class, checkbox class or date font weight; the legend is still proved by its accessible name. (review:engineering-2026-10-23)",
+        "No FIT test asserts a fixed GOV.UK colour or size for hub totals, the identification button or the arrival-transit hint; the arrival lead-in is compared with the hint's own colour, as before the tidy. (review:engineering-2026-10-23; hub.fit.spec.js:465-498, identification.fit.spec.js:31 and 957-975, arrival-transit.fit.spec.js:217-234)",
+        "The save-controls helpers find the three controls by role and order, not by the govuk-button-group class or a sibling XPath. (review:engineering-2026-10-23; fit/live-animals-journey.js:914, 934)",
+        "Every spec scenario these tests proved keeps a full proving test in openspec coverage. (tim spec lint)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Declaration, animals tidy and merge cards, medium. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-decl"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-227",
+      "title": "Refusal logging: no page logs the trader's own input errors, and the tests and docs say what the code does",
+      "detail": "The theme review stopped logging traders' own field errors on most pages but missed some. Animals commodity search still logs 'select a commodity' (and its test asserts it), and transit countries Add logs 'nothing chosen' and 'already added' while architecture.md names that controller as the model. Two consignment-details test titles say 'and log the refusal' but assert nothing is logged. A plants commit says it dropped the fieldErrors option from kit.logRefusal, but the option, its doc comment, tests, architecture.md entry and two callers remain: decide whether it stays (documented as only for refusals that are not the trader's input) or goes (check answers gets a reason key instead), and make both frontends agree.",
+      "acceptanceCriteria": [
+        "Animals commodity search with nothing selected shows its error and logs nothing; its test uses expectNoRefusalLogged. (review:engineering-2026-10-23 review fixes, medium; search.controller.js:82, search.controller.test.js:195)",
+        "Animals transit countries Add with nothing chosen, or with a country already added, logs nothing; the cap and not-on-the-list refusals still log once. (review:engineering-2026-10-23 animals tidy, medium; transit-countries.controller.js:117, 153)",
+        "docs/architecture.md in animals points at an example that is not a field error. (review:engineering-2026-10-23; docs/architecture.md:179, 187)",
+        "The consignment-details refusal tests are titled for what they assert ('… and log nothing'). (review:engineering-2026-10-23 review fixes, medium; consignment-details.controller.test.js:179, 196)",
+        "kit.logRefusal's fieldErrors option is either removed from both frontends with every caller and doc updated, or kept in both and documented as only for refusals that are not the trader's own input. (review:engineering-2026-10-23 review fixes, medium; plants shared/kit.js:133, architecture.md:207)",
+        "Plants commodity details and party edit refusal tests assert nothing is logged with expectNoRefusalLogged. (review:engineering-2026-10-23 plants tidy, low)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Review fixes and animals tidy cards, medium. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-fixes"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-228",
+      "title": "Plants type-aheads ignore accents, as animals does",
+      "detail": "The final tidy's scope said plants type-aheads would share the animals escape-then-bold helper with a fold module so they ignore accents; it was deferred, not built, yet the row is marked done. Typing 'Cote' finds Côte d'Ivoire in animals but not in plants. Mirror animals' search-fold and bold-matches client helpers in plants, used by the plants accessible-autocomplete, and write the scenario into the plants spec.",
+      "acceptanceCriteria": [
+        "With JavaScript, typing 'Cote' in the plants country of origin search offers Côte d'Ivoire with 'Côte' in bold; matching ignores case and accents. (review:engineering-2026-10-23 plants tidy, medium; plants accessible-autocomplete/README.md:41)",
+        "The same holds for every plants type-ahead (place of landing, genus, party country). (invariant)",
+        "Without JavaScript the native select is unchanged. (invariant)",
+        "A scenario for accent-insensitive matching is added to the plants origin spec and linked to a test that is seen failing with folding removed. (review:engineering-2026-10-23)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "plantsfrontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Plants and tests tidy card, medium. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-tidy-plants"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-229",
+      "title": "Plants test support catches up with animals: shared stubbed-journey set-up, reference data serving and one HTML parser helper",
+      "detail": "Deferred from the final tidy though the row is marked done: plants engine/test-support.js still lacks useStubbedJourney and referenceDataServing, so plants controller tests keep local configure and beforeAll/beforeEach pairs. Plants also repeats new JSDOM(html).window.document in several tests where animals now has a shared documentOf helper. Add the twins, replace the local copies, and make frontend.md's test-support table true for both.",
+      "acceptanceCriteria": [
+        "Plants engine/test-support.js exports useStubbedJourney and referenceDataServing with the same contract as animals, and no plants controller test keeps its own configure plus beforeAll/beforeEach pair. (review:engineering-2026-10-23 plants tidy, medium)",
+        "Plants has a documentOf test helper and no test builds a jsdom document inline. (review:engineering-2026-10-23 merge card, low; banner.test.js:55, layout.test.js:26, unauthorised.test.js:10, controller-test-support.js:291)",
+        "docs/best-practices/node/testing/frontend.md lists these exports for both frontends with no 'animals only' mark on them. (review:engineering-2026-10-23)",
+        "Every plants unit test still passes with the same titles. (house rule)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "chore",
+      "repos": [
+        "plantsfrontend",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Plants and tests tidy card, medium. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-tidy-plants"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null
+    },
+    {
+      "id": "inc-230",
+      "title": "Notification submitted: whether the ITAHC is listed as owed when other documents were uploaded",
+      "detail": "The animals Notification submitted page lists the ITAHC as still to upload only when no document at all was uploaded; the spec was narrowed to match the code during the snagging build. A trader who uploads other documents but no ITAHC loses the reminder. Waits on Sam's decision. If yes: restore the requirement in live-animals confirmation spec.md and change outstanding.js. If no: close the row with the decision recorded.",
+      "acceptanceCriteria": [
+        "Given a submitted notification with documents uploaded but no ITAHC, the Notification submitted page lists the ITAHC as owed, or not, as Sam decides, and the confirmation spec says so with a proving test. (review:engineering-2026-10-23 declaration card, low with question; spec.md:71)"
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "Declaration and Notification submitted card, question. https://claude.ai/artifact/FgYaVWYKwb75eChxGRYBDC#a-decl"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Sam: should Notification submitted list the ITAHC as owed when other documents were uploaded but no ITAHC?"
+      ],
+      "gate": null,
+      "notes": [
+        "Sam, 26 Oct (ruling:sam-2026-10-26 claim 4), answering the open question above: yes. Notification submitted lists the ITAHC as still to upload whenever no ITAHC was uploaded, whatever other documents were. Restore the requirement in live-animals confirmation spec.md, change outstanding.js, and prove it with a test."
+      ]
+    },
+    {
+      "id": "inc-231",
+      "title": "Upload documents: every save button checks a part-filled document and never drops one",
+      "detail": "BA find, 23 Oct. On animals Upload documents, Save and continue drops a part-filled document with no error whenever no document type is chosen (startsADocument in documents/form/payload.js:45-48 counts only an offered type), and Save and return to overview always leaves via leavePage, throwing away even a complete document (documents/controller.js:293-335). Save and add another already checks correctly through documentAddErrors (form/errors.js:54-61). The all-or-nothing rule (Confluence 6497338582, Documents: 'Optional - All-or-nothing') is the document's own rule, so under the 7 October ruling (c-211) Save and return refuses a half-filled document rather than skipping it. Fix: a document is started when any of reference, type (offered or not), date text or a file with content is given; route by that on every button; on Save and return, a complete document is saved and the trader goes to the overview. Unit tests at controller.test.js:582-614 pin the current wrong behaviour and change. Origin and main reason for import are as designed (only required-answer checks are skipped on Save and return). Plants has no upload documents page, so it is unaffected. Assumes Sam confirms the all-or-nothing group counts as its own rule (recommended, matches the BA's scenario).",
+      "acceptanceCriteria": [
+        "Given I am adding a document and have given some but not all of its reference, type, date of issue and attachment, when I select Save and add another, Save and continue or Save and return to overview, then I stay on the page with an error for each detail not given, what I typed is kept, and no document is added. (BA, 23 Oct; spec REQ-DOCS-016)",
+        "Given a reference, date of issue and attachment but no type, when I select Save and continue, then I see 'Select a document type' and no document is added.",
+        "Given every detail of a document is filled in, when I select Save and return to overview, then Overview is shown and reopening Upload documents lists the document.",
+        "Given nothing is filled in, when I select Save and return to overview, then Overview is shown with no error.",
+        "Given a document with an impossible date or an unsupported file type, when I select Save and return to overview, then that field's error is shown and nothing is added.",
+        "The same holds without JavaScript.",
+        "openspec upload-documents REQ-DOCS-016 covers every save button and defines a started document as any of the four details, and journey-flow REQ-FLOW-004 gains a scenario that an all-or-nothing group is refused on Save and return; coverage links follow."
+      ],
+      "dependsOn": [],
+      "theme": "design-snagging-followups",
+      "status": "dropped",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:engineering-2026-10-23",
+          "ref": "BA bug report 23 Oct (Save and continue / Save and return drop a part-filled document); investigation of origin/main documents/controller.js:293-335, form/payload.js:45-48, controller.test.js:582-614"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Sam (with the BA): should Save and return to overview make the same checks as Save and continue on every page, or only refuse rule breaks (format, list, all-or-nothing) while skipping blank required answers, as the 7 October ruling says? Evidence on what the prototype and the Confluence requirements do is being gathered for Monday."
+      ],
+      "gate": null,
+      "notes": [
+        "Sam, 23 Oct: do not assume the 7 October soft-save ruling (c-211) is right; the BA is challenging it. The BA's wider finding stands as an open issue: on upload, origin and main reason for import, Save and return to overview skips the checks Save and continue makes. The detail above calling origin and main reason 'as designed' only describes the current ruling, not a decision that it is correct. Settle the question below before building; the documents fix may become part of a wider change to Save and return on every page.",
+        "Evidence for the Save and return question (23 Oct): (1) Sam's 7 Oct ruling never mentions Save and return; it only sets precedence (prototype wins unless validation/persistence/auth/cross-service). c-211 applied it from one prototype test on one page (COVERAGE.md:59) and did not weigh Confluence; plants' 'same checks' behaviour (d-059) was overruled by c-313 via an orchestrator-applied claim, not Sam's own decision. (2) Prototype is mixed: origin, main reason, arrival, transit, transporter, roles lenient; upload documents makes Save and continue's checks on Save and return once a type is chosen; consignment details, CPH, contact strict. (3) Confluence 6497338582 has two tiers, 'Mandatory to proceed' and 'Mandatory to submit', never defining 'proceed'; every field the BA tested is 'to proceed' (region code when Yes, the reason's follow-ups, a document once its type is chosen). (4) The spec (journey-flow REQ-FLOW-004, origin line 177, import-reason 97 and 213) states the lenient rule plainly. (5) GOV.UK task-list guidance leans lenient, but is guidance only. Options: (A) same checks everywhere (animals 4 controllers, plants 5, spec and soft-save e2e rewritten, c-211/c-313 re-ruled; traders cannot park a half-done page); (A-narrow) refuse blank 'Mandatory to proceed' fields on Save and return, skip 'to submit' ones (covers all three BA pages; needs 'proceed' defined); (B) keep the lenient rule and fix documents only. Under every option Save and return must stop dropping a complete document. Also found: the transporter page already refuses a blank choice on Save and return, against c-211's list.",
+        "Sam, 26 Oct: documents must not behave differently from other pages. Save and return makes the same checks as Save and continue everywhere. This row is folded into inc-232, which carries every documents criterion here plus the rule for every page in animals and plants. The open question above is answered by that ruling."
+      ]
+    }
+  ]
+}

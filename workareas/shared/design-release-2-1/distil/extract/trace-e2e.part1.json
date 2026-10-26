@@ -1,0 +1,552 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 1 mined all 11 trace zips named in its read (10 from tests/animals/e2e/features/auth.spec.ts, 1 from tests/animals/e2e/features/headers.spec.ts) and read both spec files in full. Every trace passed. The tim distil trace CLI refused to open these zips (TraceVersionError: the traces were written by a newer Playwright than the viewer tim installs), so each zip, already unzipped under the part's working folder as <hash>/, was mined directly: the browser actions from <hash>/1-trace.trace (type=before events), the DOM from its frame-snapshots (rendered to <hash>.html with render.jq), and the network log from <hash>/1-trace.network (resource-snapshots: method, status, URL, Location, Set-Cookie, Content-Security-Policy). Refs below use 'trace <hash> action call@<n>' for actions and DOM, and 'trace <hash> request <method> <path>' for the network log. Pages reached, in order: (1) the animals frontend dashboard URL /live-animals, which unauthenticated returns 302 to /auth/sign-in?redirect=<path>, which returns 302 to the Defra ID stub authorise endpoint on localhost:3007, which returns 302 to (2) the stub sign-in page 'Sign in using Government Gateway' at /dcidmtest.onmicrosoft.com/oauth2/authresp; a bad user id or bad password re-renders that page with status 400 and an error summary; a good one returns 302 to the stub /organisations, which returns 302 straight back to the frontend /auth/sign-in-oidc with a code, which returns 302 to the stored redirect path: (3) the dashboard 'Import notification service' (heading, header navigation and Log out link only; the dashboard body belongs to parts 2 and 3) or (4) a deep journey page, 'Origin of the import', for an existing draft. Log out goes /auth/sign-out, 302 to the stub end-session URL, which renders (5) the stub page 'You have signed out'. The service root / returns 302 to /live-animals. The headers trace reloads the dashboard and records the Content-Security-Policy and other security headers on the document response. Always-present pages: sign-in, dashboard. Conditional: the error state of the sign-in page (bad credentials), the signed-out page (after Log out), the deep-link return (only when a deep link started the sign-in). Platform chrome (skip link, GOV.UK header, footer, phase banners) is left out except where it carries the sign-out control or the signed-in identity. Surfaces the slice should show and does not (empty submissions, session expiry, the post-logout callback, organisation choice, the unauthenticated root) are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-e2e-p1-001",
+      "statement": "An unauthenticated user who opens the animals notification dashboard (/live-animals) is redirected to the frontend's sign-in route, which carries the requested path as a redirect parameter.",
+      "kind": "behaviour",
+      "ref": "trace be93a request GET /live-animals",
+      "quote": "GET 302 http://localhost:3000/live-animals -> /auth/sign-in?redirect=%2Flive-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-002",
+      "statement": "The frontend's sign-in route redirects the browser to the Defra ID authorise endpoint (the stub on localhost:3007) for the b2c_1a_cui_cpdev_signupsigninsfi policy.",
+      "kind": "integration",
+      "ref": "trace be93a request GET /auth/sign-in?redirect=%2Flive-animals",
+      "quote": "http://localhost:3007/dcidmtest.onmicrosoft.com/b2c_1a_cui_cpdev_signupsigninsfi/oauth2/v2.0/authorize?serviceId=trade-imports-animals-frontend&p=b2c_1a_cui_cpdev_signupsigninsfi&response_mode=query&client_id=test-client-id&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsign-in-oidc&state=[REDACTED]&scope=openid%20offline_access%20test-client-id",
+      "confidence": "verbatim",
+      "note": "The state value differs per run; redacted here as a per-session value."
+    },
+    {
+      "id": "trace-e2e-p1-003",
+      "statement": "The authorise request is an OpenID Connect authorisation-code request: response_type code, response_mode query, scope openid offline_access plus the client id, and redirect_uri pointing at the frontend's /auth/sign-in-oidc callback.",
+      "kind": "integration",
+      "ref": "trace be93a request GET /auth/sign-in?redirect=%2Flive-animals (Location header)",
+      "quote": "response_mode=query&client_id=test-client-id&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsign-in-oidc",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-004",
+      "statement": "The authorise request names the calling service with a serviceId parameter of trade-imports-animals-frontend.",
+      "kind": "integration",
+      "ref": "trace be93a request GET /auth/sign-in?redirect=%2Flive-animals (Location header)",
+      "quote": "serviceId=trade-imports-animals-frontend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-005",
+      "statement": "The Defra ID stub's authorise endpoint redirects to its own sign-in page at /dcidmtest.onmicrosoft.com/oauth2/authresp.",
+      "kind": "behaviour",
+      "ref": "trace be93a request GET /dcidmtest.onmicrosoft.com/b2c_1a_cui_cpdev_signupsigninsfi/oauth2/v2.0/authorize",
+      "quote": "GET 302 ... /oauth2/v2.0/authorize?... -> /dcidmtest.onmicrosoft.com/oauth2/authresp",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-006",
+      "statement": "Opening the notification dashboard while signed out lands the user on the sign-in page, whose main heading is 'Sign in using Government Gateway'.",
+      "kind": "behaviour",
+      "ref": "trace be93a action call@267 (auth.spec.ts:14)",
+      "quote": "Sign in using Government Gateway",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-007",
+      "statement": "The sign-in page's browser title is 'Trade Imports Defra ID stub - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 <title>",
+      "quote": "Trade Imports Defra ID stub - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-008",
+      "statement": "The sign-in page's service navigation names the service 'Trade Imports Defra ID stub', and that service-name section is rendered twice, one under the other.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 header section.govuk-service-navigation (two copies)",
+      "quote": "Trade Imports Defra ID stub",
+      "confidence": "verbatim",
+      "note": "The duplicate service navigation section is a rendering defect in the stub, not in the animals frontend."
+    },
+    {
+      "id": "trace-e2e-p1-009",
+      "statement": "The sign-in page carries a phase banner tagged 'Basic' with no banner text.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 .govuk-phase-banner",
+      "quote": "Basic",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-010",
+      "statement": "The sign-in page asks for a Government Gateway user ID in a text input (name crn).",
+      "kind": "data",
+      "ref": "trace be93a action call@263 label[for=crn], input#crn",
+      "quote": "Government Gateway user ID",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-011",
+      "statement": "The user ID field has the hint 'This could be up to 12 characters.'",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 #crn-hint",
+      "quote": "This could be up to 12 characters.",
+      "confidence": "verbatim",
+      "note": "The hint says up to 12 characters while the error message asks for a 10-digit customer reference number (CRN); recorded, not reconciled."
+    },
+    {
+      "id": "trace-e2e-p1-012",
+      "statement": "The sign-in page asks for a password in a password-type input (name password).",
+      "kind": "data",
+      "ref": "trace be93a action call@263 label[for=password], input#password type=password",
+      "quote": "Password",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-013",
+      "statement": "The sign-in form submits with a button labelled 'Sign in'.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 button#submit",
+      "quote": "Sign in",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-014",
+      "statement": "The sign-in form posts the user ID and password as form-encoded fields crn and password to the stub's /dcidmtest.onmicrosoft.com/oauth2/authresp.",
+      "kind": "integration",
+      "ref": "trace 0b934 request POST /dcidmtest.onmicrosoft.com/oauth2/authresp",
+      "quote": "<FORM method=\"POST\" action=\"/dcidmtest.onmicrosoft.com/oauth2/authresp\"> ... crn=2100010101&password=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-015",
+      "statement": "Below the form, the sign-in page shows a link 'I have forgotten my password'; its href is '#', so it goes nowhere.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 main p.govuk-body a.govuk-link",
+      "quote": "<A class=\"govuk-link\" href=\"#\">I have forgotten my password</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-016",
+      "statement": "The sign-in page has a Details component with the summary 'Help signing in'.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 details.govuk-details summary",
+      "quote": "Help signing in",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-017",
+      "statement": "The 'Help signing in' details tell the user to contact the Rural Payments Agency if they have forgotten, lost or cannot get recognised their CRN.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 .govuk-details__text",
+      "quote": "Contact the Rural Payments Agency by email or phone if: you have forgotten your CRN / you have lost your CRN / your CRN is not recognised",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-018",
+      "statement": "The 'Help signing in' details give an email address, a telephone number and service opening times for the Rural Payments Agency.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 .govuk-details__text",
+      "quote": "Email: testing@farming.gov.uk / Telephone: 0300 000 0000 / Service opening times: 09:00 AM to 05:00 PM",
+      "confidence": "verbatim",
+      "note": "These are stub placeholder contact details."
+    },
+    {
+      "id": "trace-e2e-p1-019",
+      "statement": "The 'Help signing in' details link to GOV.UK call charges, opening in a new tab.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 .govuk-details__text a[href='https://www.gov.uk/call-charges']",
+      "quote": "Find out about call charges (opens in new tab)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-020",
+      "statement": "The 'Help signing in' details tell a user without an account to register with the Rural Payments service, linking to www.ruralpayments.service.gov.uk.",
+      "kind": "copy",
+      "ref": "trace be93a action call@263 .govuk-details__text",
+      "quote": "Register with the Rural Payments service if you do not have an account.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-021",
+      "statement": "The sign-in page uses only GOV.UK Frontend components (Input, Button, Details, Service navigation, Phase banner, Error summary) plus the app-header and app-main-wrapper hooks.",
+      "kind": "constraint",
+      "ref": "trace be93a action call@263 class list of main and header",
+      "quote": "govuk-input govuk-input--width-20 ... govuk-button ... govuk-details ... govuk-main-wrapper app-main-wrapper",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-022",
+      "statement": "Signing in with a user ID that is not a valid customer reference number keeps the user on the sign-in page, and the stub answers the post with HTTP 400.",
+      "kind": "rule",
+      "ref": "trace 8c7b9 request POST /dcidmtest.onmicrosoft.com/oauth2/authresp; action call@303 (auth.spec.ts:25)",
+      "quote": "POST 400 http://localhost:3007/dcidmtest.onmicrosoft.com/oauth2/authresp crn=invalid&password=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-023",
+      "statement": "After a bad user ID, the sign-in page shows an error summary titled 'There is a problem' with the message 'Enter a valid 10-digit customer reference number (CRN) and password'.",
+      "kind": "rule",
+      "ref": "trace 8c7b9 action call@303 .govuk-error-summary",
+      "quote": "There is a problem ... Error: Enter a valid 10-digit customer reference number (CRN) and password",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-024",
+      "statement": "Signing in with a valid user ID but a wrong password also keeps the user on the sign-in page with HTTP 400.",
+      "kind": "rule",
+      "ref": "trace 57464 request POST /dcidmtest.onmicrosoft.com/oauth2/authresp; action call@237 (auth.spec.ts:31)",
+      "quote": "POST 400 http://localhost:3007/dcidmtest.onmicrosoft.com/oauth2/authresp crn=2100010101&password=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-025",
+      "statement": "After a wrong password, the sign-in page shows the same error summary and message as for a bad user ID, so the user is not told which of the two was wrong.",
+      "kind": "rule",
+      "ref": "trace 57464 action call@237 .govuk-error-summary",
+      "quote": "There is a problem ... Error: Enter a valid 10-digit customer reference number (CRN) and password",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-026",
+      "statement": "After a failed sign-in, the user ID field keeps the value entered and the password field is empty.",
+      "kind": "behaviour",
+      "ref": "trace 8c7b9 action call@303 input#crn, input#password; trace 57464 action call@237",
+      "quote": "<INPUT ... id=\"crn\" name=\"crn\" type=\"text\" value=\"invalid\" ...> <INPUT ... id=\"password\" name=\"password\" type=\"password\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-027",
+      "statement": "The sign-in error summary departs from the GOV.UK Error summary pattern: the message is a span inside the list rather than a list item linking to the field, and neither input is marked with a field-level error message or error class.",
+      "kind": "constraint",
+      "ref": "trace 8c7b9 action call@303 .govuk-error-summary__list; .govuk-form-group (no --error modifier)",
+      "quote": "<UL class=\"govuk-list govuk-error-summary__list\"><SPAN class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter a valid 10-digit customer reference number (CRN) and password</SPAN></UL>",
+      "confidence": "verbatim",
+      "note": "The standard component would replace this with an li containing an anchor to #crn, plus govuk-form-group--error and an inline error message on the field. This is the stub's page, not the animals frontend's."
+    },
+    {
+      "id": "trace-e2e-p1-028",
+      "statement": "A correct user ID and password make the stub redirect to its /organisations step, which immediately redirects back to the frontend's /auth/sign-in-oidc callback with an authorisation code and the original state; no organisation choice is shown.",
+      "kind": "integration",
+      "ref": "trace 0b934 request POST /dcidmtest.onmicrosoft.com/oauth2/authresp; request GET /organisations",
+      "quote": "POST 302 .../oauth2/authresp -> /organisations; GET 302 http://localhost:3007/organisations -> http://localhost:3000/auth/sign-in-oidc?code=[REDACTED]&state=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-029",
+      "statement": "The frontend's /auth/sign-in-oidc callback redirects the signed-in user to the path held in the original redirect parameter (here the dashboard /live-animals).",
+      "kind": "behaviour",
+      "ref": "trace 0b934 request GET /auth/sign-in-oidc",
+      "quote": "GET 302 http://localhost:3000/auth/sign-in-oidc?code=[REDACTED]&state=[REDACTED] -> /live-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-030",
+      "statement": "Signing in from the dashboard lands the user on the notification dashboard at /live-animals, whose main heading is 'Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@257, call@259 (auth.spec.ts:19)",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-031",
+      "statement": "On sign-in the frontend sets a session cookie that lasts 4 hours (Max-Age 14400), HttpOnly and SameSite=Lax.",
+      "kind": "non-functional",
+      "ref": "trace 0b934 request GET /auth/sign-in-oidc Set-Cookie",
+      "quote": "session=[REDACTED]; Max-Age=14400; Expires=Wed, 07 Oct 2026 21:40:15 GMT; HttpOnly; SameSite=Lax; Path=/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-032",
+      "statement": "On sign-in the frontend also sets sid and crumb cookies, both HttpOnly and SameSite=Strict, and clears the temporary bell-defra-id cookie.",
+      "kind": "non-functional",
+      "ref": "trace 0b934 request GET /auth/sign-in-oidc Set-Cookie",
+      "quote": "bell-defra-id=[REDACTED]; Max-Age=0; ... crumb=[REDACTED]; HttpOnly; SameSite=Strict; Path=/ ... sid=[REDACTED]; HttpOnly; SameSite=Strict; Path=/",
+      "confidence": "verbatim",
+      "note": "None of the cookies carries the Secure flag on the local http stack."
+    },
+    {
+      "id": "trace-e2e-p1-033",
+      "statement": "The dashboard's browser title repeats the service name: 'Import notification service - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 0b934 action call@257 <title>",
+      "quote": "Import notification service - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-034",
+      "statement": "Once signed in, the service navigation names the service 'Import notification service', linking to /live-animals.",
+      "kind": "copy",
+      "ref": "trace 0b934 action call@259 .govuk-service-navigation__service-name",
+      "quote": "<A href=\"/live-animals\" class=\"govuk-service-navigation__link\">Import notification service</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-035",
+      "statement": "Once signed in, the service navigation has four items in order: Dashboard, Address book, Manage account, Log out.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@259 ul#navigation",
+      "quote": "Dashboard / Address book / Manage account / Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-036",
+      "statement": "On the dashboard the Dashboard navigation item is marked active (aria-current) and links to /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@259 li.govuk-service-navigation__item--active",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"/live-animals\" aria-current=\"true\"><STRONG class=\"govuk-service-navigation__active-fallback\">Dashboard</STRONG></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-037",
+      "statement": "The Address book navigation item links out to the separate address book service on another origin (localhost:3002/address-book).",
+      "kind": "integration",
+      "ref": "trace 0b934 action call@259 ul#navigation li[2]",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\">Address book</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-038",
+      "statement": "The Manage account navigation item has href '#', so it goes nowhere yet.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@259 ul#navigation li[3]",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"#\">Manage account</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-039",
+      "statement": "The sign-out control is a service navigation link labelled 'Log out' that points at /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "trace ca937 action call@237 (auth.spec.ts:47)",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\">Log out</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-040",
+      "statement": "The signed-in header shows no signed-in identity: no email address, name or 'signed in as' strip appears in the header or navigation.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@259 header; trace 27de2 action call@262 (auth.spec.ts:57)",
+      "quote": "expect(getByText('test.user11@defra.gov.uk')).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "In trace 27de2 the count-0 assertion finished (17555.6 ms) about 2 ms before the dashboard document finished loading (17557.9 ms), and its last DOM snapshot is still the stub sign-in page, so that trace alone does not prove the absence. The absence is confirmed from the dashboard header rendered in trace 0b934 call@259, which carries no user identity."
+    },
+    {
+      "id": "trace-e2e-p1-041",
+      "statement": "Clicking Log out calls /auth/sign-out, which redirects to the Defra ID end-session URL for the same policy with a post_logout_redirect_uri pointing back at the frontend's /auth/sign-out-oidc.",
+      "kind": "integration",
+      "ref": "trace ca937 request GET /auth/sign-out",
+      "quote": "GET 302 http://localhost:3000/auth/sign-out -> http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/signout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsign-out-oidc",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-042",
+      "statement": "Signing out clears the frontend's sid cookie.",
+      "kind": "non-functional",
+      "ref": "trace ca937 request GET /auth/sign-out Set-Cookie",
+      "quote": "sid=[REDACTED]; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict; Path=/",
+      "confidence": "verbatim",
+      "note": "Only sid is cleared in this response; the session cookie set at sign-in is not cleared here."
+    },
+    {
+      "id": "trace-e2e-p1-043",
+      "statement": "After Log out the user lands on the Defra ID stub's page with the heading 'You have signed out'.",
+      "kind": "behaviour",
+      "ref": "trace ca937 action call@243",
+      "quote": "You have signed out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-044",
+      "statement": "The signed-out page tells the user they can return to GOV.UK (link opens in a new tab) or close the browser window.",
+      "kind": "copy",
+      "ref": "trace ca937 action call@239 (stub signout page) main p.govuk-body",
+      "quote": "You can return to GOV.UK or close your browser window.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-045",
+      "statement": "The signed-out page stays on the stub: the browser is not sent on to the frontend's /auth/sign-out-oidc, and the page offers no link back into the import notification service.",
+      "kind": "behaviour",
+      "ref": "trace ca937 request log (last request GET /idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/signout, status 200)",
+      "quote": "GET 200 http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/signout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fsign-out-oidc",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-046",
+      "statement": "After signing out, reopening the notification dashboard sends the user back through sign-in to the 'Sign in using Government Gateway' page.",
+      "kind": "behaviour",
+      "ref": "trace 03083 action call@345, call@349; request GET /live-animals (second) (auth.spec.ts:62)",
+      "quote": "GET 302 http://localhost:3000/live-animals -> /auth/sign-in?redirect=%2Flive-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-047",
+      "statement": "Once signed in, opening the service root / redirects to the default set's dashboard, /live-animals, which shows the 'Import notification service' heading.",
+      "kind": "behaviour",
+      "ref": "trace 71d40 action call@250, call@254; request GET / (auth.spec.ts:40)",
+      "quote": "GET 302 http://localhost:3000/ -> /live-animals",
+      "confidence": "verbatim",
+      "note": "The spec comment says no set is served at the root any more, so / is a server-wide redirect to the default set."
+    },
+    {
+      "id": "trace-e2e-p1-048",
+      "statement": "A signed-out user who opens a page further in the journey (/live-animals/notifications/<reference>/origin) is redirected to sign-in, with that full path kept in the redirect parameter.",
+      "kind": "behaviour",
+      "ref": "trace 68f5b action call@295, call@299; request GET /live-animals/notifications/GBN-AG-26-TBYAW8/origin (auth.spec.ts:87)",
+      "quote": "GET 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-TBYAW8/origin -> /auth/sign-in?redirect=%2Flive-animals%2Fnotifications%2FGBN-AG-26-TBYAW8%2Forigin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-049",
+      "statement": "Signing in from a deep journey link returns the user to that journey page, 'Origin of the import', rather than to the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace d79c5 action call@301, call@303; request GET /auth/sign-in-oidc (second) (auth.spec.ts:92)",
+      "quote": "GET 302 http://localhost:3000/auth/sign-in-oidc?code=[REDACTED]&state=[REDACTED] -> /live-animals/notifications/GBN-AG-26-BAZX13/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-050",
+      "statement": "A draft's saved answers survive signing out and back in: on returning to the origin page after a fresh sign-in, France is still selected and the region-of-origin-code answer is still No.",
+      "kind": "behaviour",
+      "ref": "trace d79c5 action call@301 select#countryOfOrigin-select, input#regionOfOriginCodeRequirement-2",
+      "quote": "<OPTION value=\"FR\" selected=\"\">France</OPTION> ... <INPUT ... id=\"regionOfOriginCodeRequirement-2\" name=\"regionOfOriginCodeRequirement\" type=\"radio\" value=\"no\" checked=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-051",
+      "statement": "The unauthenticated deep-link tests start from no session at all: the test keeps only cookies whose names start 'liveAnimals', and the browser held none (its cookies were trade-imports-defra-id-stub-session, crumb, sid and session), so every cookie was cleared before the deep link.",
+      "kind": "behaviour",
+      "ref": "trace 68f5b action call@289 (cookies result), call@293 (addCookies with an empty list); trace d79c5 action call@283, call@287",
+      "quote": "const journeyCookies = (await pages.page.context().cookies()).filter(({ name }) => name.startsWith('liveAnimals'));",
+      "confidence": "inferred",
+      "note": "Inferred from the cookie names the trace recorded and the empty addCookies call: the journey state is held server-side against the notification reference, not in a liveAnimals cookie."
+    },
+    {
+      "id": "trace-e2e-p1-052",
+      "statement": "The animals frontend sends a Content-Security-Policy header on the dashboard document response.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals (reload) (headers.spec.ts:5)",
+      "quote": "Content-Security-Policy: base-uri 'self';connect-src 'self' wss data:;default-src 'self';font-src 'self' data:;form-action 'self' http://localhost:3002;frame-ancestors 'none';frame-src 'self' data:;img-src 'self' data:;manifest-src 'self';media-src 'self';object-src 'none';script-src 'self' 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=';style-src 'self';worker-src 'self'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-053",
+      "statement": "The CSP restricts scripts to the frontend's own origin plus one inline script allowed by its SHA-256 hash.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals Content-Security-Policy script-src",
+      "quote": "script-src 'self' 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-054",
+      "statement": "The CSP lets forms post to the frontend itself and to the address book service's origin (localhost:3002).",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals Content-Security-Policy form-action",
+      "quote": "form-action 'self' http://localhost:3002",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-055",
+      "statement": "The CSP forbids framing the frontend and forbids plugins and object embeds.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals Content-Security-Policy",
+      "quote": "frame-ancestors 'none'; ... object-src 'none'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-056",
+      "statement": "The CSP limits styles, fonts, images, media, manifests and workers to the frontend's own origin, with data: URIs also allowed for fonts, images, frames and connections.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals Content-Security-Policy",
+      "quote": "connect-src 'self' wss data:;default-src 'self';font-src 'self' data:;frame-src 'self' data:;img-src 'self' data:;manifest-src 'self';media-src 'self';style-src 'self';worker-src 'self'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-057",
+      "statement": "The CSP header is also present on the frontend's redirect responses (/live-animals 302 and /auth/sign-in 302) and on the /auth/sign-in-oidc callback, not only on rendered pages.",
+      "kind": "non-functional",
+      "ref": "trace 0b934 requests GET /live-animals (302), GET /auth/sign-in (302), GET /auth/sign-in-oidc (302)",
+      "quote": "Content-Security-Policy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-058",
+      "statement": "The dashboard response also sends Strict-Transport-Security for one year including subdomains.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals response headers",
+      "quote": "strict-transport-security: max-age=31536000; includeSubDomains",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-059",
+      "statement": "The dashboard response sends X-Frame-Options DENY, X-Content-Type-Options nosniff, X-Download-Options noopen and X-XSS-Protection '1; mode=block'.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals response headers",
+      "quote": "x-frame-options: DENY; x-content-type-options: nosniff; x-download-options: noopen; x-xss-protection: 1; mode=block",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-060",
+      "statement": "The dashboard response is sent with Cache-Control no-cache.",
+      "kind": "non-functional",
+      "ref": "trace 6b20c request GET /live-animals response headers",
+      "quote": "cache-control: no-cache",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p1-061",
+      "statement": "The corpus never submits the sign-in form with an empty user ID or an empty password, so the message for missing credentials is not recorded.",
+      "kind": "rule",
+      "ref": "auth.spec.ts (only 'invalid' user id and 'invalid' password cases); traces 8c7b9, 57464",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-062",
+      "statement": "No trace exercises session expiry: what a user sees when the 4-hour session cookie lapses, or whether a timeout warning is shown, is not recorded.",
+      "kind": "behaviour",
+      "ref": "all part 1 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-063",
+      "statement": "No trace follows the post-logout callback /auth/sign-out-oidc, so what the frontend does there (clearing the remaining session cookie, where it redirects) is not recorded.",
+      "kind": "behaviour",
+      "ref": "trace ca937, trace 03083 request logs",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-064",
+      "statement": "The stub's /organisations step redirects straight back without showing a page, so the corpus never shows an organisation or business choice for a user linked to more than one organisation.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 request GET /organisations",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-065",
+      "statement": "The service root / is only opened while signed in; whether an unauthenticated visit to / redirects to the default set first or straight to sign-in is not recorded.",
+      "kind": "behaviour",
+      "ref": "trace 71d40 (root opened after sign-in only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-066",
+      "statement": "No trace follows the Address book or Manage account navigation links, or the 'I have forgotten my password' link, so where they lead is not recorded beyond their hrefs.",
+      "kind": "behaviour",
+      "ref": "trace 0b934 action call@259 ul#navigation; trace be93a action call@263",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p1-067",
+      "statement": "The CSP and security headers are only recorded for the animals frontend; the Defra ID stub's sign-in and signed-out pages were not checked for them by any test.",
+      "kind": "non-functional",
+      "ref": "headers.spec.ts:5 (asserts only the /live-animals document)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

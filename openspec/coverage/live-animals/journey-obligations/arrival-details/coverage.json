@@ -27,11 +27,11 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "Air and Sea saves leave the Transit countries hub row absent; not probed against a reverted line" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "opening the transit page by its address goes to the overview when no means of transport is saved, or Sea is", "strength": "partial", "notes": "proves the page is not offered for no means and for Sea; does not assert the task row is hidden" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when meansOfTransport is AIRPLANE", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/common/helpers/transport-routing.test.js", "test": "routes air and vessel to transporters", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" }
-          ],
-          "notes": "FIT never asserts the non-overland skip: arrival-transit.fit always fills ROAD_VEHICLE (openTransit / fillValidArrival) and only proves the positive route to transit countries."
+          ]
         }
       ]
     },
@@ -46,11 +46,12 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "Road → save FR/BE → Sea (row gone) → Road again with the empty-list line shown; not probed against a reverted line" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "a transit form submitted after the means changes to Air saves no countries and goes to the overview", "strength": "partial", "notes": "France is only added, never saved, before the means changes to Air; proves a stale submit after leaving scope commits nothing and France is absent when Road is chosen again; does not prove saved countries are discarded or the task-row half" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should wipe the transited countries when the means changes off the overland set", "strength": "full", "notes": "asserts fulfilments cleared on AIRPLANE; does not re-open the page empty" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "purges stored transitedCountries when meansOfTransport flips to AIRPLANE", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "row reads Optional with no countries on an overland means" }
           ],
-          "notes": "No FIT round-trip wipe; only E2E re-opens the page and asserts cleared checkboxes."
+          "notes": "Only E2E saves countries, leaves scope and re-opens the page to find them gone; FIT covers the stale-submit half."
         }
       ]
     }

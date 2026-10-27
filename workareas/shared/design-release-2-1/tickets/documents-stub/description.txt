@@ -1,2 +1,124 @@
-Design Release 2.1 accompanying documents: the live animals Upload documents page opens as soon as the origin is answered, accepts punctuation in document references, drops Health certificate from the document types, returns the trader to where they came from, and saves without waiting for virus scans. 5 rows across the live animals frontend, the animals backend and the tests; 4 are ready to build and 1, files up to 50MB, waits on CDP raising its request size limit (EUDPA-518).
-This description is filled in automatically, one ticket per service domain, once the build completes. The work is not merged yet.
+h3. Background
+
+Design Release 2.1 asked for five changes to the live animals Upload documents page. This ticket is the whole of that work, and live animals is the only domain affected: high-risk plants has no documents page and the Import notification service front door is untouched, so there are no sibling tickets to read alongside this one.
+
+The work is built and is *not merged*. It sits on the branch feat/EUDPA-724-design-release-2-1-documents across the live animals frontend and the test suite, with its specification changes in the workspace repository, waiting on a technical review before it goes to main. Nothing described here is in a test environment yet.
+
+Two of the original five rows are no longer in this ticket, and it is worth knowing why rather than wondering where they went. Attaching files up to 50MB was dropped: EUDPA-296 had already delivered it, the 50MB limit is live and the page says so, and the platform request it was thought to need, EUDPA-518, turned out never to apply. The "Save and return to overview" half of the scanning change moved out to EUDPA-720's design snagging follow-ups, under Sam's ruling of 26 October that Save and return makes exactly the same checks as Save and continue on every page, so it is built once for the whole service rather than for this page alone.
+
+h3. What changes for the user
+
+h4. The page opens as soon as the origin is answered
+
+A trader who has answered only where the import is coming from can open Upload documents straight from Overview. The page no longer waits for the commodity and the commodity details to be answered first, and nothing on Overview reads "Cannot start yet" for documents.
+
+h4. The document type list drops Health certificate
+
+The Document type question offers thirteen types, in the order the design release sets, behind a "Select a document type" placeholder. Health certificate is no longer offered. A notification that already holds a document recorded as Health certificate still shows it on the page and on the review with that type, and still sends it onward with that type: only the choice is withdrawn, nothing already recorded is rewritten.
+
+h4. The page returns the trader where they came from
+
+Following the back link from Upload documents returns the trader to wherever they opened it. From Overview on a draft it goes back to Overview. Opened by a Change link from the review, it goes back to the review. While a notification is being amended it goes to the review however the page was opened. It still does so after the page has refused a part-filled document, so a refusal does not lose the trader's place.
+
+h4. A document still being scanned no longer holds the trader up
+
+A document still reading "Scanning for virus" no longer stops the trader continuing. They can carry on, come back later, and the row settles to "Check completed" once the scan finishes. A document the scanner rejects still holds them, because that is a real problem they need to deal with.
+
+h4. The specification states the rules the service applies
+
+The behaviour specification gave the file size limit as 10MB when the service has allowed 50MB since EUDPA-296, and said nothing at all about which characters a document reference may carry. It now states both, so the specification and the running service agree. This changes no behaviour: it records what the service already does.
+
+h3. Acceptance criteria
+
+h4. The page opens as soon as the origin is answered
+
+h5. SCN-DOCS-020-A Reaching the page from Overview with only the origin answered
+* *GIVEN* a new notification with only the origin of the import answered
+* *WHEN* the user follows Overview's "Upload documents" row
+* *THEN* the page titled "Upload documents" is shown
+
+h5. SCN-DOCS-020-B Opening the page with the origin and what they are importing answered
+* *GIVEN* a new notification with the origin of the import and what they are importing answered, and nothing else
+* *WHEN* the user opens the upload documents page
+* *THEN* the page titled "Upload documents" is shown
+
+h4. The document type list drops Health certificate
+
+h5. SCN-DOCS-013-A The type question offers thirteen types behind a placeholder, in position
+* *GIVEN* the user is adding a document
+* *WHEN* the page loads
+* *THEN* a document type field is shown between the reference and the date of issue, offering a placeholder and then: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other
+
+h5. SCN-DOCS-013-D A document recorded as Health certificate is listed with that type while the type question offers thirteen
+* *GIVEN* a notification holds a document recorded as Health certificate
+* *WHEN* the upload documents page opens
+* *THEN* that document is listed with Health certificate as its type
+* *AND* the type question offers thirteen document types
+
+h4. The page returns the trader where they came from
+
+h5. SCN-DOCS-002-A The back link opens Overview for a draft opened from Overview
+* *GIVEN* the user opens the upload documents page from Overview, on a draft that is not being amended
+* *WHEN* they follow the back link
+* *THEN* Overview is shown
+
+h5. SCN-DOCS-002-B The back link opens the review when changing an answer from the review
+* *GIVEN* the user opens the upload documents page by changing the uploaded documents from the review
+* *WHEN* they follow the back link
+* *THEN* the review is shown
+
+h5. SCN-DOCS-002-C The back link opens the review while the notification is being amended, however the page was opened
+* *GIVEN* the notification is being amended
+* *WHEN* the user opens the upload documents page from Overview and follows the back link
+* *THEN* the review is shown
+
+h5. SCN-DOCS-002-D The back link still opens the review after the page refuses a part-filled document
+* *GIVEN* the user opened the upload documents page by changing an answer from the review
+* *WHEN* they try to add a document with only the reference filled in, and it is refused
+* *THEN* the back link still opens the review
+* *WHEN* they follow it
+* *THEN* the review is shown
+
+h4. A document still being scanned no longer holds the trader up
+
+h5. SCN-DOCS-008-A Continuing is not blocked while a scan is still running
+* *GIVEN* a document on the page is still "Scanning for virus"
+* *WHEN* the user tries to continue
+* *THEN* continuing takes them onward
+* *WHEN* they come back to the page
+* *THEN* the document is still listed, and its row settles to "Check completed" once the scan finishes
+
+h4. The specification states the rules the service applies
+
+h5. SCN-DOCS-006-F A reference written in one of the shapes real documents carry is taken on
+* *GIVEN* the user enters a reference written as an air waybill with a hyphen, a certificate with full stops, or an invoice with a space and a forward slash
+* *WHEN* they add the document
+* *THEN* it is taken on and held against the notification with that reference as typed
+
+h5. SCN-DOCS-006-G A reference carrying a disallowed character is refused
+* *GIVEN* the user enters a reference carrying a character other than a letter, number, space, hyphen, full stop or forward slash
+* *WHEN* they try to add the document
+* *THEN* an error reading "Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes" is shown on the Document reference field
+* *AND* no document is added to the notification
+
+h3. The work behind this change
+
+|| Row || What it changed || State ||
+| inc-031 | Upload documents opens as soon as the origin is answered. The behaviour was already right on main, so this proved it with tests and wrote it into the specification | Built |
+| inc-037 | The document type list drops Health certificate, leaving the thirteen types the design release offers | Built |
+| inc-034 | The page returns the trader to where they came from | Built |
+| inc-038 | A document still being scanned no longer holds the trader | Built |
+| inc-039 | The specification states the file size and reference rules the service applies | Built |
+| inc-040 | The branch took in what main had landed while the theme was being built | Built |
+| inc-033 | Document references accept punctuation, and the type list drops Health certificate. EUDPA-296 had already delivered the punctuation half; the rest became inc-037 | Merged into inc-037 |
+| inc-035 | Save and continue no longer waits for virus scans. Its Save and return half moved to EUDPA-720's design snagging follow-ups under the 26 October ruling | Merged into inc-038 |
+| inc-036 | Attach files up to 50MB | Dropped: EUDPA-296 had already delivered it, and the platform limit it was thought to need never applied |
+
+h3. Where this is specified
+
+|| Specification file || Scenarios added ||
+| [live-animals/journey-pages/upload-documents/spec.md|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-724-design-release-2-1-documents/openspec/specs/live-animals/journey-pages/upload-documents/spec.md] | 11 |
+
+Eleven scenarios in one specification file, all of them this domain's: the theme changed no other page's specification. Every scenario above is copied from that file rather than paraphrased.
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it stays true to what was built rather than to what was planned.

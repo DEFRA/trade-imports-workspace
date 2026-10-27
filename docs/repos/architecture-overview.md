@@ -71,10 +71,10 @@ flowchart LR
 | ins-frontend | Sign-in front door, notifications dashboard, address-book UI (a backend-for-frontend) | Any database |
 | ins-backend | Cross-journey notification read model, built from events | Writes to notifications; it is read-only over REST |
 | address-book | Organisation-scoped address records (system of record) | Authentication; trusts the `Trade-Imports-Organisation-Id` header |
-| reference-data | Read API for countries and ports of entry, MDM token handling, caching | Holding data itself; it fetches from MDM |
+| reference-data | Read API for countries, ports of entry and live-animal commodity search and species checks, MDM token handling, caching | Holding data itself; it fetches from MDM |
 | dynamics-gateway | Forwarding submitted and amended notification events to Azure Service Bus; DLQ operator API | Any database; retries rely on SQS redelivery |
 | schemas | JSON Schema and JSON-LD contracts for payloads | Runtime enforcement; consumers reference it, not depend on it |
-| stub | Fake Trade platform token endpoint and MDM countries and ports | Any real logic |
+| stub | Fake Trade platform token endpoint and MDM countries, ports, product search, commodities and commodity species | Any real logic |
 | defra-id-stub | Fake Defra ID OIDC sign-in | Real identity; still a work in progress |
 | ins-tests | End-to-end, accessibility and security tests for the stack, one test directory (domain) per frontend | Application code |
 | performance-tests | k6 performance-test suites for the stack, run against it rather than in it | Application code |
@@ -107,7 +107,7 @@ which changes the notification only, not the address-book record. The animals fr
 address management and back again (the handshake, journey type `gbn-ag` only).
 
 **Reference data.** Frontends call reference-data for countries and ports of
-entry. reference-data calls MDM, which locally is `trade-imports-stub`. The
+entry, and the animals frontend also for commodity search and species checks. reference-data calls MDM, which locally is `trade-imports-stub`. The
 animals backend does not use it.
 
 **Sign-in.** The four UIs use Defra ID OIDC, or `trade-imports-defra-id-stub`

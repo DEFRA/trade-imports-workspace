@@ -37,17 +37,26 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-003",
-      "name": "A search can match a commodity's code or a species' common or scientific name",
+      "name": "A search can match a commodity's code or a species' common or Latin name",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-003-A",
-          "name": "Searching by common name finds the same species as searching by code",
+          "name": "Searching by common name offers the species under each live-animal code, by Latin name",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds a species by its common name", "strength": "full", "notes": "searches 'cattle' and finds Bos spp. / Bos taurus under Cow (0102)" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species as its common name with the scientific name after it", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "searches by commodity code (e.g. 0102) and finds the same Cow group; does not itself search by common name" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "full", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by Latin name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its scientific name", "strength": "full", "notes": "checkbox accessible names are the Latin names MDM returns" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "searches 'cattle' and '0102' and finds the same species under 0102 both ways, each by Latin name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists every species under a code searched for", "strength": "partial", "notes": "code-search half: searches 0102 and finds all 15 species by Latin name" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-003-B",
+          "name": "A search offers no commodity code the reference data flags as germinal",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java", "test": "search_leavesOutTheCodesMdmFlagsAsGerminal", "strength": "full", "notes": "MDM lists Bos taurus under 0102, 05119985 and 05111000 and flags the last two germinal; only 0102 is returned" }
           ]
         }
       ]
@@ -62,8 +71,8 @@
           "name": "A search groups its matching species under their commodity heading",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "groups the matching species under their commodity code", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -71,8 +80,8 @@
           "name": "A search matching more than one commodity renders a group for each",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity", "strength": "full", "notes": "search 0106 yields Cat and Dog groups" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "walks codes including 01061900 which yields both Cat and Dog groups, but does not assert both on one render" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity code", "strength": "full", "notes": "search taurus yields a 0102 group and a 01061900 group" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "partial", "notes": "asserts a group per code reference-data returns for each of 0102, cattle, horse, domestic cat and ostrich, so two codes on one render for cattle (0102, 01061900), horse (0101, 01061900) and ostrich (01063300, 01063980)" }
           ]
         },
         {
@@ -322,6 +331,21 @@
           "coverage": "partial",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should ignore a return value that names a page not opening the question and redirect as an unmarked save does", "strength": "partial", "notes": "a refused marker redirects as an unmarked save does; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-014",
+      "name": "One search lists no more than a hundred species",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-014-A",
+          "name": "A search matching more than a hundred species lists a hundred",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists no more than a hundred species for one search", "strength": "full", "notes": "searches 01061900, which holds 120 species" }
           ]
         }
       ]

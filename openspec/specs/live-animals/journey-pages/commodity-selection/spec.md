@@ -27,31 +27,37 @@ The system MUST list no species for a search of fewer than three characters, so 
 - **WHEN** they search for two characters
 - **THEN** no species are listed
 
-### Requirement: A search can match a commodity's code or a species' common or scientific name
+### Requirement: A search can match a commodity's code or a species' common or Latin name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST match a search against a commodity's code and against a species' common name as well as its scientific name, and MUST offer each species as its common name with the scientific name after it.
+The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its Latin name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its Latin name alone, as the reference data spells it.
 
-#### Scenario: Searching by common name finds the same species as searching by code
+#### Scenario: Searching by common name offers the species under each live-animal code, by Latin name
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
-- **THEN** the same species is offered as when searching by that commodity's code, shown as its common name followed by its scientific name
+- **THEN** each matching species is offered under its live-animal commodity code, shown by its Latin name
+
+#### Scenario: A search offers no commodity code the reference data flags as germinal
+**ID**: SCN-COMMODITY-SELECT-003-B
+- **GIVEN** the reference data lists a species under a live-animal code and under codes it flags as germinal
+- **WHEN** the user searches by that species' common name
+- **THEN** the species is offered under the live-animal code only
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004
-The system MUST group the species a search matches under a heading naming their commodity and its code, MUST render a separate group for each commodity a search matches, and MUST say so plainly when a search matches nothing.
+The system MUST group the species a search matches under a heading of their commodity code, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
 
 #### Scenario: A search groups its matching species under their commodity heading
 **ID**: SCN-COMMODITY-SELECT-004-A
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search by a commodity's code
-- **THEN** the matching species are listed together under a heading naming that commodity and its code
+- **WHEN** they search for a term matching species under one commodity code
+- **THEN** the matching species are listed together under a heading of that commodity code
 
 #### Scenario: A search matching more than one commodity renders a group for each
 **ID**: SCN-COMMODITY-SELECT-004-B
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a term that matches species under two different commodities
-- **THEN** two separate groups are shown, each headed by its own commodity's name and code
+- **WHEN** they search for a term that matches species under two different commodity codes
+- **THEN** two separate groups are shown, each headed by its own commodity code
 
 #### Scenario: A search matching nothing says so
 **ID**: SCN-COMMODITY-SELECT-004-C
@@ -225,3 +231,13 @@ The system MUST return the user to commodity details or identification details a
 - **GIVEN** the user opened what are you importing with a return value that names a page other than commodity details or identification details
 - **WHEN** they save and continue
 - **THEN** the save goes where a save with no return value goes
+
+### Requirement: One search lists no more than a hundred species
+**ID**: REQ-COMMODITY-SELECT-014
+The system MUST list no more than a hundred species for one search.
+
+#### Scenario: A search matching more than a hundred species lists a hundred
+**ID**: SCN-COMMODITY-SELECT-014-A
+- **GIVEN** the user is on the commodity selection page
+- **WHEN** they search for a commodity code holding more than a hundred species
+- **THEN** a hundred species are listed

@@ -610,7 +610,9 @@
         "The upload-documents specification carries a requirement that a document reference may hold letters, numbers, spaces, hyphens, full stops and forward slashes, up to one hundred characters, and that any other character is refused on the reference field with the service's own wording. (repo:frontend services/document-uploads/claim-contract.js; repo:backend accompanyingdocument/ClaimUploadRequest.java)",
         "Every scenario added or changed carries a coverage link to a test that already proves it, and tim spec lint and tim spec gaps --none pass for the live-animals/journey-pages/upload-documents prefix."
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "inc-040"
+      ],
       "externalDependsOn": [],
       "theme": "documents",
       "status": "todo",
@@ -642,7 +644,56 @@
         "27 Oct: the row gains the frontend. It was written as workspace-only, but its own subject - the file size and reference rules - is misstated in two frontend test files, and the first build attempt went ladder-red because of exactly that. Its fixer corrected copy/copy.test.js (a stale 10MB assertion, and the Welsh case still reading 10MB when the limit is 50MB) and fit/upload.fit.spec.js (a test titled 'over 58 characters' whose body uses REFERENCE_MAX_LENGTH + 1, where that constant is 100 in services/document-uploads/claim-contract.js). With repos and gatePhases both empty, no rung ever ran against the frontend, so the ladder would not vouch for those edits and reported the gap rather than waving it through, which was right. Naming the frontend lets the land stage commit them and the pull request CI prove them, the same verification every other row of this theme uses. Everything else about the row stands: its own nine plan checks and four red-probe cycles all passed and were independently re-run. The first attempt is preserved in the failed-inc-039 stashes in this repo and the frontend."
       ],
       "gate": null,
-      "gatePhases": []
+      "gatePhases": [],
+      "commit": "d296c8f9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
+    },
+    {
+      "id": "inc-040",
+      "title": "The theme branch takes in what main has landed since it was cut",
+      "kind": "chore",
+      "theme": "documents",
+      "status": "todo",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "dependsOn": [],
+      "detail": "Main has moved twice while this theme built, and the animals frontend pull request now conflicts with it, so GitHub runs no checks and the last row cannot be proved. The branch has to take main in before inc-039 can land. The first move brought design snagging followups inc-232, which replaced this theme's Save and return work, and the Add another commodity and Change return work; it was merged by hand on 27 October with one conflict in the live-animals page-design doc. The second move brought EUDPA-617 (commodities through reference-data), EUDPA-734, EUDPA-735, EUDPA-737 and a design snagging followups appearance change, and it conflicts in two code files rather than a doc, which is why it is a row rather than another hand merge.",
+      "acceptanceCriteria": [
+        "origin/main is merged into the theme branch in the animals frontend and the tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "fit/live-animals-journey.js keeps both sides: main's restructured helpers (openCommodityDetails, expectSpeciesSelected, the rewritten unlockSections and the FELIS_CATUS and BOS_TAURUS constants) and this theme's answerWhatYouAreImportingFromOverview, with answerWhatYouAreImporting carrying one signature that every caller on the merged branch uses.",
+        "check-answers/refusal.js imports both toArray, which main added, and isRejectedByScan, which inc-038 added, and each is used where its own side used it.",
+        "The animals frontend pull request reports no conflict with its base, so GitHub runs its checks on it again.",
+        "Both pull requests are green: unit, FIT and the tests/animals/ end-to-end suite."
+      ],
+      "notes": [
+        "27 Oct: raised by the orchestrating session after inc-039 stopped at ci-red with pr-conflicting for the second time. The conflicting files are fit/live-animals-journey.js and check-answers/refusal.js; every other file auto-merges. refusal.js is a plain import union. live-animals-journey.js is the real work: main restructured the helper while inc-031 changed the same function, so it needs both sides reconciled rather than either side taken, and it is a shared FIT helper many specs call, which is why it goes through the loop with a planned resolution and a review rather than a hand merge.",
+        "gatePhases is empty, as every row of this theme has been: the end-to-end proof is the pull request CI, because the local rungs cannot run on this machine. The merged FIT helper is therefore proved by CI's FIT run, which is the check that would catch a bad reconciliation."
+      ],
+      "sources": [
+        {
+          "source": "repo:frontend",
+          "ref": "fit/live-animals-journey.js; src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js"
+        }
+      ],
+      "requirements": []
     }
   ]
 }

@@ -172,17 +172,17 @@ The system MUST show a document as "Scanning for virus" right after upload, then
 - **WHEN** the scan refuses the file for a reason the system has no wording for
 - **THEN** its row shows "Rejected" rather than naming a cause, and there is no way to view the file
 
-### Requirement: The user cannot continue while a document is still being scanned or has been rejected
+### Requirement: The user cannot continue while a document has been rejected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Rejected", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the rejected one has been removed.
+The system MUST let the user continue past the page while a document's scan is still "Scanning for virus", MUST refuse to let them continue while any document has come back "Rejected", showing an error explaining why, and MUST let them continue once the rejected document has been removed.
 
-#### Scenario: Continuing is blocked while a scan is still running
+#### Scenario: Continuing is not blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
 - **GIVEN** a document on the page is still "Scanning for virus"
 - **WHEN** the user tries to continue
-- **THEN** an error explains they cannot continue yet
-- **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
+- **WHEN** they come back to the page
+- **THEN** the document is still listed, and its row settles to "Check completed" once the scan finishes
 
 #### Scenario: Continuing is blocked while a rejected document remains
 **ID**: SCN-DOCS-008-B

@@ -193,9 +193,9 @@
           "name": "A clean upload becomes checked and viewable",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Scanning for virus with no view link, then Check completed with a view link", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Scanning for virus then Check completed on the row — does not assert view-link absence while scanning" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "partial", "notes": "scanning then Check completed; continue gate — view-link transition covered better by E2E" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "partial", "notes": "scanning then Check completed via a reopen; the view-link transition is covered better by E2E" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "a real scan resolves the row to Check completed and a View file link is there to follow — it does not assert the Scanning for virus state or the view link's absence before the scan resolves" }
           ]
         },
@@ -204,7 +204,7 @@
           "name": "A rejected upload is flagged and blocked, naming the reason",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary blocking Save and continue until it is removed", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should name the reason virus.pdf was refused for, in the tag and the key the client rewrites by", "strength": "full", "notes": "the tag text and the key the polled client rewrites by; sibling cases cover the upload and download failures" }
           ]
@@ -221,15 +221,16 @@
     },
     {
       "id": "REQ-DOCS-008",
-      "name": "The user cannot continue while a document is still being scanned or has been rejected",
+      "name": "The user cannot continue while a document has been rejected",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-008-A",
-          "name": "Continuing is blocked while a scan is still running",
+          "name": "Continuing is not blocked while a scan is still running",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "full", "notes": "cannotContinue error while scanning; after Check completed, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "full", "notes": "Continue reaches Overview while scanning; reopening the page lists the row settled to Check completed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "partial", "notes": "guarded by firstScanStatus — the pending leg only runs when the real scan has not already settled before the first render" }
           ]
         },
         {
@@ -237,7 +238,8 @@
           "name": "Continuing is blocked while a rejected document remains",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders a rejected document and its per-file error until it is removed", "strength": "full", "notes": "Continue re-shows the rejection error; after remove, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "Continue re-shows the rejection error; after remove, Continue reaches Overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary blocking Save and continue until it is removed", "strength": "full", "notes": "Save and continue is refused while the EICAR upload is rejected; removing it and pressing again reaches Overview" }
           ]
         }
       ]

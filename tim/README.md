@@ -598,6 +598,25 @@ names. It always exits 0. The build loop's merge stage uses it to tell a merge
 that starts no workflow, which has nothing to watch, from a run that has not
 started yet.
 
+### `tim build run-jobs` — whether every job of a run has passed
+
+```bash
+gh api repos/DEFRA/trade-imports-plants-frontend/actions/runs/123/jobs?filter=latest > jobs.json
+tim build run-jobs trade-imports-plants-frontend --commit 4cd37b9c --workflow .github/workflows/publish.yml --jobs jobs.json --json
+```
+
+A run's own status can stay in progress after its jobs have finished. This
+judges the jobs instead: each must be completed with success or skipped, and
+each job the workflow file defines at the commit must have a job in the run.
+A matrix job counts by its name and a suffix. A job that calls a reusable
+workflow needs a job named `<its name> / …`, every job of that workflow when
+it is in the same repo, or one skipped job of its own name. tim reads the
+saved file and local git only: it never calls GitHub itself.
+
+The result is `{workflow, commit, green, declared, missing, notPassed, jobs}`.
+It always exits 0. The build loop's merge stage uses it for a base-branch run
+still showing in progress after its watches.
+
 ### `tim build probe` — does a test witness a line
 
 ```bash

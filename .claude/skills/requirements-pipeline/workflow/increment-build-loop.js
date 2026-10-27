@@ -2427,6 +2427,22 @@ const MERGE_SCHEMA = {
         },
         additionalProperties: false
       }
+    },
+    jobsGreen: {
+      type: 'array',
+      description:
+        'Every base-branch run whose own status stayed unresolved after the watches but whose jobs had all passed, by tim build run-jobs. Empty when every run resolved on its own',
+      items: {
+        type: 'object',
+        required: ['repo', 'runId', 'workflow', 'jobs'],
+        properties: {
+          repo: { type: 'string' },
+          runId: { type: 'string' },
+          workflow: { type: 'string' },
+          jobs: { type: 'array', items: { type: 'string' }, description: "tim's result.jobs, word for word" }
+        },
+        additionalProperties: false
+      }
     }
   }
 }
@@ -5327,6 +5343,7 @@ Return the structured output only.`,
   const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
 
   let prs = []
+  let mainRunsGreenByJobs = []
 
   finish: {
     if (IS_BRANCH) {
@@ -5727,7 +5744,15 @@ For EACH pr, in that order:`
    b. THE RUNS: \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,workflowName,status,conclusion --limit 20\`
    c. For each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
       \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
-      At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
+      At most ${CI_WATCH_WINDOWS} watches per run. A run's own status can stay in progress after its jobs have
+      finished, so a run still unresolved after that gets one more check, of its jobs:
+      \`gh api repos/<ghRepo>/actions/runs/<run-id>/jobs?filter=latest > ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-jobs.json 2>&1\`
+      then, with the run's workflow file from \`result.workflows\` in step a (the entry whose \`name\` is the run's
+      workflowName):
+      \`tim build run-jobs ${TILDE}/<repoPath> --commit <sha> --workflow <file> --jobs ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-jobs.json --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-run-jobs.json 2>&1\`
+      and read that file once. \`result.green\` true → every job has passed and every job the workflow defines has
+      one, so count that run green and put it in jobsGreen\[\] as { repo, runId, workflow, jobs } with \`result.jobs\`.
+      Anything else → the run is still unresolved, and that counts as RED.
       **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
       base branch went red after merging
       <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
@@ -5754,8 +5779,8 @@ branch: <url>" in blocked. Do NOT merge it yourself — it has not been through 
 gate in this run, and merging an unvetted PR to clear a warning is worse than the warning. Leave everything
 as it is and name it, so a human can finish it.
 
-green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them (or, by step 5e,
-the merge started no workflow there), AND the final sweep found no open PR left on \`${workBranch}\` in any repo.
+green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them (or, by step 5c, every
+job of a run still showing in progress had passed; or, by step 5e, the merge started no workflow there), AND the final sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
       light({ label: `${id} merge`, phase: 'Merge', schema: MERGE_SCHEMA })
     )
@@ -5790,6 +5815,10 @@ Return the structured output only.`,
     log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
     for (const { repo, sha, why } of merge.untriggered ?? []) {
       log(`${id}: ${repo} merge ${sha} started no workflow on ${BASE_BRANCH}, so there was no run to watch — ${why}`)
+    }
+    mainRunsGreenByJobs = merge.jobsGreen ?? []
+    for (const { repo, runId, workflow } of mainRunsGreenByJobs) {
+      log(`${id}: ${repo} ${workflow} run ${runId} on ${BASE_BRANCH} still showed in progress, but every job in it had passed, so it counts as green`)
     }
   }
 
@@ -5837,6 +5866,7 @@ Return the structured output only.`,
     outcome: 'landed',
     commit: land?.commit,
     prs: prs.map((p) => p.url),
+    ...(mainRunsGreenByJobs.length > 0 ? { mainRunsGreenByJobs } : {}),
     findings,
     judgement: judgementCalls,
     followUps: plan?.followUps

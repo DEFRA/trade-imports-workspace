@@ -1049,6 +1049,12 @@ The script carries no comments. The reasons behind its less obvious choices are 
   counts as green, and the loop logs it with each workflow's reason. Every run that does exist is watched, and red
   stops the run as before. A workflow tim says the merge starts, with no run after five looks, stops the run as
   `main-red` with `stopReason: "base-branch-unverified"`.
+- **A base-branch run counts as green once every job has passed.** A run's own status can stay `in_progress` long
+  after its jobs finish (a plants Publish run did for about 30 minutes). A run still unresolved after its watches has
+  its jobs saved with `gh api repos/<repo>/actions/runs/<id>/jobs?filter=latest` and judged by
+  `tim build run-jobs`: every job completed with success or skipped, and every job the workflow file defines present
+  (a reusable workflow's jobs too). Then it counts as green, and the landed result lists it under
+  `mainRunsGreenByJobs`. Anything else counts as red, as before.
 - **The tests repo pushes first, and the rest wait for its branch image.** Every other repo's PR E2E uses the
   tests image tagged for the branch, or `trade-imports-ins-tests:latest` when none is published yet ("Tests image:
   latest (no branch tag)"). The tests repo publishes it from its own PR, in its `publish-branch.yml` run. So the

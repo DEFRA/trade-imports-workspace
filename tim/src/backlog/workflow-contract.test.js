@@ -6568,6 +6568,52 @@ describe('increment-build-loop', () => {
         })
       )
 
+    describe('a base-branch run whose own status lags behind its jobs', () => {
+      const JOBS_GREEN = {
+        repo: 'perftests',
+        runId: '4242',
+        workflow: 'Publish',
+        jobs: ['CDP-build-workflow: success', 'publish-arm64 / build: success']
+      }
+
+      test('has the merge stage read the run’s jobs and judge them with tim build run-jobs before calling it unresolved', async () => {
+        const run = await runFactory()
+        const prompt = promptOf(run, 'inc-020 merge')
+
+        expect({
+          jobs: prompt.includes(
+            '`gh api repos/<ghRepo>/actions/runs/<run-id>/jobs?filter=latest > ~/ws/workareas/'
+          ),
+          judged: prompt.includes(
+            '`tim build run-jobs ~/ws/<repoPath> --commit <sha> --workflow <file> --jobs '
+          ),
+          otherwiseRed: prompt.includes(
+            'Anything else → the run is still unresolved, and that counts as RED.'
+          )
+        }).toEqual({ jobs: true, judged: true, otherwiseRed: true })
+      })
+
+      test('lands the row and says which run counted green by its jobs', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 merge': {
+              ...ANSWERS['inc-020 merge'],
+              jobsGreen: [JOBS_GREEN]
+            }
+          }
+        )
+
+        expect({
+          outcome: run.result.increments[0].outcome,
+          byJobs: run.result.increments[0].mainRunsGreenByJobs,
+          logged: run.logs.includes(
+            'inc-020: perftests Publish run 4242 on main still showed in progress, but every job in it had passed, so it counts as green'
+          )
+        }).toEqual({ outcome: 'landed', byJobs: [JOBS_GREEN], logged: true })
+      })
+    })
+
     describe('resuming a row whose workspace branch exists', () => {
       test('says origin/main was merged into the workspace branch before any stage ran tim', async () => {
         const run = await runFactory(

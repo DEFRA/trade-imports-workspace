@@ -400,6 +400,27 @@ describe('renderGateText for a held stack', () => {
   })
 })
 
+describe('renderGateText for a stack started again under its holder’s lease', () => {
+  test('says the gate started it again and left it up, still leased to the holder', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [{ repo: 'tests', name: 'e2e-plants', phase: 'e2e', ok: true }],
+        stack: {
+          wasUp: false,
+          startedForE2e: true,
+          stoppedAfter: false,
+          keptForHolder: true,
+          held: null
+        }
+      }).split('\n')[2]
+    ).toBe(
+      'The workspace stack was down under this holder’s lease. The gate started it again from local source and left it up, still leased to this holder.'
+    )
+  })
+})
+
 describe('renderGateText for a stack that did not start', () => {
   test('says the gate could not start the stack and why, not that the stack was left up', () => {
     const startError =

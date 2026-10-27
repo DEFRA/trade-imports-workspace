@@ -225,9 +225,15 @@ const answeringRunLease = (
   themeAnswers = {},
   planAnswers = {}
 ) => {
+  let acquires = 0
+  const acquireAnswer = () => {
+    acquires += 1
+    const first = leaseAnswers.acquire ?? LEASE_ACQUIRED
+    return acquires > 1 ? (leaseAnswers.reacquire ?? first) : first
+  }
   const leaseAnswer = (label) =>
     label === ACQUIRE_LABEL
-      ? (leaseAnswers.acquire ?? LEASE_ACQUIRED)
+      ? acquireAnswer()
       : (leaseAnswers.release ?? LEASE_RELEASED)
   const answerOwnStage = (label) => {
     if (isRunLease(label)) return leaseAnswer(label)
@@ -3195,8 +3201,35 @@ describe('increment-build-loop', () => {
           })
         })
 
-        test('stops with stack-held for a stack that no lease names', async () => {
-          const run = await runToLadderWith(
+        const REACQUIRE_REFUSED = {
+          acquired: false,
+          refused: true,
+          holder: null,
+          summary: UNLEASED.detail
+        }
+        const runToLadderLeasing = (lease, ...answers) =>
+          runLoop(scriptPath, {
+            args: BASE_ARGS,
+            lease,
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              START_ANSWER,
+              BASELINE_ANSWER,
+              PLAN_ANSWER,
+              implementAnswer(['frontend:src/a.js']),
+              NO_FINDINGS,
+              NO_FINDINGS,
+              NO_FINDINGS,
+              ...answers
+            ]
+          })
+        const allLabels = (run) =>
+          run.agents.map((entry) => entry.options.label)
+
+        test('stops with stack-held for a stack up with no lease, which the run cannot take again', async () => {
+          const run = await runToLadderLeasing(
+            { reacquire: REACQUIRE_REFUSED },
             heldLadder(UNLEASED),
             LEASE_GONE,
             KEPT
@@ -3206,6 +3239,43 @@ describe('increment-build-loop', () => {
             reason: 'stack-held',
             detail: `inc-900 ladder: the workspace stack is held by nobody: no lease names it, so somebody released this run's lease or started the stack by hand. ${UNLEASED.detail}`
           })
+        })
+
+        test('takes the run’s lease again and runs the stage once more when the lease has gone and nobody else holds it', async () => {
+          const run = await runToLadderWith(
+            heldLadder({ holder: null, detail: 'Nobody holds a lease.' }),
+            LEASE_GONE
+          )
+
+          const firstLadder = allLabels(run).indexOf('inc-900 ladder')
+          expect(allLabels(run).slice(firstLadder, firstLadder + 4)).toEqual([
+            'inc-900 ladder',
+            'inc-900 ladder lease check',
+            ACQUIRE_LABEL,
+            'inc-900 ladder'
+          ])
+        })
+
+        test('does not stop with stack-held once the stage has run again under the lease it took back', async () => {
+          const run = await runToLadderWith(
+            heldLadder({ holder: null, detail: 'Nobody holds a lease.' }),
+            LEASE_GONE,
+            { green: false, ran: [], summary: 'e2e red' }
+          )
+
+          expect(run.result.stopped?.reason).not.toBe('stack-held')
+        })
+
+        test('never takes the lease from somebody else who holds it', async () => {
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
+
+          expect(
+            allLabels(run).filter((label) => label === ACQUIRE_LABEL)
+          ).toEqual([ACQUIRE_LABEL])
         })
 
         test('stops at the baseline with stack-held and nothing to preserve', async () => {

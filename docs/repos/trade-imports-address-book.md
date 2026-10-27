@@ -11,7 +11,7 @@ Org-scoped address book API for EUDP Live Animals (EUDPA-58). Each organisation 
 **Owns**
 
 - The `addresses` collection in the `trade-imports-address-book` MongoDB database (name, address lines, town/city, county, postcode, `countryCode`, phone, email, status, audit timestamps).
-- CRUD, search (`q`, `countryCode`) and 1-based pagination (server-set page size, default 25) for addresses, all scoped by organisation id.
+- CRUD, search (`q` over name, address lines, town or city, county and postcode; `countryCode`, repeatable) and 1-based pagination (`pageSize` request parameter from 1 to 100, default 25) for addresses, all scoped by organisation id.
 - Soft delete: a delete flips internal `status` to `DELETED`; tombstones stay fetchable by id with `deleted: true` and are excluded from lists.
 - The locked OpenAPI contract (`docs/openapi/api-contract.locked.yaml`, `operators.yml`), checked on every `mvn verify`.
 

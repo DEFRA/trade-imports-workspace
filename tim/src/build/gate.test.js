@@ -297,6 +297,81 @@ describe('runGate — unit and FIT rungs', () => {
     ])
   })
 
+  describe('when a repo’s installed dependencies differ from its lockfile', () => {
+    const lockUndiciIn = (folder) => {
+      const dir = join(root, 'repos', folder)
+      const manifest = JSON.parse(
+        readFileSync(join(dir, 'package.json'), 'utf8')
+      )
+      writeFileSync(
+        join(dir, 'package.json'),
+        JSON.stringify({ ...manifest, devDependencies: { undici: '8.12.3' } })
+      )
+      writeFileSync(
+        join(dir, 'package-lock.json'),
+        JSON.stringify({
+          lockfileVersion: 3,
+          packages: { 'node_modules/undici': { version: '8.12.3' } }
+        })
+      )
+    }
+
+    const withNpmCiExiting = async (env, exitCode) => {
+      const { stdout: realNpm } = await execa('which', ['npm'])
+      writeExecutable(
+        join(root, 'fake-bin', 'npm'),
+        `if [ "$1" = ci ]; then echo ci >> '${join(root, 'npm-ci-calls')}'; exit ${exitCode}; fi\nexec '${realNpm}' "$@"`
+      )
+      return env
+    }
+
+    test('runs npm ci before the repo’s rungs, then runs them, and reports the install', async () => {
+      const env = await withNpmCiExiting(workspaceWith(unitOnly()), 0)
+      lockUndiciIn('frontend')
+
+      const outcome = await gate(env, { phase: 'unit' })
+
+      expect({
+        rungs: outcomeOf(outcome.rungs),
+        dependencies: outcome.dependencies,
+        ciCalls: readFileSync(join(root, 'npm-ci-calls'), 'utf8')
+      }).toEqual({
+        rungs: ['frontend:format:pass', 'frontend:unit:pass'],
+        dependencies: [
+          {
+            repo: 'frontend',
+            path: join(root, 'repos', 'frontend'),
+            stale: 'undici missing (locked 8.12.3)',
+            installed: true,
+            reason: null
+          }
+        ],
+        ciCalls: 'ci\n'
+      })
+    })
+
+    test('fails the repo’s rungs with the reason when npm ci fails, without running them', async () => {
+      const env = await withNpmCiExiting(workspaceWith(unitOnly()), 5)
+      lockUndiciIn('frontend')
+      const installLog = join(
+        defaultLogsDir(root, WORKAREA),
+        'gate-frontend-install.log'
+      )
+
+      const outcome = await gate(env, { phase: 'unit' })
+
+      expect(
+        outcome.rungs.map(({ name, ok, reason }) => ({ name, ok, reason }))
+      ).toEqual(
+        ['format', 'unit'].map((name) => ({
+          name,
+          ok: false,
+          reason: `npm ci exited 5 in frontend. Read ${installLog}.`
+        }))
+      )
+    })
+  })
+
   test('fails a FIT rung whose port is held, naming the holder, without running it', async () => {
     const server = createServer()
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
@@ -486,6 +561,53 @@ describe('runGate — e2e rungs', () => {
           left: []
         })
       })
+    })
+  })
+
+  test('starts the stack again for a holder whose lease outlived it, and leaves it up and leased to them', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({ holder: GATE_HOLDER })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      lease: leaseOnDisk(),
+      green: outcome.green,
+      stack: outcome.stack
+    }).toEqual({
+      calls: ['run-stack.sh -d'],
+      up: true,
+      lease: expect.objectContaining({ holder: GATE_HOLDER, state: 'up' }),
+      green: true,
+      stack: expect.objectContaining({
+        wasUp: false,
+        startedForE2e: true,
+        stoppedAfter: false,
+        keptForHolder: true,
+        downLog: null
+      })
+    })
+  })
+
+  test('keeps the lease for a holder whose lease outlived the stack when the stack will not come up again', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({ holder: GATE_HOLDER })
+    writeFileSync(join(root, 'up-fails'), '')
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      green: outcome.green,
+      lease: leaseOnDisk()?.holder,
+      startError: outcome.stack.startError
+    }).toEqual({
+      green: false,
+      lease: GATE_HOLDER,
+      startError: expect.stringContaining(
+        `the lease kept for "${GATE_HOLDER}", who held it before.`
+      )
     })
   })
 
@@ -691,7 +813,7 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
-  test('fails the e2e rungs when the stack does not come up, still stops it, and clears the lease', async () => {
+  test('fails the e2e rungs when the stack does not come up, still stops it, clears the lease, and reports why the stack did not start', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(join(root, 'up-fails'), '')
 
@@ -701,7 +823,8 @@ describe('runGate — e2e rungs', () => {
       rungs: outcome.rungs,
       calls: stackCalls(),
       lease: leaseOnDisk(),
-      held: outcome.stack.held
+      held: outcome.stack.held,
+      startError: outcome.stack.startError
     }).toEqual({
       rungs: [
         expect.objectContaining({
@@ -713,7 +836,10 @@ describe('runGate — e2e rungs', () => {
       ],
       calls: ['run-stack.sh -d', 'stop-stack.sh'],
       lease: null,
-      held: null
+      held: null,
+      startError: expect.stringMatching(
+        /^The workspace stack did not come up \(run-stack\.sh exited 9\)\. .* It was taken down again and the lease cleared\.$/
+      )
     })
   })
 

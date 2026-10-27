@@ -95,9 +95,9 @@ The system MUST keep every species the user has chosen, whichever search brought
 - **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
-### Requirement: The back link returns to the origin of the import in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, and to Overview when the page was opened from its Overview task.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, to commodity details or identification details when that page opened it, and to Overview when the page was opened from its Overview task.
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A
@@ -111,6 +111,12 @@ The system MUST return the user to the origin of the import page when they follo
 - **WHEN** they follow the back link from what are you importing
 - **THEN** the origin of the import page is shown
 
+#### Scenario: Opened from commodity details, the back link opens commodity details
+**ID**: SCN-COMMODITY-SELECT-007-C
+- **GIVEN** the user opened what are you importing from the Add another commodity link on commodity details
+- **WHEN** they follow the back link
+- **THEN** commodity details is shown
+
 ### Requirement: The tally counts what has been chosen and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
 The system MUST report how many species have been chosen and name them, and MUST let the user clear the whole selection at once.
@@ -123,9 +129,9 @@ The system MUST report how many species have been chosen and name them, and MUST
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
-### Requirement: Saving and continuing without choosing a commodity is rejected
+### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009
-The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. On save and return to overview the system MUST NOT check the choice: it saves the selection as it stands, an empty one included, and the Overview shows the commodity selection task as "To do" when nothing is chosen.
+The system MUST refuse to save from the commodity selection page when nothing has been chosen, on save and continue and on save and return to overview alike, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. A selection already saved MUST stay as it was.
 
 #### Scenario: Saving with nothing chosen shows an error summary
 **ID**: SCN-COMMODITY-SELECT-009-A
@@ -134,11 +140,11 @@ The system MUST refuse to save and continue from the commodity selection page wh
 - **THEN** an error summary headed "There is a problem" is shown, telling the user to select a commodity
 - **AND** the same error shows inline on the search field, and the summary link goes to the search field
 
-#### Scenario: Save and return to overview with nothing chosen returns to Overview without an error
+#### Scenario: Save and return to overview with nothing chosen shows the same error
 **ID**: SCN-COMMODITY-SELECT-009-B
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
+- **THEN** they stay on the page, which shows "Select a commodity" in the error summary and inline on the search field
 - **AND** the commodity selection task reads "To do"
 
 #### Scenario: With results listed, the error still sits on the search field
@@ -148,12 +154,12 @@ The system MUST refuse to save and continue from the commodity selection page wh
 - **THEN** "Select a commodity" shows in the error summary and inline on the search field, not on the listed species
 - **AND** the summary link goes to the search field
 
-#### Scenario: Save and return to overview after clearing a saved selection empties it
+#### Scenario: Save and return to overview after clearing a saved selection is refused and keeps the saved selection
 **ID**: SCN-COMMODITY-SELECT-009-D
 - **GIVEN** the user has a saved selection and clears it on the commodity selection page
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown and the commodity selection task reads "To do"
-- **AND** reopening the page shows nothing chosen
+- **THEN** they stay on the page, which shows "Select a commodity"
+- **AND** reopening the page shows the saved selection still chosen
 
 ### Requirement: A notification must carry at least one commodity line
 **ID**: REQ-COMMODITY-SELECT-010
@@ -186,12 +192,52 @@ Outside an amendment the system MUST end the commodity selection page with "Save
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
 
-### Requirement: One search lists no more than a hundred species
+### Requirement: Saving returns the user to the page that opened the question, else goes on
 **ID**: REQ-COMMODITY-SELECT-013
+The system MUST return the user to commodity details or identification details after a save on what are you importing when that page opened it, keeping any change context. Otherwise a save MUST go to the next step of the opening sequence, a save from a Change link on the review MUST go to commodity details, and save and return to overview MUST go to Overview.
+
+#### Scenario: Opened from commodity details, saving returns there
+**ID**: SCN-COMMODITY-SELECT-013-A
+- **GIVEN** the user opened what are you importing from the Add another commodity link on commodity details
+- **WHEN** they choose a further species and save and continue
+- **THEN** commodity details is shown
+
+#### Scenario: Opened from identification details, saving returns there
+**ID**: SCN-COMMODITY-SELECT-013-B
+- **GIVEN** the user opened what are you importing from identification details
+- **WHEN** they save and continue
+- **THEN** identification details is shown
+
+#### Scenario: In the opening sequence, saving opens the reason for import
+**ID**: SCN-COMMODITY-SELECT-013-C
+- **GIVEN** the user is in the opening sequence on what are you importing
+- **WHEN** they save and continue
+- **THEN** the reason for import page is shown
+
+#### Scenario: Opened from a review Change link, saving opens commodity details
+**ID**: SCN-COMMODITY-SELECT-013-D
+- **GIVEN** the user opened what are you importing from a Change link on the review
+- **WHEN** they save and continue
+- **THEN** commodity details is shown
+
+#### Scenario: Opened from commodity details under a review Change, saving returns there keeping the change context
+**ID**: SCN-COMMODITY-SELECT-013-E
+- **GIVEN** the user opened what are you importing from commodity details, reached from a Change link on the review
+- **WHEN** they save and continue
+- **THEN** commodity details is shown, still carrying the change context
+
+#### Scenario: A return value naming a page that does not open the question is ignored
+**ID**: SCN-COMMODITY-SELECT-013-F
+- **GIVEN** the user opened what are you importing with a return value that names a page other than commodity details or identification details
+- **WHEN** they save and continue
+- **THEN** the save goes where a save with no return value goes
+
+### Requirement: One search lists no more than a hundred species
+**ID**: REQ-COMMODITY-SELECT-014
 The system MUST list no more than a hundred species for one search.
 
 #### Scenario: A search matching more than a hundred species lists a hundred
-**ID**: SCN-COMMODITY-SELECT-013-A
+**ID**: SCN-COMMODITY-SELECT-014-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a commodity code holding more than a hundred species
 - **THEN** a hundred species are listed

@@ -13,6 +13,7 @@ import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
+import { installStaleDependencies } from './dependencies.js'
 import {
   loadGates,
   planRungs,
@@ -299,10 +300,12 @@ const NO_E2E_STACK = {
   wasUp: null,
   startedForE2e: false,
   stoppedAfter: false,
+  keptForHolder: false,
   servedFrom: null,
   upLog: null,
   downLog: null,
   downError: null,
+  startError: null,
   held: null,
   refresh: null
 }
@@ -380,6 +383,7 @@ const refusedE2e = (rungs, lease) => ({
     ...NO_E2E_STACK,
     wasUp: lease.up,
     upLog: lease.log ?? null,
+    startError: lease.up === false && !lease.refused ? lease.reason : null,
     held: lease.refused ? { holder: lease.holder, detail: lease.reason } : null
   }
 })
@@ -452,10 +456,12 @@ const runE2e = async (rungs, context) => {
   if (context.stackAfterLocal) await context.localDone
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
+  const keptForHolder = lease.started && lease.heldBefore === true
   const stack = {
     ...NO_E2E_STACK,
     wasUp: lease.reused,
     startedForE2e: lease.started,
+    keptForHolder,
     servedFrom: 'local-source',
     upLog: lease.log
   }
@@ -464,7 +470,7 @@ const runE2e = async (rungs, context) => {
   try {
     ran = await runLeasedRungs(rungs, context, lease)
   } finally {
-    if (lease.started) down = await giveBack(context)
+    if (lease.started && !keptForHolder) down = await giveBack(context)
   }
   return {
     results: ran.results,
@@ -533,6 +539,40 @@ const exclusiveMs = (runs) =>
     .filter(({ rung }) => isExclusive(rung))
     .reduce((total, { startedAt, endedAt }) => total + endedAt - startedAt, 0)
 
+const runsNpm = ({ run }) => run !== MVN_VERIFY && run !== TIM_DUPLICATION
+
+const npmFolders = (plan) => [
+  ...new Map(
+    plan
+      .filter((rung) => runsNpm(rung) && rung.path)
+      .map(({ repo, path }) => [path, { repo, path }])
+  ).values()
+]
+
+const installPlanDependencies = (plan, context) =>
+  Promise.all(
+    npmFolders(plan).map((folder) =>
+      installStaleDependencies({
+        ...folder,
+        logsDir: context.logsDir,
+        env: context.env
+      })
+    )
+  )
+
+const refusingWhereInstallFailed = (plan, dependencies) => {
+  const failures = new Map(
+    dependencies
+      .filter(({ reason }) => reason)
+      .map(({ path, reason }) => [path, reason])
+  )
+  return plan.map((rung) =>
+    failures.has(rung.path) && runsNpm(rung) && !rung.refusal
+      ? { ...rung, refusal: failures.get(rung.path) }
+      : rung
+  )
+}
+
 const layerDurations = (startedAt, ran) => {
   const performanceMs = exclusiveMs(ran.e2e.runs ?? [])
   const afterLocalMs = Math.max(0, ran.e2e.endedAt - ran.localEndedAt)
@@ -554,7 +594,12 @@ const layerDurations = (startedAt, ran) => {
  * runs one rung at a time instead: every unit rung, then every FIT rung,
  * then the e2e phase. Rungs come back in plan order either way. Every
  * rung's output goes to its own log; a rung that cannot run is a failure
- * with its reason, never left out.
+ * with its reason, never left out. Before any rung, each npm folder whose
+ * installed direct dependencies differ from its lockfile is reinstalled; a
+ * failed install fails that folder's npm rungs. The e2e phase leaves the
+ * stack lease as it found it: a stack it started for a holder that held no
+ * lease is stopped and the lease cleared; a stack it started again for a
+ * holder whose lease outlived the stack is left up, still leased to them.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -566,7 +611,7 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} [args.leasePath] - The stack lease file
  * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos and stackAfterLocal
  * @param {object} [args.env] - Extra environment for every command the gate runs
- * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], stack: object}>}
+ * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object}>}
  */
 export const runGate = async ({
   workspaceRoot,
@@ -583,7 +628,10 @@ export const runGate = async ({
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
-  const plan = withMachineWorkers(planRungs({ gates, repos, phase }), machine)
+  const planned = withMachineWorkers(
+    planRungs({ gates, repos, phase }),
+    machine
+  )
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {
     workspaceRoot,
@@ -597,11 +645,16 @@ export const runGate = async ({
     held: null
   }
 
+  const dependencies = await installPlanDependencies(planned, context)
+  const plan = refusingWhereInstallFailed(planned, dependencies)
   const ran = await (serial ? runSerially : runInLayers)(plan, context)
   const { local, e2e } = ran
 
   const rungs = [...local.map(({ result }) => result), ...e2e.results]
-  const stackClean = e2e.stack.wasUp !== false || e2e.stack.stoppedAfter
+  const stackClean =
+    e2e.stack.wasUp !== false ||
+    e2e.stack.stoppedAfter ||
+    e2e.stack.keptForHolder
   return {
     green: rungs.length > 0 && rungs.every(({ ok }) => ok) && stackClean,
     phase,
@@ -612,6 +665,7 @@ export const runGate = async ({
     layers: layerDurations(startedAt, ran),
     rungs,
     machine: machineSummary(machine),
+    dependencies: dependencies.filter(({ stale }) => stale),
     stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
   }
 }

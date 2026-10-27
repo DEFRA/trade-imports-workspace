@@ -107,14 +107,20 @@ The system MUST persist each species' saved counts, so a reload of the page show
 
 ### Requirement: Adding another commodity from this page preserves what was already entered
 **ID**: REQ-COMMODITY-DETAILS-007
-The system MUST let the user add a further commodity from the commodity details page, returning them to commodity selection with what they already chose still selected, and MUST preserve every already-saved species' counts once the new one is added.
+The system MUST let the user add a further commodity from the commodity details page, returning them to commodity selection with what they already chose still selected, MUST return them to commodity details once the new one is saved, and MUST preserve every already-saved species' counts once the new one is added.
 
 #### Scenario: Adding another commodity keeps the earlier species selected and their counts intact
 **ID**: SCN-COMMODITY-DETAILS-007-A
 - **GIVEN** the user has saved a count for one species
 - **WHEN** they choose to add another commodity, select a further species and save
 - **THEN** the earlier species was still shown as selected on the selection page
-- **AND** its saved count is unchanged, and the new species starts with an empty count
+- **AND** commodity details is shown again, the earlier species' saved number of animals and number of packages are unchanged, and the new species starts with an empty count
+
+#### Scenario: In the opening sequence, adding another commodity returns to commodity details
+**ID**: SCN-COMMODITY-DETAILS-007-B
+- **GIVEN** the user is in the opening sequence on commodity details
+- **WHEN** they choose to add another commodity, select a further species and save
+- **THEN** commodity details is shown, not the reason for import
 
 ### Requirement: Removing every species returns the user to commodity selection
 **ID**: REQ-COMMODITY-DETAILS-008

@@ -544,6 +544,51 @@ describe('acquireStack', () => {
       lease: null
     })
   })
+
+  test('says the holder held the lease before when it starts the stack again under its own lease', async () => {
+    const env = fakeStack()
+    writeLease({ holder: HOLDER })
+
+    const outcome = await acquire(env)
+
+    expect({
+      started: outcome.started,
+      heldBefore: outcome.heldBefore,
+      holder: readLease(leasePath()).holder
+    }).toEqual({ started: true, heldBefore: true, holder: HOLDER })
+  })
+
+  test('says the holder held no lease before when it starts a stack nobody leased', async () => {
+    const env = fakeStack()
+
+    const outcome = await acquire(env)
+
+    expect({
+      started: outcome.started,
+      heldBefore: outcome.heldBefore
+    }).toEqual({ started: true, heldBefore: false })
+  })
+
+  test('keeps the lease for its holder when the stack it held does not come up again', async () => {
+    const env = fakeStack({ upFails: true })
+    writeLease({ holder: HOLDER })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      reason: outcome.reason,
+      calls: calls(),
+      lease: readLease(leasePath())
+    }).toEqual({
+      acquired: false,
+      reason: expect.stringMatching(
+        /It was taken down again and the lease kept for "ibl-20261001T090000Z inc-003 consistency", who held it before\.$/
+      ),
+      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      lease: expect.objectContaining({ holder: HOLDER, containers: ['c1'] })
+    })
+  })
 })
 
 describe('releaseStack', () => {

@@ -4,10 +4,13 @@ import { OK, ERROR } from '../../constants/exitCodes.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { runBuildBranch } from '../../build/branch.js'
-import { join, resolve } from 'node:path'
+import { spawn } from 'node:child_process'
+import { mkdirSync, openSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { runGate, GATE_PHASES, defaultLogsDir } from '../../build/gate.js'
 import {
   clearGateResult,
+  recordGateProcess,
   waitForGateResult,
   writeGateResult
 } from '../../build/gate-result.js'
@@ -18,6 +21,7 @@ import { registerDuplication } from './duplication.js'
 import { registerMeasure } from './measure.js'
 import { registerWorkers } from './workers.js'
 import { registerTune } from './tune.js'
+import { registerPushWorkflows } from './push-workflows.js'
 
 const SCHEMA_VERSION = 1
 
@@ -122,6 +126,13 @@ const describeRung = ({
 const describeMachine = (machine) =>
   machine ? [`Ran with this machine’s settings from ${machine.config}.`] : []
 
+const describeInstall = ({ repo, stale, installed, reason }) =>
+  installed
+    ? `Reinstalled ${repo}’s dependencies from its lockfile: ${stale}.`
+    : `Could not reinstall ${repo}’s dependencies (${stale}): ${reason}`
+
+const describeDependencies = (dependencies) => dependencies.map(describeInstall)
+
 const seconds = (durationMs) => `${Math.round(durationMs / 1000)}s`
 
 const listOrNone = (services) =>
@@ -145,16 +156,24 @@ const describeStack = ({
   wasUp,
   startedForE2e,
   stoppedAfter,
+  keptForHolder = false,
   downError,
+  startError = null,
   held,
   refresh = null
 }) => {
   if (held) {
     return `The workspace stack was not the gate’s to use: ${held.detail}`
   }
+  if (startError) {
+    return `The gate could not start the workspace stack, so no E2E rung ran: ${startError}`
+  }
   if (wasUp === null) return 'The gate did not use the workspace stack.'
   if (!startedForE2e) {
     return `The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up.${describeRefresh(refresh)}`
+  }
+  if (keptForHolder) {
+    return 'The workspace stack was down under this holder’s lease. The gate started it again from local source and left it up, still leased to this holder.'
   }
   return stoppedAfter
     ? 'The gate started the workspace stack from local source and stopped it afterwards.'
@@ -185,7 +204,8 @@ export const renderGateText = ({
   durationMs,
   phases = {},
   serial = false,
-  machine = null
+  machine = null,
+  dependencies = []
 }) => {
   const failures = rungs.filter(({ ok }) => !ok).length
   return [
@@ -193,6 +213,7 @@ export const renderGateText = ({
       ? `Gate passed: ${rungs.length} rungs.`
       : `Gate failed: ${failures} of ${rungs.length} rungs failed.`,
     ...rungs.map(describeRung),
+    ...describeDependencies(dependencies),
     ...describeMachine(machine),
     describeStack(stack),
     ...(durationMs === undefined
@@ -208,6 +229,7 @@ const gateFailureMessage = ({ rungs, stack }) => {
     .map(({ repo, name }) => `${repo} ${name}`)
   const stackProblem = [
     ...(stack.held ? [`stack held: ${stack.held.detail}`] : []),
+    ...(stack.startError ? [`stack: ${stack.startError}`] : []),
     ...(stack.downError ? [`stack: ${stack.downError}`] : [])
   ]
   return `The gate failed: ${[...failedRungs, ...stackProblem].join(', ')}.`
@@ -286,6 +308,28 @@ const registerBranch = (build, timVersion) =>
       }
     })
 
+const startDetachedGate = (resultPath) => {
+  mkdirSync(dirname(resultPath), { recursive: true })
+  const output = openSync(`${resultPath}.out`, 'w')
+  const gateArguments = process.argv
+    .slice(1)
+    .filter((argument) => argument !== '--detach')
+  const gate = spawn(process.execPath, gateArguments, {
+    detached: true,
+    stdio: ['ignore', output, output]
+  })
+  recordGateProcess(resultPath, gate.pid)
+  gate.unref()
+  return gate.pid
+}
+
+const detachedEnvelope = (resultPath, pid, timVersion) =>
+  jsonEnvelope({
+    ok: true,
+    result: { detached: true, pid, result: resultPath },
+    timVersion
+  })
+
 const registerGate = (build, timVersion) =>
   build
     .command('gate')
@@ -311,12 +355,16 @@ const registerGate = (build, timVersion) =>
       'Run one rung at a time: every unit rung, then every FIT rung, then E2E (to compare against the default)',
       false
     )
+    .option(
+      '--detach',
+      'Start the gate in its own background process and return at once, printing its process id. The gate keeps running when the shell that started it ends. Wait for it with `tim build gate-wait`; its own output goes to the result file plus `.out`'
+    )
     .description(
-      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), and parallelRepos and stackAfterLocal in place of gates.json's. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Before any rung, a repo whose installed direct dependencies differ from its package-lock.json gets `npm ci`, and then, when it uses Playwright, the browsers that version needs; each writes its own log, and a repo whose install fails has its npm rungs fail with the reason. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), and parallelRepos and stackAfterLocal in place of gates.json's. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json --detach'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -340,6 +388,16 @@ const registerGate = (build, timVersion) =>
           ? resolve(parsed.result)
           : defaultResultPath(logsDir, parsed.phase)
         clearGateResult(resultPath)
+        if (opts.detach) {
+          const pid = startDetachedGate(resultPath)
+          emit(
+            globalOpts.json
+              ? JSON.stringify(detachedEnvelope(resultPath, pid, timVersion))
+              : `The gate is running in the background as process ${pid}. Wait for it with: tim build gate-wait ${resultPath}`
+          )
+          process.exit(OK)
+        }
+        recordGateProcess(resultPath, process.pid)
         const outcome = await runGate({
           workspaceRoot,
           workarea: parsed.workarea,
@@ -379,6 +437,22 @@ const stillRunningEnvelope = (resultPath, seconds, timVersion) =>
     timVersion
   })
 
+const diedEnvelope = (resultPath, timVersion) =>
+  jsonEnvelope({
+    ok: false,
+    error: {
+      code: 'GATE_DIED',
+      message: `The gate stopped without writing ${resultPath}, so it did not finish. Its rung logs show how far it got, and ${resultPath}.out holds its own output when it was started with --detach.`
+    },
+    timVersion
+  })
+
+const waitEnvelope = (wait, { resultPath, seconds, timVersion }) => {
+  if (wait.state === 'finished') return wait.envelope
+  if (wait.state === 'died') return diedEnvelope(resultPath, timVersion)
+  return stillRunningEnvelope(resultPath, seconds, timVersion)
+}
+
 const renderWaitText = (printed) =>
   printed.result
     ? renderGateText(printed.result)
@@ -397,7 +471,7 @@ const registerGateWait = (build, timVersion) =>
       String(DEFAULT_WAIT_SECONDS)
     )
     .description(
-      "Wait for a gate started with --result to finish, then print its result and exit as the gate did: 0 when every rung passed, 1 otherwise. A gate still running when the wait ends prints a GATE_STILL_RUNNING error and exits 1: run the same wait again. Each wait ends inside the Bash tool's 600-second limit, so you can wait on a longer gate in slices."
+      "Wait for a gate started with --result to finish, then print its result and exit as the gate did: 0 when every rung passed, 1 otherwise. A gate still running when the wait ends prints a GATE_STILL_RUNNING error and exits 1: run the same wait again. A gate whose process has stopped without writing a result prints a GATE_DIED error and exits 1 at once: it did not finish, so run it again. Each wait ends inside the Bash tool's 600-second limit, so you can wait on a longer gate in slices."
     )
     .addHelpText(
       'after',
@@ -411,13 +485,15 @@ const registerGateWait = (build, timVersion) =>
           seconds: opts.seconds
         })
         const resultPath = resolve(parsed.result)
-        const envelope = await waitForGateResult({
+        const wait = await waitForGateResult({
           resultPath,
           seconds: parsed.seconds
         })
-        const printed =
-          envelope ??
-          stillRunningEnvelope(resultPath, parsed.seconds, timVersion)
+        const printed = waitEnvelope(wait, {
+          resultPath,
+          seconds: parsed.seconds,
+          timVersion
+        })
         emit(
           globalOpts.json ? JSON.stringify(printed) : renderWaitText(printed)
         )
@@ -431,7 +507,7 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, tune this machine's worker counts, and print them"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, archive and report its runs, probe whether a test witnesses a line, find test code a branch copies, measure what a command does to the machine, tune this machine's worker counts and print them, and say which workflows a pushed commit starts"
     )
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
@@ -443,4 +519,5 @@ export const register = (program, { timVersion }) => {
   registerMeasure(build, timVersion)
   registerWorkers(build, timVersion)
   registerTune(build, timVersion)
+  registerPushWorkflows(build, timVersion)
 }

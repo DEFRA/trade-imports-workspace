@@ -105,7 +105,7 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | Export | What it does |
 |---|---|
 | `driveHandler(handler, { payload, seed, params, query, state, amend, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view }`. Both also take `openingRun` and `saveFailure` and return `logger`; only animals returns `cookies` |
-| `useStubbedJourney(setId, dispatchPages)` | Configures the stub stores, builds the dispatch and clears the store before each test (plants: also restores the stub records) |
+| `useStubbedJourney(setId, dispatchPages)` | Configures the stub stores and builds the dispatch before a describe, then restores the stub records and clears the store before each test. Put it and `useBackendRecords` on sibling describes, never nested |
 | `getHandlerOf(featureModule)` (animals only) | The GET handler from a feature's `routes` |
 | `postHandlerOf(featureModule)` | The POST handler from a feature's `routes` |
 | `postHandlerEndingWith(featureModule, pathSuffix)` | The POST handler whose path ends with `pathSuffix`, for features with several POST routes |
@@ -127,8 +127,9 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `sampleText(value, sampleArguments)` (animals only) | The text a copy leaf gives: the string itself, or what the copy function returns for the sample arguments |
 | `crumbProtectedServerMounting(routes, prefix)` (animals only) | A real server with the crumb plugin and test session auth, mounting the routes under the prefix |
 | `expectNoRefusalLogged(logger)` | Asserts the logger holds no refusal line |
-| `referenceDataServing()` | Returns a function that serves given rows as the reference-data response; the caller registers `resetMocksAndConfigAfterTests()` |
-| `useBackendRecords(setId)` | Registers the real records and the stub session for a describe, enables the shared `fetchMock` and clears its calls before each test, and resets the mocks and config after each test |
+| `useReferenceDataServing()` | Registers `resetMocksAndConfigAfterTests()` itself and returns a function that serves given rows as the reference-data response |
+| `useBackendRecords(setId)` | Registers the real records and the stub session for a describe, enables the shared `fetchMock` and clears its calls before each test, and resets the mocks and config after each test. Put it and `useStubbedJourney` on sibling describes, never nested: the stubbed describe's per-test restore would put the stub records back under it |
+| `fetchMock` | The shared `vitest-fetch-mock` instance that `useBackendRecords`, `addressBookAnswering` and `useReferenceDataServing` drive; enable it and set its response in a test, with `resetMocksAndConfigAfterTests()` registered |
 | `resetMocksAndConfigAfterTests(...configKeys)` | Registers an `afterEach` that resets fetch mocks and restores `stubMode` and the named config keys |
 | `addressBookAnswering(addressResponse)`, `addressBookRefusingAddresses()`, `addressBookRequestUrls()` | Stub the address book's answers and report the URLs it was asked for |
 | `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |

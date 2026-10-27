@@ -29,6 +29,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** an error banner ('Sorry, there is a problem with the service. Try again in a few minutes.'), the heading, intro, 'Add a new address' button and the filter, with no results line, table or pagination ([list.njk](https://github.com/DEFRA/trade-imports-ins-frontend/blob/3639400/src/server/app/features/address-book/list/list.njk), [list.controller.js](https://github.com/DEFRA/trade-imports-ins-frontend/blob/3639400/src/server/app/features/address-book/list/list.controller.js)). A trader can still search a book that just failed to load.
 - **To ask:** what does the page show when the list cannot be loaded? (1) keep as built; (2) also hide the 'Add a new address' button and the filter; (3) show the table with a message in place of the rows.
 
+### S-03. One layout or two for the list's name and address cells
+
+- **Ticket:** [EUDPA-710](https://eaflood.atlassian.net/browse/EUDPA-710), [ins-frontend #65](https://github.com/DEFRA/trade-imports-ins-frontend/pull/65). inc-202 review, finding 16; the open question on inc-202 in the theme backlog.
+- **Page:** the INS address book list, `/address-book`.
+- **Prototype:** two layouts, depending on how the row was made. Seeded rows split the name over lines ([address-book.html#L195-L202](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/address-book.html#L195-L202)) and put each address part on its own line ending in a comma ([#L222-L229](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/address-book.html#L222-L229)). A just-saved address (`routes.js` `buildAddressBookEntryFromManual`) shows its name and address each on one line.
+- **Built:** every row one part per line with the name split, as the prototype's seeded rows ([list.controller.js](https://github.com/DEFRA/trade-imports-ins-frontend/blob/feat/EUDPA-710-design-release-2-1-address-book-list/src/server/app/features/address-book/list/list.controller.js), `address-lines.js`, `view-model/list.js`).
+- **To ask:** (a) every row one part per line with the name split, as built; or (b) every row on one line, as the prototype shows a just-saved address?
+
 ## Settled
 
 | Question | Answer | Where it landed |

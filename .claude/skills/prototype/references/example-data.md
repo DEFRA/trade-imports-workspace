@@ -46,7 +46,9 @@ names the story after the fixture's use case instead.
   real service and is never edited. In a design release it is the
   release's own, and it must change when the release's journey changes (a
   new required page, a new walk step): `references/fake-a-service.md`, "Put
-  the page in the walk", and `.claude/rules/designer-sets.md` rule 4.
+  the page in the walk", and
+  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/designer-sets.md`
+  rule 4.
 - **Never edit a real service's stub rows** (`src/server/app/services/<name>/stub*`
   for `address-book`, `countries`, `ports` and the other real services).
   Extra rows for those go in `src/server/prototype-data/`. A prototype-owned

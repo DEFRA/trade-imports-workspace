@@ -52,11 +52,16 @@ ask anything else: make the obvious choice and say what you chose at the end.
   under `.cache/designer/port/`. (The prototype-owned service behind a list
   page, under `src/server/app/services/<name>/`, is
   `references/fake-a-service.md`'s to make or change.)
-- No Sass, no client JavaScript, no `src/client/**`, no
-  `src/server/app/shared/**`, no new `app-*` classes, no `style` attributes.
-  What the old page did with them becomes a design gap.
+- No `src/client/**`, no `src/server/app/shared/**`, no `style` attributes.
+- The old page's own Sass, `app-*` classes and scripts are dropped by
+  default, and what they did becomes a design gap. When the designer has
+  asked for one of them, because research needs it, it is rebuilt as an
+  `app-<release-id>-` pattern in the release's `assets/`, on GOV.UK
+  mixins, with a `patterns.md` entry (`references/custom-pattern.md`). Kit
+  code is never copied as it is.
 - No test files in a release: skip every recipe step that creates a
-  `*.test.js` or `*.fit.spec.js` file.
+  `*.test.js` or `*.fit.spec.js` file. A rebuilt pattern's
+  `assets/<name>.test.js` is the one exception.
 - Every visible string goes in copy, word for word. Welsh gets
   `'[Welsh needed] <English>'`. The old prototype also covers live animals:
   flag any words that name another commodity (animal welfare, livestock,
@@ -88,6 +93,12 @@ Workflow({
   }
 })
 ```
+
+When the designer has asked for the old page's own look or behaviour to be
+rebuilt, record their words first (`references/custom-pattern.md`, "Record
+their words") and add `designerMandate: { id: "<the id it printed>" }` to
+`args`. Without it, the workflow drops every `app-*` class and script and
+logs them as gaps.
 
 It writes the inventory to
 `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<slug>/inventory.json`
@@ -189,8 +200,10 @@ Make one row for each thing in the inventory: what the old page had, what the
 new page has, and a verdict:
 
 - **matched**: the same thing, built with a GOV.UK macro or class
+- **pattern**: rebuilt as a release pattern, on the designer's mandate
 - **nearest**: the nearest GOV.UK option, visibly different
-- **gap**: nothing could be built
+- **gap**: not built, such as a change to the shared header, or custom
+  styles the designer has not asked for
 
 Use `references/match-the-design/nearest-equivalent.md` to judge the nearest
 option. Add a row to the release's `design-gaps.md` (format:
@@ -204,7 +217,11 @@ In plain English, short:
 - the new page's link, for example
   `http://localhost:3103/<release-id>`, and where it sits in the journey
 - the fidelity table, and where it is saved in the release
-- what was left out and logged as a design gap
+- what was left out and logged as a design gap. When it was the old page's
+  own look or behaviour, add once: "If research needs any of these, tell me
+  what you want to learn and I can rebuild it in your release."
+- each release pattern rebuilt, with its one line per rung
+  (`references/custom-pattern.md`, "What to say back")
 - any accessibility findings from the gallery
 - "The Welsh for this page is marked '[Welsh needed]'."
 - then this line, exactly: "If this should become part of the real service,

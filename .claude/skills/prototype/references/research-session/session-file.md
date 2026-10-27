@@ -39,5 +39,10 @@ research mode, so turning research mode off leaves it alone.
 | `tasks[].startsOn` | no     | The page the task starts on, shown on the sheet as a reminder.                                                                                                                                                         |
 | `tasks[].notes`    | no     | Anything the facilitator should know.                                                                                                                                                                                   |
 
+A task that tests a release pattern names it in `notes`, with the entry's
+name from the release's `patterns.md`, for example
+`"Tests: Commodity search (patterns.md)"`. The sheet then shows the
+facilitator which hypothesis the task is for.
+
 Check each `example` id is real with
 `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>`.

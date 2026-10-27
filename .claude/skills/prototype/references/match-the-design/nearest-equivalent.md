@@ -1,15 +1,19 @@
 # Nearest GOV.UK equivalents
 
 The old Prototype Kit prototype built many screens from its own `app-*`
-markup, Sass and JavaScript. This prototype cannot: it uses only what the real
-service loads. For each bespoke pattern below, build the GOV.UK option and, if
-the designer needs the original look or behaviour, add a row to
-`design-gaps.md` so the real team sees the ask.
+markup, Sass and JavaScript. Here the default is what the real service
+loads. For each bespoke pattern below, build the GOV.UK option first, then
+check MoJ Frontend. If the designer needs the original look or behaviour:
+
+- and has asked for it, with what research should learn, build it as a
+  release pattern in the release's `assets/` (`references/custom-pattern.md`)
+- otherwise, add a row to `design-gaps.md` so the real team sees the ask
 
 Every row says:
 
-- **Build**: what to put on the page
-- **Gap**: whether to log a design gap, and what to write in it
+- **Build**: what to put on the page by default
+- **Gap**: whether to log a design gap, and what to write in it. "Or a
+  release pattern" means the designer can ask for the real thing instead.
 
 ## Custom dropdown or searchable select
 
@@ -26,7 +30,7 @@ Every row says:
   the results as `govukRadios` or a `govukTable`, with `govukPagination`. The
   consignor, contact and destination pickers do this
   (`journeys/linear/features/consignor-select/template.njk`).
-- Gap: live filtering as you type.
+- Gap, or a release pattern: live filtering as you type.
 
 ## Pop-up dialog (modal)
 
@@ -34,49 +38,54 @@ Every row says:
   `journeys/linear/features/delete-notification/template.njk` and
   `cancel-amend/template.njk` do. Use
   `references/fake-a-service/confirm-then-act.md` for the route.
-- Gap: always, if the designer wants the modal. GOV.UK advises against modals.
+- Gap, or a release pattern, if the designer wants the modal. GOV.UK
+  advises against modals: say so once when you check the rungs.
 
 ## Cards
 
 - Build: summary cards (`govukSummaryList` with `card`). See the dashboard.
-- Gap: coloured, shadowed or image cards.
+- Gap, or a release pattern: coloured, shadowed or image cards.
 
 ## Filter panel
 
 - Build: the grid and GET form in `layout-patterns.md` ("A filter panel beside
   a list").
 - Gap: yes: "MoJ filter layout needs its Sass loaded by the real service".
+  Or switch it on in the release's `assets/` when the designer asks.
 
 ## Glance counts or statistic tiles
 
 - Build: a summary list without borders, a one-row table or tags in a
   sentence (see `layout-patterns.md`).
-- Gap: the large-number tile look.
+- Gap, or a release pattern: the large-number tile look.
 
 ## Tabs
 
 - Build: see "Tabs on a dashboard" in `layout-patterns.md`.
-- Gap: yes: "Tabs need `createAll(Tabs)` in the real service".
+- Gap: yes: "Tabs need `createAll(Tabs)` in the real service". Or switch
+  Tabs on in the release's `assets/` when the designer asks.
 
 ## Accordion or "show more"
 
 - Build: `govukDetails` for one hidden block (works with no script). Several
   `govukDetails` one after another for a short set. `govukAccordion` shows
   every section open here.
-- Gap: open-and-close behaviour for an accordion.
+- Gap: open-and-close behaviour for an accordion. Or switch Accordion on in
+  the release's `assets/` when the designer asks.
 
 ## Sticky action bar or sticky summary
 
 - Build: nothing sticky. Put the buttons at the end of the form in
   `saveActions` or a `govuk-button-group`.
-- Gap: always, if the designer wants it sticky.
+- Gap, or a release pattern, if the designer wants it sticky.
 
 ## Coloured status chips (for example IPAFFS-style)
 
 - Build: `govukTag` with the nearest colour class (see `figma-to-govuk.md`).
   Several tags side by side are fine.
-- Gap: always for non-GOV.UK colours, outlines, icons in chips or rounded
-  pills. When the aim is to compare against the incumbent service, say so in
+- Gap, or a release pattern, for non-GOV.UK colours, outlines, icons in
+  chips or rounded pills. A pattern still takes its colours from
+  `govuk-colour()`. When the aim is to compare against the incumbent service, say so in
   the gap's "Why" column.
 
 ## Custom header, service navigation or home page
@@ -84,8 +93,8 @@ Every row says:
 - Build: nothing on the page. The header, service navigation, phase banner and
   footer live in `src/server/app/shared/layout.njk`, which every set shares and
   the real service owns.
-- Gap: always. Write exactly what the design wants (new links, labels, a
-  different home link) so the real team can decide.
+- Gap: always, never a release pattern. Write exactly what the design wants
+  (new links, labels, a different home link) so the real team can decide.
 
 ## A different font size, colour or spacing value
 
@@ -95,10 +104,11 @@ Every row says:
 ## Copy button, auto-dismissing banner, scroll-to or other small scripts
 
 - Build: the static version (a plain banner, no copy button).
-- Gap: always, naming the behaviour.
+- Gap, or a release pattern, naming the behaviour.
 
 ## Icons and illustrations
 
 - Build: text. GOV.UK services use words, not icons, except in the components
   that carry their own.
-- Gap: if the designer needs the icon.
+- Gap: if the designer needs the icon. A release pattern can draw one as
+  inline SVG in the template. Image files cannot go in `assets/`.

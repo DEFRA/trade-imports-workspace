@@ -3,14 +3,21 @@ export const meta = {
   description:
     'Re-create one old Prototype Kit page in a design release with real GOV.UK components, then check it, show it and grade how closely it matches',
   whenToUse:
-    'From references/port-a-kit-page.md. Launch by scriptPath with args {set, source, sourceKind, slug, after, reference}; every key is required.',
+    "From references/port-a-kit-page.md. Launch by scriptPath with args {set, source, sourceKind, slug, after, reference}; every key is required. Optional: designerMandate ({ id }) when the skill has recorded the designer's own permission, with designer:mandate record, to rebuild the old page's own look or behaviour as a release pattern.",
   phases: [
-    { title: 'Preflight', detail: 'the release is yours and not frozen' },
+    {
+      title: 'Preflight',
+      detail:
+        "the release is yours and not frozen; any designer's mandate is confirmed from mandates.md"
+    },
     { title: 'Inventory', detail: 'what the old page holds, as JSON' },
     { title: 'Build', detail: 'template, copy and registration' },
     { title: 'Check', detail: 'designer:check --full, up to 3 repairs' },
     { title: 'Show', detail: 'designer:show with the original as reference' },
-    { title: 'Fidelity', detail: 'matched, nearest or design gap, row by row' }
+    {
+      title: 'Fidelity',
+      detail: 'matched, pattern, nearest or design gap, row by row'
+    }
   ]
 }
 
@@ -61,6 +68,7 @@ const SOURCE_KINDS = ['html', 'url', 'screenshot']
 const NOT_RELEASES = ['high-risk-plants', 'sample-journey']
 const SET_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*(\/[a-z0-9]+(-[a-z0-9]+)*)*$/
+const MANDATE_ID = /^m-\d{4}-\d{2}-\d{2}-\d+$/
 const MAX_REPAIRS = 3
 
 // This workflow lives in the workspace, but every command it runs must act on
@@ -93,6 +101,14 @@ if (!SLUG.test(config.slug)) {
 if (config.reference !== null && typeof config.reference !== 'string') {
   refuse('reference must be an image path or null')
 }
+if (
+  config.designerMandate !== undefined &&
+  !MANDATE_ID.test(config.designerMandate?.id ?? '')
+) {
+  refuse(
+    "designerMandate must be { id } with an id that designer:mandate record printed, such as m-2026-10-27-1. Leave it out when the designer gave no permission for release patterns"
+  )
+}
 
 const SET_DIR = `src/server/app/sets/${config.set}`
 const WORK_DIR = `.cache/designer/port/${config.set}/${config.slug}`
@@ -108,24 +124,66 @@ const screenshotSource =
 const REFERENCE =
   config.reference === null ? screenshotSource : config.reference
 
-const GUARD_RAILS = [
-  'GUARD RAILS:',
-  `- Every command acts on the prototype repository at ${REPO}, never on the workspace repo you were launched from: use "${npm('<script>')} -- ..." for every npm command and "git -C ${REPO} <command>" for every git command.`,
-  '- Run one Bash command per call: no &&, ;, | or cd.',
-  `- Change files only under ${REPO}/${SET_DIR}/ and ${REPO}/src/server/app/routes-${config.set}.js, plus files under ${REPO}/${WORK_DIR}/ and ${REPO}/${SET_DIR}/design-gaps.md when told to.`,
+const RELEASE_PATTERN_FILES = `${REPO}/${SET_DIR}/assets/**, ${REPO}/${SET_DIR}/layout.njk, ${REPO}/${SET_DIR}/patterns.md or ${REPO}/${SET_DIR}/mandates.md`
+
+const noMandateRails = () => [
+  `- This port has no designer's mandate. Never create or change ${RELEASE_PATTERN_FILES}, and never add an app-* class.`,
   `- Never change ${REPO}/**/*.scss, ${REPO}/src/client/**, ${REPO}/webpack.config.js, ${REPO}/src/server/app/shared/** or any other set.`,
-  '- Never add *.test.js or *.fit.spec.js files to a design release.',
-  '- Never run git add, git commit, git push, git stash or git reset.',
-  `- Follow ${REPO}/.claude/rules/templates.md for every template.`
-].join('\n')
+  '- Never add *.test.js or *.fit.spec.js files to a design release.'
+]
+
+const mandateRails = (mandate) => [
+  `- DESIGNER'S MANDATE ${mandate.id}. The designer gave this permission in their own session, and ${SET_DIR}/mandates.md records it:`,
+  `  Words: "${mandate.words}"`,
+  `  Scope: ${mandate.scope}`,
+  `- Within that scope you may rebuild the old page's own look or behaviour as a release pattern, following ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/custom-pattern.md: change ${REPO}/${SET_DIR}/assets/**, ${REPO}/${SET_DIR}/layout.njk and ${REPO}/${SET_DIR}/patterns.md, and use app-${config.set}- classes. Never copy the Kit's Sass or JavaScript as it is.`,
+  '- Climb the ladder first: GOV.UK Frontend, then MoJ Frontend. Rebuild a custom pattern only when neither does the job, and give one line per rung you checked in notes.',
+  `- Every patterns.md entry you write says Asked by: "${mandate.words}" (${mandate.id}), with those words exactly. A need or hypothesis you wrote yourself ends "(proposed: confirm)", and the entry's Status is Option, for the designer to choose.`,
+  '- No script checks the scope, so keep to it yourself.',
+  `- Never create or change ${REPO}/${SET_DIR}/mandates.md, and never run designer:mandate.`,
+  `- Never change ${REPO}/src/client/**, ${REPO}/webpack.config.js, ${REPO}/webpack.prototype.config.js, ${REPO}/src/server/app/shared/** or any other set. Never write a style attribute, an inline <style> or an inline <script>.`,
+  `- Never add *.test.js or *.fit.spec.js files to a design release, except ${SET_DIR}/assets/<name>.test.js beside a pattern's own script module.`
+]
+
+const guardRailsWith = (editLines) =>
+  [
+    'GUARD RAILS:',
+    `- Every command acts on the prototype repository at ${REPO}, never on the workspace repo you were launched from: use "${npm('<script>')} -- ..." for every npm command and "git -C ${REPO} <command>" for every git command.`,
+    '- Run one Bash command per call: no &&, ;, | or cd.',
+    `- Change files only under ${REPO}/${SET_DIR}/ and ${REPO}/src/server/app/routes-${config.set}.js, plus files under ${REPO}/${WORK_DIR}/ and ${REPO}/${SET_DIR}/design-gaps.md when told to.`,
+    ...editLines,
+    '- Never run git add, git commit, git push, git stash or git reset.',
+    `- Follow ${REPO}/.claude/rules/templates.md for every template.`
+  ].join('\n')
+
+// A step that edits files: the mandate, or its absence, decides what it may
+// build.
+const builderRails = (mandate) =>
+  guardRailsWith(mandate ? mandateRails(mandate) : noMandateRails())
+
+const GUARD_RAILS = guardRailsWith([
+  `- Never change ${REPO}/src/client/**, ${REPO}/webpack.config.js, ${REPO}/webpack.prototype.config.js, ${REPO}/src/server/app/shared/** or any other set.`
+])
 
 const PREFLIGHT_SCHEMA = {
   type: 'object',
   properties: {
     ok: { type: 'boolean' },
+    baseCommit: { type: 'string' },
     reason: { type: 'string' }
   },
-  required: ['ok', 'reason']
+  required: ['ok', 'baseCommit', 'reason']
+}
+
+const MANDATE_SCHEMA = {
+  type: 'object',
+  properties: {
+    found: { type: 'boolean' },
+    words: { type: 'string' },
+    scope: { type: 'string' },
+    reason: { type: 'string' }
+  },
+  required: ['found', 'words', 'scope', 'reason']
 }
 
 const INVENTORY_SCHEMA = {
@@ -256,7 +314,7 @@ const FIDELITY_SCHEMA = {
         properties: {
           original: { type: 'string' },
           built: { type: 'string' },
-          verdict: { enum: ['matched', 'nearest', 'gap'] },
+          verdict: { enum: ['matched', 'pattern', 'nearest', 'gap'] },
           why: { type: 'string' }
         },
         required: ['original', 'built', 'verdict', 'why']
@@ -297,6 +355,9 @@ const preflight = () =>
       `   ok is false if no page in the release has the slug "${config.after}".`,
       `4. Run: grep -rn "slug: '${config.slug}'" ${inRepo(`${SET_DIR}/journeys/linear/features`)}`,
       `   ok is false if a page with the slug "${config.slug}" already exists.`,
+      `5. Run: git -C ${REPO} rev-parse HEAD, and return the commit it prints in baseCommit.`,
+      `6. Run: git -C ${REPO} branch --show-current`,
+      '   ok is false unless the branch is main or starts with design/. The reason then says: "You are on <branch>, which is not a place to work on a design release. Switch to main or your design/ branch and ask again."',
       'Return ok and, in reason, one plain sentence a designer understands.',
       'Change nothing.',
       GUARD_RAILS
@@ -307,6 +368,46 @@ const preflight = () =>
       schema: PREFLIGHT_SCHEMA
     })
   )
+
+const confirmMandate = (id) =>
+  agent(
+    [
+      `Read one recorded designer's mandate from the design release "${config.set}".`,
+      `Run: ${npm('designer:mandate')} -- show --set ${config.set} --id ${id}`,
+      "It prints JSON after npm's own first lines. When the JSON holds the entry, found is true, and words and scope are copied from it character for character, with nothing tidied. When it refuses, finds no such entry or the command is missing, found is false, words and scope are empty, and reason is what it printed.",
+      'Change nothing.',
+      GUARD_RAILS
+    ].join('\n'),
+    withModel('runner', {
+      label: 'confirm mandate',
+      phase: 'Preflight',
+      schema: MANDATE_SCHEMA
+    })
+  )
+
+/**
+ * The designer's mandate this port works under, read back from the
+ * release's mandates.md, and the line the summary gives about it.
+ */
+const confirmedMandate = async () => {
+  if (config.designerMandate === undefined) {
+    return { mandate: null, note: [] }
+  }
+  const { id } = config.designerMandate
+  const shown = await confirmMandate(id)
+  if (!shown?.found) {
+    return {
+      mandate: null,
+      note: [
+        `The designer's mandate ${id} could not be read from ${SET_DIR}/mandates.md (${shown?.reason || 'the step did not answer'}), so this port rebuilt no release patterns.`
+      ]
+    }
+  }
+  return {
+    mandate: { id, words: shown.words, scope: shown.scope },
+    note: [`Ported under the designer's mandate ${id}: "${shown.words}".`]
+  }
+}
 
 const takeInventory = () =>
   agent(
@@ -343,7 +444,12 @@ const RECIPES = {
   list: 'references/fake-a-service.md for the data, then references/change-the-journey.md to place the page'
 }
 
-const build = (inventory) =>
+const customCodeRule = (mandate) =>
+  mandate
+    ? `- Within the mandate's scope, rebuild each app-* class and custom script the designer's words cover as an app-${config.set}- release pattern with a patterns.md entry, on GOV.UK settings and mixins, never copied from the Kit. Drop the rest. List each dropped thing in leftOut.`
+    : '- Drop every app-* class and custom script. List each dropped thing in leftOut.'
+
+const build = (inventory, context) =>
   agent(
     [
       `Build the page "${inventory.title}" in the design release "${config.set}" from this inventory of an old Prototype Kit page:`,
@@ -357,11 +463,11 @@ const build = (inventory) =>
       'Rules for this port:',
       '- Use GOV.UK macros for everything; hand-written Kit markup becomes the matching macro.',
       "- Every visible string goes in the feature's copy/copy.en.js, word for word, and the same key in copy/copy.cy.js as '[Welsh needed] <English>'.",
-      '- Drop every app-* class and custom script. List each dropped thing in leftOut.',
+      customCodeRule(context.mandate),
       "- If a required answer is added, add it to the release's journeys/linear/flow/fixtures/happy-path.json so the examples still reach the end.",
       '- Do not run the checks: the next step does.',
       'Return what you built, the recipe you followed, every file you changed (repo-relative paths, relative to the prototype repo), and what you left out.',
-      GUARD_RAILS
+      builderRails(context.mandate)
     ].join('\n'),
     withModel('builder', {
       label: 'build',
@@ -370,10 +476,15 @@ const build = (inventory) =>
     })
   )
 
-const check = (attempt) =>
+const runFlags = (context) =>
+  context.mandate
+    ? ` --since ${context.baseCommit} --mandate ${context.mandate.id}`
+    : ` --since ${context.baseCommit} --no-new-patterns`
+
+const check = (attempt, context) =>
   agent(
     [
-      `Run: ${npm('designer:check')} -- --set ${config.set} --full`,
+      `Run: ${npm('designer:check')} -- --set ${config.set} --full${runFlags(context)}`,
       'Report whether it passed, the plain-English summary it prints (the failing rows in full), and the log path it prints.',
       'Change nothing.',
       GUARD_RAILS
@@ -385,15 +496,25 @@ const check = (attempt) =>
     })
   )
 
-const repair = (failure, attempt) =>
+const patternRepairLines = (context) =>
+  context.mandate
+    ? [
+        `If it says a pattern must cite the designer's mandate ${context.mandate.id}, or must be an Option, fix that entry in ${REPO}/${SET_DIR}/patterns.md to say so. If it says the run added a mandate, take that entry out of ${REPO}/${SET_DIR}/mandates.md. Never change any other mandates.md entry.`
+      ]
+    : [
+        `If it says this run has no designer's mandate, take out what the port added to ${RELEASE_PATTERN_FILES} and every app-* class it added, and list each in leftOut. Never edit mandates.md or patterns.md to make it pass.`
+      ]
+
+const repair = (failure, attempt, context) =>
   agent(
     [
       `The check of the design release "${config.set}" failed after the page "${config.slug}" was added.`,
       `Summary: ${failure.summary}`,
       `Full log: ${failure.logPath} (read it).`,
       'Fix the cause in the files the port created or changed. Fix only what the port caused. If the failure is in a file the port did not touch, change nothing and say so in notes.',
+      ...patternRepairLines(context),
       'Return what you changed.',
-      GUARD_RAILS
+      builderRails(context.mandate)
     ].join('\n'),
     withModel('builder', {
       label: `repair ${attempt}`,
@@ -402,8 +523,8 @@ const repair = (failure, attempt) =>
     })
   )
 
-const checkWithRepairs = async () => {
-  let result = await check(1)
+const checkWithRepairs = async (context) => {
+  let result = await check(1, context)
   for (
     let attempt = 1;
     attempt <= MAX_REPAIRS && result && !result.passed;
@@ -412,8 +533,8 @@ const checkWithRepairs = async () => {
     log(
       `Check failed (${result.summary}). Repair ${attempt} of ${MAX_REPAIRS}.`
     )
-    await repair(result, attempt)
-    result = await check(attempt + 1)
+    await repair(result, attempt, context)
+    result = await check(attempt + 1, context)
   }
   return result
 }
@@ -445,7 +566,7 @@ const gradeFidelity = (inventory, built, shown) =>
       'Make one row per thing in the old page (heading, caption, each component, each field, each reveal, each link, the app-* classes, the page width and chrome):',
       '- original: what the old page had',
       '- built: what the new page has',
-      '- verdict: "matched" (same thing with a GOV.UK macro or class), "nearest" (the nearest GOV.UK option, visibly different) or "gap" (nothing could be built)',
+      '- verdict: "matched" (same thing with a GOV.UK macro or class), "pattern" (rebuilt as a release pattern with a patterns.md entry, on the designer\'s mandate), "nearest" (the nearest GOV.UK option, visibly different) or "gap" (not built, such as a change to the shared header, or custom styles the designer has not asked for)',
       '- why: one plain sentence',
       'Use ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/nearest-equivalent.md to judge what the nearest option is.',
       `Then, for every "nearest" and "gap" row whose difference would show on screen, write one gap row in the exact format of ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/design-gaps.md, with Page "${config.slug}" and Frame "${config.source}". Return them in gapRows as whole markdown table lines.`,
@@ -493,6 +614,66 @@ const writeRecords = (graded, table) =>
     withModel('runner', { label: 'write records', phase: 'Fidelity' })
   )
 
+const PATTERNS_SCHEMA = {
+  type: 'object',
+  properties: {
+    patterns: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          status: { type: 'string' }
+        },
+        required: ['name', 'status']
+      }
+    }
+  },
+  required: ['patterns']
+}
+
+const listChangedPatterns = (context) =>
+  agent(
+    [
+      `List the release patterns this port added or changed in ${SET_DIR}/patterns.md.`,
+      `Run: git -C ${REPO} diff ${context.baseCommit} -- ${SET_DIR}/patterns.md`,
+      `Then read ${inRepo(`${SET_DIR}/patterns.md`)}.`,
+      'Return, in patterns, one { name, status } for each "## <name>" entry that the diff adds or changes: its name as the heading writes it, and the value of its "- Status:" line. Return an empty list when the diff is empty.',
+      'Change nothing.',
+      GUARD_RAILS
+    ].join('\n'),
+    withModel('runner', {
+      label: 'list patterns',
+      phase: 'Fidelity',
+      schema: PATTERNS_SCHEMA
+    })
+  )
+
+const optionLines = async (context) => {
+  if (!context.mandate) {
+    return []
+  }
+  const listed = await listChangedPatterns(context)
+  if (!listed) {
+    return [
+      `The release patterns this port changed could not be listed. Read ${SET_DIR}/patterns.md for any Option to choose.`
+    ]
+  }
+  const options = listed.patterns.filter(({ status }) => status === 'Option')
+  return options.length === 0
+    ? []
+    : [
+        `Options for you to choose, in ${SET_DIR}/patterns.md: ${options.map(({ name }) => `"${name}"`).join(', ')}. Say which to keep, and the others are closed.`
+      ]
+}
+
+const droppedOfferLines = (built, context) =>
+  !context.mandate && built.leftOut.length > 0
+    ? [
+        `Left out of the old page's own look or behaviour: ${built.leftOut.join(', ')}. If research needs any of it, tell me what you want to learn and it can be rebuilt in your release.`
+      ]
+    : []
+
 const main = async () => {
   phase('Preflight')
   const ready = await preflight()
@@ -502,6 +683,14 @@ const main = async () => {
     )
     return
   }
+  const { mandate, note: mandateNote } = await confirmedMandate()
+  if (!ready.baseCommit) {
+    log(
+      "Stopped before any change: the preflight did not give the starting commit, so the check could not tell a release pattern from the port's own work."
+    )
+    return
+  }
+  const context = { mandate, baseCommit: ready.baseCommit }
 
   phase('Inventory')
   const inventory = await takeInventory()
@@ -514,7 +703,7 @@ const main = async () => {
   )
 
   phase('Build')
-  const built = await build(inventory)
+  const built = await build(inventory, context)
   if (!built?.built) {
     log(`Stopped: the page was not built. ${built?.notes ?? ''}`)
     return
@@ -522,7 +711,7 @@ const main = async () => {
   log(`Built with ${built.recipe}: ${built.filesChanged.join(', ')}`)
 
   phase('Check')
-  const checked = await checkWithRepairs()
+  const checked = await checkWithRepairs(context)
   if (!checked?.passed) {
     log(
       `Parked: the release still fails its check after ${MAX_REPAIRS} repairs. ${checked?.summary ?? ''} The changed files are left in place for you to look at: ${built.filesChanged.join(', ')}`
@@ -542,12 +731,16 @@ const main = async () => {
   }
   const table = fidelityTable(graded.rows)
   await writeRecords(graded, table)
+  const options = await optionLines(context)
   log(
     [
       `${config.slug} is built in ${config.set} and passes its check.`,
+      ...mandateNote,
       graded.summary,
       table,
       `Written to ${FIDELITY_FILE}. Design gaps logged: ${graded.gapRows.length}.`,
+      ...options,
+      ...droppedOfferLines(built, context),
       `Accessibility: ${(shown?.axeFindings ?? []).join(' ') || 'no findings reported'}`
     ].join('\n')
   )

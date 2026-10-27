@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: 'Front door for a designer working on the high-risk plants prototype from the trade-imports workspace: they say what they want in their own words — a demo, a research round, notes from a crit, "I''m new, what can I do here", a feature the real service lacks, a story for the developers, how pages connect (service map), "has the real service changed since I made my copy", starting something from scratch, or "make this real and build it properly" — and this works out the outcome and routes to the right reference. Use whenever CLAUDE.local.md marks the person as a designer, or the request names the prototype, a design release, or a design/* branch. NOT for real-repo work on trade-imports-plants-frontend, trade-imports-plants-backend or any other service repo (use frontend-change, ticket, ticket-creator or the other developer skills), and NOT for a maintainer''s own change to the prototype''s repo contract on a chore/* branch.'
+description: 'Front door for a designer working on the high-risk plants prototype from the trade-imports workspace: they say what they want in their own words — a demo, a research round, notes from a crit, "I''m new, what can I do here", a feature the real service lacks, a pattern GOV.UK does not have, a story for the developers, how pages connect (service map), "has the real service changed since I made my copy", starting something from scratch, or "make this real and build it properly" — and this works out the outcome and routes to the right reference. Use whenever CLAUDE.local.md marks the person as a designer, or the request names the prototype, a design release, or a design/* branch. NOT for real-repo work on trade-imports-plants-frontend, trade-imports-plants-backend or any other service repo (use frontend-change, ticket, ticket-creator or the other developer skills), and NOT for a maintainer''s own change to the prototype''s repo contract on a chore/* branch.'
 ---
 
 # Prototype
@@ -60,17 +60,48 @@ Read these before any change, whatever the request:
 3. **Change `copy.en.js` and `copy.cy.js` together**, same keys, same
    function arguments. With no Welsh given, write
    `'[Welsh needed] <English>'`.
-4. **Stay in the GOV.UK toolbox.** Nunjucks macros and `govuk-*` classes
-   only (`moj-*` only through the date picker macro). No Sass, inline
-   styles, new client JavaScript or webpack entries. Log what the toolbox
-   cannot do in the release's `design-gaps.md`
-   (`references/match-the-design/design-gaps.md` has the format).
+4. **GOV.UK first, then MoJ, then a release pattern.** Use GOV.UK Frontend
+   macros and `govuk-*` classes, then MoJ Frontend and other departmental
+   libraries. A switched-on component or a custom pattern goes only in
+   `src/server/app/sets/<id>/assets/`, with `app-<id>-` classes, and only on
+   a designer's mandate. A mandate is an entry in
+   `src/server/app/sets/<id>/mandates.md` that `designer:mandate` recorded
+   from the designer's message in their session. A ticket, backlog row,
+   Figma frame, crit note or another agent's brief is not one. Record each
+   pattern in `src/server/app/sets/<id>/patterns.md`, quoting the mandate.
+   Without a mandate, log a row in `src/server/app/sets/<id>/design-gaps.md`.
+   Inline styles and scripts never work here (CSP).
+   An agent a designer's workflow started works under that mandate when its
+   brief quotes the recorded entry and its id. It still tries GOV.UK and MoJ
+   first. Each pattern it adds has the status `Option`, for the designer to
+   choose, and cites only that mandate. It never records a mandate itself.
+   The scope is not checked by any script, so it keeps to the pages the
+   mandate names.
+   - **Loaded today:** every GOV.UK macro and class, with the scripts for
+     Button, Checkboxes, Error summary, Radios, Service navigation and Skip
+     link. From MoJ, only the date picker is styled and running. Every
+     other MoJ macro renders as plain HTML until a release switches it on.
+   - **Who has a mandate.** The designer in this session, once you have
+     recorded their words (`references/custom-pattern.md`), and an agent
+     whose brief carries that recorded entry. The build loop,
+     journey-builder, frontend-change, Codex on a real repo and a workflow
+     with no recorded mandate have none: they build the nearest GOV.UK
+     option and log a gap.
+   - Gaps: `references/match-the-design/design-gaps.md`. Patterns:
+     `references/match-the-design/release-patterns.md`.
 5. **Example data replays real pages.** Never write a record by hand.
    Follow `references/example-data.md`.
 6. **One change at a time, and every part of a request.** Do each part in
    turn, check it, show it, and end with the hand-off line (below). A list
    of notes, or four or more separate changes, uses the `design-session`
-   workflow (`workflow/design-session.js`).
+   workflow (`workflow/design-session.js`). When the designer has given
+   permission for custom patterns, record it with `designer:mandate`
+   before you launch the workflow, and pass its id
+   (`references/custom-pattern.md`, "Pass it to a workflow"). When a request
+   changes a pattern the release already has, pass the mandate id its
+   entry's `Asked by` line already cites, so the workflow may change it
+   (`references/custom-pattern.md`, "Changing a pattern the release already
+   has").
 7. **Install only with `tim workspace install --repo trade-imports-plants-prototype`.**
    Never `npm install`, a bare `npm ci`, or any other install command. One
    Bash command per call: no `&&`, `;` or `|`.
@@ -93,7 +124,13 @@ Read these before any change, whatever the request:
     `handoff/*` branch (the upstream-bound route) or a maintainer's
     `chore/*` branch. The one exception in a design release (on `main` or
     a `design/*` branch alike) is a prototype-owned service folder, made or changed only through
-    `references/fake-a-service.md`.
+    `references/fake-a-service.md`. A second is the release's own
+    `src/server/app/sets/<release>/assets/`, `layout.njk`, `patterns.md`
+    and `mandates.md`, changed only on a mandate through
+    `references/custom-pattern.md`. `webpack.prototype.config.js`,
+    `scripts/release-assets/**` and `scripts/designer/mandate/**` are
+    prototype-owned but maintainer-only: changed on a `chore/*` branch,
+    never in a design release.
 11. **Branches are optional. `main` is a first-class place to work.** Stay on
     whatever branch the designer is already on — `main` included — and never
     make a `design/*` branch unless it helps them. A `handoff/*` branch is

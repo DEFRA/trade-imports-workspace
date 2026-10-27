@@ -11,8 +11,9 @@ A component is only fully usable when three things are true:
    styles are loaded.
 3. If it has a script, the script is started in
    `src/client/javascripts/application.js`. Both files belong to the real
-   service, so a designer cannot start a new script or load new styles. Ask
-   for it as a design gap.
+   service, so neither changes. A design release can switch a component on
+   in its own `assets/` folder, on its own pages, when the designer asks
+   (`references/custom-pattern.md`). Otherwise log it as a design gap.
 
 All three files are inside
 `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`.
@@ -20,8 +21,9 @@ All three files are inside
 ## What "Script NOT started" means on the page
 
 These components still render, but behave as they do with JavaScript turned
-off. Use them only if that is good enough for the design, and say so in the
-gap log if it is not.
+off. Use them as they are if that is good enough for the design. If not,
+switch the script on in the release when the designer asks, or say so in
+the gap log.
 
 - `govukTabs`: shows a list of links to each panel, then every panel one after
   another. It does not look like tabs. For a dashboard with tabs, see
@@ -35,7 +37,8 @@ gap log if it is not.
 - `govukNotificationBanner`: shows normally. Only the move of focus to a
   success banner is missing.
 - MoJ `add-another`, `alert`, `button-menu` and `multi-file-upload`: their
-  styles are not loaded either, so they are not usable at all.
+  styles are not loaded either, so they are not usable until a release
+  switches on both their styles and their script.
 
 `govukDetails` needs no script: it is a native HTML `<details>` element and
 works everywhere.
@@ -44,8 +47,12 @@ works everywhere.
 
 The macro renders plain, unstyled HTML. Every MoJ component except the date
 picker is in this state, including the filter layout, sub navigation, badge,
-timeline, ticket panel, button menu and the MoJ task list. Never use them. See
-`nearest-equivalent.md` for the GOV.UK option to build instead.
+timeline, ticket panel, button menu and the MoJ task list. Do not use them
+as they are. Build the GOV.UK option in `nearest-equivalent.md`, or, when the
+designer asks, switch the MoJ component on in the release's `assets/`.
+
+A component a release has switched on says "Switched on in `<release>`"
+below. It works only on that release's pages that load its layout.
 
 ## Keeping this list up to date
 
@@ -213,7 +220,8 @@ These are not components but every journey template uses them. See
 `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/gov-uk/templates-in-this-prototype.md`
 for what each does.
 
-- `{% extends "shared/layout.njk" %}` and `{% block journeyContent %}`
+- `{% extends "shared/layout.njk" %}` (or `{% extends "<release>/layout.njk" %}`
+  on a page that uses a release pattern) and `{% block journeyContent %}`
 - `{% include "shared/error-summary.njk" %}`
 - `{% from "shared/section-caption.njk" import sectionCaption %}`
 - `{% from "shared/save-actions.njk" import saveActions %}`

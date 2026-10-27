@@ -253,7 +253,8 @@ it before it reaches `main`.
    `references/show-my-change.md` first if there is none), the ownership
    answers from step 1, the Welsh markers
    (`grep -rn "\[Welsh needed\]" src/server/app/sets/<set-id>` in the
-   prototype repo), and the rows of `src/server/app/sets/<set-id>/design-gaps.md`.
+   prototype repo), the rows of `src/server/app/sets/<set-id>/design-gaps.md`,
+   and the entries of `src/server/app/sets/<set-id>/patterns.md`.
    For the page links, run
    `designer:examples -- links <set-id>` and add `?page=<page>` to an
    example link to open the page that changed, for example

@@ -153,6 +153,7 @@ const describeStack = ({
   wasUp,
   startedForE2e,
   stoppedAfter,
+  keptForHolder = false,
   downError,
   startError = null,
   held,
@@ -167,6 +168,9 @@ const describeStack = ({
   if (wasUp === null) return 'The gate did not use the workspace stack.'
   if (!startedForE2e) {
     return `The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up.${describeRefresh(refresh)}`
+  }
+  if (keptForHolder) {
+    return 'The workspace stack was down under this holder’s lease. The gate started it again from local source and left it up, still leased to this holder.'
   }
   return stoppedAfter
     ? 'The gate started the workspace stack from local source and stopped it afterwards.'

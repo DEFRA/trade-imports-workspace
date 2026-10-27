@@ -300,6 +300,7 @@ const NO_E2E_STACK = {
   wasUp: null,
   startedForE2e: false,
   stoppedAfter: false,
+  keptForHolder: false,
   servedFrom: null,
   upLog: null,
   downLog: null,
@@ -455,10 +456,12 @@ const runE2e = async (rungs, context) => {
   if (context.stackAfterLocal) await context.localDone
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
+  const keptForHolder = lease.started && lease.heldBefore === true
   const stack = {
     ...NO_E2E_STACK,
     wasUp: lease.reused,
     startedForE2e: lease.started,
+    keptForHolder,
     servedFrom: 'local-source',
     upLog: lease.log
   }
@@ -467,7 +470,7 @@ const runE2e = async (rungs, context) => {
   try {
     ran = await runLeasedRungs(rungs, context, lease)
   } finally {
-    if (lease.started) down = await giveBack(context)
+    if (lease.started && !keptForHolder) down = await giveBack(context)
   }
   return {
     results: ran.results,
@@ -593,7 +596,10 @@ const layerDurations = (startedAt, ran) => {
  * rung's output goes to its own log; a rung that cannot run is a failure
  * with its reason, never left out. Before any rung, each npm folder whose
  * installed direct dependencies differ from its lockfile is reinstalled; a
- * failed install fails that folder's npm rungs.
+ * failed install fails that folder's npm rungs. The e2e phase leaves the
+ * stack lease as it found it: a stack it started for a holder that held no
+ * lease is stopped and the lease cleared; a stack it started again for a
+ * holder whose lease outlived the stack is left up, still leased to them.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -645,7 +651,10 @@ export const runGate = async ({
   const { local, e2e } = ran
 
   const rungs = [...local.map(({ result }) => result), ...e2e.results]
-  const stackClean = e2e.stack.wasUp !== false || e2e.stack.stoppedAfter
+  const stackClean =
+    e2e.stack.wasUp !== false ||
+    e2e.stack.stoppedAfter ||
+    e2e.stack.keptForHolder
   return {
     green: rungs.length > 0 && rungs.every(({ ok }) => ok) && stackClean,
     phase,

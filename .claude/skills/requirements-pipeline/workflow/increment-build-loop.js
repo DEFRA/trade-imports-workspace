@@ -1482,19 +1482,6 @@ const withStackHeld = (schema) => ({
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY, stackDown: STACK_DOWN_PROPERTY }
 })
 
-const recoverDownStack = async (id, stage, runStage) => {
-  const first = await runStage()
-  if (!first?.stackDown) return first
-  log(`${id}: the workspace stack went down under the run at ${stage} — ${first.stackDown.detail}. Taking the lease again and running ${stage} once more`)
-  const retaken = await acquireRunLease()
-  if (!retaken?.acquired) {
-    const why = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
-    log(`${id}: could not take the lease again after the stack went down — ${why}`)
-    return first
-  }
-  return runStage()
-}
-
 const LEASE_OWNER_SCHEMA = {
   type: 'object',
   required: ['ok', 'holder', 'summary'],
@@ -1505,9 +1492,8 @@ const LEASE_OWNER_SCHEMA = {
   }
 }
 
-const confirmStackHeld = async (id, stage, held) => {
-  if (!held) return null
-  const owner = await agent(
+const readLeaseOwner = (id, stage) =>
+  agent(
     `Report who holds the workspace stack's lease. Run exactly one command and read it:
 \`tim docker lease status --workspace ${TILDE} --json\`
 Return ok as tim's \`ok\`, holder as \`result.lease.holder\` (null when \`result.lease\` is null), and a one-line summary.
@@ -1515,11 +1501,35 @@ ${RUN_WITH_BASH}
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
     light({ label: `${id} ${stage} lease check`, phase: 'Baseline', schema: LEASE_OWNER_SCHEMA })
   )
+
+const checkStackHeld = async (id, stage, result) => {
+  if (!result?.stackHeld) return { result, leaseGone: false }
+  const owner = await readLeaseOwner(id, stage)
   if (owner?.ok && owner.holder === RUN_HOLDER) {
-    log(`${id}: the ${stage} stage reported the stack held (${held.detail}), but the lease is still this run's — ignoring that report`)
-    return null
+    log(`${id}: the ${stage} stage reported the stack held (${result.stackHeld.detail}), but the lease is still this run's — ignoring that report`)
+    return { result: { ...result, stackHeld: undefined }, leaseGone: false }
   }
-  return held
+  return { result, leaseGone: owner?.ok === true && owner.holder === null }
+}
+
+const whyRetakeRunLease = (stage, { result, leaseGone }) => {
+  if (result?.stackDown) return `the workspace stack went down under the run at ${stage} — ${result.stackDown.detail}`
+  if (leaseGone) return `the run's lease on the workspace stack was gone at ${stage}, and nobody else holds it — ${result.stackHeld.detail}`
+  return null
+}
+
+const recoverRunStack = async (id, stage, runStage) => {
+  const first = await checkStackHeld(id, stage, await runStage())
+  const why = whyRetakeRunLease(stage, first)
+  if (!why) return first.result
+  log(`${id}: ${why}. Taking the lease again and running ${stage} once more`)
+  const retaken = await acquireRunLease()
+  if (!retaken?.acquired) {
+    const refusal = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
+    log(`${id}: could not take the lease again — ${refusal}`)
+    return first.result
+  }
+  return (await checkStackHeld(id, stage, await runStage())).result
 }
 
 const CI_FIX_COMMITS_PROPERTY = {
@@ -4089,13 +4099,13 @@ const themeReviewStop = async (id, { reason, outcome = reason, why, evidence, pr
 }
 
 const heldDuringThemeReview = async (id, stage, result) => {
-  const held = await confirmStackHeld(id, stage, result?.stackHeld)
+  const held = result?.stackHeld
   if (!held) return null
   return themeReviewStop(id, { reason: 'stack-held', why: `the workspace stack was held at the ${stage} stage`, evidence: stackHeldDetail(id, stage, held) })
 }
 
 const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
-  const first = await recoverDownStack(id, 'theme fix', () =>
+  const first = await recoverRunStack(id, 'theme fix', () =>
     agent(
       themeFixPrompt(id, theme, ruledFixes, TREES_BEFORE_FIX_DUTY),
       code({ label: `${id} theme fix`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(FIX_SCHEMA) })
@@ -4111,7 +4121,7 @@ const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
   const findings = (review?.findings ?? []).filter(isCodeQuality)
   if (findings.length === 0) return { fix: first }
   log(`${id}: the style re-review of the theme fix found ${findings.length} code-quality finding(s) — sending them back once`)
-  const second = await recoverDownStack(id, 'theme fix 2', () =>
+  const second = await recoverRunStack(id, 'theme fix 2', () =>
     agent(
       themeFixPrompt(id, theme, fixesForReviewFindings(findings), ''),
       code({ label: `${id} theme fix 2`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(FIX_SCHEMA) })
@@ -4123,7 +4133,7 @@ const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
 }
 
 const gateAndLandThemeFixes = async (id, theme, ruledFixes, phases, fix) => {
-  const ladder = await recoverDownStack(id, 'theme ladder', () =>
+  const ladder = await recoverRunStack(id, 'theme ladder', () =>
     agent(
       themeLadderPrompt(id, theme, phases, fix),
       code({ label: `${id} theme ladder`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(LADDER_SCHEMA) })
@@ -4482,7 +4492,7 @@ while (stopped === null) {
 
   phase('Baseline')
 
-  const baseline = await recoverDownStack(id, 'baseline', () => agent(
+  const baseline = await recoverRunStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -4511,7 +4521,7 @@ Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
   ))
 
-  const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
+  const baselineHeld = baseline?.stackHeld
   if (baselineHeld) {
     const detail = stackHeldDetail(id, 'baseline', baselineHeld)
     log(`${id}: STACK HELD at the baseline — ${detail}`)
@@ -4595,7 +4605,7 @@ ${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, merges
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await recoverDownStack(id, 'implement', () => agent(
+    : await recoverRunStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You build the change the plan decides — you do not review it,
 and you do not commit it.
 ${guardrails()}
@@ -4662,7 +4672,7 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     stopped = { reason: 'stack-held', detail }
   }
 
-  const implHeld = await confirmStackHeld(id, 'implement', impl?.stackHeld)
+  const implHeld = impl?.stackHeld
   if (implHeld) {
     await stopForHeldStack('implement', 'Implement', implHeld)
     break
@@ -4771,7 +4781,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    recoverDownStack(id, 'consistency', () => agent(
+    recoverRunStack(id, 'consistency', () => agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -4867,11 +4877,7 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
     break
   }
 
-  const reviewHeld = await confirmStackHeld(
-    id,
-    'consistency',
-    reviewed.results.find((result) => result?.stackHeld)?.stackHeld
-  )
+  const reviewHeld = reviewed.results.find((result) => result?.stackHeld)?.stackHeld
   if (reviewHeld) {
     await stopForHeldStack('consistency', 'Review', reviewHeld)
     break
@@ -4964,7 +4970,7 @@ ${COMPLETION_LINES_FIX}${mergeNote}${workspaceRepoRule()}`,
   }
 
   const claudeFix = async ({ stage, label, ruledFixes, treeDuty }) => {
-    const result = await recoverDownStack(id, stage, () => agent(
+    const result = await recoverRunStack(id, stage, () => agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the ruled fixes below — no more, no less.
 ${guardrails()}
 ${HOUSE_RULES_TO_WRITE}
@@ -4984,7 +4990,7 @@ and whatever got it green in notes. The ladder runs after you and is given your 
 Return the structured output only.`,
       code({ label, phase: 'Fix', schema: withStackHeld(FIX_SCHEMA) })
     ))
-    const held = await confirmStackHeld(id, stage, result?.stackHeld)
+    const held = result?.stackHeld
     if (held) {
       await stopForHeldStack(stage, 'Fix', held)
       return { stopped: true }
@@ -5040,7 +5046,7 @@ FIXER — ${fixerReport()}`
 
   phase('Ladder')
 
-  const ladder = await recoverDownStack(id, 'ladder', () => agent(
+  const ladder = await recoverRunStack(id, 'ladder', () => agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${guardrails()}
 ${HOUSE_RULES_TO_REPAIR}
@@ -5120,7 +5126,7 @@ Return the structured output only.`,
 
   phase('Land')
 
-  const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
+  const ladderHeld = ladder?.stackHeld
   if (ladderHeld) {
     await stopForHeldStack('ladder', 'Ladder', ladderHeld)
     break

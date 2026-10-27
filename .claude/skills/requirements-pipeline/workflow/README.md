@@ -309,7 +309,7 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
   detail names the findings and the `catch-up and cover <set>` to run;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
-  is no longer the run's (see [The workspace stack lease](#the-workspace-stack-lease)). A
+  is no longer the run's and the run cannot take its lease back (see [The workspace stack lease](#the-workspace-stack-lease)). A
   human rules on the holder;
 - at **`stack-failed`**, before any increment, when the run cannot start the workspace stack;
 - at **`land-leaked`**, when the land stage's workspace commit holds a file the workspace
@@ -816,8 +816,25 @@ The script rules on anybody else holding the stack:
   and the end-of-run release clears whatever the failed start left.
 - **Part-way through**, a stage whose gate reports `result.stack.held`, or whose lease check
   finds the lease gone or someone else's, returns `stackHeld` and runs nothing more that
-  needs the stack. The run stops at `stack-held`, naming the holder, for a human ruling. A
-  stop after implement goes through the preserve step like any other.
+  needs the stack. The script then reads the lease itself:
+  - still the run's: it ignores the report, and the stage's other result stands;
+  - gone, with nobody else holding it: it takes the run's lease again, which starts the
+    stack when it is down, and runs that stage once more, once only. Only when that
+    acquire is refused (a stack somebody started by hand, with no lease) does the run stop
+    at `stack-held`;
+  - someone else's: the run stops at `stack-held`, naming the holder, for a human ruling.
+    It never takes a lease from anybody else.
+
+  A stop after implement goes through the preserve step like any other.
+
+**A gate leaves the lease as it found it.** A gate run under the run's holder that finds
+the stack down while the run still holds the lease (a laptop that hibernated, say) starts
+the stack again, runs its E2E rungs, and leaves the stack up, still leased to the run
+(`result.stack.keptForHolder`). If the stack will not come up, the lease is still kept for
+the run. Only a stack the gate started for a holder with no lease is stopped afterwards and
+its lease cleared. Before this, a gate in that state stopped the stack and cleared the
+run's lease, and the next stage stopped the run at `stack-held` "held by nobody" (run
+`ibl-20261026T214851Z`, 27 October 2026).
 
 **When Docker Desktop quits under a run**, the run brings it back. Every tim command that
 reads the stack (`tim docker lease acquire|release|status`, and the gate through them) starts

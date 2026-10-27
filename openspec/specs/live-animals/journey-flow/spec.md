@@ -96,7 +96,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved.
+Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -142,8 +142,8 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 **ID**: SCN-FLOW-004-G
 - **GIVEN** the Arrival details page with a port of entry chosen and no means of transport
 - **WHEN** the user selects "Save and return to overview"
-- **THEN** they return to Overview with no error shown
-- **AND** the Arrival details task does not read "Complete"
+- **THEN** they return to Overview with no error shown, as saving and continuing would also accept the page
+- **AND** the Arrival details task reads "To do"
 - **AND** re-opening the page shows the port of entry chosen
 
 #### Scenario: Transit countries saved and returned keeps the countries listed

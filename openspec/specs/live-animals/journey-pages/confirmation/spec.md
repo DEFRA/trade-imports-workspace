@@ -66,9 +66,9 @@ The system MUST offer the user routes to help — where to email about import no
 - **THEN** 'contact HMRC' and 'Find out about call charges' each open in a new tab
 - **AND** each link tells screen-reader users it opens in a new tab, while its visible text stays 'contact HMRC' / 'Find out about call charges'
 
-### Requirement: The page tells the user what they still owe when documents are outstanding
+### Requirement: The page tells the user they still owe the ITAHC when none was uploaded
 **ID**: REQ-CONFIRM-006
-The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', when the notification was submitted with no document, and MUST NOT show it when any document was uploaded.
+The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC, whatever other documents were uploaded, and MUST NOT show it when an ITAHC was uploaded.
 
 #### Scenario: A submission with no documents carries the outstanding-work section
 **ID**: SCN-CONFIRM-006-A
@@ -76,9 +76,15 @@ The system MUST show a "Before the consignment is imported" section, telling the
 - **WHEN** the user reads the confirmation page
 - **THEN** a "Before the consignment is imported" section tells them they still need to 'upload the ITAHC and any other required documents'
 
-#### Scenario: A submission with a document carries no outstanding-work section
+#### Scenario: A submission with documents but no ITAHC carries the outstanding-work section
+**ID**: SCN-CONFIRM-006-B
+- **GIVEN** a notification was submitted with documents recorded, none of them an ITAHC
+- **WHEN** the user reads the confirmation page
+- **THEN** a "Before the consignment is imported" section tells them they still need to 'upload the ITAHC and any other required documents'
+
+#### Scenario: A submission with an ITAHC carries no outstanding-work section
 **ID**: SCN-CONFIRM-006-C
-- **GIVEN** a notification was submitted with a document
+- **GIVEN** a notification was submitted with an ITAHC uploaded
 - **WHEN** the user reads the confirmation page
 - **THEN** the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
 

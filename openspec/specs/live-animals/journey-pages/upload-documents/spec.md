@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, and their durability once attached. The page is titled "Upload documents".
+The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
 ## Requirements
 
@@ -127,7 +127,7 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. The upload service reports the reason it refused a file alongside its own wording, so a refused document MUST be shown as the reason it was refused for — "Virus found", "Upload failed" or "Download failed" — and MUST say the same to assistive technology. A reason the system has no wording for MUST be shown as "Rejected" rather than named wrongly.
+The system MUST show a document as "Scanning for virus" right after upload, then resolve it to "Check completed" with a way to view it, or a refusal with an error and no way to view it. A refused document MUST be shown as its reason — "Virus found", "Upload failed" or "Download failed" — stated the same way to assistive technology. An unwordable reason MUST show as "Rejected" rather than named wrongly.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -296,7 +296,7 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 
 ### Requirement: Continuing keeps a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST never carry the user past the page with the add-a-document fields they filled in dropped. Only the add action attaches a file, so continuing with a filled-in form MUST keep every answer and say which action attaches it. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer, counting the file among them, and keep them on the page. Continuing carries no file, and no browser puts a chosen one back into the input, so what it says about the file MUST NOT claim the user chose one. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST never drop an add-a-document field the user filled in when they continue. Only the add action attaches a file, so a kept filled-in form MUST name the add action as what attaches it. Continuing with only some fields filled in MUST show an error for each missing one, the file included, and keep the user on the page; since no browser restores a chosen file, that error MUST NOT claim one was chosen. Continuing past an untouched form MUST be allowed, as uploading is optional.
 
 #### Scenario: Continuing with a filled-in form keeps the answers and asks for the add action
 **ID**: SCN-DOCS-016-A
@@ -355,3 +355,19 @@ The system MUST ask for the document reference with no hint, and MUST hint the d
 - **WHEN** the page loads
 - **THEN** the Document reference field has no hint
 - **AND** the hint under the Date of issue field reads "For example, 27/3/2026"
+
+### Requirement: The page can be opened as soon as the origin of the import is answered
+**ID**: REQ-DOCS-020
+The system MUST offer and open the upload documents page with nothing beyond the origin of the import answered, and MUST ask nothing of what the trader is importing or of any later part of the notification before showing it.
+
+#### Scenario: Reaching the page from Overview with only the origin answered
+**ID**: SCN-DOCS-020-A
+- **GIVEN** a new notification with only the origin of the import answered
+- **WHEN** the user follows Overview's "Upload documents" row
+- **THEN** the page titled "Upload documents" is shown
+
+#### Scenario: Opening the page with the origin and what they are importing answered
+**ID**: SCN-DOCS-020-B
+- **GIVEN** a new notification with the origin of the import and what they are importing answered, and nothing else
+- **WHEN** the user opens the upload documents page
+- **THEN** the page titled "Upload documents" is shown

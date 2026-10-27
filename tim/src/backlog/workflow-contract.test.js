@@ -1069,7 +1069,7 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json\``
+        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
     })
@@ -1081,6 +1081,14 @@ describe('increment-build-loop', () => {
         '`tim build gate-wait <the --result file of that command> --workspace ~/ws --json`'
       )
       expect(prompt).not.toContain('or that hits the Bash timeout, is RED')
+    })
+
+    test('tells the baseline a gate whose process died is red at once, not waited on', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        'If it prints `GATE_DIED`, the\n  gate\'s process stopped without a result: that gate is RED, reported as "the gate died"'
+      )
     })
 
     test('tells the baseline to hand back a stack somebody else holds rather than work round it', async () => {
@@ -1295,7 +1303,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json\``
+          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -1312,10 +1320,10 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json\``
+          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json\``
+          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
@@ -4708,8 +4716,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )

@@ -1,6 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -349,6 +350,59 @@ describe('tim build gate-wait', () => {
       exitCode: wait.exitCode,
       code: envelopeOf(wait).errors[0].code
     }).toEqual({ exitCode: 1, code: 'GATE_STILL_RUNNING' })
+  })
+
+  test('prints the result of a gate started with --detach, which returned before the gate finished', async () => {
+    seedGateRepo({ test: 'sleep 1 && exit 2' })
+    const resultPath = join(root, 'logs', 'gate-result.json')
+    const start = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--result',
+      resultPath,
+      '--detach'
+    ])
+    const resultWhenStarted = existsSync(resultPath)
+
+    const wait = await runTim(['build', 'gate-wait', resultPath, '--json'])
+
+    expect({
+      startExitCode: start.exitCode,
+      started: envelopeOf(start).result,
+      resultWhenStarted,
+      waitExitCode: wait.exitCode,
+      rungs: envelopeOf(wait).result.rungs.map(({ repo, name, ok }) => ({
+        repo,
+        name,
+        ok
+      }))
+    }).toEqual({
+      startExitCode: 0,
+      started: { detached: true, pid: expect.any(Number), result: resultPath },
+      resultWhenStarted: false,
+      waitExitCode: 1,
+      rungs: [{ repo: 'frontend', name: 'unit', ok: false }]
+    })
+  })
+
+  test('says the gate died when its process has gone without writing a result', async () => {
+    seedWorkspace(['frontend'])
+    const resultPath = join(root, 'logs', 'gate-result.json')
+    const ended = execa('node', ['-e', ''])
+    await ended
+    mkdirSync(dirname(resultPath), { recursive: true })
+    writeFileSync(`${resultPath}.pid`, `${ended.pid}\n`)
+
+    const wait = await runTim(['build', 'gate-wait', resultPath, '--json'])
+
+    expect({
+      exitCode: wait.exitCode,
+      code: envelopeOf(wait).errors[0].code
+    }).toEqual({ exitCode: 1, code: 'GATE_DIED' })
   })
 
   test('refuses a wait longer than the Bash tool allows', async () => {

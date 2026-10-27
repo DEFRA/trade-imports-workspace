@@ -19,7 +19,7 @@ The system MUST ask the user for the country of origin, offering a searchable co
 
 ### Requirement: The country field is a searchable list that filters as the user types
 **ID**: REQ-PLANTS-ORIGIN-002
-The system MUST offer the country of origin as a searchable field that filters to matching countries as the user types, MUST offer the whole list as soon as the field is opened before anything is typed, and MUST show the chosen country's name in that field when the user returns to the page.
+The system MUST offer the country of origin as a searchable field that filters to matching countries as the user types (matching ignores case and accents, and the matched letters show in bold), MUST offer the whole list as soon as the field is opened before anything is typed, and MUST show the chosen country's name in that field when the user returns to the page.
 
 #### Scenario: Typing part of a country's name offers the matching country
 **ID**: SCN-PLANTS-ORIGIN-002-A
@@ -38,6 +38,12 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **GIVEN** the user has chosen a country and saved the page
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
+
+#### Scenario: An accented search finds a country listed without the accent
+**ID**: SCN-PLANTS-ORIGIN-002-D
+- **GIVEN** the user is on the origin of the import page with JavaScript
+- **WHEN** they type "Réunion" into the country field
+- **THEN** "Reunion" is offered, with "Reunion" in bold
 
 ### Requirement: The country field offers select text and every origin country the service primes, and submits a country code
 **ID**: REQ-PLANTS-ORIGIN-003

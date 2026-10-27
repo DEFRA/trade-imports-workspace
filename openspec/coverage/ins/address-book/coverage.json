@@ -58,6 +58,14 @@
               "test": "Should redirect to the address book for soft-deleted tombstones",
               "strength": "partial",
               "notes": "frontend hides tombstones from view; API tombstone retention is the E2E assertion"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found, viewed, kept on No, cancel, deleted on Yes, delete and left out of search, through links alone",
+              "strength": "partial",
+              "notes": "the final search for the deleted address reads Showing 0 of 0; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -672,6 +680,14 @@
               "test": "the delete page summarises the address, and No, cancel returns to its details with nothing deleted",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found, viewed, kept on No, cancel, deleted on Yes, delete and left out of search, through links alone",
+              "strength": "partial",
+              "notes": "follows No, cancel from the delete page back to the details page; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -719,6 +735,14 @@
               "test": "Should name the address as it is stored",
               "strength": "partial",
               "notes": "the banner wording helper alone"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found, viewed, kept on No, cancel, deleted on Yes, delete and left out of search, through links alone",
+              "strength": "partial",
+              "notes": "follows Yes, delete to the list banner; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -833,6 +857,14 @@
               "test": "Dashboard and Address book links are visible and navigate correctly",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found, viewed, kept on No, cancel, deleted on Yes, delete and left out of search, through links alone",
+              "strength": "partial",
+              "notes": "reaches the list from the dashboard through the service navigation; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -962,16 +994,16 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-013-A",
-          "name": "More than twenty-five addresses are shown across pages",
+          "name": "More than eight addresses are shown across pages",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "paginates when there are more than 25 addresses",
+              "test": "lists 8 addresses a page",
               "strength": "full",
-              "notes": "Showing 1-25 of 30 then 26-30 of 30 after Page 2"
+              "notes": "Showing 1-8 of 30 then 9-16 of 30 after Page 2; red-probed: fails when the list asks for 9 a page"
             },
             {
               "type": "unit",
@@ -979,7 +1011,15 @@
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
               "test": "renders numbered pagination when more than one page",
               "strength": "partial",
-              "notes": "renders page 2 range text from mocked API; does not click through page 1→2"
+              "notes": "renders page 2 range text from mocked API; does not click through page 1 to 2"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "lists 8 addresses a page and the rest on the next page",
+              "strength": "partial",
+              "notes": "run against the stack by the build gate; not red-probed"
             }
           ]
         }
@@ -2588,7 +2628,7 @@
         {
           "id": "SCN-INS-ADDR-028-C",
           "name": "Submitting a search lists the matches",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -2602,33 +2642,33 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "puts the term in the address book URL when submitted with the Search button",
-              "strength": "partial",
-              "notes": "proves the term reaches the URL; the stub does not filter by term"
+              "test": "lists only the matches, with the term in the address book URL, when submitted with the Search button",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "puts the term in the address book URL when submitted with Enter in the Search field",
-              "strength": "partial",
-              "notes": "proves the term reaches the URL; the stub does not filter by term"
+              "test": "lists only the matches, with the term in the address book URL, when submitted with Enter in the Search field",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "puts the term in the address book URL when submitted with the Search button and JavaScript is off",
-              "strength": "partial",
-              "notes": "proves the term reaches the URL; the stub does not filter by term"
+              "test": "lists only the matches, with the term in the address book URL, when submitted with the Search button and JavaScript is off",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "puts the term in the address book URL when submitted with Enter in the Search field and JavaScript is off",
-              "strength": "partial",
-              "notes": "proves the term reaches the URL; the stub does not filter by term"
+              "test": "lists only the matches, with the term in the address book URL, when submitted with Enter in the Search field and JavaScript is off",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
             },
             {
               "type": "e2e",
@@ -2709,6 +2749,21 @@
               "notes": "red-probed: fails with Clear search removed; proves the link and its href, not following it"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-F",
+          "name": "Text typed and not submitted leaves the list unchanged",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "leaves the list as it is while text is typed and not yet submitted",
+              "strength": "partial",
+              "notes": "no client script filters the list, so this passes without one; a script that filtered as the user types would turn it red"
+            }
+          ]
         }
       ]
     },
@@ -2752,6 +2807,211 @@
               "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
               "strength": "partial",
               "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-030",
+      "name": "A page number out of range shows a real page of addresses",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-030-A",
+          "name": "A page number below 1 or not a number shows the first page",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "asks for page 1 when the page number is %s",
+              "strength": "partial",
+              "notes": "page 0 and abc each ask the service for page 1; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the first page when the page number is 0",
+              "strength": "partial",
+              "notes": "Showing 1-8 of 30; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-030-B",
+          "name": "A page number beyond the last page shows the last page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the last page when the page number is past the last page",
+              "strength": "full",
+              "notes": "Showing 25-30 of 30 with Page 4 current; red-probed: fails when the list serves the empty page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "shows the last page, asked for a second time, when the page number is past the last page",
+              "strength": "full",
+              "notes": "red-probed: fails when the list serves the empty page"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-031",
+      "name": "The address book service serves a requested page size from 1 to 100",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-031-A",
+          "name": "A requested page size is served",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn8ItemsAcross4Pages_whenPageSizeIs8",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-031-B",
+          "name": "A page size outside 1 to 100 is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenPageSizeIsOutOfRange",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-031-C",
+          "name": "No page size gives 25 addresses a page",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn25ItemsAcross2Pages_whenNoPageSizeIsRequested",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-032",
+      "name": "A search matches an address by its name, address, town, county, postcode or country",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-032-A",
+          "name": "A term inside an address line finds that address",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "partialWordSearchMatchesAddressLineTwoCaseInsensitively",
+              "strength": "partial",
+              "notes": "the service matches address line 2, ignoring case; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search finds an address by a lower-case word inside its address line 2",
+              "strength": "partial",
+              "notes": "run against the stack by the build gate; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds an address by a term inside its address line 1",
+              "strength": "partial",
+              "notes": "address line 1 in stub mode, red-probed: fails when the stub ignores the term"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-B",
+          "name": "A country name finds the addresses in that country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds the addresses in a country by part of its name",
+              "strength": "full",
+              "notes": "fran finds the France row and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "forwards the search query and every country code whose name contains it",
+              "strength": "partial",
+              "notes": "the codes reach the address book service as repeated countryCode parameters"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "severalCountryCodesMatchTheAddressesInAnyOfThem",
+              "strength": "partial",
+              "notes": "the service matches any of several codes; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-C",
+          "name": "A search counts its matches and pages them past eight",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists the matches across all pages and keeps the term on the next page",
+              "strength": "full",
+              "notes": "Showing 1-8 of 11 then 9-11 of 11 with the term kept; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "shows no pagination when the matches of a search fit on one page",
+              "strength": "partial",
+              "notes": "Showing 1-2 of 2 with no pagination from mocked API; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "counts the matches of a search that fits on one page and shows no pagination",
+              "strength": "full",
+              "notes": "proves the Then 'Showing 1-2 of 2 and no pagination' over the stub; red-probed: fails when the expected line reads Showing 1-2 of 3, green restored"
             }
           ]
         }

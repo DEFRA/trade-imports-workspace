@@ -8,7 +8,7 @@ The identifier records entered for the animals of each species on a consignment:
 
 ### Requirement: The page opens with a summary of every commodity the notification holds, above one section per commodity
 **ID**: REQ-IDENT-001
-The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, common name, species and number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection.
+The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, common name, species and number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection, showing what is already chosen, where saving returns the user to identification details.
 
 #### Scenario: The summary lists every commodity with its species and a change link, ahead of the sections
 **ID**: SCN-IDENT-001-A
@@ -30,6 +30,20 @@ The system MUST show, above the identification sections, a summary table with on
 - **WHEN** they open the identification details page
 - **THEN** the summary shows that species on its own row, named by the species' common name, with its own number of animals
 
+#### Scenario: Adding a commodity from a summary row's Change returns to identification details listing it
+**ID**: SCN-IDENT-001-D
+- **GIVEN** the user is on the identification details page
+- **WHEN** they follow Change on a summary row
+- **THEN** commodity selection shows the commodities already chosen
+- **WHEN** they choose a further commodity and save and continue
+- **THEN** identification details is shown, and its summary lists the added commodity
+
+#### Scenario: Removing a commodity from a summary row's Change returns to identification details without it
+**ID**: SCN-IDENT-001-E
+- **GIVEN** the user is on the identification details page with more than one commodity chosen
+- **WHEN** they follow Change on a summary row, untick that commodity and save and continue
+- **THEN** identification details is shown, and its summary lists only the commodities left
+
 ### Requirement: The page asks for one animal's identifiers per species card, and the card's save button says what is left on the line
 **ID**: REQ-IDENT-002
 The system MUST ask the user for the identifiers of a single animal on a card scoped to one species within its commodity section, and MUST label the card's own save button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
@@ -50,7 +64,7 @@ The system MUST ask the user for the identifiers of a single animal on a card sc
 
 ### Requirement: Each card offers a way to change that species' declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
-The system MUST offer, on every species card, a Change number of animals link, naming that species to screen readers, that opens commodity details with that species' number-of-animals field ready to edit, and MUST offer an Add another commodity link — reachable while there are still commodities to identify, not only once none remain — that opens commodity selection.
+The system MUST offer, on every species card, a Change number of animals link, naming that species to screen readers, that opens commodity details with that species' number-of-animals field ready to edit, and MUST offer an Add another commodity link — reachable while there are still commodities to identify, not only once none remain — that opens commodity selection, where saving returns the user to identification details.
 
 #### Scenario: Change number of animals opens commodity details on that line
 **ID**: SCN-IDENT-003-A
@@ -64,6 +78,7 @@ The system MUST offer, on every species card, a Change number of animals link, n
 - **GIVEN** the user has a commodity still to identify
 - **WHEN** they follow Add another commodity
 - **THEN** commodity selection opens
+- **AND** saving there returns to identification details
 
 ### Requirement: The identifier fields start empty for each new record
 **ID**: REQ-IDENT-004

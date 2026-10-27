@@ -129,8 +129,8 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-007",
-      "name": "The back link returns to the origin of the import in the opening sequence, and to Overview otherwise",
-      "coverage": "full",
+      "name": "The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-007-A",
@@ -149,6 +149,14 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "follows Back from what are you importing to the origin page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to the origin of the import while the opening run is on", "strength": "partial", "notes": "href only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the commodities page back to the origin page", "strength": "partial", "notes": "the run policy's answer only" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-007-C",
+          "name": "Opened from commodity details, the back link opens commodity details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to commodity details when commodity details opened the question", "strength": "partial", "notes": "href only; not probed" }
           ]
         }
       ]
@@ -257,6 +265,64 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-013",
+      "name": "Saving returns the user to the page that opened the question, else goes on",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-013-A",
+          "name": "Opened from commodity details, saving returns there",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "returns to commodity details after adding another commodity, keeping the saved counts and leaving the new commodity empty", "strength": "full", "notes": "red without the return step in the save target" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to commodity details when commodity details opened the question", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-B",
+          "name": "Opened from identification details, saving returns there",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "changes the commodity list from a summary row and returns to identification details listing the added commodity", "strength": "full", "notes": "red without the return step in the save target" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to identification details and keep only the commodities left ticked", "strength": "partial", "notes": "redirect href and saved lines only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-C",
+          "name": "In the opening sequence, saving opens the reason for import",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "partial", "notes": "passes through the step among the whole run; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-D",
+          "name": "Opened from a review Change link, saving opens commodity details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js", "test": "Should carry the context from the search save into the consignment details page", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-E",
+          "name": "Opened from commodity details under a review Change, saving returns there keeping the change context",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js", "test": "Should carry the context and the return marker on the details page Add-another affordance", "strength": "partial", "notes": "the link carries the return marker and change context; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to the opener carrying the change context", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-F",
+          "name": "A return value naming a page that does not open the question is ignored",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should ignore a return value that names a page not opening the question and redirect as an unmarked save does", "strength": "partial", "notes": "a refused marker redirects as an unmarked save does; not probed" }
           ]
         }
       ]

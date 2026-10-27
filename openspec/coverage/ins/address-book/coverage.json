@@ -153,9 +153,9 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
               "strength": "partial",
-              "notes": "proves save and list presence by name only, not field-level persistence"
+              "notes": "proves the saved name, postal lines and country are listed; not email, phone or field-level persistence"
             },
             {
               "type": "unit",
@@ -454,24 +454,48 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-009-A",
-          "name": "Adding an address confirms it and lists it",
+          "name": "Adding an address confirms it and lists it first",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads",
+              "test": "saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: the banner title and the added banner wording"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
+              "strength": "partial",
+              "notes": "proves the saved address is listed, with its lines and country; not the banner, its order or its View link"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address first, ahead of the seeded address, with a View link to its own details page",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: the stub's create appended instead of putting the new address first"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should name the address in each success banner",
+              "strength": "partial",
+              "notes": "the added banner wording only"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         },
@@ -956,7 +980,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
               "strength": "partial",
               "notes": "run green; not red-probed"
             },
@@ -967,6 +991,14 @@
               "test": "each stored address line shows on its own line, each but the last ending in a comma, with blank lines left out",
               "strength": "partial",
               "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         },
@@ -982,6 +1014,37 @@
               "test": "returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table",
               "strength": "full",
               "notes": "red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-G",
+          "name": "A newer address is listed before an older one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address first, ahead of the seeded address, with a View link to its own details page",
+              "strength": "full",
+              "notes": "red-probed: the stub's create appended instead of putting the new address first"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.test.js",
+              "test": "Should list created addresses newest first, ahead of the seeded address",
+              "strength": "partial",
+              "notes": "the stub's order only; red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form is the first row of the list it lands on, and is listed ahead of an older address",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         }
@@ -2781,7 +2844,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads",
+              "test": "saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads",
               "strength": "partial",
               "notes": "run green; not red-probed"
             },
@@ -3012,6 +3075,29 @@
               "test": "counts the matches of a search that fits on one page and shows no pagination",
               "strength": "full",
               "notes": "proves the Then 'Showing 1-2 of 2 and no pagination' over the stub; red-probed: fails when the expected line reads Showing 1-2 of 3, green restored"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-D",
+          "name": "An address just added is found by its name, its address and its country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "finds the saved address by its name, a fragment of its address and part of its country name",
+              "strength": "full",
+              "notes": "red-probed: the stub's search left out address line 1"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form is found by a search on its name, part of its address and part of its country name",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         }

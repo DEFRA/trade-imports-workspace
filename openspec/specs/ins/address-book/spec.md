@@ -119,14 +119,14 @@ The system MUST reject an email address that is not validly formatted, with an e
 
 ### Requirement: Saving a new or edited address shows a confirmation naming it
 **ID**: REQ-INS-ADDR-009
-The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An edit's confirmation reads '<Name> address updated'.
+The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
 
-#### Scenario: Adding an address confirms it and lists it
+#### Scenario: Adding an address confirms it and lists it first
 **ID**: SCN-INS-ADDR-009-A
 - **GIVEN** the user has filled in a valid new address
 - **WHEN** they save it
-- **THEN** they return to the address book, a confirmation names the address as added
-- **AND** the new address is listed
+- **THEN** they return to the address book, and a 'Success' confirmation reads '<name> address added to your address book'
+- **AND** the new address is listed first, with a View link that opens its own details page
 
 #### Scenario: Editing an address's name confirms it under its new name
 **ID**: SCN-INS-ADDR-009-B
@@ -196,7 +196,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 ### Requirement: The address book list shows each address's key details, with a way to view, and a way to add one
 **ID**: REQ-INS-ADDR-012
-The system MUST head the list 'Address book' with an intro, then offer a way to add a new address, then the filter (REQ-INS-ADDR-028). It MUST list each address's name, stored postal address lines and country, offer a way to open that address's own details, and make the list reachable from the service's navigation. When the address book cannot be loaded, the system MUST respond with a server error, keep the heading, intro, add action and filter, and show no results line and no table.
+The system MUST head the list 'Address book' with an intro, then offer a way to add a new address, then the filter (REQ-INS-ADDR-028). It MUST list each address's name, stored postal address lines and country, newest first, with a way to open its own details, and be reachable from the service's navigation. When the address book cannot be loaded, the system MUST respond with a server error, keep the heading, intro, add action and filter, and show no results line and no table.
 
 #### Scenario: The list renders each address's details, with columns and an add action
 **ID**: SCN-INS-ADDR-012-A
@@ -239,6 +239,12 @@ The system MUST head the list 'Address book' with an intro, then offer a way to 
 - **THEN** the page responds with a server error and shows 'Sorry, there is a problem with the service. Try again in a few minutes.'
 - **AND** the heading 'Address book', the intro, the action to add a new address and the filter are still shown
 - **AND** no results line and no table are shown
+
+#### Scenario: A newer address is listed before an older one
+**ID**: SCN-INS-ADDR-012-G
+- **GIVEN** an address was added to the address book after another
+- **WHEN** the user views the address book
+- **THEN** the newer address is listed before the older one
 
 ### Requirement: The list is paged once it holds more than one page of addresses
 **ID**: REQ-INS-ADDR-013
@@ -691,3 +697,9 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **THEN** the list reads 'Showing 1-8' against the number of matches, and pagination is shown
 - **WHEN** they move to the next page
 - **THEN** the remaining matches are shown, with the search kept
+
+#### Scenario: An address just added is found by its name, its address and its country
+**ID**: SCN-INS-ADDR-032-D
+- **GIVEN** the user has just added an address in France
+- **WHEN** they search for its name, for part of its address line 1, and for 'fran'
+- **THEN** each search lists the added address

@@ -14,7 +14,7 @@ The system MUST tell the user, before they add anything, which file types are ac
 **ID**: SCN-DOCS-001-A
 - **GIVEN** the user opens the upload documents page on a notification with none added yet
 - **WHEN** the page loads
-- **THEN** it states the maximum file size as "files that are smaller than 10MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
+- **THEN** it states the maximum file size as "files that are smaller than 50MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
 - **AND** the File upload card shows no table and no message after its "Save and add another" button
 
 #### Scenario: The limit stays stated once documents have been added
@@ -108,7 +108,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document, MUST reject a reference over its maximum length, MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of one hundred characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A
@@ -121,7 +121,7 @@ The system MUST require a reference and a valid date of issue for each document,
 **ID**: SCN-DOCS-006-B
 - **GIVEN** the user enters a reference longer than the maximum allowed
 - **WHEN** they try to add the document
-- **THEN** an error links to and focuses the reference field, which still holds the value typed
+- **THEN** an error reading "Document reference must be 100 characters or fewer" links to and focuses the reference field, which still holds the value typed
 - **AND** the date of issue already entered is preserved
 
 #### Scenario: An empty date of issue links to and focuses the date field, preserving the reference
@@ -144,6 +144,19 @@ The system MUST require a reference and a valid date of issue for each document,
 - **WHEN** they try to add the document
 - **THEN** an error links to and focuses the file field
 - **AND** the reference and date already entered are preserved
+
+#### Scenario: A reference written in one of the shapes real documents carry is taken on
+**ID**: SCN-DOCS-006-F
+- **GIVEN** the user enters a reference written as an air waybill with a hyphen, a certificate with full stops, or an invoice with a space and a forward slash
+- **WHEN** they add the document
+- **THEN** it is taken on and held against the notification with that reference as typed
+
+#### Scenario: A reference carrying a disallowed character is refused
+**ID**: SCN-DOCS-006-G
+- **GIVEN** the user enters a reference carrying a character other than a letter, number, space, hyphen, full stop or forward slash
+- **WHEN** they try to add the document
+- **THEN** an error reading "Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes" is shown on the Document reference field
+- **AND** no document is added to the notification
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007

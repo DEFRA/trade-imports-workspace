@@ -14,7 +14,9 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders the reference with no hint, the date hint, the upload constraints and no added-documents table", "strength": "full", "notes": "accept attribute, size and file-type bullets, and the File upload card text ending with the Save and add another button" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lays out the empty page with two-thirds guidance and a full-width card showing no added-documents table", "strength": "partial", "notes": "JavaScript off: the card text ends with the Save and add another button — does not assert the constraint bullets" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lays out the empty page with two-thirds guidance and a full-width card showing no added-documents table", "strength": "partial", "notes": "JavaScript off: the card text ends with the Save and add another button — does not assert the constraint bullets" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.test.js", "test": "Should hold the 50MB decimal limit and name it in the oversize message", "strength": "partial", "notes": "pins the byte count as fifty million and the oversize message naming 50MB, the figure this scenario quotes — it neither loads the page nor asserts anything about the accepted file types" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "states the file size and the allowed file types as the first two bullets of the file hint", "strength": "full", "notes": "the loaded page's first two file-hint bullets are the size sentence and the allowed types, read from upload-config.js; red probe: swap the two bullets in template.njk and the test fails on their order" }
           ]
         },
         {
@@ -97,7 +99,7 @@
           "name": "A file at exactly the size limit is accepted, one byte over is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 50MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a PDF at the maximum file size and rejects one a byte over it", "strength": "full", "notes": "a real file at the cap accepted and scanned, the same file a byte over refused with the oversize message in the summary and on the file field, and the list left at one" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "witnesses the at-the-limit leg only — a file of exactly MAX_FILE_SIZE_BYTES is accepted and its row appears; it never submits one byte over" }
           ]
         },
@@ -154,7 +156,8 @@
           "name": "A reference over the maximum length links to and focuses the reference field, preserving the value",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over the maximum length links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference past the length the claim accepts, naming that length", "strength": "partial", "notes": "it asserts the message naming the limit and that nothing is added, and it neither renders the page nor asserts anything about the error summary linking or field focus" }
           ]
         },
         {
@@ -179,6 +182,23 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: no file links to and focuses the upload while preserving metadata", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-F",
+          "name": "A reference written in one of the shapes real documents carry is taken on",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should take on a document whose reference is %s", "strength": "full", "notes": "parameterised over an air waybill (125-12345675), a TRACES certificate (CHEDA.GB.2026.1234567), an invoice (INV 2026/0042) and a plain alphanumeric reference; asserts the redirect and the stored reference" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lists the document under five headings with View file and Remove right-aligned at the end of the row", "strength": "partial", "notes": "uploads a hyphenated reference and reaches Check completed, but witnessing that reference reaching the row is incidental to the test's own THEN about the table's headings and action placement" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-G",
+          "name": "A reference carrying a disallowed character is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference carrying a character the claim would reject: %s", "strength": "full", "notes": "asserts the message on the Document reference field and that the notification's documents are unchanged; no fit or end-to-end test witnesses this refusal" }
           ]
         }
       ]

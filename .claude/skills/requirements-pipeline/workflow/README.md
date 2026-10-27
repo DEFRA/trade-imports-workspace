@@ -904,7 +904,9 @@ Four things to know about codex mode:
 - **Every repo stays on the run's branch.** Each brief says so, and a light branch guard runs
   after every codex stage and again before land. A repo on another branch at the same commit
   is moved back, carrying its staged work; anything else stops the run through the preserve
-  step.
+  step. The guard and the land stage read each repo's branch and changes from
+  `tim workspace repo-state --json`, never from `git status`, and the loop checks the guard's
+  answer against the file the guard last read.
 - **A stage that cannot run stops the loop.** If a review or fix run produces no result —
   non-zero exit, no last-message file, unparseable JSON, or a dead shell or relay agent — the
   loop preserves the attempt and stops rather than proceeding. A crashed reviewer must never

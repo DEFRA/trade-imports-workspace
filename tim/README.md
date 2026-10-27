@@ -81,6 +81,22 @@ Every command supports:
 - `--verbose` — structured logs to stderr
 - `--workspace <path>` — override the resolved workspace root
 
+### `tim workspace repo-state` — one report of several repos' git state
+
+Reports each repo you name, from local git: its branch, HEAD, whether it is
+dirty and every changed path, how many changes are staged, whether a merge is
+in progress, and how far it is ahead of and behind origin. The build loop reads
+it instead of asking an agent to read `git status` in each repo.
+
+```bash
+tim workspace repo-state --repos frontend:repos/trade-imports-plants-frontend,workspace:. --json
+tim workspace repo-state --repos tests:repos/trade-imports-ins-tests --branch feat/EUDPA-1-x --base main
+```
+
+`--branch` adds whether each repo is on that branch and where the branch
+points locally. `--base` counts commits against `origin/<base>`. `--fetch`
+fetches origin first.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

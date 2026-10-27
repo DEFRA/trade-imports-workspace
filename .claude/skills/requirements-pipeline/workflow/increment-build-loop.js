@@ -519,15 +519,26 @@ and logs under \`workareas/\`, and often somebody's work in progress. If your fi
   \`git -C ${TILDE} commit -m "<message>" -- <paths>\`. Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec.
 - Never edit this loop's own script, \`${LOOP_SCRIPT}\`.`
 
-const changedReposRule = () => {
+const repoStateLog = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}-repo-state.json`
+
+const repoStateCommand = (keys, { branch, logFile }) =>
+  `tim workspace repo-state --repos ${keys.map((key) => `${key}:${REPO_PATH[key]}`).join(',')}${branch ? ` --branch ${branch}` : ''} --workspace ${TILDE} --json > ${logFile} 2> ${logFile.replace(/\.json$/, '.err')}`
+
+const REPO_STATE_FIELDS = `It is one JSON line. \`result.repos[]\` gives each repo's \`key\`, \`path\`, \`branch\`, \`dirty\`, \`changed\` (each
+path with its two \`git status\` letters), \`staged\` and \`merging\`, and with --branch \`onBranch\`, \`head\` and \`branchHead\`.
+Decide from those fields. Never run \`git status\` or \`rev-parse\` to decide which repos changed or which branch one is on.`
+
+const changedReposRule = (id, stage, branch) => {
   const keys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY || buildsWorkspace())
   const workspaceLine = buildsWorkspace()
     ? `\nIn the workspace repo, only changes THE WORKSPACE REPO rule leaves to this increment count.`
     : WORKSPACE_CONFIGURED
       ? `\nThe workspace repo is not one of this increment's repos: leave it alone, except as THE BEHAVIOUR SPEC says.`
       : ''
-  return `WHICH REPOS: check EVERY configured repo — ${keys.map((key) => `\`${repoTilde(key)}\``).join(', ')} —
-with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.${workspaceLine}`
+  return `WHICH REPOS: read every configured repo's state from tim, once:
+\`${repoStateCommand(keys, { branch, logFile: repoStateLog(id, stage) })}\`
+Read that file once. ${REPO_STATE_FIELDS}
+Act on each repo whose \`dirty\` is true.${workspaceLine}`
 }
 
 const SPEC_RULE = `THE BEHAVIOUR SPEC: an increment may also change \`${TILDE}/openspec/\`, the workspace repo's own spec and
@@ -1327,8 +1338,8 @@ ${REPO_RULE}
 ${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
-1. ${changedReposRule()} A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and
-   change nothing in it.
+1. ${changedReposRule(id, 'preserve', branch)} A repo whose \`dirty\` is true and whose \`onBranch\` is false is a stop:
+   report ok:false naming it, and change nothing in it.
 2. For EACH repo with changes, stage what the increment produced — but NOTHING under logs/, no coverage output, no
    test-results/, no Playwright artefacts.
 3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
@@ -1364,9 +1375,9 @@ TASK:
    \`git -C ${TILDE}/<repoPath> format-patch --stdout --binary origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.patch\`
    then \`git -C ${TILDE}/<repoPath> reset --soft origin/${branch}\`, which leaves those commits' changes staged for the steps
    below to save and stash. Name the commits' SHAs in your note. Never \`reset --hard\`, and never push.
-1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
-   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
-   A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
+1. ${changedReposRule(id, 'preserve', branch)} Also act on every repo whose \`merging\` is true, even where \`dirty\` is false.
+   A repo whose \`dirty\` or \`merging\` is true and whose \`onBranch\` is false is a stop: report ok:false naming it, and
+   change nothing in it.
 2. For EACH such repo, save the attempt under ${WORKAREA_TILDE}/logs/, one Bash call each, output redirected:
    \`git -C ${TILDE}/<repoPath> diff --staged --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.staged.patch\`
    \`git -C ${TILDE}/<repoPath> diff --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.unstaged.patch\`
@@ -1406,53 +1417,101 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
   }
 }
 
-const repoTildeList = (keys) => keys.map((key) => `\`${repoTilde(key)}\``).join(', ')
+const guardedRepoKeys = (branchedRepos) =>
+  branchedRepos
+    ? REPO_KEYS.filter((key) => branchedRepos.includes(key) || key !== WORKSPACE_KEY)
+    : REPO_KEYS
 
 const outsideRepoRule = (branchedRepos) => {
   const outsideRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY && !branchedRepos.includes(key))
   if (outsideRepos.length === 0) return ''
   return `
-- The repos outside the increment: ${repoTildeList(outsideRepos)}. For each, run only
-  \`git -C ${TILDE}/<repoPath> status --short\`.
-  - It prints nothing → the repo is clean, and a clean repo outside the increment is fine on ANY branch. Do not
-    check its branch, do not compare its commits, and leave it out of your summary and your ok decision.
-  - It prints anything → it is a repo to check.`
+- The repos outside the increment: ${outsideRepos.join(', ')}. One of them is a repo to check only when its \`dirty\` is
+  true. A clean repo outside the increment is fine on ANY branch. Do not check its branch, and leave it out of your
+  summary and your ok decision.`
 }
 
 const reposToCheckRule = (branchedRepos) =>
   branchedRepos
-    ? `FIRST, WORK OUT THE REPOS TO CHECK, before you look at any branch:
-- The increment's repos: ${repoTildeList(branchedRepos)}. Every one is a repo to check.${outsideRepoRule(branchedRepos)}
+    ? `WORK OUT THE REPOS TO CHECK from that file, before you look at any branch:
+- The increment's repos: ${branchedRepos.join(', ')}. Every one is a repo to check.${outsideRepoRule(branchedRepos)}
 THEN check the branch of each repo to check, and of no other repo.`
-    : `CHECK every configured repo — ${repoTildeList(REPO_KEYS)}.`
+    : `CHECK every configured repo in that file.`
 
-const branchGuard = (id, stageName, phaseName, branch, branchedRepos) =>
-  agent(
-    `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
+const BRANCH_GUARD_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    repoState: { type: 'string', description: 'The repo-state file from your last tim run, word for word' }
+  },
+  additionalProperties: false
+}
+
+const branchGuardPrompt = (id, stageName, branch, branchedRepos) => {
+  const command = repoStateCommand(guardedRepoKeys(branchedRepos), { branch, logFile: repoStateLog(id, `branch-guard-${stageName}`) })
+  return `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
 in must be on \`${branch}\`. A stage that switched a repo to another branch, or cut a new one, leaves the work where
 the land stage refuses it. You check, move a repo back where that is safe, and change nothing else.
 ${guardrails()}
+FIRST, read every repo's state from tim:
+\`${command}\`
+Read that file once. ${REPO_STATE_FIELDS}
 ${reposToCheckRule(branchedRepos)}
 For EACH repo to check:
-1. ${HEAD_BRANCH_CHECK} Prints \`${branch}\` → that repo is fine; go to the next.
-2. Anything else → compare the commits: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\` and
-   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${branch}\`.
-   - The same SHA → \`git -C ${TILDE}/<repoPath> checkout ${branch}\`. The staged and unstaged work travels with it,
-     because the two branches point at the same commit. Run step 1 again and confirm it prints \`${branch}\`. Say in
-     your summary which repo you moved and from which branch. Leave that other branch where it is — do not delete it.
-   - A different SHA, \`${branch}\` missing, or a checkout that refuses → STOP: report ok:false naming the repo, the
-     branch it is on and both SHAs, and change nothing in it.
+1. \`onBranch\` is true → that repo is fine; go to the next.
+2. \`onBranch\` is false → compare its \`head\` with its \`branchHead\`.
+   - The same SHA → \`git -C <path> checkout ${branch}\`. The staged and unstaged work travels with it, because the two
+     branches point at the same commit. Say in your summary which repo you moved and from which branch. Leave that
+     other branch where it is: do not delete it.
+   - A different SHA, \`branchHead\` null, or a checkout that refuses → STOP: report ok:false naming the repo, its
+     \`branch\` and both SHAs, and change nothing in it.
 Never create a branch, and never commit, stash, reset or clean. You only ever move a repo back onto \`${branch}\`.${
-      IS_BRANCH
-        ? `
-A repo MID-MERGE (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA) is in that state by design:
-a later stage commits the merge. Never \`merge --abort\`, \`merge --continue\` or check out in it. If it is on \`${branch}\` it
-is fine; if it is not, STOP and report ok:false naming it.`
-        : ''
-    }
-Report ok:true only when every repo you checked prints \`${branch}\`.
-Return the structured output only.`,
-    light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: incrementSchema })
+    IS_BRANCH
+      ? `
+A repo whose \`merging\` is true is in that state by design: a later stage commits the merge. Never \`merge --abort\`,
+\`merge --continue\` or check out in it. If \`onBranch\` is true it is fine; if not, STOP and report ok:false naming it.`
+      : ''
+  }
+If you moved any repo, run the same tim command again and read the file again.
+Report ok:true only when every repo you checked has \`onBranch\` true in the last file you read, and put that file's
+contents, word for word, in \`repoState\`.
+Return the structured output only.`
+}
+
+const repoStatesIn = (text) => {
+  const line = lastJsonLine(text)
+  try {
+    const repos = line ? JSON.parse(line)?.result?.repos : null
+    return Array.isArray(repos) ? repos : null
+  } catch {
+    return null
+  }
+}
+
+const strayRepos = (states, branchedRepos) =>
+  states.filter(
+    (state) => (branchedRepos === null || branchedRepos.includes(state.key) || state.dirty === true) && state.onBranch !== true
+  )
+
+const describeStray = (state) => `${state.key} is on ${state.branch ?? 'no branch'}`
+
+const guardVerdict = (guard, branchedRepos) => {
+  const states = repoStatesIn(guard?.repoState)
+  if (!guard || states === null) return guard
+  const stray = strayRepos(states, branchedRepos)
+  if (stray.length === 0) return { ...guard, ok: true }
+  return { ...guard, ok: false, summary: `${stray.map(describeStray).join('; ')}, by tim workspace repo-state. ${guard.summary}` }
+}
+
+const branchGuard = async (id, stageName, phaseName, branch, branchedRepos) =>
+  guardVerdict(
+    await agent(
+      branchGuardPrompt(id, stageName, branch, branchedRepos),
+      light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: BRANCH_GUARD_SCHEMA })
+    ),
+    branchedRepos
   )
 
 const incrementSchema = {
@@ -3609,15 +3668,15 @@ ${REPO_RULE}
 ${PUSH_RULE}
 ${SET_ROW_RULE}${mergeNoteOf(started)}
 TASK:
-1. ${changedReposRule()} Also act on every repo MID-MERGE (${MERGE_HEAD_CHECK} prints a SHA), even one whose status
-   looks empty. The increment's title, for the commit subject:
+1. ${changedReposRule(id, 'land', BASE_BRANCH)} Also act on every repo whose \`merging\` is true, even where \`dirty\` is
+   false. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
-   stop: landed:false naming the repo, and change nothing in it.
-3. In a repo MID-MERGE, ${UNRESOLVED_CHECK} must print nothing. Otherwise landed:false naming the paths: a merge is
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, stop:
+   landed:false naming the repo and its \`branch\`, and change nothing in it.
+3. In a repo whose \`merging\` is true, \`unresolved\` must be empty. Otherwise landed:false naming the paths: a merge is
    never committed with a path unresolved.
-4. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced that
-   is still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+4. What is staged and untracked is that repo's \`changed\` list. Stage anything the increment produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 5. Commit, one commit per repo, each with the same message: \`<type>(${SCOPE}): <increment title>\`, where the type is
    \`feat\` or \`fix\` when the behaviour changes below are not empty, otherwise the type the increment's \`kind\`
    implies; and a body saying what changed and naming the increment id (this run has no ticket). No trailer.
@@ -4081,11 +4140,11 @@ ${guardrails()}
 ${REPO_RULE}
 ${PUSH_RULE}
 TASK:
-1. ${changedReposRule()}
-2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
-   stop: landed:false naming the repo, and change nothing in it.
-3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the fixes produced that is
-   still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+1. ${changedReposRule(id, 'theme-land', BASE_BRANCH)}
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, stop:
+   landed:false naming the repo and its \`branch\`, and change nothing in it.
+3. What is staged and untracked is that repo's \`changed\` list. Stage anything the fixes produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit, one commit per repo, each with the same subject: \`refactor(${SCOPE}): apply the engineering review of the ${theme} theme\`,
    and a body listing the fixes below that touched that repo and naming the theme's last row, ${id}. No trailer.
    THE FIXES:
@@ -5189,16 +5248,14 @@ ${guardrails()}
 ${REPO_RULE}
 ${SET_ROW_RULE}
 TASK:
-1. ${changedReposRule()} A repo with changes that is not on \`${workBranch}\` is a
-   stop: report landed:false naming it, and change nothing in it. The increment's title, for the commit subject:
+1. ${changedReposRule(id, 'land', workBranch)} The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
-   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
-   \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
-   a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
-   no CI and no review behind it. That has happened here once already.
-3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
-   that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, STOP and report
+   landed:false naming the repo and its \`branch\`, and change nothing in it. Do not commit and do not "fix it up
+   after": a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no
+   PR, no CI and no review behind it. That has happened here once already.
+3. What is staged and untracked is that repo's \`changed\` list. Stage anything the increment produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
    behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
    changed and naming the increment id and its ticket \`${ticket?.key}\`. No trailer.

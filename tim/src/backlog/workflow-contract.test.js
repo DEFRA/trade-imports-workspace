@@ -3725,6 +3725,94 @@ describe('increment-build-loop', () => {
         expect(labels(run)).not.toContain('inc-900 land')
       })
 
+      describe('reading repo state from tim', () => {
+        const repoState = (...repos) =>
+          `${JSON.stringify({ ok: true, result: { repos } })}\n`
+        const onBranch = (key) => ({
+          key,
+          branch: WORK_BRANCH,
+          onBranch: true,
+          dirty: true
+        })
+
+        test('has the branch guard read every repo’s state from tim workspace repo-state, not git status', async () => {
+          const run = await runToFailedLand()
+          const guardPrompt = run.agents.find(
+            (entry) => entry.options.label === 'inc-900 branch-guard:land'
+          ).prompt
+
+          expect({
+            command: guardPrompt.includes(
+              `tim workspace repo-state --repos frontend:repos/trade-imports-animals-frontend,backend:repos/trade-imports-animals-backend,tests:repos/trade-imports-ins-tests --branch ${WORK_BRANCH} --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-branch-guard-land-repo-state.json`
+            ),
+            gitStatus: guardPrompt.includes('status --short'),
+            revParse: guardPrompt.includes('rev-parse --abbrev-ref HEAD')
+          }).toEqual({ command: true, gitStatus: false, revParse: false })
+        })
+
+        test('has the land stage decide which repos changed and their branch from tim workspace repo-state', async () => {
+          const run = await runToFailedLand()
+          const landPrompt = run.agents.find(
+            (entry) => entry.options.label === 'inc-900 land'
+          ).prompt
+
+          expect({
+            command: landPrompt.includes(
+              `--branch ${WORK_BRANCH} --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-land-repo-state.json`
+            ),
+            actsOnDirty: landPrompt.includes(
+              'Act on each repo whose `dirty` is true.'
+            ),
+            gitStatus: landPrompt.includes('<repoPath> status --short')
+          }).toEqual({ command: true, actsOnDirty: true, gitStatus: false })
+        })
+
+        test('stops off-branch when tim shows a repo off the branch, whatever the guard concluded', async () => {
+          const run = await runToLand(
+            {
+              ok: true,
+              summary: 'every repo on the branch',
+              repoState: repoState(onBranch('frontend'), onBranch('backend'), {
+                key: 'tests',
+                branch: 'main',
+                onBranch: false,
+                dirty: false
+              })
+            },
+            PRESERVED
+          )
+
+          expect({
+            outcome: run.result.increments[0].outcome,
+            detail: run.result.increments[0].detail,
+            landRan: labels(run).includes('inc-900 land')
+          }).toEqual({
+            outcome: 'off-branch',
+            detail:
+              'tests is on main, by tim workspace repo-state. every repo on the branch',
+            landRan: false
+          })
+        })
+
+        test('lands when tim shows every repo on the branch, though the guard misread it', async () => {
+          const run = await runToLand(
+            {
+              ok: false,
+              summary: 'backend looks off the branch',
+              repoState: repoState(
+                onBranch('frontend'),
+                onBranch('backend'),
+                onBranch('tests'),
+                { key: 'perf', branch: 'main', onBranch: false, dirty: false }
+              )
+            },
+            { landed: false, summary: 'stopped after the guard' }
+          )
+
+          expect(labels(run)).toContain('inc-900 land')
+        })
+      })
+
       describe('deriving its own next increment', () => {
         const LANDED = [
           BASELINE_ANSWER,
@@ -6290,21 +6378,20 @@ describe('increment-build-loop', () => {
           .split('\n')
           .find((line) => line.startsWith('- The repos outside the increment:'))
 
-        expect(outsideLine).not.toContain(NINE_REPOS.perftests.path)
-        for (const key of OTHER_REPOS) {
-          expect(outsideLine).toContain(NINE_REPOS[key].path)
-        }
+        expect(outsideLine).toBe(
+          `- The repos outside the increment: ${OTHER_REPOS.join(', ')}. One of them is a repo to check only when its \`dirty\` is`
+        )
       })
 
       test('tells the branch guard to leave a clean repo outside the increment on any branch before any branch check', async () => {
         const prompt = promptOf(await runOneRepo(), 'inc-014 branch-guard:land')
 
         expect(prompt).toContain(
-          'a clean repo outside the increment is fine on ANY branch. Do not\n    check its branch'
+          'A clean repo outside the increment is fine on ANY branch. Do not check its branch'
         )
-        expect(
-          prompt.indexOf('FIRST, WORK OUT THE REPOS TO CHECK')
-        ).toBeLessThan(prompt.indexOf('For EACH repo to check:'))
+        expect(prompt.indexOf('WORK OUT THE REPOS TO CHECK')).toBeLessThan(
+          prompt.indexOf('For EACH repo to check:')
+        )
       })
 
       test('still sweeps all nine repos for a PR left open at merge', async () => {

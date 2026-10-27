@@ -6226,6 +6226,29 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('lists only the repos outside the increment for the branch guard’s clean check', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 branch-guard:land')
+        const outsideLine = prompt
+          .split('\n')
+          .find((line) => line.startsWith('- The repos outside the increment:'))
+
+        expect(outsideLine).not.toContain(NINE_REPOS.perftests.path)
+        for (const key of OTHER_REPOS) {
+          expect(outsideLine).toContain(NINE_REPOS[key].path)
+        }
+      })
+
+      test('tells the branch guard to leave a clean repo outside the increment on any branch before any branch check', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 branch-guard:land')
+
+        expect(prompt).toContain(
+          'a clean repo outside the increment is fine on ANY branch. Do not\n    check its branch'
+        )
+        expect(
+          prompt.indexOf('FIRST, WORK OUT THE REPOS TO CHECK')
+        ).toBeLessThan(prompt.indexOf('For EACH repo to check:'))
+      })
+
       test('still sweeps all nine repos for a PR left open at merge', async () => {
         const prompt = promptOf(await runOneRepo(), 'inc-014 merge')
 

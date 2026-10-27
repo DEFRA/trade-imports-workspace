@@ -1405,20 +1405,34 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
   }
 }
 
-const branchGuard = (id, stageName, phaseName, branch, branchedRepos) => {
-  const otherRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
-  const reposToCheck = branchedRepos
-    ? `the increment's repos — ${branchedRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')} — and any other
-configured repo whose \`git -C ${TILDE}/<repoPath> status --short\` is not empty (${otherRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')})`
-    : `every configured repo — ${REPO_KEYS.map((key) => `\`${repoTilde(key)}\``).join(', ')}`
+const repoTildeList = (keys) => keys.map((key) => `\`${repoTilde(key)}\``).join(', ')
 
-  return agent(
+const outsideRepoRule = (branchedRepos) => {
+  const outsideRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY && !branchedRepos.includes(key))
+  if (outsideRepos.length === 0) return ''
+  return `
+- The repos outside the increment: ${repoTildeList(outsideRepos)}. For each, run only
+  \`git -C ${TILDE}/<repoPath> status --short\`.
+  - It prints nothing → the repo is clean, and a clean repo outside the increment is fine on ANY branch. Do not
+    check its branch, do not compare its commits, and leave it out of your summary and your ok decision.
+  - It prints anything → it is a repo to check.`
+}
+
+const reposToCheckRule = (branchedRepos) =>
+  branchedRepos
+    ? `FIRST, WORK OUT THE REPOS TO CHECK, before you look at any branch:
+- The increment's repos: ${repoTildeList(branchedRepos)}. Every one is a repo to check.${outsideRepoRule(branchedRepos)}
+THEN check the branch of each repo to check, and of no other repo.`
+    : `CHECK every configured repo — ${repoTildeList(REPO_KEYS)}.`
+
+const branchGuard = (id, stageName, phaseName, branch, branchedRepos) =>
+  agent(
     `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
 in must be on \`${branch}\`. A stage that switched a repo to another branch, or cut a new one, leaves the work where
 the land stage refuses it. You check, move a repo back where that is safe, and change nothing else.
 ${guardrails()}
-CHECK ${reposToCheck}.
-For EACH of them:
+${reposToCheckRule(branchedRepos)}
+For EACH repo to check:
 1. ${HEAD_BRANCH_CHECK} Prints \`${branch}\` → that repo is fine; go to the next.
 2. Anything else → compare the commits: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\` and
    \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${branch}\`.
@@ -1439,7 +1453,6 @@ Report ok:true only when every repo you checked prints \`${branch}\`.
 Return the structured output only.`,
     light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: incrementSchema })
   )
-}
 
 const incrementSchema = {
   type: 'object',

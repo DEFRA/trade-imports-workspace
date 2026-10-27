@@ -23,15 +23,35 @@ The system MUST tell the user, before they add anything, which file types are ac
 - **WHEN** the page shows the saved document
 - **THEN** the page still states the maximum number of files, as it did before anything was added
 
-### Requirement: The page offers a route back to Overview
+### Requirement: The page's back link follows where the user came from
 **ID**: REQ-DOCS-002
-The system MUST offer a back link from the upload documents page that returns the user to Overview.
+The system MUST open the review page from the upload documents page's back link when the page was opened by changing an answer from the review, or whenever the notification is being amended however the page was opened, and MUST open Overview otherwise.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview for a draft opened from Overview
 **ID**: SCN-DOCS-002-A
-- **GIVEN** the user is on the upload documents page
+- **GIVEN** the user opens the upload documents page from Overview, on a draft that is not being amended
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when changing an answer from the review
+**ID**: SCN-DOCS-002-B
+- **GIVEN** the user opens the upload documents page by changing the uploaded documents from the review
+- **WHEN** they follow the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link opens the review while the notification is being amended, however the page was opened
+**ID**: SCN-DOCS-002-C
+- **GIVEN** the notification is being amended
+- **WHEN** the user opens the upload documents page from Overview and follows the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link still opens the review after the page refuses a part-filled document
+**ID**: SCN-DOCS-002-D
+- **GIVEN** the user opened the upload documents page by changing an answer from the review
+- **WHEN** they try to add a document with only the reference filled in, and it is refused
+- **THEN** the back link still opens the review
+- **WHEN** they follow it
+- **THEN** the review is shown
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003

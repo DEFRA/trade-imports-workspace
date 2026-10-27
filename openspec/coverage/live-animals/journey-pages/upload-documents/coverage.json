@@ -29,15 +29,44 @@
     },
     {
       "id": "REQ-DOCS-002",
-      "name": "The page offers a route back to Overview",
+      "name": "The page's back link follows where the user came from",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-002-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview for a draft opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview on a draft", "strength": "full", "notes": "red probe: make the review branch unconditional on returnsToReview alone — the test fails because the overview is no longer what the handler renders" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-B",
+          "name": "The back link opens the review when changing an answer from the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link opens the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: same change-context inversion — the rendered back link stops opening the review" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after the page refuses a part-filled document", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-C",
+          "name": "The back link opens the review while the notification is being amended, however the page was opened",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review while the notification is being amended, with nothing in the address saying where the trader came from", "strength": "full", "notes": "red probe: drop the amend half of the review condition in shared/kit.js — the test fails" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Upload documents opened from Overview while amending has a Back link to the review, however the page was opened", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-D",
+          "name": "The back link still opens the review after the page refuses a part-filled document",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should keep the review back link after the page refuses a part-filled document returned from the upload service", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after the page refuses a part-filled document", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
           ]
         }
       ]

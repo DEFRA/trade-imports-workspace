@@ -195,6 +195,8 @@ const LEASE_RELEASED = { ok: true, summary: 'released' }
 const ACQUIRE_LABEL = 'run lease:acquire'
 const RELEASE_LABEL = 'run lease:release'
 const isRunLease = (label) => /^run lease:/.test(label ?? '')
+const isSpecDiffStage = (label) =>
+  / spec diff (draft|check|post)$/.test(label ?? '')
 
 const NO_THEME = {
   exitCode: 0,
@@ -251,6 +253,7 @@ const answeringRunLease = (
   let next = 0
   return (prompt, options) => {
     if (isOwnStage(options.label)) return answerOwnStage(options.label)
+    if (isSpecDiffStage(options.label)) return null
     const answer = next < answers.length ? answers[next] : null
     next += 1
     return answer
@@ -3974,9 +3977,9 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(17)
+          expect(run.result.increments.length).toBe(16)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('17 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('16 increment(s) landed')
         })
 
         test('budgets four more agents for each CI fix attempt beyond three', async () => {
@@ -3996,9 +3999,9 @@ describe('increment-build-loop', () => {
             ]
           })
 
-          expect(run.result.increments.length).toBe(14)
+          expect(run.result.increments.length).toBe(13)
           expect(run.result.stopped.detail).toContain(
-            'at up to 68 agents per increment on claude'
+            'at up to 72 agents per increment on claude'
           )
         })
 
@@ -5152,6 +5155,15 @@ describe('increment-build-loop', () => {
         })
       })
 
+      test('posts no spec diff comment, since this lifecycle has no Jira', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect({
+          outcome: run.result.increments[0].outcome,
+          specDiff: labelsOf(run).filter((label) => label.includes('spec diff'))
+        }).toEqual({ outcome: 'landed', specDiff: [] })
+      })
+
       test('finds the open PR and never raises, edits or merges one', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const prompt = promptOf(run, 'inc-900 pr')
@@ -5560,7 +5572,7 @@ describe('increment-build-loop', () => {
             }
           })
 
-          expect(run.result.increments.length).toBe(17)
+          expect(run.result.increments.length).toBe(16)
           expect(run.result.stopped.detail).toContain(
             "keeping 17 for a theme's engineering review"
           )
@@ -6128,6 +6140,7 @@ describe('increment-build-loop', () => {
           'inc-014 ci watch',
           'inc-014 merge',
           'inc-014 done',
+          'inc-014 spec diff draft',
           'inc-014 gate check',
           'inc-014 theme'
         ])
@@ -6650,6 +6663,132 @@ describe('increment-build-loop', () => {
         })
       )
 
+    describe('the spec diff comment on the ticket once a row lands', () => {
+      const TICKETS = '~/ws/workareas/shared/args-fixture/tickets'
+      const DRAFTED = {
+        ok: true,
+        file: '~/ws/workareas/shared/args-fixture/tickets/inc-020-spec-diff.txt',
+        added: 1,
+        changed: 0,
+        removed: 0,
+        summary: 'written'
+      }
+      const CHECKED = { ok: true, fixed: [], summary: 'right' }
+      const POSTED = { posted: true, detail: 'comment 10001' }
+      const commenting = (overrides = {}) =>
+        runFactory(
+          {},
+          {
+            'inc-020 spec diff draft': DRAFTED,
+            'inc-020 spec diff check': CHECKED,
+            'inc-020 spec diff post': POSTED,
+            ...overrides
+          }
+        )
+      const specDiffLabels = (run) =>
+        labelsOf(run).filter((label) => / done$| spec diff /.test(label))
+
+      test('drafts, checks and posts the comment after the ticket closes', async () => {
+        const run = await commenting()
+
+        expect({
+          labels: specDiffLabels(run),
+          comment: run.result.increments[0].specDiffComment
+        }).toEqual({
+          labels: [
+            'inc-020 done',
+            'inc-020 spec diff draft',
+            'inc-020 spec diff check',
+            'inc-020 spec diff post'
+          ],
+          comment: {
+            posted: true,
+            file: `${TICKETS}/inc-020-spec-diff.txt`,
+            added: 1,
+            changed: 0,
+            removed: 0,
+            detail: 'comment 10001'
+          }
+        })
+      })
+
+      test('gives the writer the workspace merge commit and every merged PR, and the file to write', async () => {
+        const prompt = promptOf(await commenting(), 'inc-020 spec diff draft')
+
+        expect({
+          mergeCommit: prompt.includes(
+            'THE WORKSPACE MERGE COMMIT on `main`: `workspace-sha`.'
+          ),
+          prs: prompt.includes(
+            `workspace: ${WORKSPACE_PR.url}\nperftests: ${PERFTESTS_PR.url}`
+          ),
+          diff: prompt.includes(
+            'tim spec diff --commit <that sha> --workspace ~/ws --json'
+          ),
+          file: prompt.includes(
+            `Write the comment with the Write tool to ${TICKETS}/inc-020-spec-diff.txt`
+          ),
+          noIds: prompt.includes('No\nbacklog, requirement or ruling ids')
+        }).toEqual({
+          mergeCommit: true,
+          prs: true,
+          diff: true,
+          file: true,
+          noIds: true
+        })
+      })
+
+      test('posts with a dry run first, then --confirm', async () => {
+        const prompt = promptOf(await commenting(), 'inc-020 spec diff post')
+        const file = `${TICKETS}/inc-020-spec-diff.txt`
+        const dryRun = `tim jira comment EUDPA-920 --file ${file} --workspace ~/ws --json`
+        const confirmed = `tim jira comment EUDPA-920 --file ${file} --confirm --workspace ~/ws --json`
+
+        expect(prompt.indexOf(dryRun)).toBeLessThan(prompt.indexOf(confirmed))
+      })
+
+      test('records a failed post in the result and carries on', async () => {
+        const run = await commenting({
+          'inc-020 spec diff post': {
+            posted: false,
+            detail: 'Jira refused the comment'
+          }
+        })
+
+        expect({
+          outcome: run.result.increments[0].outcome,
+          comment: run.result.increments[0].specDiffComment,
+          stopped: run.result.stopped.reason
+        }).toMatchObject({
+          outcome: 'landed',
+          comment: { posted: false, detail: 'Jira refused the comment' },
+          stopped: 'count-reached'
+        })
+      })
+
+      test('posts nothing when the check does not pass', async () => {
+        const run = await commenting({
+          'inc-020 spec diff check': {
+            ok: false,
+            fixed: [],
+            summary: 'a scenario is missing'
+          }
+        })
+
+        expect({
+          posted: labelsOf(run).includes('inc-020 spec diff post'),
+          comment: run.result.increments[0].specDiffComment
+        }).toEqual({
+          posted: false,
+          comment: {
+            posted: false,
+            file: `${TICKETS}/inc-020-spec-diff.txt`,
+            detail: 'not posted, the check did not pass: a scenario is missing'
+          }
+        })
+      })
+    })
+
     describe('a pull request that conflicts with its base', () => {
       const CONFLICT = {
         green: false,
@@ -6893,6 +7032,7 @@ describe('increment-build-loop', () => {
           'inc-020 merge',
           'inc-020 done',
           'inc-020 workspace to base',
+          'inc-020 spec diff draft',
           'inc-020 gate check',
           'inc-020 theme'
         ])

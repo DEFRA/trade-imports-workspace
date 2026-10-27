@@ -228,11 +228,11 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 56 agents on Claude and 64 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
+   increment is up to 60 agents on Claude and 68 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
    beyond three, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 17
-   increments on Claude and 15 on Codex. Under the branch lifecycle the run also
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 16
+   increments on Claude and 14 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -490,7 +490,13 @@ changes nothing the spec records reports `Spec sync: none — <reason>`, which t
 reviewer checks. A row owns every capability it writes, whole: a validate or lint failure
 already there before the row is the row's to fix, not to report as pre-existing. Once a theme's last row lands, the run lints the spec and lists unproven
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
-its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
+its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
+did not stop it.
+
+**The spec diff comment.** Under the full lifecycle, each landed row's ticket gets a Jira
+comment saying what the spec now says because of it, written to
+`<workarea>/tickets/<id>-spec-diff.txt`. Each landed entry carries `specDiffComment`. Report
+any with `posted: false` and its `detail`: post that file by hand with `tim jira comment`. A `theme-unread` entry stops the run too: read the theme
 by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
 [`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
 

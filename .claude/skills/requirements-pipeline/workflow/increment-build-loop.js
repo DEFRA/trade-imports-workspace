@@ -106,7 +106,7 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 const AGENT_CAP = 1000
 const BUDGETED_CI_FIX_ATTEMPTS = 3
-const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 56, codex: 64 }
+const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 60, codex: 68 }
 const AGENTS_PER_CI_FIX_ATTEMPT = 4
 const STARTUP_AGENTS = 4
 const agentsPerIncrement = () =>
@@ -3905,6 +3905,135 @@ Return the structured output only.`,
   return { ok: false, detail }
 }
 
+const WORKSPACE_GITHUB = GH_REPO[WORKSPACE_KEY] ?? 'DEFRA/trade-imports-workspace'
+const specDiffFile = (id) => `${WORKAREA_TILDE}/tickets/${id}-spec-diff.txt`
+const specDiffLog = (id) => `${WORKAREA_TILDE}/logs/${id}-spec-diff.json`
+
+const specDiffCommand = (id, sha) => `tim spec diff --commit ${sha} --workspace ${TILDE} --json > ${specDiffLog(id)} 2>&1`
+
+const workspaceMergeLine = (id, sha) =>
+  sha
+    ? `THE WORKSPACE MERGE COMMIT on \`${BASE_BRANCH}\`: \`${sha}\`.`
+    : `THE WORKSPACE MERGE COMMIT is not known to this run. Read the row's PRs with
+\`jq -c '.increments[] | select(.id=="${id}") | .prs' ${BACKLOG_TILDE}\` and take the \`sha\` of the merged PR in
+${WORKSPACE_GITHUB}. None there means the row changed nothing in the workspace repo, so nothing in the spec.`
+
+const SPEC_DIFF_DRAFT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'file', 'added', 'changed', 'removed', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    file: { type: 'string' },
+    added: { type: 'number' },
+    changed: { type: 'number' },
+    removed: { type: 'number' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_CHECK_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'fixed', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'The comment file is now right' },
+    fixed: { type: 'array', items: { type: 'string' } },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_POST_SCHEMA = {
+  type: 'object',
+  required: ['posted', 'detail'],
+  properties: {
+    posted: { type: 'boolean', description: 'true when posted, or when the ticket already had the same comment' },
+    detail: { type: 'string', description: "The comment id, or tim's message word for word" }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_RULES = `Jira wiki markup, never Markdown. Every paragraph is one unwrapped line. No {expand}. Plain English. No
+backlog, requirement or ruling ids (inc-, c-, req-) anywhere.`
+
+const specDiffDraftPrompt = (id, ticketKey, sha, prs) => `You are the SPEC DIFF WRITER for increment ${id}. Its work is merged to \`${BASE_BRANCH}\`. Write a Jira comment for
+${ticketKey} saying what the Behaviour Spec (\`openspec/\` in the workspace repo) now says because of it. You write one file
+and change nothing else.
+${BASE_GUARDRAILS}
+The row's title: \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
+THE MERGED PULL REQUESTS:
+${prs}
+${workspaceMergeLine(id, sha)}
+TASK:
+1. \`git -C ${TILDE} fetch origin ${BASE_BRANCH}\`, then \`${specDiffCommand(id, '<that sha>')}\`. Read that file once.
+   \`result.commits[0].scenarios\` lists every scenario the merge added, changed, removed or only re-proved
+   (\`coverage\`), with its coverage after the merge.
+2. Read each added or changed scenario IN FULL from \`origin/${BASE_BRANCH}\`:
+   \`git -C ${TILDE} show origin/${BASE_BRANCH}:openspec/specs/<capability>/spec.md\`. For a changed one, read
+   \`git -C ${TILDE} show <that sha> -- openspec/specs/<capability>/spec.md\` and say in one plain sentence what changed.
+3. Write the comment with the Write tool to ${specDiffFile(id)}:
+   - First line: \`h3. What the specification now says\`
+   - One or two plain sentences: what changed for users, and that this comment is generated from the merged spec.
+   - Per capability: \`h4. [<area or page name>|https://github.com/${WORKSPACE_GITHUB}/blob/${BASE_BRANCH}/openspec/specs/<capability>/spec.md]\`,
+     then \`h5. Added: <scenario name>\` (or Changed, or Removed), then its GIVEN, WHEN, THEN and AND steps as
+     \`* *GIVEN* …\` bullets, copied word for word. A removed scenario gets its name only.
+   - One line on coverage: how many of the added and changed scenarios a test fully proves, partly proves, and does not
+     prove yet, from their coverage, and how many scenarios the merge only newly proved.
+   - Last, every merged PR above as \`[<repo> #<number>|<url>]\`.
+   - No merge commit, or no scenario in the diff: a short comment saying the row changed code or tests only, with no
+     change to the specified behaviour, then the PRs.
+   ${SPEC_DIFF_RULES}
+Return ok, the file, and how many scenarios you wrote up as added, changed and removed.
+Return the structured output only.`
+
+const specDiffCheckPrompt = (id, ticketKey, sha, prs) => `You are the SPEC DIFF CHECKER for increment ${id}. Check the Jira comment at ${specDiffFile(id)}, written for
+${ticketKey}, against what merged to \`${BASE_BRANCH}\`. You may edit only that file.
+${BASE_GUARDRAILS}
+THE MERGED PULL REQUESTS:
+${prs}
+${workspaceMergeLine(id, sha)}
+Run \`${specDiffCommand(id, '<that sha>')}\` yourself and read it once. Then check:
+- every scenario it lists as added, changed or removed is in the comment, and nothing is there that it does not list;
+- each scenario's steps match \`git -C ${TILDE} show origin/${BASE_BRANCH}:openspec/specs/<capability>/spec.md\` word for word;
+- the coverage line matches the coverage it lists, and every merged PR is linked;
+- each link names a path that exists on \`origin/${BASE_BRANCH}\`;
+- ${SPEC_DIFF_RULES}
+Fix anything wrong in the file. Return ok (true when the file is now right), and what you fixed.
+Return the structured output only.`
+
+const specDiffPostPrompt = (id, ticketKey) => `You are the SPEC DIFF POSTER for increment ${id}. Post the checked comment at ${specDiffFile(id)} to ${ticketKey}.
+${BASE_GUARDRAILS}
+1. Dry run: \`tim jira comment ${ticketKey} --file ${specDiffFile(id)} --workspace ${TILDE} --json\`. Check it targets
+   ${ticketKey} with the file's text.
+2. Then: \`tim jira comment ${ticketKey} --file ${specDiffFile(id)} --confirm --workspace ${TILDE} --json\`.
+A ticket that already has the same comment is left alone, and that counts as posted. Return posted, and the comment id or
+tim's message word for word.
+Return the structured output only.`
+
+const postSpecDiffComment = async (id, ticketKey, mergedCommits, prs) => {
+  const sha = mergedCommits.find((entry) => entry.repo === WORKSPACE_KEY)?.sha ?? null
+  const prLines = prs.map((p) => `${p.repo}: ${p.url}`).join('\n')
+  const draft = await agent(
+    specDiffDraftPrompt(id, ticketKey, sha, prLines),
+    code({ label: `${id} spec diff draft`, phase: 'Done', schema: SPEC_DIFF_DRAFT_SCHEMA })
+  )
+  if (!draft?.ok) return { posted: false, file: specDiffFile(id), detail: `not written: ${draft?.summary ?? 'the writer died'}` }
+  const check = await agent(
+    specDiffCheckPrompt(id, ticketKey, sha, prLines),
+    code({ label: `${id} spec diff check`, phase: 'Done', schema: SPEC_DIFF_CHECK_SCHEMA })
+  )
+  if (!check?.ok) return { posted: false, file: specDiffFile(id), detail: `not posted, the check did not pass: ${check?.summary ?? 'the checker died'}` }
+  const post = await agent(specDiffPostPrompt(id, ticketKey), light({ label: `${id} spec diff post`, phase: 'Done', schema: SPEC_DIFF_POST_SCHEMA }))
+  return {
+    posted: post?.posted === true,
+    file: specDiffFile(id),
+    added: draft.added,
+    changed: draft.changed,
+    removed: draft.removed,
+    detail: post?.detail ?? 'the poster died'
+  }
+}
+
 const themeFilter = (id, builtIds) =>
   `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
 
@@ -5417,6 +5546,7 @@ Return the structured output only.`,
 
   let prs = []
   let mainRunsGreenByJobs = []
+  let mergedCommits = []
 
   finish: {
     if (IS_BRANCH) {
@@ -5905,6 +6035,7 @@ Return the structured output only.`,
     for (const { repo, sha, why } of merge.untriggered ?? []) {
       log(`${id}: ${repo} merge ${sha} started no workflow on ${BASE_BRANCH}, so there was no run to watch — ${why}`)
     }
+    mergedCommits = merge.merged ?? []
     mainRunsGreenByJobs = merge.jobsGreen ?? []
     for (const { repo, runId, workflow } of mainRunsGreenByJobs) {
       log(`${id}: ${repo} ${workflow} run ${runId} on ${BASE_BRANCH} still showed in progress, but every job in it had passed, so it counts as green`)
@@ -5946,6 +6077,13 @@ Return the structured output only.`,
     break
   }
 
+  const specDiffComment = await postSpecDiffComment(id, ticket.key, mergedCommits, prs)
+  log(
+    specDiffComment.posted
+      ? `${id}: spec diff comment posted on ${ticket.key} — ${specDiffComment.file}`
+      : `${id}: SPEC DIFF COMMENT NOT POSTED on ${ticket.key} — ${specDiffComment.detail}. The row stands`
+  )
+
   built += 1
 
   results.push({
@@ -5956,6 +6094,7 @@ Return the structured output only.`,
     commit: land?.commit,
     prs: prs.map((p) => p.url),
     ...(mainRunsGreenByJobs.length > 0 ? { mainRunsGreenByJobs } : {}),
+    specDiffComment,
     findings,
     judgement: judgementCalls,
     followUps: plan?.followUps

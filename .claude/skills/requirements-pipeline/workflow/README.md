@@ -305,8 +305,10 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
   gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
 - at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
-  `tim spec gaps --none` is red under a prefix the theme touched. The row has landed; the
-  detail names the findings and the `catch-up and cover <set>` to run;
+  `tim spec gaps --none` is red under a prefix the theme touched. Only scenarios the theme's
+  own row commits added, changed or re-proved count as gaps; older ones are listed as
+  `preexisting`. The row has landed; the detail names the findings and the
+  `catch-up and cover <set>` to run;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
   is no longer the run's and the run cannot take its lease back (see [The workspace stack lease](#the-workspace-stack-lease)). A
@@ -617,9 +619,12 @@ and the repos of the rest. A line it cannot read is read once more; unread twice
 with `theme unread`, since it cannot tell whether that was the theme's last row. When none is `todo`, a second light
 agent runs, for every prefix the theme touched, `tim spec lint --capability <prefix>` and
 `tim spec gaps --none --capability <prefix>`, each to a log under `logs/spec-check-<theme>-<prefix>-*.json`. The
-script reads the counts. A lint finding, a scenario no test proves, or a prefix a row reported writing that does not
-exist stops the run at `spec-check-red`, naming the `catch-up and cover <set>` to run. Partly proven scenarios are
-recorded, not red: there are pre-existing ones. Every check lands in the result's `specChecks`, with `sources`
+script reads the counts. A lint finding, a scenario the theme is responsible for that no test proves, or a prefix a
+row reported writing that does not exist stops the run at `spec-check-red`, naming the `catch-up and cover <set>` to
+run. A third light agent runs `tim spec diff` over every theme row's `commit` shas, and only the scenarios those
+commits added, changed or re-proved count as the theme's. An unproven scenario that predates the theme is listed in
+the check's `preexisting`, and logged, without stopping. A diff the run cannot read counts every unproven scenario,
+as before. Partly proven scenarios are recorded, not red: there are pre-existing ones. Every check lands in the result's `specChecks`, with `sources`
 saying where each prefix came from. A row this run built gives only the prefixes its plan named (`planned`) and its
 `Spec sync:` lines wrote (`written`). A theme row it did not build is known only by its repos, so it gives every
 prefix those repos could reach (`repo reach`): `trade-imports-animals-frontend` reaches both `live-animals` and

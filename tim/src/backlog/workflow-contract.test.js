@@ -200,7 +200,7 @@ const NO_THEME = {
   exitCode: 0,
   stdout: '{"theme":null,"rows":0,"todo":0,"built":[],"otherRepos":[]}'
 }
-const isThemeCheck = (label) => / theme$|^spec check:/.test(label ?? '')
+const isThemeCheck = (label) => / theme$|^spec (check|diff):/.test(label ?? '')
 const themeAnswer = (themeAnswers, label) => {
   if (label in themeAnswers) return themeAnswers[label]
   return / theme$/.test(label) ? NO_THEME : null
@@ -4209,25 +4209,98 @@ describe('increment-build-loop', () => {
             })
           })
 
-          test('stops with spec-check-red, naming the catch-up and cover to run, when a scenario has no test', async () => {
-            const run = await runThemed({
-              status: BUILT,
-              specCheck: {
-                ...CLEAN,
-                prefixes: [
-                  checkedPrefix('live-animals', {
-                    noneCount: 1,
-                    noneScenarios: ['SCN-ORIGIN-009-A']
-                  }),
-                  NO_GERMINAL_SPEC
-                ]
+          const SPEC_DIFF_LABEL = `spec diff:${THEME}`
+          const THEME_COMMITS = ['abc1234', 'def5678']
+          const COMMITTED = themeStatus({
+            rows: 2,
+            otherRepos: ['frontend'],
+            commits: THEME_COMMITS
+          })
+          const specDiff = (touched, skipped = []) => ({
+            exitCode: 0,
+            stdout: JSON.stringify({ ok: true, touched, skipped, errors: [] })
+          })
+          const UNPROVEN = {
+            ...CLEAN,
+            prefixes: [
+              checkedPrefix('live-animals', {
+                noneCount: 2,
+                noneScenarios: ['SCN-ORIGIN-009-A', 'SCN-OLD-001-A']
+              }),
+              NO_GERMINAL_SPEC
+            ]
+          }
+          const runWithDiff = ({ status = COMMITTED, specCheck, diff }) =>
+            runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...LANDED
+              ],
+              themes: {
+                'inc-901 theme': status,
+                [SPEC_CHECK_LABEL]: specCheck,
+                [SPEC_DIFF_LABEL]: diff
               }
+            })
+
+          test('stops with spec-check-red, naming the catch-up and cover to run, when a scenario the theme added has no test', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff(['SCN-ORIGIN-009-A', 'SCN-ORIGIN-010-A'])
             })
 
             expect(run.result.stopped).toEqual({
               reason: 'spec-check-red',
-              detail: `theme origin-pages, after inc-901: 1 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json). Every row of the theme is built, so nothing re-runs this check: run "catch-up and cover animals" (spec-catchup, then spec-cover), then launch again`
+              detail: `theme origin-pages, after inc-901: 1 scenario(s) the theme added or re-proved under live-animals/ that no test proves: SCN-ORIGIN-009-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json). Every row of the theme is built, so nothing re-runs this check: run "catch-up and cover animals" (spec-catchup, then spec-cover), then launch again`
             })
+          })
+
+          test('asks tim spec diff which scenarios every row commit of the theme touched', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff(['SCN-ORIGIN-009-A'])
+            })
+
+            expect(promptOf(run, SPEC_DIFF_LABEL)).toContain(
+              '`tim spec diff --commit abc1234 --commit def5678 --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-all-diff.json 2>&1`'
+            )
+          })
+
+          test('lists unproven scenarios that predate the theme without stopping', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff(['SCN-ORIGIN-010-A'], [{ commit: 'def5678' }])
+            })
+
+            expect({
+              stopped: run.result.stopped.reason,
+              check: run.result.specChecks[0]
+            }).toMatchObject({
+              stopped: 'count-reached',
+              check: {
+                outcome: 'spec-checked',
+                problems: [],
+                preexisting: [
+                  {
+                    prefix: 'live-animals',
+                    scenarios: ['SCN-ORIGIN-009-A', 'SCN-OLD-001-A']
+                  }
+                ],
+                commitsNotFound: ['def5678']
+              }
+            })
+          })
+
+          test('counts every unproven scenario when it cannot read which ones the theme touched', async () => {
+            const run = await runWithDiff({ specCheck: UNPROVEN, diff: null })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              "the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts",
+              '2 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A, SCN-OLD-001-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json)'
+            ])
           })
 
           test('stops with spec-check-red when lint finds anything', async () => {

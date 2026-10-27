@@ -3906,7 +3906,7 @@ Return the structured output only.`,
 }
 
 const themeFilter = (id, builtIds) =>
-  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
 
 const readTheme = (id, builtIds) =>
   agent(
@@ -3998,23 +3998,70 @@ const lintProblem = (entry) =>
     ? []
     : [`tim spec lint found ${entry.lintFindings ?? 'an unreported number of'} finding(s) under ${entry.prefix}/ (${entry.lintLog ?? 'no log named'})`]
 
-const gapsProblem = (entry) => {
+const unprovenIdsOf = (entry) => entry.noneScenarios ?? []
+
+const isTheThemes = (owned) => (scenarioId) => owned === null || owned.includes(scenarioId)
+
+const gapsProblem = (entry, owned) => {
   if (typeof entry.noneCount !== 'number') return [`no gap count came back for ${entry.prefix}/`]
   if (entry.noneCount === 0) return []
-  const ids = (entry.noneScenarios ?? []).join(', ') || 'ids not reported'
-  return [`${entry.noneCount} scenario(s) under ${entry.prefix}/ that no test proves: ${ids} (${entry.gapsLog ?? 'no log named'})`]
+  const ids = unprovenIdsOf(entry)
+  if (owned !== null && ids.length < entry.noneCount) {
+    return [`${entry.noneCount} scenario(s) under ${entry.prefix}/ that no test proves, ids not reported, so the run cannot tell which are the theme's (${entry.gapsLog ?? 'no log named'})`]
+  }
+  const theThemes = owned === null ? ids : ids.filter(isTheThemes(owned))
+  if (owned !== null && theThemes.length === 0) return []
+  const count = owned === null ? entry.noneCount : theThemes.length
+  const owner = owned === null ? '' : ' the theme added or re-proved'
+  return [`${count} scenario(s)${owner} under ${entry.prefix}/ that no test proves: ${theThemes.join(', ') || 'ids not reported'} (${entry.gapsLog ?? 'no log named'})`]
 }
 
-const prefixProblems = (entry, written) =>
-  entry.present ? [...lintProblem(entry), ...gapsProblem(entry)] : missingSpecProblem(entry, written)
+const prefixProblems = (entry, written, owned) =>
+  entry.present ? [...lintProblem(entry), ...gapsProblem(entry, owned)] : missingSpecProblem(entry, written)
 
-const specCheckProblems = (answer, prefixes, written) => {
+const specCheckProblems = (answer, prefixes, written, owned) => {
   if (!answer) return ['the spec check agent died, so nothing checked the spec']
   const checked = (answer.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
   const unchecked = prefixes
     .filter((prefix) => !checked.some((entry) => entry.prefix === prefix))
     .map((prefix) => `${prefix}/ was not checked`)
-  return [...unchecked, ...checked.flatMap((entry) => prefixProblems(entry, written))]
+  return [...unchecked, ...checked.flatMap((entry) => prefixProblems(entry, written, owned))]
+}
+
+const preexistingGapsOf = (checked, owned) =>
+  owned === null
+    ? []
+    : checked
+        .map((entry) => ({ prefix: entry.prefix, scenarios: unprovenIdsOf(entry).filter((scenarioId) => !owned.includes(scenarioId)) }))
+        .filter(({ scenarios }) => scenarios.length > 0)
+
+const describePreexisting = ({ prefix, scenarios }) => `${scenarios.length} under ${prefix}/ (${scenarios.join(', ')})`
+
+const themeSpecDiffLog = (theme) => specCheckLog(theme, 'all', 'diff')
+
+const readThemeSpecDiff = (id, theme, commits) =>
+  agent(
+    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly two
+commands, one Bash call each, and report what the second printed. That is your whole job.
+${BASE_GUARDRAILS}
+1. \`tim spec diff ${commits.map((sha) => `--commit ${sha}`).join(' ')} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
+2. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, errors}' ${themeSpecDiffLog(theme)}\`
+Report the second command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
+summarise or correct it, and run nothing else. The loop reads the JSON itself.`,
+    light({ label: `spec diff:${theme}`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
+  )
+
+const themeOwnedScenarios = async (id, theme, commits) => {
+  if (commits.length === 0) return { owned: [], skipped: [] }
+  const answer = await readThemeSpecDiff(id, theme, commits)
+  const line = lastJsonLine(answer?.stdout)
+  try {
+    const parsed = line ? JSON.parse(line) : null
+    if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
+    return { owned: parsed.touched, skipped: parsed.skipped ?? [] }
+  } catch {
+    return { owned: null, skipped: [] }
+  }
 }
 
 const describeSpecPrefix = (entry) =>
@@ -4067,15 +4114,23 @@ const themeSpecCheck = async (id) => {
   }
   const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
   const answer = await checkThemeSpec(id, theme, prefixes)
-  const problems = specCheckProblems(answer, prefixes, written)
+  const { owned, skipped } = await themeOwnedScenarios(id, theme, status.commits ?? [])
+  const unknownOwnership = owned === null ? ["the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts"] : []
+  const problems = [...unknownOwnership, ...specCheckProblems(answer, prefixes, written, owned)]
   const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
+  const preexisting = preexistingGapsOf(checked, owned)
+  if (preexisting.length > 0) {
+    log(`${id}: theme ${theme} leaves unproven scenarios that predate it, not its to fix: ${preexisting.map(describePreexisting).join('; ')}`)
+  }
   const record = {
     after: id,
     theme,
     outcome: problems.length > 0 ? 'spec-check-red' : 'spec-checked',
     prefixes: checked.map(({ prefix, present, lintOk, noneCount, partialCount }) => ({ prefix, present, lintOk, noneCount, partialCount })),
     sources,
-    problems
+    problems,
+    ...(preexisting.length > 0 ? { preexisting } : {}),
+    ...(skipped.length > 0 ? { commitsNotFound: skipped.map(({ commit }) => commit) } : {})
   }
   if (problems.length === 0) {
     log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)

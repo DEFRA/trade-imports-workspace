@@ -598,6 +598,21 @@ names. It always exits 0. The build loop's merge stage uses it to tell a merge
 that starts no workflow, which has nothing to watch, from a run that has not
 started yet.
 
+### `tim spec diff` — what commits changed in the Behaviour Spec
+
+```bash
+tim spec diff --commit 575f5f3c --json
+tim spec diff --commit e310d0af --commit 72fb2eda
+```
+
+Compares each commit with its first parent under `openspec/specs` and
+`openspec/coverage`, scenario by scenario: `added`, `changed` (its name or
+steps), `removed`, or `coverage` (only its `coverage.json` entry changed). Each
+scenario carries its coverage after the commit. A commit git cannot find is
+listed under `skipped`. `result.touched` is every scenario id the commits added,
+changed or re-proved. The build loop uses it to tell a theme's own unproven
+scenarios from older ones, and to write each row's spec-diff Jira comment.
+
 ### `tim build run-jobs` — whether every job of a run has passed
 
 ```bash

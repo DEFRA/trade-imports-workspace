@@ -2487,6 +2487,13 @@ describe('increment-build-loop', () => {
           '32:15. **The transit controller\'s refusal branches log, under bounded tidy-up.** Nothing upstream logs them: not `kit.js`, the engine, nor `server.js`\'s catch-all, which logs only 500 and above. House rule, Logging and errors: "Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by." `pino-logging.md` §4a: "`info` for an expected refusal, such as a validation error". So each of the three logs once, at info, at the branch that decides.'
         const QUOTED_REPO_DOC_AND_RULE =
           '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
+        const NAMES_CARRY_WHAT_COMMENTS_SAID =
+          '108:The comments at `:35` and `:64` go. The constants below them are renamed where needed so their names carry what the comments said (decision 15).'
+        const NAMES_STATE_WHAT_DOC_COMMENT_SAID =
+          '109:- Change the constant names so they carry what the doc comment said, stating the unit.'
+        const KEPT_COMMENT = '110:- Keep the comment above `decorateCard`.'
+        const COPIED_DOC_COMMENT =
+          '111:- Copy the doc comment from `decorateRow` onto the new export.'
         const GREP_CHECK =
           '61:- `grep -rn "it(\'should show the cap" fit/` finds no test the row renames.'
         const JQ_CHECK =
@@ -2689,6 +2696,49 @@ describe('increment-build-loop', () => {
               ...PLAN_ANSWER,
               checks: [{ section: 6, command: NAMED_CHECK_COMMAND }]
             },
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+          expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('passes a plan whose names carry what a deleted comment said, and still sends back one that keeps or copies a comment', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                NAMES_CARRY_WHAT_COMMENTS_SAID,
+                NAMES_STATE_WHAT_DOC_COMMENT_SAID,
+                KEPT_COMMENT,
+                COPIED_DOC_COMMENT
+              )
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            [
+              NAMES_CARRY_WHAT_COMMENTS_SAID,
+              NAMES_STATE_WHAT_DOC_COMMENT_SAID,
+              KEPT_COMMENT,
+              COPIED_DOC_COMMENT
+            ].filter((line) =>
+              replan.includes(line.replace(/^\d+:/, '').trim())
+            )
+          ).toEqual([KEPT_COMMENT, COPIED_DOC_COMMENT])
+        })
+
+        test('passes without a replan a plan whose only comment line has names carry what the comments said', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(NAMES_CARRY_WHAT_COMMENTS_SAID)
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
             implementAnswer(['frontend:src/a.js'])
           )
 

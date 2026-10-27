@@ -2812,6 +2812,8 @@ const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test n
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
+const NOT_IN_A_RELATIVE_CLAUSE = '(?<!\\b(what|which|whatever|how|why|where|who|whose)( [^ .;:]+){0,2} )'
+
 const OPEN_QUOTE = `["“\`']`
 
 const QUOTED_TEXT = '(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])\'[A-Za-z]+ [A-Za-z][^\']*\')'
@@ -2846,14 +2848,14 @@ const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a comment or doc comment to add, keep, copy or reword',
     pattern: new RegExp(
-      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:]+){0,4} ${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
+      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:]+){0,4} ${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
       'i'
     )
   },
   {
     kind: 'dictated comment or doc comment text',
     pattern: new RegExp(
-      `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
+      `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
       'i'
     )
   },

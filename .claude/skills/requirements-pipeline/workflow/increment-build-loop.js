@@ -2401,13 +2401,36 @@ const CI_SCHEMA = {
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
-      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'base-branch-unverified', 'pr-left-open'],
+      enum: ['none', 'pr-conflict', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'base-branch-unverified', 'pr-left-open'],
       description:
         'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
     },
     summary: { type: 'string' }
   },
   additionalProperties: false
+}
+
+const PR_CONFLICT = 'pr-conflict'
+
+const PR_CONFLICT_STEP = `MERGEABILITY FIRST, for EVERY pr before you watch any. GitHub runs NO checks on a PR that conflicts with its
+base, so watching its checks waits for nothing, and the other repos' E2E would run against the base's old image.
+For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
+- \`mergeable\` UNKNOWN → GitHub has not worked it out yet. Run the same command again, up to 10 times in all.
+- \`mergeable\` CONFLICTING, or \`mergeStateStatus\` DIRTY → STOP before you watch any checks. Report green:false, that pr's
+  state "red", stopReason "${PR_CONFLICT}", blocked "<repo> PR <url> conflicts with its base", and the same line in
+  failures[]. No code fix in this row clears it: the base must be merged into the branch.
+- anything else → that pr can be watched.`
+
+const conflictStopDetail = (id, ci, branch) =>
+  `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`
+
+const conflictStop = (id, ci, branch, entry) => {
+  const detail = conflictStopDetail(id, ci, branch)
+  log(`${id}: PR CONFLICTS WITH ITS BASE — ${detail}`)
+  return {
+    result: { id, ...entry, branch, outcome: PR_CONFLICT, stopReason: PR_CONFLICT, detail },
+    stopped: { reason: PR_CONFLICT, detail }
+  }
 }
 
 const MERGE_SCHEMA = {
@@ -3763,7 +3786,7 @@ const BRANCH_CI_SCHEMA = {
     ...CI_SCHEMA.properties,
     stopReason: {
       type: 'string',
-      enum: ['none', 'pr-red', 'pr-conflicting', 'mergeability-unknown', 'no-checks'],
+      enum: ['none', 'pr-red', 'pr-conflict', 'mergeability-unknown', 'no-checks'],
       description: 'WHICH stop condition fired, as a fixed value the caller branches on. "none" when every PR is green'
     }
   }
@@ -3775,22 +3798,17 @@ ${guardrails()}
 THE PULL REQUESTS:
 ${prList}
 
-For EACH pr, in the order listed:
-1. MERGEABILITY FIRST. A PR that conflicts with its base gets NO checks at all, so waiting on its checks would wait for
-   nothing. \`gh pr view <url> --json mergeable,mergeStateStatus\`
-   - \`mergeable\` UNKNOWN → GitHub has not worked it out yet. Run the same command again, up to 10 times in all. Still
-     UNKNOWN → state "unresolved", a line in failures[], stopReason "mergeability-unknown".
-   - \`mergeable\` CONFLICTING, or \`mergeStateStatus\` DIRTY → state "red", failures[] "<repo> PR conflicts with its base:
-     GitHub runs no checks on it", blocked "<repo> PR conflicts with its base", stopReason "pr-conflicting". Do not
-     watch its checks. This is a red, not an API failure, and no code fix in this row clears it.
-   - anything else → go on to step 2.
-2. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
+${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: state "unresolved", a line in
+failures[], stopReason "mergeability-unknown", and do not watch its checks.
+
+Then, for EACH pr, in the order listed:
+1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
    \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
    Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
    what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
    "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
    stopReason "no-checks". An absence of evidence is not green.
-3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+2. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
@@ -5394,6 +5412,13 @@ Return the structured output only.`,
             ci = await watchOnBranch()
           }
 
+          if (ci?.stopReason === PR_CONFLICT) {
+            const conflict = conflictStop(id, ci, workBranch, { prs: prs.map((p) => p.url), ciFixAttempts: ciAttempt, findings })
+            results.push(conflict.result)
+            stopped = conflict.stopped
+            break
+          }
+
           if (!ci || !ci.green) {
             const detail = ci
               ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ')
@@ -5519,7 +5544,9 @@ ${guardrails()}
 THE PULL REQUESTS:
 ${prList(prs)}
 
-For EACH pr, in the order listed:
+${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: go on and watch its checks.
+
+Then, for EACH pr, in the order listed:
 1. BLOCK on it. One Bash call, with the tool's \`timeout\` parameter set to 600000:
    \`gh pr checks <url> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
 2. Read that log ONCE.
@@ -5535,8 +5562,8 @@ For EACH pr, in the order listed:
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
-\`blocked\` is ONLY for something a code fix cannot address — no checks configured, \`gh\` refused, the PR is
-gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
+\`blocked\` is ONLY for something a code fix cannot address — a conflict with the base, no checks configured, \`gh\`
+refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
         light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
@@ -5633,6 +5660,13 @@ Return the structured output only.`,
       }
 
       ci = await watch()
+    }
+
+    if (ci?.stopReason === PR_CONFLICT) {
+      const conflict = conflictStop(id, ci, workBranch, { ticket: ticket.key, prs: prs.map((p) => p.url), ciFixAttempts: ciAttempt, findings })
+      results.push(conflict.result)
+      stopped = conflict.stopped
+      break
     }
 
     if (!ci || !ci.green) {

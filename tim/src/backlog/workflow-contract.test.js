@@ -5124,20 +5124,29 @@ describe('increment-build-loop', () => {
       test('stops at a PR that conflicts with its base without spending a fix attempt', async () => {
         const run = await runMergeRow(FOUND, {
           green: false,
-          blocked: 'tests PR conflicts with its base',
-          stopReason: 'pr-conflicting',
+          blocked:
+            'tests PR https://github.com/x/pull/3 conflicts with its base',
+          stopReason: 'pr-conflict',
           failures: [
-            'tests PR conflicts with its base: GitHub runs no checks on it'
+            'tests PR https://github.com/x/pull/3 conflicts with its base'
           ],
           summary: 'conflicting'
         })
 
-        expect(run.result.increments[0]).toMatchObject({
-          outcome: 'ci-red',
-          stopReason: 'pr-conflicting',
-          ciFixAttempts: 0
+        expect({
+          increment: run.result.increments[0],
+          stopped: run.result.stopped.reason,
+          fixed: labelsOf(run).includes('inc-900 ci fix 1')
+        }).toMatchObject({
+          increment: {
+            outcome: 'pr-conflict',
+            stopReason: 'pr-conflict',
+            ciFixAttempts: 0,
+            detail: `inc-900: tests PR https://github.com/x/pull/3 conflicts with its base. GitHub runs no checks on it. Merge its base branch into ${WORKING_BRANCH} in that repo, push, then run again`
+          },
+          stopped: 'pr-conflict',
+          fixed: false
         })
-        expect(labelsOf(run)).not.toContain('inc-900 ci fix 1')
       })
 
       test('tells the CI fixer a re-run does not refresh a check another job posted', async () => {
@@ -6567,6 +6576,57 @@ describe('increment-build-loop', () => {
           ...fields
         })
       )
+
+    describe('a pull request that conflicts with its base', () => {
+      const CONFLICT = {
+        green: false,
+        blocked: `perftests PR ${PERFTESTS_PR.url} conflicts with its base`,
+        stopReason: 'pr-conflict',
+        failures: [`perftests PR ${PERFTESTS_PR.url} conflicts with its base`],
+        summary: 'conflicting'
+      }
+
+      test('has the CI watcher read every PR’s mergeability before it watches any checks', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 ci watch')
+
+        expect({
+          everyFirst: prompt.includes(
+            'MERGEABILITY FIRST, for EVERY pr before you watch any.'
+          ),
+          mergeabilityBeforeChecks:
+            prompt.indexOf(
+              'gh pr view <url> --json mergeable,mergeStateStatus'
+            ) < prompt.indexOf('gh pr checks <url> --watch'),
+          stopReason: prompt.includes('stopReason "pr-conflict"')
+        }).toEqual({
+          everyFirst: true,
+          mergeabilityBeforeChecks: true,
+          stopReason: true
+        })
+      })
+
+      test('stops the row as pr-conflict, naming the PR and what to do, with no fix attempt and no merge', async () => {
+        const run = await runFactory({}, { 'inc-020 ci watch': CONFLICT })
+
+        expect({
+          increment: run.result.increments[0],
+          stopped: run.result.stopped.reason,
+          later: labelsOf(run).filter((label) =>
+            ['inc-020 ci fix 1', 'inc-020 merge'].includes(label)
+          )
+        }).toMatchObject({
+          increment: {
+            outcome: 'pr-conflict',
+            stopReason: 'pr-conflict',
+            ticket: 'EUDPA-920',
+            ciFixAttempts: 0,
+            detail: `inc-020: perftests PR ${PERFTESTS_PR.url} conflicts with its base. GitHub runs no checks on it. Merge origin/main into ${WORK_BRANCH} in that repo, push, then run again`
+          },
+          stopped: 'pr-conflict',
+          later: []
+        })
+      })
+    })
 
     describe('a base-branch run whose own status lags behind its jobs', () => {
       const JOBS_GREEN = {

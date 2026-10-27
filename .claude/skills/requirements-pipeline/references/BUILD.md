@@ -799,7 +799,8 @@ handover prompt.
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
+| `pr-conflict` | A PR conflicts with its base, so GitHub runs no checks on it. The CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches any checks, and stops on CONFLICTING or DIRTY, with `stopReason: "pr-conflict"` and no fix attempt spent. Nothing merged and every PR stays open. The detail names the PR: merge the base into the branch in that repo, push, then launch again. Both lifecycles |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call. With `stopReason: "base-branch-unverified"`, a workflow that `tim build push-workflows` says the merge commit starts has no run on `main`: check the repo's Actions page. A merge that starts no workflow at all (its files miss every push trigger's paths) is not a stop: it counts as green, and the run log names each workflow's reason. Nor is a run whose own status stays in progress after every job in it has passed, by `tim build run-jobs`: it counts as green, and the landed result lists it under `mainRunsGreenByJobs` |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
@@ -1003,7 +1004,7 @@ three.
   Absent: all three.
 - `awaitCi: false`: push and record the PRs without waiting for CI. GitHub runs no checks on a PR that conflicts
   with its base, so a row that lands before the merge that clears the conflict needs this, or it stops at
-  `ci-red` with `pr-conflicting`.
+  `pr-conflict`.
 
 A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
@@ -1027,8 +1028,7 @@ exactly that, never as green.
 
 ### The stop reasons it adds
 
-`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `ci-red` gains the
-`pr-conflicting` case. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
+`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
 `changes-requested`, `pr-left-open`) cannot fire.
 
 ## THE HANDOVER PROMPT

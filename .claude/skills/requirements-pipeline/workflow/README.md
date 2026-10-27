@@ -316,6 +316,10 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
   carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed;
 - at **`workspace-not-on-base`**, after an increment that built in the workspace repo has
   landed, when the workspace will not go back onto the base branch;
+- at **`pr-conflict`**, when a pull request conflicts with its base. GitHub runs no checks on
+  it, so the CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches
+  any checks, and stops on CONFLICTING or DIRTY. The detail names the PR and says to merge the
+  base into the branch, push, and run again;
 - at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
   `main-red` and the rest, each named in `../references/BUILD.md`;
 - at **`theme-review-red`** (branch lifecycle only), when a theme's engineering review could
@@ -934,7 +938,7 @@ like this:
 | Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
 | Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force`. The tests repo goes first, and the others wait for its branch image to publish |
 | Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
-| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR is a red (`pr-conflicting`), not an API failure. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
+| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
 | Merge | Does not run |
 | Done | `tim backlog set <workarea> <id> --status done --commit <sha>`. No ticket to move |
 

@@ -1,0 +1,68 @@
+{
+  "theme": "waiting-on-design",
+  "file": "~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/reanalysis/themes/waiting-on-design.json",
+  "rows": [
+    {
+      "id": "inc-014",
+      "verdict": "blocker-holds",
+      "evidence": "The block has three parts. Two still hold and one has partly gone. (1) Design question 3 (S08) is still unanswered: snagging/discussion.md:105 lists the commodity search as blocked. (2) MDM has partly gone. EUDPA-617 merged to animals-frontend main on 27 Oct (c3183a8e). The live-animals search now calls reference-data /commodities (services/commodities/client.js:6-7 on origin/main, through search.js:13), ten results a page, labelled by Latin name. The germinal catalogue still waits on MDM: there is no germinal set on main (src/server/app/sets/ holds only live-animals), and inc-191 is still blocked. (3) The EUDPA-616 type-ahead is not on main. Its branch origin/feat/EUDPA-616-commodity-search-type-ahead (be139883, fab51dd1) is unmerged and stale against main: it edits search/matching.js, which EUDPA-617 deleted. That branch adds appLiveSearch (src/server/common/components/live-search/macro.njk), a server-rendered results fragment (_results.njk), an icon submit button, and a polite status saying 'N results available' with Welsh. It has no Escape handling, no 'Commodity search results' label and no 'options selected' announcement. Main's commodity page still has the plain input and the grey secondary Search button (commodities/search/search.njk:28-43 on origin/main), so criterion 10 is not met. Nothing on main meets any criterion.",
+      "proposedChange": "Keep the row blocked. Notes to add: (a) EUDPA-617 merged on 27 Oct, so the live-animals half of the MDM block has gone. The germinal half still waits on inc-191. Criterion 2 becomes 'results come from reference-data's MDM commodity search (services/commodities/search.js)'. (b) EUDPA-616 sits on an unmerged branch built before 617 and needs rebasing onto main's search-query.js and selection/rows.js. Its appLiveSearch macro carries its own icon button, which duplicates main's appSubmittedSearch. Settle on one macro before criterion 10 is built. (c) Criteria 3 and 5 (the 'Commodity search results' label, 'N options selected', Escape) are not on the 616 branch."
+    },
+    {
+      "id": "inc-030",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 4 (S25) is still open. The spike, EUDPA-719, has not reported (snagging/discussion.md:115). Main still renders the 'Add country' secondary button and a server-side status region (transport/transit-countries/transit-countries.njk on origin/main: the govukButton with action=add, and the #transit-countries-status app-status-announcer). The row's notes still describe the code correctly (transport/transit-countries/, _added-countries-table.njk). The arrival-and-transit theme branch (origin/feat/EUDPA-694-...) is unmerged and also changes transit-countries.controller.js, .njk and validate.js for inc-029, which this row extends. inc-029 is still todo in that theme's backlog.",
+      "proposedChange": "No rewrite. One small fix: the page's real path is features/transport/transit-countries/, so name that folder in the notes. The row still waits on inc-029 landing from the arrival-and-transit branch."
+    },
+    {
+      "id": "inc-093",
+      "verdict": "blocker-holds",
+      "evidence": "The JavaScript half of design question 7 is still open. Design answered only the three-box layout (discussion.md:99, 'Settled'). inc-219 is on main: cph-number/validate.js:51-58 on origin/main has isWholeNumberInCounty, and git grep finds no maxlength and no data-module under features/cph-number/. So the page still has no client script. inc-091, which this row depends on (consignment-parties), is still todo.",
+      "proposedChange": "Keep it blocked. Rewrite criterion 1 so it cannot be read as bringing back maxlength: 'With JavaScript, typing a letter, space or slash into a CPH box leaves it out, and the script alone stops County, Parish and Holding at 2, 3 and 4 digits. Without JavaScript the boxes take any length and a whole number in County is split on save.' Criteria 2 and 3 stay as they are, as browser-side spreading over the server split that is already there."
+    },
+    {
+      "id": "inc-162",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 11 is still unanswered. Manage templates is not on animals-frontend main or ins-frontend main: git grep finds no templates feature there. It exists only on the stale branch origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates (features/templates/), and that branch's manage-templates.fit.spec.js:92-96 asserts there is no 'Sort by'. inc-157 is still todo in the type-question-and-templates backlog.",
+      "proposedChange": "None. It still waits on design question 11 and on inc-157 being rebuilt from main."
+    },
+    {
+      "id": "inc-189",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 13 is still open. Both frontends' main still use the library's own announcements, with Welsh overrides only (src/client/javascripts/components/accessible-autocomplete.js:38-46 in animals-frontend and in plants-frontend on origin/main: tStatusQueryTooShort, tStatusNoResults, tStatusSelectedOption, tStatusResults). Neither has 'Country search results' or 'Selected <country>'. The origin-page branch (origin/feat/EUDPA-695-..., unmerged) also edits that wrapper and the accessible-autocomplete macro.njk to add data-placeholder, so it overlaps with this row.",
+      "proposedChange": "No rewrite. Note that the origin-page branch changes the same wrapper and macro, and keep the wrapper identical in both frontends."
+    },
+    {
+      "id": "inc-192",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 12 is still open. Animals-frontend main has no germinal set (src/server/app/sets/ holds only live-animals), so the germinal dates do not exist yet. inc-053, which this row depends on (germinal-products), is still todo. inc-206's house date picker is on main (design-snagging done), as the row's notes assume.",
+      "proposedChange": "None."
+    },
+    {
+      "id": "inc-193",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 5 is still open. No picker filters as you type. The animals picker has a server 'Showing' count and appSubmittedSearch, but no data-module (party-picker/_address-picker.njk:1, 18, 66 on origin/main). The only client script in plants is address-book-picker.js, which carries the ticked radio through the pagination links and does not filter. The only client script in ins-frontend is address-book-success-banner.js. transporter-filter.js, search-fold.js and bold-matches.js are on animals main, as the notes say. inc-087 and inc-181, which this row depends on, are still todo, and address-book inc-069 is still todo.",
+      "proposedChange": "Keep it blocked. Add a note: criterion 1 (the INS address book list re-requesting as you type) could reuse the server-rendered appLiveSearch pattern on the unmerged EUDPA-616 branch, if that branch merges first."
+    },
+    {
+      "id": "inc-194",
+      "verdict": "blocker-holds",
+      "evidence": "All three blocks hold. (1) Design question 10 is unanswered. (2) The address lookup is still only a spike in the UI: ins-frontend main has features/address-lookup-spike/ and services/address-lookup/. ins-backend main now has an addresslookup package (AddressLookupController.java and others), but no journey page uses it, and git grep on animals-frontend main finds no lookup and no 'Enter address manually'. (3) Transporter requirements are unresolved: inc-042 is still blocked, and address-book inc-072 and inc-081 are still blocked.",
+      "proposedChange": "Update the address-lookup note. ins-backend now serves an address lookup (addresslookup/AddressLookupController.java on origin/main), but it is still not wired into any journey page, so the block holds."
+    },
+    {
+      "id": "inc-195",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 9 is still open, and the expected answer is still 'drop'. Neither animals-frontend nor plants-frontend main has a modal (git grep finds no moj-modal, role=\"dialog\" or aria-modal). inc-120, inc-121 (manage-notifications) and inc-185 (germinal-products), which this row depends on, are still todo. inc-122 is done.",
+      "proposedChange": "None."
+    },
+    {
+      "id": "inc-198",
+      "verdict": "blocker-holds",
+      "evidence": "Design question 8 is still open. The 'Import reference numbers' section this row enhances is not on main in either frontend (git grep finds nothing). It exists only on the unmerged overview-and-review branch (check-answers/view-model/view-header.js on origin/feat/EUDPA-696-...), from overview-and-review inc-112, which is still todo there.",
+      "proposedChange": "Add externalDependsOn {workarea: shared/design-release-2-1/themes/overview-and-review, id: inc-112}. The Copy buttons enhance that section, but the row has no dependsOn."
+    }
+  ],
+  "splitReady": false,
+  "splitReadyWhy": "Not ready to split off. All ten rows are still blocked on open design questions (3, 4, 5, 7, 8, 9, 10, 11, 12, 13). Several also wait on MDM for germinal, the address lookup or transporter requirements. Eight of the rows' own dependsOn are still todo: inc-016, inc-053, inc-181 and inc-185 (germinal-products), inc-087 and inc-091 (consignment-parties), and inc-120 and inc-121 (manage-notifications). External dependencies are unmet as well: commodities inc-013 (blocked), arrival-and-transit inc-029 (todo), templates inc-157 (todo), address-book inc-069 (todo) and address-book inc-072 and inc-081 (blocked). Other unbuilt themes or branches touch the same code: consignment-parties (pickers, CPH page), germinal-products, manage-notifications (amend pages), transporters (commercial transporter form), the unmerged overview-and-review branch (view header), the arrival-and-transit branch (transit countries), the type-question-and-templates branch (templates), the origin-page branch (the autocomplete wrapper) and the unmerged EUDPA-616 branch (the commodity search page)."
+}

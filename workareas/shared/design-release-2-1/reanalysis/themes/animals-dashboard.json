@@ -1,0 +1,83 @@
+{
+  "theme": "animals-dashboard",
+  "file": "~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/backlog.json",
+  "rows": [
+    {
+      "id": "inc-126",
+      "verdict": "partly-met",
+      "evidence": "Met: the backend's API description already lists AMEND: animals-backend origin/main NotificationController.java:244 says 'Only DRAFT, SUBMITTED and AMEND notifications can be deleted.' Not met: the animals list still shows the shared copy 'Notification deleted' / 'The notification has been deleted.' (animals-frontend origin/main src/server/app/shared/copy.en.js:60-61, used by features/dashboard/template.njk:10-17). Plants' list uses the same shared copy (plants-frontend origin/main features/dashboard/template.njk:12-19). No test deletes an amending notification (ins-tests origin/main tests/animals/e2e/features/notification-delete.spec.ts covers a draft and a submitted one only), and notification-actions-guards.spec.ts does not exist on main. No theme branch changes the delete wording. Its dependsOn rows inc-120, inc-121 and inc-125 (manage-notifications) are still todo.",
+      "proposedChange": "Drop the API description criterion (already met). Remaining criteria: (1) after 'Yes, delete' the live-animals list at ?deleted=1 shows 'Notification has been deleted' in place of 'The notification has been deleted.'; (2) plants' own list at ?deleted=1 shows 'Notification has been deleted'; (3) a notification being amended can be deleted from the amend review's Delete button and then no longer appears on the list, in animals and plants; (4) the end-to-end suite proves deleting an amending notification and the no-message guard redirects of amend, cancel amendment, copy as new and delete, still asserting ?cancelled=1 and ?deleted=1, with the smoke-tagged cancel-amendment and delete cases kept; (5) plants' success banner message reads 'Notification has been deleted'; (6) the Welsh version is a machine draft held until a translator signs it off; (7) other plants pages using the shared action wording read as today."
+    },
+    {
+      "id": "inc-129",
+      "verdict": "still-needed",
+      "evidence": "Animals list on origin/main is unchanged: copy title 'Import notification service', intro body, 'Start a new notification' start button, h2 'Your notifications' (animals-frontend features/dashboard/copy/copy.en.js:2-8; template.njk:35-43). Backend list is not organisation-scoped: NotificationController.findAll takes only page, sort and referenceNumber (NotificationController.java:177-182) and no list code reads organisationId (only ActorRequest.java:17 holds it). Plants list is unchanged (plants-frontend dashboard copy.en.js:2-12). The type-question-and-templates branch adds a GET /start route beside createPost in the same controller but no reframe; the overview-and-review branch touches only the row actions.",
+      "proposedChange": "Keep as is, with one addition: the k6 journey also calls the backend list directly without an organisation (performance-tests origin/main src/k6/journeys.js:82, `${backendUrl}/notifications?referenceNumber=`), so once the backend refuses an unscoped list that call must send the organisation too. Add to the k6 criterion: 'and its direct backend read of the notification list sends the organisation it acts for, passing every check.'"
+    },
+    {
+      "id": "inc-130",
+      "verdict": "still-needed",
+      "evidence": "Animals card on origin/main still has 'Arrival at destination', 'Status', 'Date created' and 'Date submitted', no 'Number of animals', and blank values rather than 'Not applicable' (animals-frontend features/dashboard/copy/copy.en.js:14-25; template.njk:117-154; view-model/row/index.js). Plants card still lists 'Arrival', 'Status', 'Date created', 'Date submitted' (plants-frontend dashboard copy.en.js:19-29; template.njk:104-112). No theme branch changes the card facts."
+    },
+    {
+      "id": "inc-131",
+      "verdict": "still-needed",
+      "evidence": "Not on main: backend NotificationStatus is DRAFT, SUBMITTED, AMEND, DELETED only (animals-backend origin/main NotificationStatus.java:4), and every card status is a govukTag (animals-frontend template.njk:143-145). On the unmerged overview-and-review branch (inc-113) the backend adds SUBMITTED_ACTION_REQUIRED and OutstandingItem.HEALTH_CERTIFICATE (counted only when an ITAHC or health certificate has passed its virus scan), the frontend maps it (records/real/status.js) and the card shows it as the journey-strip text 'Submitted action required' (shared/copy.en.js journeyStrip.submittedActionRequired); the tests branch asserts that text on the card (ins-tests notification-dashboard.spec.ts on the combined branch). So the record state this row reads lands with overview-and-review, but nothing builds the 'Action required' tag, the error card or 'ITAHC is missing'.",
+      "proposedChange": "Criteria still hold. Add to the detail: build on overview-and-review's SUBMITTED_ACTION_REQUIRED status and outstanding items; the card label replaces the journey-strip wording 'Submitted action required' with the 'Action required' tag, and the overview-and-review test asserting 'Submitted action required' on the card is updated in the same increment."
+    },
+    {
+      "id": "inc-135",
+      "verdict": "still-needed",
+      "evidence": "No tabs on main: animals dashboard template.njk has no MoJ sub navigation and the backend list has no status or tab filter (NotificationController.java:177-182; NotificationRepository.java:24 findAllViewByStatusIn only). No theme branch adds tabs."
+    },
+    {
+      "id": "inc-136",
+      "verdict": "still-needed",
+      "evidence": "Main still has the two-column layout with a 'Filter notifications' heading, a separate search form and a sort form with 'Update sort' (animals-frontend template.njk:44-95; copy.en.js:10-37). Search is exact reference match only (NotificationController.java:173 'exact match against a complete notification reference'). Sort offers four options and has no tie-breaker (NotificationSort.java:33-41). Design snagging (merged) added a shared joined icon-search macro, appSubmittedSearch (animals-frontend origin/main src/server/common/components/submitted-search/macro.njk), not used on the dashboard yet. The k6 suite searches with ?referenceNumber= (performance-tests src/k6/journeys.js:289).",
+      "proposedChange": "Criteria hold. Add to the detail: build the icon-only search button with the appSubmittedSearch macro that design snagging merged (src/server/common/components/submitted-search/macro.njk), not hand-written MoJ classes; if the search parameter is renamed from referenceNumber, the k6 dashboard search at src/k6/journeys.js:289 changes with it."
+    },
+    {
+      "id": "inc-137",
+      "verdict": "still-needed",
+      "evidence": "No 'Additional filters', date range or status filter on main's animals dashboard template.njk, and the backend list takes no date or status parameter (NotificationController.java:177-182). No theme branch adds them. kit.dateField exists on main (animals-frontend src/server/app/shared/kit.js:466) with the house date-picker styles (src/client/stylesheets/components/_date-picker.scss)."
+    },
+    {
+      "id": "inc-138",
+      "verdict": "still-needed",
+      "evidence": "Backend list page size is 25 (animals-backend origin/main src/main/resources/application.yml:133-134). Results line and both empty messages are still on main (animals-frontend copy.en.js:13,39-48,62; template.njk:69,157-159; plants-frontend copy.en.js:16,40-50 and template.njk:56,124-126). Tests still assert 'Showing 1 to 25 of N Results' (ins-tests tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts)."
+    },
+    {
+      "id": "inc-139",
+      "verdict": "blocker-holds",
+      "evidence": "Blocked on the INS dashboard's requirements firming up. Every ins-dashboard row (inc-128, inc-132 to inc-134, inc-143 to inc-146) is still blocked in the backlog, and nothing on main or a theme branch adds a Summary or glance cards."
+    },
+    {
+      "id": "inc-140",
+      "verdict": "still-needed",
+      "evidence": "Both lists still title the delete banner with the shared 'Notification deleted' (animals-frontend shared/copy.en.js:60; dashboard template.njk:10-17; plants-frontend dashboard template.njk:12-19). No 'Success' title in either list feature's own copy. No theme branch changes it."
+    },
+    {
+      "id": "inc-142",
+      "verdict": "blocker-holds",
+      "evidence": "Blocked on the authorities' case system sending outcomes back, and on the INS dashboard's requirements for the 'Status updated' count. Main's NotificationStatus has no delayed, completed or inspection state (NotificationStatus.java:4); the overview-and-review branch adds only SUBMITTED_ACTION_REQUIRED; no outcome feed exists; ins-dashboard rows all still blocked."
+    },
+    {
+      "id": "inc-147",
+      "verdict": "still-needed",
+      "evidence": "Nothing on main or any branch counts incomplete identifiers as outstanding: overview-and-review's OutstandingItem enum holds only HEALTH_CERTIFICATE (animals-backend branch OutstandingItem.java), and the only header warning is 'You need to upload a health certificate' (check-answers copy healthCertificateWarning on the combined branch). Main's confirmation page lists outstanding documents (snagging follow-ups, animals-frontend features/confirmation) but no identifier item. No 'Information is missing', 'Enter a minimum of 1 identifier' or identifier header warning anywhere.",
+      "proposedChange": "Criteria hold. Add to the detail: the identifier item joins overview-and-review's OutstandingItem enum beside HEALTH_CERTIFICATE, and its header warnings extend that branch's view-header warning ('You need to upload a health certificate')."
+    },
+    {
+      "id": "inc-196",
+      "verdict": "still-needed",
+      "evidence": "No 'Use template' on main's animals list (template.njk:39-42 has only the start form). The Manage templates page itself is built only on the unmerged type-question-and-templates branch (animals-frontend paths.js adds templatesRoutePath '/templates' and templatesPath()), so the link target is not on main yet."
+    },
+    {
+      "id": "inc-200",
+      "verdict": "blocker-holds",
+      "evidence": "Blocked on trade-imports-plants-backend querying by status, page size, keyword and arrival date. Its list endpoint on origin/main still takes only page, sort and referenceNumber (trade-imports-plants-backend NotificationController.java:147-149)."
+    }
+  ],
+  "splitReady": false,
+  "splitReadyWhy": "Not ready. The theme depends on manage-notifications, which is unbuilt (inc-120, 121, 123 to 125 and 201 all todo), and inc-126 depends on its rows inc-120, inc-121 and inc-125. It also depends on overview-and-review and type-question-and-templates, which are built but still on their branches, not merged. Both touch this theme's code: overview-and-review changes the dashboard row actions and status mapping and the dashboard tests (it asserts 'Submitted action required' on the card); type-question-and-templates changes the dashboard controller in both frontends and adds the Manage templates page that inc-196 links to."
+}

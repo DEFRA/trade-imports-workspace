@@ -302,9 +302,9 @@ The system MUST show identification as one section per commodity, headed with th
 - **WHEN** the user opens the identification details page
 - **THEN** the summary lists that species and no card or entry form is shown for it
 
-### Requirement: A card's button saves only its own species, and the page's save buttons save only species of one animal
+### Requirement: A card's button saves only its own species, Enter saves every species typed in, and the page's save buttons save only species of one animal
 **ID**: REQ-IDENT-021
-The system MUST, when a species card's save button is pressed, validate and save only that species' current animal and reload with that species' form empty, MUST NOT validate or save values typed into any other species' form, MUST validate and save the typed identifiers of each species with one animal when Save and continue or Save and return to overview is pressed, and MUST NOT validate or save anything typed into the form of a species with more than one animal on those buttons.
+The system MUST, when a card's button is pressed, validate and save only its species' current animal and reload with its form empty, leaving other forms alone. The system MUST, when Enter is pressed, validate and save every species form holding a value, and return the user to identification details when a species with more than one animal was saved. The system MUST, on Save and continue or Save and return to overview, validate and save only the forms of species with one animal.
 
 #### Scenario: A card button saves only its own species and shows no error for another
 **ID**: SCN-IDENT-021-A
@@ -319,6 +319,20 @@ The system MUST, when a species card's save button is pressed, validate and save
 - **WHEN** the user presses Save and continue
 - **THEN** the one-animal species' record is saved
 - **AND** the two-animal species has no record saved, and its card still asks for its first animal
+
+#### Scenario: Enter saves a species of several animals and stays on identification details
+**ID**: SCN-IDENT-021-C
+- **GIVEN** a valid identifier is typed into the form of a species with more than one animal
+- **WHEN** the user presses Enter in that field
+- **THEN** that animal is saved and identification details is shown again
+- **AND** that species' saved-animals table lists the record, its form is empty, and its heading reports the next animal
+
+#### Scenario: Enter with an over-length identifier in a species of several animals is blocked and keeps the value
+**ID**: SCN-IDENT-021-D
+- **GIVEN** an over-length ear tag is typed into the form of a species with more than one animal
+- **WHEN** the user presses Enter in that field
+- **THEN** nothing is saved and the field shows its error
+- **AND** the over-length value stays in the field
 
 ### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag and Horse name, with no hint text
 **ID**: REQ-IDENT-022

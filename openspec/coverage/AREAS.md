@@ -13,7 +13,9 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | ins/authentication | INS-AUTH |
 | ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
+| ins/notification-type | INS-NTYPE |
 | ins/page-titles | INS-PAGE-TITLE |
+| ins/service-navigation | INS-NAV |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |
@@ -49,6 +51,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/notification-events | EVENTS |
 | live-animals/notification-lifecycle | LIFECYCLE |
 | live-animals/notification-status-and-reference | STATUS-REF |
+| live-animals/notification-templates | TEMPLATES |
 | live-animals/service-navigation | NAV |
 | plants/addresses | PLANTS-ADDR |
 | plants/authentication | PLANTS-AUTH |
@@ -78,3 +81,4 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | plants/notification-dashboard | PLANTS-DASH |
 | plants/notification-lifecycle | PLANTS-LIFECYCLE |
 | plants/page-titles | PLANTS-PAGE-TITLE |
+| plants/service-navigation | PLANTS-NAV |

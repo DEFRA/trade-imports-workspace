@@ -27,15 +27,15 @@ The system MUST list no species for a search of fewer than three characters, so 
 - **WHEN** they search for two characters
 - **THEN** no species are listed
 
-### Requirement: A search can match a commodity's code or a species' common or scientific name
+### Requirement: A search can match a commodity's code or a species' common or Latin name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its scientific name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its scientific name alone, as the reference data spells it.
+The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its Latin name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its Latin name alone, as the reference data spells it.
 
-#### Scenario: Searching by common name finds the same species as searching by code
+#### Scenario: Searching by common name offers the species under each live-animal code, by Latin name
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
-- **THEN** the same species is offered as when searching by that commodity's code, shown by its scientific name alone
+- **THEN** each matching species is offered under its live-animal commodity code, shown by its Latin name
 
 #### Scenario: A search offers no commodity code the reference data flags as germinal
 **ID**: SCN-COMMODITY-SELECT-003-B

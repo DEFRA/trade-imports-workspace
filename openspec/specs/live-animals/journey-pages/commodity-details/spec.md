@@ -8,7 +8,7 @@ Asks how much of each chosen species the consignment carries — one number of a
 
 ### Requirement: The page asks a number of animals, and where owed a number of packages, per species chosen — starting empty
 **ID**: REQ-COMMODITY-DETAILS-001
-The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its scientific name, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
+The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its Latin name, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
 
 #### Scenario: The page presents one set of questions per chosen species, all empty
 **ID**: SCN-COMMODITY-DETAILS-001-A

@@ -30,7 +30,7 @@ The system MUST ask the notification for a County Parish Holding number, as a ma
 
 ### Requirement: A commodity that requires unweaned-animal tracking brings that question into play for the whole notification
 **ID**: REQ-OB-COMMODITY-002
-The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle or pig commodity, and MUST NOT ask it for any other commodity, including equine, sheep and goat.
+The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle commodity, and MUST NOT ask it for any other commodity, including equine, pig, sheep and goat.
 
 #### Scenario: Adding a commodity requiring unweaned tracking brings the question into play
 **ID**: SCN-OB-COMMODITY-002-A

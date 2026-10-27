@@ -22,6 +22,7 @@ import { registerMeasure } from './measure.js'
 import { registerWorkers } from './workers.js'
 import { registerTune } from './tune.js'
 import { registerPushWorkflows } from './push-workflows.js'
+import { registerRunJobs } from './run-jobs.js'
 
 const SCHEMA_VERSION = 1
 
@@ -520,4 +521,5 @@ export const register = (program, { timVersion }) => {
   registerWorkers(build, timVersion)
   registerTune(build, timVersion)
   registerPushWorkflows(build, timVersion)
+  registerRunJobs(build, timVersion)
 }

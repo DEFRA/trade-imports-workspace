@@ -81,6 +81,22 @@ Every command supports:
 - `--verbose` — structured logs to stderr
 - `--workspace <path>` — override the resolved workspace root
 
+### `tim workspace repo-state` — one report of several repos' git state
+
+Reports each repo you name, from local git: its branch, HEAD, whether it is
+dirty and every changed path, how many changes are staged, whether a merge is
+in progress, and how far it is ahead of and behind origin. The build loop reads
+it instead of asking an agent to read `git status` in each repo.
+
+```bash
+tim workspace repo-state --repos frontend:repos/trade-imports-plants-frontend,workspace:. --json
+tim workspace repo-state --repos tests:repos/trade-imports-ins-tests --branch feat/EUDPA-1-x --base main
+```
+
+`--branch` adds whether each repo is on that branch and where the branch
+points locally. `--base` counts commits against `origin/<base>`. `--fetch`
+fetches origin first.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under
@@ -581,6 +597,40 @@ its runs (the workflow's `name`, else its path), and `starts` lists those
 names. It always exits 0. The build loop's merge stage uses it to tell a merge
 that starts no workflow, which has nothing to watch, from a run that has not
 started yet.
+
+### `tim spec diff` — what commits changed in the Behaviour Spec
+
+```bash
+tim spec diff --commit 575f5f3c --json
+tim spec diff --commit e310d0af --commit 72fb2eda
+```
+
+Compares each commit with its first parent under `openspec/specs` and
+`openspec/coverage`, scenario by scenario: `added`, `changed` (its name or
+steps), `removed`, or `coverage` (only its `coverage.json` entry changed). Each
+scenario carries its coverage after the commit. A commit git cannot find is
+listed under `skipped`. `result.touched` is every scenario id the commits added,
+changed or re-proved. The build loop uses it to tell a theme's own unproven
+scenarios from older ones, and to write each row's spec-diff Jira comment.
+
+### `tim build run-jobs` — whether every job of a run has passed
+
+```bash
+gh api repos/DEFRA/trade-imports-plants-frontend/actions/runs/123/jobs?filter=latest > jobs.json
+tim build run-jobs trade-imports-plants-frontend --commit 4cd37b9c --workflow .github/workflows/publish.yml --jobs jobs.json --json
+```
+
+A run's own status can stay in progress after its jobs have finished. This
+judges the jobs instead: each must be completed with success or skipped, and
+each job the workflow file defines at the commit must have a job in the run.
+A matrix job counts by its name and a suffix. A job that calls a reusable
+workflow needs a job named `<its name> / …`, every job of that workflow when
+it is in the same repo, or one skipped job of its own name. tim reads the
+saved file and local git only: it never calls GitHub itself.
+
+The result is `{workflow, commit, green, declared, missing, notPassed, jobs}`.
+It always exits 0. The build loop's merge stage uses it for a base-branch run
+still showing in progress after its watches.
 
 ### `tim build probe` — does a test witness a line
 

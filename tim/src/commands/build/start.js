@@ -72,9 +72,16 @@ const describeCarried = (paths, summary) => {
   ]
 }
 
-const describeBranched = ({ branch, cut, from, caughtUpToBase }) => {
+const describeBranched = ({
+  branch,
+  cut,
+  from,
+  caughtUpToBase,
+  mergedBase
+}) => {
   if (cut) return `cut ${branch} from ${from}`
   if (caughtUpToBase) return `on ${branch}, caught up to ${from}`
+  if (mergedBase) return `on ${branch}, merged ${mergedBase} into it`
   return `on ${branch}`
 }
 
@@ -184,7 +191,7 @@ export const registerStart = (build, timVersion) =>
       "The configured repo keys in order, comma separated: what a row that names no repos builds (default: the backlog envelope's order)"
     )
     .description(
-      "Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or an open one under the epic with its summary, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. A branch that already exists locally with no commits of its own is fast-forwarded to origin/<base>, and its entry in branched says caughtUpToBase. A repo with uncommitted work is refused, except the workspace repo itself (path \".\" in the backlog's repos): its uncommitted files travel across the switch, so the land stage leaves them out. The result names those outside workareas/ in preexistingDirty (at most 50), and preexistingDirtySummary counts them and those under workareas/ and gives the file, under the workarea's logs/, that lists every one. A switch that would overwrite one of them fails, naming the files. The result's requireApproval lists the repos whose pull request a person must approve. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure."
+      "Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or an open one under the epic with its summary, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. A branch that already exists locally with no commits of its own is fast-forwarded to origin/<base>, and its entry in branched says caughtUpToBase. A workspace repo branch that already exists with commits of its own gets origin/<base> merged into it (never rebased or forced), so its tim is no older than the base's, and its entry says mergedBase; a conflict undoes the merge and fails the branch step, naming the files. A repo with uncommitted work is refused, except the workspace repo itself (path \".\" in the backlog's repos): its uncommitted files travel across the switch, so the land stage leaves them out. The result names those outside workareas/ in preexistingDirty (at most 50), and preexistingDirtySummary counts them and those under workareas/ and gives the file, under the workarea's logs/, that lists every one. A switch that would overwrite one of them fails, naming the files. The result's requireApproval lists the repos whose pull request a person must approve. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure."
     )
     .addHelpText(
       'after',

@@ -226,13 +226,13 @@ The system MUST keep an uploaded document's file and details once it has been sc
 
 ### Requirement: Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue
 **ID**: REQ-DOCS-013
-The system MUST ask for a document type as a mandatory answer, offering a placeholder plus all fourteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
+The system MUST ask for a document type as a mandatory answer, offering a placeholder plus the thirteen document types named in the scenario below, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
 
-#### Scenario: The type question offers fourteen types behind a placeholder, in position
+#### Scenario: The type question offers thirteen types behind a placeholder, in position
 **ID**: SCN-DOCS-013-A
 - **GIVEN** the user is adding a document
 - **WHEN** the page loads
-- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and fourteen document types, Health certificate among them
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and then: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other
 
 #### Scenario: Leaving the type on its placeholder is rejected
 **ID**: SCN-DOCS-013-B
@@ -245,6 +245,13 @@ The system MUST ask for a document type as a mandatory answer, offering a placeh
 - **GIVEN** the user has added a document, choosing a document type
 - **WHEN** the saved row is shown
 - **THEN** it reports the type chosen, regardless of the uploaded file's own name
+
+#### Scenario: A document recorded as Health certificate is listed with that type while the type question offers thirteen
+**ID**: SCN-DOCS-013-D
+- **GIVEN** a notification holds a document recorded as Health certificate
+- **WHEN** the upload documents page opens
+- **THEN** that document is listed with Health certificate as its type
+- **AND** the type question offers thirteen document types
 
 ### Requirement: The file can be chosen from a drop zone, not only the browser's own file picker
 **ID**: REQ-DOCS-014

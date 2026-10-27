@@ -107,10 +107,14 @@ filter from the address bar is a controller change:
 `references/fake-a-service/dashboard-filters-and-tabs.md` has the recipe. Log
 the missing MoJ look as a design gap.
 
+When the designer asks for the real MoJ filter, switch it on instead: its Sass
+in the release's `assets/styles.scss`, with a Switch on entry
+(`references/custom-pattern.md`).
+
 ## Tabs on a dashboard
 
-**Never use the `govukTabs` macro in a release.** Its script is not started in
-this service, but the macro still marks every panel after the first
+**Never use the `govukTabs` macro in a release unless the release switches the
+Tabs script on.** Its script is not started in this service, but the macro still marks every panel after the first
 `govuk-tabs__panel--hidden`, and the GOV.UK styles hide them. Only the first
 tab's content ever shows and the other tabs cannot be opened, yet a picture
 looks like working tabs. Options, best first:
@@ -130,6 +134,11 @@ in the real service (`createAll(Tabs)` in
 `designer:show --url "?tab=<id>"` and read each picture: each tab must show
 its own content.
 
+When the designer asks for tabs that really switch, use `govukTabs` and
+switch the Tabs script on in the release's `assets/scripts.js`
+(`createAll(Tabs)`), with a Switch on entry (`references/custom-pattern.md`).
+No gap row is needed then.
+
 ## Glance counts at the top of a dashboard
 
 GOV.UK has no "stat card". Use one of:
@@ -141,14 +150,21 @@ GOV.UK has no "stat card". Use one of:
 - a line of text with tags: "3 drafts, 1 late" with the "late" in a red
   `govukTag`
 
-Log the big-number look as a design gap.
+Log the big-number look as a design gap, or build it as a release pattern
+when the designer asks.
 
-## Things you cannot lay out here
+## Not by default
+
+Build the nearest pattern above and log each one in `design-gaps.md`. When
+the designer asks for the real thing, with what research should learn, each
+can be a release pattern instead (`references/custom-pattern.md`):
 
 - anything that sticks to the screen while you scroll
 - pop-up dialogs (modals). Use a separate confirm page instead, as
   `delete-notification` does
 - drag and drop
-- a layout wider than the GOV.UK page width (1020px)
 
-Build the nearest pattern above and log each one in `design-gaps.md`.
+These stay plain limits, never a release pattern:
+
+- a layout wider than the GOV.UK page width (1020px)
+- the header, service navigation, phase banner and footer

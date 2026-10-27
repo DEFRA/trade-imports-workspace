@@ -131,7 +131,8 @@ const GUARD_RAILS = [
   '- One Bash command per call: no &&, ; or |.',
   '- Never commit, push, stage any file, or install anything.',
   `- Only ever change files inside ${REPO}/src/server/app/sets/${set}/.`,
-  `- Never change ${REPO}/src/server/app/shared/**, templates, controllers, flow files or tests.`
+  `- Never change ${REPO}/src/server/app/shared/**, templates, controllers, flow files or tests.`,
+  `- Never change ${REPO}/src/server/app/sets/${set}/assets/**, ${REPO}/src/server/app/sets/${set}/patterns.md or ${REPO}/src/server/app/sets/${set}/mandates.md.`
 ].join('\n')
 
 const STRING = { type: 'string' }
@@ -174,6 +175,7 @@ const LOCATE_SCHEMA = {
     error: STRING,
     kind: STRING,
     frozen: BOOLEAN,
+    baseCommit: STRING,
     copy: { type: 'array', items: LEAF_SCHEMA },
     templates: { type: 'array', items: TEMPLATE_HIT_SCHEMA }
   },
@@ -284,6 +286,7 @@ function locatePrompt(sweep) {
     '',
     'After the npm banner lines the output is JSON with keys sets, copy, templates and pinned.',
     'Return ok: true, kind and frozen from sets[0], and the copy and templates arrays exactly as printed (every field, unchanged).',
+    `Then run: git -C ${REPO} rev-parse HEAD, and return the commit it prints in baseCommit.`,
     'If the command fails, return ok: false, the message in error, and empty arrays.',
     '',
     GUARD_RAILS
@@ -312,6 +315,11 @@ if (notFound.length > 0) {
 }
 
 const release = located[0]
+if (!release.baseCommit) {
+  fail(
+    'could not read the commit the sweep starts from, so the check could not tell a release pattern from the sweep’s own work'
+  )
+}
 if (release.frozen) {
   return {
     set,
@@ -473,7 +481,7 @@ if (plan.shared.length > 0) {
 // ---------------------------------------------------------------------------
 // Verify: the quick check, with at most MAX_REPAIRS repairs.
 
-const CHECK_COMMAND = `${npm('designer:check')} -- --set ${set} --quick`
+const CHECK_COMMAND = `${npm('designer:check')} -- --set ${set} --quick --since ${release.baseCommit} --no-new-patterns`
 const touchedFiles = plan.groups.flatMap((group) => [
   inRepo(group.enFile),
   inRepo(group.cyFile)

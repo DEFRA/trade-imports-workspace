@@ -85,6 +85,22 @@ before trusting it.
 - `~/git/defra/trade-imports-workspace/docs/best-practices/gds/*` (language,
   writing, components, patterns, styles, accessibility, service-design)
 
+### Release styles and scripts (a release's `assets/`)
+
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md`,
+  "Stay in the GOV.UK toolbox": the GOV.UK, then other design systems, then
+  "why must the service have it?" order a release pattern follows.
+- GOV.UK Frontend's settings, helpers and mixins: `dist/govuk/settings/`
+  and `dist/govuk/helpers/` in the prototype's installed `govuk-frontend`
+  package.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/accessibility.md`
+- The real service's own patterns, as house examples of shape:
+  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend/src/client/stylesheets/components/`
+  and
+  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend/src/client/javascripts/`.
+  Read them; never copy a release pattern into them.
+- `references/custom-pattern.md` for the steps.
+
 ### Copy
 
 - `~/git/defra/trade-imports-workspace/docs/best-practices/gds/language.md`
@@ -179,6 +195,8 @@ being "fixed" on sight.
 - **Design releases stay test-free.** `new:set` deliberately leaves out the
   real journey's tests, and no reference in this skill ever writes a
   `*.test.js` or `*.fit.spec.js` inside `src/server/app/sets/<release>/`.
+  The one exception is a release pattern's script module, whose
+  `assets/<name>.test.js` sits beside it.
   The hand-off's C1 route writes the tests, through the real recipes, once
   the change lands in `trade-imports-plants-frontend`.
 
@@ -188,4 +206,5 @@ Some choices are the designer's alone — a made-up name, a colour a
 `govukTag` cannot show, a copy decision the designer has already made. The
 ladder governs conventions, never the design itself: never let "the real
 service does it differently" talk a designer out of their own decision.
-Log the gap and build what they asked for.
+Log the gap and build what they asked for, or, when they ask for the real
+thing, build it as a release pattern (`references/custom-pattern.md`).

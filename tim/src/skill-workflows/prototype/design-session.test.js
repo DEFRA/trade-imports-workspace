@@ -47,6 +47,11 @@ const FILES = {
   3: [`${FEATURES}/hub/copy/copy.en.js`, `${FEATURES}/hub/copy/copy.cy.js`]
 }
 
+const BASE_COMMIT = '3f2a9c1d'
+const MANDATE_ID = 'm-2026-10-27-1'
+const MANDATE_WORDS =
+  "give me 3 options for this page; you can make reasonable use of new components or designs if GOV.UK doesn't fit"
+
 const ROUTES = [
   { index: 1, skill: 'change-the-words', pages: ['origin'] },
   { index: 2, skill: 'example-data', pages: ['commodities'] },
@@ -77,6 +82,15 @@ const makeAgent = (overrides = {}, files = FILES) => {
       return {
         ready: true,
         branch: `design/${SET}-crit-notes-friday`,
+        baseCommit: BASE_COMMIT,
+        reason: ''
+      }
+    }
+    if (label === 'confirm mandate') {
+      return {
+        found: true,
+        words: MANDATE_WORDS,
+        scope: 'commodity-search',
         reason: ''
       }
     }
@@ -112,6 +126,9 @@ const makeAgent = (overrides = {}, files = FILES) => {
       label === 'start release'
     ) {
       return { done: true, reason: '' }
+    }
+    if (label === 'list patterns') {
+      return { patterns: [] }
     }
     if (label === 'show') {
       return {
@@ -162,7 +179,17 @@ describe('design-session', () => {
       ],
       ['a set id with capitals', { ...ARGS, set: 'Plants' }, /set must be/],
       ['no requests', { ...ARGS, requests: [] }, /requests must be/],
-      ['a blank request', { ...ARGS, requests: ['  '] }, /requests must be/]
+      ['a blank request', { ...ARGS, requests: ['  '] }, /requests must be/],
+      [
+        'a mandate with no recorded id',
+        { ...ARGS, designerMandate: { id: 'go ahead' } },
+        /designerMandate must be/
+      ],
+      [
+        'a mandate given as words',
+        { ...ARGS, designerMandate: MANDATE_WORDS },
+        /designerMandate must be/
+      ]
     ])('%s', async (_, args, message) => {
       const { agent } = makeAgent()
       await expect(runWorkflow(args, { agent })).rejects.toThrow(message)
@@ -679,6 +706,243 @@ describe('design-session', () => {
       await runWorkflow(ARGS, { agent })
       const build = calls.find((call) => call.opts.label === 'build 1').prompt
       expect(build).toContain(REPO)
+    })
+  })
+
+  describe("a designer's mandate", () => {
+    const WITH_MANDATE = { ...ARGS, designerMandate: { id: MANDATE_ID } }
+    const PATTERN_FILES = `src/server/app/sets/${SET}/assets/**, src/server/app/sets/${SET}/layout.njk, src/server/app/sets/${SET}/patterns.md or src/server/app/sets/${SET}/mandates.md`
+    const NO_MANDATE_RAIL = `- This session has no designer's mandate. Never create or change ${PATTERN_FILES}, and never add an app-* class.`
+    const promptOf = (calls, label) =>
+      calls.find((call) => call.opts.label === label).prompt
+    const builderPrompts = (calls) =>
+      calls
+        .filter(
+          (call) =>
+            call.opts.label.startsWith('build') ||
+            call.opts.label.startsWith('repair')
+        )
+        .map((call) => call.prompt)
+    const failingOnce = (count) => ({
+      passed: count > 1,
+      summary: 'Release styles and scripts failed',
+      logPath: 'x.log',
+      changed: []
+    })
+
+    it('reads the recorded words back before classifying, with the mandate show command', async () => {
+      const { agent, calls } = makeAgent()
+      await runWorkflow(WITH_MANDATE, { agent })
+      expect(labels(calls).slice(0, 3)).toEqual([
+        'confirm mandate',
+        'classify',
+        'prepare'
+      ])
+      expect(promptOf(calls, 'confirm mandate')).toContain(
+        `Run: npm --prefix ${REPO} run designer:mandate -- show --set ${SET} --id ${MANDATE_ID}`
+      )
+    })
+
+    it("quotes the designer's words, scope and id in every builder's brief, and lets it build a release pattern", async () => {
+      const { agent, calls } = makeAgent({ 'check 1': failingOnce })
+      await runWorkflow(WITH_MANDATE, { agent })
+      const briefs = builderPrompts(calls)
+      expect(briefs).toHaveLength(4)
+      for (const brief of briefs) {
+        expect(brief).toContain(`DESIGNER'S MANDATE ${MANDATE_ID}`)
+        expect(brief).toContain(`  Words: "${MANDATE_WORDS}"`)
+        expect(brief).toContain('  Scope: commodity-search')
+        expect(brief).toContain(`Asked by: "${MANDATE_WORDS}" (${MANDATE_ID})`)
+        expect(brief).toContain(
+          'Climb the ladder first: GOV.UK Frontend, then MoJ Frontend.'
+        )
+        expect(brief).toContain(
+          'Give every patterns.md entry you add Status: Option, for the designer to choose, even when you build only one.'
+        )
+        expect(brief).toContain(
+          `Never create or change src/server/app/sets/${SET}/mandates.md, and never run designer:mandate.`
+        )
+        expect(brief).toContain('No script checks the scope')
+        expect(brief).not.toContain(NO_MANDATE_RAIL)
+      }
+    })
+
+    it('runs every check against the starting commit and the mandate, without the no-new-patterns flag', async () => {
+      const { agent, calls } = makeAgent({ 'check 1': failingOnce })
+      await runWorkflow(WITH_MANDATE, { agent })
+      for (const label of ['check 1', 'recheck 1', 'check 2', 'full check']) {
+        expect(promptOf(calls, label)).toContain(
+          `--since ${BASE_COMMIT} --mandate ${MANDATE_ID}`
+        )
+        expect(promptOf(calls, label)).not.toContain('--no-new-patterns')
+      }
+      expect(promptOf(calls, 'repair 1')).toContain(
+        `If it says a pattern must cite the designer's mandate ${MANDATE_ID}, or must be an Option`
+      )
+    })
+
+    it('stops before any change under a mandate with no starting commit', async () => {
+      const { agent, calls } = makeAgent({
+        prepare: { ready: true, branch: 'main', baseCommit: '', reason: '' }
+      })
+      await runWorkflow(WITH_MANDATE, { agent })
+      expect(labels(calls)).toEqual(['confirm mandate', 'classify', 'prepare'])
+    })
+
+    it('offers the custom-pattern reference to the judge only under a mandate', async () => {
+      const withMandate = makeAgent()
+      await runWorkflow(WITH_MANDATE, { agent: withMandate.agent })
+      expect(promptOf(withMandate.calls, 'classify')).toContain(
+        'fake-a-service, custom-pattern'
+      )
+
+      const without = makeAgent()
+      await runWorkflow(ARGS, { agent: without.agent })
+      expect(promptOf(without.calls, 'classify')).not.toContain(
+        'custom-pattern'
+      )
+      expect(promptOf(without.calls, 'classify')).toContain(
+        'Ask in your own words, with what you want research to learn, and it can be built.'
+      )
+    })
+
+    it('builds a custom-pattern part with the full check under a mandate', async () => {
+      const routes = [
+        { ...ROUTES[0], skill: 'custom-pattern' },
+        ROUTES[1],
+        ROUTES[2]
+      ]
+      const { agent, calls } = makeAgent({
+        classify: {
+          releaseOk: true,
+          releaseMissing: false,
+          releaseReason: '',
+          sessionSlug: 'x',
+          requests: routes
+        }
+      })
+      await runWorkflow(WITH_MANDATE, { agent })
+      expect(promptOf(calls, 'build 1')).toContain(
+        '~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/custom-pattern.md'
+      )
+      expect(promptOf(calls, 'check 1')).toContain('--full')
+    })
+
+    it('refuses a custom-pattern part when no mandate was given', async () => {
+      const routes = [
+        { ...ROUTES[0], skill: 'custom-pattern' },
+        ROUTES[1],
+        ROUTES[2]
+      ]
+      const { agent, calls } = makeAgent({
+        classify: {
+          releaseOk: true,
+          releaseMissing: false,
+          releaseReason: '',
+          sessionSlug: 'x',
+          requests: routes
+        }
+      })
+      await runWorkflow(ARGS, { agent })
+      expect(labels(calls)).not.toContain('build 1')
+    })
+
+    it('lists every pattern patterns.md shows this session added or changed, the options for the designer to choose, and picks none', async () => {
+      const { agent, calls } = makeAgent({
+        'list patterns': {
+          patterns: [
+            { name: 'Commodity search: list', status: 'Option' },
+            { name: 'Commodity search: cards', status: 'Option' },
+            { name: 'Tabs on the dashboard', status: 'Open' }
+          ]
+        }
+      })
+      const log = vi.fn()
+      await runWorkflow(WITH_MANDATE, { agent, log })
+      expect(promptOf(calls, 'list patterns')).toContain(
+        `Run: git -C ${REPO} diff ${BASE_COMMIT} -- src/server/app/sets/${SET}/patterns.md`
+      )
+      expect(logText(log)).toContain(
+        `Options for you to choose, in src/server/app/sets/${SET}/patterns.md: "Commodity search: list", "Commodity search: cards". Say which to keep, and the others are closed.`
+      )
+      expect(logText(log)).toContain(
+        `Release patterns this session changed, in src/server/app/sets/${SET}/patterns.md: "Tabs on the dashboard" (Open).`
+      )
+    })
+
+    it('never lists patterns when there is no mandate', async () => {
+      const { agent, calls } = makeAgent()
+      await runWorkflow(ARGS, { agent })
+      expect(labels(calls)).not.toContain('list patterns')
+    })
+
+    it('says so and keeps the rail when the mandate cannot be read', async () => {
+      const { agent, calls } = makeAgent({
+        'confirm mandate': {
+          found: false,
+          words: '',
+          scope: '',
+          reason: 'No mandate m-2026-10-27-1 in this release.'
+        }
+      })
+      const log = vi.fn()
+      await runWorkflow(WITH_MANDATE, { agent, log })
+      for (const brief of builderPrompts(calls)) {
+        expect(brief).toContain(NO_MANDATE_RAIL)
+        expect(brief).not.toContain("DESIGNER'S MANDATE")
+      }
+      expect(promptOf(calls, 'check 1')).toContain(
+        `--since ${BASE_COMMIT} --no-new-patterns`
+      )
+      expect(logText(log)).toContain(
+        `The designer's mandate ${MANDATE_ID} could not be read from src/server/app/sets/${SET}/mandates.md (No mandate m-2026-10-27-1 in this release.), so this session built no release patterns.`
+      )
+    })
+
+    it('puts the explicit rail in every builder brief when there is no mandate', async () => {
+      const { agent, calls } = makeAgent({ 'check 1': failingOnce })
+      await runWorkflow(ARGS, { agent })
+      const briefs = builderPrompts(calls)
+      expect(briefs).toHaveLength(4)
+      for (const brief of briefs) {
+        expect(brief).toContain(NO_MANDATE_RAIL)
+        expect(brief).toContain(
+          'build the nearest GOV.UK option and add a row to src/server/app/sets/plants-working/design-gaps.md'
+        )
+      }
+      expect(promptOf(calls, 'repair 1')).toContain(
+        'Never edit mandates.md or patterns.md to make it pass.'
+      )
+    })
+
+    it('checks every change and the full check against the starting commit when there is no mandate', async () => {
+      const { agent, calls } = makeAgent({ 'check 1': failingOnce })
+      await runWorkflow(ARGS, { agent })
+      for (const label of ['check 1', 'recheck 1', 'check 2', 'full check']) {
+        expect(promptOf(calls, label)).toContain(
+          `--since ${BASE_COMMIT} --no-new-patterns`
+        )
+      }
+      expect(promptOf(calls, 'prepare')).toContain(
+        `Run: git -C ${REPO} rev-parse HEAD`
+      )
+    })
+
+    it('stops before any change when there is no starting commit', async () => {
+      const { agent, calls } = makeAgent({
+        prepare: {
+          ready: true,
+          branch: 'main',
+          baseCommit: '',
+          reason: ''
+        }
+      })
+      const log = vi.fn()
+      await runWorkflow(ARGS, { agent, log })
+      expect(labels(calls)).toEqual(['classify', 'prepare'])
+      expect(logText(log)).toContain(
+        'Stopped before any change: the prepare step did not give the starting commit'
+      )
     })
   })
 })

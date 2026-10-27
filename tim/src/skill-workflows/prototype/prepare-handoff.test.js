@@ -303,3 +303,98 @@ describe('prepare-handoff: route C1, real run', () => {
     expect(prompt).toContain('house-conventions.md')
   })
 })
+
+describe('prepare-handoff: release patterns', () => {
+  const REAL_ARGS = { ...ARGS, route: 'C1', dryRun: false }
+  const WITH_PATTERNS = {
+    ...PLAN_ANSWER,
+    patternRequests: ['Commodity search', 'Tabs on the dashboard']
+  }
+
+  it('asks the plan for pattern requests and keeps them out of elements', async () => {
+    const agent = answers({ plan: WITH_PATTERNS })
+    const log = vi.fn()
+    const result = await runWorkflow(ARGS, { agent, log })
+    expect(promptFor(agent, 'plan')).toContain(
+      'A pattern request is never an element: it is not built here'
+    )
+    expect(result.elements).toEqual(PLAN_ANSWER.elements)
+    expect(result.patternRequests).toEqual([
+      'Commodity search',
+      'Tabs on the dashboard'
+    ])
+    expect(log.mock.calls.at(-1)[0]).toContain(
+      'Pattern requests, not built here (the real team builds each from its evidence in the story): Commodity search, Tabs on the dashboard'
+    )
+  })
+
+  it('builds only the elements, never a pattern request', async () => {
+    const agent = answers({ plan: WITH_PATTERNS })
+    await runWorkflow(REAL_ARGS, { agent })
+    expect(
+      labels(agent).filter((label) => label.startsWith('element'))
+    ).toEqual(['element 1'])
+  })
+
+  it('tells every real-repo step that a release pattern never becomes code', async () => {
+    const agent = answers({ plan: WITH_PATTERNS })
+    await runWorkflow(REAL_ARGS, { agent })
+    for (const label of ['apply starting patch', 'element 1', 'ladder 1']) {
+      expect(promptFor(agent, label)).toContain(
+        `Never add Sass, client JavaScript or app-* classes to ${PLANTS_FRONTEND}/src/client/** for one`
+      )
+    }
+  })
+
+  it('fails the ladder on src/client, Sass or app-* code the patch did not carry', async () => {
+    const agent = answers()
+    await runWorkflow(REAL_ARGS, { agent })
+    const ladder = promptFor(agent, 'ladder 1')
+    expect(ladder).toContain(
+      `- Run: git -C ${PLANTS_FRONTEND} diff --name-only origin/main`
+    )
+    expect(ladder).toContain(
+      `- Read the file names in ${HANDOFF}/upstream.patch`
+    )
+    expect(ladder).toContain(
+      'that upstream.patch does not name and that is under src/client/** or ends .scss, and for each app-* class added on this branch'
+    )
+    expect(ladder).toContain(
+      'passed is true only when every script that exists succeeds and the pattern-code check finds nothing.'
+    )
+  })
+
+  it('fails the ladder on a release class or release layout even when upstream.patch adds it', async () => {
+    const agent = answers()
+    await runWorkflow(REAL_ARGS, { agent })
+    const ladder = promptFor(agent, 'ladder 1')
+    expect(ladder).toContain(
+      '- Run: ls ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets'
+    )
+    expect(ladder).toContain(
+      'It also fails, whether or not upstream.patch adds it, for each "+" line of that diff that names an app-<set>- class for any set that ls lists (app-high-risk-plants- included), or that extends any layout other than "shared/layout.njk"'
+    )
+  })
+
+  it('has a repair take out pattern code rather than keep it', async () => {
+    const agent = answers({
+      ladder: [
+        {
+          passed: false,
+          failures: [
+            {
+              command: 'pattern-code check',
+              summary:
+                'src/client/stylesheets/components/_commodity-search.scss'
+            }
+          ]
+        },
+        { passed: true, failures: [] }
+      ]
+    })
+    await runWorkflow(REAL_ARGS, { agent })
+    expect(promptFor(agent, 'repair 1')).toContain(
+      'A "pattern-code check" failure means a release pattern became code: take out the file or class it names.'
+    )
+  })
+})

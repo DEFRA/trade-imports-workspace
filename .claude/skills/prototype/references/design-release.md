@@ -65,6 +65,8 @@ The chooser tags each set: **Real journey, updates weekly** (high-risk-plants),
   releases slows every restart. Offer to retire the oldest.
 - **No tests in a release.** `new:set` leaves out the real journey's tests,
   browser tests, docs and requirement files on purpose. Never copy them in.
+  A release pattern's own `assets/<name>.test.js` is the one test a
+  release keeps.
 - **One Bash command per call.** No `&&`, `;` or pipes. Never `--no-verify`,
   never force-push, never push or open a pull request without asking.
 
@@ -162,6 +164,13 @@ to stay as it is.
    dr2"); give a title whenever the designer named the release ("design
    release 2" becomes `--title "Design release 2"`). The output lists what it
    left out (tests, docs, requirement files) and the next steps.
+
+   Copying a design release that has release patterns keeps its `assets/`,
+   `layout.njk`, `patterns.md` and `mandates.md`, renames its classes to the
+   new id, and marks each entry `Copied from: <release> on <date>`. Tell
+   the designer in one line that each copied pattern works for research
+   straight away, but needs them to ask for it again in this release before
+   it is handed off (`references/hand-off.md`, step 10).
 
 5. **Tidy the new lines:**
 

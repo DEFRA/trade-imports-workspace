@@ -1,16 +1,22 @@
 # The design gaps log
 
-A design gap is something the design asks for that this prototype cannot
-build with the GOV.UK toolbox the real service loads. Each release keeps its
-own log at `src/server/app/sets/<release-id>/design-gaps.md`. The log is the
-designer's own file (it sits inside the release), and
-`references/hand-off.md` copies its rows into the brief for the plants team.
+A design gap is something the design asks for that was not built. Each
+release keeps its own log at `src/server/app/sets/<release-id>/design-gaps.md`.
+The log is the designer's own file (it sits inside the release), and
+`references/hand-off.md` copies its rows into the brief for the plants team,
+beside the release's patterns.
+
+Built it on purpose, in the release's `assets/`, because the designer asked?
+That is a release pattern, not a gap: see `release-patterns.md` beside this
+file.
 
 Log a gap when:
 
 - the nearest GOV.UK option was built instead of what the design shows
-- the ask needs Sass, client JavaScript, a new webpack entry or a change to
-  `src/client/**`
+- the ask needs Sass, client JavaScript or a script switched on, and the
+  designer has not asked for a release pattern
+- the ask needs a change to `src/client/**` or a new webpack entry outside
+  the release's `assets/`
 - the ask needs the shared layout (`src/server/app/shared/layout.njk`): the
   header, service navigation, phase banner or footer
 - a component would render unstyled or without its script (see
@@ -27,8 +33,8 @@ gap is closed, change its "Why" cell to start with "Closed:" and say how.
 ```text
 # Design gaps: <release-id>
 
-Things the design asks for that the GOV.UK toolbox in this prototype cannot
-build yet. Each row travels with the hand-off brief.
+Things the design asks for that were not built. Each row travels with the
+hand-off brief.
 
 | Page | What the design wants | Closest option built | Why | Frame |
 | --- | --- | --- | --- | --- |

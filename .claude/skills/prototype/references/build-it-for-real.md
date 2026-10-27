@@ -48,6 +48,12 @@ purpose, say); when either points to C2, take C2.
 - **Never push, open a pull request, merge, or launch `requirements-pipeline`
   BUILD.** This route's job ends at a local commit (C1) or a written request
   document (C2).
+- **A release pattern is built for real from its request and evidence,
+  never from the release's code.** The brief's "Pattern requests" are not
+  elements: neither route copies a release's `assets/`, Sass, scripts or
+  `app-<release>-` classes into `trade-imports-plants-frontend`. A pattern
+  request goes in the story (C1) or the DISTIL request (C2) for the real
+  team to build to the real service's standards.
 - **Requires a clean checkout of `trade-imports-plants-frontend`** before
   starting: `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
   must print nothing. If it does not, stop and say so: something else is

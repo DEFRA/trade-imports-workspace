@@ -144,7 +144,9 @@ Also skip these, because they change files the whole prototype shares:
   step 9). `webpack.config.js` and `src/client/` belong to the real service.
   Use a server-rendered GOV.UK component instead. If the design truly needs
   script, record it as a design gap (`references/match-the-design.md` explains
-  how) and stop.
+  how) and stop. Or, when the designer has asked for it, write it as a module
+  in the release's `assets/` with a `patterns.md` entry
+  (`references/custom-pattern.md`).
 
 Do not skip anything else. The boot guards still apply in a release: the
 prototype refuses to start if an obligation has no page, no feature binding,

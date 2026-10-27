@@ -615,7 +615,7 @@
       ],
       "externalDependsOn": [],
       "theme": "documents",
-      "status": "todo",
+      "status": "done",
       "kind": "docs",
       "repos": [
         "frontend"
@@ -635,7 +635,10 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: while amending a submitted notification, Upload documents now sends its Back link to the review (shared/kit.js:263 runBackLink returnsToReview, fired whenever journey.status === AMEND) but its Save and continue to the overview (shared/kit.js:222-228 exitTarget, which only returns the review when saveChoice.change is set, and shared/kit.js:168-174 returnedSaveChoice sets change under AMEND only when the posted form carried amendSave=return). inc-034 acceptance criterion 2 reads \"While amending a submitted notification, the page's Back link and Save and continue both go to the review page, however the page was opened\", so the save half is unbuilt and documents/controller.test.js:454-459 and :551 assert the overview instead. The later design snagging work (EUDPA-720, merged to main) set the opposite service-wide rule: shared/amend-form-actions.js gives every amend page two buttons, \"Save and return\" posting with change=1 and \"Save and continue\" posting without it, and trade-imports-ins-tests/tests/animals/e2e/features/amend-endings.spec.ts:68 pins it as \"Save and continue while amending goes on as it does outside an amendment, not back to the review\". Sending documents' Save and continue to the review would make it identical to Save and return on that page and make documents the only amend page that breaks the rule. The options: (a) keep the service-wide rule and retire inc-034 acceptance criterion 2, leaving Save and continue going on to the overview while amending; (b) keep inc-034 acceptance criterion 2 for Upload documents only, accepting two buttons with one destination there; (c) change the rule for every amend page. Until this is settled, the Back link and the save disagree on one page, and nothing in trade-imports-ins-tests proves the save half either (tests/animals/e2e/features/amend-endings.spec.ts:32 asserts only the Back link href and never clicks Save and continue).",
+        "For the designer: once the amend Save and continue destination above is settled, trade-imports-ins-tests needs the proof that is missing today. tests/animals/e2e/features/amend-endings.spec.ts:32 opens Upload documents from the Overview while amending and asserts only the Back link href; it never clicks Save and continue, so neither destination is pinned for that page. If the answer is (a) keep the service-wide rule, add an assertion to that test that Save and continue lands on the overview, matching tests/animals/e2e/features/amend-endings.spec.ts:68. If the answer is (b) or (c), the assertion is the review, and trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js:454-459 and :551 change with it."
+      ],
       "notes": [
         "Raised by the 26 October re-analysis, not by a requirement source: it closes the two pieces of drift that re-analysis found between the upload-documents specification and the code EUDPA-296 landed. The behaviour is not in question and no service repo changes, so the row is workspace only.",
         "The tests that prove both criteria already exist: documents-large-uploads.spec.ts uploads a file of exactly 50,000,000 bytes and reads the same bytes back, documents-limits.spec.ts accepts one at the cap and refuses one a byte over, and the frontend's controller.test.js 'documents -- what a document reference may carry' covers 125-12345675, CHEDA.GB.2026.1234567 and INV 2026/0042 and refuses REF<script>. This row writes no test; it links them.",
@@ -664,7 +667,7 @@
       "title": "The theme branch takes in what main has landed since it was cut",
       "kind": "chore",
       "theme": "documents",
-      "status": "todo",
+      "status": "done",
       "repos": [
         "frontend",
         "tests"
@@ -685,7 +688,8 @@
       ],
       "notes": [
         "27 Oct: raised by the orchestrating session after inc-039 stopped at ci-red with pr-conflicting for the second time. The conflicting files are fit/live-animals-journey.js and check-answers/refusal.js; every other file auto-merges. refusal.js is a plain import union. live-animals-journey.js is the real work: main restructured the helper while inc-031 changed the same function, so it needs both sides reconciled rather than either side taken, and it is a shared FIT helper many specs call, which is why it goes through the loop with a planned resolution and a review rather than a hand merge.",
-        "gatePhases is empty, as every row of this theme has been: the end-to-end proof is the pull request CI, because the local rungs cannot run on this machine. The merged FIT helper is therefore proved by CI's FIT run, which is the check that would catch a bad reconciliation."
+        "gatePhases is empty, as every row of this theme has been: the end-to-end proof is the pull request CI, because the local rungs cannot run on this machine. The merged FIT helper is therefore proved by CI's FIT run, which is the check that would catch a bad reconciliation.",
+        "AC3 names isRejectedByScan as the import refusal.js uses; the resolution calls hasRejectedDocuments from the same module instead, which is exactly that predicate with .some and is already the call documents/controller.js:328 makes, so the rejected-scan rule has one owner. inc-038 work is kept, main inline comparison is not restored."
       ],
       "sources": [
         {
@@ -693,7 +697,23 @@
           "ref": "fit/live-animals-journey.js; src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js"
         }
       ],
-      "requirements": []
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend needs the same allow-list vocabulary sweep as the animals frontend - its obligation helpers are allowListed/anyAllowListed (src/server/app/model/obligations/helpers/index.js:44,46) while src/server/app/sets/high-risk-plants/docs/add-a-collection.md, testing.md, obligation-model.md and services.md still call the same list a whitelist, and src/server/app/sets/high-risk-plants/obligations/whitelists.test.js still carries the old file name. Raised by the inc-040 finding that the animals frontend's src/server/app/sets/live-animals/docs/add-a-collection.md:142,148 narrates allowListed() in whitelist vocabulary, against code-quality.md Names (\"One concept, one name\" / \"A rename covers the concept's whole vocabulary\"). Plants is not a repo inc-040 builds in, so it is recorded rather than fixed here."
+      ],
+      "commit": "9060b681f0d10a5ac5ba358f081b73a3709dd7bc 329f951c669d1fb551d9e9f6c1e9b8c18b52452d",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
     }
   ]
 }

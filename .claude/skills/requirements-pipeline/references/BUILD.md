@@ -219,7 +219,9 @@ exact name, moves it onto the board, and puts the increment's repos on its
 branch. A branch an earlier attempt left behind is reused; if it has no
 commits of its own and the base has moved on, it is fast-forwarded to
 `origin/<base>` first, so the baseline never runs on a stale base. A branch
-with commits of its own is left as it is. A failure names its step and its exact reason, and the loop maps it to
+with commits of its own is left as it is, except the workspace repo's: that one
+gets `origin/<base>` merged into it, so the tim every later stage runs is the
+base's. A merge that conflicts stops the row, naming the files. A failure names its step and its exact reason, and the loop maps it to
 `derive-failed`, `no-buildable`, `ticket-failed` or `branch-failed`. See
 [`../workflow/README.md`](../workflow/README.md#the-start-stage).
 

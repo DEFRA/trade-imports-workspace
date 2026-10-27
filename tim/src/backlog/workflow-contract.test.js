@@ -6555,6 +6555,70 @@ describe('increment-build-loop', () => {
     const promptOf = (run, label) =>
       run.agents.find((entry) => entry.options.label === label).prompt
 
+    const startedWith = (fields) =>
+      startAnswer(
+        startedResult({
+          id: 'inc-020',
+          ticket: JSON.parse(ANSWERS['inc-020 start'].stdout).result.ticket,
+          branch: WORK_BRANCH,
+          repos: ROW_REPOS,
+          preexistingDirty: CARRIED,
+          preexistingDirtySummary: CARRIED_SUMMARY,
+          ...fields
+        })
+      )
+
+    describe('resuming a row whose workspace branch exists', () => {
+      test('says origin/main was merged into the workspace branch before any stage ran tim', async () => {
+        const run = await runFactory(
+          { stopAfter: 1 },
+          {
+            'inc-020 start': startedWith({
+              resumeAt: 'build',
+              branched: [
+                {
+                  repo: 'workspace',
+                  branch: WORK_BRANCH,
+                  head: 'abc1234',
+                  cut: false,
+                  from: null,
+                  caughtUpToBase: false,
+                  mergedBase: 'origin/main'
+                }
+              ]
+            })
+          }
+        )
+
+        expect(run.logs).toContain(
+          `inc-020: merged origin/main into ${WORK_BRANCH} in the workspace repo before any stage runs tim, so the tim it runs is current`
+        )
+      })
+
+      test('stops the row at the branch step, naming the files, when that merge conflicts', async () => {
+        const conflict = `workspace: merging origin/main into ${WORK_BRANCH} conflicts in tim/src/cli.js. The merge was undone. Merge origin/main into ${WORK_BRANCH} by hand, then run again.`
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 start': startedWith({
+              failedStep: 'branch',
+              reason: conflict
+            })
+          }
+        )
+
+        expect({
+          stopped: run.result.stopped.reason,
+          detail: run.result.increments[0].detail,
+          ranTimStage: labelsOf(run).includes('inc-020 baseline')
+        }).toEqual({
+          stopped: 'branch-failed',
+          detail: conflict,
+          ranTimStage: false
+        })
+      })
+    })
+
     const AWAITING_WORKSPACE_APPROVAL = {
       green: false,
       stopReason: 'awaiting-approval',

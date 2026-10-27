@@ -763,7 +763,11 @@ ticket and the loop stops at `not-landed`. In order, tim:
    exists locally with no commits of its own, pushed or not, is also fast-forwarded to
    `origin/<base>` when the base has moved on, so the increment never builds on a stale base;
    its entry in `branched` says `caughtUpToBase: true`. A branch with commits of its own is
-   left as it is: never rebased, never merged into. A repo with uncommitted work stops it
+   left as it is: never rebased, never merged into. The one exception is the workspace repo:
+   its existing branch gets `origin/<base>` merged into it (never rebased, never forced), so
+   every later stage runs the tim the base has, not an older one; its entry says
+   `mergedBase`. A merge that conflicts is undone and stops the row as `branch-failed`,
+   naming the files. A repo with uncommitted work stops it
    before any repo changes, except the workspace repo, whose uncommitted files travel across
    the switch and the fast-forward; one that either would overwrite stops it, naming the
    files. An upstream on another branch is removed.

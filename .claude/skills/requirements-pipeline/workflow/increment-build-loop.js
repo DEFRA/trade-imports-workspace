@@ -4529,6 +4529,10 @@ while (stopped === null) {
     if (repos.includes(WORKSPACE_KEY)) {
       workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
       workspaceLeftOn = workBranch
+      const workspaceMerge = (started.branched ?? []).find((entry) => entry.repo === WORKSPACE_KEY && entry.mergedBase)
+      if (workspaceMerge) {
+        log(`${id}: merged ${workspaceMerge.mergedBase} into ${workBranch} in the workspace repo before any stage runs tim, so the tim it runs is current`)
+      }
     }
     log(
       `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}, ${ticket.status}) on board ${JIRA_BOARD}, branch ${workBranch} in ${repos.join(', ')}, resuming at ${resumeAt}`

@@ -4,6 +4,12 @@
 
 The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
+A document reference's rules (REQ-DOCS-006) are not chosen here: the Live
+Animals and Germinals Data Fields page gives `accompanying_document_reference`
+as "string - max 58", the length agreed for every free-text reference and
+identifier in the service, and its character set is the alphanumerics plus the
+separators the references on real documents carry.
+
 ## Requirements
 
 ### Requirement: The page states its upload constraints before anything is added
@@ -108,7 +114,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of 58 characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value. Neither rule is chosen here: the Live Animals and Germinals Data Fields page gives `accompanying_document_reference` as "string - max 58", which is also the length agreed for every free-text reference and identifier in the service, and the character set is the alphanumerics plus the separators the references on real documents carry — an air waybill's hyphen, a TRACES certificate's full stops, and a commercial invoice's space and forward slash.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of 58 characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A

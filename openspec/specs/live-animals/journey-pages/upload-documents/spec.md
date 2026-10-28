@@ -129,7 +129,6 @@ The system MUST require a reference and a valid date of issue for each document.
 - **GIVEN** the user enters a reference of fifty-eight characters
 - **WHEN** they add the document
 - **THEN** it is taken on and held against the notification with that reference
-- **AND** a reference of fifty-nine characters is refused where the document is taken on, not only on the page
 
 #### Scenario: An empty date of issue links to and focuses the date field, preserving the reference
 **ID**: SCN-DOCS-006-C

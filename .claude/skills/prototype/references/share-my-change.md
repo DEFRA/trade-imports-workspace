@@ -156,6 +156,14 @@ saying so.
    plants-working: rename 'Consignment parties' to 'Consignment addresses' on 4 pages; Welsh needed
    ```
 
+   On `main`, end the body with a line `[no video]` unless the designer
+   asked for videos this time ("push it with video", "with the videos", "update
+   the demo page"). That line makes the push skip the walkthrough videos on
+   GitHub, so the deployed prototype is ready to share without waiting 25 to
+   50 minutes for them; the demo page keeps its last videos. Never add it on a
+   `design/*` or `handoff/*` branch: a pull request's demo page is the point
+   of that branch.
+
 3. Save it (the second `-m` is the body: pages, recipe used, design gaps):
 
    ```
@@ -219,10 +227,28 @@ plainly what happened: either this computer cannot send to the prototype yet
 (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
 then `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`, settling
 any clash as in `references/design-release.md` section G) and push again.
-Read `siteUrl` from `scripts/designer/prototype.json` (in the prototype
-repo) and tell the designer: "This is on `main` now. The deployed prototype
-and its demo page at `<siteUrl>` update once the pipeline runs, usually
-within about ten minutes." When they plan to send the deployed prototype's
+Take the deployed prototype's address from the workspace's `CLAUDE.local.md`
+(private to this computer, never committed), and `siteUrl` from
+`scripts/designer/prototype.json` (in the prototype repo). Tell the
+designer: "This is on `main` now. The deployed prototype at `<address>` has
+it in about 10 minutes: that is the link to send colleagues." With no
+address in `CLAUDE.local.md`, say the prototype maintainer has it, and offer
+to note it there once they give it. The address is kept out of every
+repository, commit, pull request and ticket, because they are public: only
+ever say it in the reply. Then, for a `[no video]` save: "No videos were
+made, so the demo page at `<siteUrl>` still shows the last ones. Say 'make
+the videos now' if you want it updated." For a save with videos: "The demo
+page at `<siteUrl>` updates once the videos are made, in 25 to 50 minutes."
+
+**"Make the videos now"** (after a `[no video]` push, or any time on `main`):
+start the pipeline on `main` by hand, which always makes the videos and
+updates the demo page, and say it takes 25 to 50 minutes:
+
+```
+gh workflow run "Check Pull Request" --repo DEFRA/trade-imports-plants-prototype --ref main
+```
+
+When they plan to send the deployed prototype's
 own address to anyone, add: "The deployed prototype can ask for a shared
 password (the `PROTOTYPE_PASSWORD` secret the maintainer sets in CDP); send
 it separately from the link. Without it, anyone with the link can use the

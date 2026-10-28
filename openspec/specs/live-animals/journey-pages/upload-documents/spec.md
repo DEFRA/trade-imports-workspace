@@ -108,7 +108,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of fifty-eight characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of 58 characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A
@@ -126,7 +126,7 @@ The system MUST require a reference and a valid date of issue for each document.
 
 #### Scenario: A reference of exactly the maximum length is taken on
 **ID**: SCN-DOCS-006-H
-- **GIVEN** the user enters a reference of fifty-eight characters
+- **GIVEN** the user enters a reference of 58 characters
 - **WHEN** they add the document
 - **THEN** it is taken on and held against the notification with that reference
 

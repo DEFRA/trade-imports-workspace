@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: 'service'
+      layer-cache:
+        description: 'Reuse the previous branch build''s layers from the GitHub Actions cache, kept per architecture'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -72,7 +77,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           provenance: false
           sbom: false
-          no-cache: true
+          no-cache: ${{ !inputs.layer-cache }}
+          cache-from: ${{ inputs.layer-cache && format('type=gha,scope={0}-{1}', inputs.image-name, matrix.arch) || '' }}
+          cache-to: ${{ inputs.layer-cache && format('type=gha,mode=max,scope={0}-{1}', inputs.image-name, matrix.arch) || '' }}
           outputs: >-
             type=image,"name=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }},defradigital/${{ inputs.image-name }}",push-by-digest=true,name-canonical=true,push=true
           labels: |

@@ -1,8 +1,30 @@
-# DR2.1 address book — handover (2026-10-19, updated 2026-10-27)
+# DR2.1 address book — handover (2026-10-19, updated 2026-10-28)
 
-## START HERE (2026-10-27): ticket 4 (EUDPA-710) built, at its gate
+## START HERE (2026-10-28): ticket 4 (EUDPA-710) merged; ticket 5 (EUDPA-706) next
 
-Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 and inc-202 are `done`, CI is green on every PR, and every branch is pushed. Its seven PRs are ready to agree with the team, with final descriptions written on 27 and 28 October:
+Tickets 1 to 4 are merged, and EUDPA-710 is Done in Jira. The workspace and every clone are on `main` with the latest pulled.
+
+**Next, in order:**
+1. **Ticket 5: EUDPA-706, the add page reached from a notification** (To Do). Rows inc-077, inc-078, inc-082 and inc-080; `tim backlog next` gives inc-077.
+   - inc-080 builds in `frontend` (the animals frontend) as well as `insfrontend` and `tests`. The theme backlog's envelope `repos` has no `frontend` key yet (it holds `addressbook`, `insfrontend`, `perftests`, `tests`). Add it before inc-080, as `ca1ba239` did for ticket 4, and add `trade-imports-animals-frontend` to the branches below.
+   - Open `feat/EUDPA-706-design-release-2-1-address-book-journey-add` in ins-frontend, ins-tests, animals-frontend and the workspace (from `main`), each with a draft PR.
+   - Before launching: pull every clone on `main`, take down any stack started by hand (`tim docker down`), check Docker's disk, and narrow the envelope's `repos` to the ticket's.
+   - Launch the loop with `lifecycle: 'branch'`, one increment at a time. Build runs commit their spec straight to the ticket's workspace branch.
+2. **The designer's answers to S-01, S-02 and S-03** (`../design-release-2-1/snagging.md`). EUDPA-710 merged as built, so each answer is now a change of its own: a `fix/EUDPA-710-…` branch from `main` in ins-frontend, ins-tests and the workspace, or a row on EUDPA-706 if it lands while ticket 5 is open. Move each to "Settled" when it lands.
+3. **Tune this machine** between increments: `tim build tune --write` (about an hour, needs the stack).
+
+**Raised:** [EUDPA-752](https://eaflood.atlassian.net/browse/EUDPA-752) (under EUDPA-641, relates to EUDPA-710): performance test the widened search, including its two worst cases, and drop `addressCountFrom`'s heading parameter.
+
+**Changed on 28 October:**
+- **An agentic review** added about 90 commits across the seven PRs before merge, including a `render-items.sh --write` fix to the review skill.
+- **Lighthouse CI runs `main`'s workflow against a PR's branch**, so a branch behind `main` can fail on a step `main` added (EUDPA-749's `merge-shard-reports.js`). Merge `main` into the ticket's branches before its PRs go up.
+- **The animals and plants pickers** name their page arithmetic (`apiPageHolding`, `servedAnotherPageSize`) instead of explaining it in a comment.
+
+Resume prompt: *"Read workareas/shared/dr21-address-book-tickets/HANDOVER.md and carry on with the next step."*
+
+## Ticket 4 (EUDPA-710) — built 2026-10-27, merged 2026-10-28
+
+Its seven PRs, merged together:
 
 | PR | Holds |
 |---|---|
@@ -12,12 +34,7 @@ Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 
 | [performance-tests #25](https://github.com/DEFRA/trade-imports-performance-tests/pull/25) | inc-202 |
 | [animals-frontend #446](https://github.com/DEFRA/trade-imports-animals-frontend/pull/446) | the address book client's page size docs; the picker's page arithmetic named, not commented |
 | [plants-frontend #128](https://github.com/DEFRA/trade-imports-plants-frontend/pull/128) | the same as animals #446 |
-| [workspace #172](https://github.com/DEFRA/trade-imports-workspace/pull/172) (draft) | the spec, the theme backlog, `snagging.md`, `deferred.md` |
-
-**Next, in order:**
-1. Get the designer's answers to S-01, S-02 and S-03 in `../design-release-2-1/snagging.md`. Apply each on `feat/EUDPA-710-design-release-2-1-address-book-list` and move it to "Settled".
-2. Agree the seven PRs with the team, mark #172 ready, and merge them together, address book first.
-3. Ticket 5 (EUDPA-706, journey add page: inc-077, 078, 082, 080). Open `feat/EUDPA-706-design-release-2-1-address-book-journey-add` in its repos with draft PRs, the workspace one **from `main`**. Pull every clone, then launch the loop with `lifecycle: 'branch'` one increment at a time.
+| [workspace #172](https://github.com/DEFRA/trade-imports-workspace/pull/172) | the spec, the theme backlog, `snagging.md`, `deferred.md`, this handover |
 
 **Changed on 27 October:**
 - **The workspace branch now comes from `main`.** The theme's backlog has been on `main` since #157, so planning moved from `chore/EUDPA-707-design-release-2-1-address-book-backlog` (built on Sam's combined branch, now history) to `feat/EUDPA-710-…-list`, which is also EUDPA-710's spec PR. Decision 3 below no longer applies: build runs commit straight to a ticket's main-based workspace branch, and nothing is moved by hand. We no longer need Sam to merge `main` into `feat/NO_JIRA-design-release-2-1`.
@@ -27,9 +44,7 @@ Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 
 - **Docker's disk filled up** (58 GB, 0 free), which killed MongoDB at stack start. `docker builder prune -f` freed 13 GB. Check `docker run --rm alpine df -h /` if the stack will not start.
 - **This machine is not tuned yet:** run `tim build tune --write` between increments (about an hour, needs the stack).
 
-**Follow-ups, not blocking** (all in `../design-release-2-1/deferred.md`): the animals picker asks for its own page size; the k6 worst-case search follows the wider search; tidy `addressCountFrom`; keep or drop the API's countryCode-only path; an address book API spec capability; shared add-form test builders in four ins-tests specs; the `sources.json` prototype path.
-
-Resume prompt: *"Read workareas/shared/dr21-address-book-tickets/HANDOVER.md and carry on with the next step."*
+**Follow-ups, not blocking** (all in `../design-release-2-1/deferred.md`): the animals picker asks for its own page size; the k6 worst-case search follows the wider search and `addressCountFrom` is tidied (both now EUDPA-752); keep or drop the API's countryCode-only path; an address book API spec capability; shared add-form test builders in four ins-tests specs; the `sources.json` prototype path.
 
 ## Ticket 3 (EUDPA-709) — built 2026-10-22, at its gate
 

@@ -118,6 +118,46 @@ Seeded state must be indistinguishable from state a user creates through the UI.
 - Seeded answers stay in step with the answers the journey flow clicks. `api-seed-parity.spec.ts` compares the two.
 - No Faker for a value the frontend serves or a picker chooses. Faker may only pick which canned entry to use, or fill a field a user types freely, such as an internal reference.
 
+## Animals domain: answers as data, journeys as translators
+
+The animals domain treats **`NotificationAnswers`** (`domain/animals/constants/journey-options.ts`) as the single source of what a notification says. The UI journey (`flows/animals/journey.ts`) and the seeded journey (`flows/animals/seeded-journey.ts`, `domain/animals/fixtures/seed-form-steps.ts`, `bin/seed-notification.ts`) only translate that data into clicks or form posts. Do not add parallel journey methods for a new scenario when a data change on the answers is enough.
+
+### One cow by default; multi-commodity is a list
+
+- Today `MANDATORY_ANSWERS` and `ALL_ANSWERS` describe a **single** cattle line (`species`, `noOfAnimals`, `earTag`, optional `passportNumber`, and so on).
+- **Multi-commodity** scenarios extend the model with **`commodityLines`**: each line holds the species, counts, and only the identifiers that species needs (cow: ear tag; cat: passport, microchip, owner address fields, and so on).
+- Express variants as ordinary spreads, the same way `ALL_ANSWERS` is derived from `MANDATORY_ANSWERS`:
+
+```typescript
+{ ...ALL_ANSWERS, commodityLines: [cowLine, catLine] }
+```
+
+- Drive **both** journeys from the lines:
+  - **UI:** loop in `answerCommodity` and `answerAnimalIdentification`. Reuse `selectSpecies`, `speciesCard`, `fillEveryPackageCount`, and similar helpers that already accept lists.
+  - **Seed:** loop `commoditySteps` over the lines. The frontend names per-line fields `<fieldId>-<lineIndex>`; post one species value per line and the cat-specific fields on index `1` (`animalIdentifierPassport-1`, `animalIdentifierMicrochip-1`, address fields with `-1`, and so on).
+- **Do not** add duplicate flows such as `answerCowAndCatCommodity`, `submitNotificationWithCowAndCat`, or species-only constants for one multi-commodity test. Existing `submitNotification` (and related `to*` methods) should handle the lines.
+
+Confirm line indices follow **selection order** on the commodity page; seeded posts depend on it. Keep `api-seed-parity.spec.ts` passing, and run multi-line answers through it when you add them.
+
+### Constants live under `domain/animals/constants/`
+
+- Add species and commodities in **`commodities.ts`** and **`commodity-species.ts`** using the same `{ value, display }` shape as cow.
+- Put passport, microchip, owner address, phone, and email on the **cat line in the answers**, not as literals in `journey.ts`.
+- Persistence and journey specs should read from **answers or constants**, not duplicated string literals (`'Cow'`, `'UK-CAT-1'`, commodity codes, and so on).
+
+### GBN-AG and INS expectations stay in the specs that need them
+
+- **`commodities`** and **`commoditySpecies`** are UI and domain pickers only (`value`, `display`). Do not add GBN-AG-only fields such as `lineDescription` or `gbnAgCommonName` on `commodities.cow`.
+- Expected outbound or aggregated strings belong in **`outbox-event-notification.spec.ts`**, **`aggregated-notification.spec.ts`**, or a small local constant in those files. If the aggregated read model’s commodity label changes (for example from display name to line description), say so in the pull request description.
+
+### Assertions
+
+- Assert the **one** shape the backend produces for identifiers (ear tag, passport, microchip). Avoid `??` chains that accept two shapes; a regression in either shape would still pass.
+
+### Legacy document fields
+
+- When keeping a legacy Mongo or API field for one release (for example `commodity` beside `commodities[]`), add a **TODO with a ticket key** for removal so it does not become permanent.
+
 ```typescript
 // Bad: an address that no picker on the page can produce
 const consignor = { name: faker.company.name(), postcode: faker.location.zipCode() };
@@ -264,6 +304,9 @@ E2E stability work removes causes of flakiness. Speed is a side effect, never th
 | A journey, lifecycle or persistence test that seeds | Loses the coverage its title claims |
 | Seeding by writing to the backend or database | State the UI never produces |
 | Faker or invented values | Data a user cannot produce |
+| A duplicate animals journey for one scenario (e.g. cow-and-cat-only methods) | Extend `NotificationAnswers` / `commodityLines` and loop in the existing flow |
+| GBN-AG strings on `commodities` / `commoditySpecies` constants | Keep `{ value, display }`; put payload expectations in the outbox or INS specs |
+| Identifier assertions with `??` across two backend shapes | Assert the one shape you rely on |
 | A locator that filters out rendered items | Hides what the page shows |
 | Geometry asserted with a tolerance | Use a `@visual` baseline |
 | A flaky assertion deleted rather than made to wait | Loses the rule it stated |

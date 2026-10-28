@@ -560,7 +560,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 **ID**: SCN-INS-ADDR-027-C
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'
-- **THEN** the add form opens, headed 'Add address details'
+- **THEN** the add form opens, headed 'Add address and contact details' under the caption 'Add new address'
 - **WHEN** they select Back
 - **THEN** they return to the address book list
 
@@ -703,3 +703,50 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **GIVEN** the user has just added an address in France
 - **WHEN** they search for its name, for part of its address line 1, and for 'fran'
 - **THEN** each search lists the added address
+
+### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
+**ID**: REQ-INS-ADDR-033
+The system MUST head the add page 'Add address and contact details' under the caption 'Add new address', from the address book or from a notification journey. Reached from a journey's 'Add a new address', it MUST also show the notification's status block above the caption, and keep it when a refused save shows the page again.
+
+#### Scenario: Reached from a journey's role picker, the page is headed with its caption and title
+**ID**: SCN-INS-ADDR-033-A
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page opens, headed 'Add address and contact details' under the caption 'Add new address'
+
+#### Scenario: Reached from a journey, the page shows a Draft tag and the notification's reference
+**ID**: SCN-INS-ADDR-033-B
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** a 'Draft' tag and the notification's reference show above the caption
+
+#### Scenario: A refused save from a journey still shows the status block
+**ID**: SCN-INS-ADDR-033-C
+- **GIVEN** a trader on the add page reached from a notification journey
+- **WHEN** the address book refuses the address they save
+- **THEN** the add page shows again with the refusal
+- **AND** the 'Draft' tag and the notification's reference still show
+
+#### Scenario: Opened from the address book, the page shows its heading and caption with no status block
+**ID**: SCN-INS-ADDR-033-D
+- **GIVEN** the user is on the address book
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page is headed 'Add address and contact details' under the caption 'Add new address'
+- **AND** no status tag shows
+
+### Requirement: The add and edit forms give each personal-data field its browser autocomplete hint
+**ID**: REQ-INS-ADDR-034
+The system MUST give the name field the autocomplete hint 'organization', the address lines 'address-line1' and 'address-line2', the town or city 'address-level2', the postcode 'postal-code', the email address 'email' and the phone number 'tel', on both the add and the edit form. County and Country MUST carry no hint.
+
+#### Scenario: The add form carries the autocomplete hints
+**ID**: SCN-INS-ADDR-034-A
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** the name, address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'organization', 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** County and Country carry none
+
+#### Scenario: The edit form carries the autocomplete hints
+**ID**: SCN-INS-ADDR-034-B
+- **GIVEN** the user opens the edit form for an address
+- **WHEN** the page is shown
+- **THEN** the name, address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'organization', 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'

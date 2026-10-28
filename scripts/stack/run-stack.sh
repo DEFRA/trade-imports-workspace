@@ -178,6 +178,8 @@ recheck_tmpdir=""
 cleanup_probe_tmpdir() {
   [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"
   [ -n "$recheck_tmpdir" ] && rm -rf "$recheck_tmpdir"
+  [ -n "${pull_pid:-}" ] && kill "$pull_pid" 2>/dev/null
+  [ -n "${pull_log:-}" ] && rm -f "$pull_log"
   return 0
 }
 trap cleanup_probe_tmpdir EXIT
@@ -262,12 +264,38 @@ start_mongodb_first() {
   done
 }
 
+# Download every other image while mongo downloads and comes up, rather than
+# after it. The stack up below still pulls with --pull always, so a failure
+# here only costs the head start, and a tag that moves meanwhile is still
+# picked up.
+pull_services=()
+for svc in "${up_services[@]}"; do
+  [ "$svc" = "mongodb" ] || pull_services+=("$svc")
+done
+
+pull_pid=""
+pull_log=""
+if [ ${#pull_services[@]} -gt 0 ]; then
+  pull_log="$(mktemp)"
+  docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
+    pull --quiet --ignore-buildable "${pull_services[@]}" >"$pull_log" 2>&1 &
+  pull_pid=$!
+fi
+
 for svc in "${up_services[@]}"; do
   if [ "$svc" = "mongodb" ]; then
     start_mongodb_first
     break
   fi
 done
+
+if [ -n "$pull_pid" ]; then
+  if ! wait "$pull_pid"; then
+    print_error "the early image download failed; the stack up below downloads them again"
+    cat "$pull_log" >&2
+  fi
+  pull_pid=""
+fi
 
 up_args=(up --wait --detach --pull always)
 [ "$dev" -eq 1 ] && up_args+=(--build)

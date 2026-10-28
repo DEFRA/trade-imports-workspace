@@ -227,11 +227,15 @@ plainly what happened: either this computer cannot send to the prototype yet
 (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
 then `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`, settling
 any clash as in `references/design-release.md` section G) and push again.
-Read `deployedUrl` and `siteUrl` from `scripts/designer/prototype.json` (in
-the prototype repo) and tell the designer: "This is on `main` now. The
-deployed prototype at `<deployedUrl>` has it in about 10 minutes: that is the
-link to send colleagues." When `deployedUrl` is `null`, say the prototype
-maintainer has its address. Then, for a `[no video]` save: "No videos were
+Take the deployed prototype's address from the workspace's `CLAUDE.local.md`
+(private to this computer, never committed), and `siteUrl` from
+`scripts/designer/prototype.json` (in the prototype repo). Tell the
+designer: "This is on `main` now. The deployed prototype at `<address>` has
+it in about 10 minutes: that is the link to send colleagues." With no
+address in `CLAUDE.local.md`, say the prototype maintainer has it, and offer
+to note it there once they give it. The address is kept out of every
+repository, commit, pull request and ticket, because they are public: only
+ever say it in the reply. Then, for a `[no video]` save: "No videos were
 made, so the demo page at `<siteUrl>` still shows the last ones. Say 'make
 the videos now' if you want it updated." For a save with videos: "The demo
 page at `<siteUrl>` updates once the videos are made, in 25 to 50 minutes."

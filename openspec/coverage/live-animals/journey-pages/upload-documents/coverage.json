@@ -157,7 +157,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over the maximum length links to and focuses the preserved value", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference past the length the claim accepts, naming that length", "strength": "partial", "notes": "it asserts the message naming the limit and that nothing is added, and it neither renders the page nor asserts anything about the error summary linking or field focus" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference past the length the claim accepts, naming that length", "strength": "partial", "notes": "it asserts the message naming the limit and that nothing is added, and it neither renders the page nor asserts anything about the error summary linking or field focus" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should name the length the claim contract accepts in the reference refusal, in both locales", "strength": "partial", "notes": "pins the wording this scenario quotes, including the figure, in English and in Welsh; it asserts nothing about the field it links to or focuses" }
           ]
         },
         {
@@ -199,6 +200,17 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference carrying a character the claim would reject: %s", "strength": "full", "notes": "asserts the message on the Document reference field and that the notification's documents are unchanged; no fit or end-to-end test witnesses this refusal" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-H",
+          "name": "A reference of exactly the maximum length is taken on",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should name the length the claim contract accepts in the reference refusal, in both locales", "strength": "full", "notes": "the one test that pins the length at fifty-eight rather than deriving it: it asserts the literal message in both locales against the claim contract's constant; red probe: change the constant and both assertions fail" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "keeps a long reference inside the full-width card, with the table outside any two-thirds column", "strength": "partial", "notes": "uploads a reference of exactly the claim contract's maximum and asserts the saved row reaches a completed scan, so the page takes the maximum on; it derives its input from the same constant, so it witnesses the boundary and not the figure" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn200_whenDocumentReferenceIsAtTheMaximumLength", "strength": "full", "notes": "the claim endpoint accepts a reference of exactly the maximum; red probe: narrow @Size by one and it answers 400" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn400_whenDocumentReferenceIsOneCharacterOverTheMaximumLength", "strength": "full", "notes": "the claim endpoint refuses one character over the maximum, which is the half of this scenario the page cannot witness; red probe: widen @Size by one and it answers 200" }
           ]
         }
       ]
@@ -519,6 +531,48 @@
           "coverage": "partial",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/entry.fit.spec.js", "test": "opening the page by its own address shows it titled \"Upload documents\" with only the origin and the species answered", "strength": "partial", "notes": "no production line conditions this page on later answers, so no inversion isolates the assertion; the test still proves the page opens with the commodity details unanswered" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-021",
+      "name": "A document can still be uploaded after leaving the page and coming back to it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-021-A",
+          "name": "Going back after adding a document and adding another",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-back-button.spec.ts", "test": "adds a second document after the browser back button returns to the page", "strength": "full", "notes": "the with-JavaScript run, against the real upload service, which is the only place the reported fault reproduces" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-021-B",
+          "name": "Going back and adding another without client-side JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-back-button.spec.ts", "test": "adds a second document after the browser back button returns to the page", "strength": "full", "notes": "the without-JavaScript run of the same spec, where the response header alone has to carry the case" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-021-C",
+          "name": "A request naming a session that has already taken a file is given another",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should open a session of its own when the session the request names has already taken a file", "strength": "full", "notes": "red probe: disable the status check in handlers/add-form-session.js and the spent session is handed back instead" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should say which session had already taken a file, and that another was opened", "strength": "partial", "notes": "pins the two log lines and their ids, not the session the add form is given" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "opens the page again with a session of its own when the browser hands back a copy it kept", "strength": "full", "notes": "drives the browser's restored-page signal in a real browser and asserts the add form's upload path changes; red probe: stop registering the client guard in client/index.js and the path stays as it was" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-021-D",
+          "name": "The page is served for this user only and never kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "serves the page with no store, so the browser holds no copy to post a spent session from", "strength": "full", "notes": "reads the header off the served response; red probe: drop the header in view-model/render.js and hapi's route default is returned instead" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should forbid the browser storing the page it serves", "strength": "full", "notes": "the handler sets it on the page it renders; a sibling test covers the same for a page rendered with a refusal on it" }
           ]
         }
       ]

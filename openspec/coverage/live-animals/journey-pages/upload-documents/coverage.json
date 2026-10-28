@@ -207,10 +207,10 @@
           "name": "A reference of exactly the maximum length is taken on",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should name the length the claim contract accepts in the reference refusal, in both locales", "strength": "full", "notes": "the one test that pins the length at fifty-eight rather than deriving it: it asserts the literal message in both locales against the claim contract's constant; red probe: change the constant and both assertions fail" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "keeps a long reference inside the full-width card, with the table outside any two-thirds column", "strength": "partial", "notes": "uploads a reference of exactly the claim contract's maximum and asserts the saved row reaches a completed scan, so the page takes the maximum on; it derives its input from the same constant, so it witnesses the boundary and not the figure" },
-            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn200_whenDocumentReferenceIsAtTheMaximumLength", "strength": "full", "notes": "the claim endpoint accepts a reference of exactly the maximum; red probe: narrow @Size by one and it answers 400" },
-            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn400_whenDocumentReferenceIsOneCharacterOverTheMaximumLength", "strength": "full", "notes": "the claim endpoint refuses one character over the maximum, which is the half of this scenario the page cannot witness; red probe: widen @Size by one and it answers 200" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/document-uploads/stub.test.js", "test": "Should take on a reference of fifty-eight characters and refuse one of fifty-nine", "strength": "full", "notes": "both halves of this scenario against the frontend's own claim contract, at the two literal lengths rather than derived from the constant; red probe: change REFERENCE_MAX_LENGTH and the refusal half fails" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn200_whenDocumentReferenceIs58Chars", "strength": "full", "notes": "the claim endpoint accepts fifty-eight characters, asserted at the literal length; red probe: narrow @Size by one and it answers 400" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java", "test": "shouldReturn400_whenDocumentReferenceIs59Chars", "strength": "full", "notes": "the claim endpoint refuses fifty-nine characters, which is the half of this scenario no browser path reaches; red probe: revert @Size to 100 and it answers 200" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "keeps a long reference inside the full-width card, with the table outside any two-thirds column", "strength": "partial", "notes": "uploads a reference of exactly the claim contract's maximum and asserts the saved row reaches a completed scan, so the page takes the maximum on; it derives its input from the same constant, so it witnesses the boundary and not the figure" }
           ]
         }
       ]
@@ -568,7 +568,7 @@
         },
         {
           "id": "SCN-DOCS-021-D",
-          "name": "The page is served for this user only and never kept",
+          "name": "The page is served with the browser forbidden to store it",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "serves the page with no store, so the browser holds no copy to post a spent session from", "strength": "full", "notes": "reads the header off the served response; red probe: drop the header in view-model/render.js and hapi's route default is returned instead" },

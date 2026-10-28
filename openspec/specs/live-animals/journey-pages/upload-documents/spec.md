@@ -465,7 +465,7 @@ The system MUST offer and open the upload documents page with nothing beyond the
 
 ### Requirement: A document can still be uploaded after leaving the page and coming back to it
 **ID**: REQ-DOCS-021
-An upload session takes one file and is then closed to further files. The system MUST NOT offer the user a closed session to upload through, MUST NOT let the browser keep a copy of the page, and MUST open the page again when the browser hands back a copy it kept. The user MUST never be shown the upload service's own response in place of a page.
+An upload session takes one file and is then closed to further files. The system MUST NOT offer the user a closed session to upload through, MUST NOT let the browser keep a copy of the page, and MUST open the page again when the browser hands back a copy it kept.
 
 #### Scenario: Going back after adding a document and adding another
 **ID**: SCN-DOCS-021-A
@@ -485,7 +485,7 @@ An upload session takes one file and is then closed to further files. The system
 - **WHEN** the page is shown
 - **THEN** its add form uploads through a different session, opened and held against the notification
 
-#### Scenario: The page is served for this user only and never kept
+#### Scenario: The page is served with the browser forbidden to store it
 **ID**: SCN-DOCS-021-D
 - **GIVEN** the user opens the upload documents page
 - **WHEN** the page is served

@@ -2,7 +2,7 @@
 
 ## START HERE (2026-10-27): ticket 4 (EUDPA-710) built, at its gate
 
-Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 and inc-202 are `done`, CI is green on every PR, and every branch is pushed. Its five PRs are ready to agree with the team, with final descriptions written on 27 October:
+Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 and inc-202 are `done`, CI is green on every PR, and every branch is pushed. Its seven PRs are ready to agree with the team, with final descriptions written on 27 and 28 October:
 
 | PR | Holds |
 |---|---|
@@ -10,11 +10,13 @@ Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 
 | [ins-frontend #65](https://github.com/DEFRA/trade-imports-ins-frontend/pull/65) | inc-063, inc-069, inc-202 |
 | [ins-tests #53](https://github.com/DEFRA/trade-imports-ins-tests/pull/53) | inc-063, inc-069, inc-202 (also merges `main`) |
 | [performance-tests #25](https://github.com/DEFRA/trade-imports-performance-tests/pull/25) | inc-202 |
+| [animals-frontend #446](https://github.com/DEFRA/trade-imports-animals-frontend/pull/446) | the address book client's page size docs; the picker's page arithmetic named, not commented |
+| [plants-frontend #128](https://github.com/DEFRA/trade-imports-plants-frontend/pull/128) | the same as animals #446 |
 | [workspace #172](https://github.com/DEFRA/trade-imports-workspace/pull/172) (draft) | the spec, the theme backlog, `snagging.md`, `deferred.md` |
 
 **Next, in order:**
 1. Get the designer's answers to S-01, S-02 and S-03 in `../design-release-2-1/snagging.md`. Apply each on `feat/EUDPA-710-design-release-2-1-address-book-list` and move it to "Settled".
-2. Agree the five PRs with the team, mark #172 ready, and merge them together, address book first.
+2. Agree the seven PRs with the team, mark #172 ready, and merge them together, address book first.
 3. Ticket 5 (EUDPA-706, journey add page: inc-077, 078, 082, 080). Open `feat/EUDPA-706-design-release-2-1-address-book-journey-add` in its repos with draft PRs, the workspace one **from `main`**. Pull every clone, then launch the loop with `lifecycle: 'branch'` one increment at a time.
 
 **Changed on 27 October:**

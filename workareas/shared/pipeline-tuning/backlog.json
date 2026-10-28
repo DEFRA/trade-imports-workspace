@@ -580,6 +580,83 @@
         }
       ],
       "commit": "17c3c0b597301daba9616311d5cefa7f87ec4b95"
+    },
+    {
+      "id": "inc-012",
+      "title": "The stack downloads every image at once",
+      "detail": "run-stack.sh starts MongoDB on its own first, with its retry for the fresh-volume race, and only then starts downloading the other images. So MongoDB's download (about 33 s on CI) runs before the rest begin. Download every image the run needs at the same time, keep MongoDB coming up first with its retry, and let it start as soon as its own image is in, while the rest are still downloading.",
+      "acceptanceCriteria": [
+        "On CI, MongoDB's download overlaps the other images' downloads, and the stack start step is measurably shorter on average over 3 runs than on main, on the end-to-end shards and on smoke, with Lighthouse measured after merge (ruling: Sam 28 Oct; the 30 s target was an estimate, the measured saving is about 20 s: e2e 145.9 s to 125.7 s, smoke 123.7 s to 103.8 s)",
+        "MongoDB still comes up alone and healthy before the rest of the stack starts, with the same retry on the fresh-volume race (ruling: Sam 28 Oct)",
+        "Every service still pulls its latest image for the branch or latest tag, as today with --pull always, so nothing runs a stale image (ruling: Sam 28 Oct)",
+        "The script works the same locally: run-stack.sh with --branch, --dev, -e and --profile behaves as before (ruling: Sam 28 Oct)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-28",
+          "ref": "Do number one: download every image at once"
+        }
+      ],
+      "requirements": [
+        "stack-1"
+      ],
+      "notes": [
+        "Evidence: workspace run 40713462848, shard 1, Start stack 166 s: MongoDB pull 15:12:00 to 15:12:33, healthy 15:12:40, then 21 other images pulled 15:12:40 to 15:13:43, then start and health 15:13:43 to 15:14:38.",
+        "Sam, 28 Oct: hard no to loosening the start-up chain (depends_on, healthcheck intervals). Do not touch either.",
+        "The stack is stood up by the workspace e2e workflow, the security active scan, the performance-tests smoke run and both frontends' Lighthouse workflows, all through scripts/stack/run-stack.sh, so this one change reaches them all."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-pull-images-at-once",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/183",
+          "repo": "workspace",
+          "number": 183
+        }
+      ],
+      "commit": "81e8a6ed"
+    },
+    {
+      "id": "inc-013",
+      "title": "Find out whether a layer cache makes standing up the stack faster",
+      "detail": "Investigate, on real CI runs, whether caching image layers between runs cuts the roughly 63 to 96 s the stack spends downloading images. Stable outside images (SQL Server, MongoDB, the Service Bus emulator, the AWS stand-in, the upload service, Redis) rarely change, and a branch image usually shares most of its layers with latest, so a seeded cache would leave only the changed layers to download. Try more than one way of caching, measure each against today, and build the best one only if it clearly wins.",
+      "acceptanceCriteria": [
+        "For each service image the stack uses, the report says how big it is and how many of a branch image's layers it shares with latest, from real images (ruling: Sam 28 Oct)",
+        "At least two ways of caching are measured on real CI runs against today's download, each over at least 3 runs: for example docker save and load through actions/cache, and restoring Docker's own storage with the daemon stopped. Each records restore time, download time after restore and the stack start step in all (ruling: Sam 28 Oct)",
+        "The report says, with those numbers, whether caching wins, by how much per stack, what it costs in cache space against the GitHub Actions cache limit for a calling repo, and how it is kept fresh (ruling: Sam 28 Oct)",
+        "If a way wins by at least 20 s per stack on average, it is built into the shared stack start: the cache only seeds layers, every service still pulls with --pull always so nothing runs a stale image, and a cache miss or failed restore falls back to today's download (ruling: Sam 28 Oct)"
+      ],
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-28",
+          "ref": "Investigate the use of a cache rather than swearing it off"
+        }
+      ],
+      "requirements": [
+        "stack-2"
+      ],
+      "notes": [
+        "Sam, 28 Oct: no paid options (bigger, custom or self-hosted runners). Free GitHub-hosted runners and the GitHub Actions cache only.",
+        "A reusable workflow's cache belongs to the calling repo, so each caller (frontends, backends, tests repo) holds its own copy; layer caches from the branch image build already use the same per-repo cache space. Say what the total looks like.",
+        "Prove on a probe branch in the workspace (chore/EUDPA-749-stack-image-cache), never merge the probe commits. Delete any probe branch once the numbers are recorded.",
+        "If no way wins by 20 s, the row is done when the report records the numbers and the reason; nothing is merged except the report."
+      ],
+      "ticket": "EUDPA-749",
+      "commit": "6e170fabadb23557138fb6d984877a50ff115a88"
     }
   ]
 }

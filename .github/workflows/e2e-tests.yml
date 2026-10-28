@@ -269,7 +269,7 @@ jobs:
       branch: ${{ inputs.branch || github.head_ref || github.ref_name }}
 
   merge-reports:
-    if: always() && needs.e2e.result != 'skipped'
+    if: ${{ !cancelled() && needs.e2e.result != 'skipped' }}
     needs: e2e
     runs-on: ubuntu-latest
     steps:
@@ -319,7 +319,7 @@ jobs:
 
   deploy-report:
     needs: [e2e, merge-reports]
-    if: always() && needs.merge-reports.result == 'success'
+    if: ${{ !cancelled() && needs.merge-reports.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

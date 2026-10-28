@@ -31,17 +31,29 @@ The system MUST list no species for a search of fewer than three characters, so 
 **ID**: REQ-COMMODITY-SELECT-003
 The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its Latin name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its Latin name alone, as the reference data spells it.
 
-#### Scenario: Searching by common name offers the species under each live-animal code, by Latin name
+#### Scenario: Searching by common name offers each matching species under each live-animal code that lists it, by Latin name alone
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
-- **THEN** each matching species is offered under its live-animal commodity code, shown by its Latin name
+- **THEN** each matching species is offered under each live-animal commodity code that lists it, by its Latin name alone
 
 #### Scenario: A search offers no commodity code the reference data flags as germinal
 **ID**: SCN-COMMODITY-SELECT-003-B
 - **GIVEN** the reference data lists a species under a live-animal code and under codes it flags as germinal
 - **WHEN** the user searches by that species' common name
 - **THEN** the species is offered under the live-animal code only
+
+#### Scenario: Searching by commodity code lists every species under that code, by Latin name
+**ID**: SCN-COMMODITY-SELECT-003-C
+- **GIVEN** the user is on the commodity selection page
+- **WHEN** they search for a live-animal commodity code
+- **THEN** every species the reference data lists under that code is offered under it, each by its Latin name alone
+
+#### Scenario: Searching by Latin name offers that species under each live-animal code that lists it
+**ID**: SCN-COMMODITY-SELECT-003-D
+- **GIVEN** the user is on the commodity selection page
+- **WHEN** they search by part of a species' Latin name
+- **THEN** that species is offered under each live-animal code that lists it, by its Latin name alone
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004

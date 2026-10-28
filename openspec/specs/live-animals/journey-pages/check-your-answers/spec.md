@@ -270,3 +270,25 @@ The system MUST show the port of entry and the port of exit on the review exactl
 - **GIVEN** a transhipment notification whose destination country is Martinique
 - **WHEN** the user views the review
 - **THEN** the destination country row reads "Martinique (France)"
+
+### Requirement: Continuing a draft is refused while it holds a species the reference data no longer lists
+**ID**: REQ-CYA-014
+The system MUST check a draft's chosen species against the commodity reference data when the user continues from the review, MUST refuse to continue while any chosen species is no longer listed under its commodity code — removed or renamed — naming each such species and its code, and MUST NOT make this check on a plain view of the review or on an amendment, whose submitted species keep the value they were sent with.
+
+#### Scenario: A draft holding a species no longer listed is refused, naming it
+**ID**: SCN-CYA-014-A
+- **GIVEN** a complete draft holding a species the reference data no longer lists under its code
+- **WHEN** the user continues from the review
+- **THEN** the review is shown again with an error summary naming that species and its code, telling the user to select a species from the list
+
+#### Scenario: The species is not named before the user continues
+**ID**: SCN-CYA-014-B
+- **GIVEN** a complete draft holding a species the reference data no longer lists under its code
+- **WHEN** the user views the review
+- **THEN** no error summary is shown
+
+#### Scenario: An amendment's species are not checked
+**ID**: SCN-CYA-014-C
+- **GIVEN** an amendment holding a species the reference data no longer lists under its code
+- **WHEN** the user continues from the review
+- **THEN** that species is not named as one to choose again

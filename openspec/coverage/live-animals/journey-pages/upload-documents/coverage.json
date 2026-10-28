@@ -538,7 +538,7 @@
     {
       "id": "REQ-DOCS-021",
       "name": "A document can still be uploaded after leaving the page and coming back to it",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-DOCS-021-A",
@@ -558,12 +558,12 @@
         },
         {
           "id": "SCN-DOCS-021-C",
-          "name": "A request naming a session that has already taken a file is given another",
-          "coverage": "full",
+          "name": "Coming back through a link that carries a session a file has already reached",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should open a session of its own when the session the request names has already taken a file", "strength": "full", "notes": "red probe: disable the status check in handlers/add-form-session.js and the spent session is handed back instead" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should say which session had already taken a file, and that another was opened", "strength": "partial", "notes": "pins the two log lines and their ids, not the session the add form is given" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "opens the page again with a session of its own when the browser hands back a copy it kept", "strength": "full", "notes": "drives the browser's restored-page signal in a real browser and asserts the add form's upload path changes; red probe: stop registering the client guard in client/index.js and the path stays as it was" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should open a session of its own when the session the request names has already taken a file", "strength": "partial", "notes": "reaches the page with a spent session carried in the link and checks a fresh one is opened; it saves no second document, so the added-documents table is never read" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should say which session had already taken a file, and that another was opened", "strength": "partial", "notes": "pins the two log lines and their ids, not what the user then sees added" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "opens the page again with a session of its own when the browser hands back a copy it kept", "strength": "partial", "notes": "drives the browser's restored-page signal in a real browser and checks the page stops offering the spent session; it saves no second document, so the added-documents table is never read" }
           ]
         },
         {

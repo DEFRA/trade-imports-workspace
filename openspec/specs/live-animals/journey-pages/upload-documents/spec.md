@@ -478,11 +478,11 @@ An upload session takes one file and is then closed to further files. The system
 - **WHEN** they return to it with the browser's back button, fill in a second document and save it
 - **THEN** the page titled "Upload documents" is shown with both documents in the added-documents table
 
-#### Scenario: A request naming a session that has already taken a file is given another
+#### Scenario: Coming back through a link that carries a session a file has already reached
 **ID**: SCN-DOCS-021-C
-- **GIVEN** a request for the upload documents page naming an upload session a file has already reached
-- **WHEN** the page is shown
-- **THEN** its add form uploads through a different session, opened and held against the notification
+- **GIVEN** the user comes back to the upload documents page through a link carrying an upload session a file has already reached
+- **WHEN** they fill in another document and save it
+- **THEN** the page titled "Upload documents" is shown with that document in the added-documents table
 
 #### Scenario: The page is served with the browser forbidden to store it
 **ID**: SCN-DOCS-021-D

@@ -35,6 +35,27 @@ off epic **EUDPA-328**.
 | `arrival-and-transit-animals/` | [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694) | Live animals journey | 5 | 20 | 4 |
 | `arrival-and-transit-plants/` | [EUDPA-703](https://eaflood.atlassian.net/browse/EUDPA-703) | High-risk plants journey | 2 | 4 | 1 |
 
+### Accompanying documents — 11 scenarios, 1 file
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `documents-stub/` | [EUDPA-724](https://eaflood.atlassian.net/browse/EUDPA-724) | Live animals journey | 8 | 11 | 1 |
+
+One domain only: plants has no documents page and the front door is untouched,
+so the theme's totals and the domain's are the same 11 scenarios in the one
+file, `live-animals/journey-pages/upload-documents/spec.md`. The folder keeps
+its `documents-stub/` name from the split, but the ticket is no longer a stub:
+the WRITE flow filled it in on 27 October and `tickets.json` records it under
+`animals` rather than `stub`.
+
+Eight rows of the theme's nine appear in the table. The ninth, inc-036 (files up
+to 50MB), is left out because it was dropped rather than built: EUDPA-296 had
+already delivered it, and the CDP request-size limit it was thought to wait on
+(EUDPA-518) never applied to the upload route. inc-040 is in the table and was
+not in the theme at the split: it is the row that took `main` into the branch
+after the pull request stopped running checks.
+
+
 ### Origin page — 16 scenarios, 4 files
 
 | Folder | Jira | Domain | Rows | Scenarios | Spec files |
@@ -78,7 +99,7 @@ skill existed, so their descriptions are updated in place rather than created.
 Three themes are not fully drained, so their tickets would describe unfinished
 work: commodities and import reason (4 rows blocked on MDM commodities), overview
 and review (2 todo, 2 blocked) and type question and templates (9 rows held).
-Each still has only the stub raised at split time, as does documents (EUDPA-724). The ten unsplit themes in the
+Each still has only the stub raised at split time. Documents (EUDPA-724) is no longer among them: its theme drained on 27 October and its ticket is filled in. The ten unsplit themes in the
 main backlog have no tickets at all.
 
 All three hang off epic **EUDPA-328**, "Catch up frontend with prototype".

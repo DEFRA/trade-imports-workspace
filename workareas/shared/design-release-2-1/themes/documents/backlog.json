@@ -1,6 +1,7 @@
 {
   "programme": "design-release-2-1-documents",
   "generatedFrom": [
+    "ruling:sam-2026-10-26",
     "ruling:sam-2026-10-09-pm",
     "ruling:sam-2026-10-09-templates",
     "ruling:sam-2026-10-09",
@@ -35,7 +36,7 @@
     "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
     "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
     "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
-    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "'Save and return to overview' makes exactly the same checks as 'Save and continue', on every page that has both buttons: on any missing or invalid answer the trader stays on the page with an error for each one and what they entered is kept; with none, the answers are saved and the overview is shown. No page is an exception, Upload documents included (ruling:sam-2026-10-26 claims 1 and 2, replacing conflicts:c-211 and ruling:sam-2026-10-07). It is built for every page by inc-232 in themes/design-snagging-followups, not here.",
     "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
     "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
   ],
@@ -43,10 +44,6 @@
     "frontend": {
       "path": "repos/trade-imports-animals-frontend",
       "github": "DEFRA/trade-imports-animals-frontend"
-    },
-    "backend": {
-      "path": "repos/trade-imports-animals-backend",
-      "github": "DEFRA/trade-imports-animals-backend"
     },
     "tests": {
       "path": "repos/trade-imports-ins-tests",
@@ -66,15 +63,20 @@
   "touches": [
     "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
     "frontend:src/server/app/services/document-types",
+    "frontend:src/server/app/services/document-uploads",
     "frontend:src/server/app/sets/live-animals/obligations/sections/documents.js",
-    "backend:src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument",
+    "frontend:src/server/app/shared/kit.js",
     "tests:page-objects/animals/accompanying-documents-page.ts",
     "tests:resources/file-upload",
+    "tests:tests/animals/e2e/features/documents-large-uploads.spec.ts",
     "tests:tests/animals/e2e/features/documents-limits.spec.ts",
     "tests:tests/animals/e2e/features/documents-refresh-no-js.spec.ts",
     "tests:tests/animals/e2e/features/documents-reject.spec.ts",
     "tests:tests/animals/e2e/features/documents-scan-lifecycle.spec.ts",
-    "tests:tests/animals/e2e/features/promoted-documents.spec.ts"
+    "tests:tests/animals/e2e/features/documents-two-tabs.spec.ts",
+    "tests:tests/animals/e2e/features/promoted-documents.spec.ts",
+    "workspace:openspec/specs/live-animals/journey-pages/upload-documents",
+    "workspace:openspec/coverage/live-animals/journey-pages/upload-documents"
   ],
   "increments": [
     {
@@ -87,7 +89,7 @@
       ],
       "dependsOn": [],
       "theme": "documents",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -127,9 +129,26 @@
         "Rewritten on an earlier re-distil: Sam's 9 October ruling (claim 20) put req-477, the move of the page to a new address, out of scope, so this row keeps only the entry-guard slice (req-544). The page stays where it is today (req-1822, adopted as exists), and the tests repo's page object and the k6 documents script need no change.",
         "The criteria assert the page by its heading, never by a literal path (req-1822).",
         "Sam's 9 October afternoon ruling accepts the documents theme as distilled, inc-031 to inc-035 (ruling:sam-2026-10-09-pm p2-051, p2-052). Plants has no documents page, so the same-increment plants rule changes nothing here (plants-common-mapping-2026-10-09.json, documents theme).",
-        "The documents section's obligation owns the guard; the journey's shared task rows and flow, which the journey-foundation rows also change, read it. If the combiner finds another row editing the documents task's gate, that shared change belongs in the foundation theme."
+        "Corrected 26 Oct: there is no documents gate on main any more, so the obligation does not own one. The journey's only section gate is the review's (linear/flow/flow.js, `gate: (scope) => scope.readyForCheckYourAnswers`); the documents section has none, and the deep-link guard (linear/flow/entry-guard.js) lets any journey page open once one user answer is committed. If a later row needs a gate on the documents task, that shared change belongs with the flow, not in features/documents.",
+        "Re-analysed 26 Oct against main: the behaviour is already there, the proof is not. Every overview task row is linked from the moment a notification is started, documents included, and none reads 'Cannot start yet' (features/hub/copy/copy.test.js, 'Should link every row on a brand new notification'); the only section gate is the review's and the entry guard turns nobody away once one answer is committed. Still to build: a test that opens the page with the origin and nothing else answered -- both repos' helpers still answer origin, commodity and commodity details first (frontend fit/live-animals-journey.js unlockSections, tests repo flows/animals/journey.ts unlockSections) -- and an openspec requirement in the upload-documents spec, which today says nothing about when the page can be opened. Treat this row as test-and-spec work, not a code change.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red.",
+        "26 Oct: gatePhases is empty, so the loop runs no local gate for this row, neither baseline nor ladder. The verification is the repo pre-push hooks for the unit suite and the pull request CI for everything: both pull requests run unit, FIT and the tests/animals/ e2e suite against the branch-tagged tests image and the branch service images, green in about 9 minutes on the seed commits. This is not a preference for less testing: the local e2e rung timed out nearly every spec at 90s and died without writing a result, and the local unit rung timed out two files at 5000ms that pass in 2.85s alone, both because the loop holds a 20-container stack up on a 12-CPU machine whatever phases a row needs (increment-build-loop.js:4221). The loop still stops at ci-red, and the plan review, style, code and consistency reviews, finding verification and judge all still run."
       ],
-      "gate": null
+      "gate": null,
+      "gatePhases": [],
+      "commit": "6b96ba09 2bd3636 7d2b97d0",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
     },
     {
       "id": "inc-033",
@@ -145,7 +164,7 @@
         "inc-031"
       ],
       "theme": "documents",
-      "status": "todo",
+      "status": "merged-into",
       "kind": "feat",
       "repos": [
         "backend",
@@ -198,10 +217,84 @@
       "notes": [
         "Combines the reference-characters slice (req-497, the backend's check on the document-upload request, proved through the page) and the document-type list slice (req-499, the frontend's options): both decide what a document may be, share the same add-a-document set-up, and are proved by the same tests-repo document specs. The backend keeps its Health certificate type so saved documents still load and are coded on the outbound event (conflict c-085); the review page keeps its label for that type. The page's own 58-character limit on the reference is unchanged. Re-raise req-497 if a downstream codelist proves to need a narrower character set.",
         "Conflict c-065's outcome says the k6 suite's own references stay valid once the backend accepts more, so perftests needs no change and is not in repos.",
-        "Plants has no document entry or type list (plants-common-mapping-2026-10-09.json), so plantsfrontend is not in repos."
+        "Plants has no document entry or type list (plants-common-mapping-2026-10-09.json), so plantsfrontend is not in repos.",
+        "Closed 26 Oct by re-analysis against main; the row's two halves parted company. (1) The reference-characters half (req-497) is done on main and needs no row. EUDPA-296 replaced the old upload request with a claim: services/document-uploads/claim-contract.js in the frontend and accompanyingdocument/ClaimUploadRequest.java in the backend both now accept ^[A-Za-z0-9 ./-]*$ up to one hundred characters, so 'ITAHC-001' and 'GB/HC 2026 01' are both taken end to end, as this row's first two criteria asked. Proved by controller.test.js 'documents -- what a document reference may carry' (125-12345675, CHEDA.GB.2026.1234567, INV 2026/0042, GBHC1234567890) and the fit spec's ITAHC-2026-0001. Design Release 2.1 asks for any non-blank reference and main is deliberately narrower, telling the trader 'Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes'; that difference is a design question for Sam, not a build, and it is recorded in deferred.md rather than held open here. (2) The document-type half (req-499) is still to build and is now inc-037, which also drops the backend from repos, since the backend keeps HEALTH_CERTIFICATE on purpose. The openspec work for the reference rule is inc-039."
       ],
       "gate": null,
       "externalDependsOn": []
+    },
+    {
+      "id": "inc-037",
+      "title": "The document type list drops Health certificate, leaving the thirteen types Design Release 2.1 offers",
+      "detail": "Design Release 2.1 offers thirteen document types. The service offers fourteen: the same thirteen with 'Health certificate' between 'Laboratory sampling results for aflatoxin' and 'Journey log'. Two of the thirteen already read as health certificates, so the extra one gives a trader no way to tell which to pick. After this the Document type select offers the design's thirteen, in the design's order, behind its placeholder. A document already saved as Health certificate still loads, still reads back on the review page and is still coded on the outbound event, because the animals backend keeps that type in its enum; only the list the page offers changes.",
+      "acceptanceCriteria": [
+        "The 'Document type' select offers, in this order after its placeholder: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other. (prototype:dr2-1-source app/routes.js:10843-10861; prototype:dr2-1-specs e2e/documents.fit.spec.js:11-26; document:dr1-parity-backlog backlog.json inc-136; conflict c-085)",
+        "'Health certificate' is not among the Document type options. (prototype:dr2-1-source app/routes.js:10843-10856; document:dr1-parity-backlog backlog.json inc-136; conflict c-085)",
+        "A notification holding a document saved as Health certificate still opens the Upload documents page with that document listed and its type read back, and submitting it still codes that type on the outbound event. (repo:backend accompanyingdocument/DocumentType.java; conflict c-085)",
+        "openspec REQ-DOCS-013 and SCN-DOCS-013-A say the select offers thirteen types rather than fourteen, and name them in order; coverage links follow."
+      ],
+      "dependsOn": [],
+      "externalDependsOn": [],
+      "theme": "documents",
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:10843-10861"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/documents.fit.spec.js:11-26"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "backlog.json inc-136"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "src/server/app/services/document-types/stub.js DOCUMENT_TYPE_OPTIONS (fourteen, HEALTH_CERTIFICATE twelfth); features/documents/copy/copy.en.js types"
+        },
+        {
+          "source": "repo:backend",
+          "ref": "accompanyingdocument/DocumentType.java (keeps HEALTH_CERTIFICATE)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p2-051, p2-052"
+        }
+      ],
+      "requirements": [
+        "req-499"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Carries the document-type half of inc-033, which is merged-into this row. The reference-characters half (req-497) needed no row: see inc-033's closing note.",
+        "Re-analysed 26 Oct against main: src/server/app/services/document-types/stub.js lists the fourteen options, and dropping HEALTH_CERTIFICATE leaves exactly the design's thirteen in exactly the design's order, so this is a deletion rather than a reordering. The frontend reads the list from that module through features/documents/contracts/document-type-options.js, and form/payload.js validates the submitted type against the same list, so an older saved value is refused as a type the page never offered -- which is why the third criterion exists.",
+        "The backend is not in repos. It keeps HEALTH_CERTIFICATE in accompanyingdocument/DocumentType.java so saved documents still load and are coded on the outbound event (conflict c-085), and the claim endpoint takes whatever type the frontend sends, so nothing there changes.",
+        "Plants has no document entry or type list (plants-common-mapping-2026-10-09.json), so plantsfrontend is not in repos.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red.",
+        "26 Oct: gatePhases is empty, so the loop runs no local gate for this row, neither baseline nor ladder. The verification is the repo pre-push hooks for the unit suite and the pull request CI for everything: both pull requests run unit, FIT and the tests/animals/ e2e suite against the branch-tagged tests image and the branch service images, green in about 9 minutes on the seed commits. This is not a preference for less testing: the local e2e rung timed out nearly every spec at 90s and died without writing a result, and the local unit rung timed out two files at 5000ms that pass in 2.85s alone, both because the loop holds a 20-container stack up on a 12-CPU machine whatever phases a row needs (increment-build-loop.js:4221). The loop still stops at ci-red, and the plan review, style, code and consistency reviews, finding verification and judge all still run."
+      ],
+      "gate": null,
+      "gatePhases": [],
+      "commit": "ba73b4e3 0de149f",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
     },
     {
       "id": "inc-034",
@@ -216,7 +309,7 @@
         "inc-031"
       ],
       "theme": "documents",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -263,8 +356,11 @@
         "Sam's 9 October ruling (claims 17, 21 and 39; conflict c-237): no ?from=hub or ?from=review query and no hidden 'from' form field is added. The overview case rests on the live flow's fallback, which the journey-foundation row (inc-002) changes; the review and amending cases rest on the existing ?change=1 and amend state. Query and field names stay the service's own.",
         "req-539's return to a template review is not a criterion: req-543 keeps the page out of template creation, so a trader never reaches it from a template review.",
         "Depends on the journey-foundation rows for the step order (inc-001: Upload documents after the transporter and before Consignment addresses) and for the overview fallback (inc-002). The shared kit's change-context and next-target helpers are also used by other pages, so any change to them belongs to journey-foundation. The afternoon ruling's plants changes to inc-002 ride in that row; plants has no documents page, so nothing here changes plants.",
-        "Trimmed 20 Oct: main (journey foundation, #399) already sends Save and continue to Consignment addresses in the opening run and to the overview from the overview, and the Back link already goes to the overview. Still to build: the Back link to review (render.js:41 hard-codes hubPath), keeping that through add, remove and errors, and the amend case without ?change=1.",
-        "Added 22 Oct at the split: build the Back link on the run Back-target helper that design snagging inc-218 (Back links) puts on main, runBackLink in the animals kit (runBackLink and runBackTarget name the same seam). Extend it so the documents page goes Back to the review page when opened from review or while amending, and to the overview otherwise. Do not write a second Back-target rule in the documents feature. inc-218 leaves the documents page going Back to the overview, so this row owns that change."
+        "Trimmed 20 Oct, re-checked 26 Oct against main. Already true and must stay true: Save and continue goes on to Consignment addresses in the opening run (flow/run.js puts documents after the transporter list and before the addresses) and back to the overview from the overview; opened from the review page with ?change=1, Save and continue returns to the review page (shared/kit.js exitTarget); and the change context survives Save and add another and Remove, because the page the add returns to is built by documents/contracts/upload-session.js documentsPageHref, which applies kit.withChangeContext. Still to build: (1) the Back link, which view-model/render.js line 95 still hard-codes to hubPath(journey.journeyId); (2) the amend case however the page was opened, because both kit.runBackLink and kit.amendReviewTarget fall back to the overview unless the request carries ?change=1, so an amendment reached without that query returns to the overview rather than the review page.",
+        "Added 22 Oct at the split: build the Back link on the run Back-target helper that design snagging inc-218 (Back links) puts on main, runBackLink in the animals kit (runBackLink and runBackTarget name the same seam). Extend it so the documents page goes Back to the review page when opened from review or while amending, and to the overview otherwise. Do not write a second Back-target rule in the documents feature. inc-218 leaves the documents page going Back to the overview, so this row owns that change.",
+        "Re-analysed 26 Oct. Both externalDependsOn rows are done, so nothing outside this theme holds the row up: journey-foundation inc-001 (step order) and inc-002 (overview fallback) are both done in themes/journey-foundation. Design snagging inc-218 is merged to main, so kit.runBackLink is there to extend (shared/kit.js line 169) and the documents page is the only animals page whose Back link bypasses it. EUDPA-296 (frontend #424) rebuilt the add as a post straight to the upload service and back through a correlation id, so the page now reloads far more often than when this row was written; the return context has to survive that round trip too, which it does today through documentsPageHref. Spec: openspec REQ-DOCS-002 still says flatly that the page offers a route back to Overview, so this row rewrites it and SCN-DOCS-002-A.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red.",
+        "26 Oct: gatePhases is empty, so the loop runs no local gate for this row, neither baseline nor ladder. The verification is the repo pre-push hooks for the unit suite and the pull request CI for everything: both pull requests run unit, FIT and the tests/animals/ e2e suite against the branch-tagged tests image and the branch service images, green in about 9 minutes on the seed commits. This is not a preference for less testing: the local e2e rung timed out nearly every spec at 90s and died without writing a result, and the local unit rung timed out two files at 5000ms that pass in 2.85s alone, both because the loop holds a 20-container stack up on a 12-CPU machine whatever phases a row needs (increment-build-loop.js:4221). The loop still stops at ci-red, and the plan review, style, code and consistency reviews, finding verification and judge all still run."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -275,6 +371,20 @@
         {
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-002"
+        }
+      ],
+      "gatePhases": [],
+      "commit": "8182f729e5c28b200ef65d26459f94b917c197c4 df1dd89e781b143f0c1c8d657cb9407ce0026cad 690b21f86fb3db13154febd3e3e8fd38978eada9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
         }
       ]
     },
@@ -293,7 +403,7 @@
         "inc-031"
       ],
       "theme": "documents",
-      "status": "todo",
+      "status": "merged-into",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -341,10 +451,82 @@
       "notes": [
         "Combines the Save and continue slice (req-538) and the Save and return to overview slice (req-540): both decide what the page's save buttons do with a typed-in document and with documents still scanning, share one controller path and one set-up. Kept apart from the return-context row because that row's criteria rest on the journey's step order, which another area owns. A document needs every field, its file included, to be stored, so req-540's full check before leaving stands with the cross-page ruling in conflict c-211. The tests-repo scan-lifecycle spec that expects the scan to hold Save and continue changes here.",
         "The 'Virus found' criterion is observable on the local stack: the stack's cdp-uploader container's mock scan rejects the tests repo's restricted file, as the existing reject spec already relies on; in CDP the real scan rejects it.",
-        "Already true on main and must stay true: a 'Virus found' document still holds Save and continue with '<filename> contains a virus. Remove it and try again with a different file.' (controller.test.js:405-424), and Save and return with no document type goes straight to the overview and adds nothing (controller.test.js:595). Only pending scans stop holding the trader."
+        "Already true on main and must stay true: a 'Virus found' document still holds Save and continue with '<filename> contains a virus. Remove it and try again with a different file.' (controller.test.js:405-424), and Save and return with no document type goes straight to the overview and adds nothing (controller.test.js:595). Only pending scans stop holding the trader.",
+        "Closed 26 Oct by re-analysis against main; the row's three parts went three ways. (1) The scan half is still to build and is now inc-038. (2) The Save and return to overview half is no longer this theme's. Sam, 26 October, on the BA's find: Save and return to overview makes exactly the same checks as Save and continue on every page that has both buttons, replacing the 7 October soft-save ruling (c-211) and its plants counterpart (c-313); 'No page is an exception. Upload documents follows the same rule.' It is built for every page, with this row's documents criteria carried verbatim, as inc-232 in themes/design-snagging-followups, which also absorbed the documents-only fix inc-231. The theme envelope's invariant has been rewritten to the new rule. (3) The first criterion is withdrawn, not moved: it asked that Save and continue save a typed-in document and move the trader on, and EUDPA-296 (frontend #424) made that impossible on purpose. The file now posts straight to the upload service from the add control's own formaction, so a Save and continue post carries no file at all; the page deliberately refuses a typed-in document and asks for the add action instead (controller.js continuesADocument and refuseUnaddedDocument), which is what openspec REQ-DOCS-016 now requires. Building the old criterion would undo that."
       ],
       "gate": null,
       "externalDependsOn": []
+    },
+    {
+      "id": "inc-038",
+      "title": "A document still being scanned no longer holds the trader on Upload documents",
+      "detail": "Today a document whose virus scan has not finished holds Save and continue: the page comes back with 'You cannot continue until all documents have been scanned or removed', so a trader who has attached everything has to wait on the page until the scan settles. Waiting is not a real constraint, because the animals backend only ever publishes documents that scanned clean and were claimed, so a scan still running cannot put an unscanned file on the outbound event. After this a document still showing 'Scanning for virus' lets the trader carry on, and the page says nothing about waiting. A document the scan rejected still holds them, because that one has to be removed before the notification is right.",
+      "acceptanceCriteria": [
+        "With a document still showing 'Scanning for virus', Save and continue takes the trader to the next step, and 'You cannot continue until all documents have been scanned or removed' does not appear. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:103-112; conflict c-080)",
+        "Coming back to the page afterwards still lists that document, and its status settles to 'Check completed' as before. (repo:frontend features/documents/scan/status.js)",
+        "A document the scan rejected still holds Save and continue, with '<filename> cannot be used. Remove it and try again with a different file.' in the error summary, and continuing is possible once it is removed. (repo:frontend features/documents/copy/copy.en.js errors.rejected)",
+        "openspec REQ-DOCS-008 and its scenarios say that only a rejected document holds the trader, not one still being scanned; coverage links follow."
+      ],
+      "dependsOn": [],
+      "externalDependsOn": [],
+      "theme": "documents",
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:11046-11067, 12262-12273"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:103-112"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/documents/controller.js leavePage and renderStillSettling; scan/status.js hasDocumentsNotClearedByScan; scan/summary-errors.js settlingSummaryErrors"
+        },
+        {
+          "source": "repo:backend",
+          "ref": "outbox/OutboxService.java:82-84 (publishes only claimed documents whose ScanStatus is COMPLETE)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p2-051, p2-052"
+        }
+      ],
+      "requirements": [
+        "req-538"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Carries the scan half of inc-035, which is merged-into this row. The Save and return to overview half went to inc-232 in themes/design-snagging-followups under Sam's 26 October ruling, and inc-035's other criterion was withdrawn: see inc-035's closing note.",
+        "Re-analysed 26 Oct against main. features/documents/controller.js leavePage refuses on hasDocumentsNotClearedByScan, which treats every status other than COMPLETE as not cleared, so PENDING and REJECTED are refused together; splitting them is the change. The tests that pin the current behaviour are in the frontend: controller.test.js 'Should block Continue while a scan is PENDING, naming the reason and leaving the add form open', and fit/scan-status.fit.spec.js line 76. The tests repo's documents-scan-lifecycle.spec.ts no longer asserts the hold, so an earlier note saying that spec changes here is wrong.",
+        "The rejected wording moved under EUDPA-296: the summary line is now '<filename> cannot be used. Remove it and try again with a different file.', not '<filename> contains a virus...'. 'Virus found' is still the status tag on the row, and the local stack's cdp-uploader mock rejects the tests repo's EICAR file, as documents-scan-lifecycle.spec.ts relies on.",
+        "Ordering against inc-232 (themes/design-snagging-followups), which makes Save and return to overview run Save and continue's checks on every page. Both change what leaving the documents page checks: this row changes the scan branch of leavePage, inc-232 the hub-exit branch. Whichever lands second updates the other's tests, so that Save and return inherits the same rule -- a document still scanning never holds either button, a rejected one holds both. Say in the report which order it happened in, so Sam can watch for the clash.",
+        "26 Oct: gatePhases is unit and fit only. The end-to-end proof is the pull request CI run, not the local gate: the local E2E rung starved this machine (Docker holds 8.2GB of 19.3GB for a 20-container stack), died mid-run without writing a result and hung the loop for 2h40m on tim build gate-wait. Both pull requests run tests/animals/ against the branch-tagged tests image and the branch service images, because every repo of this theme shares the branch name, so the branch tests prove the branch code. The loop still stops at ci-red.",
+        "26 Oct: gatePhases is empty, so the loop runs no local gate for this row, neither baseline nor ladder. The verification is the repo pre-push hooks for the unit suite and the pull request CI for everything: both pull requests run unit, FIT and the tests/animals/ e2e suite against the branch-tagged tests image and the branch service images, green in about 9 minutes on the seed commits. This is not a preference for less testing: the local e2e rung timed out nearly every spec at 90s and died without writing a result, and the local unit rung timed out two files at 5000ms that pass in 2.85s alone, both because the loop holds a 20-container stack up on a 12-CPU machine whatever phases a row needs (increment-build-loop.js:4221). The loop still stops at ci-red, and the plan review, style, code and consistency reviews, finding verification and judge all still run.",
+        "27 Oct: the four claim-return save-choice cases in controller.test.js (the Save and return to overview, the plain Save and continue, the amend Save and return and the amend Save and continue) are one parameterised it.each case, as sections 2 and 4 already required; the three separate blocks the build left behind are gone.",
+        "27 Oct: SCN-DOCS-008-B's full-strength coverage links were proved with a red probe. leavePage's rejected branch (controller.js:328-330) was removed; the fit test \"names the virus a rejected document was refused for, until it is removed\" and the e2e test \"infected upload: accepted while scanning, then Virus found with error summary blocking Save and continue until it is removed\" both went red, each on the first Save and continue press reaching the Overview instead of re-showing the rejection error. The branch was restored from the index and both tests went green again. Logs: inc-038-probe-rejected-fit-red.log, inc-038-probe-rejected-e2e-red.log, inc-038-probe-rejected-fit-green.log, inc-038-probe-rejected-e2e-green.log."
+      ],
+      "gate": null,
+      "gatePhases": [],
+      "commit": "83b05c7e 9f997b8",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
     },
     {
       "id": "inc-036",
@@ -358,7 +540,7 @@
       ],
       "dependsOn": [],
       "theme": "documents",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -409,15 +591,129 @@
       "requirements": [
         "req-509"
       ],
-      "openQuestions": [
-        "Waits on CDP: CDP must raise the nginx ingress request-body cap in front of trade-imports-animals-frontend to at least 50,001,024 bytes, and the service team must record the confirmation against EUDPA-518, before this is built and deployed. Until then the limit stays at 10MB everywhere. Sam's 9 October afternoon ruling keeps it blocked on this (ruling:sam-2026-10-09-pm p2-054)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Kept apart from the copy row so the wording change (req-508) is not held up by the platform blocker. The route's payload cap is the limit plus 1KiB of multipart allowance. A configurable limit was rejected by DR1 because it gives no parity anywhere. The backend needs no change: it already accepts 50MB.",
-        "One limit applies in every environment and every set: if the germinal-products documents page (req-1825) has been copied before this unblocks, this row raises its limit too, and its criteria then hold on both sets' documents pages. Plants has no file attachment (plants-common-mapping-2026-10-09.json)."
+        "One limit applies in every environment and every set: if the germinal-products documents page (req-1825) has been copied before this unblocks, this row raises its limit too, and its criteria then hold on both sets' documents pages. Plants has no file attachment (plants-common-mapping-2026-10-09.json).",
+        "Dropped 26 Oct: EUDPA-296 delivered it, and the blocker it waited on is gone rather than lifted. The frontend's limit is 50MB (features/documents/upload-config.js MAX_FILE_SIZE_MB = 50) and the page states 'files that are smaller than 50MB', so criterion 1 is met. The CDP request-size cap no longer stands in the way: the browser now posts the file to /upload-and-scan on the frontend's own domain, and CDP's managed nginx gives that location client_max_body_size 2304M on every service, proxied straight to cdp-uploader (docs/best-practices/node/hapi.md, from DEFRA/cdp-nginx-upstreams src/templates/server.conf.tpl). So no platform request is needed and EUDPA-518 is not on this path. Criterion 2 is proved by tests/animals/e2e/features/documents-large-uploads.spec.ts, which uploads a file of exactly 50,000,000 bytes, waits for 'Check completed' and reads the same bytes back. Criterion 3 is proved by documents-limits.spec.ts 'accepts a PDF at the maximum file size and rejects one a byte over it', which checks the summary link and the inline Attachment error and that nothing is added. Criterion 4 is proved at fit level by upload.fit.spec.js 'a file the upload service refuses as too large is reported on receipt', where the refusal comes back from the service with the browser's own size check never having fired, and is drawn on the file field with no document added. Recorded commit: animals frontend ab3ac4f0 (#424). Left over: openspec SCN-DOCS-001-A still states the limit as 10MB, which is now wrong; that is inc-039. deferred.md's row for the 50 MB limit and EUDPA-518 should be closed off with this finding."
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "ab3ac4f0"
+    },
+    {
+      "id": "inc-039",
+      "title": "The Upload documents specification states the file size and reference rules the service now applies",
+      "detail": "EUDPA-296 rebuilt the document upload to post the file straight to the upload service, and with it raised the file size limit to 50MB and settled which characters a document reference may carry. The Behaviour Spec was not brought with it on both counts: the upload-documents specification still states the limit as 10MB, which is no longer what the page tells a trader, and it says nothing at all about the reference's characters, so a reader cannot tell a deliberate rule from an accident. A reader of the spec must be able to trust it against the running service. After this the specification states the 50MB limit the page states, and states which characters a reference may carry and what a trader is told when it carries another.",
+      "acceptanceCriteria": [
+        "openspec SCN-DOCS-001-A states the maximum file size as the 50MB the page states, matching features/documents/upload-config.js. (repo:frontend upload-config.js MAX_FILE_SIZE_MB; repo:frontend features/documents/copy/copy.en.js file.smallerThan)",
+        "The upload-documents specification carries a requirement that a document reference may hold letters, numbers, spaces, hyphens, full stops and forward slashes, up to one hundred characters, and that any other character is refused on the reference field with the service's own wording. (repo:frontend services/document-uploads/claim-contract.js; repo:backend accompanyingdocument/ClaimUploadRequest.java)",
+        "Every scenario added or changed carries a coverage link to a test that already proves it, and tim spec lint and tim spec gaps --none pass for the live-animals/journey-pages/upload-documents prefix."
+      ],
+      "dependsOn": [
+        "inc-040"
+      ],
+      "externalDependsOn": [],
+      "theme": "documents",
+      "status": "done",
+      "kind": "docs",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "repo:frontend",
+          "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js (MAX_FILE_SIZE_MB = 50); services/document-uploads/claim-contract.js (REFERENCE_PATTERN, REFERENCE_MAX_LENGTH)"
+        },
+        {
+          "source": "repo:backend",
+          "ref": "accompanyingdocument/ClaimUploadRequest.java REFERENCE_PATTERN and @Size(max = 100)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "tests/animals/e2e/features/documents-large-uploads.spec.ts; documents-limits.spec.ts"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "For the designer: while amending a submitted notification, Upload documents now sends its Back link to the review (shared/kit.js:263 runBackLink returnsToReview, fired whenever journey.status === AMEND) but its Save and continue to the overview (shared/kit.js:222-228 exitTarget, which only returns the review when saveChoice.change is set, and shared/kit.js:168-174 returnedSaveChoice sets change under AMEND only when the posted form carried amendSave=return). inc-034 acceptance criterion 2 reads \"While amending a submitted notification, the page's Back link and Save and continue both go to the review page, however the page was opened\", so the save half is unbuilt and documents/controller.test.js:454-459 and :551 assert the overview instead. The later design snagging work (EUDPA-720, merged to main) set the opposite service-wide rule: shared/amend-form-actions.js gives every amend page two buttons, \"Save and return\" posting with change=1 and \"Save and continue\" posting without it, and trade-imports-ins-tests/tests/animals/e2e/features/amend-endings.spec.ts:68 pins it as \"Save and continue while amending goes on as it does outside an amendment, not back to the review\". Sending documents' Save and continue to the review would make it identical to Save and return on that page and make documents the only amend page that breaks the rule. The options: (a) keep the service-wide rule and retire inc-034 acceptance criterion 2, leaving Save and continue going on to the overview while amending; (b) keep inc-034 acceptance criterion 2 for Upload documents only, accepting two buttons with one destination there; (c) change the rule for every amend page. Until this is settled, the Back link and the save disagree on one page, and nothing in trade-imports-ins-tests proves the save half either (tests/animals/e2e/features/amend-endings.spec.ts:32 asserts only the Back link href and never clicks Save and continue).",
+        "For the designer: once the amend Save and continue destination above is settled, trade-imports-ins-tests needs the proof that is missing today. tests/animals/e2e/features/amend-endings.spec.ts:32 opens Upload documents from the Overview while amending and asserts only the Back link href; it never clicks Save and continue, so neither destination is pinned for that page. If the answer is (a) keep the service-wide rule, add an assertion to that test that Save and continue lands on the overview, matching tests/animals/e2e/features/amend-endings.spec.ts:68. If the answer is (b) or (c), the assertion is the review, and trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js:454-459 and :551 change with it."
+      ],
+      "notes": [
+        "Raised by the 26 October re-analysis, not by a requirement source: it closes the two pieces of drift that re-analysis found between the upload-documents specification and the code EUDPA-296 landed. The behaviour is not in question and no service repo changes, so the row is workspace only.",
+        "The tests that prove both criteria already exist: documents-large-uploads.spec.ts uploads a file of exactly 50,000,000 bytes and reads the same bytes back, documents-limits.spec.ts accepts one at the cap and refuses one a byte over, and the frontend's controller.test.js 'documents -- what a document reference may carry' covers 125-12345675, CHEDA.GB.2026.1234567 and INV 2026/0042 and refuses REF<script>. This row writes no test; it links them.",
+        "Do not restate the character rule as 'any non-blank reference'. Design Release 2.1 asks for that, but main deliberately narrows it and tells the trader so ('Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes'). The spec records what the service does; re-opening the design question is inc-033's closing note, not this row.",
+        "ATTEMPT FAILED: red verification ladder; no merge to abort; frontend repo local changes (copy.test.js, upload.fit.spec.js) stashed as stash@{0}; workspace openspec/ changes stashed as stash@{0}; patches at inc-039-preserve-frontend.{staged,unstaged}.patch",
+        "27 Oct: the row gains the frontend. It was written as workspace-only, but its own subject - the file size and reference rules - is misstated in two frontend test files, and the first build attempt went ladder-red because of exactly that. Its fixer corrected copy/copy.test.js (a stale 10MB assertion, and the Welsh case still reading 10MB when the limit is 50MB) and fit/upload.fit.spec.js (a test titled 'over 58 characters' whose body uses REFERENCE_MAX_LENGTH + 1, where that constant is 100 in services/document-uploads/claim-contract.js). With repos and gatePhases both empty, no rung ever ran against the frontend, so the ladder would not vouch for those edits and reported the gap rather than waving it through, which was right. Naming the frontend lets the land stage commit them and the pull request CI prove them, the same verification every other row of this theme uses. Everything else about the row stands: its own nine plan checks and four red-probe cycles all passed and were independently re-run. The first attempt is preserved in the failed-inc-039 stashes in this repo and the frontend."
+      ],
+      "gate": null,
+      "gatePhases": [],
+      "commit": "d296c8f9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
+    },
+    {
+      "id": "inc-040",
+      "title": "The theme branch takes in what main has landed since it was cut",
+      "kind": "chore",
+      "theme": "documents",
+      "status": "done",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "dependsOn": [],
+      "detail": "Main has moved twice while this theme built, and the animals frontend pull request now conflicts with it, so GitHub runs no checks and the last row cannot be proved. The branch has to take main in before inc-039 can land. The first move brought design snagging followups inc-232, which replaced this theme's Save and return work, and the Add another commodity and Change return work; it was merged by hand on 27 October with one conflict in the live-animals page-design doc. The second move brought EUDPA-617 (commodities through reference-data), EUDPA-734, EUDPA-735, EUDPA-737 and a design snagging followups appearance change, and it conflicts in two code files rather than a doc, which is why it is a row rather than another hand merge.",
+      "acceptanceCriteria": [
+        "origin/main is merged into the theme branch in the animals frontend and the tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "fit/live-animals-journey.js keeps both sides: main's restructured helpers (openCommodityDetails, expectSpeciesSelected, the rewritten unlockSections and the FELIS_CATUS and BOS_TAURUS constants) and this theme's answerWhatYouAreImportingFromOverview, with answerWhatYouAreImporting carrying one signature that every caller on the merged branch uses.",
+        "check-answers/refusal.js imports both toArray, which main added, and isRejectedByScan, which inc-038 added, and each is used where its own side used it.",
+        "The animals frontend pull request reports no conflict with its base, so GitHub runs its checks on it again.",
+        "Both pull requests are green: unit, FIT and the tests/animals/ end-to-end suite."
+      ],
+      "notes": [
+        "27 Oct: raised by the orchestrating session after inc-039 stopped at ci-red with pr-conflicting for the second time. The conflicting files are fit/live-animals-journey.js and check-answers/refusal.js; every other file auto-merges. refusal.js is a plain import union. live-animals-journey.js is the real work: main restructured the helper while inc-031 changed the same function, so it needs both sides reconciled rather than either side taken, and it is a shared FIT helper many specs call, which is why it goes through the loop with a planned resolution and a review rather than a hand merge.",
+        "gatePhases is empty, as every row of this theme has been: the end-to-end proof is the pull request CI, because the local rungs cannot run on this machine. The merged FIT helper is therefore proved by CI's FIT run, which is the check that would catch a bad reconciliation.",
+        "AC3 names isRejectedByScan as the import refusal.js uses; the resolution calls hasRejectedDocuments from the same module instead, which is exactly that predicate with .some and is already the call documents/controller.js:328 makes, so the rejected-scan rule has one owner. inc-038 work is kept, main inline comparison is not restored."
+      ],
+      "sources": [
+        {
+          "source": "repo:frontend",
+          "ref": "fit/live-animals-journey.js; src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend needs the same allow-list vocabulary sweep as the animals frontend - its obligation helpers are allowListed/anyAllowListed (src/server/app/model/obligations/helpers/index.js:44,46) while src/server/app/sets/high-risk-plants/docs/add-a-collection.md, testing.md, obligation-model.md and services.md still call the same list a whitelist, and src/server/app/sets/high-risk-plants/obligations/whitelists.test.js still carries the old file name. Raised by the inc-040 finding that the animals frontend's src/server/app/sets/live-animals/docs/add-a-collection.md:142,148 narrates allowListed() in whitelist vocabulary, against code-quality.md Names (\"One concept, one name\" / \"A rename covers the concept's whole vocabulary\"). Plants is not a repo inc-040 builds in, so it is recorded rather than fixed here."
+      ],
+      "commit": "9060b681f0d10a5ac5ba358f081b73a3709dd7bc 329f951c669d1fb551d9e9f6c1e9b8c18b52452d",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/435",
+          "repo": "trade-imports-animals-frontend",
+          "number": 435
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/58",
+          "repo": "trade-imports-ins-tests",
+          "number": 58
+        }
+      ]
     }
   ]
 }

@@ -14,7 +14,9 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders the reference with no hint, the date hint, the upload constraints and no added-documents table", "strength": "full", "notes": "accept attribute, size and file-type bullets, and the File upload card text ending with the Save and add another button" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lays out the empty page with two-thirds guidance and a full-width card showing no added-documents table", "strength": "partial", "notes": "JavaScript off: the card text ends with the Save and add another button — does not assert the constraint bullets" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lays out the empty page with two-thirds guidance and a full-width card showing no added-documents table", "strength": "partial", "notes": "JavaScript off: the card text ends with the Save and add another button — does not assert the constraint bullets" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.test.js", "test": "Should hold the 50MB decimal limit and name it in the oversize message", "strength": "partial", "notes": "pins the byte count as fifty million and the oversize message naming 50MB, the figure this scenario quotes — it neither loads the page nor asserts anything about the accepted file types" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "states the file size and the allowed file types as the first two bullets of the file hint", "strength": "full", "notes": "the loaded page's first two file-hint bullets are the size sentence and the allowed types, read from upload-config.js; red probe: swap the two bullets in template.njk and the test fails on their order" }
           ]
         },
         {
@@ -29,15 +31,44 @@
     },
     {
       "id": "REQ-DOCS-002",
-      "name": "The page offers a route back to Overview",
+      "name": "The page's back link follows where the user came from",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-002-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview for a draft opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview on a draft", "strength": "full", "notes": "red probe: make the review branch unconditional on returnsToReview alone — the test fails because the overview is no longer what the handler renders" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-B",
+          "name": "The back link opens the review when changing an answer from the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link opens the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: same change-context inversion — the rendered back link stops opening the review" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after the page refuses a part-filled document", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-C",
+          "name": "The back link opens the review while the notification is being amended, however the page was opened",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review while the notification is being amended, with nothing in the address saying where the trader came from", "strength": "full", "notes": "red probe: drop the amend half of the review condition in shared/kit.js — the test fails" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Upload documents opened from Overview while amending has a Back link to the review, however the page was opened", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-002-D",
+          "name": "The back link still opens the review after the page refuses a part-filled document",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should keep the review back link after the page refuses a part-filled document returned from the upload service", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after the page refuses a part-filled document", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
           ]
         }
       ]
@@ -68,7 +99,7 @@
           "name": "A file at exactly the size limit is accepted, one byte over is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a 50MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a PDF at the maximum file size and rejects one a byte over it", "strength": "full", "notes": "a real file at the cap accepted and scanned, the same file a byte over refused with the oversize message in the summary and on the file field, and the list left at one" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "witnesses the at-the-limit leg only — a file of exactly MAX_FILE_SIZE_BYTES is accepted and its row appears; it never submits one byte over" }
           ]
         },
@@ -125,7 +156,8 @@
           "name": "A reference over the maximum length links to and focuses the reference field, preserving the value",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over the maximum length links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference past the length the claim accepts, naming that length", "strength": "partial", "notes": "it asserts the message naming the limit and that nothing is added, and it neither renders the page nor asserts anything about the error summary linking or field focus" }
           ]
         },
         {
@@ -151,6 +183,23 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: no file links to and focuses the upload while preserving metadata", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-DOCS-006-F",
+          "name": "A reference written in one of the shapes real documents carry is taken on",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should take on a document whose reference is %s", "strength": "full", "notes": "parameterised over an air waybill (125-12345675), a TRACES certificate (CHEDA.GB.2026.1234567), an invoice (INV 2026/0042) and a plain alphanumeric reference; asserts the redirect and the stored reference" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lists the document under five headings with View file and Remove right-aligned at the end of the row", "strength": "partial", "notes": "uploads a hyphenated reference and reaches Check completed, but witnessing that reference reaching the row is incidental to the test's own THEN about the table's headings and action placement" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-G",
+          "name": "A reference carrying a disallowed character is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a reference carrying a character the claim would reject: %s", "strength": "full", "notes": "asserts the message on the Document reference field and that the notification's documents are unchanged; no fit or end-to-end test witnesses this refusal" }
+          ]
         }
       ]
     },
@@ -164,9 +213,9 @@
           "name": "A clean upload becomes checked and viewable",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Scanning for virus with no view link, then Check completed with a view link", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Scanning for virus then Check completed on the row — does not assert view-link absence while scanning" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "partial", "notes": "scanning then Check completed; continue gate — view-link transition covered better by E2E" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "partial", "notes": "scanning then Check completed via a reopen; the view-link transition is covered better by E2E" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "a real scan resolves the row to Check completed and a View file link is there to follow — it does not assert the Scanning for virus state or the view link's absence before the scan resolves" }
           ]
         },
@@ -175,7 +224,7 @@
           "name": "A rejected upload is flagged and blocked, naming the reason",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary blocking Save and continue until it is removed", "strength": "full", "notes": "a real EICAR file scanned by the upload service, so the reason travels the whole way" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should name the reason virus.pdf was refused for, in the tag and the key the client rewrites by", "strength": "full", "notes": "the tag text and the key the polled client rewrites by; sibling cases cover the upload and download failures" }
           ]
@@ -192,15 +241,16 @@
     },
     {
       "id": "REQ-DOCS-008",
-      "name": "The user cannot continue while a document is still being scanned or has been rejected",
+      "name": "The user cannot continue while a document has been rejected",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-008-A",
-          "name": "Continuing is blocked while a scan is still running",
+          "name": "Continuing is not blocked while a scan is still running",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "full", "notes": "cannotContinue error while scanning; after Check completed, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "full", "notes": "Continue reaches Overview while scanning; reopening the page lists the row settled to Check completed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "partial", "notes": "guarded by firstScanStatus — the pending leg only runs when the real scan has not already settled before the first render" }
           ]
         },
         {
@@ -208,7 +258,8 @@
           "name": "Continuing is blocked while a rejected document remains",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders a rejected document and its per-file error until it is removed", "strength": "full", "notes": "Continue re-shows the rejection error; after remove, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "names the virus a rejected document was refused for, until it is removed", "strength": "full", "notes": "Continue re-shows the rejection error; after remove, Continue reaches Overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary blocking Save and continue until it is removed", "strength": "full", "notes": "Save and continue is refused while the EICAR upload is rejected; removing it and pressing again reaches Overview" }
           ]
         }
       ]
@@ -291,10 +342,11 @@
       "scenarios": [
         {
           "id": "SCN-DOCS-013-A",
-          "name": "The type question offers fourteen types behind a placeholder, in position",
+          "name": "The type question offers thirteen types behind a placeholder, in position",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "offers all fourteen document types behind the select text, between the reference and the date", "strength": "full", "notes": "asserts the full option list (14 types, Health certificate included) and DOM order of the three fields" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "offers thirteen document types behind the select text, between the reference and the date", "strength": "full", "notes": "asserts the full option list (13 types, Health certificate withheld) and DOM order of the three fields" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-entry.spec.ts", "test": "the document type select opens on Select one, then offers thirteen document types in order", "strength": "partial", "notes": "asserts the option list through the stack; not probed against a reverted line" }
           ]
         },
         {
@@ -311,6 +363,14 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "the chosen type is what the saved row reports, whatever the file is called", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-013-D",
+          "name": "A document recorded as Health certificate is listed with that type while the type question offers thirteen",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should label a document recorded as Health certificate with that type while the select offers thirteen", "strength": "full", "notes": "red probe: delete the HEALTH_CERTIFICATE entry from copy/copy.en.js types — the cell falls back to Not provided and the test fails" }
           ]
         }
       ]
@@ -435,6 +495,30 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders the reference with no hint, the date hint, the upload constraints and no added-documents table", "strength": "full", "notes": "the reference field's accessible description is exactly empty; the date hint is read from copy" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should hint the date of issue with the shared date example in both locales", "strength": "full", "notes": "the hint pinned exactly in English and Welsh" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-020",
+      "name": "The page can be opened as soon as the origin of the import is answered",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-020-A",
+          "name": "Reaching the page from Overview with only the origin answered",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/entry.fit.spec.js", "test": "following the documents row from Overview opens the page titled \"Upload documents\" with only the origin answered", "strength": "full", "notes": "red probe: remove the documents entry from GROUPS in features/hub/controller.js:39 — Overview then offers no such row and the act fails; restore it and the test passes" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-entry.spec.ts", "test": "opens the upload documents page from Overview with only the origin answered", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-020-B",
+          "name": "Opening the page with the origin and what they are importing answered",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/entry.fit.spec.js", "test": "opening the page by its own address shows it titled \"Upload documents\" with only the origin and the species answered", "strength": "partial", "notes": "no production line conditions this page on later answers, so no inversion isolates the assertion; the test still proves the page opens with the commodity details unanswered" }
           ]
         }
       ]

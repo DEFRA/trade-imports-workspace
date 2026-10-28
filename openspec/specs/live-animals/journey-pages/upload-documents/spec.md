@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, and their durability once attached. The page is titled "Upload documents".
+The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
 ## Requirements
 
@@ -14,7 +14,7 @@ The system MUST tell the user, before they add anything, which file types are ac
 **ID**: SCN-DOCS-001-A
 - **GIVEN** the user opens the upload documents page on a notification with none added yet
 - **WHEN** the page loads
-- **THEN** it states the maximum file size as "files that are smaller than 10MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
+- **THEN** it states the maximum file size as "files that are smaller than 50MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
 - **AND** the File upload card shows no table and no message after its "Save and add another" button
 
 #### Scenario: The limit stays stated once documents have been added
@@ -23,15 +23,35 @@ The system MUST tell the user, before they add anything, which file types are ac
 - **WHEN** the page shows the saved document
 - **THEN** the page still states the maximum number of files, as it did before anything was added
 
-### Requirement: The page offers a route back to Overview
+### Requirement: The page's back link follows where the user came from
 **ID**: REQ-DOCS-002
-The system MUST offer a back link from the upload documents page that returns the user to Overview.
+The system MUST open the review page from the upload documents page's back link when the page was opened by changing an answer from the review, or whenever the notification is being amended however the page was opened, and MUST open Overview otherwise.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview for a draft opened from Overview
 **ID**: SCN-DOCS-002-A
-- **GIVEN** the user is on the upload documents page
+- **GIVEN** the user opens the upload documents page from Overview, on a draft that is not being amended
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when changing an answer from the review
+**ID**: SCN-DOCS-002-B
+- **GIVEN** the user opens the upload documents page by changing the uploaded documents from the review
+- **WHEN** they follow the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link opens the review while the notification is being amended, however the page was opened
+**ID**: SCN-DOCS-002-C
+- **GIVEN** the notification is being amended
+- **WHEN** the user opens the upload documents page from Overview and follows the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link still opens the review after the page refuses a part-filled document
+**ID**: SCN-DOCS-002-D
+- **GIVEN** the user opened the upload documents page by changing an answer from the review
+- **WHEN** they try to add a document with only the reference filled in, and it is refused
+- **THEN** the back link still opens the review
+- **WHEN** they follow it
+- **THEN** the review is shown
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
@@ -88,7 +108,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document, MUST reject a reference over its maximum length, MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of one hundred characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A
@@ -101,7 +121,7 @@ The system MUST require a reference and a valid date of issue for each document,
 **ID**: SCN-DOCS-006-B
 - **GIVEN** the user enters a reference longer than the maximum allowed
 - **WHEN** they try to add the document
-- **THEN** an error links to and focuses the reference field, which still holds the value typed
+- **THEN** an error reading "Document reference must be 100 characters or fewer" links to and focuses the reference field, which still holds the value typed
 - **AND** the date of issue already entered is preserved
 
 #### Scenario: An empty date of issue links to and focuses the date field, preserving the reference
@@ -124,6 +144,19 @@ The system MUST require a reference and a valid date of issue for each document,
 - **WHEN** they try to add the document
 - **THEN** an error links to and focuses the file field
 - **AND** the reference and date already entered are preserved
+
+#### Scenario: A reference written in one of the shapes real documents carry is taken on
+**ID**: SCN-DOCS-006-F
+- **GIVEN** the user enters a reference written as an air waybill with a hyphen, a certificate with full stops, or an invoice with a space and a forward slash
+- **WHEN** they add the document
+- **THEN** it is taken on and held against the notification with that reference as typed
+
+#### Scenario: A reference carrying a disallowed character is refused
+**ID**: SCN-DOCS-006-G
+- **GIVEN** the user enters a reference carrying a character other than a letter, number, space, hyphen, full stop or forward slash
+- **WHEN** they try to add the document
+- **THEN** an error reading "Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes" is shown on the Document reference field
+- **AND** no document is added to the notification
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
@@ -152,17 +185,17 @@ The system MUST show a document as "Scanning for virus" immediately after upload
 - **WHEN** the scan refuses the file for a reason the system has no wording for
 - **THEN** its row shows "Rejected" rather than naming a cause, and there is no way to view the file
 
-### Requirement: The user cannot continue while a document is still being scanned or has been rejected
+### Requirement: The user cannot continue while a document has been rejected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Rejected", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the rejected one has been removed.
+The system MUST let the user continue past the page while a document's scan is still "Scanning for virus", MUST refuse to let them continue while any document has come back "Rejected", showing an error explaining why, and MUST let them continue once the rejected document has been removed.
 
-#### Scenario: Continuing is blocked while a scan is still running
+#### Scenario: Continuing is not blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
 - **GIVEN** a document on the page is still "Scanning for virus"
 - **WHEN** the user tries to continue
-- **THEN** an error explains they cannot continue yet
-- **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
+- **WHEN** they come back to the page
+- **THEN** the document is still listed, and its row settles to "Check completed" once the scan finishes
 
 #### Scenario: Continuing is blocked while a rejected document remains
 **ID**: SCN-DOCS-008-B
@@ -226,13 +259,13 @@ The system MUST keep an uploaded document's file and details once it has been sc
 
 ### Requirement: Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue
 **ID**: REQ-DOCS-013
-The system MUST ask for a document type as a mandatory answer, offering a placeholder plus all fourteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
+The system MUST ask for a document type as a mandatory answer, offering a placeholder plus the thirteen document types named in the scenario below, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
 
-#### Scenario: The type question offers fourteen types behind a placeholder, in position
+#### Scenario: The type question offers thirteen types behind a placeholder, in position
 **ID**: SCN-DOCS-013-A
 - **GIVEN** the user is adding a document
 - **WHEN** the page loads
-- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and fourteen document types, Health certificate among them
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and then: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other
 
 #### Scenario: Leaving the type on its placeholder is rejected
 **ID**: SCN-DOCS-013-B
@@ -245,6 +278,13 @@ The system MUST ask for a document type as a mandatory answer, offering a placeh
 - **GIVEN** the user has added a document, choosing a document type
 - **WHEN** the saved row is shown
 - **THEN** it reports the type chosen, regardless of the uploaded file's own name
+
+#### Scenario: A document recorded as Health certificate is listed with that type while the type question offers thirteen
+**ID**: SCN-DOCS-013-D
+- **GIVEN** a notification holds a document recorded as Health certificate
+- **WHEN** the upload documents page opens
+- **THEN** that document is listed with Health certificate as its type
+- **AND** the type question offers thirteen document types
 
 ### Requirement: The file can be chosen from a drop zone, not only the browser's own file picker
 **ID**: REQ-DOCS-014
@@ -399,3 +439,19 @@ The system MUST ask for the document reference with no hint, and MUST hint the d
 - **WHEN** the page loads
 - **THEN** the Document reference field has no hint
 - **AND** the hint under the Date of issue field reads "For example, 27/3/2026"
+
+### Requirement: The page can be opened as soon as the origin of the import is answered
+**ID**: REQ-DOCS-020
+The system MUST offer and open the upload documents page with nothing beyond the origin of the import answered, and MUST ask nothing of what the trader is importing or of any later part of the notification before showing it.
+
+#### Scenario: Reaching the page from Overview with only the origin answered
+**ID**: SCN-DOCS-020-A
+- **GIVEN** a new notification with only the origin of the import answered
+- **WHEN** the user follows Overview's "Upload documents" row
+- **THEN** the page titled "Upload documents" is shown
+
+#### Scenario: Opening the page with the origin and what they are importing answered
+**ID**: SCN-DOCS-020-B
+- **GIVEN** a new notification with the origin of the import and what they are importing answered, and nothing else
+- **WHEN** the user opens the upload documents page
+- **THEN** the page titled "Upload documents" is shown

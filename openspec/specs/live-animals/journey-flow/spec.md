@@ -329,7 +329,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
 
 #### Scenario: A page opened from Overview while amending ends with the three amend controls
 **ID**: SCN-FLOW-013-A

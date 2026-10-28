@@ -7,8 +7,8 @@
 # Must. Pipes inside cell values are escaped as `\|`.
 #
 # --write puts the table into review.{repo}.md instead of printing it:
-# it replaces the table already there, or, when there is none, goes in
-# just before "## Repository Verdict" in place of the paste-here comment.
+# it replaces the table already there or the comment that names
+# render-items.sh, or, failing both, goes in before "## Repository Verdict".
 
 set -e
 
@@ -23,8 +23,8 @@ Render the ## Items markdown table for one repo from items.{repo}.json.
 Options:
   --repo REPO   The repo whose items to render (required)
   --write       Write the table into review.{repo}.md instead of printing it.
-                Replaces the table already there; with none, puts it before
-                "## Repository Verdict", in place of the paste-here comment.
+                Replaces the table already there or the comment that names
+                render-items.sh; failing both, goes before "## Repository Verdict".
   -h, --help    Show this help
 EOF
 }
@@ -75,7 +75,7 @@ awk -v table="$table" '
     in_table && /^\|/ { next }
     in_table { in_table = 0 }
     !done && /^\| # \| File \|/ { emit(); in_table = 1; next }
-    !done && /^<!-- paste output of `render-items\.sh/ { skipping_comment = 1 }
+    !done && /^<!-- .*render-items\.sh/ { skipping_comment = 1 }
     skipping_comment {
         if (/-->/) { skipping_comment = 0; emit() }
         next
@@ -84,7 +84,7 @@ awk -v table="$table" '
     { print }
     END { if (!done) exit 3 }
 ' "$summary" > "$written" || {
-    echo "No items table, paste-here comment or \"## Repository Verdict\" heading in $summary" >&2
+    echo "No items table, render-items.sh comment or \"## Repository Verdict\" heading in $summary" >&2
     exit 1
 }
 

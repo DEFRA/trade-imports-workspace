@@ -4,7 +4,7 @@
 # Usage: bash tools/review/render-items.write.test.sh
 #
 # Builds a throwaway review workarea and checks that --write replaces a
-# stale items table, fills the paste-here comment, falls back to the
+# stale items table, fills a comment that names render-items.sh, falls back to the
 # Repository Verdict heading, keeps the rest of the summary as it was,
 # and refuses a summary it has nowhere to write into.
 # Exits 0 when every check passes, 1 when any fails.
@@ -95,6 +95,20 @@ EOF
 "$RENDER" "$TICKET" --repo "$REPO" --write > /dev/null
 check "the table is the rendered one" "$(table_in_summary)" "$expected_table"
 check "the comment is gone" "$(grep -c 'paste output of' "$SUMMARY")" "0"
+
+echo "Fills the skeleton's items-table comment"
+cat > "$SUMMARY" <<'EOF'
+## Risk Assessment
+**Overall Risk:** Low
+
+<!-- items table: `render-items.sh EUDPA-XXXXX --repo {repo} --write` puts it here.
+     Full schema and `|` escape rules: assets/items-table.md. -->
+
+## Repository Verdict
+EOF
+"$RENDER" "$TICKET" --repo "$REPO" --write > /dev/null
+check "the table is the rendered one" "$(table_in_summary)" "$expected_table"
+check "the comment is gone" "$(grep -c 'items table:' "$SUMMARY")" "0"
 
 echo "Falls back to the Repository Verdict heading"
 cat > "$SUMMARY" <<'EOF'

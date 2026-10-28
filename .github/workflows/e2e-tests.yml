@@ -20,15 +20,24 @@ on:
         description: 'Branch name to probe for service images'
         required: true
         type: string
+      shard-total:
+        description: 'Number of shards to split the tests over, from 1 to 6'
+        required: false
+        type: number
+        default: 3
     outputs:
       report-url:
         description: 'URL to the deployed Playwright HTML report'
         value: ${{ jobs.deploy-report.outputs.report-url }}
 
+concurrency:
+  group: workspace-e2e-${{ github.repository == 'DEFRA/trade-imports-workspace' && github.event_name == 'pull_request' && github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
-  # One run, sharded three ways for wall-clock. Each shard stands up its
-  # own stack, then emits a blob report; merge-reports stitches the blobs back
-  # into one HTML report.
+  # One run, sharded for wall-clock. Each shard stands up its own stack, then
+  # emits a blob report; merge-reports stitches the blobs back into one HTML
+  # report.
   e2e:
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -39,8 +48,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shardIndex: [1, 2, 3]
-        shardTotal: [3]
+        shardIndex: ${{ fromJSON('{"1":[1],"2":[1,2],"3":[1,2,3],"4":[1,2,3,4],"5":[1,2,3,4,5],"6":[1,2,3,4,5,6]}')[format('{0}', inputs.shard-total || 3)] }}
+        shardTotal: ${{ fromJSON(format('[{0}]', inputs.shard-total || 3)) }}
 
     steps:
       - name: Resolve workspace ref
@@ -102,10 +111,28 @@ jobs:
             echo "Tests image: latest (no branch tag)"
           fi
 
+      - name: Start pulling the tests image
+        env:
+          IMAGE: defradigital/trade-imports-ins-tests:${{ steps.branch-tag.outputs.tests-tag }}
+        run: |
+          (
+            if docker pull "$IMAGE"; then status=0; else status=1; fi
+            echo "$status" > "$RUNNER_TEMP/tests-image-pull.exit"
+          ) > "$RUNNER_TEMP/tests-image-pull.log" 2>&1 &
+
       - name: Start stack
         env:
           BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
         run: ./scripts/stack/run-stack.sh --branch "$BRANCH"
+
+      - name: Wait for the tests image
+        timeout-minutes: 10
+        run: |
+          until [ -f "$RUNNER_TEMP/tests-image-pull.exit" ]; do sleep 2; done
+          if [ "$(cat "$RUNNER_TEMP/tests-image-pull.exit")" != 0 ]; then
+            cat "$RUNNER_TEMP/tests-image-pull.log"
+            echo "::warning::The tests image did not pull in the background; the next step pulls it again"
+          fi
 
       - name: Assert E2E stack
         run: |
@@ -144,6 +171,7 @@ jobs:
         env:
           SUITES: ${{ steps.scope.outputs.suites }}
           TAGS: ${{ steps.scope.outputs.tags }}
+          SHARD_WEIGHTS: ${{ steps.scope.outputs.suites == 'all' && matrix.shardTotal == 3 && '3:4:4' || '' }}
         run: |
           # SUITES is "all" (no path, so every test), a list, or empty when only
           # tags run. normalise-suites.sh validates a list and gives each
@@ -184,6 +212,10 @@ jobs:
           status=0
           if [ "$run_suites" = true ]; then
             docker_env=()
+            if [ -n "$SHARD_WEIGHTS" ]; then
+              docker_env=(-e "PWTEST_SHARD_WEIGHTS=$SHARD_WEIGHTS")
+              echo "Shard weights: $SHARD_WEIGHTS"
+            fi
             run_tests "${suite_args[@]}" || status=1
           fi
           if [ -n "$tag_pattern" ]; then

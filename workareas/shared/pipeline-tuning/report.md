@@ -316,6 +316,86 @@ A superseded run now ends cancelled, not failed.
 
 The tests repo probe branches used to prove this from a caller have been deleted, and the reader's draft pull request (tests repo PR 66) is closed.
 
+## Standing up the stack: does a layer cache help?
+
+**No. Neither cache wins, so nothing is built.** The best one, restoring Docker's own storage, made the images ready about 43 seconds sooner. Restoring it cost about 48 seconds, so a stack came up about 3 seconds slower in all.
+
+- **Why:** about 60 seconds of "Start stack" is services starting and passing health checks, not downloading. A cache cannot touch that, and Sam ruled out changing `depends_on` and health-check timing.
+- **Measured** on 28 Oct 2026 against main after the "download every image at once" change merged (workspace PR 183), on free GitHub-hosted runners.
+- **Probe:** branch `chore/EUDPA-749-stack-image-cache`, run 40730131318: 1 cold attempt, then 3 warm reruns. Each attempt ran every approach on its own runner at the same time. The branch and its caches are deleted, and nothing was merged.
+
+### The images
+
+Compressed size of the linux/amd64 image, from the registry manifests. "Shared" compares a recent branch image's layer digests with `:latest`.
+
+| Service | Image | Size (MB) | Layers | Recent branch image: layers shared with latest | Branch image: new to download (MB) |
+|---|---|---|---|---|---|
+| SQL Server | mssql/server:2022-latest | 627 | 3 | n/a | n/a |
+| MongoDB | mongo:7.0 | 297 | 8 | n/a | n/a |
+| AWS CLI (Floci set-up) | amazon/aws-cli | 141 | 5 | n/a | n/a |
+| Upload service | cdp-uploader:latest | 119 | 14 | n/a | n/a |
+| Service Bus emulator | servicebus-emulator:1.1.2 | 88 | 5 | n/a | n/a |
+| Floci (AWS stand-in) | floci/floci:latest | 87 | 6 | n/a | n/a |
+| nginx (animals frontend sidecar) | nginx:1.29-alpine | 26 | 8 | n/a | n/a |
+| Redis | redis:7.2.3-alpine3.18 | 16 | 7 | n/a | n/a |
+| Toxiproxy | shopify/toxiproxy:2.9.0 | 7 | 2 | n/a | n/a |
+| Animals backend | trade-imports-animals-backend | 256 | 5 | 2 of 5 (185 MB) | 70 |
+| INS backend | trade-imports-ins-backend | 254 | 5 | 2 of 5 (185 MB) | 68 |
+| Stub | trade-imports-stub | 251 | 5 | 2 of 5 (185 MB) | 65 |
+| Dynamics gateway | trade-imports-dynamics-gateway | 248 | 5 | 2 of 5 (185 MB) | 62 |
+| Reference data | trade-imports-reference-data | 247 | 5 | 2 of 5 (185 MB) | 61 |
+| Plants backend | trade-imports-plants-backend | 245 | 5 | 2 of 5 (185 MB) | 59 |
+| Address book | trade-imports-address-book | 236 | 5 | 2 of 5 (185 MB) | 50 |
+| Animals frontend | trade-imports-animals-frontend | 99 | 13 | 8 of 13 (66 MB) | 32 |
+| Plants frontend | trade-imports-plants-frontend | 99 | 13 | 8 of 13 (66 MB) | 32 |
+| Defra ID stub | trade-imports-defra-id-stub | 96 | 13 | 8 of 13 (66 MB) | 29 |
+| Animals admin | trade-imports-animals-admin | 94 | 13 | 8 of 13 (66 MB) | 27 |
+| INS frontend | trade-imports-ins-frontend | 89 | 13 | 8 of 13 (66 MB) | 22 |
+| Tests image (pulled beside the stack) | trade-imports-ins-tests | 1,948 | 15 | 7 of 15 (935 MB) | 1,012 |
+
+- **The stack's 21 images add up to 3,620 MB, but only about 2.2 GB is unique.** The 7 Java images share a 185 MB base, and the 5 Node images share a 66 MB base. A pull already fetches a shared layer only once.
+- **A branch image shares only its base with `:latest`.** Every application layer is new, even when little has changed, because the branch build runs without a cache. A cache seeded from `:latest` would still leave 22 to 70 MB to download for each branch service.
+- **Branch images compared:** the newest branch with a published image in each repo on 28 Oct, for example `fix/EUDPA-751-upload-documents-spent-session` (animals backend) and `feat/EUDPA-706-design-release-2-1-address-book-journey-add` (both frontends and the tests image).
+
+### The approaches
+
+Every approach kept `run-stack.sh` as it is on main, `--pull always` included, so the registry still decided which image is current. A cache miss fell back to today's download.
+
+| Approach | Warm runs | Restore (s) | Downloads done after restore (s) | Start stack (s) | Restore plus Start stack (s) | Against today | Cold run: Start stack, then archive build and save (s) |
+|---|---|---|---|---|---|---|---|
+| Today (main, no cache) | 3 (plus 1 cold) | 0 | 61.5 (52.0, 51.7, 80.7) | 126.0 (119, 121, 138) | 126.0 | n/a | 123, then nothing |
+| a. `docker save` of the stack images, zstd-compressed, through actions/cache, then `docker load` | 3 (plus 1 cold) | 122 (cache 26, load 96) | 21.1 | 86.0 (88, 83, 87) | 208.0 (210, 200, 214) | 82 s slower | 124, then 63 + 11 |
+| b. Stop Docker, restore `/var/lib/docker` and `/var/lib/containerd` from actions/cache, start it again | 3 (plus 1 cold) | 48.4 (cache 16.7, unpack and restart 31.7) | 18.4 | 81.0 (83, 84, 76) | 129.3 (123, 122, 143) | 3 s slower | 125, then 59 + 12 |
+| c. No cache: let Docker download 16 layers at once instead of 3 (`max-concurrent-downloads`) | 3 (plus 1 cold) | 1.3 (daemon restart) | 52.2 | 119.7 (124, 124, 111) | 121.0 | 5 s faster | 126 |
+
+- **"Downloads done"** is the time from the start of "Start stack" to the last stack image's pull event (`docker events`).
+- **a is slow because `docker load` writes about 5.2 GB** of uncompressed layers. The archive is 2.05 GB (1.91 GiB) with zstd.
+- **b's archive is 2.07 GB.** The first try was 2.93 GB, because it also held about 2.5 GB of the runner's own preinstalled images. The measured runs left those images out.
+- **c is within run-to-run noise.** "Today" alone ranged from 119 to 138 seconds.
+- **The tests image still downloaded in the background in every approach,** as it does on main.
+- **Runners use the classic `overlay2` store under `/var/lib/docker`.** The containerd image store is not in use.
+
+### Verdict
+
+**No approach meets the 20-second bar.**
+
+| Approach | Saving per stack, warm, after restore | Meets the 20 s bar |
+|---|---|---|
+| a. `docker save` and `docker load` | -82 s (slower) | No |
+| b. Restore Docker's storage | -3 s (slower) | No |
+| c. More downloads at once | +5 s (noise) | No |
+
+- **The ceiling is low.** Downloads finish about 62 seconds into "Start stack". A perfect, free cache could save at most about 40 seconds, the drop b showed before counting its restore.
+- **Branch stacks would gain less.** The application layers of a branch image are not in a cache seeded from `:latest`.
+
+### What a cache would cost
+
+- **Space:** about 2.05 GB for each calling repo. A reusable workflow's cache belongs to its caller, so all 14 callers would hold their own copy against a 10 GB limit per repo (7-day retention).
+- **The tests repo would evict its own layer cache.** It already holds 10.3 GB in 123 entries, all of it the branch image build's layer cache. The animals frontend holds 2.4 GB and the plants frontend 1.6 GB. The other callers hold under 1 GB each.
+- **Staying fresh:** the key would be a hash of every stack image's manifest digest, with a prefix fallback. Pulling with `--pull always` stays the guard against a stale image, so an old entry only costs download time.
+- **Why that churns:** `:latest` moves every time any of 12 services merges, so the key would change several times a day. Each change writes another 2 GB entry.
+- **Who could use an entry:** a cache written on a pull request belongs to that branch. To help every pull request, each caller would need a main-branch or scheduled job to write it.
+
 ## Settled
 
 - **Skip e2e on workspace PRs that don't touch the stack: dropped.** Sam, 27 Oct: don't stop running tests; workspace PRs aren't a hot path.

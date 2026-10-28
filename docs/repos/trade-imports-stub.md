@@ -4,12 +4,12 @@
 
 ## Purpose
 
-Stub service that mocks responses from third-party integrations for the Trade Imports project. Today it imitates two upstream surfaces: the Defra Trade platform OAuth2 token endpoint and the MDM (Master Data Management) API for countries and ports of entry. It is available locally and on the shared CDP environments.
+Stub service that mocks responses from third-party integrations for the Trade Imports project. Today it imitates two upstream surfaces: the Defra Trade platform OAuth2 token endpoint and the MDM (Master Data Management) API for countries, ports of entry, product search, commodities and commodity species. It is available locally and on the shared CDP environments.
 
 ## Responsibilities
 
 **Owns**
-- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`). They are MDM's own responses, captured once from MDM and served whole, with every value MDM masks left out rather than guessed. The capture came in with [DEFRA/trade-imports-stub#18](https://github.com/DEFRA/trade-imports-stub/pull/18); `workareas/shared/design-release-2-1/mdm/regenerate/*.jq` rebuild them from the raw captures in `workareas/shared/design-release-2-1/mdm/captures/raw/`.
+- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`, `mdmProductSearchResponses.json`, `mdmProductSpeciesResponses.json`, `mdmProductCommoditiesResponses.json`). The countries and ports files are MDM's own responses, captured once from MDM and served whole, with every value MDM masks left out rather than guessed; that capture came in with [DEFRA/trade-imports-stub#18](https://github.com/DEFRA/trade-imports-stub/pull/18), and `workareas/shared/design-release-2-1/mdm/regenerate/*.jq` rebuild them from the raw captures in `workareas/shared/design-release-2-1/mdm/captures/raw/`. The three product files were saved from TST in October 2026 with [DEFRA/trade-imports-stub#26](https://github.com/DEFRA/trade-imports-stub/pull/26); the only values changed are `isGerminal` on `05111000` and `05119985`, set to `true` by hand.
 - A fake OAuth2 token endpoint that always succeeds.
 
 **Does not own**
@@ -24,12 +24,15 @@ Stub service that mocks responses from third-party integrations for the Trade Im
 | `POST /tenant/oauth2/v2.0/token` | Trade platform (Azure AD style) client-credentials token endpoint | Low. Ignores the form body and returns a `Token` with `expiresOn` (epoch millis, now plus 3600s) and the value `stub-token`. |
 | `GET /mdm/geo/countries` | MDM geo countries API | One capture. Returns the records captured once from MDM, whole (all 250 countries unfiltered, 32 for `GBNAG_SPS_EX`, the only block captured), plus an `x-ms-middleware-request-id: stub-trace-id` header. Not checked against MDM since the capture. |
 | `GET /mdm/trade/bcp/poes` | MDM trade BCP/ports-of-entry API | One capture. Returns the 78 port records captured once from MDM, whole, each with its `traffic`, address and status, plus the same trace header. Not checked against MDM since the capture. |
+| `GET /mdm/trade/product/search` | MDM product search | Responses saved from MDM in TST, keyed by search term. A term not saved finds nothing, a later page is empty with the saved total, and a `q` shorter than two characters answers 400. |
+| `GET /mdm/trade/product/commodities` | MDM commodities by code | The saved commodity for each known code in `codes`, in the order asked. TST does not set `isGerminal` yet, so the fixture sets it to `true` for `05111000` and `05119985`. |
+| `GET /mdm/trade/product/commodities/{code}/species` | MDM species of one commodity | Responses saved from MDM in TST, one body per page. An unknown code answers an empty page. |
 
 ## Integrations
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-reference-data | REST (Feign client) | Fetches an access token, then countries and ports of entry. Confirmed by its `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` settings, which point at port 8087 by default and in the workspace stack. |
+| Inbound | trade-imports-reference-data | REST (Feign client) | Fetches an access token, then countries, ports of entry, product search results, commodities and commodity species. Confirmed by its `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` settings, which point at port 8087 by default and in the workspace stack. |
 | Outbound | None found | - | The controllers serve fixtures and make no outbound calls. |
 | Outbound (config only) | MongoDB | Spring Data Mongo | Configured in `application.yml` (database `trade-imports-stub`) and the stack waits for it to be healthy; no code path that uses it was found. |
 | Outbound (config only) | CloudWatch EMF agent | Embedded metrics | Metrics publishing via `AWS_EMF_AGENT_ENDPOINT`. |

@@ -50,6 +50,7 @@ One fact per line, only the lines that apply:
 Pages: arrival-details, origin
 Recipe: add-a-field, add-a-branch
 Design gaps: 1 added (dashboard status chips)
+Patterns: 1 added (dashboard tabs switched on)
 Welsh needed: 3 strings
 Examples: happy path updated for the new question
 ```

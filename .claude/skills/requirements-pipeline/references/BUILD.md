@@ -219,18 +219,20 @@ exact name, moves it onto the board, and puts the increment's repos on its
 branch. A branch an earlier attempt left behind is reused; if it has no
 commits of its own and the base has moved on, it is fast-forwarded to
 `origin/<base>` first, so the baseline never runs on a stale base. A branch
-with commits of its own is left as it is. A failure names its step and its exact reason, and the loop maps it to
+with commits of its own is left as it is, except the workspace repo's: that one
+gets `origin/<base>` merged into it, so the tim every later stage runs is the
+base's. A merge that conflicts stops the row, naming the files. A failure names its step and its exact reason, and the loop maps it to
 `derive-failed`, `no-buildable`, `ticket-failed` or `branch-failed`. See
 [`../workflow/README.md`](../workflow/README.md#the-start-stage).
 
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 56 agents on Claude and 64 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
+   increment is up to 60 agents on Claude and 68 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
    beyond three, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 17
-   increments on Claude and 15 on Codex. Under the branch lifecycle the run also
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 16
+   increments on Claude and 14 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -290,7 +292,11 @@ with commits of its own is left as it is. A failure names its step and its exact
    stack down. A refused acquire stops the run at `stack-held` before any
    increment; a stack that will not start stops it at `stack-failed`. A stage
    that finds the stack in somebody else's hands returns `stackHeld`, and the
-   run stops at `stack-held` for you to rule on. When Docker Desktop has quit,
+   run stops at `stack-held` for you to rule on. A stage that finds the run's
+   lease gone, with nobody else holding it, gets the lease taken again under
+   the run's holder and runs once more instead. A gate under the run's holder
+   that finds the stack down while the run still holds the lease starts it
+   again and leaves it up, still leased to the run. When Docker Desktop has quit,
    tim starts it again (`open -a Docker`, up to five minutes) wherever it reads
    or starts the stack, and a stage that finds the stack gone from under the
    run's own lease returns `stackDown`: the loop takes the lease again, which
@@ -484,7 +490,13 @@ changes nothing the spec records reports `Spec sync: none — <reason>`, which t
 reviewer checks. A row owns every capability it writes, whole: a validate or lint failure
 already there before the row is the row's to fix, not to report as pre-existing. Once a theme's last row lands, the run lints the spec and lists unproven
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
-its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
+its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
+did not stop it.
+
+**The spec diff comment.** Under the full lifecycle, each landed row's ticket gets a Jira
+comment saying what the spec now says because of it, written to
+`<workarea>/tickets/<id>-spec-diff.txt`. Each landed entry carries `specDiffComment`. Report
+any with `posted: false` and its `detail`: post that file by hand with `tim jira comment`. A `theme-unread` entry stops the run too: read the theme
 by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
 [`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
 
@@ -778,10 +790,10 @@ handover prompt.
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
 | `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
 | `gate` | Full lifecycle only. The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
-| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves, or a prefix a row reported writing that does not exist. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
+| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves that the theme's own row commits added, changed or re-proved (by `tim spec diff`), or a prefix a row reported writing that does not exist. An unproven scenario that predates the theme never stops it: the check lists it under `preexisting`. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
-| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
+| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands; one that finds the lease gone with nobody holding it gets the run's lease taken again and runs once more, so the run stops here only when that acquire is refused. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
 | `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
@@ -793,8 +805,9 @@ handover prompt.
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
-| `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
+| `pr-conflict` | A PR conflicts with its base, so GitHub runs no checks on it. The CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches any checks, and stops on CONFLICTING or DIRTY, with `stopReason: "pr-conflict"` and no fix attempt spent. Nothing merged and every PR stays open. The detail names the PR: merge the base into the branch in that repo, push, then launch again. Both lifecycles |
+| `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call. With `stopReason: "base-branch-unverified"`, a workflow that `tim build push-workflows` says the merge commit starts has no run on `main`: check the repo's Actions page. A merge that starts no workflow at all (its files miss every push trigger's paths) is not a stop: it counts as green, and the run log names each workflow's reason. Nor is a run whose own status stays in progress after every job in it has passed, by `tim build run-jobs`: it counts as green, and the landed result lists it under `mainRunsGreenByJobs` |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
@@ -997,7 +1010,7 @@ three.
   Absent: all three.
 - `awaitCi: false`: push and record the PRs without waiting for CI. GitHub runs no checks on a PR that conflicts
   with its base, so a row that lands before the merge that clears the conflict needs this, or it stops at
-  `ci-red` with `pr-conflicting`.
+  `pr-conflict`.
 
 A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
@@ -1021,8 +1034,7 @@ exactly that, never as green.
 
 ### The stop reasons it adds
 
-`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `ci-red` gains the
-`pr-conflicting` case. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
+`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
 `changes-requested`, `pr-left-open`) cannot fire.
 
 ## THE HANDOVER PROMPT

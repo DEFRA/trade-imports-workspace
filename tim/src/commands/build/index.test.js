@@ -1,6 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -351,6 +352,59 @@ describe('tim build gate-wait', () => {
     }).toEqual({ exitCode: 1, code: 'GATE_STILL_RUNNING' })
   })
 
+  test('prints the result of a gate started with --detach, which returned before the gate finished', async () => {
+    seedGateRepo({ test: 'sleep 1 && exit 2' })
+    const resultPath = join(root, 'logs', 'gate-result.json')
+    const start = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--result',
+      resultPath,
+      '--detach'
+    ])
+    const resultWhenStarted = existsSync(resultPath)
+
+    const wait = await runTim(['build', 'gate-wait', resultPath, '--json'])
+
+    expect({
+      startExitCode: start.exitCode,
+      started: envelopeOf(start).result,
+      resultWhenStarted,
+      waitExitCode: wait.exitCode,
+      rungs: envelopeOf(wait).result.rungs.map(({ repo, name, ok }) => ({
+        repo,
+        name,
+        ok
+      }))
+    }).toEqual({
+      startExitCode: 0,
+      started: { detached: true, pid: expect.any(Number), result: resultPath },
+      resultWhenStarted: false,
+      waitExitCode: 1,
+      rungs: [{ repo: 'frontend', name: 'unit', ok: false }]
+    })
+  })
+
+  test('says the gate died when its process has gone without writing a result', async () => {
+    seedWorkspace(['frontend'])
+    const resultPath = join(root, 'logs', 'gate-result.json')
+    const ended = execa('node', ['-e', ''])
+    await ended
+    mkdirSync(dirname(resultPath), { recursive: true })
+    writeFileSync(`${resultPath}.pid`, `${ended.pid}\n`)
+
+    const wait = await runTim(['build', 'gate-wait', resultPath, '--json'])
+
+    expect({
+      exitCode: wait.exitCode,
+      code: envelopeOf(wait).errors[0].code
+    }).toEqual({ exitCode: 1, code: 'GATE_DIED' })
+  })
+
   test('refuses a wait longer than the Bash tool allows', async () => {
     seedWorkspace(['frontend'])
 
@@ -396,6 +450,60 @@ describe('renderGateText for a held stack', () => {
       }).split('\n')[2]
     ).toBe(
       'The workspace stack was not the gate’s to use: The workspace stack is leased to "x".'
+    )
+  })
+})
+
+describe('renderGateText for a stack started again under its holder’s lease', () => {
+  test('says the gate started it again and left it up, still leased to the holder', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [{ repo: 'tests', name: 'e2e-plants', phase: 'e2e', ok: true }],
+        stack: {
+          wasUp: false,
+          startedForE2e: true,
+          stoppedAfter: false,
+          keptForHolder: true,
+          held: null
+        }
+      }).split('\n')[2]
+    ).toBe(
+      'The workspace stack was down under this holder’s lease. The gate started it again from local source and left it up, still leased to this holder.'
+    )
+  })
+})
+
+describe('renderGateText for a stack that did not start', () => {
+  test('says the gate could not start the stack and why, not that the stack was left up', () => {
+    const startError =
+      'The workspace stack did not come up (run-stack.sh exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
+
+    const text = renderGateText({
+      green: false,
+      logs: '/logs',
+      rungs: [
+        {
+          repo: 'tests',
+          name: 'e2e-plants',
+          phase: 'e2e',
+          ok: false,
+          reason: startError
+        }
+      ],
+      stack: {
+        wasUp: false,
+        startedForE2e: false,
+        stoppedAfter: false,
+        downError: null,
+        startError,
+        held: null
+      }
+    })
+
+    expect(text.split('\n')[2]).toBe(
+      `The gate could not start the workspace stack, so no E2E rung ran: ${startError}`
     )
   })
 })

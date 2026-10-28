@@ -72,6 +72,7 @@ reference.
 | `references/design-release.md` | "start a new design release", "make a working copy of the journey", "freeze what we've got as design release 2", "copy this change to release X", "which releases are there", "retire release X", "I want the latest", "is my release out of date", "pick up the real team's changes" | Starts, freezes, carries changes between, catches up and retires releases |
 | `references/change-the-words.md` | "change the wording", "reword this", "rename X to Y everywhere", "change the hint", "change the error message", "show me the Welsh" | Finds every place a phrase lives and changes English and Welsh together |
 | `references/match-the-design.md` | "make this page match the Figma", "change the spacing", "make it wider", "make it a summary list", "add a tag", "change the header" | Rebuilds a layout with GOV.UK components and logs design gaps |
+| `references/custom-pattern.md` | "a pattern GOV.UK doesn't have", "build a custom component", "build the commodity search as designed", "we're testing it in round 3", "we know it's not GOV.UK, here's why", "you can use new components if GOV.UK doesn't fit", "can the dashboard tabs actually work?", "switch on the MoJ filter", "give me 3 options for this page" | Climbs GOV.UK, then MoJ, then builds a release pattern in the release's own `assets/`, on the designer's recorded words |
 | `references/port-a-kit-page.md` | "re-create this page from the old prototype", "port the GB notification page for X", "build this Prototype Kit page here", "bring over the transporter page" | Rebuilds an old Prototype Kit page in a release, with a fidelity table |
 | `references/change-the-journey.md` | "add a question", "add a page", "add a guidance page", "move this page", "only show this page when", "skip this page if", "regroup the task list", "change the confirmation page", "a green panel with the reference" | Follows the repo's recipes to change the flow |
 | `references/example-data.md` | "add an example", "show a late notification", "which ones are overdue", "an example stopped at the X page", "a link straight to the X page", "add a port", "fill the dashboard", "another organisation", "put the X journey first on the demo page", "feature this journey", "what shows first for stakeholders" | Adds example notifications, parties, ports and countries, with stable links; chooses what leads the demo page |
@@ -102,7 +103,9 @@ no row are two or three rows together.
   it once the designer gives its options.
 - A part that no reference covers at all: say which part in one plain line,
   do the rest, and log the missing part in the release's `design-gaps.md`
-  when it is a design the toolbox cannot build.
+  when GOV.UK and MoJ cannot build it. When the designer asks for the real
+  thing, build it as a release pattern instead
+  (`references/custom-pattern.md`).
 - Ask one plain question only when the request is truly ambiguous (step 6
   above).
 
@@ -158,6 +161,24 @@ Workflow({
   args: { set: "plants-working", requests: ["…", "…"] }
 })
 ```
+
+When the designer has given permission for custom patterns in their own
+words, record it first (`references/custom-pattern.md`, "Record their
+words"), then pass the id it prints:
+
+```text
+Workflow({
+  scriptPath: ".claude/skills/prototype/workflow/design-session.js",
+  args: {
+    set: "plants-working",
+    requests: ["Give me 3 options for the commodity page"],
+    designerMandate: { id: "m-2026-10-27-1" }
+  }
+})
+```
+
+Never make up an id, and never pass one the designer did not give in this
+session.
 
 | Workflow | Started by | Use it for |
 | --- | --- | --- |
@@ -249,6 +270,8 @@ All run as
   retire, remount · `designer:examples` list, check, links, init, fixtures
 - `designer:words` find words, page, Welsh report · `designer:research`
   research mode on, off, status, sheet · `designer:handoff` brief and patch
+- `designer:mandate` record and show a designer's permission for release
+  patterns
 - `designer:service` new, list and retire prototype-owned services
 - `designer:format` tidies changed files · `designer:save -- -m "<line>"`
   saves what is staged as one commit

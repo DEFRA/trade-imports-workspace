@@ -106,7 +106,7 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 const AGENT_CAP = 1000
 const BUDGETED_CI_FIX_ATTEMPTS = 3
-const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 56, codex: 64 }
+const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 60, codex: 68 }
 const AGENTS_PER_CI_FIX_ATTEMPT = 4
 const STARTUP_AGENTS = 4
 const agentsPerIncrement = () =>
@@ -269,6 +269,10 @@ const FRONTEND_CHANGE_SETS = {
 }
 const FRONTEND_CHANGE_PATHS = Object.keys(FRONTEND_CHANGE_SETS)
 const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
+
+const TESTS_REPO_PATH = 'repos/trade-imports-ins-tests'
+const TESTS_IMAGE_WORKFLOW = 'publish-branch.yml'
+const TESTS_KEY = REPO_KEYS.find((key) => REPOS[key].path === TESTS_REPO_PATH)
 
 const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
@@ -515,15 +519,26 @@ and logs under \`workareas/\`, and often somebody's work in progress. If your fi
   \`git -C ${TILDE} commit -m "<message>" -- <paths>\`. Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec.
 - Never edit this loop's own script, \`${LOOP_SCRIPT}\`.`
 
-const changedReposRule = () => {
+const repoStateLog = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}-repo-state.json`
+
+const repoStateCommand = (keys, { branch, logFile }) =>
+  `tim workspace repo-state --repos ${keys.map((key) => `${key}:${REPO_PATH[key]}`).join(',')}${branch ? ` --branch ${branch}` : ''} --workspace ${TILDE} --json > ${logFile} 2> ${logFile.replace(/\.json$/, '.err')}`
+
+const REPO_STATE_FIELDS = `It is one JSON line. \`result.repos[]\` gives each repo's \`key\`, \`path\`, \`branch\`, \`dirty\`, \`changed\` (each
+path with its two \`git status\` letters), \`staged\` and \`merging\`, and with --branch \`onBranch\`, \`head\` and \`branchHead\`.
+Decide from those fields. Never run \`git status\` or \`rev-parse\` to decide which repos changed or which branch one is on.`
+
+const changedReposRule = (id, stage, branch) => {
   const keys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY || buildsWorkspace())
   const workspaceLine = buildsWorkspace()
     ? `\nIn the workspace repo, only changes THE WORKSPACE REPO rule leaves to this increment count.`
     : WORKSPACE_CONFIGURED
       ? `\nThe workspace repo is not one of this increment's repos: leave it alone, except as THE BEHAVIOUR SPEC says.`
       : ''
-  return `WHICH REPOS: check EVERY configured repo — ${keys.map((key) => `\`${repoTilde(key)}\``).join(', ')} —
-with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.${workspaceLine}`
+  return `WHICH REPOS: read every configured repo's state from tim, once:
+\`${repoStateCommand(keys, { branch, logFile: repoStateLog(id, stage) })}\`
+Read that file once. ${REPO_STATE_FIELDS}
+Act on each repo whose \`dirty\` is true.${workspaceLine}`
 }
 
 const SPEC_RULE = `THE BEHAVIOUR SPEC: an increment may also change \`${TILDE}/openspec/\`, the workspace repo's own spec and
@@ -829,17 +844,17 @@ const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)}`
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
-const GATE_WAIT_RULE = `A LONG GATE. A gate across several repos often runs longer than one Bash call allows. When the tool reports
-  that a gate command exceeded its timeout and was MOVED TO THE BACKGROUND, the gate is still running and nothing is
-  wrong: never kill it, never run it again, and never call it red. Wait for it instead, with ONE FOREGROUND Bash call,
-  \`timeout\` 600000:
+const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
+  process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
+  kill it and never run the command again. Wait for it with ONE FOREGROUND Bash call, \`timeout\` 600000:
   \`tim build gate-wait <the --result file of that command> --workspace ${TILDE} --json\`
-  It prints the gate's own JSON line, exactly as the gate would have, once the gate finishes. If it prints
-  \`GATE_STILL_RUNNING\` instead, make the same call again, up to ${MAX_GATE_WAITS} times. Only a gate that has still
-  written no result after the last of them is RED, reported as "the gate did not finish". Never use
-  run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
+  It prints the gate's own JSON line once the gate finishes, and exits as the gate did. If it prints
+  \`GATE_STILL_RUNNING\` instead, make the same call again, up to ${MAX_GATE_WAITS} times. If it prints \`GATE_DIED\`, the
+  gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
+  copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
+  not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
 const gateCommandList = (phases, logs) =>
   phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
 
@@ -863,11 +878,11 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
 - Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
 - Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
   leave it as it is.
-- Run each gate command in the FOREGROUND with the Bash tool's \`timeout\` set to 600000. It prints one JSON line:
+- Run each gate command in the FOREGROUND, then wait for it as below. The wait prints the gate's one JSON line:
   \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
   It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
-  it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
-  an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
+  it is neither green nor red, so say so and go on. A gate command or wait that errors before running any rung
+  (\`ok\` false with an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
 - ${GATE_WAIT_RULE}
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
   there, run nothing more, and ${STACK_HELD_LINE}
@@ -899,7 +914,8 @@ yourself. Never run the gate's E2E phase, never start or stop the workspace stac
 repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 ${gateCommandList(phases, gateLogs(id, stage))}
-Each prints one JSON line; a red rung names its \`log\` — read that file once.
+Each starts its gate and returns at once; the wait below prints the gate's one JSON line, and a red rung names its \`log\` —
+read that file once.
 ${GATE_WAIT_RULE}
 To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. ${DUPLICATION_REPAIR} Never run the gate's E2E phase — the ladder does, after review —
@@ -1295,6 +1311,26 @@ ${HEAD_BRANCH_CHECK}
 If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
 Do not commit "just this once" and sort the branch out afterwards.`
 
+const testsImageFirstRule = (id, branch) => {
+  if (!TESTS_KEY) return ''
+  const ghRepo = REPOS[TESTS_KEY].github
+  return `
+TESTS REPO FIRST. Every other repo's pull request runs its E2E with the tests image tagged for \`${branch}\` when one
+is published, and with \`trade-imports-ins-tests:latest\` when not ("Tests image: latest (no branch tag)" in its log),
+which runs the wrong specs. The tests repo publishes that image from its own pull request, in its
+\`${TESTS_IMAGE_WORKFLOW}\` run. So whenever you push ${TESTS_KEY} and any other repo:
+a. Push ${TESTS_KEY} before every other repo, whatever order a list gives. The publish runs only for an open pull
+   request on \`${branch}\`, so where your task registers ${TESTS_KEY}'s pull request, do that before step b too.
+b. Its pushed commit: \`git -C ${TILDE}/${TESTS_REPO_PATH} rev-parse HEAD\`.
+c. \`gh run list --repo ${ghRepo} --workflow ${TESTS_IMAGE_WORKFLOW} --commit <sha> --json databaseId,status,conclusion --limit 5\`
+   An empty list means GitHub has not started it yet: run the same list again, at most 5 times in all.
+d. BLOCK on that run, with the Bash tool's \`timeout\` set to 600000, at most ${CI_WATCH_WINDOWS} times:
+   \`gh run watch <run-id> --repo ${ghRepo} --exit-status > ${WORKAREA_TILDE}/logs/${id}-tests-image.log 2>&1\`
+e. Only then push the other repos. A publish that failed, never started or never finished does not stop you: push the
+   others and name it in your summary. The tests pull request's own checks show it, and the CI stage deals with it.
+None of this applies when you push ${TESTS_KEY} alone, or do not push it.`
+}
+
 const preserveWork = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${guardrails()}
@@ -1302,8 +1338,8 @@ ${REPO_RULE}
 ${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
-1. ${changedReposRule()} A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and
-   change nothing in it.
+1. ${changedReposRule(id, 'preserve', branch)} A repo whose \`dirty\` is true and whose \`onBranch\` is false is a stop:
+   report ok:false naming it, and change nothing in it.
 2. For EACH repo with changes, stage what the increment produced — but NOTHING under logs/, no coverage output, no
    test-results/, no Playwright artefacts.
 3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
@@ -1339,9 +1375,9 @@ TASK:
    \`git -C ${TILDE}/<repoPath> format-patch --stdout --binary origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.patch\`
    then \`git -C ${TILDE}/<repoPath> reset --soft origin/${branch}\`, which leaves those commits' changes staged for the steps
    below to save and stash. Name the commits' SHAs in your note. Never \`reset --hard\`, and never push.
-1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
-   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
-   A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
+1. ${changedReposRule(id, 'preserve', branch)} Also act on every repo whose \`merging\` is true, even where \`dirty\` is false.
+   A repo whose \`dirty\` or \`merging\` is true and whose \`onBranch\` is false is a stop: report ok:false naming it, and
+   change nothing in it.
 2. For EACH such repo, save the attempt under ${WORKAREA_TILDE}/logs/, one Bash call each, output redirected:
    \`git -C ${TILDE}/<repoPath> diff --staged --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.staged.patch\`
    \`git -C ${TILDE}/<repoPath> diff --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.unstaged.patch\`
@@ -1381,41 +1417,102 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
   }
 }
 
-const branchGuard = (id, stageName, phaseName, branch, branchedRepos) => {
-  const otherRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
-  const reposToCheck = branchedRepos
-    ? `the increment's repos — ${branchedRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')} — and any other
-configured repo whose \`git -C ${TILDE}/<repoPath> status --short\` is not empty (${otherRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')})`
-    : `every configured repo — ${REPO_KEYS.map((key) => `\`${repoTilde(key)}\``).join(', ')}`
+const guardedRepoKeys = (branchedRepos) =>
+  branchedRepos
+    ? REPO_KEYS.filter((key) => branchedRepos.includes(key) || key !== WORKSPACE_KEY)
+    : REPO_KEYS
 
-  return agent(
-    `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
+const outsideRepoRule = (branchedRepos) => {
+  const outsideRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY && !branchedRepos.includes(key))
+  if (outsideRepos.length === 0) return ''
+  return `
+- The repos outside the increment: ${outsideRepos.join(', ')}. One of them is a repo to check only when its \`dirty\` is
+  true. A clean repo outside the increment is fine on ANY branch. Do not check its branch, and leave it out of your
+  summary and your ok decision.`
+}
+
+const reposToCheckRule = (branchedRepos) =>
+  branchedRepos
+    ? `WORK OUT THE REPOS TO CHECK from that file, before you look at any branch:
+- The increment's repos: ${branchedRepos.join(', ')}. Every one is a repo to check.${outsideRepoRule(branchedRepos)}
+THEN check the branch of each repo to check, and of no other repo.`
+    : `CHECK every configured repo in that file.`
+
+const BRANCH_GUARD_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    repoState: { type: 'string', description: 'The repo-state file from your last tim run, word for word' }
+  },
+  additionalProperties: false
+}
+
+const branchGuardPrompt = (id, stageName, branch, branchedRepos) => {
+  const command = repoStateCommand(guardedRepoKeys(branchedRepos), { branch, logFile: repoStateLog(id, `branch-guard-${stageName}`) })
+  return `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
 in must be on \`${branch}\`. A stage that switched a repo to another branch, or cut a new one, leaves the work where
 the land stage refuses it. You check, move a repo back where that is safe, and change nothing else.
 ${guardrails()}
-CHECK ${reposToCheck}.
-For EACH of them:
-1. ${HEAD_BRANCH_CHECK} Prints \`${branch}\` → that repo is fine; go to the next.
-2. Anything else → compare the commits: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\` and
-   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${branch}\`.
-   - The same SHA → \`git -C ${TILDE}/<repoPath> checkout ${branch}\`. The staged and unstaged work travels with it,
-     because the two branches point at the same commit. Run step 1 again and confirm it prints \`${branch}\`. Say in
-     your summary which repo you moved and from which branch. Leave that other branch where it is — do not delete it.
-   - A different SHA, \`${branch}\` missing, or a checkout that refuses → STOP: report ok:false naming the repo, the
-     branch it is on and both SHAs, and change nothing in it.
+FIRST, read every repo's state from tim:
+\`${command}\`
+Read that file once. ${REPO_STATE_FIELDS}
+${reposToCheckRule(branchedRepos)}
+For EACH repo to check:
+1. \`onBranch\` is true → that repo is fine; go to the next.
+2. \`onBranch\` is false → compare its \`head\` with its \`branchHead\`.
+   - The same SHA → \`git -C <path> checkout ${branch}\`. The staged and unstaged work travels with it, because the two
+     branches point at the same commit. Say in your summary which repo you moved and from which branch. Leave that
+     other branch where it is: do not delete it.
+   - A different SHA, \`branchHead\` null, or a checkout that refuses → STOP: report ok:false naming the repo, its
+     \`branch\` and both SHAs, and change nothing in it.
 Never create a branch, and never commit, stash, reset or clean. You only ever move a repo back onto \`${branch}\`.${
-      IS_BRANCH
-        ? `
-A repo MID-MERGE (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA) is in that state by design:
-a later stage commits the merge. Never \`merge --abort\`, \`merge --continue\` or check out in it. If it is on \`${branch}\` it
-is fine; if it is not, STOP and report ok:false naming it.`
-        : ''
-    }
-Report ok:true only when every repo you checked prints \`${branch}\`.
-Return the structured output only.`,
-    light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: incrementSchema })
-  )
+    IS_BRANCH
+      ? `
+A repo whose \`merging\` is true is in that state by design: a later stage commits the merge. Never \`merge --abort\`,
+\`merge --continue\` or check out in it. If \`onBranch\` is true it is fine; if not, STOP and report ok:false naming it.`
+      : ''
+  }
+If you moved any repo, run the same tim command again and read the file again.
+Report ok:true only when every repo you checked has \`onBranch\` true in the last file you read, and put that file's
+contents, word for word, in \`repoState\`.
+Return the structured output only.`
 }
+
+const repoStatesIn = (text) => {
+  const line = lastJsonLine(text)
+  try {
+    const repos = line ? JSON.parse(line)?.result?.repos : null
+    return Array.isArray(repos) ? repos : null
+  } catch {
+    return null
+  }
+}
+
+const strayRepos = (states, branchedRepos) =>
+  states.filter(
+    (state) => (branchedRepos === null || branchedRepos.includes(state.key) || state.dirty === true) && state.onBranch !== true
+  )
+
+const describeStray = (state) => `${state.key} is on ${state.branch ?? 'no branch'}`
+
+const guardVerdict = (guard, branchedRepos) => {
+  const states = repoStatesIn(guard?.repoState)
+  if (!guard || states === null) return guard
+  const stray = strayRepos(states, branchedRepos)
+  if (stray.length === 0) return { ...guard, ok: true }
+  return { ...guard, ok: false, summary: `${stray.map(describeStray).join('; ')}, by tim workspace repo-state. ${guard.summary}` }
+}
+
+const branchGuard = async (id, stageName, phaseName, branch, branchedRepos) =>
+  guardVerdict(
+    await agent(
+      branchGuardPrompt(id, stageName, branch, branchedRepos),
+      light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: BRANCH_GUARD_SCHEMA })
+    ),
+    branchedRepos
+  )
 
 const incrementSchema = {
   type: 'object',
@@ -1458,19 +1555,6 @@ const withStackHeld = (schema) => ({
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY, stackDown: STACK_DOWN_PROPERTY }
 })
 
-const recoverDownStack = async (id, stage, runStage) => {
-  const first = await runStage()
-  if (!first?.stackDown) return first
-  log(`${id}: the workspace stack went down under the run at ${stage} — ${first.stackDown.detail}. Taking the lease again and running ${stage} once more`)
-  const retaken = await acquireRunLease()
-  if (!retaken?.acquired) {
-    const why = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
-    log(`${id}: could not take the lease again after the stack went down — ${why}`)
-    return first
-  }
-  return runStage()
-}
-
 const LEASE_OWNER_SCHEMA = {
   type: 'object',
   required: ['ok', 'holder', 'summary'],
@@ -1481,9 +1565,8 @@ const LEASE_OWNER_SCHEMA = {
   }
 }
 
-const confirmStackHeld = async (id, stage, held) => {
-  if (!held) return null
-  const owner = await agent(
+const readLeaseOwner = (id, stage) =>
+  agent(
     `Report who holds the workspace stack's lease. Run exactly one command and read it:
 \`tim docker lease status --workspace ${TILDE} --json\`
 Return ok as tim's \`ok\`, holder as \`result.lease.holder\` (null when \`result.lease\` is null), and a one-line summary.
@@ -1491,11 +1574,35 @@ ${RUN_WITH_BASH}
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
     light({ label: `${id} ${stage} lease check`, phase: 'Baseline', schema: LEASE_OWNER_SCHEMA })
   )
+
+const checkStackHeld = async (id, stage, result) => {
+  if (!result?.stackHeld) return { result, leaseGone: false }
+  const owner = await readLeaseOwner(id, stage)
   if (owner?.ok && owner.holder === RUN_HOLDER) {
-    log(`${id}: the ${stage} stage reported the stack held (${held.detail}), but the lease is still this run's — ignoring that report`)
-    return null
+    log(`${id}: the ${stage} stage reported the stack held (${result.stackHeld.detail}), but the lease is still this run's — ignoring that report`)
+    return { result: { ...result, stackHeld: undefined }, leaseGone: false }
   }
-  return held
+  return { result, leaseGone: owner?.ok === true && owner.holder === null }
+}
+
+const whyRetakeRunLease = (stage, { result, leaseGone }) => {
+  if (result?.stackDown) return `the workspace stack went down under the run at ${stage} — ${result.stackDown.detail}`
+  if (leaseGone) return `the run's lease on the workspace stack was gone at ${stage}, and nobody else holds it — ${result.stackHeld.detail}`
+  return null
+}
+
+const recoverRunStack = async (id, stage, runStage) => {
+  const first = await checkStackHeld(id, stage, await runStage())
+  const why = whyRetakeRunLease(stage, first)
+  if (!why) return first.result
+  log(`${id}: ${why}. Taking the lease again and running ${stage} once more`)
+  const retaken = await acquireRunLease()
+  if (!retaken?.acquired) {
+    const refusal = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
+    log(`${id}: could not take the lease again — ${refusal}`)
+    return first.result
+  }
+  return (await checkStackHeld(id, stage, await runStage())).result
 }
 
 const CI_FIX_COMMITS_PROPERTY = {
@@ -2294,13 +2401,73 @@ const CI_SCHEMA = {
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
-      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'pr-left-open'],
+      enum: ['none', 'pr-conflict', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'base-branch-unverified', 'pr-left-open'],
       description:
         'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
     },
     summary: { type: 'string' }
   },
   additionalProperties: false
+}
+
+const PR_CONFLICT = 'pr-conflict'
+
+const PR_CONFLICT_STEP = `MERGEABILITY FIRST, for EVERY pr before you watch any. GitHub runs NO checks on a PR that conflicts with its
+base, so watching its checks waits for nothing, and the other repos' E2E would run against the base's old image.
+For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
+- \`mergeable\` UNKNOWN → GitHub has not worked it out yet. Run the same command again, up to 10 times in all.
+- \`mergeable\` CONFLICTING, or \`mergeStateStatus\` DIRTY → STOP before you watch any checks. Report green:false, that pr's
+  state "red", stopReason "${PR_CONFLICT}", blocked "<repo> PR <url> conflicts with its base", and the same line in
+  failures[]. No code fix in this row clears it: the base must be merged into the branch.
+- anything else → that pr can be watched.`
+
+const conflictStopDetail = (id, ci, branch) =>
+  `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`
+
+const conflictStop = (id, ci, branch, entry) => {
+  const detail = conflictStopDetail(id, ci, branch)
+  log(`${id}: PR CONFLICTS WITH ITS BASE — ${detail}`)
+  return {
+    result: { id, ...entry, branch, outcome: PR_CONFLICT, stopReason: PR_CONFLICT, detail },
+    stopped: { reason: PR_CONFLICT, detail }
+  }
+}
+
+const MERGE_SCHEMA = {
+  ...CI_SCHEMA,
+  properties: {
+    ...CI_SCHEMA.properties,
+    untriggered: {
+      type: 'array',
+      description: 'Every merge commit that started no workflow on the base branch, so had no run to watch. Empty when every merge started one',
+      items: {
+        type: 'object',
+        required: ['repo', 'sha', 'why'],
+        properties: {
+          repo: { type: 'string' },
+          sha: { type: 'string' },
+          why: { type: 'string', description: "Each workflow's reason from tim build push-workflows" }
+        },
+        additionalProperties: false
+      }
+    },
+    jobsGreen: {
+      type: 'array',
+      description:
+        'Every base-branch run whose own status stayed unresolved after the watches but whose jobs had all passed, by tim build run-jobs. Empty when every run resolved on its own',
+      items: {
+        type: 'object',
+        required: ['repo', 'runId', 'workflow', 'jobs'],
+        properties: {
+          repo: { type: 'string' },
+          runId: { type: 'string' },
+          workflow: { type: 'string' },
+          jobs: { type: 'array', items: { type: 'string' }, description: "tim's result.jobs, word for word" }
+        },
+        additionalProperties: false
+      }
+    }
+  }
 }
 
 const readIncrement = (id) => `
@@ -2744,6 +2911,8 @@ const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test n
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
+const NOT_IN_A_RELATIVE_CLAUSE = '(?<!\\b(what|which|whatever|how|why|where|who|whose)( [^ .;:]+){0,2} )'
+
 const OPEN_QUOTE = `["“\`']`
 
 const QUOTED_TEXT = '(["“][A-Za-z]+ [A-Za-z][^"”]*["”]|`[A-Za-z]+ [A-Za-z][^`]*`|(?<![A-Za-z`])\'[A-Za-z]+ [A-Za-z][^\']*\')'
@@ -2778,14 +2947,14 @@ const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a comment or doc comment to add, keep, copy or reword',
     pattern: new RegExp(
-      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:]+){0,4} ${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
+      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:]+){0,4} ${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
       'i'
     )
   },
   {
     kind: 'dictated comment or doc comment text',
     pattern: new RegExp(
-      `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
+      `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
       'i'
     )
   },
@@ -3538,15 +3707,15 @@ ${REPO_RULE}
 ${PUSH_RULE}
 ${SET_ROW_RULE}${mergeNoteOf(started)}
 TASK:
-1. ${changedReposRule()} Also act on every repo MID-MERGE (${MERGE_HEAD_CHECK} prints a SHA), even one whose status
-   looks empty. The increment's title, for the commit subject:
+1. ${changedReposRule(id, 'land', BASE_BRANCH)} Also act on every repo whose \`merging\` is true, even where \`dirty\` is
+   false. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
-   stop: landed:false naming the repo, and change nothing in it.
-3. In a repo MID-MERGE, ${UNRESOLVED_CHECK} must print nothing. Otherwise landed:false naming the paths: a merge is
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, stop:
+   landed:false naming the repo and its \`branch\`, and change nothing in it.
+3. In a repo whose \`merging\` is true, \`unresolved\` must be empty. Otherwise landed:false naming the paths: a merge is
    never committed with a path unresolved.
-4. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced that
-   is still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+4. What is staged and untracked is that repo's \`changed\` list. Stage anything the increment produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 5. Commit, one commit per repo, each with the same message: \`<type>(${SCOPE}): <increment title>\`, where the type is
    \`feat\` or \`fix\` when the behaviour changes below are not empty, otherwise the type the increment's \`kind\`
    implies; and a body saying what changed and naming the increment id (this run has no ticket). No trailer.
@@ -3564,7 +3733,7 @@ TASK:
    Leave the status alone.
 7. Push every repo you committed in, by HOW TO PUSH above:
    \`git -C ${TILDE}/<repoPath> push origin refs/heads/${BASE_BRANCH}:refs/heads/${BASE_BRANCH}\`. A rejected push is
-   pushed:false, saying which repo and what git said. Never \`--force\`.
+   pushed:false, saying which repo and what git said. Never \`--force\`.${testsImageFirstRule(id, BASE_BRANCH)}
 8. When no backlog repo had changes and none was mid-merge, commit nothing and push nothing: landed:true, pushed:true,
    no commit, and say so in your summary.
 Report landed, pushed, the commit SHA or SHAs, and a summary.
@@ -3617,7 +3786,7 @@ const BRANCH_CI_SCHEMA = {
     ...CI_SCHEMA.properties,
     stopReason: {
       type: 'string',
-      enum: ['none', 'pr-red', 'pr-conflicting', 'mergeability-unknown', 'no-checks'],
+      enum: ['none', 'pr-red', 'pr-conflict', 'mergeability-unknown', 'no-checks'],
       description: 'WHICH stop condition fired, as a fixed value the caller branches on. "none" when every PR is green'
     }
   }
@@ -3629,22 +3798,17 @@ ${guardrails()}
 THE PULL REQUESTS:
 ${prList}
 
-For EACH pr, in the order listed:
-1. MERGEABILITY FIRST. A PR that conflicts with its base gets NO checks at all, so waiting on its checks would wait for
-   nothing. \`gh pr view <url> --json mergeable,mergeStateStatus\`
-   - \`mergeable\` UNKNOWN → GitHub has not worked it out yet. Run the same command again, up to 10 times in all. Still
-     UNKNOWN → state "unresolved", a line in failures[], stopReason "mergeability-unknown".
-   - \`mergeable\` CONFLICTING, or \`mergeStateStatus\` DIRTY → state "red", failures[] "<repo> PR conflicts with its base:
-     GitHub runs no checks on it", blocked "<repo> PR conflicts with its base", stopReason "pr-conflicting". Do not
-     watch its checks. This is a red, not an API failure, and no code fix in this row clears it.
-   - anything else → go on to step 2.
-2. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
+${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: state "unresolved", a line in
+failures[], stopReason "mergeability-unknown", and do not watch its checks.
+
+Then, for EACH pr, in the order listed:
+1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
    \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
    Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
    what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
    "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
    stopReason "no-checks". An absence of evidence is not green.
-3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+2. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
@@ -3659,7 +3823,7 @@ never create, edit or un-draft a pull request.
 ${guardrails()}
 ${HOUSE_RULES_TO_WRITE}
 ${ciFixStandards(plan)}
-${PUSH_RULE}
+${PUSH_RULE}${testsImageFirstRule(id, BASE_BRANCH)}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList}
@@ -3741,8 +3905,137 @@ Return the structured output only.`,
   return { ok: false, detail }
 }
 
+const WORKSPACE_GITHUB = GH_REPO[WORKSPACE_KEY] ?? 'DEFRA/trade-imports-workspace'
+const specDiffFile = (id) => `${WORKAREA_TILDE}/tickets/${id}-spec-diff.txt`
+const specDiffLog = (id) => `${WORKAREA_TILDE}/logs/${id}-spec-diff.json`
+
+const specDiffCommand = (id, sha) => `tim spec diff --commit ${sha} --workspace ${TILDE} --json > ${specDiffLog(id)} 2>&1`
+
+const workspaceMergeLine = (id, sha) =>
+  sha
+    ? `THE WORKSPACE MERGE COMMIT on \`${BASE_BRANCH}\`: \`${sha}\`.`
+    : `THE WORKSPACE MERGE COMMIT is not known to this run. Read the row's PRs with
+\`jq -c '.increments[] | select(.id=="${id}") | .prs' ${BACKLOG_TILDE}\` and take the \`sha\` of the merged PR in
+${WORKSPACE_GITHUB}. None there means the row changed nothing in the workspace repo, so nothing in the spec.`
+
+const SPEC_DIFF_DRAFT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'file', 'added', 'changed', 'removed', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    file: { type: 'string' },
+    added: { type: 'number' },
+    changed: { type: 'number' },
+    removed: { type: 'number' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_CHECK_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'fixed', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'The comment file is now right' },
+    fixed: { type: 'array', items: { type: 'string' } },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_POST_SCHEMA = {
+  type: 'object',
+  required: ['posted', 'detail'],
+  properties: {
+    posted: { type: 'boolean', description: 'true when posted, or when the ticket already had the same comment' },
+    detail: { type: 'string', description: "The comment id, or tim's message word for word" }
+  },
+  additionalProperties: false
+}
+
+const SPEC_DIFF_RULES = `Jira wiki markup, never Markdown. Every paragraph is one unwrapped line. No {expand}. Plain English. No
+backlog, requirement or ruling ids (inc-, c-, req-) anywhere.`
+
+const specDiffDraftPrompt = (id, ticketKey, sha, prs) => `You are the SPEC DIFF WRITER for increment ${id}. Its work is merged to \`${BASE_BRANCH}\`. Write a Jira comment for
+${ticketKey} saying what the Behaviour Spec (\`openspec/\` in the workspace repo) now says because of it. You write one file
+and change nothing else.
+${BASE_GUARDRAILS}
+The row's title: \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
+THE MERGED PULL REQUESTS:
+${prs}
+${workspaceMergeLine(id, sha)}
+TASK:
+1. \`git -C ${TILDE} fetch origin ${BASE_BRANCH}\`, then \`${specDiffCommand(id, '<that sha>')}\`. Read that file once.
+   \`result.commits[0].scenarios\` lists every scenario the merge added, changed, removed or only re-proved
+   (\`coverage\`), with its coverage after the merge.
+2. Read each added or changed scenario IN FULL from \`origin/${BASE_BRANCH}\`:
+   \`git -C ${TILDE} show origin/${BASE_BRANCH}:openspec/specs/<capability>/spec.md\`. For a changed one, read
+   \`git -C ${TILDE} show <that sha> -- openspec/specs/<capability>/spec.md\` and say in one plain sentence what changed.
+3. Write the comment with the Write tool to ${specDiffFile(id)}:
+   - First line: \`h3. What the specification now says\`
+   - One or two plain sentences: what changed for users, and that this comment is generated from the merged spec.
+   - Per capability: \`h4. [<area or page name>|https://github.com/${WORKSPACE_GITHUB}/blob/${BASE_BRANCH}/openspec/specs/<capability>/spec.md]\`,
+     then \`h5. Added: <scenario name>\` (or Changed, or Removed), then its GIVEN, WHEN, THEN and AND steps as
+     \`* *GIVEN* …\` bullets, copied word for word. A removed scenario gets its name only.
+   - One line on coverage: how many of the added and changed scenarios a test fully proves, partly proves, and does not
+     prove yet, from their coverage, and how many scenarios the merge only newly proved.
+   - Last, every merged PR above as \`[<repo> #<number>|<url>]\`.
+   - No merge commit, or no scenario in the diff: a short comment saying the row changed code or tests only, with no
+     change to the specified behaviour, then the PRs.
+   ${SPEC_DIFF_RULES}
+Return ok, the file, and how many scenarios you wrote up as added, changed and removed.
+Return the structured output only.`
+
+const specDiffCheckPrompt = (id, ticketKey, sha, prs) => `You are the SPEC DIFF CHECKER for increment ${id}. Check the Jira comment at ${specDiffFile(id)}, written for
+${ticketKey}, against what merged to \`${BASE_BRANCH}\`. You may edit only that file.
+${BASE_GUARDRAILS}
+THE MERGED PULL REQUESTS:
+${prs}
+${workspaceMergeLine(id, sha)}
+Run \`${specDiffCommand(id, '<that sha>')}\` yourself and read it once. Then check:
+- every scenario it lists as added, changed or removed is in the comment, and nothing is there that it does not list;
+- each scenario's steps match \`git -C ${TILDE} show origin/${BASE_BRANCH}:openspec/specs/<capability>/spec.md\` word for word;
+- the coverage line matches the coverage it lists, and every merged PR is linked;
+- each link names a path that exists on \`origin/${BASE_BRANCH}\`;
+- ${SPEC_DIFF_RULES}
+Fix anything wrong in the file. Return ok (true when the file is now right), and what you fixed.
+Return the structured output only.`
+
+const specDiffPostPrompt = (id, ticketKey) => `You are the SPEC DIFF POSTER for increment ${id}. Post the checked comment at ${specDiffFile(id)} to ${ticketKey}.
+${BASE_GUARDRAILS}
+1. Dry run: \`tim jira comment ${ticketKey} --file ${specDiffFile(id)} --workspace ${TILDE} --json\`. Check it targets
+   ${ticketKey} with the file's text.
+2. Then: \`tim jira comment ${ticketKey} --file ${specDiffFile(id)} --confirm --workspace ${TILDE} --json\`.
+A ticket that already has the same comment is left alone, and that counts as posted. Return posted, and the comment id or
+tim's message word for word.
+Return the structured output only.`
+
+const postSpecDiffComment = async (id, ticketKey, mergedCommits, prs) => {
+  const sha = mergedCommits.find((entry) => entry.repo === WORKSPACE_KEY)?.sha ?? null
+  const prLines = prs.map((p) => `${p.repo}: ${p.url}`).join('\n')
+  const draft = await agent(
+    specDiffDraftPrompt(id, ticketKey, sha, prLines),
+    code({ label: `${id} spec diff draft`, phase: 'Done', schema: SPEC_DIFF_DRAFT_SCHEMA })
+  )
+  if (!draft?.ok) return { posted: false, file: specDiffFile(id), detail: `not written: ${draft?.summary ?? 'the writer died'}` }
+  const check = await agent(
+    specDiffCheckPrompt(id, ticketKey, sha, prLines),
+    code({ label: `${id} spec diff check`, phase: 'Done', schema: SPEC_DIFF_CHECK_SCHEMA })
+  )
+  if (!check?.ok) return { posted: false, file: specDiffFile(id), detail: `not posted, the check did not pass: ${check?.summary ?? 'the checker died'}` }
+  const post = await agent(specDiffPostPrompt(id, ticketKey), light({ label: `${id} spec diff post`, phase: 'Done', schema: SPEC_DIFF_POST_SCHEMA }))
+  return {
+    posted: post?.posted === true,
+    file: specDiffFile(id),
+    added: draft.added,
+    changed: draft.changed,
+    removed: draft.removed,
+    detail: post?.detail ?? 'the poster died'
+  }
+}
+
 const themeFilter = (id, builtIds) =>
-  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
 
 const readTheme = (id, builtIds) =>
   agent(
@@ -3834,23 +4127,70 @@ const lintProblem = (entry) =>
     ? []
     : [`tim spec lint found ${entry.lintFindings ?? 'an unreported number of'} finding(s) under ${entry.prefix}/ (${entry.lintLog ?? 'no log named'})`]
 
-const gapsProblem = (entry) => {
+const unprovenIdsOf = (entry) => entry.noneScenarios ?? []
+
+const isTheThemes = (owned) => (scenarioId) => owned === null || owned.includes(scenarioId)
+
+const gapsProblem = (entry, owned) => {
   if (typeof entry.noneCount !== 'number') return [`no gap count came back for ${entry.prefix}/`]
   if (entry.noneCount === 0) return []
-  const ids = (entry.noneScenarios ?? []).join(', ') || 'ids not reported'
-  return [`${entry.noneCount} scenario(s) under ${entry.prefix}/ that no test proves: ${ids} (${entry.gapsLog ?? 'no log named'})`]
+  const ids = unprovenIdsOf(entry)
+  if (owned !== null && ids.length < entry.noneCount) {
+    return [`${entry.noneCount} scenario(s) under ${entry.prefix}/ that no test proves, ids not reported, so the run cannot tell which are the theme's (${entry.gapsLog ?? 'no log named'})`]
+  }
+  const theThemes = owned === null ? ids : ids.filter(isTheThemes(owned))
+  if (owned !== null && theThemes.length === 0) return []
+  const count = owned === null ? entry.noneCount : theThemes.length
+  const owner = owned === null ? '' : ' the theme added or re-proved'
+  return [`${count} scenario(s)${owner} under ${entry.prefix}/ that no test proves: ${theThemes.join(', ') || 'ids not reported'} (${entry.gapsLog ?? 'no log named'})`]
 }
 
-const prefixProblems = (entry, written) =>
-  entry.present ? [...lintProblem(entry), ...gapsProblem(entry)] : missingSpecProblem(entry, written)
+const prefixProblems = (entry, written, owned) =>
+  entry.present ? [...lintProblem(entry), ...gapsProblem(entry, owned)] : missingSpecProblem(entry, written)
 
-const specCheckProblems = (answer, prefixes, written) => {
+const specCheckProblems = (answer, prefixes, written, owned) => {
   if (!answer) return ['the spec check agent died, so nothing checked the spec']
   const checked = (answer.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
   const unchecked = prefixes
     .filter((prefix) => !checked.some((entry) => entry.prefix === prefix))
     .map((prefix) => `${prefix}/ was not checked`)
-  return [...unchecked, ...checked.flatMap((entry) => prefixProblems(entry, written))]
+  return [...unchecked, ...checked.flatMap((entry) => prefixProblems(entry, written, owned))]
+}
+
+const preexistingGapsOf = (checked, owned) =>
+  owned === null
+    ? []
+    : checked
+        .map((entry) => ({ prefix: entry.prefix, scenarios: unprovenIdsOf(entry).filter((scenarioId) => !owned.includes(scenarioId)) }))
+        .filter(({ scenarios }) => scenarios.length > 0)
+
+const describePreexisting = ({ prefix, scenarios }) => `${scenarios.length} under ${prefix}/ (${scenarios.join(', ')})`
+
+const themeSpecDiffLog = (theme) => specCheckLog(theme, 'all', 'diff')
+
+const readThemeSpecDiff = (id, theme, commits) =>
+  agent(
+    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly two
+commands, one Bash call each, and report what the second printed. That is your whole job.
+${BASE_GUARDRAILS}
+1. \`tim spec diff ${commits.map((sha) => `--commit ${sha}`).join(' ')} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
+2. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, errors}' ${themeSpecDiffLog(theme)}\`
+Report the second command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
+summarise or correct it, and run nothing else. The loop reads the JSON itself.`,
+    light({ label: `spec diff:${theme}`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
+  )
+
+const themeOwnedScenarios = async (id, theme, commits) => {
+  if (commits.length === 0) return { owned: [], skipped: [] }
+  const answer = await readThemeSpecDiff(id, theme, commits)
+  const line = lastJsonLine(answer?.stdout)
+  try {
+    const parsed = line ? JSON.parse(line) : null
+    if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
+    return { owned: parsed.touched, skipped: parsed.skipped ?? [] }
+  } catch {
+    return { owned: null, skipped: [] }
+  }
 }
 
 const describeSpecPrefix = (entry) =>
@@ -3903,15 +4243,23 @@ const themeSpecCheck = async (id) => {
   }
   const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
   const answer = await checkThemeSpec(id, theme, prefixes)
-  const problems = specCheckProblems(answer, prefixes, written)
+  const { owned, skipped } = await themeOwnedScenarios(id, theme, status.commits ?? [])
+  const unknownOwnership = owned === null ? ["the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts"] : []
+  const problems = [...unknownOwnership, ...specCheckProblems(answer, prefixes, written, owned)]
   const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
+  const preexisting = preexistingGapsOf(checked, owned)
+  if (preexisting.length > 0) {
+    log(`${id}: theme ${theme} leaves unproven scenarios that predate it, not its to fix: ${preexisting.map(describePreexisting).join('; ')}`)
+  }
   const record = {
     after: id,
     theme,
     outcome: problems.length > 0 ? 'spec-check-red' : 'spec-checked',
     prefixes: checked.map(({ prefix, present, lintOk, noneCount, partialCount }) => ({ prefix, present, lintOk, noneCount, partialCount })),
     sources,
-    problems
+    problems,
+    ...(preexisting.length > 0 ? { preexisting } : {}),
+    ...(skipped.length > 0 ? { commitsNotFound: skipped.map(({ commit }) => commit) } : {})
   }
   if (problems.length === 0) {
     log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)
@@ -4010,18 +4358,18 @@ ${guardrails()}
 ${REPO_RULE}
 ${PUSH_RULE}
 TASK:
-1. ${changedReposRule()}
-2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
-   stop: landed:false naming the repo, and change nothing in it.
-3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the fixes produced that is
-   still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+1. ${changedReposRule(id, 'theme-land', BASE_BRANCH)}
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, stop:
+   landed:false naming the repo and its \`branch\`, and change nothing in it.
+3. What is staged and untracked is that repo's \`changed\` list. Stage anything the fixes produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit, one commit per repo, each with the same subject: \`refactor(${SCOPE}): apply the engineering review of the ${theme} theme\`,
    and a body listing the fixes below that touched that repo and naming the theme's last row, ${id}. No trailer.
    THE FIXES:
 ${ruledFixes}
 5. ${SPEC_RULE} It must have no changes: these fixes never touch the spec. If it has any, report landed:false naming them.
 6. Push every repo you committed in, by HOW TO PUSH above. A rejected push is pushed:false, saying which repo and what
-   git said.
+   git said.${testsImageFirstRule(id, BASE_BRANCH)}
 Report landed, pushed, the commit SHA or SHAs in the order of the configured repos, and a summary.
 Return the structured output only.`
 
@@ -4044,13 +4392,13 @@ const themeReviewStop = async (id, { reason, outcome = reason, why, evidence, pr
 }
 
 const heldDuringThemeReview = async (id, stage, result) => {
-  const held = await confirmStackHeld(id, stage, result?.stackHeld)
+  const held = result?.stackHeld
   if (!held) return null
   return themeReviewStop(id, { reason: 'stack-held', why: `the workspace stack was held at the ${stage} stage`, evidence: stackHeldDetail(id, stage, held) })
 }
 
 const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
-  const first = await recoverDownStack(id, 'theme fix', () =>
+  const first = await recoverRunStack(id, 'theme fix', () =>
     agent(
       themeFixPrompt(id, theme, ruledFixes, TREES_BEFORE_FIX_DUTY),
       code({ label: `${id} theme fix`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(FIX_SCHEMA) })
@@ -4066,7 +4414,7 @@ const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
   const findings = (review?.findings ?? []).filter(isCodeQuality)
   if (findings.length === 0) return { fix: first }
   log(`${id}: the style re-review of the theme fix found ${findings.length} code-quality finding(s) — sending them back once`)
-  const second = await recoverDownStack(id, 'theme fix 2', () =>
+  const second = await recoverRunStack(id, 'theme fix 2', () =>
     agent(
       themeFixPrompt(id, theme, fixesForReviewFindings(findings), ''),
       code({ label: `${id} theme fix 2`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(FIX_SCHEMA) })
@@ -4078,7 +4426,7 @@ const applyAndReReviewThemeFixes = async (id, theme, ruledFixes) => {
 }
 
 const gateAndLandThemeFixes = async (id, theme, ruledFixes, phases, fix) => {
-  const ladder = await recoverDownStack(id, 'theme ladder', () =>
+  const ladder = await recoverRunStack(id, 'theme ladder', () =>
     agent(
       themeLadderPrompt(id, theme, phases, fix),
       code({ label: `${id} theme ladder`, phase: THEME_REVIEW_PHASE, schema: withStackHeld(LADDER_SCHEMA) })
@@ -4399,6 +4747,10 @@ while (stopped === null) {
     if (repos.includes(WORKSPACE_KEY)) {
       workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
       workspaceLeftOn = workBranch
+      const workspaceMerge = (started.branched ?? []).find((entry) => entry.repo === WORKSPACE_KEY && entry.mergedBase)
+      if (workspaceMerge) {
+        log(`${id}: merged ${workspaceMerge.mergedBase} into ${workBranch} in the workspace repo before any stage runs tim, so the tim it runs is current`)
+      }
     }
     log(
       `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}, ${ticket.status}) on board ${JIRA_BOARD}, branch ${workBranch} in ${repos.join(', ')}, resuming at ${resumeAt}`
@@ -4437,7 +4789,7 @@ while (stopped === null) {
 
   phase('Baseline')
 
-  const baseline = await recoverDownStack(id, 'baseline', () => agent(
+  const baseline = await recoverRunStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -4466,7 +4818,7 @@ Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
   ))
 
-  const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
+  const baselineHeld = baseline?.stackHeld
   if (baselineHeld) {
     const detail = stackHeldDetail(id, 'baseline', baselineHeld)
     log(`${id}: STACK HELD at the baseline — ${detail}`)
@@ -4550,7 +4902,7 @@ ${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, merges
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await recoverDownStack(id, 'implement', () => agent(
+    : await recoverRunStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You build the change the plan decides — you do not review it,
 and you do not commit it.
 ${guardrails()}
@@ -4617,7 +4969,7 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     stopped = { reason: 'stack-held', detail }
   }
 
-  const implHeld = await confirmStackHeld(id, 'implement', impl?.stackHeld)
+  const implHeld = impl?.stackHeld
   if (implHeld) {
     await stopForHeldStack('implement', 'Implement', implHeld)
     break
@@ -4726,7 +5078,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    recoverDownStack(id, 'consistency', () => agent(
+    recoverRunStack(id, 'consistency', () => agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -4822,11 +5174,7 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
     break
   }
 
-  const reviewHeld = await confirmStackHeld(
-    id,
-    'consistency',
-    reviewed.results.find((result) => result?.stackHeld)?.stackHeld
-  )
+  const reviewHeld = reviewed.results.find((result) => result?.stackHeld)?.stackHeld
   if (reviewHeld) {
     await stopForHeldStack('consistency', 'Review', reviewHeld)
     break
@@ -4919,7 +5267,7 @@ ${COMPLETION_LINES_FIX}${mergeNote}${workspaceRepoRule()}`,
   }
 
   const claudeFix = async ({ stage, label, ruledFixes, treeDuty }) => {
-    const result = await recoverDownStack(id, stage, () => agent(
+    const result = await recoverRunStack(id, stage, () => agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the ruled fixes below — no more, no less.
 ${guardrails()}
 ${HOUSE_RULES_TO_WRITE}
@@ -4939,7 +5287,7 @@ and whatever got it green in notes. The ladder runs after you and is given your 
 Return the structured output only.`,
       code({ label, phase: 'Fix', schema: withStackHeld(FIX_SCHEMA) })
     ))
-    const held = await confirmStackHeld(id, stage, result?.stackHeld)
+    const held = result?.stackHeld
     if (held) {
       await stopForHeldStack(stage, 'Fix', held)
       return { stopped: true }
@@ -4995,7 +5343,7 @@ FIXER — ${fixerReport()}`
 
   phase('Ladder')
 
-  const ladder = await recoverDownStack(id, 'ladder', () => agent(
+  const ladder = await recoverRunStack(id, 'ladder', () => agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${guardrails()}
 ${HOUSE_RULES_TO_REPAIR}
@@ -5075,7 +5423,7 @@ Return the structured output only.`,
 
   phase('Land')
 
-  const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
+  const ladderHeld = ladder?.stackHeld
   if (ladderHeld) {
     await stopForHeldStack('ladder', 'Ladder', ladderHeld)
     break
@@ -5122,16 +5470,14 @@ ${guardrails()}
 ${REPO_RULE}
 ${SET_ROW_RULE}
 TASK:
-1. ${changedReposRule()} A repo with changes that is not on \`${workBranch}\` is a
-   stop: report landed:false naming it, and change nothing in it. The increment's title, for the commit subject:
+1. ${changedReposRule(id, 'land', workBranch)} The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
-   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
-   \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
-   a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
-   no CI and no review behind it. That has happened here once already.
-3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
-   that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+2. Every repo you are about to commit in must have \`onBranch\` true in that file. Where it is false, STOP and report
+   landed:false naming the repo and its \`branch\`, and change nothing in it. Do not commit and do not "fix it up
+   after": a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no
+   PR, no CI and no review behind it. That has happened here once already.
+3. What is staged and untracked is that repo's \`changed\` list. Stage anything the increment produced that is still
+   untracked (\`??\`), but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
    behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
    changed and naming the increment id and its ticket \`${ticket?.key}\`. No trailer.
@@ -5199,6 +5545,8 @@ Return the structured output only.`,
   const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
 
   let prs = []
+  let mainRunsGreenByJobs = []
+  let mergedCommits = []
 
   finish: {
     if (IS_BRANCH) {
@@ -5247,6 +5595,13 @@ Return the structured output only.`,
             )
             await reviewThenStyleFixCiCommits({ id, attempt: ciAttempt, fix, branch: BASE_BRANCH, commitNames: `increment ${id}` })
             ci = await watchOnBranch()
+          }
+
+          if (ci?.stopReason === PR_CONFLICT) {
+            const conflict = conflictStop(id, ci, workBranch, { prs: prs.map((p) => p.url), ciFixAttempts: ciAttempt, findings })
+            results.push(conflict.result)
+            stopped = conflict.stopped
+            break
           }
 
           if (!ci || !ci.green) {
@@ -5317,8 +5672,9 @@ REPOS, in order: ${repos.join(', ')}. These are the increment's repos and the ON
 configured repo is not this increment's: leave it on whatever branch it is on, and never push it or raise a PR in it.
 GitHub repos: ${repos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}. Repo paths: ${repos.map((key) => `${key}=${REPO_PATH[key]}`).join(', ')}.
 <repo> below is the repo's key from that list, never its GitHub name.
+${repos.includes(TESTS_KEY) ? testsImageFirstRule(id, workBranch) : ''}
 
-For EACH of those repos, in that order:
+For EACH of those repos, in that order${repos.includes(TESTS_KEY) ? ` — except that ${TESTS_KEY}, when it has commits, goes through every step first and then waits for its image by TESTS REPO FIRST above` : ''}:
 1. Prove the repo is on the work branch before you push a thing:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing
@@ -5373,7 +5729,9 @@ ${guardrails()}
 THE PULL REQUESTS:
 ${prList(prs)}
 
-For EACH pr, in the order listed:
+${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: go on and watch its checks.
+
+Then, for EACH pr, in the order listed:
 1. BLOCK on it. One Bash call, with the tool's \`timeout\` parameter set to 600000:
    \`gh pr checks <url> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
 2. Read that log ONCE.
@@ -5389,8 +5747,8 @@ For EACH pr, in the order listed:
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
-\`blocked\` is ONLY for something a code fix cannot address — no checks configured, \`gh\` refused, the PR is
-gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
+\`blocked\` is ONLY for something a code fix cannot address — a conflict with the base, no checks configured, \`gh\`
+refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
         light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
@@ -5409,7 +5767,7 @@ CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you 
 ${guardrails()}${ciFixerWorkspaceRule()}
 ${HOUSE_RULES_TO_WRITE}
 ${ciFixStandards(plan)}
-${PUSH_RULE}
+${PUSH_RULE}${testsImageFirstRule(id, workBranch)}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList(prs)}
@@ -5487,6 +5845,13 @@ Return the structured output only.`,
       }
 
       ci = await watch()
+    }
+
+    if (ci?.stopReason === PR_CONFLICT) {
+      const conflict = conflictStop(id, ci, workBranch, { ticket: ticket.key, prs: prs.map((p) => p.url), ciFixAttempts: ciAttempt, findings })
+      results.push(conflict.result)
+      stopped = conflict.stopped
+      break
     }
 
     if (!ci || !ci.green) {
@@ -5589,14 +5954,37 @@ For EACH pr, in that order:`
 3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
 4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
 5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
-   \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,name,status,conclusion --limit 20\`
-   then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
-   \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
-   At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
-   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
-   base branch went red after merging
-   <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
-   base branch being red is a human decision, not a repair job.
+   a. WHICH WORKFLOWS THE MERGE STARTS. A workflow's push trigger can filter on branches and paths, so a merge
+      that touches none of its paths starts no run at all. Ask tim, from the repo's own workflow files:
+      \`git -C ${TILDE}/<repoPath> fetch origin ${BASE_BRANCH}\`, then
+      \`tim build push-workflows ${TILDE}/<repoPath> --commit <sha> --branch ${BASE_BRANCH} --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-push-workflows-<repo>.json 2>&1\`
+      and read that file once. \`result.starts\` names every workflow the merge starts, as \`gh run list\` names
+      its runs (workflowName); \`result.workflows\` gives each workflow's reason.
+   b. THE RUNS: \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,workflowName,status,conclusion --limit 20\`
+   c. For each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
+      \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
+      At most ${CI_WATCH_WINDOWS} watches per run. A run's own status can stay in progress after its jobs have
+      finished, so a run still unresolved after that gets one more check, of its jobs:
+      \`gh api repos/<ghRepo>/actions/runs/<run-id>/jobs?filter=latest > ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-jobs.json 2>&1\`
+      then, with the run's workflow file from \`result.workflows\` in step a (the entry whose \`name\` is the run's
+      workflowName):
+      \`tim build run-jobs ${TILDE}/<repoPath> --commit <sha> --workflow <file> --jobs ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-jobs.json --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-main-<repo>-<run-id>-run-jobs.json 2>&1\`
+      and read that file once. \`result.green\` true → every job has passed and every job the workflow defines has
+      one, so count that run green and put it in jobsGreen\[\] as { repo, runId, workflow, jobs } with \`result.jobs\`.
+      Anything else → the run is still unresolved, and that counts as RED.
+      **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
+      base branch went red after merging
+      <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
+      base branch being red is a human decision, not a repair job.
+   d. EVERY workflow in \`result.starts\` must have a run in that list. One missing means GitHub has not started it
+      yet: run the list in b again, at most 5 times in all, and watch each new run by c. Still missing after that,
+      or tim refused (\`ok:false\`) and the list is empty → **STOP.** Report green:false,
+      \`stopReason: "base-branch-unverified"\`, with "<repo> merge commit <sha> should start <workflow> on
+      ${BASE_BRANCH} and no run of it exists" (or tim's error, word for word) in blocked. Never call it green.
+   e. The list is empty AND \`result.starts\` is empty → this merge starts no workflow on \`${BASE_BRANCH}\`: there is
+      nothing to watch and nothing that can go red, so that repo's base branch counts as green. Put it in
+      untriggered\[\] as { repo, sha, why }, where why gives each workflow's reason from \`result.workflows\`.
+      This is the ONLY way an empty run list counts as green.
 6. Persist it: \`${setRow(id, `--pr '{"url":"<url>","merged":true,"sha":"<merge sha>"}'`)}\`. Do this after EACH merge.
 
 FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole
@@ -5610,10 +5998,10 @@ branch: <url>" in blocked. Do NOT merge it yourself — it has not been through 
 gate in this run, and merging an unvetted PR to clear a warning is worse than the warning. Leave everything
 as it is and name it, so a human can finish it.
 
-green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
-sweep found no open PR left on \`${workBranch}\` in any repo.
+green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them (or, by step 5c, every
+job of a run still showing in progress had passed; or, by step 5e, the merge started no workflow there), AND the final sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
-      light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
+      light({ label: `${id} merge`, phase: 'Merge', schema: MERGE_SCHEMA })
     )
 
     if (!merge || !merge.green) {
@@ -5644,6 +6032,14 @@ Return the structured output only.`,
     }
 
     log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
+    for (const { repo, sha, why } of merge.untriggered ?? []) {
+      log(`${id}: ${repo} merge ${sha} started no workflow on ${BASE_BRANCH}, so there was no run to watch — ${why}`)
+    }
+    mergedCommits = merge.merged ?? []
+    mainRunsGreenByJobs = merge.jobsGreen ?? []
+    for (const { repo, runId, workflow } of mainRunsGreenByJobs) {
+      log(`${id}: ${repo} ${workflow} run ${runId} on ${BASE_BRANCH} still showed in progress, but every job in it had passed, so it counts as green`)
+    }
   }
 
   phase('Done')
@@ -5681,6 +6077,13 @@ Return the structured output only.`,
     break
   }
 
+  const specDiffComment = await postSpecDiffComment(id, ticket.key, mergedCommits, prs)
+  log(
+    specDiffComment.posted
+      ? `${id}: spec diff comment posted on ${ticket.key} — ${specDiffComment.file}`
+      : `${id}: SPEC DIFF COMMENT NOT POSTED on ${ticket.key} — ${specDiffComment.detail}. The row stands`
+  )
+
   built += 1
 
   results.push({
@@ -5690,6 +6093,8 @@ Return the structured output only.`,
     outcome: 'landed',
     commit: land?.commit,
     prs: prs.map((p) => p.url),
+    ...(mainRunsGreenByJobs.length > 0 ? { mainRunsGreenByJobs } : {}),
+    specDiffComment,
     findings,
     judgement: judgementCalls,
     followUps: plan?.followUps

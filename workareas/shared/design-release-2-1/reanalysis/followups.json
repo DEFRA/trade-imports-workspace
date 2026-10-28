@@ -1,0 +1,484 @@
+{
+  "file": "workareas/shared/design-release-2-1/reanalysis/followups.json",
+  "summary": {
+    "checkedAgainst": "origin/main of trade-imports-animals-frontend (ba85c222), trade-imports-plants-frontend (8ef2dc1), trade-imports-ins-tests and the workspace, fetched 27 Oct 2026. Every design-snagging-followups row is merged to main.",
+    "items": 40,
+    "alreadyDone": 9,
+    "duplicate": 4,
+    "foldIntoRow": 1,
+    "newRow": 25,
+    "drop": 1,
+    "newRowsProposed": 6,
+    "callsMade": [
+      "Test-hygiene follow-ups go into the remaining theme that owns the file when that theme is todo (consignment-parties, identification-and-permanent-address), so two machines never edit one spec. Everything else goes into a new test-hygiene theme: one row each for animals browser tests, animals frontend code and plants.",
+      "The transporters theme is wholly blocked, so its two specs (arrival-transit and transporters) go in the animals browser-test row rather than waiting on a blocked row. That row's touches overlap the transporters theme's frontend transport/fit: narrow transporters' touch to its own transporter specs on the next re-distil, or tim backlog check will refuse it.",
+      "Item ids for proposed rows are placeholders (inc-234 to inc-239), the next free numbers after inc-233. The orchestrator assigns the real ids.",
+      "'Keep govukColourOf in the plants fit helper' is recorded as already done, because it is still there. It is not dropped."
+    ]
+  },
+  "items": [
+    {
+      "source": "inc-233 followUps[0]",
+      "text": "Extract one shared reader for the `return` query marker in the animals frontend and move cph-number hubEntryReturn, party-edit returnHref/RETURN_SLUGS and the commodities detour reader onto it.",
+      "verdict": "already-done",
+      "evidence": "One shared reader exists: kit.readReturnMarker at src/server/app/shared/kit.js:201 (tests kit.test.js:452). The CPH page uses it at cph-number/controller.js:25-28, party edit at addresses/party-edit/party-edit.controller.js:28-38 (RETURN_SLUGS is gone) and the commodities detour at commodities/commodity-question-detour.js:18-24."
+    },
+    {
+      "source": "inc-233 followUps[1]",
+      "text": "Identification card's 'Change number of animals' link: either give it the same return marker or correct page-design.md, which says Commodity details returns there.",
+      "verdict": "already-done",
+      "evidence": "page-design.md was corrected: src/server/app/sets/live-animals/docs/page-design.md:212-214 now says the link keeps the change context, so Continue on Commodity details returns to where the trader came from. It no longer says it returns to identification. The browser test identification.fit.spec.js:374 proves the link lands on Commodity details."
+    },
+    {
+      "source": "inc-233 followUps[2]",
+      "text": "Delete the doc comment on party-edit.controller.js:28's internal constant and let the name say it.",
+      "verdict": "already-done",
+      "evidence": "addresses/party-edit/party-edit.controller.js:26-28 carries no doc comment: `const EDITABLE_PARTIES = ...` and `const returnHref = ...` stand bare."
+    },
+    {
+      "source": "inc-233 followUps[3]",
+      "text": "Fold addresses/party-edit/edit-href.js partyEditHref, which builds return plus change with URLSearchParams, onto the same shared return-marker href builder as the shared reader that section 7 already proposes. The new commodities detour builder mirrors its body.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-235: animals frontend code tidy",
+      "evidence": "Not done. addresses/party-edit/edit-href.js:4-13 builds `new URLSearchParams({ return: returnSlug })` itself, and commodities/commodity-question-detour.js:9-16 builds `new URLSearchParams({ [RETURN_PARAMETER]: opener.slug })` itself. kit.js has the reader (:201) but no matching builder. Neither folder is in a remaining theme's touches. Callers in consignment-parties' addresses/controller.js:52 and contact/controller.js:56 keep working if the partyEditHref signature stays."
+    },
+    {
+      "source": "inc-233 followUps[4]",
+      "text": "The new commodities href builder (URLSearchParams with `return` plus `change`) has the same shape as `addresses/party-edit/edit-href.js` `partyEditHref`. Pull out one shared builder for return-marked links in the animals frontend, alongside the shared `return` reader that section 7 already lists.",
+      "verdict": "duplicate",
+      "row": "inc-233 followUps[3]",
+      "evidence": "Same change as inc-233 followUps[3]: one shared builder for return-marked links (edit-href.js:4-13, commodity-question-detour.js:9-16)."
+    },
+    {
+      "source": "inc-225 followUps[0]",
+      "text": "Plants type-ahead spec: govukInputStyleOf passes { classes, properties } to its browser callback under those names, and the focus test is retitled to say what it proves.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Half done. The focus test has been retitled ('gives the enhanced input the focus colour, outline width and inset shadow size of a focused GOV.UK input', plants type-ahead.fit.spec.js:322). The reader, now govukReferenceStyleOf at type-ahead.fit.spec.js:375-401, still takes { element, classes, focused, properties } and passes them to the browser as { tagName, className, isFocused, names }."
+    },
+    {
+      "source": "inc-225 followUps[1]",
+      "text": "Plants fit/high-risk-plants-journey.js govukColourOf: pass the token to its browser callback under the name it takes it by.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Not done. In plants fit/high-risk-plants-journey.js:76-84, govukColourOf takes `token` but its browser callback still names it `(name) =>`."
+    },
+    {
+      "source": "inc-225 followUps[2]",
+      "text": "Plants focus test: assert box-shadow and outline width against a focused plain govuk-input instead of /inset/ and '3px'.",
+      "verdict": "already-done",
+      "evidence": "Plants type-ahead.fit.spec.js:322-347 reads outline-width and box-shadow from a focused plain govuk-input (govukReferenceStyleOf with focused: true) and compares the enhanced input with them. Nothing in plants matches /inset/ or '3px'."
+    },
+    {
+      "source": "inc-225 followUps[3]",
+      "text": "Plants: keep govukColourOf in fit/high-risk-plants-journey.js; drop that half of the open question.",
+      "verdict": "already-done",
+      "evidence": "This was a decision, not a change. govukColourOf stays in plants fit/high-risk-plants-journey.js:76 and is listed as shared in plants docs/testing.md:69. Nothing to build."
+    },
+    {
+      "source": "inc-225 followUps[4]",
+      "text": "Animals hub and arrival-transit specs: replace GOVUK_BLUE, GOVUK_SECONDARY_TEXT and fixed '48px'/'700' with run-time GOV.UK values, then delete both constants.",
+      "verdict": "already-done",
+      "evidence": "Running `git grep -E \"GOVUK_BLUE|GOVUK_SECONDARY_TEXT|'48px'|'700'\" origin/main -- src fit` in animals-frontend finds nothing. The arrival hint colour is now read at run time (arrival-transit.fit.spec.js:222)."
+    },
+    {
+      "source": "inc-225 followUps[5]",
+      "text": "Animals identification.fit.spec.js: replace local GOVUK_GREEN rgb constant with the run-time GOV.UK token.",
+      "verdict": "new-row",
+      "theme": "identification-and-permanent-address",
+      "row": "proposed inc-238: identification browser tests",
+      "evidence": "Not done. commodities/fit/identification.fit.spec.js:30 still has `const GOVUK_GREEN = 'rgb(15, 122, 82)'`, used at :923. The file is in the identification-and-permanent-address theme's touches, and that theme's rows are todo."
+    },
+    {
+      "source": "inc-225 followUps[6]",
+      "text": "Animals identification, party-edit and hub-picker fit specs: delete local saveAndContinue copies and import the shared one.",
+      "verdict": "new-row",
+      "theme": "consignment-parties",
+      "row": "proposed inc-237: party and CPH browser tests",
+      "evidence": "Partly done. identification.fit.spec.js now imports the shared saveAndContinue (line 9; shared one at fit/live-animals-journey.js:941). Two local copies remain: addresses/fit/party-edit.fit.spec.js:20 and addresses/fit/hub-picker.fit.spec.js:86. addresses/fit is in consignment-parties' touches."
+    },
+    {
+      "source": "inc-225 followUps[7]",
+      "text": "Plants docs/testing.md (src/server/app/sets/high-risk-plants/docs/testing.md:93-96) says spec-local readers mean 'the coverage report never counts them as source'. That is untrue: coverage includes only src/**/*.js (plants vitest.config.js:23) and Sonar's sources are src/ only, so fit/ is never counted either.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Not done. Plants docs/testing.md:97-99 still says the readers live in type-ahead.fit.spec.js 'so the coverage report never counts them as source'. The same section is also broken: the helper list at :93 ends mid-sentence ('... content under the page heading are') before :94 starts a new paragraph."
+    },
+    {
+      "source": "inc-225 followUps[8]",
+      "text": "Animals type-ahead.fit.spec.js: the '.app-autocomplete__button' selector is written as a literal three times (:23, :256, :461 inside measureJoinedSearchButton). Give it one owner.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. The literal is still written three times, at animals type-ahead.fit.spec.js:183, :256 and :471."
+    },
+    {
+      "source": "inc-226 followUps[0]",
+      "text": "Move the arrival details medium-label class checks (animals arrival-transit.fit.spec.js:199-215, plants arrival-details.fit.spec.js:182,:298) to a screenshot and keep the labels found by accessible name.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests (the plants half is inc-228 followUps[9], in proposed inc-236)",
+      "evidence": "Not done. The animals check is still at transport/fit/arrival-transit.fit.spec.js:210-211 (toHaveClass /govuk-label--m/). The plants check is still at arrival-details.fit.spec.js:182-183 and :298-299. Note: arrival-transit.fit.spec.js sits under transport/fit, which the blocked transporters theme touches."
+    },
+    {
+      "source": "inc-226 followUps[1]",
+      "text": "Prove the transit remove cell and documents actions cell text-align with screenshots (arrival-transit.fit.spec.js:835, upload.fit.spec.js:712-715).",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. arrival-transit.fit.spec.js:833 and documents/fit/upload.fit.spec.js:712, :715 still assert toHaveCSS('text-align', 'right')."
+    },
+    {
+      "source": "inc-226 followUps[2]",
+      "text": "Find the hub buttons by role, not by govuk-button--secondary or .govuk-button-group (hub.fit.spec.js:349-355).",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. hub/hub.fit.spec.js:348 still finds the buttons with locator('.govuk-button-group .govuk-button'), and :354 still asserts not.toHaveClass(/govuk-button--secondary/)."
+    },
+    {
+      "source": "inc-226 followUps[3]",
+      "text": "Replace the hub caption-wrap line-height measurement (hub.fit.spec.js:447-463) with the Overview screenshot.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. hub/hub.fit.spec.js:447-452 still reads `${TOTAL_BOX}__caption` and parseFloat(getComputedStyle(element).lineHeight)."
+    },
+    {
+      "source": "inc-226 followUps[4]",
+      "text": "Drop the class assertions in expectOnlyHiddenMissing and the check-answers last-card test (check-answers.fit.spec.js:45-50, :149-151).",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. check-answers/check-answers.fit.spec.js:47-48 still asserts toHaveClass('govuk-visually-hidden'), and :146-151 still asserts the last block toHaveClass(/govuk-summary-card/)."
+    },
+    {
+      "source": "inc-226 followUps[5]",
+      "text": "Move the class assertions in additional-details, origin, consignment-details, cph-number, transporters, section-caption and import-reason FIT specs to screenshots.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests (the cph-number part goes in proposed inc-237, consignment-parties)",
+      "evidence": "Not done. Class assertions remain at: additional-details.fit.spec.js:74, :77; origin.fit.spec.js:151-161; commodities/fit/consignment-details.fit.spec.js:112-121; cph-number.fit.spec.js:105-107, :121, :359-361; transport/fit/transporters.fit.spec.js:344-347, :498, :785; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153. The cph-number folder belongs to consignment-parties, which is todo, so that part goes in that theme's row. transporters.fit.spec.js belongs to the blocked transporters theme. It stays here so it does not wait on a blocked row (see calls made)."
+    },
+    {
+      "source": "inc-226 followUps[6]",
+      "text": "identification.fit.spec.js:394: use the shared save-controls helper instead of .govuk-button-group and an absence check.",
+      "verdict": "new-row",
+      "theme": "identification-and-permanent-address",
+      "row": "proposed inc-238: identification browser tests",
+      "evidence": "Not done. The test has moved to identification.fit.spec.js:360-364 but still uses locator('.govuk-button-group') and toHaveCount(0) on 'Save and finish'. The shared save-controls steps are at fit/live-animals-journey.js:941-993."
+    },
+    {
+      "source": "inc-226 followUps[7]",
+      "text": "declaration-content.ts finds the date line by p.govuk-body class: use a role locator.",
+      "verdict": "already-done",
+      "evidence": "trade-imports-ins-tests page-objects/shared/declaration-content.ts:17 finds the line with getByRole('paragraph').filter({ hasText: 'Date of declaration:' }).getByRole('strong'). No govuk-body locator is left in that file."
+    },
+    {
+      "source": "inc-226 followUps[8]",
+      "text": "Tests README per-domain table lacks a plants visual script: add test:docker-compose:plants:visual or say why not.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Not done. In trade-imports-ins-tests, README.md:98 still shows '—' for plants visual, and package.json has only test:docker-compose:animals:visual (:46). Yet tests/plants/e2e/visual holds four specs with baselines, and README.md:374 says plants has @visual specs."
+    },
+    {
+      "source": "inc-226 followUps[9]",
+      "text": "commodity-selection/coverage.json:267 links search.fit.spec.js to a save-controls test that does not exist in that file: repoint or remove it.",
+      "verdict": "already-done",
+      "evidence": "Workspace openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json:276 now links 'offers Save and continue, then Save and return to overview, then Cancel and return to overview'. That test exists at animals commodities/fit/search.fit.spec.js:360."
+    },
+    {
+      "source": "inc-226 followUps[10]",
+      "text": "expectStyle in fit/live-animals-journey.js has only type-ahead.fit.spec.js as a user once the hub stops calling it, but animals docs/testing.md:45 calls it shared. Under that doc's own rule it should move into type-ahead.fit.spec.js.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. expectStyle is still exported from fit/live-animals-journey.js:102, and its only user is type-ahead.fit.spec.js (:8, :361, :406). animals docs/testing.md:74 still calls it shared."
+    },
+    {
+      "source": "inc-226 followUps[11]",
+      "text": "type-ahead.fit.spec.js:378 reads an element's computed colour inline, and the rewritten arrival hint test will do the same. Promote one shared computed-style reader to fit/live-animals-journey.js and delete both inline reads.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. type-ahead.fit.spec.js:377-379 and transport/fit/arrival-transit.fit.spec.js:222 each still read getComputedStyle(...).color inline. fit/live-animals-journey.js has a private reader at :211 but exports none."
+    },
+    {
+      "source": "inc-226 followUps[12]",
+      "text": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json:267 links search.fit.spec.js to a test 'ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview' that is not in that file. Correct or remove the stale link.",
+      "verdict": "duplicate",
+      "row": "inc-226 followUps[9]",
+      "evidence": "Same stale link as inc-226 followUps[9], already corrected (coverage.json:276 → search.fit.spec.js:360)."
+    },
+    {
+      "source": "inc-226 followUps[13]",
+      "text": "hub.fit.spec.js finds the totals boxes by the .app-commodity-total class (TOTAL_BOX) in the panels and stacking tests: find them by role or heading, and let the Overview screenshot prove the look.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. hub/hub.fit.spec.js:36 still defines TOTAL_BOX = '.app-commodity-total', used at :82, :447, :468 and :480."
+    },
+    {
+      "source": "inc-228 followUps[0]",
+      "text": "State accent- and case-insensitive matching and bold letters in the plants arrival-details and commodity-details specs, with FIT links",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Not done. In the workspace, openspec/specs/plants/journey-pages/origin/spec.md:22, :42-46 states the rule for origin only. The arrival-details and commodity-details specs do not mention accents or bold letters. The proving tests already exist: the accented cases for place of landing and genus in plants type-ahead.fit.spec.js:44-87, :178-191."
+    },
+    {
+      "source": "inc-228 followUps[1]",
+      "text": "Replace the animals no-JavaScript type-ahead label-class assertion (type-ahead.fit.spec.js:251-253) with a run-time GOV.UK label comparison",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. animals type-ahead.fit.spec.js:229-232 still maps label sizes to the classes govuk-label--s and --m, and :251-253 asserts toHaveClass with them. Plants already compares with a run-time GOV.UK label (plants type-ahead.fit.spec.js:223-228)."
+    },
+    {
+      "source": "inc-228 followUps[2]",
+      "text": "Move animals bold-matches.js's single-use HTML_ESCAPES and MATCH_CLASS into their one user each",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-235: animals frontend code tidy",
+      "evidence": "Not done. src/client/common/helpers/bold-matches.js:3-9 (HTML_ESCAPES, used only by escapeHtml) and :14 (MATCH_CLASS, used only by strongMatch) are still at module scope. That breaks .claude/rules/code-quality.md:59. No remaining theme touches src/client/common/helpers."
+    },
+    {
+      "source": "inc-228 followUps[3]",
+      "text": "Align animals type-ahead.fit.spec.js on one reference reader, with colours through the fit helper where one exists",
+      "verdict": "already-done",
+      "evidence": "animals type-ahead.fit.spec.js:418-460 has one reference reader, measureReferenceElement, with govukColourOf and govukInputStyleOf built on it. fit/live-animals-journey.js has no shared colour helper (git grep govukColourOf origin/main -- fit finds nothing), so nothing else needs routing through one. The remaining inline colour read at :377-379 is covered by inc-226 followUps[11]."
+    },
+    {
+      "source": "inc-228 followUps[4]",
+      "text": "Add animals FIT accented-query cases per type-ahead",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-234: animals browser tests",
+      "evidence": "Not done. The animals type-ahead.fit.spec.js cases (:35-115) carry only plain typed/bold pairs and no accented query. Plants has accentedTyped cases per type-ahead. The behaviour is documented in animals page-design.md ('Type-ahead suggestions match ignoring accents as well as case')."
+    },
+    {
+      "source": "inc-228 followUps[5]",
+      "text": "Decide on a Welsh genus-label E2E once a plants locale toggle exists",
+      "verdict": "drop",
+      "evidence": "This depends on something nobody is building. Plants has no language toggle on main (git grep 'lang=cy|languageToggle|setLanguage' in plants src finds nothing), and no remaining backlog row adds one. It is a decision to take when a toggle row exists, not a requirement now."
+    },
+    {
+      "source": "inc-228 followUps[6]",
+      "text": "Animals src/client/common/helpers/bold-matches.js: move HTML_ESCAPES into escapeHtml and MATCH_CLASS into strongMatch (literals used by one function at module scope).",
+      "verdict": "duplicate",
+      "row": "inc-228 followUps[2]",
+      "evidence": "Same change as inc-228 followUps[2] (bold-matches.js:3-14)."
+    },
+    {
+      "source": "inc-228 followUps[7]",
+      "text": "Animals src/client/common/helpers/.gitkeep: delete it, now that the directory holds real files.",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-235: animals frontend code tidy",
+      "evidence": "Not done. `git ls-tree origin/main src/client/common/helpers` lists .gitkeep beside bold-matches.js, search-fold.js and search-fold.test.js."
+    },
+    {
+      "source": "inc-228 followUps[8]",
+      "text": "Animals type-ahead.fit.spec.js no-JavaScript test: replace the govuk-label--s/--m class assertion (labelSizeModifier) with a GOV.UK label size read at run time.",
+      "verdict": "duplicate",
+      "row": "inc-228 followUps[1]",
+      "evidence": "Same change as inc-228 followUps[1] (animals type-ahead.fit.spec.js:229-253)."
+    },
+    {
+      "source": "inc-228 followUps[9]",
+      "text": "Replace the fixed `govuk-label--m` class assertions in plants `arrival-details/arrival-details.fit.spec.js:183` and `:299` with a comparison against a GOV.UK reference label read at run time, as the type-ahead FIT spec now does (programme invariant: no fixed class assertions).",
+      "verdict": "new-row",
+      "theme": "test-hygiene",
+      "row": "proposed inc-236: plants test hygiene",
+      "evidence": "Not done. Plants arrival-details.fit.spec.js:182-183 and :298-299 still assert toHaveClass(/govuk-label--m/). This is the plants half of inc-226 followUps[0]."
+    },
+    {
+      "source": "orphan EUDPA-739",
+      "text": "Orphaned page 'Search for an approved commercial transporter' (animals transporters/select): remove it so its address shows Page not found, with its controller, template, copy, route, section caption entry and tests gone.",
+      "verdict": "fold-into-row",
+      "theme": "transporters",
+      "row": "inc-044",
+      "evidence": "inc-044 (transporters, blocked) is this removal. Its criterion 1 is the ticket's 'Page not found', and its criterion 2 keeps the list's commercial save. Proposal: record ticket EUDPA-739 on inc-044, and add a note listing the ticket's wider scope. The page is still on main: transport/transporters-select/transporters-select.controller.js, transport/page.js:22, transport/copy/copy.en.js:161, features/index.js:19, flow/section-captions/section-captions.test.js:26, contract.test.js:47. The block (ruling:sam-2026-10-09-pm claim 42, c-285: waits on transporter requirements) still applies: no ruling or source since has settled whether the service manages transporters. The ticket is new evidence for Sam to weigh, not a reason this triage unblocks the row."
+    },
+    {
+      "source": "orphan EUDPA-742",
+      "text": "Orphaned 'Notification copied' banner on the animals dashboard: remove it so ?copied=1 shows no banner, with the banner block, the copySucceeded flag, its copy (en/cy) and its tests gone.",
+      "verdict": "new-row",
+      "theme": "animals-dashboard",
+      "row": "proposed inc-239, beside inc-140",
+      "evidence": "Nothing in the backlog removes it. inc-140's notes only say the banner is never reached. It is still on main: dashboard/template.njk:19-26, dashboard/controller.js:107 (copySucceeded: request.query?.copied === '1'), dashboard/controller.test.js:397-400, and the wording in src/server/app/shared/copy.en.js:55 (and copy.cy.js). It is unreachable because Copy as new redirects to the new notification's Overview (notification-actions/controller.js:39). No test or openspec scenario in ins-tests or the workspace names it."
+    }
+  ],
+  "proposedRows": [
+    {
+      "id": "inc-234",
+      "theme": "test-hygiene",
+      "title": "Live animals browser tests prove how pages look by screenshot, accessible name and GOV.UK values read at run time",
+      "detail": "Many live animals browser tests still prove looks by class list, fixed alignment, line height or a hard-coded colour, and find buttons and boxes by class. That breaks the programme rule that a browser test never writes a fixed style and compares only with GOV.UK values read at run time or a screenshot. The tests move to accessible names and roles, the looks they stop asserting move to the screenshot suite, the type-aheads gain accented searches, and shared test steps keep only what more than one spec uses.",
+      "acceptanceCriteria": [
+        "Every live animals browser test that checks how a page looks proves it by a screenshot, by position or size against another element, or by a value read from GOV.UK at run time. None writes a fixed colour, pixel size, line height, text alignment or class list. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[0]-[5], [13]; inc-228 followUps[1])",
+        "The live animals browser tests find the Overview's buttons and commodity totals, the arrival details labels and the review's cards by role, accessible name or heading. (loop:design-snagging-followups inc-226 followUps[0], [2], [4], [13])",
+        "The screenshot suite shows the looks those tests stop asserting: the arrival details medium labels, the transit countries remove column and the Upload documents actions column right-aligned, the Overview's buttons and commodity totals with their captions, and the review's last card. (loop:design-snagging-followups inc-226 followUps[0]-[4], [13])",
+        "Each live animals type-ahead is proven in the browser to offer a matching name when the trader's search and the name differ only by accents, with the matching letters in bold. (loop:design-snagging-followups inc-228 followUps[4])",
+        "A browser-test step, reader or selector used by one spec lives in that spec, and one used by several has a single owner. The live animals testing guide lists as shared only the steps more than one spec uses. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[10], [11])",
+        "Every live animals browser test and the animals screenshot suite pass, on both screenshot baselines. (loop:design-snagging-followups inc-226)"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "test",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "loop:design-snagging-followups", "ref": "inc-225 followUps[8]; inc-226 followUps[0]-[5], [10], [11], [13]; inc-228 followUps[1], [4]" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Covers inc-225 followUps[8]; inc-226 followUps[0] (animals half), [1], [2], [3], [4], [5] (all but cph-number), [10], [11], [13]; inc-228 followUps[1], [4]. Their duplicates are inc-228 followUps[8].",
+        "Places found on main 27 Oct: hub.fit.spec.js:36, :348-354, :447-452; arrival-transit.fit.spec.js:210-211, :222, :833; upload.fit.spec.js:712-715; check-answers.fit.spec.js:47-48, :146-151; additional-details.fit.spec.js:74-77; origin.fit.spec.js:151-161; consignment-details.fit.spec.js:112-121; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153; transporters.fit.spec.js:344-347, :498, :785; type-ahead.fit.spec.js:183, :229-253, :256, :377-379, :471; fit/live-animals-journey.js:102; docs/testing.md:74.",
+        "Theme overlap: transport/fit/arrival-transit.fit.spec.js and transporters.fit.spec.js sit inside the blocked transporters theme's 'frontend:.../transport/fit'. Narrow that touch to the transporter specs, or tim backlog check will refuse the test-hygiene theme."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-235",
+      "theme": "test-hygiene",
+      "title": "Links that bring the trader back to the page they came from follow one rule in live animals",
+      "detail": "Add another commodity, the commodity list's Change, and Edit details on a party each build their 'come back here' link separately, though one shared rule already reads the marker back. One shared rule builds them too. The type-ahead bold-letters helper keeps its single-use literals inside the functions that use them, and the client helpers folder loses its leftover placeholder file.",
+      "acceptanceCriteria": [
+        "Add another commodity and Change on Commodity details and Identification details, and Edit details on every party from the consignment addresses, contact and review pages, still return the trader to the page they came from, keeping a review Change's context. (loop:design-snagging-followups inc-233 followUps[3], [4])",
+        "The live animals journey builds every link that names a page to return to by one shared rule, and reads it back by one, so the marker's name and the change context are each written once. (loop:design-snagging-followups inc-233 followUps[3], [4])",
+        "Type-ahead suggestions still show the matching letters in bold and anything the trader typed as plain text, never markup. (loop:design-snagging-followups inc-228 followUps[2], [6])",
+        "Every literal used by one function lives in that function, and the client helpers folder holds only real code. (loop:design-snagging-followups inc-228 followUps[2], [6], [7]; .claude/rules/code-quality.md:59)"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "refactor",
+      "repos": ["frontend"],
+      "sources": [
+        { "source": "loop:design-snagging-followups", "ref": "inc-233 followUps[3], [4]; inc-228 followUps[2], [6], [7]" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "On main 27 Oct: addresses/party-edit/edit-href.js:4-13 and commodities/commodity-question-detour.js:9-16 each build the query; kit.readReturnMarker is at shared/kit.js:201; bold-matches.js:3-14; src/client/common/helpers/.gitkeep.",
+        "Keep partyEditHref's call signature, so consignment-parties' addresses/controller.js and contact/controller.js stay untouched."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-236",
+      "theme": "test-hygiene",
+      "title": "Plants tests and their guides say what is true and prove looks without class lists",
+      "detail": "The plants testing guide says spec-local readers keep code out of coverage, which is untrue, and has a broken sentence. Two browser readers hand values to the page under different names from the ones they take. The arrival details labels are still proven by class. The behaviour spec does not say the place of landing and genus searches ignore accents. The tests repository has plants screenshot specs but no command or guide entry to run them alone.",
+      "acceptanceCriteria": [
+        "The plants testing guide says the coverage report and the quality gate count only application source, never browser-test files, and every sentence in its shared-helpers section is whole. (loop:design-snagging-followups inc-225 followUps[7])",
+        "Each plants browser reader that runs code in the page hands its values over under the names it takes them by. (loop:design-snagging-followups inc-225 followUps[0], [1])",
+        "The plants arrival details labels are proven to be the medium size by comparison with a GOV.UK label read at run time, and no plants browser test asserts a class list. (loop:design-snagging-followups inc-228 followUps[9]; inc-226 followUps[0])",
+        "The plants arrival details and commodity details behaviour specs say the place of landing and genus searches match ignoring case and accents, with the matching letters in bold, and each statement links to the browser test that proves it. (loop:design-snagging-followups inc-228 followUps[0])",
+        "The tests repository's guide lists a plants screenshot command beside the animals one, and that command runs only the plants screenshot specs. (loop:design-snagging-followups inc-226 followUps[8])"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "test",
+      "repos": ["plantsfrontend", "tests", "workspace"],
+      "sources": [
+        { "source": "loop:design-snagging-followups", "ref": "inc-225 followUps[0], [1], [7]; inc-226 followUps[0] (plants half), [8]; inc-228 followUps[0], [9]" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "On main 27 Oct: plants docs/testing.md:93-99; fit/high-risk-plants-journey.js:76-84; type-ahead.fit.spec.js:375-401; arrival-details.fit.spec.js:182-183, :298-299; ins-tests README.md:98 and package.json:46; openspec/specs/plants/journey-pages/arrival-details and commodity-details.",
+        "No remaining theme touches these plants files. design-snagging-followups touched plants accessible-autocomplete and test support, and is merged."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-237",
+      "theme": "consignment-parties",
+      "title": "Party and CPH number browser tests share the journey's save step and prove looks without class lists",
+      "detail": "The party picker and party edit browser tests each keep their own copy of the Save and continue step. The CPH number tests prove box widths and error styling by class. They use the shared step, and the looks move to GOV.UK values read at run time or a screenshot.",
+      "acceptanceCriteria": [
+        "The party picker, party edit and CPH number browser tests press Save and continue through the journey's one shared step and keep no copy of their own. (loop:design-snagging-followups inc-225 followUps[6])",
+        "The CPH number boxes' two, three and four character widths and their error styling are proven by screenshot or by GOV.UK values read at run time, and the part labels are proven visible by accessible name. (loop:design-snagging-followups inc-226 followUps[5])"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "test",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "loop:design-snagging-followups", "ref": "inc-225 followUps[6]; inc-226 followUps[5] (cph-number part)" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "On main 27 Oct: addresses/fit/party-edit.fit.spec.js:20, addresses/fit/hub-picker.fit.spec.js:86, cph-number/cph-number.fit.spec.js:105-107, :121, :359-361.",
+        "inc-091 rewrites the CPH number page: build this after it, or fold it in when inc-091's plan is written."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-238",
+      "theme": "identification-and-permanent-address",
+      "title": "Identification details browser tests read GOV.UK's green at run time and find the save buttons by role",
+      "detail": "The identification browser tests hard-code GOV.UK's green and find the page's save buttons by their group's class. They read the colour at run time and use the journey's shared save-controls step.",
+      "acceptanceCriteria": [
+        "The identification page's green tag is checked against GOV.UK's green read at run time. (loop:design-snagging-followups inc-225 followUps[5])",
+        "The identification page's test that it ends on the journey's Save and continue, and offers no 'Save and finish' there, finds the buttons by role through the shared save-controls step. (loop:design-snagging-followups inc-226 followUps[6])"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "test",
+      "repos": ["frontend"],
+      "sources": [
+        { "source": "loop:design-snagging-followups", "ref": "inc-225 followUps[5]; inc-226 followUps[6]" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "On main 27 Oct: commodities/fit/identification.fit.spec.js:30, :923, :360-364."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-239",
+      "theme": "animals-dashboard",
+      "title": "The live animals list shows a success banner only when an action sends the trader back to it",
+      "detail": "Copy as new opens the new notification's Overview and never returns to the list, so the list's banner for a copied notification can never be reached. The banner, the flag that raises it, its English and Welsh wording and its tests go. The delete's banner stays.",
+      "acceptanceCriteria": [
+        "Opening the live animals list shows a success banner only when a delete has just sent the trader there. Any other query shows the list with no success banner. (jira:EUDPA-742)",
+        "Copy as new still opens the new notification's Overview, and both the copy and the original stay on the live animals list. (jira:EUDPA-742; repo:frontend notification-actions/controller.js:39, notification-actions.fit.spec.js:66)",
+        "After a delete, the live animals list still shows its success banner with the delete's message. (jira:EUDPA-742; inc-140)",
+        "The list's English and Welsh wording, and the shared action wording, hold only messages a page shows. (jira:EUDPA-742)"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "kind": "chore",
+      "ticket": "EUDPA-742",
+      "repos": ["frontend"],
+      "sources": [
+        { "source": "jira:EUDPA-742", "ref": "To Do, raised by a colleague: orphaned 'Notification copied' banner" },
+        { "source": "repo:frontend", "ref": "dashboard/template.njk:19-26; dashboard/controller.js:107; dashboard/controller.test.js:397-400; shared/copy.en.js:55" }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Sits beside inc-140 (success banner titled 'Success'). Both change the list's banners, so build them one after the other in the theme. Once this lands, inc-140's note that the copied banner is never reached no longer applies.",
+        "The wording lives in src/server/app/shared/copy.en.js and copy.cy.js (notificationActions.copy.successTitle and successBody). That is outside animals-dashboard's touches: add those two files to the theme's touches, or leave the two strings for a shared-copy tidy. journey-foundation, which owns shared/, is split off and merged, so nothing builds there now."
+      ],
+      "gate": null
+    }
+  ],
+  "proposedRowEdits": [
+    {
+      "row": "inc-044",
+      "theme": "transporters",
+      "change": "Record ticket EUDPA-739. Add a note that the ticket's scope matches criterion 1 and names the parts to remove: the controller, template, copy, route, section caption entry and tests (on main: transport/transporters-select/, transport/page.js:22, transport/copy/copy.en.js:161, features/index.js:19, flow/section-captions/section-captions.test.js:26).",
+      "blockStillApplies": "Yes. ruling:sam-2026-10-09-pm claim 42 (c-285) blocks it on transporter requirements, and nothing since has settled them. Status stays blocked."
+    }
+  ]
+}

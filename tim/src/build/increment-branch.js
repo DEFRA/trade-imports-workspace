@@ -128,7 +128,45 @@ const catchUpToBase = async (repo, branch, base) => {
   return true
 }
 
-const checkOut = async (repo, branch, base) => {
+const unresolvedPaths = async (dir) =>
+  (await git(dir, ['diff', '--name-only', '--diff-filter=U'])).stdout
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+
+const containsBase = (dir, base) =>
+  succeeds(dir, ['merge-base', '--is-ancestor', `origin/${base}`, 'HEAD'])
+
+const mergeBaseInto = async ({ key, path }, branch, base) => {
+  if (!(await hasRef(path, `refs/remotes/origin/${base}`))) return false
+  if (await containsBase(path, base)) return false
+  const merged = await git(path, [
+    'merge',
+    '--quiet',
+    '--no-edit',
+    `origin/${base}`
+  ])
+  if (merged.exitCode === 0) return true
+  const conflicted = await unresolvedPaths(path)
+  if (conflicted.length === 0) {
+    throw new BranchStepFailure(
+      `${key}: can't merge origin/${base} into ${branch}: ${firstLine(merged.stderr) || `git exited ${merged.exitCode}`}`,
+      merged.stderr
+    )
+  }
+  await git(path, ['merge', '--abort'])
+  throw new BranchStepFailure(
+    `${key}: merging origin/${base} into ${branch} conflicts in ${namedFiles(conflicted)}. The merge was undone. Merge origin/${base} into ${branch} by hand, then run again.`
+  )
+}
+
+const catchUpWorkspace = async (repo, branch, base, moved) => {
+  if (!repo.workspace || moved.caughtUpToBase) return moved
+  return (await mergeBaseInto(repo, branch, base))
+    ? { ...moved, mergedBase: `origin/${base}` }
+    : moved
+}
+
+const checkOutExisting = async (repo, branch, base) => {
   const { key, path } = repo
   if (await hasRef(path, `refs/heads/${branch}`)) {
     await must(
@@ -141,13 +179,22 @@ const checkOut = async (repo, branch, base) => {
       ? { cut: false, from: `origin/${base}`, caughtUpToBase: true }
       : { cut: false, from: null, caughtUpToBase: false }
   }
-  if (await hasRef(path, `refs/remotes/origin/${branch}`)) {
-    await must(
-      path,
-      ['checkout', '--quiet', '-b', branch, '--track', `origin/${branch}`],
-      `${key}: can't check out ${branch} from origin`
-    )
-    return { cut: false, from: `origin/${branch}`, caughtUpToBase: false }
+  await must(
+    path,
+    ['checkout', '--quiet', '-b', branch, '--track', `origin/${branch}`],
+    `${key}: can't check out ${branch} from origin`
+  )
+  return { cut: false, from: `origin/${branch}`, caughtUpToBase: false }
+}
+
+const checkOut = async (repo, branch, base) => {
+  const { key, path } = repo
+  if (
+    (await hasRef(path, `refs/heads/${branch}`)) ||
+    (await hasRef(path, `refs/remotes/origin/${branch}`))
+  ) {
+    const moved = await checkOutExisting(repo, branch, base)
+    return catchUpWorkspace(repo, branch, base, moved)
   }
   if (!(await hasRef(path, `refs/remotes/origin/${base}`))) {
     throw new BranchStepFailure(
@@ -255,7 +302,11 @@ const putOnBranch = async (repo, branch, base) => {
  * the fast-forward, and its result lists them as `carried`: each file that was
  * uncommitted before the increment started, one by one inside an untracked
  * folder too, and both paths of a rename. A switch or fast-forward that would
- * overwrite one of them stops, naming the files.
+ * overwrite one of them stops, naming the files. A workspace branch that
+ * already exists, has commits of its own and lacks origin/<base> gets
+ * origin/<base> merged into it (never rebased, never forced), so the tim it
+ * carries is no older than the base's; its result says `mergedBase`. A merge
+ * that conflicts is undone and stops, naming the conflicted files.
  *
  * @param {object} args
  * @param {{key: string, path: string, workspace?: boolean}[]} args.repos - In the order to branch them

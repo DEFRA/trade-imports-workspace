@@ -37,17 +37,26 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-003",
-      "name": "A search can match a commodity's code or a species' common or scientific name",
+      "name": "A search can match a commodity's code or a species' common or Latin name",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-003-A",
-          "name": "Searching by common name finds the same species as searching by code",
+          "name": "Searching by common name offers the species under each live-animal code, by Latin name",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds a species by its common name", "strength": "full", "notes": "searches 'cattle' and finds Bos spp. / Bos taurus under Cow (0102)" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species as its common name with the scientific name after it", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "searches by commodity code (e.g. 0102) and finds the same Cow group; does not itself search by common name" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "full", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by Latin name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its scientific name", "strength": "full", "notes": "checkbox accessible names are the Latin names MDM returns" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "searches 'cattle' and '0102' and finds the same species under 0102 both ways, each by Latin name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists every species under a code searched for", "strength": "partial", "notes": "code-search half: searches 0102 and finds all 15 species by Latin name" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-003-B",
+          "name": "A search offers no commodity code the reference data flags as germinal",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java", "test": "search_leavesOutTheCodesMdmFlagsAsGerminal", "strength": "full", "notes": "MDM lists Bos taurus under 0102, 05119985 and 05111000 and flags the last two germinal; only 0102 is returned" }
           ]
         }
       ]
@@ -62,8 +71,8 @@
           "name": "A search groups its matching species under their commodity heading",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "groups the matching species under their commodity code", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -71,8 +80,8 @@
           "name": "A search matching more than one commodity renders a group for each",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity", "strength": "full", "notes": "search 0106 yields Cat and Dog groups" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "walks codes including 01061900 which yields both Cat and Dog groups, but does not assert both on one render" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity code", "strength": "full", "notes": "search taurus yields a 0102 group and a 01061900 group" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "partial", "notes": "asserts a group per code reference-data returns for each of 0102, cattle, horse, domestic cat and ostrich, so two codes on one render for cattle (0102, 01061900), horse (0101, 01061900) and ostrich (01063300, 01063980)" }
           ]
         },
         {
@@ -129,8 +138,8 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-007",
-      "name": "The back link returns to the origin of the import in the opening sequence, and to Overview otherwise",
-      "coverage": "full",
+      "name": "The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-007-A",
@@ -149,6 +158,14 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "follows Back from what are you importing to the origin page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to the origin of the import while the opening run is on", "strength": "partial", "notes": "href only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the commodities page back to the origin page", "strength": "partial", "notes": "the run policy's answer only" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-007-C",
+          "name": "Opened from commodity details, the back link opens commodity details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go Back to commodity details when commodity details opened the question", "strength": "partial", "notes": "href only; not probed" }
           ]
         }
       ]
@@ -171,7 +188,7 @@
     },
     {
       "id": "REQ-COMMODITY-SELECT-009",
-      "name": "Saving and continuing without choosing a commodity is rejected",
+      "name": "Saving without choosing a commodity is rejected on either save control",
       "coverage": "full",
       "scenarios": [
         {
@@ -185,11 +202,11 @@
         },
         {
           "id": "SCN-COMMODITY-SELECT-009-B",
-          "name": "Save and return to overview with nothing chosen returns to Overview without an error",
+          "name": "Save and return to overview with nothing chosen shows the same error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "what are you importing: when nothing is chosen, returns to the overview without an error", "strength": "full", "notes": "asserts the task reads To do" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should go to the overview with nothing chosen on Save and return to overview", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "what are you importing: when nothing is chosen, refuses the save with \"Select a commodity\" and leaves the task not complete", "strength": "partial", "notes": "asserts the summary link and that the task reads To do" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should refuse nothing chosen on Save and return to overview with the same error as Save and continue", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -204,12 +221,12 @@
         },
         {
           "id": "SCN-COMMODITY-SELECT-009-D",
-          "name": "Save and return to overview after clearing a saved selection empties it",
+          "name": "Save and return to overview after clearing a saved selection is refused and keeps the saved selection",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "shows the commodity task as To do", "strength": "full", "notes": "clears a saved selection, saves and returns to Overview, and asserts the task reads To do" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "refuses save and continue with \"Select a commodity\" on reopening the page", "strength": "full", "notes": "reopening the page and saving is refused with the one summary link, which happens only when nothing is saved" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should empty a saved selection on Save and return to overview with nothing chosen", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "refuses the save with \"Select a commodity\" and stays on the page", "strength": "partial", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "keeps the saved selection when the page is reopened", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should leave the saved selection unchanged when Save and return to overview is refused with nothing chosen", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -256,7 +273,80 @@
           "name": "The opening sequence offers all three controls",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers Save and continue, then Save and return to overview, then Cancel and return to overview", "strength": "full", "notes": "reached by answering origin; red when the page stops rendering its save controls" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-013",
+      "name": "Saving returns the user to the page that opened the question, else goes on",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-013-A",
+          "name": "Opened from commodity details, saving returns there",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "returns to commodity details after adding another commodity, keeping the saved counts and leaving the new commodity empty", "strength": "full", "notes": "red without the return step in the save target" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to commodity details when commodity details opened the question", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-B",
+          "name": "Opened from identification details, saving returns there",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "changes the commodity list from a summary row and returns to identification details listing the added commodity", "strength": "full", "notes": "red without the return step in the save target" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to identification details and keep only the commodities left ticked", "strength": "partial", "notes": "redirect href and saved lines only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-C",
+          "name": "In the opening sequence, saving opens the reason for import",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "partial", "notes": "passes through the step among the whole run; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-D",
+          "name": "Opened from a review Change link, saving opens commodity details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js", "test": "Should carry the context from the search save into the consignment details page", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-E",
+          "name": "Opened from commodity details under a review Change, saving returns there keeping the change context",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js", "test": "Should carry the context and the return marker on the details page Add-another affordance", "strength": "partial", "notes": "the link carries the return marker and change context; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to the opener carrying the change context", "strength": "partial", "notes": "redirect href only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-013-F",
+          "name": "A return value naming a page that does not open the question is ignored",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should ignore a return value that names a page not opening the question and redirect as an unmarked save does", "strength": "partial", "notes": "a refused marker redirects as an unmarked save does; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-014",
+      "name": "One search lists no more than a hundred species",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-014-A",
+          "name": "A search matching more than a hundred species lists a hundred",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists no more than a hundred species for one search", "strength": "full", "notes": "searches 01061900, which holds 120 species" }
           ]
         }
       ]

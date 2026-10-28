@@ -243,7 +243,9 @@ when the designer asks "where did my data go":
 
 - **Saving a file restarts the prototype.** Saving a page, copy or flow file
   (any `.js`, `.json` or `.njk` under `src/`, except tests and
-  `src/client/`) restarts it. Refresh the page after a few seconds.
+  `src/client/`) restarts it. Refresh the page after a few seconds. Edits to
+  a release's existing `assets/` rebuild by themselves. A brand-new
+  `assets/` folder needs the prototype stopped and started again.
 - **The real journey forgets on restart.** In `high-risk-plants`, a restart
   empties every notification. Its examples come back on your next visit.
 - **Design releases remember, on your computer.** A design release keeps its

@@ -105,11 +105,12 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | Export | What it does |
 |---|---|
 | `driveHandler(handler, { payload, seed, params, query, state, amend, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view }`. Both also take `openingRun` and `saveFailure` and return `logger`; only animals returns `cookies` |
-| `useStubbedJourney(setId, dispatchPages)` (animals only) | Configures the stub stores and clears the store before each test |
+| `useStubbedJourney(setId, dispatchPages)` | Configures the stub stores and builds the dispatch before a describe, then restores the stub records and clears the store before each test. Put it and `useBackendRecords` on sibling describes, never nested |
 | `getHandlerOf(featureModule)` (animals only) | The GET handler from a feature's `routes` |
 | `postHandlerOf(featureModule)` | The POST handler from a feature's `routes` |
 | `postHandlerEndingWith(featureModule, pathSuffix)` | The POST handler whose path ends with `pathSuffix`, for features with several POST routes |
-| `stubH(request)` | A response toolkit that records the view, redirect and cookies a handler produced |
+| `stubH(request, { writesStateToRequest })` (the option is plants only) | A response toolkit that records the view, redirect and cookies a handler produced. With `writesStateToRequest`, each cookie is also written onto `request.state`, so a later read in the same request sees it |
+| `requestAsSessionHoldingNoJourney(journeyId, { get, post })` (plants only) | Runs a GET and a POST handler as a session that holds no journey and returns both requests and both responses |
 | `recordingH()` | A toolkit that records `state` and `unstate` cookie calls |
 | `journeyRequest(journeyId, overrides)` | A signed-in request for a known journey |
 | `registerTestSessionAuth(server)` | Signs every request in as `authenticatedCredentials` on a real server |
@@ -125,9 +126,12 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `expectBackLinkIsPage(result, slug)` | Asserts the view's back link is the journey page at `slug` |
 | `sampleText(value, sampleArguments)` (animals only) | The text a copy leaf gives: the string itself, or what the copy function returns for the sample arguments |
 | `crumbProtectedServerMounting(routes, prefix)` (animals only) | A real server with the crumb plugin and test session auth, mounting the routes under the prefix |
-| `referenceDataServing()` (animals only) | Registers the mock reset and returns a function that serves given rows as the reference-data response |
-| `resetMocksAndConfigAfterTests(...configKeys)` (animals only) | Registers an `afterEach` that resets fetch mocks and restores `stubMode` and the named config keys |
-| `addressBookAnswering(addressResponse)`, `addressBookCountriesServing()`, `addressBookRequestUrls()` (animals only) | Stub the address book's answers and report the URLs it was asked for |
+| `expectNoRefusalLogged(logger)` | Asserts the logger holds no refusal line |
+| `useReferenceDataServing()` | Registers `resetMocksAndConfigAfterTests()` itself and returns a function that serves given rows as the reference-data response |
+| `useBackendRecords(setId)` | Registers the real records and the stub session for a describe, enables the shared `fetchMock` and clears its calls before each test, and resets the mocks and config after each test. Put it and `useStubbedJourney` on sibling describes, never nested: the stubbed describe's per-test restore would put the stub records back under it |
+| `fetchMock` | The shared `vitest-fetch-mock` instance that `useBackendRecords`, `addressBookAnswering` and `useReferenceDataServing` drive; enable it and set its response in a test, with `resetMocksAndConfigAfterTests()` registered |
+| `resetMocksAndConfigAfterTests(...configKeys)` | Registers an `afterEach` that resets fetch mocks and restores `stubMode` and the named config keys |
+| `addressBookAnswering(addressResponse)`, `addressBookRefusingAddresses()`, `addressBookRequestUrls()` | Stub the address book's answers and report the URLs it was asked for |
 | `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |
 | `expectBackLinkIsPath(result, path)` (plants only) | Asserts the view's back link is the given path |
 | `itHoldsCopyAtEveryLeaf(en, cy)` and `expectEveryLeafToBeCopy(locale, bundle)` (plants only) | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function |
@@ -140,7 +144,8 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `mockOidcConfig` | A static OIDC discovery document |
 | `sessionAuth(sessionId, overrides)` | The `auth` option for `server.inject` |
 | `readEmfDocuments(logSpy)` | Parses the EMF metric documents written to stdout |
-| `runInZone(zone, assertions)` | Runs assertions with `TZ` moved off UTC, then restores it (animals only) |
+| `runInZone(zone, assertions)` | Runs assertions with `TZ` moved off UTC, then restores it |
+| `documentOf(html)`, `trimmedTextOf(element)` (`document-of.js`) | Parse rendered HTML into a document to query, and read an element's trimmed text |
 
 Shared fixtures live in `test/fixtures/`.
 

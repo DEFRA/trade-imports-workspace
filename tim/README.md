@@ -81,6 +81,22 @@ Every command supports:
 - `--verbose` — structured logs to stderr
 - `--workspace <path>` — override the resolved workspace root
 
+### `tim workspace repo-state` — one report of several repos' git state
+
+Reports each repo you name, from local git: its branch, HEAD, whether it is
+dirty and every changed path, how many changes are staged, whether a merge is
+in progress, and how far it is ahead of and behind origin. The build loop reads
+it instead of asking an agent to read `git status` in each repo.
+
+```bash
+tim workspace repo-state --repos frontend:repos/trade-imports-plants-frontend,workspace:. --json
+tim workspace repo-state --repos tests:repos/trade-imports-ins-tests --branch feat/EUDPA-1-x --base main
+```
+
+`--branch` adds whether each repo is on that branch and where the branch
+points locally. `--base` counts commits against `origin/<base>`. `--fetch`
+fetches origin first.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under
@@ -458,6 +474,7 @@ tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere oth
 tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json
 tim build tune                                              # once per machine: time FIT and E2E at 2, 3, 4 workers, save config/machine.json
 tim build workers --json                                    # this machine's worker counts, as the gate reads them
+tim build push-workflows . --commit 4cd37b9c --json          # which workflows a push of that commit to main starts
 ```
 
 How hard the gate drives the machine comes from the workspace's gitignored
@@ -559,6 +576,61 @@ The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
 clone is `{lines, tokens, first, second}`, and `first` and `second` are
 `{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
 finds a clone, and 2 when `--base` does not exist.
+
+### `tim build push-workflows` — which workflows a pushed commit starts
+
+```bash
+tim build push-workflows . --commit 4cd37b9c --branch main --json
+tim build push-workflows trade-imports-ins-tests --commit origin/main
+```
+
+Reads the repo's `.github/workflows` files as they are at the commit, and the
+files the commit changes from its first parent. A workflow starts when it has a
+push trigger whose `branches`, `branches-ignore` and `tags` filters let the
+branch through, and whose `paths` or `paths-ignore` match at least one changed
+file. `!` patterns count in order, as GitHub reads them. It reads local git
+only, so fetch the commit first.
+
+The result is `{commit, branch, changedFiles, workflows, starts}`. Each
+workflow is `{file, name, starts, reason}`, where `name` is what GitHub calls
+its runs (the workflow's `name`, else its path), and `starts` lists those
+names. It always exits 0. The build loop's merge stage uses it to tell a merge
+that starts no workflow, which has nothing to watch, from a run that has not
+started yet.
+
+### `tim spec diff` — what commits changed in the Behaviour Spec
+
+```bash
+tim spec diff --commit 575f5f3c --json
+tim spec diff --commit e310d0af --commit 72fb2eda
+```
+
+Compares each commit with its first parent under `openspec/specs` and
+`openspec/coverage`, scenario by scenario: `added`, `changed` (its name or
+steps), `removed`, or `coverage` (only its `coverage.json` entry changed). Each
+scenario carries its coverage after the commit. A commit git cannot find is
+listed under `skipped`. `result.touched` is every scenario id the commits added,
+changed or re-proved. The build loop uses it to tell a theme's own unproven
+scenarios from older ones, and to write each row's spec-diff Jira comment.
+
+### `tim build run-jobs` — whether every job of a run has passed
+
+```bash
+gh api repos/DEFRA/trade-imports-plants-frontend/actions/runs/123/jobs?filter=latest > jobs.json
+tim build run-jobs trade-imports-plants-frontend --commit 4cd37b9c --workflow .github/workflows/publish.yml --jobs jobs.json --json
+```
+
+A run's own status can stay in progress after its jobs have finished. This
+judges the jobs instead: each must be completed with success or skipped, and
+each job the workflow file defines at the commit must have a job in the run.
+A matrix job counts by its name and a suffix. A job that calls a reusable
+workflow needs a job named `<its name> / …`, every job of that workflow when
+it is in the same repo, or one skipped job of its own name. tim reads the
+saved file and local git only: it never calls GitHub itself.
+
+The result is `{workflow, commit, green, declared, missing, notPassed, jobs}`.
+It always exits 0. The build loop's merge stage uses it for a base-branch run
+still showing in progress after its watches.
 
 ### `tim build probe` — does a test witness a line
 

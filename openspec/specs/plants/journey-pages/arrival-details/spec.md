@@ -100,9 +100,9 @@ The system MUST accept the arrival details once every answer the notification ow
 - **WHEN** they answer the arrival date and save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving and continuing with the page empty is refused
+### Requirement: Saving with the page empty is refused on either save control
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-005
-The system MUST refuse to save and continue from the arrival details when the required answers for the notification's state are missing, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error. It MUST NOT refuse the page for a missing answer on save and return to overview.
+The system MUST refuse to save from the arrival details when the required answers for the notification's state are missing, on save and continue and on save and return to overview alike, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error.
 
 #### Scenario: A blank potato page names the date, time and place of landing
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-A
@@ -118,12 +118,12 @@ The system MUST refuse to save and continue from the arrival details when the re
 - **WHEN** they save and continue
 - **THEN** an error summary names the missing arrival date
 
-#### Scenario: Save and return to overview saves a blank page and leaves the arrival row incomplete
+#### Scenario: Save and return to overview refuses a blank page, naming each missing answer
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-C
 - **GIVEN** a potatoes notification is on the arrival details with nothing answered
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
-- **AND** the arrival task row does not read "Completed"
+- **THEN** an error summary names the missing date, time and place of landing
+- **AND** nothing is saved, so the arrival task row does not read "Completed"
 
 ### Requirement: An impossible date is rejected with its own error, distinct from a missing date
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-006

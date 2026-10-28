@@ -564,6 +564,53 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
+  test('starts the stack again for a holder whose lease outlived it, and leaves it up and leased to them', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({ holder: GATE_HOLDER })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      lease: leaseOnDisk(),
+      green: outcome.green,
+      stack: outcome.stack
+    }).toEqual({
+      calls: ['run-stack.sh -d'],
+      up: true,
+      lease: expect.objectContaining({ holder: GATE_HOLDER, state: 'up' }),
+      green: true,
+      stack: expect.objectContaining({
+        wasUp: false,
+        startedForE2e: true,
+        stoppedAfter: false,
+        keptForHolder: true,
+        downLog: null
+      })
+    })
+  })
+
+  test('keeps the lease for a holder whose lease outlived the stack when the stack will not come up again', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({ holder: GATE_HOLDER })
+    writeFileSync(join(root, 'up-fails'), '')
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      green: outcome.green,
+      lease: leaseOnDisk()?.holder,
+      startError: outcome.stack.startError
+    }).toEqual({
+      green: false,
+      lease: GATE_HOLDER,
+      startError: expect.stringContaining(
+        `the lease kept for "${GATE_HOLDER}", who held it before.`
+      )
+    })
+  })
+
   const withDevService = async () => {
     mkdirSync(join(root, 'docker', 'stack'), { recursive: true })
     writeFileSync(
@@ -766,7 +813,7 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
-  test('fails the e2e rungs when the stack does not come up, still stops it, and clears the lease', async () => {
+  test('fails the e2e rungs when the stack does not come up, still stops it, clears the lease, and reports why the stack did not start', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(join(root, 'up-fails'), '')
 
@@ -776,7 +823,8 @@ describe('runGate — e2e rungs', () => {
       rungs: outcome.rungs,
       calls: stackCalls(),
       lease: leaseOnDisk(),
-      held: outcome.stack.held
+      held: outcome.stack.held,
+      startError: outcome.stack.startError
     }).toEqual({
       rungs: [
         expect.objectContaining({
@@ -788,7 +836,10 @@ describe('runGate — e2e rungs', () => {
       ],
       calls: ['run-stack.sh -d', 'stop-stack.sh'],
       lease: null,
-      held: null
+      held: null,
+      startError: expect.stringMatching(
+        /^The workspace stack did not come up \(run-stack\.sh exited 9\)\. .* It was taken down again and the lease cleared\.$/
+      )
     })
   })
 

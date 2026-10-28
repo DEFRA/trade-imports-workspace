@@ -70,6 +70,15 @@ it never sends anything anywhere by itself.
   without asking.
 - **Never edit `.claude/settings.json`, `.claude/settings.local.json` or
   anything under `.claude/hooks/`**, in either the prototype or the workspace.
+- **Release patterns travel as requests, never as code.** Nothing from the
+  release's `assets/`, `layout.njk`, `patterns.md` or `mandates.md` goes in
+  `upstream.patch`. In patched templates `designer:handoff` turns
+  `{% extends "<release>/layout.njk" %}` back into `shared/layout.njk`. Any
+  file that still names an `app-<release>-` class or hook is left out of
+  the patch, and the brief names it beside the request. `designer:handoff`
+  refuses a patch that still carries a release class or release layout. Each `patterns.md` entry goes into the brief under "Pattern
+  requests", with its evidence, beside the design gaps. Only a `handoff/*`
+  route may change `src/client/` in the real service.
 
 ## Before writing the folder
 
@@ -167,6 +176,15 @@ it never sends anything anywhere by itself.
    `--since <commit>`, the commit before it (for a release whose first commit
    only copied the journey, `--since` that commit hands off everything after
    the copy). Default: everything (`--all`).
+10. **Settle the release patterns.** Read
+    `src/server/app/sets/<set-id>/patterns.md`, if there is one.
+    `designer:handoff` refuses while any entry is still `Option`, or while a
+    `Copied from` entry has no `Asked by` line citing a mandate recorded in
+    this release. A mandate copied with the release does not count.
+    Ask the designer, in one message, to choose, drop or confirm each one.
+    Record a confirmation with `designer:mandate`
+    (`references/custom-pattern.md`), then add its line to the entry. A
+    dropped option becomes `Closed: dropped, <their reason>`.
 
 ## Writing the folder
 
@@ -283,6 +301,10 @@ it never sends anything anywhere by itself.
      ruling c-002 chose the words…" under "What cannot ship as it is"): name
      the ruling and its reason, and say the product owner should confirm the
      new words still meet it,
+   - each release pattern, under "Pattern requests": what it is, why GOV.UK
+     and MoJ did not fit, what research should learn, the round and any
+     findings. Say the plants team build it from that, to the real
+     service's standards, and none of its code goes in the patch,
    - what cannot ship as it is, and why. A file that uses the prototype's own
      example data or stub plumbing is left out of the patch, and so is every
      file that imports it ("Imports …, which is left out"),
@@ -352,6 +374,10 @@ upstream.patch` in their own clone of `trade-imports-plants-frontend`, write
    anything it left out).
 7. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
    prints nothing, and you are back on the designer's branch.
+8. `upstream.patch` names no file under the release's `assets/`, and no
+   `app-<release>-` class, `release-<release>` bundle or
+   `<release>/layout.njk`. Each open `patterns.md` entry is in the brief's
+   "Pattern requests".
 
 ## Hand-off note
 
@@ -366,3 +392,9 @@ merged", add or update the status lines at the top of that hand-off's
 `brief.md` (see "Keeping track" in `handoffs/README.md`), then save with
 `references/share-my-change.md`. `references/raise-the-story.md` does this
 for you automatically when it creates the ticket.
+
+When the real service ships a requested pattern and the weekly update brings
+it here, switch the release's pages to the real classes, remove the
+release's copy from `assets/`, and close the entry:
+`Closed: in the real service since <date>, <its name there>`. A frozen
+release keeps its copy.

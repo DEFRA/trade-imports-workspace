@@ -1,0 +1,585 @@
+{
+  "programme": "pipeline-tuning",
+  "generatedFrom": [
+    "audit:pipeline-tuning-2026-10-27"
+  ],
+  "invariants": [
+    "Every check that ran on a pull request before still runs, over the same tests. No pull request skips a test suite because of the paths it changes.",
+    "The main-branch publish of every image never reads a layer cache, so OS patches land. It may write one for branch builds to start from (Sam ruled on 27 Oct only that the cache must not serve a stale \"latest\"; writing a cache main never reads keeps that).",
+    "Each change records the before-and-after timings of the checks it changed, from real GitHub Actions runs, in workareas/shared/pipeline-tuning/report.md.",
+    "A change to a shared workflow in the workspace repo stays compatible with every repo that calls it today: a new input is optional and its default keeps today's behaviour.",
+    "The animals and plants frontends take the same approach to every pipeline change: what one does to FIT, Lighthouse, the Playwright install, the Docker build or run cancelling, the other does too, in the same job and step structure with the same helper scripts. The INS frontend follows the same shape where it has the same check."
+  ],
+  "repos": {
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
+    },
+    "instests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "animalsfrontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "insfrontend": {
+      "path": "repos/trade-imports-ins-frontend",
+      "github": "DEFRA/trade-imports-ins-frontend"
+    },
+    "addressbook": {
+      "path": "repos/trade-imports-address-book",
+      "github": "DEFRA/trade-imports-address-book"
+    },
+    "animalsbackend": {
+      "path": "repos/trade-imports-animals-backend",
+      "github": "DEFRA/trade-imports-animals-backend"
+    },
+    "plantsbackend": {
+      "path": "repos/trade-imports-plants-backend",
+      "github": "DEFRA/trade-imports-plants-backend"
+    },
+    "insbackend": {
+      "path": "repos/trade-imports-ins-backend",
+      "github": "DEFRA/trade-imports-ins-backend"
+    },
+    "referencedata": {
+      "path": "repos/trade-imports-reference-data",
+      "github": "DEFRA/trade-imports-reference-data"
+    },
+    "gateway": {
+      "path": "repos/trade-imports-dynamics-gateway",
+      "github": "DEFRA/trade-imports-dynamics-gateway"
+    },
+    "stub": {
+      "path": "repos/trade-imports-stub",
+      "github": "DEFRA/trade-imports-stub"
+    }
+  },
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "Shared branch-image build can reuse a layer cache",
+      "detail": "The shared branch-image workflow builds every image with no cache. In about 1 build in 6 the tests image's apt step stalls for 18 to 33 minutes on a slow Ubuntu mirror, and end-to-end tests cannot start until it finishes. Give the shared workflow an optional cache, off by default, kept separately for each architecture, using GitHub's own build cache so the ECR build roles need no change. Calling repos that do not ask for it build exactly as today.",
+      "acceptanceCriteria": [
+        "A repo that calls the shared branch-image workflow without asking for the cache builds with no cache, as today (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "A repo that asks for the cache gets a branch build that reuses the layers of its previous build on the same architecture, and stores its own layers for the next one (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "The amd64 and arm64 builds keep separate caches, so neither overwrites the other (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "The branch tag, the image labels and the push to ECR and Docker Hub are unchanged (audit:pipeline-tuning-2026-10-27 pt-2)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-2; report.md §Cache the tests image build"
+        }
+      ],
+      "requirements": [
+        "pt-2"
+      ],
+      "notes": [
+        "Split from inc-002 because callers use the shared workflow at @main: the tests repo cannot pass a new input until the workspace change has merged. Sam's ruling, 27 Oct: base images in the tests Dockerfile are pinned to exact versions, so the cache cannot serve a stale base.",
+        "Merged into inc-009 (Sam, 28 Oct: combine rows)."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-branch-image-layer-cache",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/178",
+          "repo": "workspace",
+          "number": 178
+        }
+      ]
+    },
+    {
+      "id": "inc-002",
+      "title": "Tests image branch builds use the layer cache",
+      "detail": "Turn the shared workflow's cache on for the tests repo's branch image, so a push that changes no Dockerfile or lockfile skips apt and npm install and end-to-end tests start sooner.",
+      "acceptanceCriteria": [
+        "A tests repo pull request push that changes neither the Dockerfile nor the lockfile builds its branch image from cached layers, with no apt or npm install run (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "A push that changes the lockfile reruns the npm install and the layers after it, and keeps the cached layers before it (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "The tests repo's main-branch publish still builds with no cache (audit:pipeline-tuning-2026-10-27 pt-2)"
+      ],
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "instests"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-2"
+        }
+      ],
+      "requirements": [
+        "pt-2"
+      ],
+      "ticket": "EUDPA-749",
+      "notes": [
+        "Merged into inc-011 (Sam, 28 Oct: combine rows)."
+      ]
+    },
+    {
+      "id": "inc-003",
+      "title": "Shared end-to-end run balances its shards and starts sooner",
+      "detail": "The shared end-to-end workflow splits tests across 3 shards by test count, so the slow animals tests land on one shard that runs about 5.8 minutes against 2.6 to 3.1 on the others. Each shard also pulls the tests image only after the stack is healthy, adding about 50 idle seconds, and the workspace's own pull request runs never cancel a superseded push. Balance the shards by test time, pull the tests image while the stack starts, cancel superseded workspace pull request runs, and let a calling repo choose how many shards it runs, defaulting to today's 3.",
+      "acceptanceCriteria": [
+        "No end-to-end shard runs more than a minute longer than the others, on the workspace's own run and on the tests repo's (audit:pipeline-tuning-2026-10-27 pt-4, pt-5)",
+        "Each shard starts pulling the tests image before the stack is healthy, and runs its tests only once both are ready (audit:pipeline-tuning-2026-10-27 pt-7)",
+        "A new push to a workspace pull request cancels that pull request's end-to-end run still in progress (audit:pipeline-tuning-2026-10-27 pt-20)",
+        "A calling repo can ask for a number of shards; one that does not ask runs 3, as today (audit:pipeline-tuning-2026-10-27 pt-19)",
+        "Every suite each calling repo ran before still runs, with the same tests (audit:pipeline-tuning-2026-10-27 report §Settled)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-4, pt-5, pt-7, pt-20, pt-19; report.md §Balance the e2e shards"
+        }
+      ],
+      "requirements": [
+        "pt-4",
+        "pt-5",
+        "pt-7",
+        "pt-20"
+      ],
+      "notes": [
+        "The shard-count input is here, not in inc-006, because callers use the shared workflow at @main. Playwright's shard weighting is undocumented: say in the report to re-check shard times a few weeks after. Sam ruled 27 Oct that workspace pull requests keep running every end-to-end suite: never add a paths filter.",
+        "Merged into inc-009 (Sam, 28 Oct: combine rows)."
+      ],
+      "ticket": "EUDPA-749"
+    },
+    {
+      "id": "inc-004",
+      "title": "Animals frontend pull requests go green about 3 minutes sooner",
+      "detail": "The animals frontend FIT check runs 636 Playwright tests on one runner for about 14 minutes, 2.4 minutes under its 15-minute timeout. Lighthouse audits 32 pages one at a time and finishes about 13.4 minutes after the push. Either change alone barely helps because the other becomes the slowest check, so do both: shard FIT across runners with one merged report, and split Lighthouse's pages across 2 runners with one merged result. Also drop the Lighthouse stack tear-down (the runner is thrown away), cancel superseded pull request runs, and drop the pull request check's second Docker and frontend build that Publish Branch Image already does.",
+      "acceptanceCriteria": [
+        "The FIT check runs across several runners, every FIT test still runs once, and the pull request shows one merged FIT report (audit:pipeline-tuning-2026-10-27 pt-6)",
+        "Lighthouse audits every page it audits today, split across 2 runners, and publishes one report and one pull request status covering all of them (audit:pipeline-tuning-2026-10-27 pt-3)",
+        "The time from push to every check green on an animals frontend pull request is about 11 minutes, down from about 14.5 (audit:pipeline-tuning-2026-10-27 pt-3, pt-6)",
+        "A new push to an animals frontend pull request cancels that pull request's checks still in progress (audit:pipeline-tuning-2026-10-27 pt-21)",
+        "The pull request check no longer builds the Docker image or the frontend bundle a second time, and a broken Dockerfile still fails a check on the pull request (audit:pipeline-tuning-2026-10-27 pt-22)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "animalsfrontend"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-3, pt-6, pt-21, pt-22; Lighthouse run 27 Oct: stack start 2 min, audit 5.7 min, tear-down 0.5 min"
+        }
+      ],
+      "requirements": [
+        "pt-3",
+        "pt-6",
+        "pt-21",
+        "pt-22"
+      ],
+      "notes": [
+        "Lighthouse's page list comes from one generated targets file; each runner seeds its own stack. The shared Lighthouse status action lives in the workspace at @main: keep its inputs as they are.",
+        "Merged into inc-010 (Sam, 28 Oct: animals and plants match; combine rows)."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-animals-frontend-time-to-green",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/444",
+          "repo": "animalsfrontend",
+          "number": 444
+        }
+      ]
+    },
+    {
+      "id": "inc-005",
+      "title": "Plants frontend Lighthouse and FIT checks finish sooner",
+      "detail": "Lighthouse is the last plants pull request check to finish, about 2 minutes after end-to-end. About 1 FIT run in 8 stalls for 5 to 12 minutes installing browser packages from a slow Ubuntu mirror. Drop the Lighthouse stack tear-down and merge its publish and status jobs, split its 18 pages across 2 runners with one merged result, and run FIT where the browser's system packages are already installed.",
+      "acceptanceCriteria": [
+        "Lighthouse audits every page it audits today, split across 2 runners, and publishes one report and one pull request status covering all of them (audit:pipeline-tuning-2026-10-27 pt-8)",
+        "Lighthouse no longer finishes after end-to-end on a typical plants pull request (audit:pipeline-tuning-2026-10-27 pt-8)",
+        "The FIT check installs no browser system packages from apt, and runs every FIT test it runs today (audit:pipeline-tuning-2026-10-27 pt-12)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "plantsfrontend"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-8, pt-12"
+        }
+      ],
+      "requirements": [
+        "pt-8",
+        "pt-12"
+      ],
+      "notes": [
+        "A Playwright container's tag must match the repo's Playwright version.",
+        "Merged into inc-010 (Sam, 28 Oct: animals and plants match; combine rows)."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-plants-lighthouse-fit",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/126",
+          "repo": "plantsfrontend",
+          "number": 126
+        }
+      ]
+    },
+    {
+      "id": "inc-006",
+      "title": "INS frontend FIT and end-to-end checks use fewer runners and no apt",
+      "detail": "About 1 INS frontend FIT run in 8 stalls for about 10 minutes installing browser packages from apt. Its end-to-end run uses 3 runners that spend most of their time starting the stack for a small suite. Install the browser without apt, and run its end-to-end tests on 1 shard using the shard-count input the shared workflow gains in inc-003.",
+      "acceptanceCriteria": [
+        "The FIT check installs no browser system packages from apt, and runs every FIT test it runs today (audit:pipeline-tuning-2026-10-27 pt-11)",
+        "The INS frontend end-to-end run uses 1 shard, runs every test it runs today, and finishes no later than it does today (audit:pipeline-tuning-2026-10-27 pt-19)"
+      ],
+      "dependsOn": [
+        "inc-003"
+      ],
+      "status": "merged-into",
+      "kind": "chore",
+      "repos": [
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-11, pt-19"
+        }
+      ],
+      "requirements": [
+        "pt-11",
+        "pt-19"
+      ],
+      "ticket": "EUDPA-749",
+      "notes": [
+        "Merged into inc-011 (Sam, 28 Oct: combine rows)."
+      ]
+    },
+    {
+      "id": "inc-007",
+      "title": "Address book pull request check runs its tests and Docker build once",
+      "detail": "Canary for the Java repo tidy. The address book pull request check runs the Maven build and tests, then the SonarCloud job runs them all again on a fresh runner. It also builds the Docker image that Publish Branch Image builds anyway, reruns the whole check when a bot or person edits the pull request title or description, and never cancels a superseded push. Make the tests run once with SonarCloud analysing that run, drop the second Docker build, stop reruns on title and description edits, and cancel superseded runs.",
+      "acceptanceCriteria": [
+        "An address book pull request push runs the Maven tests once, and SonarCloud still reports coverage and the quality gate on the pull request (audit:pipeline-tuning-2026-10-27 pt-14)",
+        "The pull request check no longer builds the Docker image, and a broken Dockerfile still fails a check on the pull request (audit:pipeline-tuning-2026-10-27 pt-17)",
+        "Editing the pull request's title or description starts no new check run (audit:pipeline-tuning-2026-10-27 pt-23)",
+        "A new push to the pull request cancels its checks still in progress (audit:pipeline-tuning-2026-10-27 pt-23)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "addressbook"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-14, pt-17, pt-23"
+        }
+      ],
+      "requirements": [
+        "pt-14",
+        "pt-17",
+        "pt-23"
+      ],
+      "notes": "Canary first (workspace rule 7): inc-008 copies whatever shape lands here into the other Java repos. Publish Branch Image skips dependabot pull requests, so a dependabot pull request needs another check that the Dockerfile builds.",
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-address-book-pr-check",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-address-book/pull/19",
+          "repo": "addressbook",
+          "number": 19,
+          "merged": true,
+          "mergeCommit": "9f807d83e83f3fedca08dd837bdc192dcd91b1ba"
+        }
+      ],
+      "commit": "9f807d83e83f3fedca08dd837bdc192dcd91b1ba"
+    },
+    {
+      "id": "inc-008",
+      "title": "Java repo pipelines run their tests and Docker build once",
+      "detail": "Apply the shape the address book canary landed to the other Java repos, wherever each has the same waste: tests run twice in the pull request check, a second Docker build the branch-image workflow already does, reruns on pull request title or description edits, no cancel of superseded runs, and a main-branch publish that runs the tests again after the image is published.",
+      "acceptanceCriteria": [
+        "Each repo's pull request push runs its Maven tests once, and SonarCloud still reports coverage and the quality gate on the pull request (audit:pipeline-tuning-2026-10-27 pt-10, pt-13, pt-24)",
+        "No repo's pull request check builds the Docker image a second time, and a broken Dockerfile still fails a check on every pull request, dependabot's included (audit:pipeline-tuning-2026-10-27 pt-15, pt-25)",
+        "Editing a pull request's title or description starts no new check run in any of these repos, and a new push cancels the checks still in progress (audit:pipeline-tuning-2026-10-27 pt-9, pt-26, pt-27, pt-28, pt-29)",
+        "The animals backend and dynamics gateway main-branch publish runs its tests before the image is published, once (audit:pipeline-tuning-2026-10-27 pt-16, pt-18)"
+      ],
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "animalsbackend",
+        "plantsbackend",
+        "insbackend",
+        "referencedata",
+        "gateway",
+        "stub"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-9, pt-10, pt-13, pt-15, pt-16, pt-18, pt-24 to pt-29, and the rejected list"
+        }
+      ],
+      "requirements": [
+        "pt-9",
+        "pt-10",
+        "pt-13",
+        "pt-15",
+        "pt-16",
+        "pt-18",
+        "pt-24",
+        "pt-25",
+        "pt-26",
+        "pt-27",
+        "pt-28",
+        "pt-29"
+      ],
+      "notes": "The audit's verifier rejected the tests-twice and duplicate-Docker items for animals backend, reference data and dynamics gateway as saving no PR waiting time; they still waste runners, so they are in scope here for consistency across the template.",
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-java-pipelines",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/116",
+          "repo": "animalsbackend",
+          "number": 116,
+          "headSha": "3bcc1c86ba35600ced02be429c5e9cbbf4377767",
+          "merged": true,
+          "mergeCommit": "3ff024c43885a636ff240f836f593030f1804f02"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-backend/pull/12",
+          "repo": "plantsbackend",
+          "number": 12,
+          "headSha": "9fdcc2264d67e0697d36ad8ea1f457c30489867f",
+          "merged": true,
+          "mergeCommit": "5a22f5c9fa0da2b27a906d9c783282f4e13c5981"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-backend/pull/28",
+          "repo": "insbackend",
+          "number": 28,
+          "headSha": "729041742d50392e6b3ec8a8b7a0fde4cf55e49d",
+          "merged": true,
+          "mergeCommit": "847acd9cd339a24e505aecbb988910ba141f13a0"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-reference-data/pull/38",
+          "repo": "referencedata",
+          "number": 38,
+          "headSha": "102ebdacdfa07baa3a19ddac85532d1a899ae27a",
+          "merged": true,
+          "mergeCommit": "5fdd6cf3adc18b6a0b753c667a7e00816f906901"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-dynamics-gateway/pull/31",
+          "repo": "gateway",
+          "number": 31,
+          "headSha": "de001ce33ad0283fc2de6d9095948a0b1282628c",
+          "merged": true,
+          "mergeCommit": "db76cea39396273db941b950661a6515522d372c"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-stub/pull/27",
+          "repo": "stub",
+          "number": 27,
+          "headSha": "bfcc6e96d4d36b51c411e011db374ea14d8de1bd",
+          "merged": true,
+          "mergeCommit": "5f572f25eefe9e7a62e5afedd634b9600d60ddd0"
+        }
+      ],
+      "commit": "5f572f25eefe9e7a62e5afedd634b9600d60ddd0"
+    },
+    {
+      "id": "inc-009",
+      "title": "Shared image build and end-to-end workflows run faster for every repo",
+      "detail": "One workspace change for both shared workflows. The branch-image workflow gains an optional layer cache, off by default and kept per architecture, so a repo that asks for it skips apt and npm install when nothing changed. The end-to-end workflow balances its shards by test time, pulls the tests image while the stack starts, cancels superseded workspace pull request runs, and lets a calling repo choose its shard count, defaulting to today's 3.",
+      "acceptanceCriteria": [
+        "A repo that calls the shared branch-image workflow without asking for the cache builds with no cache, as today, and the branch tag, image labels and pushes are unchanged (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "A repo that asks for the cache gets a branch build that reuses the layers of its previous build on the same architecture; amd64 and arm64 keep separate caches (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "Across at least 3 runs on the final head, no end-to-end shard averages more than a minute longer than the others, on the workspace run and on the tests repo run. One run can be over by runner noise, which is about 40 s per shard (audit:pipeline-tuning-2026-10-27 pt-4, pt-5)",
+        "Each shard starts pulling the tests image before the stack is healthy (audit:pipeline-tuning-2026-10-27 pt-7)",
+        "A new push to a workspace pull request cancels that pull request's end-to-end run still in progress (audit:pipeline-tuning-2026-10-27 pt-20)",
+        "A calling repo can ask for a number of shards; one that does not ask runs 3, and every suite it ran before still runs (audit:pipeline-tuning-2026-10-27 pt-19)",
+        "A repo that turns the cache on gets a first build on a new pull request branch that is no slower than today uncached build, because it starts from a cache written on main (audit:pipeline-tuning-2026-10-27 pt-2)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-2, pt-4, pt-5, pt-7, pt-19, pt-20"
+        }
+      ],
+      "requirements": [
+        "pt-2",
+        "pt-4",
+        "pt-5",
+        "pt-7",
+        "pt-20"
+      ],
+      "notes": [
+        "Combines inc-001 and inc-003 (Sam, 28 Oct: combine rows that can be combined). Continues on branch chore/EUDPA-749-branch-image-layer-cache and PR #178, which already holds the cache change; retitle the PR.",
+        "The tests repo branch chore/EUDPA-749-layer-cache-probe exists only to prove the cache from the workspace branch. Never merge it; delete it once the proof is recorded.",
+        "Playwright's shard weighting is undocumented: say in the report to re-check shard times a few weeks after.",
+        "28 Oct review: the gha cache belongs to one branch, so a new branch started cold and paid about 3 minutes to write it. Fix: main writes the cache without ever reading it. If the tests repo main publish is the place that writes it, that part lands in the tests repo row, and this row only adds the optional input that writes without reading.",
+        "Cite the run behind every before figure in report.md (the workspace e2e before figure 489/379/372 s had none; run 40660708421 gives 505/390/389 s)."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-branch-image-layer-cache",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/178",
+          "repo": "workspace",
+          "number": 178,
+          "merged": true,
+          "mergeCommit": "7d533d5b87d62eddf1c118df67f55ef7f0524c51"
+        }
+      ],
+      "commit": "7d533d5b87d62eddf1c118df67f55ef7f0524c51"
+    },
+    {
+      "id": "inc-010",
+      "title": "Animals and plants frontend pull requests go green sooner, the same way",
+      "detail": "Both frontends get the same pipeline shape. FIT shards across runners with one merged report. Lighthouse splits its pages across 2 runners with one merged result, one report and one status, and no stack tear-down. FIT runs where the browser's system packages are already installed, so no apt. Superseded pull request runs are cancelled. The pull request check stops building the Docker image and frontend bundle a second time where Publish Branch Image already does. Whatever one frontend does, the other does in the same job and step structure with the same helper scripts.",
+      "acceptanceCriteria": [
+        "In both frontends, the FIT check runs across several runners, every FIT test still runs once, and the pull request shows one merged FIT report (audit:pipeline-tuning-2026-10-27 pt-6)",
+        "In both frontends, Lighthouse audits every page it audits today, split across 2 runners, and publishes one report and one pull request status covering all of them (audit:pipeline-tuning-2026-10-27 pt-3, pt-8)",
+        "In both frontends, the FIT check installs no browser system packages from apt (audit:pipeline-tuning-2026-10-27 pt-12)",
+        "In both frontends, a new push to a pull request cancels that pull request's checks still in progress (audit:pipeline-tuning-2026-10-27 pt-21)",
+        "In both frontends, the pull request check builds the Docker image and frontend bundle once, and a broken Dockerfile still fails a check on the pull request (audit:pipeline-tuning-2026-10-27 pt-22)",
+        "The two frontends' pull request, FIT and Lighthouse workflows differ only where the repos themselves differ, such as names, paths and page lists (ruling: Sam 28 Oct)",
+        "The time from push to every check green is about 11 minutes on an animals frontend pull request, down from about 14.5, and no longer on a plants one than today (audit:pipeline-tuning-2026-10-27 pt-3, pt-6, pt-8)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "animalsfrontend",
+        "plantsfrontend"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-3, pt-6, pt-8, pt-12, pt-21, pt-22"
+        }
+      ],
+      "requirements": [
+        "pt-3",
+        "pt-6",
+        "pt-8",
+        "pt-12",
+        "pt-21",
+        "pt-22"
+      ],
+      "notes": [
+        "Combines inc-004 and inc-005 (Sam, 28 Oct: animals and plants match in approach on everything; combine rows). The earlier attempts are PR animals-frontend #444 (branch chore/EUDPA-749-animals-frontend-time-to-green) and plants-frontend #126 (branch chore/EUDPA-749-plants-lighthouse-fit); they had already diverged (plants merges Lighthouse shard reports with a script, animals does not).",
+        "Cross-repo branches share one name (workspace rule 2): move both onto chore/EUDPA-749-frontend-pipelines, open a PR from it in each repo, and close #444 and #126 with a comment linking the replacement.",
+        "A Playwright container's tag must match the repo's Playwright version.",
+        "Check after merge, before marking done: on the first animals and the first plants pull request after both merge, measure push to all checks green (animals target about 11 min; plants no slower than its baseline), and confirm the Lighthouse CI status is posted by the sharded workflow covering 32 animals pages and 18 plants pages. Before merge this is only a projection: the workflow_run Lighthouse run uses main's lighthouse.yml, and report-status has only ever been skipped (workflow_dispatch runs 40665441651 and 40664611153). Last pre-merge observation: animals head f2023fa0 took 13.0 min push to green on main's single-runner Lighthouse; the sharded dispatch run projects about 10.5 min. Record before and after timings in report.md."
+      ],
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-frontend-pipelines",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/445",
+          "repo": "animalsfrontend",
+          "number": 445,
+          "merged": true,
+          "mergeCommit": "7f135b79911138c936746354fa4bf144f28f411a"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/127",
+          "repo": "plantsfrontend",
+          "number": 127,
+          "merged": true,
+          "mergeCommit": "51fa8e40b885f0e502276ece22694891829b2a93"
+        }
+      ],
+      "commit": "7f135b79911138c936746354fa4bf144f28f411a"
+    },
+    {
+      "id": "inc-011",
+      "title": "Tests repo and INS frontend use the faster shared workflows",
+      "detail": "The callers adopt the shared options from inc-009 and the frontend shape from inc-010. The tests repo turns the layer cache on for its branch image. The INS frontend runs its small end-to-end suite on 1 shard instead of 3 runners that mostly start the stack, and installs its FIT browser the same way the animals and plants frontends do, with no apt.",
+      "acceptanceCriteria": [
+        "A tests repo pull request push that changes neither the Dockerfile nor the lockfile builds its branch image from cached layers, with no apt or npm install run. Its main-branch publish reads no cache and writes the cache a new branch starts from (audit:pipeline-tuning-2026-10-27 pt-2)",
+        "The INS frontend end-to-end run uses 1 shard, runs every test it runs today, and finishes no later than it does today (audit:pipeline-tuning-2026-10-27 pt-19)",
+        "The INS frontend FIT check installs no browser system packages from apt, the same way the animals and plants frontends do (audit:pipeline-tuning-2026-10-27 pt-11)"
+      ],
+      "dependsOn": [
+        "inc-009",
+        "inc-010"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "instests",
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "audit:pipeline-tuning-2026-10-27",
+          "ref": "findings.json pt-2, pt-11, pt-19"
+        }
+      ],
+      "requirements": [
+        "pt-2",
+        "pt-11",
+        "pt-19"
+      ],
+      "notes": "Combines inc-002 and inc-006 (Sam, 28 Oct). Waits for inc-009 because callers use the shared workflows at @main, and for inc-010 so the INS FIT install copies the frontends' shape.",
+      "ticket": "EUDPA-749",
+      "branch": "chore/EUDPA-749-ins-callers",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/69",
+          "repo": "instests",
+          "number": 69,
+          "merged": true,
+          "mergeCommit": "17c3c0b597301daba9616311d5cefa7f87ec4b95"
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/68",
+          "repo": "insfrontend",
+          "number": 68,
+          "merged": true,
+          "mergeCommit": "f57e09670d8f4c7146e9e37bf35a8a3d5606c6b0"
+        }
+      ],
+      "commit": "17c3c0b597301daba9616311d5cefa7f87ec4b95"
+    }
+  ]
+}

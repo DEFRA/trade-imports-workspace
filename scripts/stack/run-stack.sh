@@ -178,11 +178,74 @@ recheck_tmpdir=""
 cleanup_probe_tmpdir() {
   [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"
   [ -n "$recheck_tmpdir" ] && rm -rf "$recheck_tmpdir"
-  [ -n "${pull_pid:-}" ] && kill "$pull_pid" 2>/dev/null
-  [ -n "${pull_log:-}" ] && rm -f "$pull_log"
+  local pid log
+  for pid in ${early_pull_pids[@]+"${early_pull_pids[@]}"}; do
+    [ -n "$pid" ] && { kill "$pid" 2>/dev/null || true; }
+  done
+  for log in ${early_pull_logs[@]+"${early_pull_logs[@]}"}; do
+    rm -f "$log"
+  done
   return 0
 }
 trap cleanup_probe_tmpdir EXIT
+
+# The stack up below still pulls with --pull always, so these downloads are
+# only a head start: a failure costs the time saved, and a tag that moves is
+# still picked up. Images whose tag does not depend on the branch start before
+# the branch-tag probe, and mongo has its own job so it can start the moment
+# its image is in.
+early_pull_pids=()
+early_pull_logs=()
+early_pull_names=()
+pull_early() {
+  local name="$1" log
+  shift
+  [ $# -gt 0 ] || return 0
+  log="$(mktemp)"
+  docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
+    pull --quiet --ignore-buildable "$@" >"$log" 2>&1 &
+  early_pull_pids+=("$!")
+  early_pull_logs+=("$log")
+  early_pull_names+=("$name")
+}
+
+wait_early_pull() {
+  local name="$1" i
+  for i in ${early_pull_names[@]+"${!early_pull_names[@]}"}; do
+    [ "${early_pull_names[$i]}" = "$name" ] || continue
+    [ -n "${early_pull_pids[$i]}" ] || return 0
+    if ! wait "${early_pull_pids[$i]}"; then
+      print_error "the early $name image download failed; the stack up below downloads it again"
+      cat "${early_pull_logs[$i]}" >&2
+    fi
+    early_pull_pids[i]=""
+  done
+  return 0
+}
+
+is_repo_image() {
+  local svc="$1" entry image
+  for entry in "${services[@]}"; do
+    IFS='|' read -r _ image _ <<< "$entry"
+    [ "$svc" = "$image" ] && return 0
+  done
+  return 1
+}
+
+mongo_pull=()
+fixed_tag_pulls=()
+branch_tag_pulls=()
+for svc in ${up_services[@]+"${up_services[@]}"}; do
+  if [ "$svc" = "mongodb" ]; then
+    mongo_pull+=("$svc")
+  elif is_repo_image "$svc"; then
+    branch_tag_pulls+=("$svc")
+  else
+    fixed_tag_pulls+=("$svc")
+  fi
+done
+pull_early mongo ${mongo_pull[@]+"${mongo_pull[@]}"}
+pull_early third-party ${fixed_tag_pulls[@]+"${fixed_tag_pulls[@]}"}
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   probe_tmpdir="$(mktemp -d)"
   probe_pids=()
@@ -264,24 +327,9 @@ start_mongodb_first() {
   done
 }
 
-# Download every other image while mongo downloads and comes up, rather than
-# after it. The stack up below still pulls with --pull always, so a failure
-# here only costs the head start, and a tag that moves meanwhile is still
-# picked up.
-pull_services=()
-for svc in "${up_services[@]}"; do
-  [ "$svc" = "mongodb" ] || pull_services+=("$svc")
-done
+pull_early service ${branch_tag_pulls[@]+"${branch_tag_pulls[@]}"}
 
-pull_pid=""
-pull_log=""
-if [ ${#pull_services[@]} -gt 0 ]; then
-  pull_log="$(mktemp)"
-  docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
-    pull --quiet --ignore-buildable "${pull_services[@]}" >"$pull_log" 2>&1 &
-  pull_pid=$!
-fi
-
+wait_early_pull mongo
 for svc in "${up_services[@]}"; do
   if [ "$svc" = "mongodb" ]; then
     start_mongodb_first
@@ -289,13 +337,8 @@ for svc in "${up_services[@]}"; do
   fi
 done
 
-if [ -n "$pull_pid" ]; then
-  if ! wait "$pull_pid"; then
-    print_error "the early image download failed; the stack up below downloads them again"
-    cat "$pull_log" >&2
-  fi
-  pull_pid=""
-fi
+wait_early_pull third-party
+wait_early_pull service
 
 up_args=(up --wait --detach --pull always)
 [ "$dev" -eq 1 ] && up_args+=(--build)

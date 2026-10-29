@@ -197,6 +197,7 @@ details.fold { margin-top: 0.5rem; }
   }
   function title(id) { return byId[id] ? byId[id].title : id; }
   var P = D.progress || null;
+  var scoped = D.scope && D.scope.id !== 'all';
   function unfinished(id) { var t = byId[id]; return !t || t.ready.length > 0 || t.blocked.length > 0 || t.held.length > 0; }
   function pendingDeps(t) { return t.dependsOn.filter(unfinished); }
   function canStartNow(t) { return t.ready.length && !pendingDeps(t).length; }
@@ -273,7 +274,10 @@ details.fold { margin-top: 0.5rem; }
     if (!P) return '';
     var im = P.implemented;
     var html = '<section class="section" aria-labelledby="stand-h"><header><h1 id="stand-h">Where the build stands</h1>' +
-      fmt('Design Release 2.1 brings the real services up to the new design.\n\nUpdated ' + P.asOf + '.\n\n- Every row is counted once, across the main backlog and the ' + (D.backlogCount - 1) + ' theme backlogs.\n- Dropped rows sit outside the total.\n- A theme marked "rebuild from main" was built once on a branch that will not be merged, so its rows count as unbuilt.', 'lede') + '</header>' +
+      fmt('Design Release 2.1 brings the real services up to the new design.' +
+        (scoped ? '\n\nThis copy shows only the ' + D.scope.of + ' journey and the work shared with it.' : '') +
+        '\n\nUpdated ' + P.asOf + '.\n\n- Every row is counted once, across the main backlog and the ' + (D.backlogCount - 1) + ' theme backlogs.\n- Dropped rows sit outside the total.\n- A theme marked "rebuild from main" was built once on a branch that will not be merged, so its rows count as unbuilt.' +
+        (scoped ? '\n- ' + D.excluded.rows + ' rows outside ' + D.scope.of + ' are left out, and are in neither the counts nor the themes below.' : ''), 'lede') + '</header>' +
       '<div class="facts">' +
       '<div class="fact lead"><b>' + im.done + ' of ' + im.total + ' (' + im.percent + '%)</b><span>Implemented</span></div>' +
       '<div class="fact"><b class="ready">' + P.readyCount + '</b><span>ready to build</span></div>' +
@@ -371,8 +375,33 @@ details.fold { margin-top: 0.5rem; }
       '<div><p class="label">As built</p>' + fmt(q.default) + '</div></article>';
   }
 
+  function scopeSection() {
+    if (!scoped) return '';
+    var dropped = D.excluded.byTheme.filter(function (t) { return t.whole; });
+    var thinned = D.excluded.byTheme.filter(function (t) { return !t.whole; });
+    var html = '<section class="section" aria-labelledby="scope-h"><header><h2 id="scope-h">What this copy leaves out</h2>' +
+      fmt(D.scope.rule, 's') + '</header><div class="panel">';
+    if (dropped.length) {
+      html += '<div><p class="label">Themes not here at all</p><ul class="plain">';
+      dropped.forEach(function (t) {
+        html += '<li>' + esc(t.name) + ' — all ' + t.cut + ' rows are outside ' + esc(D.scope.of) + '</li>';
+      });
+      html += '</ul></div>';
+    }
+    if (thinned.length) {
+      html += '<div><p class="label">Themes here with rows left out</p><div class="table-wrap"><table class="mid"><thead><tr>' +
+        '<th scope="col">Theme</th><th scope="col" class="num">Rows left out</th></tr></thead><tbody>';
+      thinned.forEach(function (t) {
+        html += '<tr><td><a href="#' + esc(t.id) + '">' + esc(t.name) + '</a></td><td class="num">' + t.cut + '</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+    return html + fmt('A row left out still has to be built. It is on the whole-programme copy of this page, and on the copy for the journey that owns it.', 'note') + '</div></section>';
+  }
+
   function overview() {
     var html = progressSection();
+    html += scopeSection();
 
     html += '<section class="section" aria-labelledby="areas-h"><header><h2 id="areas-h">Work by area</h2>' + fmt(totalToBuild + ' rows still to build and ' + totalBlocked + ' blocked, across ' + themes.length + ' areas.\n\nAreas that can start now come first.\n\nEach area page lists its rows and what each lands after.', 's') + '</header><div class="cards">';
     readyThemes.concat(heldThemes, blockedThemes, builtThemes).forEach(function (t) {

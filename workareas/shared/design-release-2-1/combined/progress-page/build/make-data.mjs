@@ -24,15 +24,23 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { readScope, inputFile, writeScopedPage } from '../../scope.mjs'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
-const pageDir = path.resolve(here, '..')
-const combined = path.resolve(pageDir, '..')
+const canonicalBuild = path.dirname(fileURLToPath(import.meta.url))
+const canonicalPage = path.resolve(canonicalBuild, '..')
+const combined = path.resolve(canonicalPage, '..')
 const workarea = path.resolve(combined, '..')
 
-const EDITORIAL_FILE = path.join(here, 'editorial.json')
-const PRS_FILE = path.join(here, 'prs.json')
-const DELIVERY_FILE = path.join(here, 'delivery.meta.json')
+// The build directory to work in, so a journey copy of the page can run this
+// same generator over its own scope. Defaults to this generator's own.
+const here = process.argv[2] ? path.resolve(process.argv[2]) : canonicalBuild
+const pageDir = path.resolve(here, '..')
+
+const scope = readScope(here)
+
+const EDITORIAL_FILE = inputFile(here, canonicalBuild, 'editorial.json')
+const PRS_FILE = inputFile(here, canonicalBuild, 'prs.json')
+const DELIVERY_FILE = inputFile(here, canonicalBuild, 'delivery.meta.json')
 const META_FILE = path.join(combined, 'build-order-page', 'build', 'themes.meta.json')
 const SPLIT_FILE = path.join(workarea, 'themes', 'themes.json')
 const TICKETS_FILE = path.join(workarea, 'tickets', 'tickets.json')
@@ -92,12 +100,15 @@ const prsFetchedAt = readJson(PRS_FILE).fetchedAt
 const delivery = readJson(DELIVERY_FILE).themes || {}
 
 const files = backlogFiles()
-const rows = []
+const everyRow = []
 for (const file of files) {
   const backlog = readJson(file)
   if (!Array.isArray(backlog.increments)) throw new Error('no increments in ' + file)
-  for (const inc of backlog.increments) rows.push({ ...inc, from: path.relative(workarea, file) })
+  for (const inc of backlog.increments) everyRow.push({ ...inc, from: path.relative(workarea, file) })
 }
+
+const rows = everyRow.filter(scope.keeps)
+if (!rows.length) throw new Error('the scope in ' + path.join(here, 'scope.json') + ' keeps no rows at all')
 
 /* ------------------------------------------------------------- row lookup --- */
 
@@ -246,8 +257,9 @@ for (const theme of themes) {
  * as a theme page, so a theme with a branch and open pull requests does not
  * simply vanish from the page.
  */
+const themesWithRows = new Set(everyRow.map((row) => row.theme))
 const retired = splitThemes
-  .filter((theme) => !themeById.has(theme.id))
+  .filter((theme) => !themesWithRows.has(theme.id))
   .map((theme) => ({
     id: theme.id,
     title: theme.title || (meta[theme.id] ? meta[theme.id].name : theme.id),
@@ -445,6 +457,28 @@ mainBacklog.note =
     .join(', ') +
   '.'
 
+/**
+ * What the scope leaves out, so a journey copy can say so rather than looking
+ * like the whole programme with fewer rows. A theme the scope drops entirely is
+ * named; a theme it only thins is counted.
+ */
+const cutRows = everyRow.filter((row) => !scope.keeps(row))
+const cutThemes = [...new Set(cutRows.map((row) => row.theme))]
+  .map((id) => ({
+    id,
+    name: meta[id] ? meta[id].name : id,
+    cut: cutRows.filter((row) => row.theme === id).length,
+    whole: !themeById.has(id)
+  }))
+  .sort((a, b) => b.cut - a.cut || a.name.localeCompare(b.name))
+
+const excluded = {
+  rows: cutRows.length,
+  themes: cutThemes.filter((theme) => theme.whole).length,
+  thinned: cutThemes.filter((theme) => !theme.whole).length,
+  byTheme: cutThemes
+}
+
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
@@ -486,6 +520,8 @@ const data = {
   },
   themes,
   retired,
+  scope: { id: scope.id, title: scope.title, of: scope.of, rule: scope.rule },
+  excluded,
   blockers: blockedGroups,
   questions: editorial.questions.filter((question) => themeById.has(question.theme)),
   staleProse: editorial.page.staleProse,
@@ -494,6 +530,9 @@ const data = {
 }
 
 fs.writeFileSync(OUT_FILE, 'window.DR21 = ' + JSON.stringify(data) + ';\n')
+
+const scopedPage = writeScopedPage(pageDir, canonicalPage, scope)
+if (scopedPage) console.log('page written from the whole-programme markup: ' + path.relative(workarea, scopedPage))
 
 const p = data.progress
 console.log(
@@ -525,4 +564,14 @@ for (const theme of progressThemes) {
 for (const theme of retired) console.log('  retired, no rows left: ' + theme.title)
 for (const shared of sharedIds) {
   console.log('  id used by more than one backlog: ' + shared.id + ' in ' + shared.backlogs.join(' and '))
+}
+if (scope.id !== 'all') {
+  const rowWord = (n) => n + (n === 1 ? ' row' : ' rows')
+  console.log(
+    '  scope ' + scope.id + ' leaves out ' + rowWord(excluded.rows) + ': ' +
+      excluded.themes + ' themes dropped whole, ' + excluded.thinned + ' thinned'
+  )
+  for (const theme of excluded.byTheme) {
+    console.log('    ' + theme.name + ': ' + rowWord(theme.cut) + (theme.whole ? ', the whole theme' : ''))
+  }
 }

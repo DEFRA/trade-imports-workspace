@@ -1057,6 +1057,17 @@ window.DR21_BUILD_ORDER = {
       "staleBranch": true
     }
   ],
+  "scope": {
+    "id": "all",
+    "title": null,
+    "of": null
+  },
+  "excluded": {
+    "rows": 0,
+    "themes": 0,
+    "thinned": 0,
+    "byTheme": []
+  },
   "sources": [
     "backlog.json",
     "themes/address-book/backlog.json",

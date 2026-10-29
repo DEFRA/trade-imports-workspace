@@ -15,7 +15,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const pageDir = path.resolve(here, '..')
+
+// The page directory to check, so a journey copy of the page can run this same
+// check over its own markup and data. Defaults to this check's own page.
+const pageDir = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(here, '..')
 
 const html = fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8')
 const dataSource = fs.readFileSync(path.join(pageDir, 'data.js'), 'utf8')

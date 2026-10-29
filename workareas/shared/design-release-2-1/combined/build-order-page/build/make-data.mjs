@@ -21,12 +21,20 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { readScope, inputFile, writeScopedPage } from '../../scope.mjs'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
+const canonicalBuild = path.dirname(fileURLToPath(import.meta.url))
+const canonicalPage = path.resolve(canonicalBuild, '..')
+const workarea = path.resolve(canonicalPage, '..', '..')
+
+// The build directory to work in, so a journey copy of the page can run this
+// same generator over its own scope. Defaults to this generator's own.
+const here = process.argv[2] ? path.resolve(process.argv[2]) : canonicalBuild
 const pageDir = path.resolve(here, '..')
-const workarea = path.resolve(pageDir, '..', '..')
 
-const META_FILE = path.join(here, 'themes.meta.json')
+const scope = readScope(here)
+
+const META_FILE = inputFile(here, canonicalBuild, 'themes.meta.json')
 const TICKETS_FILE = path.join(workarea, 'tickets', 'tickets.json')
 const SPLIT_FILE = path.join(workarea, 'themes', 'themes.json')
 const OUT_FILE = path.join(pageDir, 'data.js')
@@ -85,12 +93,15 @@ function backlogFiles() {
 const meta = readJson(META_FILE).themes
 const files = backlogFiles()
 
-const rows = []
+const everyRow = []
 for (const file of files) {
   const backlog = readJson(file)
   if (!Array.isArray(backlog.increments)) throw new Error('no increments in ' + file)
-  for (const inc of backlog.increments) rows.push({ ...inc, from: path.relative(workarea, file) })
+  for (const inc of backlog.increments) everyRow.push({ ...inc, from: path.relative(workarea, file) })
 }
+
+const rows = everyRow.filter(scope.keeps)
+if (!rows.length) throw new Error('the scope in ' + path.join(here, 'scope.json') + ' keeps no rows at all')
 
 /**
  * A row id is unique within one backlog, but two backlogs can carry the same
@@ -477,8 +488,9 @@ for (const [parent, child] of reduced) {
  * instead — otherwise a theme with a branch and open pull requests simply
  * vanishes from the page.
  */
+const themesWithRows = new Set(everyRow.map((row) => row.theme))
 const retired = splitThemes
-  .filter((theme) => !themes.has(theme.id))
+  .filter((theme) => !themesWithRows.has(theme.id))
   .map((theme) => ({
     id: theme.id,
     name: meta[theme.id] ? meta[theme.id].name : theme.id,
@@ -486,6 +498,30 @@ const retired = splitThemes
     branch: theme.branch,
     staleBranch: Boolean(theme.staleBranch)
   }))
+
+/* ------------------------------------------------------------- what is cut --- */
+
+/**
+ * What the scope leaves out, so a journey copy can say so rather than looking
+ * like the whole programme with fewer rows. A theme the scope drops entirely is
+ * named; a theme it only thins is counted.
+ */
+const cutRows = everyRow.filter((row) => !scope.keeps(row))
+const cutThemes = [...new Set(cutRows.map((row) => row.theme))]
+  .map((id) => ({
+    id,
+    name: meta[id] ? meta[id].name : id,
+    cut: cutRows.filter((row) => row.theme === id).length,
+    whole: !themes.has(id)
+  }))
+  .sort((a, b) => b.cut - a.cut || a.name.localeCompare(b.name))
+
+const excluded = {
+  rows: cutRows.length,
+  themes: cutThemes.filter((theme) => theme.whole).length,
+  thinned: cutThemes.filter((theme) => !theme.whole).length,
+  byTheme: cutThemes
+}
 
 /* ----------------------------------------------------------------- totals --- */
 
@@ -536,10 +572,15 @@ const data = {
   },
   sharedIds,
   retired,
+  scope: { id: scope.id, title: scope.title, of: scope.of, rule: scope.rule },
+  excluded,
   sources: files.map((file) => path.relative(workarea, file))
 }
 
 fs.writeFileSync(OUT_FILE, 'window.DR21_BUILD_ORDER = ' + JSON.stringify(data, null, 2) + '\n')
+
+const scopedPage = writeScopedPage(pageDir, canonicalPage, scope)
+if (scopedPage) console.log('page written from the whole-programme markup: ' + path.relative(workarea, scopedPage))
 
 console.log(
   'build-order data written: ' +
@@ -563,4 +604,14 @@ for (const theme of data.themes) {
 }
 for (const shared of sharedIds) {
   console.log('  id used by more than one backlog: ' + shared.id + ' in ' + shared.backlogs.join(' and '))
+}
+if (scope.id !== 'all') {
+  const rowWord = (n) => n + (n === 1 ? ' row' : ' rows')
+  console.log(
+    '  scope ' + scope.id + ' leaves out ' + rowWord(excluded.rows) + ': ' +
+      excluded.themes + ' themes dropped whole, ' + excluded.thinned + ' thinned'
+  )
+  for (const theme of excluded.byTheme) {
+    console.log('    ' + theme.name + ': ' + rowWord(theme.cut) + (theme.whole ? ', the whole theme' : ''))
+  }
 }

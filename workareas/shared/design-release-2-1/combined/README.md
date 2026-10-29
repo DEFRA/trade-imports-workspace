@@ -74,6 +74,12 @@ instead.
 Answers on both review pages live in each page's shared database (`verdicts/<reviewer id>`); read them back with the
 ArtifactData tool.
 
+Both pages also come in a per-journey copy, which shows one journey and the work shared with it. Today that is live
+animals, in [`../animals/`](../animals/README.md). A journey copy runs this generator and this renderer over a
+smaller set of rows, declared in its own `build/scope.json`, so a count or a layout is fixed in one place; `scope.mjs`
+beside this file holds the rule. Edit a page's `index.html` only here — a journey copy's is written by its build from
+this one, and an edit there is lost on the next run.
+
 The progress and build-order pages are the exception to this section's heading: both read the backlogs, not this
 branch, so they are true of the whole programme rather than of the combined review. Everything countable on them is
 derived — levels, positions, every line, the counts, the register, the per-theme row lists, the ready and waiting

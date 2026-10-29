@@ -330,13 +330,17 @@
 
     /* ---------------------------------------------------------- masthead --- */
 
+    const scoped = data.scope.id !== 'all'
+
     document.getElementById('standfirst').textContent =
       t.themes + ' themes bring the real GB notification services up to Design Release 2.1 of the prototype. ' +
       'Each one can only start once the themes it depends on have landed. This is the order that produces, ' +
-      'and where the work has reached.'
+      'and where the work has reached.' +
+      (scoped ? ' This copy shows only the ' + data.scope.of + ' journey and the work shared with it.' : '')
 
     document.getElementById('asof').textContent =
-      'Generated ' + data.generatedAt + ' from ' + t.rows + ' backlog rows on feat/NO_JIRA-design-release-2-1'
+      'Generated ' + data.generatedAt + ' from ' + t.rows + ' backlog rows on feat/NO_JIRA-design-release-2-1' +
+      (scoped ? ' — ' + data.excluded.rows + ' rows outside ' + data.scope.of + ' left out' : '')
 
     /* ----------------------------------------------------------- figures --- */
 
@@ -604,6 +608,30 @@
         ' rows, ' + (criticalUnticketed === criticalUnbuilt.length ? 'none of which has a ticket.' :
         'and ' + criticalUnticketed + ' have no ticket.')
     })
+
+    if (scoped) {
+      const dropped = data.excluded.byTheme.filter((theme) => theme.whole)
+      const thinned = data.excluded.byTheme.filter((theme) => !theme.whole)
+      readings.push({
+        derived: true,
+        mark: data.excluded.rows + ' rows left out',
+        head: 'This is the ' + data.scope.of + ' slice, not the programme',
+        body:
+          data.scope.rule + ' ' +
+          (dropped.length
+            ? sentence(dropped.map((theme) => theme.name).sort((a, b) => a.localeCompare(b))) +
+              (dropped.length === 1 ? ' goes entirely' : ' go entirely') + ', and '
+            : '') +
+          thinned.length + ' more themes lose rows without losing their place — ' +
+          sentence(
+            thinned
+              .slice(0, 4)
+              .map((theme) => theme.name + ' ' + theme.cut)
+          ) + (thinned.length > 4 ? ', and others' : '') + '. ' +
+          'The levels and lines are recomputed over what is left, so a theme can sit higher here than it does on ' +
+          'the whole-programme page.'
+      })
+    }
 
     const stale = data.themes.filter((theme) => theme.staleBranch)
     if (stale.length) {

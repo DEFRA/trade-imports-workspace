@@ -5061,7 +5061,7 @@ describe('increment-build-loop', () => {
         }
       )
 
-      test('refuses a repo key that names the workspace itself', async () => {
+      test('refuses a repo key that names the workspace itself, saying where to drop it and where the spec still lands', async () => {
         const run = await runLoop(scriptPath, {
           args: {
             ...BRANCH_ARGS,
@@ -5069,9 +5069,10 @@ describe('increment-build-loop', () => {
           }
         })
 
-        expect(run.error.message).toContain(
-          'Each key is a lower-case word other than "workspace"'
+        expect(run.error.message).toBe(
+          'increment-build-loop: lifecycle "branch" never branches the workspace repo, so config.repos must not name "workspace". Drop it from three places that have to agree: config.repos, the backlog envelope\'s repos, and every row\'s repos. The spec still lands on this branch without it — the land stage commits `openspec/` on whatever branch the workspace is on. Anything else a row writes in the workspace is left uncommitted and listed in the run\'s `leftUncommitted` for you to commit'
         )
+        expect(run.agents).toEqual([])
       })
     })
 

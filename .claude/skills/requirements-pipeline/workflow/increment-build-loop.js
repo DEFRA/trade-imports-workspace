@@ -226,13 +226,16 @@ const WORKSPACE_PATH = '.'
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const configuredKeys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
-const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || (IS_BRANCH && key === WORKSPACE_KEY))
-if (configuredKeys.length === 0 || badRepoKeys.length > 0) {
-  const keyRule = IS_BRANCH
-    ? `a lower-case word other than "${WORKSPACE_KEY}", which lifecycle "branch" keeps for a row that names no repo`
-    : `a lower-case word, "${WORKSPACE_KEY}" for the workspace repo itself`
+const malformedRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key))
+if (configuredKeys.length === 0 || malformedRepoKeys.length > 0) {
+  const keyRule = IS_BRANCH ? 'a lower-case word' : `a lower-case word, "${WORKSPACE_KEY}" for the workspace repo itself`
   throw new Error(
     `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is ${keyRule} — got ${JSON.stringify(REPOS)}`
+  )
+}
+if (IS_BRANCH && configuredKeys.includes(WORKSPACE_KEY)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: lifecycle "branch" never branches the workspace repo, so config.repos must not name "${WORKSPACE_KEY}". Drop it from three places that have to agree: config.repos, the backlog envelope's repos, and every row's repos. The spec still lands on this branch without it — the land stage commits \`openspec/\` on whatever branch the workspace is on. Anything else a row writes in the workspace is left uncommitted and listed in the run's \`leftUncommitted\` for you to commit`
   )
 }
 

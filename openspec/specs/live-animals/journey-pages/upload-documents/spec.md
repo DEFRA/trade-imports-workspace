@@ -4,6 +4,12 @@
 
 The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
+A document reference's rules (REQ-DOCS-006) are not chosen here: the Live
+Animals and Germinals Data Fields page gives `accompanying_document_reference`
+as "string - max 58", the length agreed for every free-text reference and
+identifier in the service, and its character set is the alphanumerics plus the
+separators the references on real documents carry.
+
 ## Requirements
 
 ### Requirement: The page states its upload constraints before anything is added
@@ -108,7 +114,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of one hundred characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of 58 characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A
@@ -121,8 +127,14 @@ The system MUST require a reference and a valid date of issue for each document.
 **ID**: SCN-DOCS-006-B
 - **GIVEN** the user enters a reference longer than the maximum allowed
 - **WHEN** they try to add the document
-- **THEN** an error reading "Document reference must be 100 characters or fewer" links to and focuses the reference field, which still holds the value typed
+- **THEN** an error reading "Document reference must be 58 characters or fewer" links to and focuses the reference field, which still holds the value typed
 - **AND** the date of issue already entered is preserved
+
+#### Scenario: A reference of exactly the maximum length is taken on
+**ID**: SCN-DOCS-006-H
+- **GIVEN** the user enters a reference of 58 characters
+- **WHEN** they add the document
+- **THEN** it is taken on and held against the notification with that reference
 
 #### Scenario: An empty date of issue links to and focuses the date field, preserving the reference
 **ID**: SCN-DOCS-006-C
@@ -455,3 +467,31 @@ The system MUST offer and open the upload documents page with nothing beyond the
 - **GIVEN** a new notification with the origin of the import and what they are importing answered, and nothing else
 - **WHEN** the user opens the upload documents page
 - **THEN** the page titled "Upload documents" is shown
+
+### Requirement: A document can still be uploaded after leaving the page and coming back to it
+**ID**: REQ-DOCS-021
+An upload session takes one file and is then closed to further files. The system MUST NOT offer the user a closed session to upload through, MUST NOT let the browser keep a copy of the page, and MUST open the page again when the browser hands back a copy it kept.
+
+#### Scenario: Going back after adding a document and adding another
+**ID**: SCN-DOCS-021-A
+- **GIVEN** the user has added a document and left the upload documents page
+- **WHEN** they return to it with the browser's back button, fill in a second document and save it
+- **THEN** the page titled "Upload documents" is shown with both documents in the added-documents table
+
+#### Scenario: Going back and adding another without client-side JavaScript
+**ID**: SCN-DOCS-021-B
+- **GIVEN** the user has no JavaScript, has added a document and left the upload documents page
+- **WHEN** they return to it with the browser's back button, fill in a second document and save it
+- **THEN** the page titled "Upload documents" is shown with both documents in the added-documents table
+
+#### Scenario: Coming back through a link that carries a session a file has already reached
+**ID**: SCN-DOCS-021-C
+- **GIVEN** the user comes back to the upload documents page through a link carrying an upload session a file has already reached
+- **WHEN** they fill in another document and save it
+- **THEN** the page titled "Upload documents" is shown with that document in the added-documents table
+
+#### Scenario: The page is served with the browser forbidden to store it
+**ID**: SCN-DOCS-021-D
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page is served
+- **THEN** the response forbids the browser storing it

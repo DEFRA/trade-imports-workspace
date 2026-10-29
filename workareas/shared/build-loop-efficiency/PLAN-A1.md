@@ -1128,7 +1128,27 @@ tim docker lease status --json
 
 - [ ] **Push**
 
-A `PreToolUse` hook runs the real SonarCloud quality gate on `git push` — for this branch that is `npm ci`, format, lint, the full `tim` suite and the scanner. Let it run; never work round it.
+Nothing gates this push. The workspace is the orchestration repo, not a DEFRA product service: it has no SonarCloud
+project and no `sonar-project.properties`, so `tools/sonar/sonar-push-check.sh` exits 0 at line 62 whatever
+`SONAR_TOKEN` holds. Do not wait for a gate, and do not read a silent push as a verified one.
+
+The quality bar for this branch is `tim`'s own scripts, which is why Task 6 runs them explicitly rather than leaving
+them to a hook:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/tim test
+```
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/tim run format
+```
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/tim run lint
+```
+
+All three must be green before the push. The pre-push gate becomes relevant again only for a change inside
+`repos/<service>`, which this plan does not touch.
 
 ---
 

@@ -2491,7 +2491,7 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' and is opened directly from the address book",
+      "name": "The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book and the place of origin and consignor pickers, and is opened directly from the address book",
       "coverage": "full",
       "scenarios": [
         {
@@ -3179,7 +3179,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from a handshake keeps the journey, the Draft status and the notification reference on the form when the API rejects the address",
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification reference and United Kingdom alone on the form when the API rejects the address",
               "strength": "full",
               "notes": "red-probed: fails when the strip is not passed to the layout"
             }
@@ -3258,6 +3258,207 @@
               "test": "Should give each personal-data field its browser autocomplete hint and none to County or Country",
               "strength": "full",
               "notes": "red-probed: fails when the postcode hint is removed from the shared field macro"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-035",
+      "name": "The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-035-A",
+          "name": "The place of origin and consignor pages offer every country, opening on Select a country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the place of origin handshake opens the Country select on Select a country, offers every served country and shows every field",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignor handshake opens the Country select on Select a country, offers every served country and shows every field",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the place of origin handshake opens the Country select on Select a country and offers France",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the place of origin picker opens on Select a country, offers France, and keeps a blank name on the page with its error",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-B",
+          "name": "The consignee, importer and place of destination pages offer the United Kingdom alone",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignee handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the importer handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the place of destination handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification reference and United Kingdom alone on the form when the API rejects the address",
+              "strength": "full",
+              "notes": "red-probed: fails when the address book 400 re-render drops the handshake context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake shows the recoverable-error banner and United Kingdom alone, selected, when the address book fails",
+              "strength": "full",
+              "notes": "red-probed: fails when the address book failure re-render drops the handshake context"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignee handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the consignee picker offers United Kingdom alone, and the saved address reads United Kingdom on Roles and addresses",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-C",
+          "name": "A consignee, importer or place of destination address is saved as United Kingdom whatever country is posted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake saves the address as United Kingdom whatever country is posted",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted country is not fixed to GB"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-countries.test.js",
+              "test": "Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the consignee",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted country is not fixed to GB"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the consignee picker offers United Kingdom alone, and the saved address reads United Kingdom on Roles and addresses",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-D",
+          "name": "A place of origin or consignor address with no country, or one the list does not offer, is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with no country shows Select a country and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with a country the list does not offer shows Select a country and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-E",
+          "name": "A consignee, importer or place of destination address with the name, postcode and phone blank is refused naming each",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected",
+              "strength": "full",
+              "notes": "red-probed: fails when the blank country is not fixed to GB before validation"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-F",
+          "name": "A place of origin or consignor address with an over-long postcode or a badly formed email address is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with a 13-character postcode and a badly formed email shows both format errors and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the postcode maximum length is raised to 13"
             }
           ]
         }

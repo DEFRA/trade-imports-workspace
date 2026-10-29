@@ -1008,6 +1008,16 @@ describe('increment-build-loop', () => {
       ).prompt
     }
 
+    const baselinePromptWithE2e = async (e2e) => {
+      const run = await runFromWithArgs({ e2e })
+      return run.agents.find(
+        (entry) => entry.options.label === 'inc-900 baseline'
+      ).prompt
+    }
+
+    const CI_E2E_EVIDENCE_HEADING =
+      "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+
     test('starts the increment with one tim build start call before the baseline', async () => {
       const run = await runFrom(null)
 
@@ -1187,6 +1197,33 @@ describe('increment-build-loop', () => {
         `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
+    })
+
+    test('asks the baseline for the unit and FIT phases one at a time when the pull requests prove e2e', async () => {
+      const prompt = await baselinePromptWithE2e('ci')
+
+      expect({
+        unit: prompt.includes('--phase unit'),
+        fit: prompt.includes('--phase fit'),
+        e2e: prompt.includes('--phase e2e'),
+        wholeGate: prompt.includes('--phase all')
+      }).toEqual({ unit: true, fit: true, e2e: false, wholeGate: false })
+    })
+
+    test('sends the baseline to the branch’s pull request for its e2e evidence when the pull requests prove e2e', async () => {
+      const prompt = await baselinePromptWithE2e('ci')
+
+      expect(prompt).toContain(CI_E2E_EVIDENCE_HEADING)
+      expect(prompt).toContain(
+        '`gh pr checks <number> --repo <github> --json name,state,workflow`'
+      )
+    })
+
+    test('leaves the baseline the whole gate, and no pull-request evidence, when e2e is proved locally', async () => {
+      const prompt = await baselinePromptWithE2e('local')
+
+      expect(prompt).toContain('--phase all')
+      expect(prompt).not.toContain(CI_E2E_EVIDENCE_HEADING)
     })
 
     test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
@@ -5163,6 +5200,22 @@ describe('increment-build-loop', () => {
         )
         expect(prompt).not.toContain('--phase e2e')
         expect(prompt).not.toContain('--phase all')
+      })
+
+      test('sends the baseline to the branch’s pull requests for its e2e evidence when they prove e2e', async () => {
+        const run = await runBranch({ e2e: 'ci' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).toContain(
+          "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+        )
+      })
+
+      test('leaves the baseline no pull-request evidence step when e2e is proved locally', async () => {
+        const run = await runBranch({ e2e: 'local' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).not.toContain(
+          'THE E2E EVIDENCE IS'
+        )
       })
 
       test('runs every phase the row owes in the ladder, even after a red one', async () => {

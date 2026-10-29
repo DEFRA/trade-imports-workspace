@@ -847,6 +847,7 @@ const specBaselineLine = () =>
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.`
 
 const GATE_PHASES = ['unit', 'fit', 'e2e']
+const OFFERED_GATE_PHASES = E2E_IS_LOCAL ? GATE_PHASES : GATE_PHASES.filter((name) => name !== 'e2e')
 const WHOLE_GATE = 'all'
 const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 
@@ -3675,6 +3676,18 @@ ${gateCommandList(phases, logs)}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
 }
 
+const ciE2eEvidenceStep = (repoKeys) => {
+  if (E2E_IS_LOCAL) return ''
+  const named = (repoKeys ?? REPO_KEYS).map((key) => `${key} (${REPOS[key].github})`).join(', ')
+  return `3b. THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN, not a local gate. This run holds no
+   stack lease, so never run the gate's E2E phase, never start or stop the workspace stack, and never drive \`docker\`
+   yourself. For each of ${named}, find the open pull request on \`${BASE_BRANCH}\`
+   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`), then read its checks once:
+   \`gh pr checks <number> --repo <github> --json name,state,workflow\`
+   Report each repo's end-to-end job and the state it is in, word for word, in your summary. A pull request that has
+   completed no end-to-end run yet is not red: say it is awaited. Add no rung for any of this — rungs[] is the gate's.`
+}
+
 const ladderGateStep = (phases, logs) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
@@ -3704,6 +3717,7 @@ TASK:
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 ${baselineGateStep(phases, gateLogs(id, 'baseline'))}
+${ciE2eEvidenceStep()}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
@@ -4705,7 +4719,7 @@ while (stopped === null) {
   let approvalRepos = []
   workspaceInIncrement = null
   let rowMerges = []
-  let rowGatePhases = GATE_PHASES
+  let rowGatePhases = OFFERED_GATE_PHASES
   let rowAwaitsCi = true
 
   ticketAndBranch: {
@@ -4728,7 +4742,10 @@ while (stopped === null) {
       repos = row.repos
       resumeAt = row.resumeAt
       rowMerges = row.merge ?? []
-      rowGatePhases = row.gatePhases === undefined ? GATE_PHASES : GATE_PHASES.filter((name) => row.gatePhases.includes(name))
+      rowGatePhases =
+        row.gatePhases === undefined
+          ? OFFERED_GATE_PHASES
+          : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
       rowAwaitsCi = row.awaitCi !== false
       log(
         `${id}: on ${workBranch} in every repo; row repos ${repos.join(', ') || 'none'}; merges ${rowMerges.map((entry) => `${entry.repo}<-${entry.ref}`).join(', ') || 'none'}; gate ${rowGatePhases.join(', ') || 'none'}; CI ${rowAwaitsCi ? 'awaited' : 'not awaited'}; resuming at ${resumeAt}`
@@ -4838,7 +4855,8 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 ${specBaselineLine()}
-${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
+${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'))}
+${ciE2eEvidenceStep(repos)}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.

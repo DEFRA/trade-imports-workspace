@@ -119,7 +119,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'ciFixAttempts',
     'ciWatchMinutes',
     'requireApproval',
-    'approvalWaitMinutes'
+    'approvalWaitMinutes',
+    'e2e'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -169,7 +170,8 @@ const BASE_ARGS = {
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
   requireApproval: true,
-  approvalWaitMinutes: 20
+  approvalWaitMinutes: 20,
+  e2e: 'local'
 }
 
 const WORKSPACE_ANSWER = {
@@ -627,6 +629,31 @@ describe('increment-build-loop', () => {
 
     expect(run.error.message).toContain('no readable backlog')
   })
+
+  test('stops before any agent when e2e is missing', async () => {
+    const run = await runLoop(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'e2e')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key e2e. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test.each([['both'], [null], ['Local']])(
+    'refuses e2e %j before any agent',
+    async (value) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, e2e: value }
+      })
+
+      expect(run.error.message).toContain(
+        'config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it)'
+      )
+      expect(run.agents).toEqual([])
+    }
+  )
 
   test('refuses planOnly without an explicit increments list', async () => {
     const run = await runLoop(scriptPath, {

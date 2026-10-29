@@ -68,7 +68,8 @@ const ALWAYS_REQUIRED = [
   'ciFixAttempts',
   'ciWatchMinutes',
   'requireApproval',
-  'approvalWaitMinutes'
+  'approvalWaitMinutes',
+  'e2e'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -99,6 +100,15 @@ const REQUIRE_APPROVAL = CFG.requireApproval
 const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
 const STOP_AFTER = CFG.stopAfter
+
+const E2E_LOCATIONS = ['local', 'ci']
+const E2E = CFG.e2e
+if (!E2E_LOCATIONS.includes(E2E)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it) — got ${JSON.stringify(E2E)}`
+  )
+}
+const E2E_IS_LOCAL = E2E === 'local'
 
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 

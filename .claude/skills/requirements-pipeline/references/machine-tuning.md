@@ -165,13 +165,28 @@ Apple Silicon, 12 cores, 18 GiB. Docker Desktop 8 CPUs, 10 GiB and 2 GiB swap
 raised from 8092 MiB, which was below the floor the 22 October run set.
 `tim build tune` with the whole stack up in dev mode, every repo on `main`.
 
-**This machine cannot prove a theme locally.** Animals FIT does not finish at 2
-or 3 workers: both hit the 900s global timeout. The end-to-end suite passes at 2
-workers but takes 33.5 minutes and swaps 8.8 million pages, leaving a shell
-745 ms to start, which is a terminal nobody can type in. Where the 22 October
-machine ran animals FIT in 234s at 4 workers having swapped 23,620 pages, this
-one takes 757s and swaps 1.4 million. Build a theme here with `e2e: "ci"` and
-let the pull requests carry the end-to-end proof.
+**Read these as a worker-count cap, not as what this machine can do.** Every
+figure below was measured with the whole stack up, because that is what
+`tim build tune` does — and no gate run puts a FIT suite in those conditions.
+`gates.json` sets `stackAfterLocal: true`, so `tim build gate` starts the stack
+only once unit and FIT have finished (`tim/src/build/gate.js:456`), and an
+`e2e: "ci"` build takes no lease at all, so nothing is up. The FIT numbers here
+are therefore a worst case nobody runs, and the e2e numbers are for a rung an
+`e2e: "ci"` run never asks for.
+
+What the file is for on this machine is the cap: the narrow FIT runs individual
+build-loop stages make themselves — a red probe, a plan check, a reviewer's or
+fixer's local proof — take `--workers=100%` without it, which is ten browsers
+for one spec file on a 12-core machine.
+
+For the record of what was seen: animals FIT did not finish at 2 or 3 workers
+against the 900s global timeout, and the e2e suite took 33.5 minutes at 2
+workers while swapping 8.8 million pages. Against the 22 October machine's 234s
+and 23,620 pages for animals FIT, this is a machine deep in swap — but it is
+also a 641-test suite where that one was 477, measured under a stack the gate
+would have deferred, on a host that began the run with 18 GB already swapped
+out. Do not read a capability verdict into it, and do not re-run the tune to
+settle it: under `e2e: "ci"` the question does not arise.
 
 ### FIT and E2E, stack up
 
@@ -216,9 +231,10 @@ replace it with a measured one.
 - **Plants FIT: 4.** Fastest by 71s over 3 workers, and the *lowest* shell start
   time of the three counts (42 ms against 130 ms at 3).
 - **ins-frontend FIT: 4.** Fastest, and the whole suite is half a minute.
-- **E2E: 2.** One data point, and it passed. Playwright's own default here would
-  be 6 workers (half of 12 cores), which on this machine would be worse than the
-  33.5 minutes and 8.8 million swapped pages that 2 workers already cost.
+- **E2E: 2.** One data point, and it passed. It is also a count this machine
+  will not use: an `e2e: "ci"` build drops the e2e phase, and that is how a theme
+  is built here. Kept so the key is not missing if somebody ever runs
+  `e2e: "local"`, not because 2 is the measured answer.
 - **parallelRepos 1, stackAfterLocal true.** As `gates.json` has them.
 
 **Where this departs from the rule.** "Back off one if that count swaps" cannot

@@ -43,16 +43,16 @@ The system MUST search the commodity reference data against a commodity's code a
 - **WHEN** the user searches by that species' common name
 - **THEN** the species is offered under the live-animal code only
 
-#### Scenario: Searching by commodity code lists every species under that code, by Latin name
+#### Scenario: Searching by commodity code offers the species that search returns under that code, by Latin name alone
 **ID**: SCN-COMMODITY-SELECT-003-C
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a live-animal commodity code
-- **THEN** every species the reference data lists under that code is offered under it, each by its Latin name alone
+- **WHEN** they search for a live-animal commodity code whose search lists no more than a hundred species
+- **THEN** those species are offered under that code, each by its Latin name alone
 
-#### Scenario: Searching by Latin name offers that species under each live-animal code that lists it
+#### Scenario: Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by Latin name alone
 **ID**: SCN-COMMODITY-SELECT-003-D
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search by part of a species' Latin name
+- **WHEN** they search by a species' Latin name, or one word of it
 - **THEN** that species is offered under each live-animal code that lists it, by its Latin name alone
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity

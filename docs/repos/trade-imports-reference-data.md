@@ -41,12 +41,16 @@ No use of this service by `trade-imports-animals-backend` was found in its `appl
 
 MDM's product search is an early-access API built on ITAHC data from TRACES. What follows was observed in TST in October 2026, from the responses saved in `trade-imports-stub` (`src/main/resources/responses/mdmProductSearchResponses.json`). Re-check it against TST before relying on it, as MDM may change it.
 
+**Two kinds of row**
+
+MDM `/search` answers with `resultType` `species` or `commodity`, mixed on one page. A species row is one species under one code (`commodityCnCode`). A commodity row is one code, with its species nested as `scientificNames`, and counts as one result however many names it holds. The nested list on a commodity search row is not the full species catalogue: `01061900` nested 100 names on the search row when `GET /mdm/trade/product/commodities/01061900/species` holds 1,234. The captures that show this are the keys `cattle`, `Bos taurus`, `0102`, `01061900`, `010` and `ostrich` in `trade-imports-stub`'s `mdmProductSearchResponses.json`. Reference-data flattens both kinds of row into groups of Latin names, so the trader's page looks the same.
+
 **What a search matches**
 
-- **Common name**: "cattle" finds Bos taurus, Bos, Bibos spp., Bos sp. and Novibos spp. under 0102.
-- **Commodity code**: "0102" returns one commodity row holding all 15 of its species; "010" returns 45 rows. A code search is a prefix match.
-- **Latin name**: "Bos taurus" finds Bos taurus under each code it sits under.
-- **Commodity description**: "ostrich" returns the 01063300 commodity row ("Ostriches; emus") as well as the Struthio species, so Rhea, Emu and Cassowaries come back too.
+- **Species common name** (`cattle`): species rows. The capture has eight: five cattle species under 0102, then Bos taurus again under 01061900 and two germinal codes.
+- **Latin name** (`Bos taurus`, `tau`): species rows. One row per code that lists that species.
+- **Commodity code** (`0102`): one commodity row, species nested. A code is a prefix (`010` returns 45 commodity rows).
+- **Commodity description** (`ostrich`, `horse`): mixed. Species rows plus a commodity row, so the nested species of that commodity come back too.
 
 **Partial terms**
 
@@ -61,7 +65,7 @@ MDM's product search is an early-access API built on ITAHC data from TRACES. Wha
 - MDM has proposed replacing `isGerminal` with a `germinal` object, present only on germinal codes. Reference-data checks the flag in one method, `CommoditySearchService.isGerminal`, so that change touches only its body (`germinal != null`).
 - The same species under several live-animal codes: Bos taurus is under 0102 and 01061900. Each is a separate choice.
 - Some species have no common name (Catagonus, Equus cabalus*asinus) and some carry placeholder ones ("Animals" for Poephagus spp., "Pig-deer?" for Babyrousa).
-- Results come back in MDM's order, with no sort option. Species and commodity rows are mixed on one page, and a commodity row counts as one result however many species it holds.
+- Results come back in MDM's order, with no sort option.
 
 The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-617 ticket.
 

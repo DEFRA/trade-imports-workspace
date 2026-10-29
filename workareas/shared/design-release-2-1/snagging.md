@@ -37,6 +37,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** every row one part per line with the name split, as the prototype's seeded rows ([list.controller.js](https://github.com/DEFRA/trade-imports-ins-frontend/blob/feat/EUDPA-710-design-release-2-1-address-book-list/src/server/app/features/address-book/list/list.controller.js), `address-lines.js`, `view-model/list.js`).
 - **To ask:** (a) every row one part per line with the name split, as built; or (b) every row on one line, as the prototype shows a just-saved address?
 
+### S-04. The country list on the add page reached from the consignment contact picker
+
+- **Ticket:** [EUDPA-706](https://eaflood.atlassian.net/browse/EUDPA-706), [ins-frontend #70](https://github.com/DEFRA/trade-imports-ins-frontend/pull/70). inc-078 follow-up.
+- **Page:** the INS add page reached from a notification's 'Contact address for this consignment' picker.
+- **Prototype:** `renderConsignmentAddAddressPage` ([routes.js#L4050-L4110](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L4050-L4110)) offers United Kingdom alone, selected, only when `consignmentAddAddressUsesLookup` is true: the section is in the destination group, consignee, importer or place of destination ([consignment-address-use-groups.js#L19-L25](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/consignment-address-use-groups.js#L19-L25), [#L81-L83](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/consignment-address-use-groups.js#L81-L83)). The consignment contact is not in that map, so it falls through to the full list.
+- **Built:** the same. Consignee, importer and place of destination get United Kingdom alone, selected. Place of origin, consignor and the consignment contact get 'Select a country' and the full list (`journey-registry.js`).
+- **To confirm:** the contact gets any country only because the prototype leaves it out of its map. Is that intended, or should the consignment contact be United Kingdom only, like the destination side? Low priority: built as the prototype behaves.
+
 ## Settled
 
 | Question | Answer | Where it landed |

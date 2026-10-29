@@ -137,7 +137,7 @@ The system MUST return the user to the address book list on a successful save, a
 
 ### Requirement: Cancelling the add or edit form discards changes
 **ID**: REQ-INS-ADDR-010
-The system MUST discard anything entered on the add or edit form when the user cancels, and MUST NOT save it. Cancelling the add form returns the user to the address book list: on the add form opened from the address book, cancelling is a 'Cancel and return to address book' link below 'Save and continue'. Cancelling the edit form goes to the page the edit was opened from, by default the address's details page (REQ-INS-ADDR-025).
+The system MUST discard anything entered on the add or edit form when the user cancels, and MUST NOT save it. Cancelling the add form opened from the address book returns the user to the address book list: cancelling is a 'Cancel and return to address book' link below 'Save and continue'. Cancelling the edit form goes to the page the edit was opened from, by default the address's details page (REQ-INS-ADDR-025).
 
 #### Scenario: Cancelling add discards the form without creating an address
 **ID**: SCN-INS-ADDR-010-A
@@ -805,3 +805,42 @@ The system MUST show every address and contact field, with no address search, on
 - **WHEN** they choose 'Add a new address'
 - **THEN** the Country field is a drop-down list holding its countries as options
 - **AND** it is not a type-ahead search
+
+### Requirement: The add page reached from a notification journey returns through the journey to the page each control names
+**ID**: REQ-INS-ADDR-036
+The system MUST, on the add page reached from a notification's role picker, offer 'Back' to that picker, a primary 'Save and select', a secondary 'Save and return to address page' and a 'Cancel and return to hub' link. From the consignment contact page it MUST offer 'Back', 'Save and continue' and a secondary 'Cancel and return to address page'. Each MUST return the user to the journey, and the address book's own success banner MUST NOT show.
+
+#### Scenario: A role's add page offers Back, Save and select, Save and return to address page and Cancel and return to hub
+**ID**: SCN-INS-ADDR-036-A
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page offers a 'Back' link, a primary 'Save and select' button, a secondary 'Save and return to address page' button after it, and a 'Cancel and return to hub' link
+
+#### Scenario: Save and select hands the new address back to the journey for selection
+**ID**: SCN-INS-ADDR-036-B
+- **GIVEN** a trader on the add page reached from a notification's role picker
+- **WHEN** they save a valid address with 'Save and select'
+- **THEN** the journey is handed the new address to select for the role
+- **AND** the address book list shows no success banner
+
+#### Scenario: Save and return to address page hands the new address back without selecting it
+**ID**: SCN-INS-ADDR-036-C
+- **GIVEN** a trader on the add page reached from a notification's role picker
+- **WHEN** they save a valid address with 'Save and return to address page'
+- **THEN** the journey is handed the new address to list on the role's picker, not to select
+
+#### Scenario: Cancel and return to hub saves nothing
+**ID**: SCN-INS-ADDR-036-D
+- **GIVEN** a trader on the add page reached from a notification's role picker who has typed an address
+- **WHEN** they follow 'Cancel and return to hub'
+- **THEN** the journey is handed back to the notification's hub, and the address book holds nothing new
+
+#### Scenario: The consignment contact's add page offers Back, Save and continue and Cancel and return to address page
+**ID**: SCN-INS-ADDR-036-E
+- **GIVEN** a trader on the consignment contact page
+- **WHEN** they choose to add a new address
+- **THEN** the add page offers a 'Back' link, a primary 'Save and continue' button and a secondary 'Cancel and return to address page' button
+- **WHEN** they save a valid address with 'Save and continue'
+- **THEN** the journey is handed the new address to select as the contact address
+- **WHEN** they choose 'Cancel and return to address page' instead
+- **THEN** the journey is handed back with no address

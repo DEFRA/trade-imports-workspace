@@ -3380,7 +3380,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "the INS add page reached from the consignee picker offers United Kingdom alone, and the saved address reads United Kingdom on Roles and addresses",
+              "test": "the INS add page reached from the consignee picker offers United Kingdom alone, already selected",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3411,7 +3411,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "the INS add page reached from the consignee picker offers United Kingdom alone, and the saved address reads United Kingdom on Roles and addresses",
+              "test": "Save and select on the INS add page reached from the Consignee picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3514,6 +3514,152 @@
               "test": "the INS add page reached from the Consignor picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-036",
+      "name": "The add page reached from a notification journey returns through the journey to the page each control names",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-036-A",
+          "name": "A role's add page offers Back, Save and select, Save and return to address page and Cancel and return to hub",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields",
+              "strength": "full",
+              "notes": "red-probed: fails when the role's controls are swapped for the contact's"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from a role handshake links Back to the journey return with no address and no landing",
+              "strength": "full",
+              "notes": "red-probed: fails when Back links to the address book"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-B",
+          "name": "Save and select hands the new address back to the journey for selection",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of Save and select returns to the journey with the new address id and the select landing, logs the hand-back once, and shows no address-book banner",
+              "strength": "full",
+              "notes": "red-probed: fails when the landing is dropped from the return URL"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-C",
+          "name": "Save and return to address page hands the new address back without selecting it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of Save and return to address page returns to the journey with the new address id and the return landing, and logs the hand-back once",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted action is ignored"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and return to address page on the INS add page reached from the Consignor picker lands on the picker with the added banner, the new address listed first and nothing selected",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-D",
+          "name": "Cancel and return to hub saves nothing",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Cancel and return to hub on the INS add page reached from the Consignor picker lands on the Overview and saves no address",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-E",
+          "name": "The consignment contact's add page offers Back, Save and continue and Cancel and return to address page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the contact page",
+              "strength": "full",
+              "notes": "red-probed: fails when the contact is not told apart from a role"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/journey-registry.test.js",
+              "test": "is true for the consignment contact handshake",
+              "strength": "full",
+              "notes": "red-probed: fails when the predicate never says true"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing",
+              "strength": "full",
+              "notes": "red-probed: fails when the save hands back the return landing instead of select"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once",
+              "strength": "full",
+              "notes": "red-probed: fails when the contact cancel hands back with the cancel landing"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
             }
           ]
         }

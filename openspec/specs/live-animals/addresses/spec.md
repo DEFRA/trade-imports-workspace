@@ -8,7 +8,7 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service. Outside stub mode, the journey MAY hand the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return them to the picker.
+The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey to the page the action they chose names.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
@@ -35,18 +35,56 @@ The system MUST NOT let a user create, edit, or remove an address book record fr
 - **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading; for the consignment contact, a link is offered
 - **AND** either leads to the address book's own add-address page, and no add-address form is served within the journey itself
 
-#### Scenario: Saving a new address in the address book's own service returns to the picker with it selected
+#### Scenario: Saving with Save and select lands on the consignment addresses page with the address chosen for the role
 **ID**: SCN-ADDR-001-E
-- **GIVEN** the user has followed the link from the picker to the address book's own add-address page
-- **WHEN** they save a new address there
-- **THEN** they return to the picker with the new address already selected
-- **AND** continuing from the picker commits that address to the role
+- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **WHEN** they save a new address there with "Save and select"
+- **THEN** the Consignment addresses page opens with a "Success" banner reading "<name> address added to your address book", naming the address as it is stored
+- **AND** the role shows the address with a "Change" link
 
-#### Scenario: Cancelling out of the address book's own service returns to the picker with nothing added
+#### Scenario: Cancelling out of the address book's own service lands on the overview with nothing added
 **ID**: SCN-ADDR-001-F
-- **GIVEN** the user has followed the link from the picker to the address book's own add-address page
-- **WHEN** they cancel without saving
-- **THEN** they return to the picker, and the role still shows no address chosen
+- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **WHEN** they follow "Cancel and return to hub"
+- **THEN** the notification's Overview opens
+- **AND** the Consignment addresses page still offers the role only its add link, and the address book holds nothing new
+
+#### Scenario: Saving with Save and return to address page lands on the role's picker with the new address listed first and none selected
+**ID**: SCN-ADDR-001-G
+- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **WHEN** they save a new address there with "Save and return to address page"
+- **THEN** the role's picker opens with a "Success" banner reading "<name> address added to your address book"
+- **AND** the new address is listed above the addresses that were already in the book, and no address is selected
+
+#### Scenario: The added address banner stays until the user leaves or reloads the page
+**ID**: SCN-ADDR-001-H
+- **GIVEN** the user has saved a new address from the address book's own add-address page and returned to the journey
+- **WHEN** the page has been open for ten seconds
+- **THEN** the "Success" banner is still shown
+- **WHEN** they reload the page
+- **THEN** no banner is shown
+
+#### Scenario: Back on the address book's own add-address page returns to the role's picker
+**ID**: SCN-ADDR-001-I
+- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **WHEN** they follow "Back"
+- **THEN** the role's picker opens
+
+#### Scenario: A return with an unknown role or a token that is missing or already used is refused for each action
+**ID**: SCN-ADDR-001-J
+- **GIVEN** the address book's own add-address page returns the user to the journey with "Save and select", "Save and return to address page" or "Cancel and return to hub"
+- **WHEN** the return names a role the journey does not know, or carries a handshake token that is missing or has already been used
+- **THEN** the return is refused as a bad request
+- **AND** nothing is saved to the notification
+
+#### Scenario: Adding an address from the consignment contact page returns to the contact page
+**ID**: SCN-ADDR-001-K
+- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
+- **THEN** the page offers "Back", "Save and continue" and "Cancel and return to address page"
+- **WHEN** they save a new address there
+- **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book", and the address is chosen as the contact address
+- **WHEN** they follow "Back" or "Cancel and return to address page" instead
+- **THEN** the consignment contact page opens and nothing is saved to the notification
 
 ### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-ADDR-002

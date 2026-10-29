@@ -34,6 +34,80 @@ sha: the stale branch carries it.
 On the build machine, pull the workspace branch `feat/NO_JIRA-design-release-2-1` first. Then run
 `tim workspace branch <theme branch>`, open Claude Code at the workspace root and say the phrase for the theme.
 
+## Taking `main` in while a theme builds
+
+A theme branch is cut from `main` and lives for days, so `main` moves under it. A pull request that conflicts with its
+base gets no checks from GitHub at all, so the row cannot be proved and the run stops. The loop now stops such a row at
+once as `pr-conflict` rather than spending its CI fix attempts, which makes this a cadence to keep rather than a problem
+to spot.
+
+**One merge row per move, played through the loop. Never a hand merge.**
+
+- **Never merge `main` in by hand on a theme branch.** A hand merge is unreviewed, unproved and invisible to the
+  backlog, and leaves the next row to discover it. Both of the documents theme's merges were noticed only because its
+  pull request stopped running checks.
+- **Check before every launch**, in each repo the theme builds:
+
+  ```bash
+  git -C ~/git/defra/trade-imports-workspace/repos/<repo> fetch origin
+  git -C ~/git/defra/trade-imports-workspace/repos/<repo> rev-list --count HEAD..origin/main
+  ```
+
+  Any count above zero, or a pull request GitHub reports as conflicting
+  (`gh pr view <url> --json mergeable,mergeStateStatus`), calls for a merge row.
+- **Write it as a row and put it before the rows that need it.** One row covers every repo that needs the merge — one
+  key per repo in `merge`, each of them also in `repos`. Save the row to a file and add it:
+
+  ```bash
+  tim backlog add shared/design-release-2-1/themes/<theme> --from merge-row.json --before <the next todo row> --write --json
+  ```
+
+  To set the ref on a row that exists already:
+
+  ```bash
+  tim backlog set shared/design-release-2-1/themes/<theme> <id> --merge frontend=origin/main --json
+  ```
+
+- **Give the row the resolution, not just the instruction.** The loop plans, reviews and proves a merge row like any
+  other, so its acceptance criteria say which side wins in each conflicting file. That is what makes it worth a row
+  rather than a hand merge: inc-040's shared FIT helper needed both sides reconciled, and the review caught that the
+  import its criteria named was the wrong predicate.
+- **`gatePhases` follows the theme.** An `e2e: "ci"` theme's rows carry `gatePhases: []` and prove themselves on the
+  pull requests; a merge row in that theme does the same.
+
+The template, from the documents theme's inc-040:
+
+```json
+{
+  "id": "inc-NNN",
+  "title": "The theme branch takes in what main has landed since it was cut",
+  "kind": "chore",
+  "theme": "<theme>",
+  "status": "todo",
+  "repos": ["frontend", "tests"],
+  "merge": { "frontend": "origin/main", "tests": "origin/main" },
+  "gatePhases": [],
+  "dependsOn": [],
+  "detail": "What has landed on main since the branch was cut, which files conflict, and why each one conflicts.",
+  "acceptanceCriteria": [
+    "origin/main is merged into the theme branch in <each repo>, as one two-parent merge commit each, with no conflict markers left in any file.",
+    "<each conflicting file> keeps <which side's work, named>.",
+    "Every pull request reports no conflict with its base, so GitHub runs its checks again.",
+    "Every pull request is green."
+  ],
+  "notes": [],
+  "sources": [],
+  "requirements": [],
+  "openQuestions": []
+}
+```
+
+Then check it before launching:
+
+```bash
+tim backlog check shared/design-release-2-1/themes/<theme>
+```
+
 ## The business tickets, around every theme
 
 A theme's Jira tickets are filled in automatically from the development work by the `theme-ticket` skill — one Story

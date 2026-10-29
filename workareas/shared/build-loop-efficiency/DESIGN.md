@@ -1,7 +1,9 @@
 # Build loop: streamlining the increment build loop
 
 **Design, 29 October 2026.** Agreed with Ian in conversation. A1 is planned in
-[`PLAN-A1.md`](PLAN-A1.md) and built on `chore/NO_JIRA-build-loop-efficiency`; A2, A3 and A4 are
+[`PLAN-A1.md`](PLAN-A1.md) and built on `chore/NO_JIRA-build-loop-efficiency`. A4 is planned in
+[`PLAN-A4.md`](PLAN-A4.md) and built on `chore/NO_JIRA-build-loop-machine-and-process`, where its
+first two items turned out to be smaller than this design assumed — see A4 below. A2 and A3 are
 neither planned nor built.
 
 The Design Release 2.1 accompanying documents theme (EUDPA-724) landed six rows in six loop
@@ -210,17 +212,27 @@ gets bumped to `full`, or `local` gets switched to `ci` after a stack failure.
 
 ## A4 — Machine and process
 
-- **`tim build tune --write`** has never been run here: `config/machine.json` does not exist, so
-  the gate runs every FIT and e2e rung at the worker count its own script says. Write it.
-- **Docker Desktop's allocation** — 8.2GB of this machine's 19.3GB, and 12 CPUs shared with the
-  host. Now optional rather than blocking, because a `"ci"` run never starts the stack.
+- **`config/machine.json`** did not exist, so the gate ran every FIT and e2e rung at the worker
+  count its own script says. Written now, and recorded in `machine-tuning.md`. It is a **cap**, not
+  a measurement: `tim build tune` times every rung with the stack up, which no gate run does
+  (`gates.json` sets `stackAfterLocal`, and an `e2e: "ci"` run holds no lease at all), so an hour
+  of tuning measures a worst case nobody runs. What the file is for is stopping a stage's own
+  narrow FIT run taking `--workers=100%` — ten browsers for one spec file. Set the counts and move
+  on. (The flag this bullet first named does not exist: writing is the default, `--dry-run` the
+  opt-out.)
+- **Docker Desktop's allocation** — was 8.2GB of this machine's 19.3GB, and 12 CPUs shared with the
+  host; now 10GB and 8 CPUs, so the host keeps four cores. Moot rather than merely optional,
+  because a `"ci"` run never starts the stack: raising it changed no FIT timing that mattered.
 - **A stated `main`-merge cadence** in `themes/HOW-TO-BUILD.md`. The documents branch took `main`
   in twice in one day, once by hand and once as inc-040, neither planned. `54e335d5` made the
   loop stop at once on a conflicting pull request, so this is now a cadence to write down and a
-  scheduled merge row, not a detection problem.
+  scheduled merge row, not a detection problem. Written, with inc-040 as the row template.
 - **`tim sonar gate`**, so the CI fixer can see why a SonarCloud quality gate failed. On inc-212
   it spent all three CI fix attempts blind before a hand fix found three S2187 blockers. This
-  matters more once CI carries the e2e proof.
+  matters more once CI carries the e2e proof. Built, and bound into both CI-fixer prompts. The
+  blindness is worse than a missing summary: the scan step inside the workflow passes and
+  SonarCloud posts its verdict as a check of its own, so the `gh run view --log-failed` the fixer
+  is told to read first holds nothing at all.
 
 ## What is deliberately not changing
 

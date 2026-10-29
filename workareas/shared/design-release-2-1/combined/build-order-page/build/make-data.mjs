@@ -21,13 +21,22 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { readScope, inputFile, writeScopedPage } from '../../scope.mjs'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
+const canonicalBuild = path.dirname(fileURLToPath(import.meta.url))
+const canonicalPage = path.resolve(canonicalBuild, '..')
+const workarea = path.resolve(canonicalPage, '..', '..')
+
+// The build directory to work in, so a journey copy of the page can run this
+// same generator over its own scope. Defaults to this generator's own.
+const here = process.argv[2] ? path.resolve(process.argv[2]) : canonicalBuild
 const pageDir = path.resolve(here, '..')
-const workarea = path.resolve(pageDir, '..', '..')
 
-const META_FILE = path.join(here, 'themes.meta.json')
+const scope = readScope(here)
+
+const META_FILE = inputFile(here, canonicalBuild, 'themes.meta.json')
 const TICKETS_FILE = path.join(workarea, 'tickets', 'tickets.json')
+const SPLIT_FILE = path.join(workarea, 'themes', 'themes.json')
 const OUT_FILE = path.join(pageDir, 'data.js')
 
 const JIRA_BROWSE = 'https://eaflood.atlassian.net/browse'
@@ -84,24 +93,59 @@ function backlogFiles() {
 const meta = readJson(META_FILE).themes
 const files = backlogFiles()
 
-const rows = []
+const everyRow = []
 for (const file of files) {
   const backlog = readJson(file)
   if (!Array.isArray(backlog.increments)) throw new Error('no increments in ' + file)
-  for (const inc of backlog.increments) rows.push({ ...inc, from: path.relative(workarea, file) })
+  for (const inc of backlog.increments) everyRow.push({ ...inc, from: path.relative(workarea, file) })
 }
 
-const seen = new Map()
+const rows = everyRow.filter(scope.keeps)
+if (!rows.length) throw new Error('the scope in ' + path.join(here, 'scope.json') + ' keeps no rows at all')
+
+/**
+ * A row id is unique within one backlog, but two backlogs can carry the same
+ * one: the split-off themes numbered their own new rows from the same sequence
+ * the parent backlog was already using. Those clashes are recorded and shown on
+ * the page rather than thrown, because a dependency read in its own backlog
+ * first always lands on the row that was meant. A clash that forces a lookup
+ * across backlogs still throws, in themeOfDependency below.
+ */
+const backlogsOfId = new Map()
 for (const row of rows) {
-  if (seen.has(row.id)) {
-    throw new Error('row ' + row.id + ' appears in both ' + seen.get(row.id) + ' and ' + row.from)
-  }
-  seen.set(row.id, row.from)
+  if (!backlogsOfId.has(row.id)) backlogsOfId.set(row.id, [])
+  backlogsOfId.get(row.id).push(row.from)
 }
+const sharedIds = [...backlogsOfId]
+  .filter(([, from]) => from.length > 1)
+  .map(([id, from]) => ({ id, backlogs: from.sort() }))
+  .sort((a, b) => a.id.localeCompare(b.id))
 
 /* --------------------------------------------------------------- counting --- */
 
-const themeOfRow = new Map(rows.map((row) => [row.id, row.theme]))
+const themeOfRowInBacklog = new Map(rows.map((row) => [row.from + '#' + row.id, row.theme]))
+
+const themesOfId = new Map()
+for (const row of rows) {
+  if (!themesOfId.has(row.id)) themesOfId.set(row.id, new Set())
+  themesOfId.get(row.id).add(row.theme)
+}
+
+/** The theme a dependency names, read in the depending row's own backlog first. */
+function themeOfDependency(backlog, dependencyId) {
+  const sameBacklog = themeOfRowInBacklog.get(backlog + '#' + dependencyId)
+  if (sameBacklog) return sameBacklog
+  const themesNamed = themesOfId.get(dependencyId)
+  if (!themesNamed) return null
+  if (themesNamed.size > 1) {
+    throw new Error(
+      'the dependency on ' + dependencyId + ' in ' + backlog + ' names no row in that backlog, and ' +
+        dependencyId + ' is used by rows in themes ' + [...themesNamed].sort().join(', ') +
+        '. Renumber one of them before the page can say which theme waits on which.'
+    )
+  }
+  return [...themesNamed][0]
+}
 
 /** The theme counter each backlog status adds to, one entry per status in the backlog schema. */
 const COUNTER_OF_STATUS = {
@@ -142,10 +186,23 @@ for (const row of rows) {
 // carry no ticket rows.
 const ticketsByTheme = fs.existsSync(TICKETS_FILE) ? readJson(TICKETS_FILE).themes || {} : {}
 
+/**
+ * The themes split off to their own branch. A theme marked staleBranch there was
+ * built once on that branch and will not be merged from it: the rows went back
+ * to todo and the theme is played again on a fresh branch from main. The page
+ * has to say so, or four themes read as never started while their branch and
+ * pull requests say otherwise.
+ */
+const splitThemes = fs.existsSync(SPLIT_FILE) ? readJson(SPLIT_FILE).themes || [] : []
+const splitById = new Map(splitThemes.map((theme) => [theme.id, theme]))
+
 for (const theme of themes.values()) {
   if (!meta[theme.id]) throw new Error('no themes.meta.json entry for theme ' + theme.id)
   theme.name = meta[theme.id].name
   theme.ticket = meta[theme.id].ticket
+  const split = splitById.get(theme.id)
+  theme.branch = split ? split.branch : null
+  theme.staleBranch = Boolean(split && split.staleBranch)
   // Dropped, rejected and merged rows sit outside the total: they are not work anyone will do.
   theme.excluded = theme.dropped + theme.rejected + theme.merged
   theme.live = theme.rows - theme.excluded
@@ -183,7 +240,7 @@ for (const row of rows) {
   if (NOT_WORK.has(row.status)) continue
   const deps = [...(row.dependsOn || []), ...(row.externalDependsOn || []).map((dep) => dep.id)]
   for (const dep of deps) {
-    const parent = themeOfRow.get(dep)
+    const parent = themeOfDependency(row.from, dep)
     if (!parent || parent === row.theme) continue
     edges.add(parent + '>' + row.theme)
   }
@@ -246,14 +303,13 @@ for (const theme of themes.values()) {
   else theme.state = 'open'
 }
 
-// Ready means every theme it waits on is finished, so nothing stops it starting.
+// Ready means nothing a theme waits on is still open, so nothing stops it
+// starting. A theme that waits on nothing is ready as soon as it is not started.
 // This needs its own pass: it reads other themes' state, which the loop above
 // only finishes assigning once it has been round them all.
 for (const theme of themes.values()) {
   theme.ready =
-    theme.state === 'open' &&
-    theme.followsAll.length > 0 &&
-    theme.followsAll.every((parent) => themes.get(parent).state === 'done')
+    theme.state === 'open' && theme.followsAll.every((parent) => themes.get(parent).state === 'done')
 }
 
 /* -------------------------------------------------------------- geometry ---- */
@@ -423,6 +479,50 @@ for (const [parent, child] of reduced) {
   paths.push({ parent, child, d: parts.join(' ') })
 }
 
+/* ---------------------------------------------------------------- retired --- */
+
+/**
+ * A theme that was split off and now has no rows in any backlog: its rows were
+ * ported in full onto the rows of another theme, which carries their criteria.
+ * It cannot be drawn, having neither counts nor dependencies, so it is listed
+ * instead — otherwise a theme with a branch and open pull requests simply
+ * vanishes from the page.
+ */
+const themesWithRows = new Set(everyRow.map((row) => row.theme))
+const retired = splitThemes
+  .filter((theme) => !themesWithRows.has(theme.id))
+  .map((theme) => ({
+    id: theme.id,
+    name: meta[theme.id] ? meta[theme.id].name : theme.id,
+    ticket: meta[theme.id] ? meta[theme.id].ticket : null,
+    branch: theme.branch,
+    staleBranch: Boolean(theme.staleBranch)
+  }))
+
+/* ------------------------------------------------------------- what is cut --- */
+
+/**
+ * What the scope leaves out, so a journey copy can say so rather than looking
+ * like the whole programme with fewer rows. A theme the scope drops entirely is
+ * named; a theme it only thins is counted.
+ */
+const cutRows = everyRow.filter((row) => !scope.keeps(row))
+const cutThemes = [...new Set(cutRows.map((row) => row.theme))]
+  .map((id) => ({
+    id,
+    name: meta[id] ? meta[id].name : id,
+    cut: cutRows.filter((row) => row.theme === id).length,
+    whole: !themes.has(id)
+  }))
+  .sort((a, b) => b.cut - a.cut || a.name.localeCompare(b.name))
+
+const excluded = {
+  rows: cutRows.length,
+  themes: cutThemes.filter((theme) => theme.whole).length,
+  thinned: cutThemes.filter((theme) => !theme.whole).length,
+  byTheme: cutThemes
+}
+
 /* ----------------------------------------------------------------- totals --- */
 
 const all = [...themes.values()]
@@ -440,8 +540,11 @@ const totals = {
   excluded: all.reduce((n, t) => n + t.excluded, 0),
   ticketed: all.filter((t) => t.ticket).length,
   ready: all.filter((t) => t.ready).length,
+  staleBranches: all.filter((t) => t.staleBranch).length,
+  retired: retired.length,
   edgesRecorded: pairs.length,
-  edgesDrawn: reduced.length
+  edgesDrawn: reduced.length,
+  sharedIds: sharedIds.length
 }
 totals.percent = Math.round((totals.done / totals.live) * 100)
 
@@ -467,10 +570,17 @@ const data = {
     top: TOP,
     paths
   },
+  sharedIds,
+  retired,
+  scope: { id: scope.id, title: scope.title, of: scope.of, rule: scope.rule },
+  excluded,
   sources: files.map((file) => path.relative(workarea, file))
 }
 
 fs.writeFileSync(OUT_FILE, 'window.DR21_BUILD_ORDER = ' + JSON.stringify(data, null, 2) + '\n')
+
+const scopedPage = writeScopedPage(pageDir, canonicalPage, scope)
+if (scopedPage) console.log('page written from the whole-programme markup: ' + path.relative(workarea, scopedPage))
 
 console.log(
   'build-order data written: ' +
@@ -491,4 +601,17 @@ console.log(
 )
 for (const theme of data.themes) {
   if (theme.ready) console.log('  ready to start: ' + theme.name + ' (' + theme.live + ' rows)')
+}
+for (const shared of sharedIds) {
+  console.log('  id used by more than one backlog: ' + shared.id + ' in ' + shared.backlogs.join(' and '))
+}
+if (scope.id !== 'all') {
+  const rowWord = (n) => n + (n === 1 ? ' row' : ' rows')
+  console.log(
+    '  scope ' + scope.id + ' leaves out ' + rowWord(excluded.rows) + ': ' +
+      excluded.themes + ' themes dropped whole, ' + excluded.thinned + ' thinned'
+  )
+  for (const theme of excluded.byTheme) {
+    console.log('    ' + theme.name + ': ' + rowWord(theme.cut) + (theme.whole ? ', the whole theme' : ''))
+  }
 }

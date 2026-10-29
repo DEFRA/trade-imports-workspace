@@ -202,6 +202,12 @@
   .state.blocked { color: var(--blocked); }
   .state.blocked::before { background: var(--blocked); }
 
+  .stale-mark {
+    display: block; margin-top: 4px; font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
+  }
+  .stale-mark::before { content: "↻ "; }
+
   .readings {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(286px, 1fr));
     gap: 1px; background: var(--rule); border: 1px solid var(--rule);
@@ -324,13 +330,17 @@
 
     /* ---------------------------------------------------------- masthead --- */
 
+    const scoped = data.scope.id !== 'all'
+
     document.getElementById('standfirst').textContent =
       t.themes + ' themes bring the real GB notification services up to Design Release 2.1 of the prototype. ' +
       'Each one can only start once the themes it depends on have landed. This is the order that produces, ' +
-      'and where the work has reached.'
+      'and where the work has reached.' +
+      (scoped ? ' This copy shows only the ' + data.scope.of + ' journey and the work shared with it.' : '')
 
     document.getElementById('asof').textContent =
-      'Generated ' + data.generatedAt + ' from ' + t.rows + ' backlog rows on feat/NO_JIRA-design-release-2-1'
+      'Generated ' + data.generatedAt + ' from ' + t.rows + ' backlog rows on feat/NO_JIRA-design-release-2-1' +
+      (scoped ? ' — ' + data.excluded.rows + ' rows outside ' + data.scope.of + ' left out' : '')
 
     /* ----------------------------------------------------------- figures --- */
 
@@ -490,6 +500,9 @@
       return theme.ready ? 'Ready now' : 'Not started'
     }
 
+    const staleNote = (theme) =>
+      theme.staleBranch ? '<span class="stale-mark">rebuild from main</span>' : ''
+
     document.getElementById('register').innerHTML = data.themes
       .map((theme) =>
         '<tr>' +
@@ -498,7 +511,7 @@
         '<td class="tkt' + (theme.ticket ? '' : ' no-tkt') + '">' + (theme.ticket || 'none') + '</td>' +
         '<td class="built">' + theme.done + ' of ' + theme.live +
         (theme.merged > 0 ? ' · ' + theme.merged + ' merged' : '') + '</td>' +
-        '<td><span class="state ' + theme.state + '">' + stateLabel(theme) + '</span></td>' +
+        '<td><span class="state ' + theme.state + '">' + stateLabel(theme) + '</span>' + staleNote(theme) + '</td>' +
         '<td class="follows">' + (theme.follows.length ? sentence(list(theme.follows)) : '— nothing') + '</td>' +
         '</tr>'
       )
@@ -557,7 +570,7 @@
         mark: ready.length + (ready.length === 1 ? ' theme ready' : ' themes ready'),
         head: sentence(list(ready.map((theme) => theme.id))) + ' can start today',
         body:
-          'Every theme ' + (ready.length === 1 ? 'it waits' : 'they wait') + ' on is complete, so nothing blocks ' +
+          'Nothing ' + (ready.length === 1 ? 'it waits' : 'they wait') + ' on is still open, so nothing blocks ' +
           (ready.length === 1 ? 'it' : 'them') + '. ' +
           'Between ' + (ready.length === 1 ? 'it holds' : 'them they hold') + ' ' +
           ready.reduce((n, theme) => n + theme.live, 0) + ' rows, and ' +
@@ -595,6 +608,56 @@
         ' rows, ' + (criticalUnticketed === criticalUnbuilt.length ? 'none of which has a ticket.' :
         'and ' + criticalUnticketed + ' have no ticket.')
     })
+
+    if (scoped) {
+      const dropped = data.excluded.byTheme.filter((theme) => theme.whole)
+      const thinned = data.excluded.byTheme.filter((theme) => !theme.whole)
+      readings.push({
+        derived: true,
+        mark: data.excluded.rows + ' rows left out',
+        head: 'This is the ' + data.scope.of + ' slice, not the programme',
+        body:
+          data.scope.rule + ' ' +
+          (dropped.length
+            ? sentence(dropped.map((theme) => theme.name).sort((a, b) => a.localeCompare(b))) +
+              (dropped.length === 1 ? ' goes entirely' : ' go entirely') + ', and '
+            : '') +
+          thinned.length + ' more themes lose rows without losing their place — ' +
+          sentence(
+            thinned
+              .slice(0, 4)
+              .map((theme) => theme.name + ' ' + theme.cut)
+          ) + (thinned.length > 4 ? ', and others' : '') + '. ' +
+          'The levels and lines are recomputed over what is left, so a theme can sit higher here than it does on ' +
+          'the whole-programme page.'
+      })
+    }
+
+    const stale = data.themes.filter((theme) => theme.staleBranch)
+    if (stale.length) {
+      readings.push({
+        derived: true,
+        mark: stale.length + (stale.length === 1 ? ' stale branch' : ' stale branches'),
+        head: sentence(list(stale.map((theme) => theme.id))) + ' were built once already',
+        body:
+          'Each was built on its own branch, then its rows went back to being unbuilt: those branches will not be ' +
+          'merged, and the theme is played again on a fresh branch from main, taking code from the old one as its ' +
+          'rows’ salvage notes say. ' + stale.reduce((n, theme) => n + theme.live, 0) + ' rows sit behind that ' +
+          'rebuild, so the open pull requests on those branches count for nothing on their own.'
+      })
+    }
+
+    if (data.retired.length) {
+      readings.push({
+        derived: true,
+        mark: 'Retired',
+        head: sentence(data.retired.map((theme) => theme.name).sort((a, b) => a.localeCompare(b))) + ' no longer has rows',
+        body:
+          'Its rows were ported in full onto design snagging’s, which carry their criteria, so the theme is ' +
+          'finished without being built under its own name and is not drawn above. Its branch ' +
+          data.retired.map((theme) => theme.branch).join(', ') + ' is stale.'
+      })
+    }
 
     // Authored judgement about two particular themes. Guarded, so the page still
     // renders if either theme is renamed, merged away or finished.
@@ -646,6 +709,13 @@
       '<p><strong>Counts.</strong> ' + t.rows + ' rows in total, ' + t.dropped + ' dropped, ' + t.rejected +
       ' rejected and ' + t.merged + ' merged into another row, all excluded, leaving ' + t.live + '. A row counts as built when its status is <code>done</code>. ' + t.deferred + ' rows are ' +
       '<code>deferred</code> rather than blocked — paused for review, not waiting on anyone. Readings marked ' +
-      '<em>Commentary</em> are authored judgement, not derived, so check them against the register.</p>'
+      '<em>Commentary</em> are authored judgement, not derived, so check them against the register.</p>' +
+      (data.sharedIds.length
+        ? '<p><strong>Row ids used twice.</strong> ' + data.sharedIds.length + ' ids appear in two backlogs each — ' +
+          data.sharedIds.map((shared) => '<code>' + shared.id + '</code>').join(', ') + ' — because the split-off ' +
+          'themes numbered their new rows from a sequence the parent backlog was already using. Every dependency ' +
+          'on one of them names a row in its own backlog, so this page reads each in its own backlog first and the ' +
+          'levels and lines are unaffected. They are worth renumbering before anything else has to resolve them.</p>'
+        : '')
   })()
 </script>

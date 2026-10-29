@@ -1,6 +1,8 @@
 # Build loop: streamlining the increment build loop
 
-**Design, 29 October 2026.** Agreed with Ian in conversation; not yet planned or built.
+**Design, 29 October 2026.** Agreed with Ian in conversation. A1 is planned in
+[`PLAN-A1.md`](PLAN-A1.md) and built on `chore/NO_JIRA-build-loop-efficiency`; A2, A3 and A4 are
+neither planned nor built.
 
 The Design Release 2.1 accompanying documents theme (EUDPA-724) landed six rows in six loop
 launches over about 29 hours, for roughly 696M tokens. Not one launch ended because the work
@@ -79,18 +81,31 @@ agent starts.
   nine minutes on the seed commits alone. CI watch and `ciFixAttempts` are unchanged, and the run
   still stops at `ci-red`.
 - **`"local"`** — as today, except the tests repo's e2e rung takes its `scope` from
-  `config/e2e-tests-pr-scope.json` for the repos being built.
+  `config/e2e-tests-pr-scope.json` for the built repos other than its own, as below.
 
 **The lease becomes derived, not configured.** `increment-build-loop.js:4569` is today
 `PLAN_ONLY ? null : await acquireRunLease()`. It becomes: take the lease only when
 `e2e === "local"` and some row in the run owes an e2e phase.
 
 **Scope the local e2e rung.** The tests repo's `e2e` rung in `references/gates.json` runs
-`test:docker-compose` with no `scope`, and no Playwright args means no filter — so an
-animals-frontend change runs the plants, ins and animals-admin specs too. That is more than its
-own pull request runs and it duplicates what CDP does after deployment. Scoping it from the same
-file makes the local and CI paths prove the same thing by construction, and is part of why
-"nearly every spec timed out at 90s" on this machine.
+`test:docker-compose` with no `scope`, and no Playwright args means no filter: every domain's
+specs run, whatever the run is building. Where a theme changes no tests-repo file that is more
+than its services' pull requests run. Where it does change one — most themes, documents included
+— the tests repo has no entry in `config/e2e-tests-pr-scope.json` and falls to the default of
+every suite, so its own pull request runs everything too, and the local rung matched the two pull
+requests between them. Either way it duplicates what CDP runs after deployment, and it costs the
+most on the machine least able to afford it: it is part of why "nearly every spec timed out at
+90s" here.
+
+The rung therefore takes `scopeFrom: "pr-scope"`, resolved for the built repos **other than the
+rung's own** — the services the run is proving. A theme building the animals frontend and the
+tests repo scopes to `tests/animals/` with `--grep @animals-frontend`; a tests-repo-only theme
+has nothing to scope from and runs every spec. The reason it is sound to drop the other domains
+is that the e2e specs a theme changes in the tests repo are the specs for the service it is
+building: a documents theme edits `tests/animals/documents-*.spec.ts` and never touches plants.
+A shared helper under `flows/` that another domain's specs use is the one case this misses, and
+the tests repo's own pull request and CDP's family runs catch it — the same trade `e2e: "ci"`
+makes, applied to the local path for consistency.
 
 **No soundness check on `"ci"`.** `config/e2e-tests-pr-scope.json` is the project's deliberate
 statement of what a service's pull request needs to run — its own domain plus the cross-domain

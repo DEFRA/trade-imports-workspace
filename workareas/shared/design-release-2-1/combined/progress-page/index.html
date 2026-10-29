@@ -127,6 +127,12 @@ details.fold { background: var(--surface); border: 1px solid var(--rule); border
 details.fold > summary { cursor: pointer; font-weight: 600; }
 details.fold[open] > summary { margin-bottom: 12px; }
 .prlinks { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.pr-state { margin-left: 5px; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.pr-state.merged { color: var(--done); }
+.pr-state.open { color: var(--warn-edge); }
+.pr-state.closed { color: var(--muted); text-decoration: line-through; }
+.stale-mark { display: inline-block; margin-top: 4px; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--block); }
+.stale-mark::before { content: "\21bb\00a0"; }
 .reason { color: var(--muted); font-size: 1rem; display: grid; gap: 0.5rem; }
 table { border-collapse: collapse; width: 100%; font-size: 1rem; }
 th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
@@ -161,9 +167,9 @@ details.fold { margin-top: 0.5rem; }
 <script src="data.js"></script>
 <script>
 (function () {
+  var D = window.DR21 || { themes: [], blockers: [], questions: [], retired: [], sharedIds: [], staleProse: [] };
   // Summaries written before the 9 October afternoon rulings reshaped these themes: their background prose is not shown.
-  var STALE_PROSE = ['ins-dashboard', 'transporters'];
-  var D = window.DR21 || { themes: [], blockers: [], questions: [] };
+  var STALE_PROSE = D.staleProse || [];
   var themes = D.themes;
   var byId = {};
   themes.forEach(function (t) { t.held = t.held || []; byId[t.id] = t; });
@@ -225,7 +231,8 @@ details.fold { margin-top: 0.5rem; }
 
   function chips(t) {
     var c = '';
-    if (t.splitOff) c += '<span class="chip">split off</span>';
+    if (t.staleBranch) c += '<span class="chip block">rebuild from main</span>';
+    else if (t.splitOff) c += '<span class="chip">split off</span>';
     if (t.done.length) c += '<span class="chip ready">' + t.done.length + ' built</span>';
     if (t.ready.length) c += '<span class="chip">' + t.ready.length + ' to build</span>';
     if (t.blocked.length) c += '<span class="chip block">' + t.blocked.length + ' blocked</span>';
@@ -244,9 +251,13 @@ details.fold { margin-top: 0.5rem; }
     return 'Lands after ' + p.map(title).join('; ') + '.';
   }
 
+  var PR_STATE = { MERGED: 'merged', OPEN: 'open', CLOSED: 'closed' };
+
   function prLinks(prs) {
+    if (!prs || !prs.length) return '<span class="empty">None</span>';
     return '<span class="prlinks">' + prs.map(function (p) {
-      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.label) + ' #' + p.number + '</a>';
+      var state = PR_STATE[p.state] ? '<span class="pr-state ' + PR_STATE[p.state] + '">' + PR_STATE[p.state] + '</span>' : '';
+      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.label) + ' #' + p.number + state + '</a>';
     }).join('') + '</span>';
   }
 
@@ -262,7 +273,7 @@ details.fold { margin-top: 0.5rem; }
     if (!P) return '';
     var im = P.implemented;
     var html = '<section class="section" aria-labelledby="stand-h"><header><h1 id="stand-h">Where the build stands</h1>' +
-      fmt('Design Release 2.1 brings the real services up to the new design.\n\nUpdated ' + P.asOf + '.\n\n- Every row is counted once, across the main backlog and the seven theme backlogs.\n- Dropped rows sit outside the total.', 'lede') + '</header>' +
+      fmt('Design Release 2.1 brings the real services up to the new design.\n\nUpdated ' + P.asOf + '.\n\n- Every row is counted once, across the main backlog and the ' + (D.backlogCount - 1) + ' theme backlogs.\n- Dropped rows sit outside the total.\n- A theme marked "rebuild from main" was built once on a branch that will not be merged, so its rows count as unbuilt.', 'lede') + '</header>' +
       '<div class="facts">' +
       '<div class="fact lead"><b>' + im.done + ' of ' + im.total + ' (' + im.percent + '%)</b><span>Implemented</span></div>' +
       '<div class="fact"><b class="ready">' + P.readyCount + '</b><span>ready to build</span></div>' +
@@ -273,7 +284,7 @@ details.fold { margin-top: 0.5rem; }
       '<div class="bar" role="img" aria-label="' + im.done + ' of ' + im.total + ' rows implemented"><span style="width:' + im.percent + '%"></span></div>' +
       fmt(P.heldCount + ' rows are held, not abandoned.\n\nWhy: ' + P.heldReason + '.\n\nHeld rows stay inside the total until they are built or dropped.', 'note') + '</section>';
 
-    html += '<section class="section" aria-labelledby="theme-h"><header><h2 id="theme-h">Progress by theme</h2>' + fmt('Each theme builds on its own branch, with its own draft pull requests.\n\nNothing merges to main until Sam has checked the finished theme.', 's') + '</header><div class="panel"><div class="table-wrap"><table class="wide"><thead><tr>' +
+    html += '<section class="section" aria-labelledby="theme-h"><header><h2 id="theme-h">Progress by theme</h2>' + fmt('Each theme builds on its own branch, with its own pull requests, and merges to main once Sam has checked it.\n\nA branch marked "rebuild from main" was built once and will not be merged. Its pull requests are left open on a stale branch, and its rows count as unbuilt until the theme is played again from main.', 's') + '</header><div class="panel"><div class="table-wrap"><table class="wide"><thead><tr>' +
       '<th scope="col">Theme</th><th scope="col">Ticket</th><th scope="col">Branch</th><th scope="col">Pull requests</th>' +
       '<th scope="col" class="num">Built</th><th scope="col" class="num">Ready</th><th scope="col" class="num">Waiting</th><th scope="col" class="num">Blocked</th><th scope="col" class="num">Held</th><th scope="col" class="num">Dropped</th>' +
       '<th scope="col">State</th><th scope="col">Review</th></tr></thead><tbody>';
@@ -283,7 +294,8 @@ details.fold { margin-top: 0.5rem; }
       add(t.counts);
       html += '<tr><td><a href="#' + esc(t.id) + '">' + esc(t.title) + '</a></td>' +
         '<td><a href="' + esc(t.ticketUrl) + '" target="_blank" rel="noopener">' + esc(t.ticket) + '</a></td>' +
-        '<td class="repo" style="white-space:normal;word-break:break-all">' + esc(t.branch) + '</td><td>' + prLinks(t.prs) + '</td>' +
+        '<td class="repo" style="white-space:normal;word-break:break-all">' + esc(t.branch) +
+        (t.staleBranch ? '<span class="stale-mark">rebuild from main</span>' : '') + '</td><td>' + prLinks(t.prs) + '</td>' +
         '<td class="num">' + t.counts.done + '</td><td class="num">' + t.counts.ready + '</td><td class="num">' + t.counts.waiting + '</td><td class="num">' + t.counts.blocked + '</td><td class="num">' + t.counts.held + '</td><td class="num">' + t.counts.dropped + '</td>' +
         '<td>' + fmt(t.state) + '</td><td>' + reviewLinks() + '</td></tr>';
     });
@@ -292,13 +304,21 @@ details.fold { margin-top: 0.5rem; }
     html += '<tr><td>Not yet split off</td><td>No ticket yet</td><td class="repo" style="white-space:normal">main backlog</td><td>No pull requests yet</td>' +
       '<td class="num">' + m.done + '</td><td class="num">' + m.ready + '</td><td class="num">' + m.waiting + '</td><td class="num">' + m.blocked + '</td><td class="num">' + m.held + '</td><td class="num">' + m.dropped + '</td>' +
       '<td>' + fmt(m.note) + '</td><td>' + reviewLinks() + '</td></tr>';
+    D.retired.forEach(function (t) {
+      html += '<tr><td>' + esc(t.title) + '</td><td>' + esc(t.id) + '</td>' +
+        '<td class="repo" style="white-space:normal;word-break:break-all">' + esc(t.branch) +
+        '<span class="stale-mark">retired</span></td><td>' + prLinks(t.prs) + '</td>' +
+        '<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>' +
+        '<td>' + fmt('No rows left. They were ported in full onto design snagging’s rows, which carry their criteria, so the theme is finished without having been built under its own name. Its branch is stale.') + '</td><td>' + reviewLinks() + '</td></tr>';
+    });
     html += '<tr class="total"><td>All rows</td><td></td><td></td><td></td><td class="num">' + sum.done + '</td><td class="num">' + sum.ready + '</td><td class="num">' + sum.waiting + '</td><td class="num">' + sum.blocked + '</td><td class="num">' + sum.held + '</td><td class="num">' + sum.dropped + '</td><td>' + sum.total + ' rows</td><td></td></tr>';
     html += '</tbody></table></div>' + fmt('What the columns mean:\n- Ready: a row to build whose every dependency is built.\n- Waiting: a row to build that still waits on another row.\n- Blocked: the row waits on someone outside the build.\n- Held: the row is withheld on purpose until the review is done.', 'note') + '</div></section>';
 
     var c = P.combined;
     html += '<section class="section" aria-labelledby="comb-h"><header><h2 id="comb-h">The combined branch</h2><p class="s">All the themes together on one branch, so the whole release can be reviewed and tested as one.</p></header><div class="panel">' +
       '<p>Branch <span class="mono">' + esc(c.branch) + '</span></p>' +
-      '<div class="callout ready"><p class="label">End-to-end proof</p><p>' + esc(c.e2e.label) + '</p></div>' +
+      (c.note ? '<div class="callout"><p class="label">Read it as a snapshot</p>' + fmt(c.note) + '</div>' : '') +
+      '<div class="callout ready"><p class="label">End-to-end proof</p>' + fmt(c.e2e.label) + '</div>' +
       '<div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Repo</th><th scope="col">Draft pull request</th></tr></thead><tbody>';
     c.draftPrs.forEach(function (p) {
       html += '<tr><td class="repo">' + esc(p.repo) + '</td><td><a href="' + esc(p.url) + '" target="_blank" rel="noopener">#' + p.number + '</a></td></tr>';
@@ -357,7 +377,7 @@ details.fold { margin-top: 0.5rem; }
     html += '<section class="section" aria-labelledby="areas-h"><header><h2 id="areas-h">Work by area</h2>' + fmt(totalToBuild + ' rows still to build and ' + totalBlocked + ' blocked, across ' + themes.length + ' areas.\n\nAreas that can start now come first.\n\nEach area page lists its rows and what each lands after.', 's') + '</header><div class="cards">';
     readyThemes.concat(heldThemes, blockedThemes, builtThemes).forEach(function (t) {
       html += '<a class="card" href="#' + t.id + '"><p class="h">' + esc(t.title) + '</p>' +
-        (t.splitOff ? '<p class="s">Split off to <span class="mono">' + esc(t.splitOff.branch) + '</span></p>' : '') +
+        (t.splitOff ? '<p class="s">' + (t.staleBranch ? 'Built once on' : 'Split off to') + ' <span class="mono">' + esc(t.splitOff.branch) + '</span></p>' : '') +
         '<p class="s">' + esc(landsAfterText(t)) + '</p><div class="chips">' + chips(t) + '</div></a>';
     });
     html += '</div></section>';
@@ -367,7 +387,12 @@ details.fold { margin-top: 0.5rem; }
       D.questions.forEach(function (q) { html += questionCard(q, true); });
       html += '</section>';
     }
-    html += '<footer class="end">' + fmt('There are no waves.\n\nThe only order is row to row. Each ready row names the rows it lands after.') + '</footer>';
+    html += '<footer class="end">' + fmt('There are no waves.\n\nThe only order is row to row. Each ready row names the rows it lands after.') +
+      fmt('Where this comes from: every row’s status across ' + D.backlogCount + ' backlogs in the workarea shared/design-release-2-1, and the pull requests as GitHub had them on ' + D.prsFetchedAt + '. Each theme’s background, the blocker groupings and the open questions are written copy, held in build/editorial.json. Rebuild with npm run build in build/.') +
+      (D.sharedIds.length
+        ? fmt('Row ids used twice: ' + D.sharedIds.map(function (s) { return s.id; }).join(', ') + ' each appear in two backlogs, because the split-off themes numbered their new rows from a sequence the main backlog was already using. Every dependency on one of them names a row in its own backlog, so this page reads each in its own backlog first and the counts are unaffected. Worth renumbering before anything else has to resolve them.')
+        : '') +
+      '</footer>';
     return html;
   }
 
@@ -384,8 +409,17 @@ details.fold { margin-top: 0.5rem; }
     var html = '<header class="prose"><p class="eyebrow">Theme <span class="mono">' + esc(id) + '</span></p>' +
       '<h1>' + esc(t.title) + '</h1>' + fmt(t.why, 'lede') + '<div class="chips">' + chips(t) + '</div></header>';
 
-    if (t.splitOff) {
+    if (t.splitOff && t.staleBranch) {
+      html += '<section class="callout block"><p class="label">Built once already, on a branch that will not be merged</p>' +
+        fmt('It was built on ' + t.splitOff.branch + ', then every row went back to being unbuilt.\n\n' +
+          (t.staleBranchNote || '') + '\n\nSo the rows below read as work still to do, and the pull requests on that branch count for nothing on their own. Each row names the code to take from it in its salvage note in the backlog.') +
+        '</section>';
+    } else if (t.splitOff) {
       html += '<section class="callout ready"><p class="label">Split off to its own branch</p><p>Builds on <span class="mono">' + esc(t.splitOff.branch) + '</span>, from the workarea <span class="mono">' + esc(t.splitOff.workarea) + '</span>. Its rows no longer live in the main backlog.</p></section>';
+    }
+
+    if (t.prs && t.prs.length) {
+      html += '<section class="panel"><p class="label">Pull requests</p>' + prLinks(t.prs) + '</section>';
     }
 
     var qs = questionsFor(id);

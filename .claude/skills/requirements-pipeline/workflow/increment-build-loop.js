@@ -3301,6 +3301,19 @@ const PREFLIGHT_SCHEMA = {
       type: 'boolean',
       description:
         "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
+    },
+    rowRepos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'repos'],
+        properties: {
+          id: { type: 'string' },
+          repos: { type: 'array', items: { type: 'string' } }
+        },
+        additionalProperties: false
+      },
+      description: "Every todo increment's id and its repos list, [] where it names none"
     }
   },
   additionalProperties: false
@@ -3316,16 +3329,20 @@ const BRANCH_PR_STEP = IS_BRANCH
 const E2E_PHASES_STEP = `
 ${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gatePhases // ["e2e"])] | any(index("e2e") != null)' ${BACKLOG_TILDE}\``
 
+const ROW_REPOS_STEP = `
+${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // [])}]' ${BACKLOG_TILDE}\``
+
 const preflight = await agent(
-  `Report whether this run's backlog exists and is readable, which repos its envelope names, and whether any
-increment still to build owes the gate's e2e phase. Run exactly these
+  `Report whether this run's backlog exists and is readable, which repos its envelope names, whether any
+increment still to build owes the gate's e2e phase, and which repos those increments name. Run exactly these
 commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${ROW_REPOS_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
-gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Do nothing
+gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Copy the last
+command's output into rowRepos exactly as printed, every id and repos list as it is. Do nothing
 else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
@@ -3376,6 +3393,20 @@ if (ENVELOPE_REPOS === null) {
       `${WORKFLOW_NAME}: config.repos does not match the repos the backlog envelope at ${BACKLOG} names — ${problems.join('; ')}. Copy the envelope's repos into args in full`
     )
   }
+}
+
+const rowRepoProblems = (rows) =>
+  rows.flatMap(({ id, repos: rowRepos }) =>
+    rowRepos
+      .filter((key) => !REPO_KEYS.includes(key))
+      .map((key) => `${id} names repo ${JSON.stringify(key)}, which config.repos does not configure`)
+  )
+
+const unconfiguredRowRepos = rowRepoProblems(preflight.rowRepos ?? [])
+if (unconfiguredRowRepos.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: ${unconfiguredRowRepos.join('; ')}. Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again`
+  )
 }
 
 const NEXT_SCHEMA = {

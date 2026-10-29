@@ -1018,6 +1018,46 @@ describe('increment-build-loop', () => {
     const CI_E2E_EVIDENCE_HEADING =
       "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
 
+    const runWithRowRepos = (rowRepos) =>
+      runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, preflightAnswer({ rowRepos }), START_ANSWER]
+      })
+
+    test('stops at the preflight when a todo row names a repo the args do not configure', async () => {
+      const run = await runWithRowRepos([
+        { id: 'inc-900', repos: ['frontend'] },
+        { id: 'inc-901', repos: ['frontend', 'workspace'] }
+      ])
+
+      expect(run.error.message).toContain(
+        'inc-901 names repo "workspace", which config.repos does not configure'
+      )
+      expect(run.error.message).not.toContain('inc-900')
+      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+        'workspace',
+        'preflight'
+      ])
+    })
+
+    test('names every row that names an unconfigured repo, not just the first', async () => {
+      const run = await runWithRowRepos([
+        { id: 'inc-900', repos: ['workspace'] },
+        { id: 'inc-901', repos: ['admin'] }
+      ])
+
+      expect(run.error.message).toContain('inc-900 names repo "workspace"')
+      expect(run.error.message).toContain('inc-901 names repo "admin"')
+    })
+
+    test('lets a row naming no repo through the preflight', async () => {
+      const run = await runWithRowRepos([{ id: 'inc-900', repos: [] }])
+
+      expect(run.agents.map((entry) => entry.options.label)).toContain(
+        'inc-900 start'
+      )
+    })
+
     test('starts the increment with one tim build start call before the baseline', async () => {
       const run = await runFrom(null)
 

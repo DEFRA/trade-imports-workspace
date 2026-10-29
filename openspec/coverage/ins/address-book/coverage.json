@@ -214,9 +214,9 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
-              "test": "the add form's Country select lists every country reference data serves alphabetically, United Kingdom in its place",
-              "strength": "full",
-              "notes": ""
+              "test": "the add form's Country select opens on Select a country, then lists every country reference data serves alphabetically, United Kingdom in its place",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             },
             {
               "type": "e2e",
@@ -564,7 +564,7 @@
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
               "test": "returns to the address book without creating an address",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: fails when the cancel link submits the typed address (logs/inc-082-probe3-cancel-red.log), passes restored (logs/inc-082-restored-green.log)"
             },
             {
               "type": "unit",
@@ -3293,15 +3293,31 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "from the place of origin handshake opens the Country select on Select a country and offers France",
-              "strength": "partial",
-              "notes": "run by the gate; not red-probed"
+              "test": "from the place of origin handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the any-country branch of addFormCountryOffer returns the United Kingdom alone (logs/inc-082-probe1-red.log), passes restored (logs/inc-082-restored-green.log)"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignor handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the any-country branch of addFormCountryOffer returns the United Kingdom alone (logs/inc-082-probe1-red.log), passes restored (logs/inc-082-restored-green.log)"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "the INS add page reached from the place of origin picker opens on Select a country, offers France, and keeps a blank name on the page with its error",
+              "test": "the INS add page reached from the Place of origin picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3459,6 +3475,45 @@
               "test": "POST from the consignor handshake with a 13-character postcode and a badly formed email shows both format errors and saves nothing",
               "strength": "full",
               "notes": "red-probed: fails when the postcode maximum length is raised to 13"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-G",
+          "name": "The place of origin and consignor pages offer the Country field as a drop-down list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the place of origin handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the govukSelect in address-fields.njk is replaced by a text input (logs/inc-082-probe2-red.log), passes restored (logs/inc-082-restored-green.log)"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignor handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the govukSelect in address-fields.njk is replaced by a text input (logs/inc-082-probe2-red.log), passes restored (logs/inc-082-restored-green.log)"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Place of origin picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         }

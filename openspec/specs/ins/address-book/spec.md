@@ -753,7 +753,7 @@ The system MUST give the name field the autocomplete hint 'organization', the ad
 
 ### Requirement: The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination
 **ID**: REQ-INS-ADDR-035
-The system MUST show every address and contact field, with no address search, on the add page reached from a notification's role picker. From the place of origin or consignor picker it MUST offer every served country, opening the Country select on 'Select a country'. From the consignee, importer or place of destination picker it MUST offer only 'United Kingdom', selected, and MUST save that country whatever country is posted.
+The system MUST show every address and contact field, with no address search, on the add page reached from a notification's role picker. From the place of origin or consignor picker it MUST offer every served country, opening the Country select on 'Select a country'; the Country field there is a drop-down list. From the consignee, importer or place of destination picker it MUST offer only 'United Kingdom', selected, and MUST save that country whatever country is posted.
 
 #### Scenario: The place of origin and consignor pages offer every country, opening on Select a country
 **ID**: SCN-INS-ADDR-035-A
@@ -761,7 +761,7 @@ The system MUST show every address and contact field, with no address search, on
 - **WHEN** they choose 'Add a new address'
 - **THEN** every address and contact field is shown, with no address search
 - **AND** the Country select's first option reads 'Select a country' and no country is selected
-- **AND** every country the reference data service serves can be chosen
+- **AND** after 'Select a country' the select offers 'United Kingdom' and every country the reference data service serves, and no other, by their served names, in alphabetical order
 
 #### Scenario: The consignee, importer and place of destination pages offer the United Kingdom alone
 **ID**: SCN-INS-ADDR-035-B
@@ -798,3 +798,10 @@ The system MUST show every address and contact field, with no address search, on
 - **WHEN** they save with a postcode of more than 12 characters and an email address that is not in the correct format
 - **THEN** the summary and the fields show 'Postcode must be 12 characters or fewer' and 'Enter an email address in the correct format'
 - **AND** nothing is saved
+
+#### Scenario: The place of origin and consignor pages offer the Country field as a drop-down list
+**ID**: SCN-INS-ADDR-035-G
+- **GIVEN** a trader on a notification's place of origin or consignor picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the Country field is a drop-down list holding its countries as options
+- **AND** it is not a type-ahead search

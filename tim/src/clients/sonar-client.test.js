@@ -125,3 +125,136 @@ describe('listIssues', () => {
     ).rejects.toMatchObject({ code: 'PARSE' })
   })
 })
+
+describe('qualityGate', () => {
+  const condition = (over) => ({
+    status: 'OK',
+    metricKey: 'new_coverage',
+    comparator: 'LT',
+    periodIndex: 1,
+    errorThreshold: '90',
+    actualValue: '97.9',
+    ...over
+  })
+
+  test('returns the status and every condition the gate weighed on a pull request', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query({ projectKey: PROJECT, pullRequest: '435' })
+      .reply(200, {
+        projectStatus: { status: 'OK', conditions: [condition()] }
+      })
+
+    const result = await createSonarClient({ token: '' }).qualityGate(
+      'trade-imports-plants-frontend',
+      { pullRequest: 435 }
+    )
+
+    expect(result).toEqual({
+      project: PROJECT,
+      pullRequest: '435',
+      branch: null,
+      status: 'OK',
+      conditions: [
+        {
+          metric: 'new_coverage',
+          status: 'OK',
+          comparator: 'LT',
+          threshold: '90',
+          actual: '97.9'
+        }
+      ],
+      url: `${BASE}/summary/new_code?id=${PROJECT}&pullRequest=435`
+    })
+  })
+
+  test('carries the threshold and the measurement of a failing condition', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query(true)
+      .reply(200, {
+        projectStatus: {
+          status: 'ERROR',
+          conditions: [
+            condition({
+              status: 'ERROR',
+              metricKey: 'new_blocker_violations',
+              comparator: 'GT',
+              errorThreshold: '0',
+              actualValue: '3'
+            })
+          ]
+        }
+      })
+
+    const result = await createSonarClient({ token: '' }).qualityGate(PROJECT, {
+      pullRequest: 435
+    })
+
+    expect({ status: result.status, condition: result.conditions[0] }).toEqual({
+      status: 'ERROR',
+      condition: {
+        metric: 'new_blocker_violations',
+        status: 'ERROR',
+        comparator: 'GT',
+        threshold: '0',
+        actual: '3'
+      }
+    })
+  })
+
+  test('links the branch it was asked about', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query({ projectKey: PROJECT, branch: 'main' })
+      .reply(200, { projectStatus: { status: 'OK', conditions: [] } })
+
+    const result = await createSonarClient({ token: '' }).qualityGate(PROJECT, {
+      branch: 'main'
+    })
+
+    expect({ branch: result.branch, url: result.url }).toEqual({
+      branch: 'main',
+      url: `${BASE}/summary/new_code?id=${PROJECT}&branch=main`
+    })
+  })
+
+  test('reports NONE with no conditions when nothing has been analysed', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query(true)
+      .reply(200, { projectStatus: { status: 'NONE', conditions: [] } })
+
+    const result = await createSonarClient({ token: '' }).qualityGate(PROJECT)
+
+    expect({ status: result.status, conditions: result.conditions }).toEqual({
+      status: 'NONE',
+      conditions: []
+    })
+  })
+
+  test('sends SONAR_TOKEN as a bearer token when one is set', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query(true)
+      .matchHeader('authorization', 'Bearer secret')
+      .reply(200, { projectStatus: { status: 'OK', conditions: [] } })
+
+    const result = await createSonarClient({ token: 'secret' }).qualityGate(
+      PROJECT
+    )
+
+    expect(result.status).toBe('OK')
+  })
+
+  test('maps a refusal to the same TimError the issue search does', async () => {
+    mockPool(BASE)
+      .get('/api/qualitygates/project_status')
+      .query(true)
+      .reply(404, {})
+
+    await expect(
+      createSonarClient({ token: '' }).qualityGate(PROJECT)
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})

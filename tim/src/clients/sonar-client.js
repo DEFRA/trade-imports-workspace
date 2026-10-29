@@ -31,6 +31,27 @@ const projectKeyOf = (project) =>
 
 const fileOf = (component) => component.slice(component.indexOf(':') + 1)
 
+const scopeParamsOf = ({ pullRequest, branch }) => {
+  const params = new URLSearchParams()
+  if (pullRequest !== undefined) params.set('pullRequest', String(pullRequest))
+  if (branch !== undefined) params.set('branch', branch)
+  return params
+}
+
+const conditionSummary = ({
+  status,
+  metricKey,
+  comparator,
+  errorThreshold,
+  actualValue
+}) => ({
+  metric: metricKey,
+  status,
+  comparator,
+  threshold: errorThreshold ?? null,
+  actual: actualValue ?? null
+})
+
 const issueSummary = (baseUrl, projectKey, scope) => (issue) => ({
   key: issue.key,
   rule: issue.rule,
@@ -87,11 +108,7 @@ export const createSonarClient = ({
      */
     listIssues: async (project, { pullRequest, branch } = {}) => {
       const projectKey = projectKeyOf(project)
-      const scopeParams = new URLSearchParams()
-      if (pullRequest !== undefined) {
-        scopeParams.set('pullRequest', String(pullRequest))
-      }
-      if (branch !== undefined) scopeParams.set('branch', branch)
+      const scopeParams = scopeParamsOf({ pullRequest, branch })
       const scope = scopeParams.toString()
       const query = new URLSearchParams({
         componentKeys: projectKey,
@@ -109,6 +126,38 @@ export const createSonarClient = ({
         branch: branch ?? null,
         total: data.total ?? data.issues.length,
         issues: data.issues.map(issueSummary(root, projectKey, scope))
+      }
+    },
+
+    /**
+     * The quality gate's verdict on a pull request, a branch or the main
+     * branch, with every condition it weighed. A gate failure has no GitHub
+     * job log, so this is the only machine-readable account of one.
+     *
+     * @param {string} project - repo name, with or without the DEFRA_ prefix
+     * @param {object} [scope]
+     * @param {string|number} [scope.pullRequest]
+     * @param {string} [scope.branch]
+     */
+    qualityGate: async (project, { pullRequest, branch } = {}) => {
+      const projectKey = projectKeyOf(project)
+      const scopeParams = scopeParamsOf({ pullRequest, branch })
+      const query = new URLSearchParams({ projectKey })
+      for (const [name, value] of scopeParams) query.set(name, value)
+      const data = await get(
+        `/api/qualitygates/project_status?${query}`,
+        `qualityGate(${projectKey})`
+      )
+      const scope = scopeParams.toString()
+      return {
+        project: projectKey,
+        pullRequest: pullRequest === undefined ? null : String(pullRequest),
+        branch: branch ?? null,
+        status: data.projectStatus?.status ?? 'NONE',
+        conditions: (data.projectStatus?.conditions ?? []).map(
+          conditionSummary
+        ),
+        url: `${root}/summary/new_code?id=${projectKey}${scope ? `&${scope}` : ''}`
       }
     }
   }

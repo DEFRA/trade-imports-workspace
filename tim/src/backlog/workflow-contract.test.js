@@ -5450,6 +5450,18 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('tells the branch CI fixer how to read a quality gate that has no job log', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+
+        expect(promptOf(run, 'inc-900 ci fix 1')).toContain(
+          'tim sonar gate <the repo name> --pull-request <n>'
+        )
+      })
+
       test('binds the house rules into the branch CI fixer', async () => {
         const run = await runMergeRow(
           FOUND,
@@ -7324,6 +7336,23 @@ describe('increment-build-loop', () => {
 
         expect(promptOf(run, 'inc-020 ci fix 1')).toContain(
           'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
+        )
+      })
+
+      test('tells the CI fixer how to read a quality gate that has no job log', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 ci watch': {
+              green: false,
+              failures: ['unit: red'],
+              summary: 'red'
+            }
+          }
+        )
+
+        expect(promptOf(run, 'inc-020 ci fix 1')).toContain(
+          'tim sonar gate <the repo name> --pull-request <n>'
         )
       })
 

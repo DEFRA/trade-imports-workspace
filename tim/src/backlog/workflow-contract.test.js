@@ -925,6 +925,11 @@ describe('increment-build-loop', () => {
     const WORK_BRANCH = 'feat/EUDPA-900-fixture'
     const START_ANSWER = startAnswer(startedResult())
 
+    const preflightAnswer = (fields = {}) => ({
+      ...PREFLIGHT_ANSWER,
+      ...fields
+    })
+
     const runFrom = (...answers) =>
       runLoop(scriptPath, {
         args: BASE_ARGS,
@@ -3664,6 +3669,56 @@ describe('increment-build-loop', () => {
 
           expect(run.result.stopped.detail).toContain(
             `The run's workspace stack lease could not be given back — The workspace stack did not come down. Give it back with \`tim docker lease release --holder "${RUN_ID}"\``
+          )
+        })
+
+        const runWithE2e = (e2e, preflightFields) =>
+          runLoop(scriptPath, {
+            args: { ...BASE_ARGS, e2e },
+            answers: [WORKSPACE_ANSWER, preflightAnswer(preflightFields)]
+          })
+
+        test('takes the lease when e2e is local and a row owes an e2e phase', async () => {
+          const run = await runWithE2e('local', { e2ePhasesOwed: true })
+
+          expect(run.agents.map((entry) => entry.options.label)).toContain(
+            ACQUIRE_LABEL
+          )
+        })
+
+        test('takes no lease when the pull requests prove e2e', async () => {
+          const run = await runWithE2e('ci', { e2ePhasesOwed: true })
+
+          expect({
+            labels: run.agents.map((entry) => entry.options.label),
+            logged: run.logs
+          }).toEqual({
+            labels: expect.not.arrayContaining([ACQUIRE_LABEL]),
+            logged: expect.arrayContaining([
+              'increment-build-loop: no stack lease — e2e is proved by the pull requests'
+            ])
+          })
+        })
+
+        test('takes no lease when no increment of the run owes an e2e phase', async () => {
+          const run = await runWithE2e('local', { e2ePhasesOwed: false })
+
+          expect({
+            labels: run.agents.map((entry) => entry.options.label),
+            logged: run.logs
+          }).toEqual({
+            labels: expect.not.arrayContaining([ACQUIRE_LABEL]),
+            logged: expect.arrayContaining([
+              'increment-build-loop: no stack lease — no increment of this run owes an e2e phase'
+            ])
+          })
+        })
+
+        test('takes the lease when the preflight could not say whether a row owes an e2e phase', async () => {
+          const run = await runWithE2e('local', {})
+
+          expect(run.agents.map((entry) => entry.options.label)).toContain(
+            ACQUIRE_LABEL
           )
         })
       })

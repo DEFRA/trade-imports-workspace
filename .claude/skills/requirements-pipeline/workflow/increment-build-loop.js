@@ -3295,6 +3295,11 @@ const PREFLIGHT_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       description: `Branch lifecycle only: every repo checked out on ${BASE_BRANCH} with no open pull request for it`
+    },
+    e2ePhasesOwed: {
+      type: 'boolean',
+      description:
+        "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
     }
   },
   additionalProperties: false
@@ -3307,14 +3312,19 @@ const BRANCH_PR_STEP = IS_BRANCH
    <repo> the entry's \`repo\`. Put every repo whose list prints \`[]\` in branchWithoutPr, and [] when there is none.`
   : ''
 
+const E2E_PHASES_STEP = `
+${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gatePhases // ["e2e"])] | any(index("e2e") != null)' ${BACKLOG_TILDE}\``
+
 const preflight = await agent(
-  `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
+  `Report whether this run's backlog exists and is readable, which repos its envelope names, and whether any
+increment still to build owes the gate's e2e phase. Run exactly these
 commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
-the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
+the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
+gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Do nothing
 else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
@@ -4576,9 +4586,17 @@ let themeReviewsRun = 0
 const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
 let workspaceLeftOn = null
 
-const runLease = PLAN_ONLY ? null : await acquireRunLease()
+const E2E_PHASES_OWED = preflight.e2ePhasesOwed !== false
+const leaselessReason = !E2E_IS_LOCAL
+  ? 'e2e is proved by the pull requests'
+  : !E2E_PHASES_OWED
+    ? 'no increment of this run owes an e2e phase'
+    : null
+if (leaselessReason) log(`${WORKFLOW_NAME}: no stack lease — ${leaselessReason}`)
 
-if (!PLAN_ONLY && !runLease?.acquired) {
+const runLease = PLAN_ONLY || leaselessReason ? null : await acquireRunLease()
+
+if (!PLAN_ONLY && !leaselessReason && !runLease?.acquired) {
   if (runLease?.refused) {
     stopped = {
       reason: 'stack-held',
@@ -4593,7 +4611,7 @@ if (!PLAN_ONLY && !runLease?.acquired) {
   log(`${WORKFLOW_NAME}: ${stopped.reason.toUpperCase()} before any increment — ${stopped.detail}`)
 }
 
-const runMayHoldLease = !PLAN_ONLY && !runLease?.refused
+const runMayHoldLease = !PLAN_ONLY && !leaselessReason && !runLease?.refused
 
 try {
 while (stopped === null) {

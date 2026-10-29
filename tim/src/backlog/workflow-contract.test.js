@@ -448,6 +448,34 @@ describe('every workflow script', () => {
       expect(run.agents).toEqual([])
     }
   })
+
+  const ARGUMENT_TABLE_HEADING = '| Field | What it is |'
+
+  const documentedArgs = (readme, scriptHeading) => {
+    const section = readme.indexOf(scriptHeading)
+    const table = readme.indexOf(ARGUMENT_TABLE_HEADING, section)
+    return readme
+      .slice(table)
+      .split('\n\n')[0]
+      .split('\n')
+      .map((row) => /^\| `([A-Za-z0-9]+)` \|/.exec(row)?.[1])
+      .filter(Boolean)
+      .sort()
+  }
+
+  test.each([
+    ['increment-build-loop.js', '### `increment-build-loop.js`'],
+    ['distil.js', '## `distil.js`']
+  ])(
+    "documents exactly %s's required args in the workflow README",
+    (script, heading) => {
+      const readme = readFileSync(join(buildLoopDir, 'README.md'), 'utf8')
+
+      expect(documentedArgs(readme, heading)).toEqual(
+        [...REQUIRED_KEYS_BY_SCRIPT[script]].sort()
+      )
+    }
+  )
 })
 
 describe('args-canary', () => {

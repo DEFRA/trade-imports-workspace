@@ -91,7 +91,45 @@ models        {} for the recommended split, pass that unless the user asks
               included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
+e2e           where a row's end-to-end proof comes from: local (the gate's e2e
+              phase against the workspace stack) or ci (no local e2e, no stack
+              lease, no images built; the baseline reads each repo's open pull
+              request with `gh pr checks`). Settle it at the launch from what
+              this machine can do, and say which evidence decided it — see
+              "Choosing e2e" below
 ```
+
+### Choosing e2e
+
+This is the one parameter to work out from the machine rather than the backlog.
+Run each, one call per command:
+
+```
+docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
+ls config/machine.json
+tim docker lease status --json
+```
+
+Recommend `ci` when Docker holds under half the machine's memory, or when
+`config/machine.json` is absent so `tim build tune --write` has never run here,
+and say which of the two decided it. Recommend `local` otherwise. Give the
+recommendation and its evidence rather than asking cold.
+
+A `ci` run leaves the end-to-end proof to the pull requests, which run each
+repo's own domain plus the specs elsewhere carrying its service tag
+(`config/e2e-tests-pr-scope.json`), and CDP runs each service's whole family
+after deployment. The loop still stops at `ci-red`.
+
+Record the answer in the theme's `build-args.json` so a relaunch after a stop
+defaults to it and needs a confirm rather than the question again. A relaunch is
+the moment to change it: a stack failure, or a unit rung timing out in files
+that pass alone, both say `ci`.
+
+Every `build-args.json` written before this parameter existed lacks it, and the
+loop stops before its first agent naming the missing key. That is deliberate
+rather than a migration left undone: the right value depends on the machine the
+launch runs on, and a theme can move between machines, so no value was guessed
+on anyone's behalf. Work it out from the three commands above and add it.
 
 A `lifecycle: 'full'` run goes ticket → branch → build → PR → CI → merge → ticket
 done. A `lifecycle: 'branch'` run goes branch check → build → push → find the

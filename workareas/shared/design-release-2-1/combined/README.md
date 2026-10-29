@@ -61,29 +61,65 @@ After resolution the merge adds no content over 696; it records reference lists 
 |---|---|---|
 | Business review (BAs, POs, SMEs): every change a user would notice, before and after, with Right / Wrong / Not sure | https://claude.ai/artifact/WWWq8qXCzAHaciTzU8YBGa | `business-review/` |
 | Engineering review: risk-ranked findings, with each engineer's verdict | https://claude.ai/artifact/7bH3vbECyuEax7i6xiwfDA | `engineering-review/` |
-| Progress report: Design Release 2.1 work by theme | https://claude.ai/artifact/FHJCGEJ8jm7zs9mLXT4YBw | `progress-page/` |
-| Build order: the themes as a dependency schematic, with what could start today | https://claude.ai/artifact/Mk8EUXrnNpQg7gTtYb1umy | `build-order-page/` |
+| Progress report: Design Release 2.1 work by theme | https://claude.ai/code/artifact/466c571f-880f-478e-971e-dbf10c53b7d5 | `progress-page/` |
+| Build order: the themes as a dependency schematic, with what could start today | https://claude.ai/code/artifact/f7f85b51-6974-4096-acd1-66bec1171457 | `build-order-page/` |
 | OpenSpec audit | — | `openspec-audit.md` |
+
+The progress and build-order links above replace two earlier ones,
+https://claude.ai/artifact/FHJCGEJ8jm7zs9mLXT4YBw and
+https://claude.ai/artifact/Mk8EUXrnNpQg7gTtYb1umy. Those were published from the claude.ai web app rather than from
+Claude Code, so a Claude Code session cannot republish them and they still show 12 October. Share the links above
+instead.
 
 Answers on both review pages live in each page's shared database (`verdicts/<reviewer id>`); read them back with the
 ArtifactData tool.
 
-The build-order page is the exception to this section's heading: it reads the backlogs, not this branch, so it is
-true of the whole programme rather than of the combined review. Everything on it is derived — levels, positions,
-every line, the counts, the register, and four of its six readings — so it stays true as themes are built. Only
-`build/themes.meta.json` is hand-kept, holding each theme's display name and Jira ticket; add a row there when a
-theme is added and the schematic places it and routes its lines, with no layout to edit.
+Both pages also come in a per-journey copy, which shows one journey and the work shared with it. Today that is live
+animals, in [`../animals/`](../animals/README.md). A journey copy runs this generator and this renderer over a
+smaller set of rows, declared in its own `build/scope.json`, so a count or a layout is fixed in one place; `scope.mjs`
+beside this file holds the rule. Edit a page's `index.html` only here — a journey copy's is written by its build from
+this one, and an edit there is lost on the next run.
 
-Refresh it with `npm run build` then `npm run check` in `build-order-page/build/`. The `check` step runs the page's
-own script against a stub DOM and the new data, failing if a region is left empty, if the drawing has the wrong
-number of boxes or lines, or if a value renders as `undefined` — run it before republishing, because a half-drawn
-page otherwise only shows up once it is live. The generator fails rather than guessing: an unknown row status, a
-theme with no `themes.meta.json` entry, a duplicated row id or a dependency cycle all stop the build.
+The progress and build-order pages are the exception to this section's heading: both read the backlogs, not this
+branch, so they are true of the whole programme rather than of the combined review. Everything countable on them is
+derived — levels, positions, every line, the counts, the register, the per-theme row lists, the ready and waiting
+splits, the stale-branch markers — so they stay true as themes are built. `build/themes.meta.json` under
+`build-order-page/` is hand-kept, holding each theme's display name and Jira ticket, and both pages read it, so a
+theme is named the same way on each; add a row there when a theme is added and the schematic places it and routes
+its lines, with no layout to edit.
+
+The progress page has three more hand-kept inputs of its own, each in `progress-page/build/`:
+
+- `editorial.json` — the copy no backlog records: each theme's background, the blocker groupings, the open design
+  questions and the page's standing notes. A blocker group whose rows have all moved on disappears by itself, and
+  blocked rows no group claims are gathered under "Waiting on something else" rather than being dropped, so the
+  page tells you when a group needs writing.
+- `prs.json` — written by `bash fetch-prs.sh`, because a backlog row records the pull request it was built in but
+  not what later became of it. Re-run it whenever the pull requests may have moved.
+- `delivery.meta.json` — the extra branches a theme split into per-ticket pull requests was delivered on. Only the
+  address book needs one today.
+
+Refresh each with `npm run build` then `npm run check` in its own `build/`. The `check` step runs the page's own
+script against a stub DOM and the new data — the build-order one failing if a region is left empty, if the drawing
+has the wrong number of boxes or lines, or if a value renders as `undefined`; the progress one rendering the
+overview and every theme page in turn, and failing if a region is empty, if the headline counts do not add up to the
+total, if a blocked row sits in no group, or if copy was passed through the text formatter and printed as escaped
+markup. Run it before republishing, because a half-drawn page otherwise only shows up once it is live. Both
+generators fail rather than guessing: an unknown row status, a theme with no `themes.meta.json` entry or a
+dependency cycle all stop the build.
+
+A row id used by two backlogs does not stop them. The split-off themes numbered their new rows from a sequence the
+parent backlog was already using, so five ids (`inc-037` to `inc-040` and `inc-202`) name a different row in each of
+two backlogs. Every dependency on one of them names a row in its own backlog, so both generators resolve a
+dependency in its own backlog first and report the clashes on the page and in the build output. A clash that ever
+forces a lookup across backlogs throws instead of guessing which row was meant. Renumbering them would remove the
+hazard.
 
 Then republish `index.html` with `data.js` as a supporting file, **passing the artifact URL above** — publishing
-without it creates a second page instead of updating this one. Two of the six readings under "What the shape tells
-you" are authored judgement rather than derived, and are labelled *Commentary* on the page: the transporters
-decision and the waiting-on-design holding pen. Both are skipped automatically once their theme is complete.
+without it creates a second page instead of updating this one. Two of the build-order page's readings under "What
+the shape tells you" are authored judgement rather than derived, and are labelled *Commentary* on the page: the
+transporters decision and the waiting-on-design holding pen. Both are skipped automatically once their theme is
+complete.
 
 Screenshots: `business-review/capture/` is a Playwright harness that walks the same data through both sides
 (`SIDE=before|after CLEAN=1 npm run capture --prefix business-review/capture`). Before = published `:latest` images

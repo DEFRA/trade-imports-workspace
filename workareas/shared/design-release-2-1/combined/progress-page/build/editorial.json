@@ -1,0 +1,902 @@
+{
+  "comment": "Editorial copy for the Design Release 2.1 progress page: the parts no backlog records. Lifted from the 12 October hand-built data.js so a rebuild keeps them. Everything else on the page is derived by make-data.mjs.",
+  "page": {
+    "heldReason": "The type question and templates theme was paused on 12 October so Sam could review it. These five rows were left unbuilt, and the theme has since become a stale branch: when it is played again, they are built with the rest of it from a fresh branch off main.",
+    "reviewLinks": {
+      "business": "https://claude.ai/artifact/WWWq8qXCzAHaciTzU8YBGa",
+      "engineering": "https://claude.ai/artifact/7bH3vbECyuEax7i6xiwfDA"
+    },
+    "combined": {
+      "branch": "feat/NO_JIRA-design-release-2-1-combined",
+      "draftPrs": [
+        {
+          "label": "animals frontend",
+          "repo": "trade-imports-animals-frontend",
+          "number": 405,
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/405"
+        },
+        {
+          "label": "animals backend",
+          "repo": "trade-imports-animals-backend",
+          "number": 108,
+          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/108"
+        },
+        {
+          "label": "INS frontend",
+          "repo": "trade-imports-ins-frontend",
+          "number": 52,
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/52"
+        },
+        {
+          "label": "plants frontend",
+          "repo": "trade-imports-plants-frontend",
+          "number": 99,
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/99"
+        },
+        {
+          "label": "tests",
+          "repo": "trade-imports-ins-tests",
+          "number": 27,
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/27"
+        },
+        {
+          "label": "stub",
+          "repo": "trade-imports-stub",
+          "number": 23,
+          "url": "https://github.com/DEFRA/trade-imports-stub/pull/23"
+        },
+        {
+          "label": "reference-data",
+          "repo": "trade-imports-reference-data",
+          "number": 30,
+          "url": "https://github.com/DEFRA/trade-imports-reference-data/pull/30"
+        },
+        {
+          "label": "performance tests",
+          "repo": "trade-imports-performance-tests",
+          "number": 19,
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/19"
+        }
+      ],
+      "e2e": {
+        "passed": 433,
+        "skipped": 7,
+        "failed": 0,
+        "label": "Proved once, on 12 October: 433 passed, 7 skipped, 0 failed, on a dev-mode stack of the combined branch. Re-proved after templates merged in: 500 passed, with two failures and one flaky test fixed in 9740498."
+      },
+      "note": "A review snapshot, not the current build. It holds the five themes whose branches went stale on 20 October, so what it shows was built before those rows were reset. Never merge it: each theme merges to main through its own pull requests."
+    },
+    "mainBacklogNote": "Rows not yet split off to a theme branch.",
+    "staleProse": [
+      "ins-dashboard",
+      "transporters"
+    ]
+  },
+  "themes": {
+    "journey-foundation": {
+      "why": "Shared code that several themes read. It covers:\n- each animals set's and plants' journey flow (req-1615, req-1625, req-1934, req-1935, req-1988)\n- the shared layout, kit, save actions and status strip of the animals, plants and INS frontends\n- the shared accessible autocomplete\n\nThe frontends' shared layout, kit, save actions and status strip include:\n- inc-004's amend endings\n- inc-122's Amend bar, under ruling:sam-2026-10-09-pm claim 40\n- inc-127's page titles, under claim 53\n\nIt is made once here, in the first wave.\n\nThe feature themes then build on it in parallel, without touching shared files.\n\nIt holds 7 rows, 7 of them ready to build.",
+      "prose": {
+        "headline": "Traders move through a live-animals notification in Design Release 2.1's order.\n\n- A page opened from the overview goes back to the overview when saved.\n- They can leave a page unfinished.\n- An amendment gives them a choice of where to go after each save.",
+        "whatChanges": "The opening run now:\n- asks for the main reason for import before commodity details\n- no longer stops at the CPH number page\n- always ends on the review page\n\nA page opened from an overview task goes back to the overview when saved. It does not run on through its section.\n\n'Save and return to overview' saves an unfinished page. A badly formatted answer is still refused.\n\nWhile amending, pages end with 'Save and return', 'Save and continue' and 'Save and return to overview'.\n\nContinue on the amend review is held until everything is complete and valid.",
+        "today": "Today the opening run:\n- asks for commodity details before the reason for import\n- sends traders to the CPH number page after 'Roles and addresses'\n\nFrom the overview, a save carries on through the rest of the section before it returns.\n\n'Save and return to overview' is refused on the same errors as 'Save and continue'.\n\nWhen amending, saving a page opened from a Change link always goes back to the notification view.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "These change:\n- the live-animals journey's step order and next-page rules\n- the shared save actions on each page\n- the journey-flow documentation"
+          },
+          {
+            "repo": "tests",
+            "what": "- The full-journey walk becomes Design Release 2.1's cattle-by-air journey, in the new order.\n- A horse-by-sea walk is added.\n- Specs that relied on the old chaining or the old change return are updated."
+          }
+        ],
+        "risks": [
+          "The new step order breaks today's cattle-by-road walk in the tests repo.\n\nThe walk has to be rewritten in the same change (inc-001).\n\nAfter that, every later end-to-end walk follows the new order.",
+          "The return-to-overview change (inc-002) breaks existing tests that rely on section chaining. These include:\n- the animal identifiers cap and reason-and-purpose scope specs\n- the journey helper's step that completes every section",
+          "Several themes wait on these rows:\n- commodities and reason\n- arrival and transit\n- documents\n- transporters\n- identification and permanent address\n- consignment parties\n- type question and templates\n- germinal products\n\nBuilding this theme first stops each of them editing the shared flow.",
+          "A criterion in the overview-and-review row inc-110 says an incomplete amendment shows an error summary.\n\nThat contradicts the held Continue with no error summary in inc-004.\n\nSo inc-110 needs reconciling."
+        ],
+        "screens": [
+          {
+            "file": "review-notification--incomplete.png",
+            "caption": "Review your notification for an unfinished notification. The opening run now always ends here and names what is still outstanding."
+          },
+          {
+            "file": "notification-hub--cattle-air-complete.png",
+            "caption": "The overview with every task complete after the cattle-by-air walk in the new step order."
+          },
+          {
+            "file": "review-notification--amend.png",
+            "caption": "The amend review. 'Save and return' brings traders back here, and Continue is held while anything is incomplete."
+          }
+        ]
+      }
+    },
+    "reference-lists": {
+      "why": "It covers:\n- the countries and ports services and their captured fixtures in the animals, INS and plants frontends\n- reference-data\n- the stub's MDM responses\n\nRequirements: req-1744 to req-1752, req-1811 to req-1814, req-304, req-1932, req-1933.\n\nNo other theme changes the reference services.\n\nThe pages that show the lists belong to their own themes.\n\nIt holds 3 rows, 3 of them ready to build.",
+      "prose": {
+        "headline": "Country and port lists in the GB notification services show what master reference data really serves.\n\n- Destination countries include their territories.\n- Ports are listed airports first, then seaports, then rail.",
+        "whatChanges": "First, the stub is tidied up so it serves the same countries and ports as real master reference data (MDM).\n\nIt also filters countries by block the way MDM does.\n\nThen every captured copy of those lists is recaptured from it. These copies are in the animals frontend, the INS frontend and the tests repo.\n\nAfter that, the destination country selects on the import reason page offer territories as well as countries.\n\nThe port of entry and port of exit lists are ordered by port type. They use the type MDM already holds for each port.\n\nNo list entry is added, removed or respelt in code.",
+        "today": "The stub serves:\n- 78 hand-kept ports, with no port type\n- 31 hand-kept countries\n\nIt ignores the block filter.\n\nThe destination country selects offer those 31 countries, with no territories.\n\nPorts are sorted by name alone, and case matters. So airports and seaports are mixed, and names in capitals come first.\n\nThe INS frontend's stub mode offers four hand-typed countries.",
+        "byRepo": [
+          {
+            "repo": "stub",
+            "what": "- Serves MDM's real country and port records whole and in MDM's order.\n- Filters countries by block.\n- Its own tests check the new data."
+          },
+          {
+            "repo": "referencedata",
+            "what": "- Returns each port's type (airport, seaport or rail) from MDM.\n- Orders the port list by type, then A to Z by name, ignoring letter case."
+          },
+          {
+            "repo": "frontend",
+            "what": "- Recaptures its country and port data from the tidied stub.\n- Adds territories to the destination country selects.\n- Gives port of exit options the same label and order as port of entry."
+          },
+          {
+            "repo": "insfrontend",
+            "what": "Stub mode's Country select in the address book offers the recaptured country list instead of four hand-typed countries."
+          },
+          {
+            "repo": "tests",
+            "what": "- Takes country names from the recaptured data.\n- Drops an unused hand-kept list.\n- Expects the real counts and orders."
+          }
+        ],
+        "risks": [
+          "inc-173 gates six list rows across four themes: inc-006, inc-007, inc-008, inc-082, inc-174, inc-175.\n\nIt has 13 criteria.\n\nThe report suggests it could be split into a countries row and a ports row.",
+          "MDM's duplicate and misspelt ports stay in the list on purpose.\n\nNo test may assert a particular port name, entry or count that pins them.",
+          "List content differs by environment:\n- the stub locally and in CDP dev\n- real MDM in CDP test\n\nTests must assert order and shape, not named entries.",
+          "The destination country change (inc-006) sits in the import reason page's code. The commodities-and-reason theme owns that code.\n\nBuilders of both themes should coordinate."
+        ],
+        "screens": [
+          {
+            "file": "reason-for-import--transhipment-reveal.png",
+            "caption": "Main import reason: the transhipment 'Destination country' select, which gains territories labelled with their parent country"
+          },
+          {
+            "file": "reason-for-import--transit-reveal.png",
+            "caption": "Main import reason: the transit choice, with its 'Destination country' and 'Port of exit' selects"
+          },
+          {
+            "file": "arrival-details--port-search-open.png",
+            "caption": "Arrival details: the port of entry search, listed airports first, then seaports, then rail"
+          }
+        ]
+      }
+    },
+    "origin-page": {
+      "why": "It covers:\n- the live-animals origin feature folder and its obligation section\n- plants' origin folder\n\nRequirements: req-015, req-016, req-030, and the region code and internal reference requirements of inc-010.\n\nThe search box's JavaScript-only additions wait in waiting-on-design.\n\nIt holds 3 rows, 3 of them ready to build.",
+      "prose": {
+        "headline": "On the Origin of the import page, users search for a country instead of scrolling a drop-down.\n\n- The region code prefix fills in as soon as they pick a country.\n- Subdivisions show with their parent country, such as 'Canary Islands (Spain)'.",
+        "whatChanges": "The country of origin control becomes a search box. It:\n- has a placeholder and a search icon\n- shows results only once the user types\n- matches letters anywhere in a name\n- shows the match in bold\n\nThe region of origin code question gets a new hint and a 5-character limit.\n\nIts prefix follows the chosen country without a page reload.\n\nAnswering No clears a saved code.\n\nThe task only reads 'Complete' when the region question is answered.\n\nAlso:\n- the internal reference hint gets shorter\n- every changed string gets Welsh\n- the page's visual baseline is refreshed",
+        "today": "The country box has the hint 'Start typing to search for a country.' and a drop-down arrow.\n\nClicking it opens all 40 places. It matches only the start of words, with no bold.\n\nThe region code prefix appears only after the page reloads.\n\nChanging Yes to No keeps the old code.\n\nSubdivisions show by their plain MDM name.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "The live-animals origin page and its obligation section change:\n- the country search box\n- the region code hint, length limit, live prefix and clearing\n- the completeness rule\n- the internal reference hint\n- Welsh copy\n- the subdivision labels"
+          },
+          {
+            "repo": "tests",
+            "what": "- The country type-ahead and origin page end-to-end specs cover the new behaviour.\n- The origin page's full-page visual baseline is updated to the finished page."
+          }
+        ],
+        "risks": [
+          "The type-ahead component is shared with port of entry and transit countries.\n\nDecide whether the change moves into the foundation theme or applies only to the country of origin.",
+          "The visual baseline is refreshed in inc-010.\n\nIf inc-175 lands after it, inc-175 has to refresh the baseline again.",
+          "The completeness rule needs a stored Yes with no code to never read 'Complete'.\n\nThe page already blocks that case. So the builder must add the rule to the origin obligation as well.",
+          "The germinal products set copies this origin page later.\n\nChanges here carry into that set.\n\ninc-154 and inc-176 both depend on inc-010."
+        ],
+        "screens": [
+          {
+            "file": "origin-of-the-import.png",
+            "caption": "Origin of the import page in Design Release 2.1: no country hint, the search box and the new hints"
+          },
+          {
+            "file": "origin-of-the-import--country-search-open.png",
+            "caption": "Country search results open after typing, with the matching letters in bold"
+          },
+          {
+            "file": "origin-of-the-import--region-code-prefix.png",
+            "caption": "Region code box showing the prefix taken from the chosen country"
+          }
+        ]
+      }
+    },
+    "commodities-and-reason": {
+      "why": "It covers:\n- the commodity search and Commodity details folders\n- the live-animals commodity service\n- the import reason and additional details folders and their obligation sections\n- the k6 walk's commodity steps\n\nRows: inc-011, inc-015, inc-018, inc-020 to inc-022.\n\nThe catalogue rows blocked on MDM also wait here: inc-012, inc-013, inc-019 and inc-023.\n\nIt holds 10 rows, 6 of them ready to build.",
+      "prose": {
+        "headline": "Traders pick from Design Release 2.1's full live-animal list. The search answers as they type.\n\nThey then move through these pages in the new order, with the new wording:\n- commodity\n- main import reason\n- commodity details\n- additional details",
+        "whatChanges": "The live-animal catalogue grows from five commodities to Design Release 2.1's list.\n\nIts germinal lines move out to the germinal set.\n\nWhen JavaScript is on, the commodity search lists results as the trader types.\n\nThe selected panel shows one chip per species.\n\nThe commodity pages become steps in the journey around the main import reason.\n\nAdditional details moves after identification.\n\nWording, hard stops and save behaviour on these pages follow Design Release 2.1, in English and Welsh.",
+        "today": "The catalogue holds five commodities: Cow, Horse, Cat, Dog and Fish.\n\nThe search runs only when the trader presses Search, with nothing under 3 characters.\n\nThe reason page is headed 'Main reason for import'. Its task completes only once Additional details is saved too.\n\nOnly cattle are asked the unweaned question.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "These live-animals pages change:\n- commodity\n- Commodity details\n- Main import reason\n- Additional details\n\nThey change their catalogue, search, wording, hard stops, saving and place in the journey."
+          },
+          {
+            "repo": "tests",
+            "what": "The page specs and page objects for commodity, commodity details, import reason and additional details change with the new wording and order.\n\nA new poultry-by-rail journey proves the whole route."
+          },
+          {
+            "repo": "perftests",
+            "what": "The live-animals performance journey searches for 'Cattle' instead of 'Cow' and walks the new step order."
+          }
+        ],
+        "risks": [
+          "The as-you-type search (inc-014) adds a new client-side script.\n\nIf it is not wired into the frontend's build, it fails silently.\n\nCheck it on a fresh stack.",
+          "The performance suite breaks:\n- as soon as the opening step order lands (inc-001)\n- once 'Cow' no longer exists\n\ninc-015 and inc-012 should follow closely so it keeps running.",
+          "The germinal set copies this theme's finished pages. inc-016, inc-017 and inc-024 wait on it.\n\nIdentification, consignment parties and templates rows wait on the catalogue and journey order.\n\nDelays here hold up several other themes.",
+          "The review area may make the same review label changes as inc-020.\n\ninc-019 is a tests-only proof that the notes suggest folding into the catalogue row.\n\nAgree who owns each before building."
+        ],
+        "screens": [
+          {
+            "file": "what-are-you-importing--two-selected.png",
+            "caption": "What are you importing? with two commodities selected, one chip per species"
+          },
+          {
+            "file": "consignment-details--two-commodities.png",
+            "caption": "Commodity details with one block for each of two commodities"
+          },
+          {
+            "file": "reason-for-import--internal-market-reveal.png",
+            "caption": "Main import reason with the internal market purposes revealed"
+          }
+        ]
+      }
+    },
+    "arrival-and-transit": {
+      "why": "It covers:\n- the port of entry and transit countries folders\n- plants' arrival status and arrival details folders\n\nReferences: req-278, req-295, req-1929 to req-1931, inc-028, inc-029, inc-174.\n\nThe transit page's add-and-remove-in-place JavaScript waits in waiting-on-design.\n\nIt holds 5 rows, 5 of them ready to build.",
+      "prose": {
+        "headline": "Traders see Design Release 2.1's arrival details and Transit countries pages. They get:\n- clearer wording\n- port searches that show 'name - code'\n- means of transport required\n- a return to wherever they came from\n- transit countries added and removed without a page reload",
+        "whatChanges": "Arrival details gets Design Release 2.1's labels, hints, placeholder and shorter means of transport options.\n\nThe port and transit country searches:\n- get a search button\n- show each port as 'name - code'\n- bold the matched text\n\nMeans of transport becomes the one required answer.\n\nBoth pages return to the overview or the review when the trader started there.\n\nTransit countries:\n- gets a new title, Back link, empty state and redirect\n- adds and removes countries in place with JavaScript\n- offers the GBNAG_SPS_EX countries and their subdivisions",
+        "today": "Today:\n- the arrival details labels are small and bold\n- ports read 'Port of Dover (GB DVR)'\n- every field can be left blank\n- Save and continue always moves on to the next page, instead of going back to the overview\n\nThe transit search offers the 31-country origin list, with no subdivisions.\n\nA country is only added by pressing 'Add country', which reloads the page.\n\nAn empty list shows 'You have not added any countries yet.'",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "The live-animals arrival details and Transit countries pages change their:\n- copy\n- type-ahead searches\n- save routing\n- page title, Back link and redirect\n- in-place add and remove\n- transit country list"
+          },
+          {
+            "repo": "tests",
+            "what": "The arrival details and transit countries page objects and specs follow the new option text, routing, announcements and country list."
+          }
+        ],
+        "risks": [
+          "The search button and bold match set the pattern for the shared type-ahead. The origin country search also uses it.\n\nAgree it at the inc-027 review point.\n\nOrder the work with the origin page's search change.",
+          "The tests repo picks ports by today's '(code)' text.\n\nSo its port selection must follow the new 'name - code' text in the same change.",
+          "Keep every server-side field check and the no-JavaScript route.\n\n- A page with any error saves nothing.\n- An impossible date is refused, even on 'Save and return to overview'.",
+          "Do not assert a transit country count.\n\nThe count differs between the stub and real MDM.\n\nAny gap with Design Release 2.1's 41 countries is for MDM to change, not a list edited in code."
+        ],
+        "screens": [
+          {
+            "file": "arrival-details--port-search-open.png",
+            "caption": "Arrival details with the port search open, showing 'name - code' options and the matched text in bold"
+          },
+          {
+            "file": "arrival-details--error.png",
+            "caption": "Arrival details refusing Save and continue when no means of transport is chosen"
+          },
+          {
+            "file": "transit-countries--two-countries.png",
+            "caption": "Transit countries with two countries added"
+          }
+        ]
+      }
+    },
+    "documents": {
+      "why": "It covers:\n- the documents folder\n- the document types service\n- the documents obligation section\n- the backend's accompanying document package\n\nRows: inc-031 to inc-035.\n\nThe 50MB row, inc-036, waits on the CDP ingress cap.\n\nIt holds 6 rows, 5 of them ready to build.",
+      "prose": {
+        "headline": "Traders can:\n- open Upload documents as soon as the origin is answered\n- see the Design Release 2.1 wording\n- use any reference, such as 'ITAHC-001'\n- return to where they started\n- move on without waiting for virus scans",
+        "whatChanges": "The Upload documents task opens once the origin of the import is answered.\n\nThe page's wording, hints, table headings and maximum-documents error change to match the design.\n\nAlso:\n- document references can contain punctuation\n- the document type list drops 'Health certificate'\n- the page sends the trader back to where they came from\n- Save and continue no longer waits for scans that are still running\n- Save and return to overview keeps a typed-in document\n\nRaising the file limit to 50MB waits on CDP.",
+        "today": "Today Upload documents opens only once origin, commodities and commodity details are complete.\n\n- Back and Save and continue always go to the overview.\n- Any document not yet scanned clean holds the trader.\n- Save and return to overview drops a part-filled document.\n\nThe backend refuses references that are not letters and digits. So 'ITAHC-001' shows as an upload error.\n\nThe select offers fourteen types, including Health certificate.\n\nFiles are limited to 10MB.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "The live animals Upload documents page gets its new:\n- entry rule\n- wording\n- type list\n- return behaviour\n- save-button behaviour\n\nLater, it gets the 50MB limit."
+          },
+          {
+            "repo": "backend",
+            "what": "The document upload check accepts references with hyphens, slashes, spaces and other punctuation.\n\nIt keeps the Health certificate type, so saved documents still load and are coded on the outbound event."
+          },
+          {
+            "repo": "tests",
+            "what": "These change:\n- the documents page object\n- the limits, reject, scan-lifecycle, refresh-without-JavaScript and promoted-documents specs\n\nThey assert the new wording, types, return behaviour and scan handling."
+          }
+        ],
+        "risks": [
+          "The entry rule for Upload documents sits in the journey's shared flow and task rows.\n\nThe journey-flow and overview work also change these.\n\nPut it in the foundation theme if another row edits the same task gate.",
+          "The backend must keep its Health certificate type. This lets documents already saved with it still load and be coded on the outbound event.\n\nOnly the frontend's options drop it.",
+          "The return behaviour uses the service's own change-from-review context and overview fallback.\n\nDo not add a 'from' marker to the address or a hidden 'from' field.",
+          "If the germinal products Upload documents page is copied before the 50MB row unblocks, the 50MB change must raise that page's limit too."
+        ],
+        "screens": [
+          {
+            "file": "upload-documents.png",
+            "caption": "Upload documents as Design Release 2.1 shows it, with the new guidance and hints"
+          },
+          {
+            "file": "upload-documents--one-document.png",
+            "caption": "One document added, listed in the table with its status"
+          },
+          {
+            "file": "upload-documents--error.png",
+            "caption": "The page with validation errors"
+          }
+        ]
+      }
+    },
+    "transporters": {
+      "why": "It covers:\n- the transporter list, type, add and details folders\n- the transporters and address lookup services\n- the INS backend's address lookup\n- the stub's federated lookup\n- the address book's transporter type, tab and hand-over\n\ninc-043 builds now.\n\ninc-008, inc-037 to inc-042, inc-044 and inc-074 to inc-076 wait on whether the service manages transporters (ruling:sam-2026-10-09-pm claims 34 to 36).\n\nThe address book's transporter code is new code beside the address book's own folders. It touches none of them.\n\nIt holds 12 rows, 1 of them ready to build.",
+      "prose": {
+        "headline": "Traders choosing or adding a transporter see Design Release 2.1's pages:\n- a searchable list of DR2.1's eight transporters\n- a type page and add forms that refuse blank answers\n- a success banner on the list after adding one",
+        "whatChanges": "The transporter list takes:\n- DR2.1's layout\n- an icon-button search that also matches type and status\n- DR2.1's eight transporters\n\n'Choose a transporter type' and both add forms take DR2.1's copy. They stop a trader who saves a blank form.\n\nSaving an add now returns to the list, with the new transporter chosen under a success banner.\n\nA new cancel button goes to the dashboard.\n\nAlso:\n- the private transporter's country list shows what MDM serves\n- the journey run continues to 'Upload documents'\n- the unlinked old commercial transporter search page is removed",
+        "today": "The list ships two placeholder commercial transporters. It searches with a text button.\n\nA blank type choice or a blank add form saves nothing and carries on without an error.\n\nSaving an add, or saving the list, always lands on the overview.\n\nThe old commercial search page can still be opened by its address, though nothing links to it.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "These change:\n- the transporter list\n- the type page\n- both add forms\n- their shared save and cancel behaviour\n- the country select\n\nThe unlinked commercial search page is removed."
+          },
+          {
+            "repo": "tests",
+            "what": "Transporter page objects and E2E specs move to DR2.1's records, copy and destinations.\n\nThe removed page's spec and helper go."
+          },
+          {
+            "repo": "insbackend",
+            "what": "Only the blocked Northern Ireland address search uses its address lookup, once that lookup is a real feature."
+          },
+          {
+            "repo": "stub",
+            "what": "Only the blocked address search adds Northern Ireland addresses to the lookup stub."
+          }
+        ],
+        "risks": [
+          "Other areas build on this theme. These all reuse the new list, type page and save behaviour:\n- the address book's transporter add\n- the germinal transporter copy\n- the amend and template endings\n\nThat is why there are review points on the list (inc-037) and on save and cancel (inc-039).",
+          "Some E2E journeys must move to DR2.1's records and new destinations. These are journeys that:\n- pick 'García Livestock Transport SL' by name\n- expect the overview after adding a transporter or saving the list",
+          "The performance journey picks the first transporter and saves.\n\nSo the list must keep its real journey path and form field names.",
+          "The in-page search filter is a client-side script: without its build entry it fails silently."
+        ],
+        "screens": [
+          {
+            "file": "transporter--transporter-added.png",
+            "caption": "Transporter details: the list after adding a transporter, with the success banner"
+          },
+          {
+            "file": "transporter-add--error.png",
+            "caption": "Choose a transporter type: the error when no type is chosen"
+          },
+          {
+            "file": "transporter-add-private--error.png",
+            "caption": "Add a private transporter: a blank form names every required field"
+          }
+        ]
+      }
+    },
+    "identification-and-permanent-address": {
+      "why": "It covers:\n- the animal identification folder and its evaluation\n- the permanent address folder\n- the backend's animal identifier\n\nRows: inc-045 to inc-058.\n\nPigs, sheep and goats' ear tags (inc-051) wait on the MDM catalogue.\n\nIt holds 11 rows, 10 of them ready to build.",
+      "prose": {
+        "headline": "Identification details becomes a real journey step. It has one panel per species, and each panel saves on its own.\n\nEach cat's, dog's or ferret's permanent address moves to its own Permanent address page.",
+        "whatChanges": "Identification details follows Commodity details in the journey. It is skipped when there is nothing to identify.\n\nThe page groups panels by commodity, then by species.\n\nEach species panel saves only its own animal.\n\nIdentifier labels, hints and length errors follow DR2.1.\n\nA new Permanent address page in consignment parties shows one card per cat, dog or ferret.\n\nEach card offers 'Same as the place of destination (POD)' or 'Enter a new address'.\n\nThe address fields then leave the identification page.\n\nAddresses are summarised on Consignment addresses and listed on the review page.",
+        "today": "Identification details opens only from the Overview. Both its Back link and Save and continue return there.\n\nAny save checks and saves every card at once.\n\nCat and dog panels carry a fraud warning and eight permanent address fields under the identifiers.\n\nThe saved-animals table has a 'Permanent address' column.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "- Moves Identification details into the page-to-page journey.\n- Regroups and re-saves its species panels.\n- Updates identifier wording.\n- Adds the Permanent address page with its summaries.\n- Removes the address fields from identification."
+          },
+          {
+            "repo": "backend",
+            "what": "Stores each animal's permanent address choice and address with the notification, in a shape the plan chooses from the real model."
+          },
+          {
+            "repo": "tests",
+            "what": "- Updates the identification page tests and the shared journey helper to the new next page.\n- Adds Permanent address page tests.\n- Adds an end-to-end pet-cats-by-air journey with permanent addresses."
+          }
+        ],
+        "risks": [
+          "inc-057 must not land before inc-054, or the service stops capturing permanent addresses.",
+          "inc-054 has 13 criteria and may be too big to review in one go.\n\nIt could split into the page and the same-as-destination choice.",
+          "The germinal set copies the identification page later.\n\nSo the panel structure set by inc-046 and inc-047 carries over to it.",
+          "The tests repo's shared journey helper expects the identification save to return to the Overview.\n\nIt must follow the new next page."
+        ],
+        "screens": [
+          {
+            "file": "animal-identification-details--animal-1-of-2.png",
+            "caption": "Identification details partway through a species, with one of two animals entered"
+          },
+          {
+            "file": "permanent-address-select--new-address-reveal.png",
+            "caption": "Permanent address page with 'Enter a new address' chosen and the address fields shown"
+          },
+          {
+            "file": "roles-and-addresses--cat-permanent-added.png",
+            "caption": "Consignment addresses showing the permanent address summary for cats"
+          }
+        ]
+      }
+    },
+    "address-book": {
+      "why": "It covers:\n- the address book record in trade-imports-address-book\n- the INS front door's address-book feature folders and services\n- the journey's address return and handshake\n- the k6 address book walk\n\nRows: inc-059 to inc-073, inc-077 to inc-084.\n\nStill waiting:\n- address search (inc-072, inc-081) waits on the address lookup\n- the transporter type, tab and hand-over wait with the transporters theme\n\nIt holds 23 rows, 21 of them ready to build.",
+      "prose": {
+        "headline": "Traders get an address book that:\n- sorts addresses by type into four tabs\n- starts every new address with 'Choose an address type'\n- adds addresses from a notification on Design Release 2.1's 'Add address and contact details' page",
+        "whatChanges": "Each address book record gains a type and the uses it was saved for.\n\nThe list splits into four category tabs. It gets:\n- a Type column\n- a Type filter\n- a search that covers the whole row\n\nAdd, edit, view and delete pages take on Design Release 2.1's headings, buttons, messages and banners.\n\nTransporters join the book.\n\nThe add page reached from a notification journey becomes 'Add address and contact details'. It has new save and cancel routes back into the journey.",
+        "today": "The INS address book is one untyped table, 25 to a page.\n\nIts search matches only name, town or city and postcode.\n\nAdding an address is a single 'Add address details' form, with no type step.\n\nThe journey hands over to that same form.\n\nA dead or deleted address link shows a 404.",
+        "byRepo": [
+          {
+            "repo": "addressbook",
+            "what": "The address record and its API:\n- carry a type and uses\n- filter the list by category, type and whole-row search\n- serve 8 addresses a page\n- use Design Release 2.1's validation messages"
+          },
+          {
+            "repo": "insfrontend",
+            "what": "The list, view, delete, add and edit pages and the journey's add page are rebuilt to Design Release 2.1.\n\nEvery new string gets a Welsh draft."
+          },
+          {
+            "repo": "frontend",
+            "what": "The animals journey's address handshake returns to the right page after the new save and cancel actions.\n\nTransporters added from the address book flow through the transporter pages."
+          },
+          {
+            "repo": "tests",
+            "what": "Shared address fixtures gain a type.\n\nEnd-to-end specs walk the address book through its own links. They prove the add round trip from every role picker."
+          },
+          {
+            "repo": "perftests",
+            "what": "The k6 address book sessions and background volume are updated for the category tabs and the new 'Choose an address type' step."
+          }
+        ],
+        "risks": [
+          "The typed record contract (inc-059) is a review point.\n\nThese all build on its type and use field names:\n- the add form\n- the category tabs\n- the DR1 address pickers\n\nSo check it before anything else lands.",
+          "The changed handshake return (inc-080) must land on the right journey page. This applies from all five pickers, for each action and the Back link.\n\nIt must still refuse an unknown fulfilment or a stale token.",
+          "The tabs and the new type step break the k6 address book sessions and background volume.\n\nThose fixes ship in the same rows (inc-067, inc-070), not later.",
+          "The tests repo's shared address fixtures need a type.\n\nWithout one, they land on the wrong tab and journey parties stop finding them."
+        ],
+        "screens": [
+          {
+            "file": "address-book--origin-and-consignor.png",
+            "caption": "Address book list on the Origin and Consignor tab, with its Type column"
+          },
+          {
+            "file": "address-book-add.png",
+            "caption": "'Choose an address type', the new first step of adding an address"
+          },
+          {
+            "file": "place-of-origin-add-address.png",
+            "caption": "'Add address and contact details' reached from the place of origin picker in a notification"
+          }
+        ]
+      }
+    },
+    "consignment-parties": {
+      "why": "It covers:\n- the live-animals addresses page and party picker\n- the CPH number and contact folders\n- each frontend's read-only address-book service\n- the address book's role-scoped query\n- the INS journey registry\n- plants' consignor, place of destination, contact and picker folders\n\nRows: inc-085 to inc-097, inc-180.\n\nThe pickers' live filter and the CPH boxes' JavaScript wait in waiting-on-design.\n\nIt holds 13 rows, 13 of them ready to build.",
+      "prose": {
+        "headline": "Traders get a clearer Consignment addresses page. It shows full addresses and has same-as shortcuts.\n\nEach party picker offers only the addresses saved for its role, on one page with a live filter.\n\nThe CPH number and contact address pages follow Design Release 2.1.",
+        "whatChanges": "The Consignment addresses page gets:\n- new wording\n- add links that name the party\n- full addresses on answered rows\n- same-as buttons\n\nAddress book records gain roles. So each of the five party pickers lists only its role's addresses, on one page.\n\nThe list narrows as the trader types.\n\nThe CPH number page:\n- applies to more animals\n- can be saved blank\n- has boxes that take a pasted number\n\nThe contact address page:\n- lists only the trader's own branch addresses\n- requires a choice\n- can add a new branch through the INS address book\n\nThe INS address book also learns to return traders to germinal products notifications.",
+        "today": "Every party picker searches the same address book, with no roles, five addresses a page.\n\nEach row has an in-place 'View details' expander. A blank save shows an error.\n\nOn the roles and addresses page:\n- answered rows show only the name\n- every empty row offers a bare 'Add'\n\nThe CPH question covers only a short commodity list and refuses a blank save.\n\nThe contact page:\n- lists every record in the address book\n- accepts a save with nothing chosen\n- shows a 'Current contact address' card",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "These change their wording, layout, rules and where they go next:\n- the live-animals roles and addresses page\n- the five party pickers\n- the CPH number and contact address pages\n\nThe CPH boxes gain their first client script."
+          },
+          {
+            "repo": "addressbook",
+            "what": "Address records hold one or more roles.\n\nThe service can list one organisation's addresses for a single role on one page."
+          },
+          {
+            "repo": "insfrontend",
+            "what": "The INS address book:\n- returns traders to the picker they came from\n- opens ready to add a branch address for the contact page\n- accepts adds from germinal products notifications"
+          },
+          {
+            "repo": "tests",
+            "what": "The page objects and specs for the addresses page, party pickers, CPH number and contact address pages change to match.\n\nThis includes the pagination, expander and blank-save error tests."
+          }
+        ],
+        "risks": [
+          "Role filtering (inc-087) is the theme's one review point.\n\nCheck it on the compose stack and in stub mode before these build on it:\n- the same-as row\n- the country search\n- the germinal pickers\n\nRecords saved before roles existed must still show on every picker.",
+          "Same-as buttons need the summary list moved inside the page's form. Today it sits outside.\n\nEach copy must be independent of its source party.",
+          "inc-096 changes shared code that other themes also touch: the parties obligations and the journey flow.\n\nThe tests repo's flow that expects the CPH page after Consignment addresses has to change with it.",
+          "The 'View' link carries a return path across services.\n\nAccept only a return path inside the animals journey, so it cannot become an open redirect."
+        ],
+        "screens": [
+          {
+            "file": "roles-and-addresses--same-as-shortcuts.png",
+            "caption": "Consignment addresses with named add links, full addresses and same-as shortcuts"
+          },
+          {
+            "file": "consignor-or-exporter.png",
+            "caption": "The Consignor picker with the new add button, search control and 'Select an address' list"
+          },
+          {
+            "file": "contact-address-for-consignment.png",
+            "caption": "Contact address for consignment with its intro and 'Select an address' heading"
+          }
+        ]
+      }
+    },
+    "overview-and-review": {
+      "why": "It covers:\n- the set-owned overview, check answers, declaration and confirmation folders in the animals and plants frontends (ruling:sam-2026-10-09-pm claim 39)\n- the backend's notification record, status and view\n- the INS dashboard's link view-model for a new status\n\nReferences: inc-098 to inc-117, inc-187, inc-199; req-1987.\n\nIt holds 20 rows, 18 of them ready to build.",
+      "prose": {
+        "headline": "Traders will see these pages laid out and worded as in Design Release 2.1:\n- the live-animals Overview\n- the 'Review your notification' page\n- the submitted notification's view\n- the Declaration\n- the 'Import notification submitted' page\n\nA submitted notification will get its own header. It shows:\n- its status\n- the date submitted\n- Amend, Copy as new and Delete buttons",
+        "whatChanges": "The Overview:\n- gets regions that assistive technology can move between\n- has its 'Main import reason' row renamed\n- shows the Transit countries task only when transit countries are required\n\nThe review page is rebuilt to Design Release 2.1's sections, cards, rows and unfinished-card messages. This includes:\n- a new 'What are you importing?' card\n- one card per document\n- one Addresses card\n\nA submitted notification's view, and a draft's review, get a header with:\n- the reference\n- a status tag\n- a date\n- action buttons\n- the import reference numbers\n\nSubmitting will record its date and any outstanding items. So a notification still missing its health certificate shows as 'Submitted action required'.\n\nThe Declaration and confirmation pages take the new wording, links and redirects.",
+        "today": "Today the review uses older headings and card titles: '4. Documents', 'Import details', 'Roles and addresses'.\n\nIt ends with Continue only. It shows species cards with no species blocks.\n\nA submitted notification opens under the 'Review your notification' heading, with no date and no action-required state.\n\nIts Back link goes to the notification's Overview.\n\nThe declaration saves only the tick, without recording a submission date.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "The live-animals Overview, review page, view header, Declaration and confirmation pages change to Design Release 2.1's structure, wording, links and redirects."
+          },
+          {
+            "repo": "backend",
+            "what": "The notification record and its view will store the submission date and the items still outstanding at submit.\n\nThey also back the view header's status and the amendment's review state."
+          },
+          {
+            "repo": "tests",
+            "what": "End-to-end tests and page objects are updated for:\n- the Overview rows\n- the review\n- amend and resubmit\n- cancel amend\n- the Declaration\n\nNew tests cover the review, declaration and confirmation paths that no test proves today."
+          }
+        ],
+        "risks": [
+          "inc-101 and inc-104 set the review's structure and are review points.\n\nMost of the other review rows build their cards into them. So a late change there means rework.",
+          "inc-111 decides how the page tells a submitted notification's view apart from the journey review. It is keyed on the route and the stored status.\n\nThese all build on it:\n- the rows for header actions, action required and the draft header\n- work in the manage-notifications and ins-dashboard themes",
+          "inc-113 changes what the backend stores at submit.\n\nThe ins-dashboard theme's action-required rows (inc-131, inc-147) depend on it. So get the stored shape right first.",
+          "The view's Back link and the confirmation page's dashboard link go to the INS front door through a configured URL.\n\nWhere none is configured, they fall back to the set's own root.\n\nSo check both cases."
+        ],
+        "screens": [
+          {
+            "file": "notification-hub--poultry-rail-complete.png",
+            "caption": "Overview for a completed poultry notification, where the Transit countries task applies"
+          },
+          {
+            "file": "review-notification--cattle-air-complete.png",
+            "caption": "Review your notification, with Design Release 2.1's sections and cards"
+          },
+          {
+            "file": "review-notification--action-required.png",
+            "caption": "A submitted notification's view with its header in the 'Submitted action required' state"
+          }
+        ]
+      }
+    },
+    "manage-notifications": {
+      "why": "It covers:\n- the amend, cancel-amend, delete and notification actions folders in the animals and plants frontends\n- the backend's notification controller and copy mapper\n- the k6 amend walk\n\nRows: inc-120, inc-121, inc-123 to inc-125.\n\nThe pop-ups wait in waiting-on-design.\n\nConfirmations stay pages (ruling:sam-2026-10-09-pm claim 19).\n\nIt holds 5 rows, 5 of them ready to build.",
+      "prose": {
+        "headline": "Traders:\n- confirm amending and cancelling in a dialog over the page\n- see an 'Amend' status bar throughout an amendment\n- get a copy that keeps exactly what Design Release 2.1 lists\n- see which notification they are about to delete",
+        "whatChanges": "'Amend this notification' and 'Cancel amend' open confirmation dialogs over the page, instead of going to a separate page.\n\nA page without script reaches the same choices on a confirmation page.\n\nConfirming an amendment lands on the review page.\n\nWhile an amendment is in progress, an 'Amend' status bar with 'Cancel amend' shows on:\n- the Overview\n- the review\n- every question page\n\nCopy as new keeps and clears exactly what Design Release 2.1 says.\n\nA stale copy from the view page returns to that page.\n\nThe delete confirmation page gets a summary of the notification, plus new wording and buttons.",
+        "today": "Amend has no confirmation and lands on the Overview.\n\nCancelling an amendment goes to a separate page that ends with a success banner.\n\nThe copy record and the copy's pages disagree. The Overview shows sections as Complete that the record has cleared.\n\nA stale Copy as new from the view page redirects to an address no route serves.\n\nThe delete page has only a heading, one sentence and two buttons. Its way back goes to the dashboard.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "These all change in the live-animals set, with Welsh text:\n- the amend, cancel-amendment and delete pages\n- a shared confirmation dialog with a no-script fallback page\n- the 'Amend' status bar\n- the stale-copy return\n- the stub's copy behaviour"
+          },
+          {
+            "repo": "backend",
+            "what": "The copy mapping:\n- keeps and clears exactly Design Release 2.1's list\n- copies the submitted version during an amendment\n- maps certified-for values that are no longer offered to current ones"
+          },
+          {
+            "repo": "tests",
+            "what": "Page objects and end-to-end specs cover:\n- the dialogs\n- the status bar\n- the copy contents\n- the stale-copy and dashboard-return guards\n- the new delete page"
+          },
+          {
+            "repo": "perftests",
+            "what": "The k6 amendment journey's 'amendment started' check expects the amend review instead of the Overview.\n\nThis is in the same change as the new landing."
+          }
+        ],
+        "risks": [
+          "The confirmation dialog in inc-120 is a review point.\n\nCheck these before the cancel-amendment dialog and the status bar reuse it:\n- its markup\n- focus handling\n- how Close, the overlay and the go-back button dismiss it\n- its no-script page",
+          "State changes must stay form posts that carry the CSRF token.\n\nSo both dialogs confirm by submitting a form.\n\nEach needs a confirmation page that works without script.",
+          "Guards that return the trader to the overall dashboard go to:\n- the INS front door's dashboard, on the stack and in CDP\n- /live-animals, in the animals frontend's own fit run\n\nTests need to expect both.",
+          "Later themes build on this one.\n\nThe delete landing (inc-126) and the germinal manage actions (inc-185) both wait for these rows.\n\nSo a change to dialog behaviour here carries into them."
+        ],
+        "screens": [
+          {
+            "file": "review-notification--amend-modal.png",
+            "caption": "The 'Amend notification' confirmation dialog over a submitted notification"
+          },
+          {
+            "file": "review-notification--cancel-amend-modal.png",
+            "caption": "The cancel-amendment dialog over 'Review your notification' during an amendment"
+          },
+          {
+            "file": "notifications-delete.png",
+            "caption": "'Delete this notification?' with the notification summary and the new buttons"
+          }
+        ]
+      }
+    },
+    "animals-dashboard": {
+      "why": "It covers:\n- the live-animals dashboard folder and the list reads in the animals frontend's persistence\n- the backend's list query and sort\n- plants' dashboard folder\n- the k6 suite's list endpoints\n\nReferences: ruling:sam-2026-10-09-pm claims 54 and 55; inc-126, inc-129 to inc-131, inc-135 to inc-140, inc-147, inc-196.\n\nThese also wait here:\n- the summary glance cards (inc-139)\n- the authorities' outcomes (inc-142)\n- plants' tabs, paging and search (inc-200)\n\nIt holds 14 rows, 11 of them ready to build.",
+      "prose": null
+    },
+    "ins-dashboard": {
+      "why": "It covers:\n- the INS read model and its drill-down feature folders\n- the k6 suite's INS page and readiness checks\n\nRows: inc-128, inc-132 to inc-134, inc-143 to inc-146.\n\nEvery row is blocked until the INS dashboard's requirements firm up (ruling:sam-2026-10-09-templates claim 1; ruling:sam-2026-10-09-pm claim 52).\n\nTwo parts go ahead elsewhere:\n- the INS home's controls, in the templates theme\n- its titles, in journey-foundation\n\nIt holds 8 rows, 0 of them ready to build.",
+      "prose": {
+        "headline": "Traders sign in to a new overall dashboard. It sums up each kind of import, with drill-downs for work needing action.\n\nThey find their live animals and germinal products notification lists in the Import Notification Service, rather than the animals service.",
+        "whatChanges": "The INS home stops being a table of notifications.\n\nIt becomes the Design Release 2.1 overall dashboard, with one section for each category and glance cards.\n\nThe live animals list moves from the animals frontend to the INS frontend, limited to the trader's organisation. It gets:\n- new cards\n- tabs\n- one search and sort form\n- additional filters\n- 8-per-page paging\n\nA germinal products list is added next to it.\n\nEach notification event now carries its category. So the INS read model can:\n- file notifications by category\n- work out which submitted notifications need action",
+        "today": "Today the INS home is a 'Dashboard' page. It holds:\n- a reference search\n- a sort form\n- a table of every notification\n\nIts titles read 'X | Import notification service'.\n\nThe live animals list sits in the animals frontend at the live-animals set root, backed by the animals backend. It:\n- pages 20 or 25 at a time\n- has a separate 'Filter notifications' column\n- has no tabs\n\nNotification events carry no category.",
+        "byRepo": [
+          {
+            "repo": "insfrontend",
+            "what": "Gets:\n- the new overall dashboard home\n- GOV.UK-pattern page titles\n- the Action needed, Status updated and Inspection required drill-downs\n- the live animals and germinal products notification lists"
+          },
+          {
+            "repo": "insbackend",
+            "what": "The notification read model:\n- records each notification's category\n- limits results to the trader's organisation\n- works out which notifications need action\n- serves the facts, tabs, search, sort, filters and paging that the lists need"
+          },
+          {
+            "repo": "frontend",
+            "what": "- The live-animals set root now sends the trader to the INS live animals list, instead of showing a list.\n- A delete lands on the overall dashboard.\n- Missing-identifier messages are shown."
+          },
+          {
+            "repo": "backend",
+            "what": "Every notification event it publishes carries the notification's category.\n\nSubmitted notifications record the outstanding items that drive 'Action required'."
+          },
+          {
+            "repo": "schemas",
+            "what": "The event envelope gains one optional category property, with no new PIMS profile version."
+          },
+          {
+            "repo": "tests",
+            "what": "The INS end-to-end specs and page objects are rewritten for the new home, the drill-downs and the moved lists."
+          },
+          {
+            "repo": "perftests",
+            "what": "The k6 home check expects the new heading.\n\nThe page walker, readiness probes and endpoint list cover the moved live animals list."
+          }
+        ],
+        "risks": [
+          "The live animals list crosses services.\n\nCard actions post from the INS frontend to animals frontend routes. The trader must come back to the INS list afterwards.\n\nSo organisation scoping in the read model has to be right before the other list rows copy it.",
+          "Older events carry no category. So the INS read model must treat them as live animals.\n\nOtherwise existing notifications drop off the live animals list.",
+          "The rewritten home removes the table that today's INS end-to-end specs and the k6 home check rely on.\n\nThose specs need rewriting with inc-128, not later.",
+          "'Action needed' covers only missing documents and missing identifiers.\n\nAuthority-flagged actions are left out until an outcome feed exists.\n\nSo counts may look lower than the prototype's."
+        ],
+        "screens": [
+          {
+            "file": "index.png",
+            "caption": "The overall dashboard home, 'Import notification service', with a section for each category"
+          },
+          {
+            "file": "live-animals--in-progress.png",
+            "caption": "The Live animals notification list on its 'In progress' tab"
+          },
+          {
+            "file": "actions--live-animals.png",
+            "caption": "'Tasks requiring your attention': the Action needed drill-down filtered to live animals"
+          }
+        ]
+      }
+    },
+    "germinal-products": {
+      "why": "It covers:\n- the germinal-products set folder and its routes\n- the set's build config\n- the persistence mapper for its fields\n- the backend's germinal commodity, species and GBN-AG publishing\n\nRows: inc-016, inc-017, inc-024, inc-052, inc-053, inc-099, inc-105, inc-141, inc-172, inc-176 to inc-186, inc-191.\n\nEach germinal page is copied after its live twin is built (ruling:sam-2026-10-09 claim 14).\n\nSo the theme lands last among the ready themes.\n\nIt holds 20 rows, 19 of them ready to build.",
+      "prose": {
+        "headline": "Importers of semen, embryos and ova get their own germinal products notification, at its own address.\n\nIt asks only the germinal questions, in Design Release 2.1's look and step order.\n\nThis runs from create through to submit, amend and templates.",
+        "whatChanges": "Germinal products becomes its own set beside live animals in the animals frontend.\n\nEach germinal page is a copy of its finished live-animals page, plus the germinal differences.\n\nThe V4 germinal data fields page decides the questions, limits and which answers are mandatory.\n\nThe backend stores:\n- the notification's category\n- the germinal line's gross weight, packages, temperature and donor details",
+        "today": "The animals frontend serves only the live-animals set.\n\nSo germinal products go through the live-animals journey and are asked for a CPH number.\n\nThe stored notification has no category and holds no temperature.",
+        "byRepo": [
+          {
+            "repo": "frontend",
+            "what": "A new germinal products set, with its own entry point, journey, flow and obligations.\n\nIt is built from copies of every live-animals page except:\n- Additional details\n- CPH number\n- permanent address"
+          },
+          {
+            "repo": "backend",
+            "what": "Stores:\n- each notification's category, with no category read as live animals\n- the germinal gross weight, packages, temperature and donor identification\n\nMaps germinal species and commodities for publishing."
+          },
+          {
+            "repo": "tests",
+            "what": "Germinal page objects plus end-to-end, accessibility and security specs, ending in a full bovine semen notification from create to submitted."
+          }
+        ],
+        "risks": [
+          "This theme builds last. It depends on 12 other themes.\n\nEach germinal page must be copied only after its live-animals twin has finished changing. Otherwise the copies will drift.",
+          "The first row sets the pattern every later germinal page copies.\n\nSo review its skeleton at the review point before the other copies follow.",
+          "Notifications stored before the set exists have no category.\n\nThey must keep reading as live animals without a data migration.\n\nThe category must never change after create.",
+          "Some germinal details have no field in PIMS, such as gross weight and temperature. These are stored and shown, but not published.\n\nPublishing them waits on separate work outside this backlog."
+        ],
+        "screens": [
+          {
+            "file": "consignment-details--germinal.png",
+            "caption": "Commodity details for germinal products: weight, packages and storage temperature"
+          },
+          {
+            "file": "animal-identification-details--germinal.png",
+            "caption": "Identification details for germinal products: donor, dates and identification mark"
+          },
+          {
+            "file": "review-notification--germinal-semen-complete.png",
+            "caption": "Review your notification for a completed bovine semen notification"
+          }
+        ]
+      }
+    },
+    "waiting-on-design": {
+      "why": "One blocked increment per design question (ruling:sam-2026-10-09-pm claims 8 to 22):\n- search buttons (inc-188)\n- region code prefix (inc-190)\n- commodity search as you type (inc-014)\n- transit countries in place (inc-030)\n- live filtering (inc-193)\n- place of origin filtering (inc-197)\n- CPH boxes (inc-093)\n- copy buttons (inc-198)\n- the amend pop-ups (inc-195)\n- address search (inc-194)\n- the templates sort (inc-162)\n- germinal date calendars (inc-192)\n- custom search announcements (inc-189)\n\nEach one enhances a page that another theme builds without JavaScript.\n\nSo its touches are the enhancement scripts layered on those pages.\n\nThe theme lands after them.\n\nEach row is re-drawn when design answers.\n\nIt holds 13 rows, 0 of them ready to build.",
+      "prose": null
+    },
+    "type-question-and-templates": {
+      "why": "It covers:\n- the INS type question and the INS home's controls folder\n- the templates folder and template review in the animals frontend\n- the backend's template store\n- plants' first page, where the INS type question hands over\n\nReferences: inc-148 to inc-161, inc-164 to inc-171; ruling:sam-2026-10-09-templates claims 2 and 4 to 7.\n\nTemplate mode walks the other themes' pages as they stand (claim 6).\n\nSo its few edits there land after the themes it depends on. These edits are:\n- inc-166, inc-168, inc-170, inc-171's Back links\n- inc-152's navigation item in each shared layout\n\nIt holds 22 rows, 22 of them ready to build.",
+      "prose": {
+        "headline": "Every new notification starts by asking 'What are you importing?'\n\nTraders can save, view, change, use and delete templates from a new Manage templates page.",
+        "whatChanges": "The INS front door asks 'What are you importing?' before any draft exists. It then hands each type to its own set or service.\n\nThe home gets 'Create new' and 'Use template' buttons.\n\nBoth frontends get a Templates item in the service navigation.\n\nThe animals backend gets a template store.\n\nThe animals frontend gets the Manage templates page, with template creation, review, save, view, change, use, discard and delete.\n\nJourney pages learn template mode. So Back links and save buttons return to wherever the page was opened from.",
+        "today": "Today the dashboard's create button goes straight into the live-animals journey and lands on the origin page.\n\nThere is no type question.\n\nThe INS home offers 'Start a new notification' only when the trader has no notifications.\n\nNo real service has templates.",
+        "byRepo": [
+          {
+            "repo": "insfrontend",
+            "what": "Builds:\n- the 'What are you importing?' question, with its handover to each set or service\n- the home's 'Create new' and 'Use template' buttons\n- the Templates navigation item"
+          },
+          {
+            "repo": "frontend",
+            "what": "Adds:\n- Manage templates and every templates page\n- the template task list and review\n- template mode on the journey pages\n- Back links that follow the context a page was opened in"
+          },
+          {
+            "repo": "backend",
+            "what": "Adds a template store that keeps each user's templates between sessions and seeds a new draft notification from a template."
+          },
+          {
+            "repo": "tests",
+            "what": "Adds end-to-end coverage for the type question and every templates page, and extends the sign-in tests."
+          }
+        ],
+        "risks": [
+          "Three rows set patterns that later work copies. Review them before building on them:\n- inc-148 covers the cross-service handover from the type question (today a form post with its own request forgery token)\n- inc-151 covers the template store and record shape\n- inc-154 covers how template mode shows on a question page",
+          "Germinal products is offered on the type question before the germinal set exists.\n\nThe test should check the handover to the set's start, not the germinal origin page.",
+          "The template-mode rows change pages that other themes own. So they must land after those themes.\n\nThe germinal products theme also waits on most of this theme's templates rows.",
+          "inc-154 has 13 criteria, which may be too big to review in one go.\n\nBack links must take their context from the service's own journey state, not from markers in the address."
+        ],
+        "screens": [
+          {
+            "file": "notification-type.png",
+            "caption": "'What are you importing?', the type question that starts every new notification"
+          },
+          {
+            "file": "templates--saved.png",
+            "caption": "Manage templates after a template is saved, with the success banner and the new template first"
+          },
+          {
+            "file": "review-notification--template.png",
+            "caption": "Review your template, before saving or deleting it"
+          }
+        ]
+      }
+    }
+  },
+  "blockers": [
+    {
+      "key": "design",
+      "title": "Waiting on design",
+      "what": "Design answers its question on JavaScript-only behaviour from the prototype.\n\nEach row is built as design says, or dropped.\n\nThe version that works without JavaScript is built now, in its own row.",
+      "unblocks": "Design answers its open questions on the prototype's JavaScript-only behaviour.\n\nEach row is then built as design says, or dropped.",
+      "rowIds": [
+        "inc-014",
+        "inc-030",
+        "inc-093",
+        "inc-188",
+        "inc-189",
+        "inc-190",
+        "inc-192",
+        "inc-193",
+        "inc-194",
+        "inc-195",
+        "inc-197",
+        "inc-198"
+      ]
+    },
+    {
+      "key": "mdm-commodities",
+      "title": "Waiting on MDM commodities",
+      "what": "Commodities come from MDM through reference-data.\n\nThe catalogue and commodity search are then re-distilled from that list.",
+      "unblocks": "Two things happen:\n- whoever owns the MDM commodity integration delivers it\n- Sam rules the catalogue unblocked\n\nThe catalogue and commodity search are then re-distilled.",
+      "rowIds": [
+        "inc-051",
+        "inc-191",
+        "inc-012",
+        "inc-013",
+        "inc-019",
+        "inc-023"
+      ]
+    },
+    {
+      "key": "transporters",
+      "title": "Waiting on transporter requirements",
+      "what": "Someone decides:\n- whether the service manages transporters at all\n- if so, whether the address book or something else does",
+      "unblocks": "Whoever owns transporter requirements decides:\n- whether the service manages transporters at all\n- whether the address book or something else does it\n\nThe area is then re-distilled.",
+      "rowIds": [
+        "inc-008",
+        "inc-037",
+        "inc-038",
+        "inc-039",
+        "inc-040",
+        "inc-041",
+        "inc-042",
+        "inc-044",
+        "inc-074",
+        "inc-075",
+        "inc-076"
+      ]
+    },
+    {
+      "key": "ins-dashboard",
+      "title": "Waiting on INS dashboard requirements",
+      "what": "The INS dashboard's summary information firms up. This covers:\n- counts\n- glance cards\n- status-change cards\n- drill-downs\n\nIts controls and templates go ahead now.",
+      "unblocks": "Whoever owns the INS dashboard's requirements firms them up and agrees them with Sam.\n\nThe dashboard area is then re-distilled.",
+      "rowIds": [
+        "inc-128",
+        "inc-132",
+        "inc-133",
+        "inc-134",
+        "inc-139",
+        "inc-142",
+        "inc-143",
+        "inc-144",
+        "inc-145",
+        "inc-146"
+      ]
+    },
+    {
+      "key": "address-lookup",
+      "title": "Waiting on the address lookup",
+      "what": "The INS address lookup becomes a real feature.\n\nToday only the EUDPA-390 spike exists.\n\nUntil then, every add-address page offers manual entry.",
+      "unblocks": "The team building the INS address lookup makes it a real feature. Today only the EUDPA-390 spike exists.\n\nThe area is then re-distilled.",
+      "rowIds": [
+        "inc-072",
+        "inc-081"
+      ]
+    },
+    {
+      "key": "case-system-outcomes",
+      "title": "Waiting on outcomes from the authorities' case system",
+      "what": "PIMS Dynamics sends post-submission outcomes back to the notification:\n- action required\n- inspection\n- delayed\n- completed",
+      "unblocks": "The programme owner names and builds a source of completion.\n\nThe most likely source is PIMS Dynamics sending post-submission outcomes back to the notification.",
+      "rowIds": [
+        "inc-116"
+      ]
+    },
+    {
+      "key": "cdp-upload-limit",
+      "title": "Waiting on the CDP upload limit (EUDPA-518)",
+      "what": "CDP raises the request-body cap in front of the animals frontend so a 50 MB upload gets through.",
+      "unblocks": "CDP raises the request-body cap in front of the animals frontend to at least 50,001,024 bytes.\n\nThe service team records the confirmation against EUDPA-518.",
+      "rowIds": [
+        "inc-036"
+      ]
+    },
+    {
+      "key": "plants-backend",
+      "title": "Waiting on the plants backend",
+      "what": "The plants backend, outside this programme, lets plants' list search, sort and filter. Deferred.",
+      "unblocks": "The plants backend's owners let plants' list:\n- query by status\n- ask for a page size of 8\n- search by keyword, status and arrival date",
+      "rowIds": [
+        "inc-200"
+      ]
+    },
+    {
+      "key": "plants-customs-code",
+      "title": "Waiting on plants' customs document code",
+      "what": "The plants policy or customs owner confirms plants' own customs document code.",
+      "unblocks": "The plants policy or customs owner confirms plants' own customs document code.",
+      "rowIds": [
+        "inc-199"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "c-292",
+      "about": "The party pickers move to one unpaginated page with no 'Selected address' inset.\n\nThe question is whether this reaches the plants contact picker, which lists the whole address book.",
+      "question": "inc-087 drops five-a-page pagination and the 'Selected address' inset for the plants consignor and place of destination pickers.\n\nDoes the plants contact picker drop them too? It lists the whole address book rather than one role's records.",
+      "default": "No.\n\ninc-087 changes only the plants consignor and place of destination pickers.\n\nThe plants contact picker:\n- keeps its five-a-page pagination and 'Selected address' inset, as today\n- takes only the shared layout change (req-1964)",
+      "requirements": [
+        "req-1965"
+      ],
+      "theme": "consignment-parties"
+    },
+    {
+      "id": "c-303",
+      "about": "What the main heading (h1) of plants' notification list says.\n\nDesign Release 2.1 heads each list with its category, and has no plants list.",
+      "question": "What does the high-risk plants notification list's h1 say: 'Plants', 'High-risk plants' or something else?",
+      "default": "'Plants'. This is the prototype's own label for plants notifications.\n\nIt has a Welsh machine draft that ships only after translator sign-off.",
+      "requirements": [
+        "req-2029"
+      ],
+      "theme": "animals-dashboard"
+    },
+    {
+      "id": "c-308",
+      "about": "Which checks a journey page applies in template mode: the notification's own, or looser ones.",
+      "question": "In template mode, should a journey page keep the notification's required-answer checks on 'Save and continue'?\n\nOr may a template leave a required answer blank?",
+      "default": "Live animals and germinal products template pages keep the notification's checks:\n- malformed answers are refused\n- 'Save and continue' needs the page's required answers\n- 'Save and return to overview' saves without required checks, as it does for a notification\n\nWhat Design Release 2.1 already does differently for a template stands:\n- no arrival date is asked\n- the template name is optional\n- a template can be saved with sections unanswered\n\nPlants has no template mode.",
+      "requirements": [
+        "req-2049"
+      ],
+      "theme": "type-question-and-templates"
+    }
+  ]
+}

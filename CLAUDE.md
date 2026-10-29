@@ -156,10 +156,22 @@ scripts against it directly — no `cd` needed, and nothing in the
 Makefile, which is deprecated:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim ci
 npm --prefix ~/git/defra/trade-imports-workspace/tim test
 npm --prefix ~/git/defra/trade-imports-workspace/tim run lint
 npm --prefix ~/git/defra/trade-imports-workspace/tim run format
+```
+
+`npm ci` is the one exception: it needs the shell to be inside `tim`.
+Under `--prefix` it refuses with `Missing: tim@0.0.0 from lock file`
+against a lockfile that is in step with `package.json`, so the error
+points at the wrong thing. A stale `tim/node_modules` shows up as a red
+`src/distil/trace.test.js`, which compares the Playwright tim installs
+with the one each repo records traces with, so reach for this when that
+test fails:
+
+```bash
+cd ~/git/defra/trade-imports-workspace/tim
+npm ci
 ```
 
 `tim` finds the workspace by walking up from the current directory, then

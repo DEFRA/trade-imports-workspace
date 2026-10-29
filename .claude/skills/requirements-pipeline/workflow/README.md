@@ -241,6 +241,7 @@ missing key. The first log line is the resolved configuration.
 | `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, and a theme's engineering reviewers and judge. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, a theme's fixer and ladder, and the spec diff comment's writer and checker. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, the plan review recorder, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, the spec diff reader and poster, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
+| `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -366,7 +367,8 @@ ever.
   },
   models: {},
   increments: null,
-  stopAfter: 'all'
+  stopAfter: 'all',
+  e2e: 'local'
 }
 ```
 
@@ -789,13 +791,26 @@ The workspace resolve and the preflight's envelope-against-args check stay in th
 
 ### The workspace stack lease
 
-The workspace stack is one compose project per machine, and the run holds it for its whole
-length under one lease. The holder is the run id, `ibl-<the time the workspace agent read>`,
-so a resumed run keeps it.
+The workspace stack is one compose project per machine, and a run that needs it holds it for
+its whole length under one lease. The holder is the run id, `ibl-<the time the workspace agent
+read>`, so a resumed run keeps it.
+
+**A run only takes the lease when it needs it**: when `e2e` is `'local'` **and** some todo row
+still owes the gate's e2e phase, which the preflight works out from the backlog. Three kinds of
+run therefore start no containers, build no images and give nothing back, logging which reason
+applied: a `planOnly` run, an `e2e: 'ci'` run, and a `'local'` run whose every row carries
+`gatePhases` without `e2e`. On such a run the baseline reads each repo's open pull request with
+`gh pr checks` for its end-to-end evidence, and a pull request with no completed run yet counts
+as awaited rather than red.
+
+Choose `e2e` at the launch from what the machine can actually do. Docker holding well under half
+the machine's memory, or a missing `config/machine.json`, points at `'ci'`: the documents theme
+took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alone, purely from a
+20-container stack no row needed competing for 12 CPUs.
 
 1. **At the start**, after the preflight and before the first increment, a light agent runs
    `tim docker lease acquire --holder "<run id>" --mode dev`, which starts the stack from
-   local source. A `planOnly` run builds nothing and takes no lease.
+   local source.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds
@@ -986,7 +1001,8 @@ The worked example for the frontend alignment sync:
   },
   models: {},
   increments: null,
-  stopAfter: 'all'
+  stopAfter: 'all',
+  e2e: 'local'
 }
 ```
 

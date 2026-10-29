@@ -68,7 +68,8 @@ const ALWAYS_REQUIRED = [
   'ciFixAttempts',
   'ciWatchMinutes',
   'requireApproval',
-  'approvalWaitMinutes'
+  'approvalWaitMinutes',
+  'e2e'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -99,6 +100,15 @@ const REQUIRE_APPROVAL = CFG.requireApproval
 const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
 const STOP_AFTER = CFG.stopAfter
+
+const E2E_LOCATIONS = ['local', 'ci']
+const E2E = CFG.e2e
+if (!E2E_LOCATIONS.includes(E2E)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it) — got ${JSON.stringify(E2E)}`
+  )
+}
+const E2E_IS_LOCAL = E2E === 'local'
 
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 
@@ -216,13 +226,16 @@ const WORKSPACE_PATH = '.'
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const configuredKeys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
-const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || (IS_BRANCH && key === WORKSPACE_KEY))
-if (configuredKeys.length === 0 || badRepoKeys.length > 0) {
-  const keyRule = IS_BRANCH
-    ? `a lower-case word other than "${WORKSPACE_KEY}", which lifecycle "branch" keeps for a row that names no repo`
-    : `a lower-case word, "${WORKSPACE_KEY}" for the workspace repo itself`
+const malformedRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key))
+if (configuredKeys.length === 0 || malformedRepoKeys.length > 0) {
+  const keyRule = IS_BRANCH ? 'a lower-case word' : `a lower-case word, "${WORKSPACE_KEY}" for the workspace repo itself`
   throw new Error(
     `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is ${keyRule} — got ${JSON.stringify(REPOS)}`
+  )
+}
+if (IS_BRANCH && configuredKeys.includes(WORKSPACE_KEY)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: lifecycle "branch" never branches the workspace repo, so config.repos must not name "${WORKSPACE_KEY}". Drop it from three places that have to agree: config.repos, the backlog envelope's repos, and every row's repos. The spec still lands on this branch without it — the land stage commits \`openspec/\` on whatever branch the workspace is on. Anything else a row writes in the workspace is left uncommitted and listed in the run's \`leftUncommitted\` for you to commit`
   )
 }
 
@@ -837,6 +850,7 @@ const specBaselineLine = () =>
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.`
 
 const GATE_PHASES = ['unit', 'fit', 'e2e']
+const OFFERED_GATE_PHASES = E2E_IS_LOCAL ? GATE_PHASES : GATE_PHASES.filter((name) => name !== 'e2e')
 const WHOLE_GATE = 'all'
 const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 
@@ -3285,6 +3299,24 @@ const PREFLIGHT_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       description: `Branch lifecycle only: every repo checked out on ${BASE_BRANCH} with no open pull request for it`
+    },
+    e2ePhasesOwed: {
+      type: 'boolean',
+      description:
+        "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
+    },
+    rowRepos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'repos'],
+        properties: {
+          id: { type: 'string' },
+          repos: { type: 'array', items: { type: 'string' } }
+        },
+        additionalProperties: false
+      },
+      description: "Every todo increment's id and its repos list, [] where it names none"
     }
   },
   additionalProperties: false
@@ -3297,14 +3329,23 @@ const BRANCH_PR_STEP = IS_BRANCH
    <repo> the entry's \`repo\`. Put every repo whose list prints \`[]\` in branchWithoutPr, and [] when there is none.`
   : ''
 
+const E2E_PHASES_STEP = `
+${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gatePhases // ["e2e"])] | any(index("e2e") != null)' ${BACKLOG_TILDE}\``
+
+const ROW_REPOS_STEP = `
+${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // [])}]' ${BACKLOG_TILDE}\``
+
 const preflight = await agent(
-  `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
+  `Report whether this run's backlog exists and is readable, which repos its envelope names, whether any
+increment still to build owes the gate's e2e phase, and which repos those increments name. Run exactly these
 commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${ROW_REPOS_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
-the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
+the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
+gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Copy the last
+command's output into rowRepos exactly as printed, every id and repos list as it is. Do nothing
 else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
@@ -3355,6 +3396,20 @@ if (ENVELOPE_REPOS === null) {
       `${WORKFLOW_NAME}: config.repos does not match the repos the backlog envelope at ${BACKLOG} names — ${problems.join('; ')}. Copy the envelope's repos into args in full`
     )
   }
+}
+
+const rowRepoProblems = (rows) =>
+  rows.flatMap(({ id, repos: rowRepos }) =>
+    rowRepos
+      .filter((key) => !REPO_KEYS.includes(key))
+      .map((key) => `${id} names repo ${JSON.stringify(key)}, which config.repos does not configure`)
+  )
+
+const unconfiguredRowRepos = rowRepoProblems(preflight.rowRepos ?? [])
+if (unconfiguredRowRepos.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: ${unconfiguredRowRepos.join('; ')}. Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again`
+  )
 }
 
 const NEXT_SCHEMA = {
@@ -3655,6 +3710,18 @@ ${gateCommandList(phases, logs)}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
 }
 
+const ciE2eEvidenceStep = (repoKeys) => {
+  if (E2E_IS_LOCAL) return ''
+  const named = (repoKeys ?? REPO_KEYS).map((key) => `${key} (${REPOS[key].github})`).join(', ')
+  return `3b. THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN, not a local gate. This run holds no
+   stack lease, so never run the gate's E2E phase, never start or stop the workspace stack, and never drive \`docker\`
+   yourself. For each of ${named}, find the open pull request on \`${BASE_BRANCH}\`
+   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`), then read its checks once:
+   \`gh pr checks <number> --repo <github> --json name,state,workflow\`
+   Report each repo's end-to-end job and the state it is in, word for word, in your summary. A pull request that has
+   completed no end-to-end run yet is not red: say it is awaited. Add no rung for any of this — rungs[] is the gate's.`
+}
+
 const ladderGateStep = (phases, logs) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
@@ -3684,6 +3751,7 @@ TASK:
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 ${baselineGateStep(phases, gateLogs(id, 'baseline'))}
+${ciE2eEvidenceStep()}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
@@ -4566,9 +4634,17 @@ let themeReviewsRun = 0
 const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
 let workspaceLeftOn = null
 
-const runLease = PLAN_ONLY ? null : await acquireRunLease()
+const E2E_PHASES_OWED = preflight.e2ePhasesOwed !== false
+const leaselessReason = !E2E_IS_LOCAL
+  ? 'e2e is proved by the pull requests'
+  : !E2E_PHASES_OWED
+    ? 'no increment of this run owes an e2e phase'
+    : null
+if (leaselessReason) log(`${WORKFLOW_NAME}: no stack lease — ${leaselessReason}`)
 
-if (!PLAN_ONLY && !runLease?.acquired) {
+const runLease = PLAN_ONLY || leaselessReason ? null : await acquireRunLease()
+
+if (!PLAN_ONLY && !leaselessReason && !runLease?.acquired) {
   if (runLease?.refused) {
     stopped = {
       reason: 'stack-held',
@@ -4583,7 +4659,7 @@ if (!PLAN_ONLY && !runLease?.acquired) {
   log(`${WORKFLOW_NAME}: ${stopped.reason.toUpperCase()} before any increment — ${stopped.detail}`)
 }
 
-const runMayHoldLease = !PLAN_ONLY && !runLease?.refused
+const runMayHoldLease = !PLAN_ONLY && !leaselessReason && !runLease?.refused
 
 try {
 while (stopped === null) {
@@ -4677,7 +4753,7 @@ while (stopped === null) {
   let approvalRepos = []
   workspaceInIncrement = null
   let rowMerges = []
-  let rowGatePhases = GATE_PHASES
+  let rowGatePhases = OFFERED_GATE_PHASES
   let rowAwaitsCi = true
 
   ticketAndBranch: {
@@ -4700,7 +4776,10 @@ while (stopped === null) {
       repos = row.repos
       resumeAt = row.resumeAt
       rowMerges = row.merge ?? []
-      rowGatePhases = row.gatePhases === undefined ? GATE_PHASES : GATE_PHASES.filter((name) => row.gatePhases.includes(name))
+      rowGatePhases =
+        row.gatePhases === undefined
+          ? OFFERED_GATE_PHASES
+          : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
       rowAwaitsCi = row.awaitCi !== false
       log(
         `${id}: on ${workBranch} in every repo; row repos ${repos.join(', ') || 'none'}; merges ${rowMerges.map((entry) => `${entry.repo}<-${entry.ref}`).join(', ') || 'none'}; gate ${rowGatePhases.join(', ') || 'none'}; CI ${rowAwaitsCi ? 'awaited' : 'not awaited'}; resuming at ${resumeAt}`
@@ -4810,7 +4889,8 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 ${specBaselineLine()}
-${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
+${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'))}
+${ciE2eEvidenceStep(repos)}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.

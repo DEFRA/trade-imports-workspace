@@ -119,7 +119,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'ciFixAttempts',
     'ciWatchMinutes',
     'requireApproval',
-    'approvalWaitMinutes'
+    'approvalWaitMinutes',
+    'e2e'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -169,7 +170,8 @@ const BASE_ARGS = {
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
   requireApproval: true,
-  approvalWaitMinutes: 20
+  approvalWaitMinutes: 20,
+  e2e: 'local'
 }
 
 const WORKSPACE_ANSWER = {
@@ -446,6 +448,34 @@ describe('every workflow script', () => {
       expect(run.agents).toEqual([])
     }
   })
+
+  const ARGUMENT_TABLE_HEADING = '| Field | What it is |'
+
+  const documentedArgs = (readme, scriptHeading) => {
+    const section = readme.indexOf(scriptHeading)
+    const table = readme.indexOf(ARGUMENT_TABLE_HEADING, section)
+    return readme
+      .slice(table)
+      .split('\n\n')[0]
+      .split('\n')
+      .map((row) => /^\| `([A-Za-z0-9]+)` \|/.exec(row)?.[1])
+      .filter(Boolean)
+      .sort()
+  }
+
+  test.each([
+    ['increment-build-loop.js', '### `increment-build-loop.js`'],
+    ['distil.js', '## `distil.js`']
+  ])(
+    "documents exactly %s's required args in the workflow README",
+    (script, heading) => {
+      const readme = readFileSync(join(buildLoopDir, 'README.md'), 'utf8')
+
+      expect(documentedArgs(readme, heading)).toEqual(
+        [...REQUIRED_KEYS_BY_SCRIPT[script]].sort()
+      )
+    }
+  )
 })
 
 describe('args-canary', () => {
@@ -627,6 +657,31 @@ describe('increment-build-loop', () => {
 
     expect(run.error.message).toContain('no readable backlog')
   })
+
+  test('stops before any agent when e2e is missing', async () => {
+    const run = await runLoop(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'e2e')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key e2e. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test.each([['both'], [null], ['Local']])(
+    'refuses e2e %j before any agent',
+    async (value) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, e2e: value }
+      })
+
+      expect(run.error.message).toContain(
+        'config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it)'
+      )
+      expect(run.agents).toEqual([])
+    }
+  )
 
   test('refuses planOnly without an explicit increments list', async () => {
     const run = await runLoop(scriptPath, {
@@ -898,6 +953,11 @@ describe('increment-build-loop', () => {
     const WORK_BRANCH = 'feat/EUDPA-900-fixture'
     const START_ANSWER = startAnswer(startedResult())
 
+    const preflightAnswer = (fields = {}) => ({
+      ...PREFLIGHT_ANSWER,
+      ...fields
+    })
+
     const runFrom = (...answers) =>
       runLoop(scriptPath, {
         args: BASE_ARGS,
@@ -975,6 +1035,56 @@ describe('increment-build-loop', () => {
         (entry) => entry.options.label === 'inc-900 baseline'
       ).prompt
     }
+
+    const baselinePromptWithE2e = async (e2e) => {
+      const run = await runFromWithArgs({ e2e })
+      return run.agents.find(
+        (entry) => entry.options.label === 'inc-900 baseline'
+      ).prompt
+    }
+
+    const CI_E2E_EVIDENCE_HEADING =
+      "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+
+    const runWithRowRepos = (rowRepos) =>
+      runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, preflightAnswer({ rowRepos }), START_ANSWER]
+      })
+
+    test('stops at the preflight when a todo row names a repo the args do not configure', async () => {
+      const run = await runWithRowRepos([
+        { id: 'inc-900', repos: ['frontend'] },
+        { id: 'inc-901', repos: ['frontend', 'workspace'] }
+      ])
+
+      expect(run.error.message).toContain(
+        'inc-901 names repo "workspace", which config.repos does not configure'
+      )
+      expect(run.error.message).not.toContain('inc-900')
+      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+        'workspace',
+        'preflight'
+      ])
+    })
+
+    test('names every row that names an unconfigured repo, not just the first', async () => {
+      const run = await runWithRowRepos([
+        { id: 'inc-900', repos: ['workspace'] },
+        { id: 'inc-901', repos: ['admin'] }
+      ])
+
+      expect(run.error.message).toContain('inc-900 names repo "workspace"')
+      expect(run.error.message).toContain('inc-901 names repo "admin"')
+    })
+
+    test('lets a row naming no repo through the preflight', async () => {
+      const run = await runWithRowRepos([{ id: 'inc-900', repos: [] }])
+
+      expect(run.agents.map((entry) => entry.options.label)).toContain(
+        'inc-900 start'
+      )
+    })
 
     test('starts the increment with one tim build start call before the baseline', async () => {
       const run = await runFrom(null)
@@ -1155,6 +1265,33 @@ describe('increment-build-loop', () => {
         `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
+    })
+
+    test('asks the baseline for the unit and FIT phases one at a time when the pull requests prove e2e', async () => {
+      const prompt = await baselinePromptWithE2e('ci')
+
+      expect({
+        unit: prompt.includes('--phase unit'),
+        fit: prompt.includes('--phase fit'),
+        e2e: prompt.includes('--phase e2e'),
+        wholeGate: prompt.includes('--phase all')
+      }).toEqual({ unit: true, fit: true, e2e: false, wholeGate: false })
+    })
+
+    test('sends the baseline to the branch’s pull request for its e2e evidence when the pull requests prove e2e', async () => {
+      const prompt = await baselinePromptWithE2e('ci')
+
+      expect(prompt).toContain(CI_E2E_EVIDENCE_HEADING)
+      expect(prompt).toContain(
+        '`gh pr checks <number> --repo <github> --json name,state,workflow`'
+      )
+    })
+
+    test('leaves the baseline the whole gate, and no pull-request evidence, when e2e is proved locally', async () => {
+      const prompt = await baselinePromptWithE2e('local')
+
+      expect(prompt).toContain('--phase all')
+      expect(prompt).not.toContain(CI_E2E_EVIDENCE_HEADING)
     })
 
     test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
@@ -3639,6 +3776,56 @@ describe('increment-build-loop', () => {
             `The run's workspace stack lease could not be given back — The workspace stack did not come down. Give it back with \`tim docker lease release --holder "${RUN_ID}"\``
           )
         })
+
+        const runWithE2e = (e2e, preflightFields) =>
+          runLoop(scriptPath, {
+            args: { ...BASE_ARGS, e2e },
+            answers: [WORKSPACE_ANSWER, preflightAnswer(preflightFields)]
+          })
+
+        test('takes the lease when e2e is local and a row owes an e2e phase', async () => {
+          const run = await runWithE2e('local', { e2ePhasesOwed: true })
+
+          expect(run.agents.map((entry) => entry.options.label)).toContain(
+            ACQUIRE_LABEL
+          )
+        })
+
+        test('takes no lease when the pull requests prove e2e', async () => {
+          const run = await runWithE2e('ci', { e2ePhasesOwed: true })
+
+          expect({
+            labels: run.agents.map((entry) => entry.options.label),
+            logged: run.logs
+          }).toEqual({
+            labels: expect.not.arrayContaining([ACQUIRE_LABEL]),
+            logged: expect.arrayContaining([
+              'increment-build-loop: no stack lease — e2e is proved by the pull requests'
+            ])
+          })
+        })
+
+        test('takes no lease when no increment of the run owes an e2e phase', async () => {
+          const run = await runWithE2e('local', { e2ePhasesOwed: false })
+
+          expect({
+            labels: run.agents.map((entry) => entry.options.label),
+            logged: run.logs
+          }).toEqual({
+            labels: expect.not.arrayContaining([ACQUIRE_LABEL]),
+            logged: expect.arrayContaining([
+              'increment-build-loop: no stack lease — no increment of this run owes an e2e phase'
+            ])
+          })
+        })
+
+        test('takes the lease when the preflight could not say whether a row owes an e2e phase', async () => {
+          const run = await runWithE2e('local', {})
+
+          expect(run.agents.map((entry) => entry.options.label)).toContain(
+            ACQUIRE_LABEL
+          )
+        })
       })
 
       const GREEN_LADDER = {
@@ -4902,7 +5089,7 @@ describe('increment-build-loop', () => {
         }
       )
 
-      test('refuses a repo key that names the workspace itself', async () => {
+      test('refuses a repo key that names the workspace itself, saying where to drop it and where the spec still lands', async () => {
         const run = await runLoop(scriptPath, {
           args: {
             ...BRANCH_ARGS,
@@ -4910,9 +5097,10 @@ describe('increment-build-loop', () => {
           }
         })
 
-        expect(run.error.message).toContain(
-          'Each key is a lower-case word other than "workspace"'
+        expect(run.error.message).toBe(
+          'increment-build-loop: lifecycle "branch" never branches the workspace repo, so config.repos must not name "workspace". Drop it from three places that have to agree: config.repos, the backlog envelope\'s repos, and every row\'s repos. The spec still lands on this branch without it — the land stage commits `openspec/` on whatever branch the workspace is on. Anything else a row writes in the workspace is left uncommitted and listed in the run\'s `leftUncommitted` for you to commit'
         )
+        expect(run.agents).toEqual([])
       })
     })
 
@@ -5081,6 +5269,22 @@ describe('increment-build-loop', () => {
         )
         expect(prompt).not.toContain('--phase e2e')
         expect(prompt).not.toContain('--phase all')
+      })
+
+      test('sends the baseline to the branch’s pull requests for its e2e evidence when they prove e2e', async () => {
+        const run = await runBranch({ e2e: 'ci' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).toContain(
+          "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+        )
+      })
+
+      test('leaves the baseline no pull-request evidence step when e2e is proved locally', async () => {
+        const run = await runBranch({ e2e: 'local' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).not.toContain(
+          'THE E2E EVIDENCE IS'
+        )
       })
 
       test('runs every phase the row owes in the ladder, even after a red one', async () => {

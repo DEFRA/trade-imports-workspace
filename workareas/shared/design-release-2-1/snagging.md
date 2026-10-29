@@ -45,6 +45,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** the same. Consignee, importer and place of destination get United Kingdom alone, selected. Place of origin, consignor and the consignment contact get 'Select a country' and the full list (`journey-registry.js`).
 - **To confirm:** the contact gets any country only because the prototype leaves it out of its map. Is that intended, or should the consignment contact be United Kingdom only, like the destination side? Low priority: built as the prototype behaves.
 
+### S-05. The buttons on the consignment contact's add page
+
+- **Ticket:** [EUDPA-706](https://eaflood.atlassian.net/browse/EUDPA-706), [ins-frontend #70](https://github.com/DEFRA/trade-imports-ins-frontend/pull/70). inc-080 review, finding 40; the open question on inc-080 in the theme backlog.
+- **Page:** the INS add page reached from a notification's 'Contact address for this consignment' page.
+- **Prototype:** not shown. Design Release 2.1 sets the buttons only for the five role pickers: 'Save and select', 'Save and return to address page' and 'Cancel and return to hub'.
+- **Built:** the five roles get that set. The contact keeps the older pair: a primary 'Save' button and a secondary 'Cancel' button that returns to the journey (`add.njk:40-49`, `copy.add.save`, `copy.add.cancelToJourney`).
+- **To ask:** (a) keep 'Save' and 'Cancel' for the contact, as built; (b) give the contact the roles' set; or (c) another set?
+
 ## Settled
 
 | Question | Answer | Where it landed |

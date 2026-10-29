@@ -132,6 +132,7 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `fetchMock` | The shared `vitest-fetch-mock` instance that `useBackendRecords`, `addressBookAnswering` and `useReferenceDataServing` drive; enable it and set its response in a test, with `resetMocksAndConfigAfterTests()` registered |
 | `resetMocksAndConfigAfterTests(...configKeys)` | Registers an `afterEach` that resets fetch mocks and restores `stubMode` and the named config keys |
 | `addressBookAnswering(addressResponse)`, `addressBookRefusingAddresses()`, `addressBookRequestUrls()` | Stub the address book's answers and report the URLs it was asked for |
+| `addedAddressBannerState(addressName)`, `expectAddedAddressBannerShownOnce(getHandler)` (animals only; in `src/server/app/sets/live-animals/journeys/linear/features/addresses/test-support.js`) | The request state of a trader who has just added an address in the address book, and the check that a landing page's GET shows the added address banner once, then unstates it |
 | `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |
 | `expectBackLinkIsPath(result, path)` (plants only) | Asserts the view's back link is the given path |
 | `itHoldsCopyAtEveryLeaf(en, cy)` and `expectEveryLeafToBeCopy(locale, bundle)` (plants only) | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function |

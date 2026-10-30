@@ -72,7 +72,7 @@ This table is the whole feature. Everything from Task 8 on implements one of its
 |---|---|---|---|
 | Plan | `think` tier | `think` tier | `code` tier |
 | Plan lint (code text, denied checks) | yes | yes | yes |
-| Plan review | review, revise, re-review | review, revise; re-review only on a structural finding | none |
+| Plan review | review, revise, re-review | review, revise; re-review when a finding is structural or the review names none | none |
 | Implement | yes | yes | yes |
 | Style reviewer per (repo, language) group | yes | no | no |
 | Code reviewer | per group | per group | one, across the whole change |
@@ -236,7 +236,7 @@ Add to the configuration describe, after Task 1's tests:
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
     )
   })
 
@@ -302,7 +302,7 @@ const rulesOf = (rigour) => RIGOUR_RULES[rigour]
 const rigourSummary = (rigour) => {
   const planReviewPhrases = {
     twice: 'reviewed, revised and re-reviewed',
-    structural: 'reviewed once and re-reviewed only on a structural finding',
+    structural: 'reviewed once, and re-reviewed when a finding is structural or the review names none',
     none: 'no plan review'
   }
   const rules = rulesOf(rigour)
@@ -934,7 +934,7 @@ In the branch-lifecycle describe (`:5107`), where `ROW` is the row fixture its n
         const run = await runBranch({ rigour: 'standard' }, ROW)
 
         expect(run.logs).toContain(
-          'inc-900: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+          'inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
         )
       })
 ```
@@ -2315,7 +2315,7 @@ fixer commit and the theme's engineering review all run at every preset.
 | preset | what runs |
 |---|---|
 | `full` | The plan reviewed, revised and re-reviewed; a style and a code reviewer per (repo, language) group; a consistency reviewer; a verifier per finding group; judge, fix, ladder |
-| `standard` | One plan review, and the revised plan re-reviewed only when the first review found the plan built wrong; no style reviewers; the group code reviewers, the consistency reviewer and the verifiers as before |
+| `standard` | One plan review, and the revised plan re-reviewed when the first review found something structural — or objected while naming nothing; no style reviewers; the group code reviewers, the consistency reviewer and the verifiers as before |
 | `fast` | A code-tier plan, no plan review, one code reviewer across the whole change, and the judge verifying its own findings before it rules |
 
 **One value governs the whole theme, and that is the only answer a launch owes.**
@@ -2395,7 +2395,7 @@ rigour       <full, standard or fast>, and any row that sets its own
 **The args table already has a `rigour` row.** Task 1 had to add a one-line stub, because `workflow-contract.test.js:471-483` asserts that table lists exactly `REQUIRED_KEYS_BY_SCRIPT` and the key's arrival turned it red. **Replace that row** — do not add a second:
 
 ```
-| `rigour` | How much of the pipeline every row of this run gets: `'full'` (the plan reviewed, revised and re-reviewed, a style and a code reviewer per (repo, language) group, a consistency reviewer, a verifier per finding group), `'standard'` (one plan review, re-reviewed only on a structural finding, and no style reviewers) or `'fast'` (a `code`-tier plan, no plan review, one code reviewer across the whole change, and the judge verifying its own findings). A row's own `rigour` wins. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and the theme's engineering review run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `rigour` | How much of the pipeline every row of this run gets: `'full'` (the plan reviewed, revised and re-reviewed, a style and a code reviewer per (repo, language) group, a consistency reviewer, a verifier per finding group), `'standard'` (one plan review, re-reviewed when a finding is structural or the review names none, and no style reviewers) or `'fast'` (a `code`-tier plan, no plan review, one code reviewer across the whole change, and the judge verifying its own findings). A row's own `rigour` wins. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and the theme's engineering review run at every preset — see [The rigour dial](#the-rigour-dial) |
 ```
 
 Add `rigour: 'standard',` to the worked example after `resumeFrom: null` (line 374). In the `models` row of that table, change "the per-group style and code reviewers" to "the per-group style and code reviewers (`rigour` decides which of them run)", and add to the `think` list that a `fast` row's plan goes to `code` instead.
@@ -2740,7 +2740,42 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     replan → replan lint and refuse if still dirty — but every send-back test in the suite runs at `full`, and
     the only `fast` test asserted the lint *stage was present*. A stage being present is not the same claim as a
     dirty plan being sent back. Now tested.
-27. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+27. **The honesty fix stopped at the log line, and four other texts still described the world before the dial.**
+    The theme of Task 8's quality review, and the most useful thing it said. Entry 25 made `withMustAddress`'s log
+    truthful about `standard` and left: the implementor's must-address preamble, the consistency reviewer's, the
+    section the recorder writes *into the plan file*, `rigourSummary`'s operator-facing sentence, and
+    `readReviewedPlan`'s "that plan passed its lint and its review" — which at `fast` is simply false, and is
+    reachable, because `preserveAttempt` records `planReviewed: Boolean(plan?.ok)` for a plan no reviewer saw.
+    All five fixed. **Carry this forward into Tasks 9 to 11:** each adds another claim about what ran — the review
+    fan-out, the verifier, the judge — and settled decision 2 already says a prompt that claims verification that
+    did not happen is worse than the stage being missing. When a preset drops a stage, every text that mentions
+    that stage is part of the change.
+28. **`planReviewed` now means "a plan exists and passed its lint", not "a reviewer read it".** At `fast` no
+    reviewer runs, so the field records `true` for an unreviewed plan and `resumePointFor` resumes the row on it.
+    The name mispredicts, and the house rules would have it renamed — but it is a `backlog.json` schema field that
+    live backlogs already carry, so renaming it is a data migration rather than a tidy. Decision: keep the name,
+    document the meaning here and in the schema, and treat the field as "there is a plan worth resuming onto".
+    If it is ever renamed, `tim/src/build/start.js` and `tim/src/commands/backlog/rows.js` are the other readers.
+29. **One rule had two owners in `reviewedPlan`, and naming it answered a question the plan could not.** The same
+    two-term test — "is this a plain list of detail findings?" — was spelled twice, thirty lines apart, with
+    opposite consequences: escalate to a second read, or refuse the increment. Named once as
+    `detailFindingsOnly(findings)`, both call sites read from it. That also settles whether the empty-findings
+    disjunct needed a comment: with this shape nobody reasons about an empty list, because "only details → carry
+    on, anything else → escalate" reads directly and an empty list is visibly not "only details".
+30. **Three sibling functions, two parameter conventions — the plan's own doing.** Entry 22 dropped the dead
+    `branchedRepos = null` defaults from `planPassingLint` and `reviewedPlan` and left `planIncrement` hiding its
+    now-mandatory `rigour` inside an options bag, so `planIncrement(id)` still looked valid and died on
+    `rulesOf(undefined).planTier`. Made positional to match its siblings.
+31. **`withMustAddress`'s `why` parameter went.** A caller-composed middle clause did not read as one sentence at
+    the new call site — "its" had to reach back over two sentences — and the contract was unenforceable, since
+    `why` had to end in a full stop and nothing said so. Each caller now logs its own line, and the function keeps
+    only the log it owns.
+32. **Declined: making `planReview: 'structural'` explicit rather than a fall-through.** The review noted that no
+    behaviour branch reads that value — `standard` is simply what matches neither `'none'` nor `'twice'` — and
+    that the convention is a poor one to hand to Tasks 9 to 11. Left as it is: `'twice'` is the only special
+    case, a typo in it degrades loudly rather than silently (a test catches it), and the fields Tasks 9 to 11
+    read are booleans and an explicitly-compared enum, so the fall-through does not generalise.
+33. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

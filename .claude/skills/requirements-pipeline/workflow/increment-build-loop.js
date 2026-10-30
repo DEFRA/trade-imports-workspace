@@ -352,6 +352,60 @@ const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
 
+// `planReview: 'structural'` reviews the plan once and re-reads the revised plan only when the
+// first review found the plan built wrong, so a lower rigour never lets a structural finding
+// through unchecked.
+const RIGOUR_RULES = {
+  full: {
+    planTier: 'think',
+    planReview: 'twice',
+    styleReviewers: true,
+    reviewScope: 'group',
+    consistencyReview: true,
+    verifyFindings: true
+  },
+  standard: {
+    planTier: 'think',
+    planReview: 'structural',
+    styleReviewers: false,
+    reviewScope: 'group',
+    consistencyReview: true,
+    verifyFindings: true
+  },
+  fast: {
+    planTier: 'code',
+    planReview: 'none',
+    styleReviewers: false,
+    reviewScope: 'whole',
+    consistencyReview: false,
+    verifyFindings: false
+  }
+}
+
+const rulesOf = (rigour) => RIGOUR_RULES[rigour]
+
+const tierFor = (tier) => (tier === 'think' ? think : code)
+
+const PLAN_REVIEW_SUMMARY = {
+  twice: 'reviewed, revised and re-reviewed',
+  structural: 'reviewed once and re-reviewed only on a structural finding',
+  none: 'no plan review'
+}
+
+const rigourSummary = (rigour) => {
+  const rules = rulesOf(rigour)
+  const plan = `a ${rules.planTier}-tier plan`
+  return [
+    rules.planReview === 'none' ? `${plan}, no plan review` : `${plan}, ${PLAN_REVIEW_SUMMARY[rules.planReview]}`,
+    rules.styleReviewers ? 'style reviewers' : 'no style reviewers',
+    rules.reviewScope === 'whole' ? 'one code reviewer across the whole change' : 'a code reviewer per (repo, language) group',
+    rules.consistencyReview ? 'a consistency review' : 'no consistency review',
+    rules.verifyFindings ? 'and findings verified before the judge' : 'and findings verified by the judge itself'
+  ].join(', ')
+}
+
+log(`${WORKFLOW_NAME}: rigour ${RIGOUR} — ${rigourSummary(RIGOUR)}`)
+
 const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
   command you have not run, and never report Bash or any tool as missing without first calling it.`
 

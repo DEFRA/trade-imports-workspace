@@ -749,6 +749,28 @@ describe('increment-build-loop', () => {
     }
   )
 
+  test('says what the run’s rigour runs', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'standard' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+    )
+  })
+
+  test('says what fast gives up', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'fast' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour fast — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself'
+    )
+  })
+
   test('names the same resume stages the backlog records', async () => {
     const source = readFileSync(scriptPath, 'utf8')
 

@@ -40,21 +40,17 @@
     "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
   ],
   "repos": {
-    "addressbook": {
-      "path": "repos/trade-imports-address-book",
-      "github": "DEFRA/trade-imports-address-book"
-    },
     "insfrontend": {
       "path": "repos/trade-imports-ins-frontend",
       "github": "DEFRA/trade-imports-ins-frontend"
     },
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
     "tests": {
       "path": "repos/trade-imports-ins-tests",
       "github": "DEFRA/trade-imports-ins-tests"
-    },
-    "perftests": {
-      "path": "repos/trade-imports-performance-tests",
-      "github": "DEFRA/trade-imports-performance-tests"
     }
   },
   "theme": "address-book",
@@ -875,7 +871,7 @@
         "inc-062"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -925,9 +921,23 @@
       "notes": [
         "Unchanged in substance from the last distil: none of its requirements changed. Combines the page-frame slice (heading, title, caption, status block) with the field-copy slice (section headings, name label, no county, autocomplete): both change the same INS add-details template in journey mode, so building them apart would repeat the same set-up and ladder. The page is the INS add-details step the address-book-add-and-edit area restructures: combiner, keep it depending on that area's add-details rows (inc-061, inc-062); only the status block is journey-specific, and it needs the notification's reference to reach the INS page through the handshake context. The address book record keeps its optional county, left empty (req-642 deltaNote).",
         "Ticket 5 (journey add page), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
-        "Re-cut 2026-10-16: no longer depends on inc-061 (moved to ticket 6). A journey's handshake opens the add-details form directly, with or without the type step, so this row builds on inc-062 alone."
+        "Re-cut 2026-10-16: no longer depends on inc-061 (moved to ticket 6). A journey's handshake opens the add-details form directly, with or without the type step, so this row builds on inc-062 alone.",
+        "Landed 2026-10-28. CI went red on an unrelated E2E test, EUDPA-751's documents back-button spec, because this ticket's animals-frontend branch was cut before EUDPA-751's animals fix (19645ca4) reached main. Merging main into the animals and ins-tests branches cleared it; E2E green on run 40751312217."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "3e79c9e 72babf3",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/70",
+          "repo": "insfrontend",
+          "number": 70
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/71",
+          "repo": "tests",
+          "number": 71
+        }
+      ]
     },
     {
       "id": "inc-078",
@@ -949,7 +959,7 @@
         "inc-060"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -995,7 +1005,20 @@
         "Ticket 5 (journey add page), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
         "Re-cut 2026-10-20 (user ruling): every frontend validates the whole address it saves, country included, because a user can save it in place (the animals and plants journeys do the same for their copies), so validating in the address book API alone would not protect them. The address book API stores countryCode as given, so a stored code can be one reference data does not offer."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "4db048f a078e0f 279a0a2",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/70",
+          "repo": "insfrontend",
+          "number": 70
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/71",
+          "repo": "tests",
+          "number": 71
+        }
+      ]
     },
     {
       "id": "inc-082",
@@ -1012,7 +1035,7 @@
         "inc-078"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -1055,6 +1078,19 @@
           "workarea": "shared/design-release-2-1/themes/reference-lists",
           "id": "inc-173"
         }
+      ],
+      "commit": "efcb833 e7ec105 41f8130",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/70",
+          "repo": "insfrontend",
+          "number": 70
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/71",
+          "repo": "tests",
+          "number": 71
+        }
       ]
     },
     {
@@ -1080,7 +1116,7 @@
         "inc-077"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -1156,7 +1192,11 @@
         "req-1958",
         "req-1284"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the cancel button on the consignment contact's add page. Asked as S-05 in workareas/shared/design-release-2-1/snagging.md, which holds the question, the prototype's behaviour and the options. Raised by inc-080 review finding 40.",
+        "Twin fix: repos/trade-imports-plants-frontend/src/server/app/engine/persistence/session.js:32-34 needs the doc comment on sessionConfiguredFor cut to its contract (delete the sentence describing registerJourneyCookie as a caller), as inc-080 review finding 13.",
+        "Twin fix: repos/trade-imports-plants-frontend/src/server/app/set-completeness.js:64 needs the 'Called by a set's gateway…' paragraph deleted from assertSetConfigured's doc comment (it describes a caller), as inc-080 review finding 14."
+      ],
       "notes": [
         "Combines the drafts of the party-address-add-and-edit, address-book-add-and-edit areas for this row: they change the same pages and record, so building them apart would repeat the same set-up, review and ladder.",
         "Combines the journey-mode type skip (req-1958, now this area's), the buttons-and-copy slice (Save and select, Save and return to address page, Cancel and return to hub, Back), the landing and banner slice and the every-picker proof: all change the one return contract between the INS add page and the journey's address-return, and the proof is of the same round trip. Combiner: the existing inc-080 also covers req-1284 (journey mode of the INS add page), which belongs to the address-book-add-and-edit area; this draft lists only this area's requirements and leaves out req-1284's criteria (the INS banner not shown on landing, the registered live-animals handshake). Merge the two drafts back into inc-080 as before, keeping its id and gate. repos is in merge order: frontend before insfrontend, because the journey's address-return must accept each new landing before the INS page sends it. The banner that stays (req-674) removes the INS script that hides it on a timer. The picker the second save lands on is the role-filtered picker the party picker area builds (inc-087, req-673 deltaNote); the address book already lists newest first, so 'listed first' is observable on today's picker and this row does not depend on inc-087, avoiding a dependency from the address-book theme back to consignment-parties. Depends on inc-077 (and through it the type-step and add-details rows). A germinal products notification uses the same handshake with its own INS return entry (req-1831), built in its own row.",
@@ -1165,7 +1205,25 @@
         "This is EUDPA-706's row (the live animals side); it is built on ticket 5's branch alongside the INS rows it needs.",
         "Re-cut 2026-10-20 (user ruling): every address book banner names the address as it is stored. The prototype sentence-cased the name on the edit and delete banners but not on add, which mangles names such as 'ABC Farms Ltd'; that casing is not carried over."
       ],
-      "gate": "Ticket 5 (journey add page) is complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team before building ticket 6 (types and uses)."
+      "gate": "Ticket 5 (journey add page) is complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team before building ticket 6 (types and uses).",
+      "commit": "e191ada 2f0a825 e3eef6b 16759dd",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/448",
+          "repo": "frontend",
+          "number": 448
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/70",
+          "repo": "insfrontend",
+          "number": 70
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/71",
+          "repo": "tests",
+          "number": 71
+        }
+      ]
     },
     {
       "id": "inc-059",
@@ -1990,7 +2048,7 @@
         4,
         5
       ],
-      "notes": "inc-059 (the typed record) moved here from ticket 1 on 2026-10-19; type and uses become required in inc-070."
+      "notes": "inc-059 (the typed record) moved here from ticket 1 on 2026-10-19; type and uses become required in inc-070. Before this ticket's run, the envelope's repos map must add back addressbook (path repos/trade-imports-address-book, github DEFRA/trade-imports-address-book) and perftests (path repos/trade-imports-performance-tests, github DEFRA/trade-imports-performance-tests): ticket 5's run dropped them, and inc-059, inc-067, inc-068 and inc-070 name them, so the build loop stops those rows as naming a repo that is not configured. frontend can come out then, as no row in this ticket names it."
     }
   ]
 }

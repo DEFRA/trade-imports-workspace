@@ -104,7 +104,7 @@ Both frontends have this file. The rows below are in both unless a row says othe
 
 | Export | What it does |
 |---|---|
-| `driveHandler(handler, { payload, seed, params, query, state, amend, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view }`. Both also take `openingRun` and `saveFailure` and return `logger`; only animals returns `cookies` |
+| `driveHandler(handler, { payload, seed, params, query, amend, openingRun, saveFailure, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view, logger }`. Animals also takes `state` (the request's cookies), `flowOnly` (session-only answers to seed) and `journeyId` (drive an existing journey instead of creating one), and also returns `cookies` (the cookies the handler set) and `unstated` (the names of the cookies the handler unstated) |
 | `useStubbedJourney(setId, dispatchPages)` | Configures the stub stores and builds the dispatch before a describe, then restores the stub records and clears the store before each test. Put it and `useBackendRecords` on sibling describes, never nested |
 | `getHandlerOf(featureModule)` (animals only) | The GET handler from a feature's `routes` |
 | `postHandlerOf(featureModule)` | The POST handler from a feature's `routes` |
@@ -135,6 +135,14 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |
 | `expectBackLinkIsPath(result, path)` (plants only) | Asserts the view's back link is the given path |
 | `itHoldsCopyAtEveryLeaf(en, cy)` and `expectEveryLeafToBeCopy(locale, bundle)` (plants only) | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function |
+
+### Address feature tests: `src/server/app/sets/live-animals/journeys/linear/features/addresses/test-support.js`
+
+Animals only.
+
+| Export | What it does |
+|---|---|
+| `addedAddressBannerState(addressName)`, `expectAddedAddressBannerShownOnce(getHandler)` | The request state of a trader who has just added an address in the address book, and the check that a landing page's GET shows the added address banner once, then unstates it |
 
 ### Server and helper tests: `src/server/common/test-helpers/`
 

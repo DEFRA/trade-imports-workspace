@@ -16,7 +16,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 - Server-side session (Catbox: Redis in production, memory otherwise), CSRF (crumb) and CSP.
 - Pages: dashboard `/` (notification list, sort, reference-number search, pagination) and address book at `/address-book`, `/address-book/add`, `/address-book/{id}`, `/edit` and `/delete`. Routes are only registered when `auth.enabled` is true.
 - Address form validation (`address-schema.js`) and mapping API problem responses to GOV.UK error summaries.
-- A journey handshake: an address-book visit can carry `journeyType`, `notificationId`, `fulfilmentId` and `handshakeToken`. The only known journey type is `gbn-ag`; the return URL points at the animals frontend (`/notifications/{id}/address-return`).
+- A journey handshake: an address-book visit can carry the query or form keys `journey-type`, `notification-id`, `fulfilment-id` and `handshake-token`. The only known journey type is `gbn-ag`. The return URL points at the animals frontend's live-animals set, `/live-animals/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}`, and adds `handshake-token` when one was sent (`journey-registry.js`). On the add page, Save adds `addressId` and `landing=select` or `landing=return`; Cancel adds `landing=cancel`, except for the consignment contact, whose cancel adds no landing; the back link adds no landing (`add.controller.js`).
 
 **Does not own**
 

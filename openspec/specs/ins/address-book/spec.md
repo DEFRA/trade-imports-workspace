@@ -61,7 +61,7 @@ The system MUST persist every field entered for a new address, including its opt
 
 ### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional
 **ID**: REQ-INS-ADDR-005
-The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code, and MUST offer in the country field, on both forms, every country the reference data service serves, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
+The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code, and MUST offer in the country field of the address book's add and edit forms, and of the add form reached from a notification's place of origin or consignor picker or its consignment contact page, every country the reference data service serves, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
 
 #### Scenario: The add form asks for every field, marking address line 2 and county optional
 **ID**: SCN-INS-ADDR-005-A
@@ -73,7 +73,7 @@ The system MUST ask for name, address line 1, town or city, postcode, country, p
 
 #### Scenario: The country field lists every country alphabetically, United Kingdom in its place
 **ID**: SCN-INS-ADDR-005-B
-- **GIVEN** the user opens the add or the edit address form
+- **GIVEN** the user opens the address book's add or edit address form, or the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the country list is read in full
 - **THEN** after any placeholder it offers United Kingdom and every country the reference data service serves, by their served names, in alphabetical order
 
@@ -119,11 +119,11 @@ The system MUST reject an email address that is not validly formatted, with an e
 
 ### Requirement: Saving a new or edited address shows a confirmation naming it
 **ID**: REQ-INS-ADDR-009
-The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
+The system MUST return the user to the address book list on a successful save from the add form opened from the address book or from the edit form, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
 
 #### Scenario: Adding an address confirms it and lists it first
 **ID**: SCN-INS-ADDR-009-A
-- **GIVEN** the user has filled in a valid new address
+- **GIVEN** the user has filled in a valid new address on the add form opened from the address book
 - **WHEN** they save it
 - **THEN** they return to the address book, and a 'Success' confirmation reads '<name> address added to your address book'
 - **AND** the new address is listed first, with a View link that opens its own details page
@@ -137,7 +137,7 @@ The system MUST return the user to the address book list on a successful save, a
 
 ### Requirement: Cancelling the add or edit form discards changes
 **ID**: REQ-INS-ADDR-010
-The system MUST discard anything entered on the add or edit form when the user cancels, and MUST NOT save it. Cancelling the add form returns the user to the address book list: on the add form opened from the address book, cancelling is a 'Cancel and return to address book' link below 'Save and continue'. Cancelling the edit form goes to the page the edit was opened from, by default the address's details page (REQ-INS-ADDR-025).
+The system MUST discard anything entered on the add or edit form when the user cancels, and MUST NOT save it. Cancelling the add form opened from the address book returns the user to the address book list: cancelling is a 'Cancel and return to address book' link below 'Save and continue'. Cancelling the edit form goes to the page the edit was opened from, by default the address's details page (REQ-INS-ADDR-025).
 
 #### Scenario: Cancelling add discards the form without creating an address
 **ID**: SCN-INS-ADDR-010-A
@@ -311,11 +311,11 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. 'Select a country' applies on the address book's add and edit forms and on the add form reached from a notification's place of origin or consignor picker or its consignment contact page. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
-- **GIVEN** the user is adding an address
+- **GIVEN** the user is adding an address on the address book's add form or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** they leave the name, postcode, country and phone number blank and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
@@ -328,7 +328,7 @@ The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode 
 
 #### Scenario: A country that is not offered is refused as if none were chosen
 **ID**: SCN-INS-ADDR-018-C
-- **GIVEN** the user is adding or editing an address
+- **GIVEN** the user is adding or editing an address on the address book's add or edit form, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the form is saved with a country that is not one the list offers
 - **THEN** the save is blocked and 'Select a country' is shown
 
@@ -538,9 +538,9 @@ The system MUST show the edit form's Country select with no blank option and the
 - **THEN** the Country select opens on a blank option
 - **AND** no country is selected
 
-### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' and is opened directly from the address book
+### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book, the place of origin and consignor pickers and the consignment contact page, and is opened directly from the address book
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and, opened from the address book or from a notification's place of origin or consignor picker or its consignment contact page, open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -551,7 +551,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 
 #### Scenario: The add form opens the Country select on Select a country
 **ID**: SCN-INS-ADDR-027-B
-- **GIVEN** the user opens the add form
+- **GIVEN** the user opens the add form from the address book or from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the page is shown
 - **THEN** no country is selected
 - **AND** the Country select's blank first option reads 'Select a country'
@@ -560,7 +560,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 **ID**: SCN-INS-ADDR-027-C
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'
-- **THEN** the add form opens, headed 'Add address details'
+- **THEN** the add form opens
 - **WHEN** they select Back
 - **THEN** they return to the address book list
 
@@ -703,3 +703,145 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **GIVEN** the user has just added an address in France
 - **WHEN** they search for its name, for part of its address line 1, and for 'fran'
 - **THEN** each search lists the added address
+
+### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
+**ID**: REQ-INS-ADDR-033
+The system MUST head the add page 'Add address and contact details' under the caption 'Add new address', from the address book or from a notification journey. Reached from a journey's 'Add a new address', it MUST also show the notification's status block above the caption, and keep it when a refused save shows the page again.
+
+#### Scenario: Reached from a journey's role picker, the page is headed with its caption and title
+**ID**: SCN-INS-ADDR-033-A
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page opens, headed 'Add address and contact details' under the caption 'Add new address'
+
+#### Scenario: Reached from a journey, the page shows a Draft tag and the notification's reference
+**ID**: SCN-INS-ADDR-033-B
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** a 'Draft' tag and the notification's reference show above the caption
+
+#### Scenario: A refused save from a journey still shows the status block
+**ID**: SCN-INS-ADDR-033-C
+- **GIVEN** a trader on the add page reached from a notification journey
+- **WHEN** the address book refuses the address they save
+- **THEN** the add page shows again with the refusal
+- **AND** the 'Draft' tag and the notification's reference still show
+
+#### Scenario: Opened from the address book, the page shows its heading and caption with no status block
+**ID**: SCN-INS-ADDR-033-D
+- **GIVEN** the user is on the address book
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page is headed 'Add address and contact details' under the caption 'Add new address'
+- **AND** no status tag shows
+
+### Requirement: The add and edit forms give each personal-data field its browser autocomplete hint
+**ID**: REQ-INS-ADDR-034
+The system MUST give the address lines the autocomplete hints 'address-line1' and 'address-line2', the town or city 'address-level2', the postcode 'postal-code', the email address 'email' and the phone number 'tel', on both the add and the edit form. The name field, which holds a person's or an organisation's name, County and Country MUST carry no hint.
+
+#### Scenario: The add form carries the autocomplete hints
+**ID**: SCN-INS-ADDR-034-A
+- **GIVEN** the user opens the add form
+- **WHEN** the page is shown
+- **THEN** the address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** the name, County and Country fields carry none
+
+#### Scenario: The edit form carries the autocomplete hints
+**ID**: SCN-INS-ADDR-034-B
+- **GIVEN** the user opens the edit form for an address
+- **WHEN** the page is shown
+- **THEN** the address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** the name, County and Country fields carry none
+
+### Requirement: The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination
+**ID**: REQ-INS-ADDR-035
+The system MUST show every address and contact field, with no address search, on the add page reached from a notification's role picker. From the place of origin or consignor picker it MUST offer every served country, opening the Country select on 'Select a country'; the Country field there is a drop-down list. From the consignee, importer or place of destination picker it MUST offer only 'United Kingdom', selected, and MUST save that country whatever country is posted.
+
+#### Scenario: The place of origin and consignor pages offer every country, opening on Select a country
+**ID**: SCN-INS-ADDR-035-A
+- **GIVEN** a trader on a notification's place of origin or consignor picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** every address and contact field is shown, with no address search
+- **AND** the Country select's first option reads 'Select a country' and no country is selected
+- **AND** after 'Select a country' the select offers 'United Kingdom' and every country the reference data service serves, and no other, by their served names, in alphabetical order
+
+#### Scenario: The consignee, importer and place of destination pages offer the United Kingdom alone
+**ID**: SCN-INS-ADDR-035-B
+- **GIVEN** a trader on a notification's consignee, importer or place of destination picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** every address and contact field is shown, with no address search
+- **AND** the Country select offers only 'United Kingdom'
+- **AND** 'United Kingdom' is selected
+
+#### Scenario: A consignee, importer or place of destination address is saved as United Kingdom whatever country is posted
+**ID**: SCN-INS-ADDR-035-C
+- **GIVEN** a trader on the add page reached from a notification's consignee, importer or place of destination picker
+- **WHEN** a save is posted with a country other than the United Kingdom
+- **THEN** the address is stored with the country United Kingdom
+
+#### Scenario: A place of origin or consignor address with no country, or one the list does not offer, is refused
+**ID**: SCN-INS-ADDR-035-D
+- **GIVEN** a trader on the add page reached from a notification's place of origin or consignor picker
+- **WHEN** they save with no country chosen, or with a country the list does not offer
+- **THEN** 'Select a country' is shown in the summary and against the Country select
+- **AND** nothing is saved
+
+#### Scenario: A consignee, importer or place of destination address with the name, postcode and phone blank is refused naming each
+**ID**: SCN-INS-ADDR-035-E
+- **GIVEN** a trader on the add page reached from a notification's consignee, importer or place of destination picker
+- **WHEN** they leave the name, postcode and phone number blank and save
+- **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code' and 'Enter a phone number'
+- **AND** each summary link reaches its field
+- **AND** nothing is saved
+
+#### Scenario: A place of origin or consignor address with an over-long postcode or a badly formed email address is refused
+**ID**: SCN-INS-ADDR-035-F
+- **GIVEN** a trader on the add page reached from a notification's place of origin or consignor picker
+- **WHEN** they save with a postcode of more than 12 characters and an email address that is not in the correct format
+- **THEN** the summary and the fields show 'Postcode must be 12 characters or fewer' and 'Enter an email address in the correct format'
+- **AND** nothing is saved
+
+#### Scenario: The place of origin and consignor pages offer the Country field as a drop-down list
+**ID**: SCN-INS-ADDR-035-G
+- **GIVEN** a trader on a notification's place of origin or consignor picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the Country field is a drop-down list holding its countries as options
+- **AND** it is not a type-ahead search
+
+### Requirement: The add page reached from a notification journey returns through the journey to the page each control names
+**ID**: REQ-INS-ADDR-036
+The system MUST, on the add page reached from a notification's role picker, offer 'Back' to that picker, a primary 'Save and select', a secondary 'Save and return to address page' and a 'Cancel and return to hub' link. From the consignment contact page it MUST offer 'Back', 'Save and continue' and a secondary 'Cancel and return to address page'. Each MUST return the user to the journey, and the address book's own success banner MUST NOT show.
+
+#### Scenario: A role's add page offers Back, Save and select, Save and return to address page and Cancel and return to hub
+**ID**: SCN-INS-ADDR-036-A
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page offers a 'Back' link, a primary 'Save and select' button, a secondary 'Save and return to address page' button after it, and a 'Cancel and return to hub' link
+
+#### Scenario: Save and select hands the new address back to the journey for selection
+**ID**: SCN-INS-ADDR-036-B
+- **GIVEN** a trader on the add page reached from a notification's role picker
+- **WHEN** they save a valid address with 'Save and select'
+- **THEN** the journey is handed the new address to select for the role
+- **AND** the address book list shows no success banner
+
+#### Scenario: Save and return to address page hands the new address back without selecting it
+**ID**: SCN-INS-ADDR-036-C
+- **GIVEN** a trader on the add page reached from a notification's role picker
+- **WHEN** they save a valid address with 'Save and return to address page'
+- **THEN** the journey is handed the new address to list on the role's picker, not to select
+
+#### Scenario: Cancel and return to hub saves nothing
+**ID**: SCN-INS-ADDR-036-D
+- **GIVEN** a trader on the add page reached from a notification's role picker who has typed an address
+- **WHEN** they follow 'Cancel and return to hub'
+- **THEN** the journey is handed back to the notification's hub, and the address book holds nothing new
+
+#### Scenario: The consignment contact's add page offers Back, Save and continue and Cancel and return to address page
+**ID**: SCN-INS-ADDR-036-E
+- **GIVEN** a trader on the consignment contact page
+- **WHEN** they choose to add a new address
+- **THEN** the add page offers a 'Back' link, a primary 'Save and continue' button and a secondary 'Cancel and return to address page' button
+- **WHEN** they save a valid address with 'Save and continue'
+- **THEN** the journey is handed the new address to select as the contact address
+- **WHEN** they choose 'Cancel and return to address page' instead
+- **THEN** the journey is handed back with no address

@@ -6,7 +6,7 @@
     {
       "id": "REQ-ADDR-001",
       "name": "The journey reads the address book and never writes to it",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ADDR-001-A",
@@ -49,18 +49,101 @@
         },
         {
           "id": "SCN-ADDR-001-E",
-          "name": "Saving a new address in the address book's own service returns to the picker with it selected",
+          "name": "Saving with Save and select lands on the consignment addresses page with the address chosen for the role",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "saving a new address in INS returns to the picker with it selected and committed", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should commit a copy of the address, land on the Consignment addresses page and set the banner", "strength": "full", "notes": "red-probed: fails when the select landing redirects anywhere but the Consignment addresses page" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Place of origin picker saves the address, selects it for the role and lands on Roles and addresses with the added banner", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Consignee picker saves the address, selects it for the role and lands on Roles and addresses with the added banner", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Importer picker saves the address, selects it for the role and lands on Roles and addresses with the added banner", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Place of destination picker saves the address, selects it for the role and lands on Roles and addresses with the added banner", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
           ]
         },
         {
           "id": "SCN-ADDR-001-F",
-          "name": "Cancelling out of the address book's own service returns to the picker with nothing added",
+          "name": "Cancelling out of the address book's own service lands on the overview with nothing added",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should land on the hub, commit nothing and set no banner", "strength": "partial", "notes": "not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Cancel and return to hub on the INS add page reached from the Place of origin picker lands on the Overview and saves no address", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Cancel and return to hub on the INS add page reached from the Consignor picker lands on the Overview and saves no address", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Cancel and return to hub on the INS add page reached from the Consignee picker lands on the Overview and saves no address", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Cancel and return to hub on the INS add page reached from the Importer picker lands on the Overview and saves no address", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Cancel and return to hub on the INS add page reached from the Place of destination picker lands on the Overview and saves no address", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-G",
+          "name": "Saving with Save and return to address page lands on the role's picker with the new address listed first and none selected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "cancelling INS add returns to the picker without saving an address", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should land on the party page with nothing selected, commit nothing and set the banner", "strength": "full", "notes": "red-probed: fails when the return landing commits the address or redirects to the Consignment addresses page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should list the addresses in the order the address book returns them", "strength": "partial", "notes": "red-probed: fails when the picker sorts the rows by id or by name; witnesses the listing order only, not the banner or that no address is selected" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and return to address page on the INS add page reached from the Place of origin picker lands on the picker with the added banner, the new address listed first and nothing selected", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and return to address page on the INS add page reached from the Consignor picker lands on the picker with the added banner, the new address listed first and nothing selected", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and return to address page on the INS add page reached from the Consignee picker lands on the picker with the added banner, the new address listed first and nothing selected", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and return to address page on the INS add page reached from the Importer picker lands on the picker with the added banner, the new address listed first and nothing selected", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and return to address page on the INS add page reached from the Place of destination picker lands on the picker with the added banner, the new address listed first and nothing selected", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-H",
+          "name": "The added address banner stays until the user leaves or reloads the page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.test.js", "test": "takes the added address banner from the request and unstates its cookie", "strength": "partial", "notes": "witnesses the reload half only (the cookie is unstated, so a reload shows no banner), not that the banner is still shown after ten seconds; red-probed: fails when the take leaves the banner cookie in place" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should render a success notification banner with the given title and text", "strength": "partial", "notes": "witnesses only that the banner renders, not that it is still shown after ten seconds or gone after a reload; red-probed: fails when the layout slot renders nothing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "witnesses the reload half only (shown once, then its cookie cleared), not that the banner is still shown after ten seconds; red-probed: fails when the banner cookie is not cleared" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "witnesses the reload half only (shown once, then its cookie cleared), not that the banner is still shown after ten seconds; red-probed: fails when the banner cookie is not cleared" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Consignor picker shows the added banner, which is still shown ten seconds later and is gone after a reload", "strength": "partial", "notes": "advances the page clock ten seconds then reloads; run on the leased stack by the gate; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-I",
+          "name": "Back on the address book's own add-address page returns to the role's picker",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should redirect to the party page and log the landing", "strength": "partial", "notes": "not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Back on the INS add page reached from the Consignor picker lands on the Consignor picker", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-J",
+          "name": "A return with an unknown role or a token that is missing or already used is refused for each action",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse a stale handshake token", "strength": "full", "notes": "red-probed: fails when the token check is skipped, and when the address is committed before the token check (AND nothing is saved to the notification: the stored answers are unchanged); runs on the select, return and cancel landings" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse a missing handshake token", "strength": "full", "notes": "red-probed: fails when the token check is skipped, and when the address is committed before the token check (AND nothing is saved to the notification: the stored answers are unchanged); runs on the select, return and cancel landings" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse an unknown fulfilment id", "strength": "partial", "notes": "runs on the select, return and cancel landings; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-K",
+          "name": "The address book's own add-address page reached from the consignment contact page offers Back, Save and continue, and Cancel and return to address page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing", "strength": "partial", "notes": "red-probed; starts from the handshake, not from following the contact page's link" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/add.fit.spec.js", "test": "from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page", "strength": "partial", "notes": "run by the gate; not red-probed; no e2e drives the contact round trip" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-L",
+          "name": "Saving an address added from the consignment contact page returns to the contact page with it chosen",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing", "strength": "partial", "notes": "not red-probed; no e2e drives the contact round trip" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should commit the contact answer and land on the contact page", "strength": "partial", "notes": "not red-probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "red-probed: fails when the banner cookie is not cleared; the scenario's other Thens are not probed" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-M",
+          "name": "Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once", "strength": "partial", "notes": "not red-probed; no e2e drives the contact round trip" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should redirect the contact to the contact page and commit nothing", "strength": "partial", "notes": "not red-probed" }
           ]
         }
       ]
@@ -394,7 +477,7 @@
           "name": "A partially filled permanent address for an animal identifier blocks the save",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "passport + owner name only → Enter address line 1; completing address fields then adds the unit" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "full", "notes": "passport + owner name only → Enter address line 1; completing address fields then adds the unit" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address validation: empty address line 1 links to and focuses the preserved field", "strength": "partial", "notes": "clears one field from a complete fill; same mandate, different entry path" }
           ]
         }

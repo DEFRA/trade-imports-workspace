@@ -407,13 +407,14 @@ const dependenciesFor = (row, ids, backlog) => {
  * `merge` sets a ref per repo key, keeping the row's other merge refs;
  * `dependsOn` replaces the row's dependencies with other rows of this backlog;
  * `attempt` replaces how far the last failed attempt got, or clears it when
- * given `'none'`. A `commit` clears it, whatever else the same call asks for:
- * a landed row has no attempt in flight.
+ * given `'none'`, as does `rigour` with its own preset. A `commit` clears
+ * `attempt`, whatever else the same call asks for: a landed row has no
+ * attempt in flight.
  *
  * @param {object} args
  * @param {{increments: object[]}} args.backlog
  * @param {string} args.id
- * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none'}} args.changes
+ * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none', rigour?: string|'none'}} args.changes
  * @returns {{backlog: object, changed: Record<string, {before: unknown, after: unknown}>}}
  * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, or a dependency is the row itself or not in the backlog
  */
@@ -443,6 +444,10 @@ export const setRowFields = ({ backlog, id, changes }) => {
   if (changes.attempt !== undefined) {
     if (changes.attempt === 'none') delete after.attempt
     else after.attempt = changes.attempt
+  }
+  if (changes.rigour !== undefined) {
+    if (changes.rigour === 'none') delete after.rigour
+    else after.rigour = changes.rigour
   }
   if (changes.commit !== undefined) delete after.attempt
 

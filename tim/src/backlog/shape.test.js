@@ -343,6 +343,23 @@ describe('checkBacklog', () => {
       ])
     })
 
+    test('passes a row that sets a rigour preset, and one that leaves it null', () => {
+      const rows = [
+        row({ rigour: 'fast' }),
+        row({ id: 'inc-002', rigour: null })
+      ]
+
+      expect(checkBacklog(backlogOf(...rows)).problems).toEqual([])
+    })
+
+    test('refuses a rigour preset the loop does not have', () => {
+      expect(
+        checkBacklog(backlogOf(row({ rigour: 'quick' }))).problems
+      ).toEqual([
+        'inc-001 "rigour" must be one of: full, standard, fast or null.'
+      ])
+    })
+
     test('refuses a merge that names no repo', () => {
       expect(checkBacklog(backlogOf(row({ merge: {} }))).problems).toEqual([
         'inc-001 "merge" must be an object whose values are text or null.'

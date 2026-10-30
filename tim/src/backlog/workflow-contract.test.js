@@ -8,6 +8,7 @@ import {
   runWorkflowScript
 } from '../test-support/workflow-runtime.js'
 import { ATTEMPT_STAGES } from '../build/start.js'
+import { loadBacklogSchema, rowSchemaOf } from './backlog-schema.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -376,6 +377,18 @@ describe('every workflow script', () => {
     )
 
     expect(houseRulesInLoop(loop)).toBe(houseRulesInRulesFile(rules))
+  })
+
+  test('offers exactly the rigour presets a row may set', () => {
+    const loop = readFileSync(
+      join(buildLoopDir, 'increment-build-loop.js'),
+      'utf8'
+    )
+    const schema = loadBacklogSchema(workspaceRoot)
+
+    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(
+      rowSchemaOf(schema).properties.rigour.anyOf[0].enum
+    )
   })
 
   test('the review and code-style tools accept exactly the finding categories the build loop verifies by', () => {

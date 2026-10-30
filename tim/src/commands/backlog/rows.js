@@ -7,6 +7,7 @@ import {
 import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
+  rigoursOf,
   statusesOf
 } from '../../backlog/backlog-schema.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
@@ -49,13 +50,14 @@ const setOptsSchemaFor = (statuses) =>
       pr: z.string().optional(),
       merge: z.array(z.string()).optional(),
       dependsOn: z.string().optional(),
-      attempt: z.string().optional()
+      attempt: z.string().optional(),
+      rigour: z.string().optional()
     })
     .refine(
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on or --attempt.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
       }
     )
 
@@ -101,6 +103,17 @@ const parseAttempt = (raw) => {
   return result.data
 }
 
+const parseRigour = (raw, rigours) => {
+  if (raw === 'none') return 'none'
+  if (!rigours.includes(raw)) {
+    throw new TimError(
+      'USAGE',
+      `--rigour must be "none" to clear it, or one of ${rigours.join(', ')}.`
+    )
+  }
+  return raw
+}
+
 const MERGE_PATTERN = /^([^=\s]+)=(\S+)$/
 
 const parseMergeEntry = (entry) => {
@@ -140,10 +153,11 @@ const collect = (value, previous = []) => [...previous, value]
  *
  * @param {object} opts
  * @param {string[]} statuses - The statuses backlog.schema.json allows
+ * @param {string[]} rigours - The rigour presets backlog.schema.json allows
  * @returns {object} The changes to apply
  * @throws {TimError} USAGE
  */
-export const parseSetOpts = (opts, statuses) => {
+export const parseSetOpts = (opts, statuses, rigours) => {
   const parsed = parseOptions(setOptsSchemaFor(statuses), {
     status: opts.status,
     commit: opts.commit,
@@ -154,7 +168,8 @@ export const parseSetOpts = (opts, statuses) => {
     pr: opts.pr,
     merge: opts.merge,
     dependsOn: opts.dependsOn,
-    attempt: opts.attempt
+    attempt: opts.attempt,
+    rigour: opts.rigour
   })
   return Object.fromEntries(
     Object.entries({
@@ -166,7 +181,11 @@ export const parseSetOpts = (opts, statuses) => {
           ? undefined
           : parseDependsOn(parsed.dependsOn),
       attempt:
-        parsed.attempt === undefined ? undefined : parseAttempt(parsed.attempt)
+        parsed.attempt === undefined ? undefined : parseAttempt(parsed.attempt),
+      rigour:
+        parsed.rigour === undefined
+          ? undefined
+          : parseRigour(parsed.rigour, rigours)
     }).filter(([, value]) => value !== undefined)
   )
 }
@@ -257,7 +276,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket, branch, dependencies and the last failed attempt are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
+      'Record build state on one increment: status, commit, ticket, branch, dependencies, the last failed attempt and rigour are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
@@ -270,7 +289,8 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on "" --json\n' +
         '  tim backlog set shared/my-programme inc-004 --attempt \'{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}\' --json\n' +
-        '  tim backlog set shared/my-programme inc-004 --attempt none --json'
+        '  tim backlog set shared/my-programme inc-004 --attempt none --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --rigour fast --json\n'
     )
     .option(
       '--status <status>',
@@ -301,14 +321,20 @@ export const register = (backlog, { timVersion }) => {
       '--attempt <json>',
       'How far the last failed attempt got, as JSON with a "stage" of implement, review or ladder, a "reason", an "at", a "planReviewed" and a "work". "none" clears it, and so does recording a --commit'
     )
+    .option(
+      '--rigour <preset>',
+      'How much of the pipeline this row gets, overriding the run\'s: full, standard or fast. "none" clears it, and `tim build rigour <workarea>` proposes one'
+    )
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) => {
           const path = backlogPathFor(workspaceRoot, args[0])
           const id = args[1]
+          const schema = loadBacklogSchema(workspaceRoot)
           const changes = parseSetOpts(
             opts,
-            statusesOf(loadBacklogSchema(workspaceRoot))
+            statusesOf(schema),
+            rigoursOf(schema)
           )
           const { backlog: updated, changed } = setRowFields({
             backlog: readJsonFile(path),

@@ -48,6 +48,15 @@ export const rowSchemaOf = (schema) =>
 export const statusesOf = (schema) => rowSchemaOf(schema).properties.status.enum
 
 /**
+ * The rigour presets a row may set, in the order the schema lists them.
+ *
+ * @param {object} schema - The backlog schema
+ * @returns {string[]}
+ */
+export const rigoursOf = (schema) =>
+  rowSchemaOf(schema).properties.rigour.anyOf[0].enum
+
+/**
  * The fields that turn a requirement into a recipe: every field the row
  * schema's `not` refuses.
  *

@@ -736,21 +736,21 @@ The system MUST head the add page 'Add address and contact details' under the ca
 
 ### Requirement: The add and edit forms give each personal-data field its browser autocomplete hint
 **ID**: REQ-INS-ADDR-034
-The system MUST give the name field the autocomplete hint 'organization', the address lines 'address-line1' and 'address-line2', the town or city 'address-level2', the postcode 'postal-code', the email address 'email' and the phone number 'tel', on both the add and the edit form. County and Country MUST carry no hint.
+The system MUST give the address lines the autocomplete hints 'address-line1' and 'address-line2', the town or city 'address-level2', the postcode 'postal-code', the email address 'email' and the phone number 'tel', on both the add and the edit form. The name field, which holds a person's or an organisation's name, County and Country MUST carry no hint.
 
 #### Scenario: The add form carries the autocomplete hints
 **ID**: SCN-INS-ADDR-034-A
 - **GIVEN** the user opens the add form
 - **WHEN** the page is shown
-- **THEN** the name, address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'organization', 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
-- **AND** County and Country carry none
+- **THEN** the address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** the name, County and Country fields carry none
 
 #### Scenario: The edit form carries the autocomplete hints
 **ID**: SCN-INS-ADDR-034-B
 - **GIVEN** the user opens the edit form for an address
 - **WHEN** the page is shown
-- **THEN** the name, address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'organization', 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
-- **AND** County and Country carry none
+- **THEN** the address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** the name, County and Country fields carry none
 
 ### Requirement: The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination
 **ID**: REQ-INS-ADDR-035

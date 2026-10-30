@@ -1248,6 +1248,9 @@ describe('increment-build-loop', () => {
       expect(run.error.message).toContain(
         'inc-901 names repo "workspace", which config.repos does not configure'
       )
+      expect(run.error.message).toContain(
+        'Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again'
+      )
       expect(run.error.message).not.toContain('inc-900')
       expect(run.agents.map((entry) => entry.options.label)).toEqual([
         'workspace',
@@ -1282,6 +1285,8 @@ describe('increment-build-loop', () => {
       expect(run.error.message).toContain(
         'inc-901 sets rigour "quick", which is not one of full, standard, fast'
       )
+      expect(run.error.message).toContain('Fix the rows, then launch again')
+      expect(run.error.message).not.toContain('config.repos')
       expect(run.error.message).not.toContain('inc-900')
       expect(run.agents.map((entry) => entry.options.label)).toEqual([
         'workspace',

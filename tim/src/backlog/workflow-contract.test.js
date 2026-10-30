@@ -5293,6 +5293,22 @@ describe('increment-build-loop', () => {
         })
       })
 
+      test('asks the branch stage for the attempt alongside the commit and the pull requests', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
+
+        expect(prompt).toContain(
+          '{repos, merge, gatePhases, awaitCi, commit, prs, attempt}'
+        )
+      })
+
+      test('tells the branch stage how an attempt becomes a resume point', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
+
+        expect(prompt).toContain(
+          'Otherwise `attempt` set, with `planReviewed` true and a `stage` of implement, review or ladder → that stage'
+        )
+      })
+
       test('asserts every configured repo is on the branch and fast-forwards it, creating nothing', async () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
 

@@ -3571,7 +3571,12 @@ const BRANCH_ROW_SCHEMA = {
         additionalProperties: false
       }
     },
-    resumeAt: { type: 'string', enum: ['build', 'pr', 'ci'] },
+    resumeAt: { type: 'string', enum: [...RESUME_FROM_VALUES, 'pr', 'ci'] },
+    attempt: {
+      type: ['object', 'null'],
+      description: "The row's `attempt` object exactly as written, or null when it has none",
+      additionalProperties: true
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -3584,7 +3589,7 @@ every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. Y
 ${guardrails()}
 ${REPO_RULE}
 STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
-\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs}' ${BACKLOG_TILDE}\`
+\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs, attempt}' ${BACKLOG_TILDE}\`
 \`jq -c '.repos | keys' ${BACKLOG_TILDE}\`
 The envelope's keys must be exactly ${[...REPO_KEYS].sort().join(', ')}: the repos this run was configured with. Any
 difference is ok:false naming it, because the gate reads the envelope and this run reads its args.
@@ -3608,7 +3613,11 @@ STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
 - merge: one {repo, ref} for each key of the row's \`merge\` object, in the order written. [] when it is null or absent.
 - gatePhases: verbatim when it is a list, [] included. Leave it out when it is null or absent.
 - awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
-- resumeAt, from \`commit\` and \`prs\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr". Otherwise "build".
+- attempt: the row's \`attempt\` object exactly as written, every field as it is. null when the row has none.
+- resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
+  Otherwise \`attempt\` set, with \`planReviewed\` true and a \`stage\` of implement, review or ladder → that stage.
+  Otherwise "build". Never from anything else you can see in the repos: a dirty tree belongs to an earlier attempt and
+  STEP 2 has already refused it.
 Report ok:true only when STEP 1's keys matched and every repo passed STEP 2.
 Return the structured output only.`,
     light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_ROW_SCHEMA })

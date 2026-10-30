@@ -36,6 +36,14 @@ const rowWithout = (field) =>
 
 const backlogOf = (...rows) => ({ programme: 'demo', increments: rows })
 
+const attempt = {
+  stage: 'ladder',
+  reason: 'ladder-red',
+  at: '2026-10-30T11:00:00.000Z',
+  planReviewed: true,
+  work: { kind: 'wip', branch: 'feat/EUDPA-900-notification-list', sha: 'abc1234' }
+}
+
 describe('checkBacklog', () => {
   test('passes a row that says what, why and acceptance', () => {
     expect(checkBacklog(backlogOf(row()))).toEqual({
@@ -49,6 +57,14 @@ describe('checkBacklog', () => {
     expect(checkBacklog({ items: [] }).problems).toEqual([
       'The backlog needs an "increments" list.'
     ])
+  })
+
+  test('passes a row carrying an attempt, and refuses one whose stage is not a stage', () => {
+    expect(checkBacklog(backlogOf(row({ attempt }))).problems).toEqual([])
+    expect(
+      checkBacklog(backlogOf(row({ attempt: { ...attempt, stage: 'land' } })))
+        .problems
+    ).toEqual(['inc-001 "attempt" must be an object.'])
   })
 
   test('names every missing requirement field', () => {
@@ -613,5 +629,37 @@ describe('setRowFields', () => {
     expect(() =>
       setRowFields({ backlog: backlogOf(row()), id: 'inc-009', changes: {} })
     ).toThrow("Can't find inc-009 in the backlog.")
+  })
+
+  test('records how far an attempt got', () => {
+    const { backlog, changed } = setRowFields({
+      backlog: backlogOf(row()),
+      id: 'inc-001',
+      changes: { attempt }
+    })
+
+    expect(backlog.increments[0].attempt).toEqual(attempt)
+    expect(changed.attempt).toEqual({ before: undefined, after: attempt })
+  })
+
+  test('drops the attempt when the increment lands', () => {
+    const { backlog, changed } = setRowFields({
+      backlog: backlogOf(row({ attempt })),
+      id: 'inc-001',
+      changes: { commit: 'def5678' }
+    })
+
+    expect(backlog.increments[0]).not.toHaveProperty('attempt')
+    expect(changed.attempt).toEqual({ before: attempt, after: undefined })
+  })
+
+  test('clears the attempt on its own when asked for none', () => {
+    const { backlog } = setRowFields({
+      backlog: backlogOf(row({ attempt })),
+      id: 'inc-001',
+      changes: { attempt: 'none' }
+    })
+
+    expect(backlog.increments[0]).not.toHaveProperty('attempt')
   })
 })

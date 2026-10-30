@@ -8,7 +8,7 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey to the page the action they chose names.
+The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey: from a consignment role, to the consignment addresses page after "Save and select", to that role's picker after "Save and return to address page" or "Back", and to the notification's overview after "Cancel and return to hub"; from the consignment contact, to the consignment contact page after any of its actions.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A

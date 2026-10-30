@@ -119,11 +119,11 @@ The system MUST reject an email address that is not validly formatted, with an e
 
 ### Requirement: Saving a new or edited address shows a confirmation naming it
 **ID**: REQ-INS-ADDR-009
-The system MUST return the user to the address book list on a successful save, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
+The system MUST return the user to the address book list on a successful save from the add form opened from the address book or from the edit form, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
 
 #### Scenario: Adding an address confirms it and lists it first
 **ID**: SCN-INS-ADDR-009-A
-- **GIVEN** the user has filled in a valid new address
+- **GIVEN** the user has filled in a valid new address on the add form opened from the address book
 - **WHEN** they save it
 - **THEN** they return to the address book, and a 'Success' confirmation reads '<name> address added to your address book'
 - **AND** the new address is listed first, with a View link that opens its own details page

@@ -1086,7 +1086,7 @@ The `planOnly` run is the cheapest way to drive the plan stage: it needs three a
       expect(stageLabels(run)).toContain('inc-900 revise plan')
       expect(stageLabels(run)).not.toContain('inc-900 plan review 2')
       expect(run.logs).toContain(
-        'inc-900: one plan review runs at this row\'s rigour, so the revised plan is not re-read. Its 1 finding(s) stand as required work. Building it, with each as required work.'
+        "inc-900: one plan review runs at this row's rigour, so the revised plan is not re-read. Its 1 finding(s) stand. Building it, with each as required work."
       )
     })
 
@@ -1186,7 +1186,7 @@ const reviewedPlan = async (id, branchedRepos = null, rigour) => {
       id,
       withFollowUps(revised, [review]),
       findings,
-      `one plan review runs at this row's rigour, so the revised plan is not re-read. Its ${findings.length} finding(s) stand as required work.`
+      `one plan review runs at this row's rigour, so the revised plan is not re-read. Its ${findings.length} finding(s) stand.`
     )
   }
   const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })

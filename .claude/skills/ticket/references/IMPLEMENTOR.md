@@ -135,10 +135,31 @@ value decides. The fix is the name, and no comment.
 
 ### Verification
 
-Unit tests, lint and the E2E suite. Never verify by hand in a browser.
-If a behaviour has no E2E cover, add or extend a spec in
-`repos/trade-imports-ins-tests` and run it with
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose`.
+Unit tests and lint, every time. Never verify by hand in a browser.
+
+Run the E2E suite locally only when the change touches the tests repo,
+cross-cutting code, or a behaviour whose E2E cover you added or
+changed:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose
+```
+
+Otherwise name the existing spec that covers the behaviour, say that it
+is unchanged, and leave it to CI. Standing the stack up to re-run specs
+you did not touch tells you nothing CI does not, and it is the single
+easiest way to spend an hour on a one-line change.
+
+When a behaviour has no E2E cover at all, add or extend a spec in
+`repos/trade-imports-ins-tests` and run it — that is a changed spec, so
+the condition above is met. Scope the run to the specs you touched
+(`-- "<path regex>"`) before reaching for the whole suite.
+
+Match the proof to what the change can break. A markup or copy change
+in one feature is proved by the suite that renders it; it does not earn
+a stack. Where the plan asks for a step its own reasoning rules out,
+the plan is wrong — fix it under "## Implementation Notes" rather than
+running the step.
 
 ## When Plan is Wrong
 
@@ -170,7 +191,7 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 ## Completion Checklist
 
 - [ ] All AC met
-- [ ] Tests pass (before and after), E2E included
+- [ ] Tests pass (before and after), with E2E run or its existing cover named
 - [ ] Comment pass done on every touched file
 - [ ] No ticket keys, ids or history in code, comments or test titles
 - [ ] Docs, recipes and JSDoc the plan listed as made untrue are updated

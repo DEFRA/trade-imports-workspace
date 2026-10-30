@@ -674,6 +674,17 @@ describe('setRowFields', () => {
     expect(changed.attempt).toEqual({ before: attempt, after: undefined })
   })
 
+  test('keeps a row’s rigour when it records the commit that landed it', () => {
+    const { backlog } = setRowFields({
+      backlog: backlogOf(row({ attempt, rigour: 'fast' })),
+      id: 'inc-001',
+      changes: { commit: 'def5678' }
+    })
+
+    expect(backlog.increments[0]).not.toHaveProperty('attempt')
+    expect(backlog.increments[0].rigour).toBe('fast')
+  })
+
   test('clears the attempt on its own when asked for none', () => {
     const { backlog } = setRowFields({
       backlog: backlogOf(row({ attempt })),

@@ -431,6 +431,52 @@
             "required": ["url"],
             "properties": { "url": { "$ref": "#/$defs/text" } }
           }
+        },
+        "attempt": {
+          "description": "Written by the build loop through `tim backlog set --attempt`: how far the last failed attempt at the increment got, so a relaunch picks it up there rather than re-planning and re-implementing it. Cleared when the increment lands, because a recorded commit and an attempt in flight cannot both be true. Set it to \"none\" to clear it by hand.",
+          "type": "object",
+          "required": ["stage", "reason", "at", "planReviewed", "work"],
+          "properties": {
+            "stage": {
+              "description": "The stage the attempt reached, and the one a relaunch enters at: implement (the plan is reviewed, the code is not written), review (the code is written and staged), ladder (the code is written, reviewed and fixed).",
+              "enum": ["implement", "review", "ladder"]
+            },
+            "reason": {
+              "description": "The stop reason that ended the attempt, such as \"ladder-red\".",
+              "$ref": "#/$defs/text"
+            },
+            "at": {
+              "description": "When the attempt was preserved, as an ISO 8601 time.",
+              "$ref": "#/$defs/text"
+            },
+            "planReviewed": {
+              "description": "true when plans/<id>.md passed its lint and its plan review before the attempt ran. false means a relaunch plans again whatever `stage` says.",
+              "type": "boolean"
+            },
+            "work": {
+              "description": "Where the preserved work is. The full lifecycle commits it; the branch lifecycle cannot, so it writes patches.",
+              "type": "object",
+              "required": ["kind"],
+              "properties": {
+                "kind": {
+                  "description": "wip: a pushed commit at the branch's head. patches: files under <workarea>/logs/. none: the stage left nothing to restore.",
+                  "enum": ["wip", "patches", "none"]
+                },
+                "branch": {
+                  "description": "kind wip: the branch the commit is on.",
+                  "$ref": "#/$defs/text"
+                },
+                "sha": {
+                  "description": "kind wip: the commit.",
+                  "$ref": "#/$defs/text"
+                },
+                "files": {
+                  "description": "kind patches: each saved file, relative to the workarea, such as [\"logs/inc-034-preserve-frontend.staged.patch\"].",
+                  "$ref": "#/$defs/textList"
+                }
+              }
+            }
+          }
         }
       },
       "not": {

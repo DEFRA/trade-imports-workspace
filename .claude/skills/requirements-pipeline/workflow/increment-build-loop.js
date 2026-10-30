@@ -8,6 +8,7 @@ export const meta = {
     { title: 'Start' },
     { title: 'Derive' },
     { title: 'Branch' },
+    { title: 'Resume' },
     { title: 'Baseline' },
     { title: 'Plan' },
     { title: 'Implement' },
@@ -69,7 +70,8 @@ const ALWAYS_REQUIRED = [
   'ciWatchMinutes',
   'requireApproval',
   'approvalWaitMinutes',
-  'e2e'
+  'e2e',
+  'resumeFrom'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -109,6 +111,20 @@ if (!E2E_LOCATIONS.includes(E2E)) {
   )
 }
 const E2E_IS_LOCAL = E2E === 'local'
+
+const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
+const RESUME_FROM_VALUES = ['build', ...ATTEMPT_STAGES]
+const RESUME_FROM = CFG.resumeFrom
+if (RESUME_FROM !== null && !RESUME_FROM_VALUES.includes(RESUME_FROM)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.resumeFrom must be null to take it from the row, or one of ${RESUME_FROM_VALUES.join(', ')} — the stage the FIRST row this run builds enters at. Got ${JSON.stringify(RESUME_FROM)}`
+  )
+}
+if (RESUME_FROM !== null) {
+  log(
+    `${WORKFLOW_NAME}: resumeFrom ${RESUME_FROM} — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog`
+  )
+}
 
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 
@@ -1345,7 +1361,19 @@ e. Only then push the other repos. A publish that failed, never started or never
 None of this applies when you push ${TESTS_KEY} alone, or do not push it.`
 }
 
-const preserveWork = (id, branch, reason, evidence) =>
+const attemptRecordStep = (id, { stage, outcome, planReviewed }, step, work) => {
+  if (stage === null) return ''
+  const record = `{"stage":"${stage}","reason":"${outcome}","at":"<the time now>","planReviewed":${planReviewed},"work":${work}}`
+  return `
+${step}. RECORD HOW FAR THIS ATTEMPT GOT, so the next run resumes here rather than rebuilding it from the top.
+   The time now, as its own Bash call: \`date -u +%Y-%m-%dT%H:%M:%SZ\`. Then:
+   \`${setRow(id, `--attempt '${record}'`)}\`
+   Write the JSON exactly as above, filling in only the bracketed parts. Do NOT change the stage or the reason: the
+   loop settled those from the stage that failed, and a stage you choose yourself would resume this increment in the
+   wrong place. Where you saved nothing at all, write \`"work":{"kind":"none"}\`.`
+}
+
+const preserveWork = (id, branch, reason, evidence, record) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${guardrails()}
 ${REPO_RULE}
@@ -1366,13 +1394,13 @@ ${specPreserveStep(id, branch)}
 7. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; branch <branch>; wip <sha>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built, and a recorded commit would make the next attempt skip
-   the build.
+   the build.${attemptRecordStep(id, record, 8, `{"kind":"wip","branch":"${branch}","sha":"<the wip SHA, or several in the order of the configured repos, space separated>"}`)}
 The next attempt branches from here and builds on top; the squash merge collapses the wip commit.
 NEVER \`reset --hard\`, NEVER \`clean -fd\`.
 Report the branch name and the wip SHA.
 Return the structured output only.`
 
-const preserveWorkOnBranch = (id, branch, reason, evidence) =>
+const preserveWorkOnBranch = (id, branch, reason, evidence, record) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK WITHOUT COMMITTING ANY OF IT.
 ${guardrails()}
 ${REPO_RULE}
@@ -1410,15 +1438,30 @@ TASK:
    \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
 6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; local commits <SHAs or none> moved back from <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
-   Do NOT record a commit — the increment is not built.
+   Do NOT record a commit — the increment is not built.${attemptRecordStep(id, record, 7, '{"kind":"patches","files":[<every .staged.patch and .unstaged.patch you wrote in step 2, each as "logs/<its name>", comma separated>]}')}
+   Name only the \`.staged.patch\` and \`.unstaged.patch\` files: step 0's \`.commits.patch\` is a mailbox that \`git apply\`
+   cannot take, and step 0's \`reset --soft\` already left its changes staged, so the staged patch holds them.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.
 Report the patch files, the stash refs and which merges you aborted.
 Return the structured output only.`
 
-const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail }) => {
+const RESUME_STAGE_OF_PRESERVING_PHASE = {
+  Implement: 'implement',
+  Review: 'review',
+  'Verify findings': 'review',
+  Fix: 'review',
+  Land: 'ladder'
+}
+
+const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail, planReviewed }) => {
   log(`${id}: ${outcome.toUpperCase()} — preserving the attempt. ${detail}`)
+  const record = {
+    stage: RESUME_STAGE_OF_PRESERVING_PHASE[phaseName] ?? null,
+    outcome,
+    planReviewed: planReviewed === true
+  }
   const kept = await agent(
-    (IS_BRANCH ? preserveWorkOnBranch : preserveWork)(id, workBranch, reason, evidence),
+    (IS_BRANCH ? preserveWorkOnBranch : preserveWork)(id, workBranch, reason, evidence, record),
     light({ label: `${id} preserve`, phase: phaseName, schema: incrementSchema })
   )
   return {
@@ -1430,6 +1473,129 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
     preserved: kept?.summary
   }
 }
+
+const RESTORE_SCHEMA = {
+  type: 'object',
+  required: ['restored', 'green', 'rungs', 'changedFiles', 'summary'],
+  properties: {
+    restored: {
+      type: 'boolean',
+      description:
+        "The preserved work is in the trees: every recorded commit is in its repo's history, or every patch applied cleanly. false when it is not here at all"
+    },
+    green: {
+      type: 'boolean',
+      description: 'Every gate phase that had rungs came back green. false whenever restored is false'
+    },
+    rungs: {
+      type: 'array',
+      items: GATE_RUNG_SCHEMA,
+      description: 'Every rung from every gate phase, copied from the JSON tim printed'
+    },
+    changedFiles: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Every file the restored work touches, each written `<repoKey>:<repo-relative path>`'
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const restoreCommitsStep = (branch, work) => `1. PUT THE WORK BACK. It is already committed: the preserve stage
+   committed it on \`${branch}\` and pushed it, so nothing is applied here. You CHECK it is there.
+   THE RECORDED COMMITS: ${work.sha ?? '(the record names none)'}
+   a. For EACH of the increment's repos, \`git -C ${TILDE}/<repoPath> status --short\` must print nothing. A dirty tree
+      here is somebody else's work: report restored:false naming the repo, and change nothing in it.
+   b. For EACH recorded commit, find the repo it is in: in each of the increment's repos, run
+      \`git -C ${TILDE}/<repoPath> merge-base --is-ancestor <sha> HEAD\` (exit 0 means it is in that repo's history).
+      Every recorded commit must be an ancestor of HEAD in exactly one of them. One that is in none is not on this
+      machine: report restored:false naming it.
+   Never \`checkout\`, \`reset\`, \`cherry-pick\`, \`revert\` or commit anything.`
+
+const restorePatchesStep = (id, work) => {
+  const files = work.files ?? []
+  if (files.length === 0) {
+    return `1. PUT THE WORK BACK. The record names no patch file, so there is nothing to restore: report restored:false
+   and green:false, run no gate command, and report changedFiles as [].`
+  }
+  return `1. PUT THE WORK BACK. The preserve stage saved it as patches, because the branch is shared and nothing from a
+   failed attempt may be committed to it. Apply them.
+   THE SAVED PATCHES, each relative to ${WORKAREA_TILDE}:
+${files.map((file) => `   - ${file}`).join('\n')}
+   a. For EACH of the increment's repos, \`git -C ${TILDE}/<repoPath> status --short\` must print nothing. A dirty tree
+      here is an earlier attempt nobody cleared: report restored:false naming the repo, and change nothing in it.
+   b. A patch is named \`${id}-preserve-<repoKey>.staged.patch\` or \`.unstaged.patch\`: the repoKey in the name says
+      which repo it belongs to. For each repo, apply its staged patch first, then its unstaged one:
+      \`git -C ${TILDE}/<repoPath> apply --index ${WORKAREA_TILDE}/<the .staged.patch>\`
+      \`git -C ${TILDE}/<repoPath> apply ${WORKAREA_TILDE}/<the .unstaged.patch>\`
+   c. A patch that is not on disk, or that git refuses, is restored:false naming it and quoting git. Never add
+      \`--3way\`, \`--reject\` or \`--exclude\`, and never edit a patch to make it apply: a half-applied tree is a tree
+      nobody wrote, and the gate would measure it as though somebody had.
+   Never \`checkout\`, \`reset\`, \`stash\` or commit anything.`
+}
+
+const restoreWorkStep = (id, branch, work) => {
+  if (work.kind === 'wip') return restoreCommitsStep(branch, work)
+  if (work.kind === 'patches') return restorePatchesStep(id, work)
+  return `1. PUT THE WORK BACK. The preserve stage saved nothing for this attempt, so there is nothing to restore:
+   report restored:false and green:false, run no gate command, and report changedFiles as [].`
+}
+
+const restoreAttempt = (id, branch, attempt, phases) =>
+  agent(
+    `You are the RESTORE STAGE for increment ${id}. Its last attempt reached the ${attempt.stage} stage and stopped at
+${attempt.reason}. The work was preserved. Put it back, prove it, and report what it touches. You plan nothing, you
+write no code, and you repair nothing.
+${guardrails()}
+${REPO_RULE}
+${GATE_RULE}
+${restoreWorkStep(id, branch, attempt.work ?? {})}
+2. WHAT IT TOUCHES. For EACH of the increment's repos, two Bash calls:
+   \`git -C ${TILDE}/<repoPath> diff --staged --name-only\`
+   \`git -C ${TILDE}/<repoPath> diff --name-only\`
+   ${attempt.work?.kind === 'wip' ? `Both print nothing for this attempt: its work is committed and pushed, so the tree is clean and \`origin/${branch}\`\n   already holds it. What the attempt changed is its branch against the base:\n   \`git -C ${TILDE}/<repoPath> diff --name-only origin/${BASE_BRANCH}...HEAD\`\n   ` : ''}Report every path once in changedFiles, each written \`<repoKey>:<repo-relative path>\` with the repo keys
+   ${REPO_KEYS.join(', ')}. The review stages are grouped from this list, so a path left out is a file nobody reads.
+${baselineGateStep(phases, gateLogs(id, 'resume'))}
+4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
+   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. restored:true only when step 1 put every piece back.
+   green:true only when every phase that had rungs came back green, and false whenever restored is false, whatever
+   else ran. Put each red rung's reason in your summary, word for word.
+A RED RUNG IS NOT YOURS TO FIX. The loop reads green:false and sends the work to the implementor, which is the stage
+that repairs code. Never edit a file, never weaken a test, and never attempt a repair.
+${RUN_STACK_RULE}
+Return the structured output only.`,
+    light({ label: `${id} restore`, phase: 'Resume', schema: withStackHeld(RESTORE_SCHEMA) })
+  )
+
+const LANDED_RESUME_POINTS = ['pr', 'ci', 'done']
+
+const enteredAfterRestore = (id, stage, restored) => {
+  if (!restored?.restored) {
+    log(`${id}: the attempt that reached the ${stage} stage is not here — building it from the top`)
+    return 'build'
+  }
+  if (!restored.green) {
+    log(`${id}: the restored attempt is red on the cheap gate phases — resuming at implement rather than ${stage}`)
+    return 'implement'
+  }
+  log(`${id}: resuming at ${stage} — ${(restored.changedFiles ?? []).length} file(s) restored`)
+  return stage
+}
+
+const restoredImpl = (attempt, restored, files) => ({
+  ok: true,
+  summary: `This work comes from an earlier attempt that reached the ${attempt.stage} stage and stopped at ${attempt.reason}. The restore stage put it back and proved it: ${restored.summary}`,
+  notes: `This attempt was restored rather than built here, so the implementor's own notes are not available — read the diff, and the row's notes in the backlog for what the preserve stage recorded. What ended the earlier attempt: ${attempt.reason}.`,
+  changedFiles: files
+})
+
+const restoreEvidence = (id, restored, phases) => `THE RESTORE GATE, run on the restored work before this ladder — every rung below was green then, so a rung red now
+is this increment's to fix. Its logs are in ${gateLogs(id, 'resume')}/, named \`gate-<repo>-<rung>.log\`:
+${baselineRungList(restored)}
+This row was built on an earlier attempt and restored, so there is no pre-change baseline from this launch. The restore
+gate ran ${phases.join(' and ') || 'no phase'}, and that is the comparison point for those phases; any other phase has none here. A rung with no
+comparison point is still yours to diagnose and name — never to call pre-existing.`
 
 const guardedRepoKeys = (branchedRepos) =>
   branchedRepos
@@ -2208,6 +2374,19 @@ const PLAN_SCHEMA = {
     }
   },
   additionalProperties: false
+}
+
+const PLAN_READ_SCHEMA = {
+  ...PLAN_SCHEMA,
+  properties: {
+    ...PLAN_SCHEMA.properties,
+    planReviewMustAddress: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Every finding under the plan\'s "Plan review: must address" section. [] when it has none'
+    }
+  }
 }
 
 const PLAN_FINDING_KINDS = ['structural', 'detail']
@@ -3278,6 +3457,24 @@ const reviewedPlan = async (id, branchedRepos = null) => {
   return withMustAddress(id, reviewed, stillOpen)
 }
 
+const readReviewedPlan = (id, branchedRepos) =>
+  agent(
+    `Increment ${id} was planned on an earlier attempt, and that plan passed its lint and its review. READ IT BACK.
+You are not planning: you change nothing in the plan, you judge nothing in it, and you add nothing to it.
+${guardrails()}
+${readPlan(id)}
+Report the plan's own words, section by section, in the structured output:
+- repos: section 1's repos, in merge order${branchedRepos ? `, each one of ${branchedRepos.join(', ')}` : ''}
+- behaviourChanges, decisions, risks, specPrefixes, docsMadeUntrue, departures, standards and followUps, each as its
+  section writes them, and empty where the section says none
+- checks: every check in sections 5 and 6, one entry per command, each with its section number and the command as the
+  plan writes it
+- planReviewMustAddress: every finding under "Plan review: must address", or [] when the plan has no such section
+Report ok:false only when the file is missing or holds no plan. A section you cannot find is empty, not a failure.
+Return the structured output only.`,
+    code({ label: `${id} plan read`, phase: 'Resume', schema: PLAN_READ_SCHEMA })
+  )
+
 const ENVELOPE_REPO_SCHEMA = {
   type: 'object',
   required: ['key', 'path', 'github'],
@@ -3556,7 +3753,12 @@ const BRANCH_ROW_SCHEMA = {
         additionalProperties: false
       }
     },
-    resumeAt: { type: 'string', enum: ['build', 'pr', 'ci'] },
+    resumeAt: { type: 'string', enum: [...RESUME_FROM_VALUES, 'pr', 'ci'] },
+    attempt: {
+      type: ['object', 'null'],
+      description: "The row's `attempt` object exactly as written, or null when it has none",
+      additionalProperties: true
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -3569,7 +3771,7 @@ every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. Y
 ${guardrails()}
 ${REPO_RULE}
 STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
-\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs}' ${BACKLOG_TILDE}\`
+\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs, attempt}' ${BACKLOG_TILDE}\`
 \`jq -c '.repos | keys' ${BACKLOG_TILDE}\`
 The envelope's keys must be exactly ${[...REPO_KEYS].sort().join(', ')}: the repos this run was configured with. Any
 difference is ok:false naming it, because the gate reads the envelope and this run reads its args.
@@ -3593,7 +3795,11 @@ STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
 - merge: one {repo, ref} for each key of the row's \`merge\` object, in the order written. [] when it is null or absent.
 - gatePhases: verbatim when it is a list, [] included. Leave it out when it is null or absent.
 - awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
-- resumeAt, from \`commit\` and \`prs\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr". Otherwise "build".
+- attempt: the row's \`attempt\` object exactly as written, every field as it is. null when the row has none.
+- resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
+  Otherwise \`attempt\` set, with \`planReviewed\` true and a \`stage\` of implement, review or ladder → that stage.
+  Otherwise "build". Never from anything else you can see in the repos: a dirty tree belongs to an earlier attempt and
+  STEP 2 has already refused it.
 Report ok:true only when STEP 1's keys matched and every repo passed STEP 2.
 Return the structured output only.`,
     light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_ROW_SCHEMA })
@@ -4640,6 +4846,13 @@ let stopped = null
 let themeReviewsRun = 0
 const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
 let workspaceLeftOn = null
+let forcedResumeRow = null
+
+const forcedResumeFor = (id) => {
+  if (RESUME_FROM === null) return null
+  if (forcedResumeRow === null) forcedResumeRow = id
+  return forcedResumeRow === id ? RESUME_FROM : null
+}
 
 const E2E_PHASES_OWED = preflight.e2ePhasesOwed !== false
 const leaselessReason = !E2E_IS_LOCAL
@@ -4757,6 +4970,7 @@ while (stopped === null) {
   let workBranch = BASE_BRANCH
   let repos = null
   let resumeAt = 'build'
+  let rowAttempt = null
   let approvalRepos = []
   workspaceInIncrement = null
   let rowMerges = []
@@ -4782,6 +4996,7 @@ while (stopped === null) {
       }
       repos = row.repos
       resumeAt = row.resumeAt
+      rowAttempt = row.attempt ?? null
       rowMerges = row.merge ?? []
       rowGatePhases =
         row.gatePhases === undefined
@@ -4829,6 +5044,7 @@ while (stopped === null) {
     workBranch = started.branch
     repos = started.repos
     resumeAt = started.resumeAt ?? 'build'
+    rowAttempt = started.attempt ?? null
     approvalRepos = REQUIRE_APPROVAL ? REPO_KEYS : [...new Set([...APPROVAL_REPO_KEYS, ...(started.requireApproval ?? [])])]
     if (repos.includes(WORKSPACE_KEY)) {
       workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
@@ -4859,6 +5075,13 @@ while (stopped === null) {
   let mergesInProgress = []
   let workspaceEdits = []
   let specPrefixesOfRow = { planned: [], written: [] }
+  let impl = null
+  let files = []
+  let fixResult = null
+  let baselineEvidence = ''
+  let mergeNote = ''
+  let resumedFrom = null
+  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,
     confirmed: confirmed.length,
@@ -4867,11 +5090,67 @@ while (stopped === null) {
     foundInFix: fixReviewFindings.length
   })
 
+  const attempt = { id, ticket, workBranch }
+
+  const stopForHeldStack = async (stage, phaseName, held) => {
+    const detail = stackHeldDetail(id, stage, held)
+    log(`${id}: STACK HELD at ${stage} — ${detail}`)
+    const preserved = await preserveAttempt({
+      ...attempt,
+      phaseName,
+      reason: `the workspace stack was held by somebody else at the ${stage} stage`,
+      evidence: detail,
+      outcome: 'stack-held',
+      detail,
+      planReviewed: Boolean(plan?.ok)
+    })
+    results.push({ ...preserved, holder: held.holder })
+    stopped = { reason: 'stack-held', detail }
+  }
+
+  const offBranch = async (stageName, phaseName) => {
+    const guard = await branchGuard(id, stageName, phaseName, workBranch, IS_BRANCH ? null : repos)
+    if (guard?.ok) return null
+    return preserveAttempt({
+      ...attempt,
+      phaseName,
+      reason: `a repo left \`${workBranch}\` by the end of the ${stageName} stage`,
+      evidence: guard?.summary ?? 'the branch guard died',
+      outcome: 'off-branch',
+      detail: guard?.summary ?? 'the branch guard died',
+      planReviewed: Boolean(plan?.ok)
+    })
+  }
+
   build: {
-    if (resumeAt !== 'build') {
+    if (LANDED_RESUME_POINTS.includes(resumeAt)) {
       log(`${id}: already built on ${workBranch} — skipping to ${resumeAt}`)
+      if (forcedResumeFor(id) !== null) {
+        log(`${id}: resumeFrom ${RESUME_FROM} is ignored — the row records what landed, so it resumes at ${resumeAt}`)
+      }
       break build
     }
+
+    let enterAt = forcedResumeFor(id) ?? resumeAt
+
+    if (enterAt !== 'build') {
+      phase('Resume')
+      const restored = await recoverRunStack(id, 'restore', () => restoreAttempt(id, workBranch, rowAttempt, builderPhases))
+      const restoreHeld = restored?.stackHeld
+      if (restoreHeld) {
+        await stopForHeldStack('restore', 'Resume', restoreHeld)
+        break
+      }
+      enterAt = enteredAfterRestore(id, enterAt, restored)
+      if (enterAt !== 'build') {
+        resumedFrom = enterAt
+        files = (restored.changedFiles ?? []).filter((file) => !file.endsWith('.log'))
+        impl = restoredImpl(rowAttempt, restored, files)
+        baselineEvidence = restoreEvidence(id, restored, builderPhases)
+      }
+    }
+
+  if (enterAt === 'build') {
 
   phase('Baseline')
 
@@ -4921,19 +5200,22 @@ Return the structured output only.`,
     break
   }
 
-  const baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now
+  baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now
 is this increment's to fix, even when the failing test's own file is unchanged. Its logs are in
 ${gateLogs(id, 'baseline')}/, named \`gate-<repo>-<rung>.log\`:
 ${baselineRungList(baseline)}`
 
+  }
+
   phase('Plan')
 
-  plan = await reviewedPlan(id, repos)
+  const planner = enterAt === 'build' ? 'the planner' : 'the plan reader'
+  plan = enterAt === 'build' ? await reviewedPlan(id, repos) : await readReviewedPlan(id, repos)
 
   if (!plan || !plan.ok) {
-    log(`${id}: PLAN REFUSED — ${plan ? plan.summary : 'the planner died'}`)
-    results.push({ id, ticket: ticket?.key, outcome: 'plan-refused', plan: `${PLANS}/${id}.md`, detail: plan?.summary ?? 'the planner died' })
-    stopped = { reason: 'plan-refused', detail: `${id}: ${plan?.summary ?? 'the planner died'}` }
+    log(`${id}: PLAN REFUSED — ${plan ? plan.summary : `${planner} died`}`)
+    results.push({ id, ticket: ticket?.key, outcome: 'plan-refused', plan: `${PLANS}/${id}.md`, detail: plan?.summary ?? `${planner} died` })
+    stopped = { reason: 'plan-refused', detail: `${id}: ${plan?.summary ?? `${planner} died`}` }
     break
   }
 
@@ -4947,7 +5229,11 @@ ${baselineRungList(baseline)}`
     }
     break
   }
-  log(`${id}: planned — ${plan.repos.join(', ')}; ${plan.behaviourChanges.length} behaviour changes`)
+  log(
+    `${id}: ${enterAt === 'build' ? 'planned' : 'plan read back'} — ${plan.repos.join(', ')}; ${plan.behaviourChanges.length} behaviour changes`
+  )
+
+  if (enterAt === 'build' || enterAt === 'implement') {
 
   phase('Implement')
 
@@ -4964,7 +5250,8 @@ ${baselineRungList(baseline)}`
           reason: 'a merge the row asks for could not start',
           evidence: started?.summary ?? 'the merge stage agent died',
           outcome: 'merge-failed',
-          detail: started?.summary ?? 'agent failed'
+          detail: started?.summary ?? 'agent failed',
+          planReviewed: Boolean(plan?.ok)
         })
       )
       stopped = { reason: 'merge-failed', detail: `${id}: ${started?.summary ?? 'agent failed'}` }
@@ -4976,10 +5263,9 @@ ${baselineRungList(baseline)}`
       `${id}: merges started — ${started.merges.map((entry) => `${entry.repo}<-${entry.ref} ${entry.alreadyMerged ? 'already in' : `${entry.conflicted.length} conflicted`}`).join(', ')}`
     )
   }
-  const mergeNote = mergeNoteOf(mergesInProgress)
-  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
+  mergeNote = mergeNoteOf(mergesInProgress)
 
-  const impl = EXECUTOR === 'codex'
+  impl = EXECUTOR === 'codex'
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
@@ -5039,23 +5325,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     code({ label: `${id} implement`, phase: 'Implement', schema: withStackHeld(incrementSchema) })
   ))
 
-  const attempt = { id, ticket, workBranch }
-
-  const stopForHeldStack = async (stage, phaseName, held) => {
-    const detail = stackHeldDetail(id, stage, held)
-    log(`${id}: STACK HELD at ${stage} — ${detail}`)
-    const preserved = await preserveAttempt({
-      ...attempt,
-      phaseName,
-      reason: `the workspace stack was held by somebody else at the ${stage} stage`,
-      evidence: detail,
-      outcome: 'stack-held',
-      detail
-    })
-    results.push({ ...preserved, holder: held.holder })
-    stopped = { reason: 'stack-held', detail }
-  }
-
   const implHeld = impl?.stackHeld
   if (implHeld) {
     await stopForHeldStack('implement', 'Implement', implHeld)
@@ -5070,24 +5339,12 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
         reason: 'the implementor could not finish it',
         evidence: impl?.summary ?? 'the implementor agent died',
         outcome: 'implement-failed',
-        detail: impl?.summary ?? 'agent failed'
+        detail: impl?.summary ?? 'agent failed',
+        planReviewed: Boolean(plan?.ok)
       })
     )
     stopped = { reason: 'implement-failed', detail: `${id}: ${impl?.summary ?? 'agent failed'}` }
     break
-  }
-
-  const offBranch = async (stageName, phaseName) => {
-    const guard = await branchGuard(id, stageName, phaseName, workBranch, IS_BRANCH ? null : repos)
-    if (guard?.ok) return null
-    return preserveAttempt({
-      ...attempt,
-      phaseName,
-      reason: `a repo left \`${workBranch}\` by the end of the ${stageName} stage`,
-      evidence: guard?.summary ?? 'the branch guard died',
-      outcome: 'off-branch',
-      detail: guard?.summary ?? 'the branch guard died'
-    })
   }
 
   if (EXECUTOR === 'codex') {
@@ -5099,8 +5356,12 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     }
   }
 
-  const files = (impl.changedFiles ?? []).filter((f) => !f.endsWith('.log'))
+  files = (impl.changedFiles ?? []).filter((f) => !f.endsWith('.log'))
   log(`${id}: implemented, ${files.length} files changed — reviewing`)
+
+  }
+
+  if (enterAt !== 'ladder') {
 
   phase('Review')
 
@@ -5254,7 +5515,8 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
         reason: 'a review stage produced no result',
         evidence: reviewed.failed.map((slug) => codexNoResult(id, slug)).join(' | '),
         outcome: 'review-failed',
-        detail: `no result from ${reviewed.failed.join(', ')}`
+        detail: `no result from ${reviewed.failed.join(', ')}`,
+        planReviewed: Boolean(plan?.ok)
       })
     )
     stopped = { reason: 'review-failed', detail: `${id}: no result from ${reviewed.failed.join(', ')}` }
@@ -5310,8 +5572,6 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
       )) ?? judgement
   }
 
-  let fixResult = null
-
   const codexFix = async ({ stage, ruledFixes, treeDuty }) => {
     const result = await codexStage(id, 'fix', {
       phaseName: 'Fix',
@@ -5338,7 +5598,8 @@ ${COMPLETION_LINES_FIX}${mergeNote}${workspaceRepoRule()}`,
           reason: 'the fix stage produced no result',
           evidence: codexNoResult(id, stage),
           outcome: 'fix-failed',
-          detail: codexNoResult(id, stage)
+          detail: codexNoResult(id, stage),
+          planReviewed: Boolean(plan?.ok)
         })
       )
       stopped = { reason: 'fix-failed', detail: `${id}: ${codexNoResult(id, stage)}` }
@@ -5416,8 +5677,11 @@ Return the structured output only.`,
     }
   }
 
+  }
+
   const fixerReport = () => {
     if (fixResult) return `${fixResult.summary}\n  notes: ${fixResult.notes || '(none)'}`
+    if (enterAt === 'ladder') return 'no fix stage ran: this attempt was restored with its fixes already in it'
     if (judgement.fixNow.length > 0) return 'the fix stage returned no result'
     return 'no fix stage ran: the judge ruled nothing fix-now'
   }
@@ -5524,7 +5788,8 @@ Return the structured output only.`,
         reason: 'red verification ladder',
         evidence: ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed',
         outcome: 'ladder-red',
-        detail: ladder?.summary ?? 'verifier failed'
+        detail: ladder?.summary ?? 'verifier failed',
+        planReviewed: Boolean(plan?.ok)
       })
     )
     log(`${id}: attempt preserved — stopping the run so the failure is not built on top of`)
@@ -5605,7 +5870,8 @@ Return the structured output only.`,
         reason: 'the land stage could not commit it',
         evidence: land?.summary ?? 'the land agent died',
         outcome: 'land-failed',
-        detail: land?.summary ?? 'agent failed'
+        detail: land?.summary ?? 'agent failed',
+        planReviewed: Boolean(plan?.ok)
       })),
       findings: findingCounts()
     })
@@ -5736,6 +6002,7 @@ Return the structured output only.`,
         prs: prs.map((p) => p.url),
         ci: ciOutcome(),
         leftUncommitted: workspaceEdits,
+        ...(resumedFrom ? { resumedFrom } : {}),
         findings,
         judgement: judgementCalls,
         followUps: plan?.followUps
@@ -6182,6 +6449,7 @@ Return the structured output only.`,
     commit: land?.commit,
     prs: prs.map((p) => p.url),
     ...(mainRunsGreenByJobs.length > 0 ? { mainRunsGreenByJobs } : {}),
+    ...(resumedFrom ? { resumedFrom } : {}),
     specDiffComment,
     findings,
     judgement: judgementCalls,

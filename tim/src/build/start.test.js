@@ -375,6 +375,34 @@ describe('runBuildStart — an increment that already has a ticket', () => {
 
     expect(outcome.resumeAt).toBe('ci')
   })
+
+  test('hands the whole attempt record on, so the restore stage knows where the work is', async () => {
+    const attempt = {
+      stage: 'ladder',
+      reason: 'ladder-red',
+      at: '2026-10-30T11:00:00Z',
+      planReviewed: true,
+      work: { kind: 'wip', branch: 'feat/EUDPA-77-x', sha: 'abc1234' }
+    }
+    await workspaceWith([row({ ticket: 'EUDPA-77', attempt })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start()
+
+    expect({ resumeAt: outcome.resumeAt, attempt: outcome.attempt }).toEqual({
+      resumeAt: 'ladder',
+      attempt
+    })
+  })
+
+  test('reports no attempt for a row that has none', async () => {
+    await workspaceWith([row({ ticket: 'EUDPA-77' })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start()
+
+    expect(outcome.attempt).toBeNull()
+  })
 })
 
 describe('runBuildStart — derive', () => {
@@ -700,6 +728,27 @@ describe('resumePointFor', () => {
 
   test('is build for a row with nothing recorded', () => {
     expect(resumePointFor({})).toBe('build')
+  })
+
+  test('is the stage the last attempt reached when nothing has landed', () => {
+    expect(
+      resumePointFor({ attempt: { stage: 'ladder', planReviewed: true } })
+    ).toBe('ladder')
+  })
+
+  test('plans again when the attempt reached further on a plan that was never reviewed', () => {
+    expect(
+      resumePointFor({ attempt: { stage: 'ladder', planReviewed: false } })
+    ).toBe('build')
+  })
+
+  test('prefers what landed over what an attempt claims', () => {
+    expect(
+      resumePointFor({
+        commit: 'abc',
+        attempt: { stage: 'ladder', planReviewed: true }
+      })
+    ).toBe('pr')
   })
 })
 

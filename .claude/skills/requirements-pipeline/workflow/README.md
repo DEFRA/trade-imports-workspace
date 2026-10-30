@@ -242,6 +242,7 @@ missing key. The first log line is the resolved configuration.
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
+| `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -286,8 +287,9 @@ buildable increment itself. Under the branch lifecycle a one-command agent runs
 `tim backlog next <workarea> --json` instead. Either way the loop builds the id that comes
 back and goes round again after each landing, so one launch builds many increments and the
 run outlives the session that started it. Resuming is launching it again with the same
-args: `backlog.json` carries the status, ticket, branch and PRs, and the start stage
-resumes an increment part-way through its lifecycle.
+args: `backlog.json` carries the status, ticket, branch, PRs and the last failed attempt, and
+the row picks up at the stage that attempt reached — see
+[Resuming a row part-way through](#resuming-a-row-part-way-through).
 
 The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`, where `specChecks` holds one
 entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)), `reviewChecks` the checks left
@@ -368,7 +370,8 @@ ever.
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local'
+  e2e: 'local',
+  resumeFrom: null
 }
 ```
 
@@ -784,10 +787,75 @@ ticket and the loop stops at `not-landed`. In order, tim:
    the switch and the fast-forward; one that either would overwrite stops it, naming the
    files. An upstream on another branch is removed.
 
-It reports `resumeAt` from the row's `commit` and `prs`, never from the ticket's status. The
+It reports `resumeAt` from the row's `commit`, `prs` and `attempt`, never from the ticket's
+status, and hands the whole `attempt` record on beside it — see
+[Resuming a row part-way through](#resuming-a-row-part-way-through). The
 script maps a failed step to the stop reasons it always had: `derive-failed`, `no-buildable`,
 `ticket-failed` (also when tim does not report the ticket on the board) and `branch-failed`.
 The workspace resolve and the preflight's envelope-against-args check stay in the script.
+
+### Resuming a row part-way through
+
+A row that stops before it lands leaves its work preserved and a record of how far it got, so
+the next launch picks it up there rather than planning and implementing it again.
+
+**Where a row picks up** is `resumeAt`, derived from what the backlog records and nothing else —
+`resumePointFor` in `tim/src/build/start.js` under the full lifecycle, and the branch stage's own
+reading of the row under the branch lifecycle:
+
+| The row records | `resumeAt` | A relaunch re-runs |
+|---|---|---|
+| every `prs` entry merged | `done` | nothing |
+| `prs` non-empty | `ci` | CI watch, merge, done |
+| `commit` set | `pr` | PR, CI, merge, done |
+| an `attempt` whose `stage` is `ladder` | `ladder` | ladder, land, and on |
+| an `attempt` whose `stage` is `review` | `review` | review, verify, judge, fix, ladder, land, and on |
+| an `attempt` whose `stage` is `implement` | `implement` | implement and everything after it |
+| none of those | `build` | all of it, from the baseline |
+
+**The `attempt` record** is written by the preserve stage through `tim backlog set --attempt`, and
+cleared the moment the row records a `commit`. It holds the stage the attempt reached, the stop
+reason that ended it, the time, whether `plans/<id>.md` had passed its lint and review, and where
+the work is: a pushed `wip` commit under the full lifecycle, or patch files under `logs/` on the
+branch lifecycle, whose branch is shared and may carry nothing from a failed attempt.
+
+The stage comes from the phase the preserve ran in, so nothing has to be decided twice:
+`Implement` records `implement`, `Review`, `Verify findings` and `Fix` all record `review`, and
+`Land` records `ladder` — the ladder's own failure is preserved under `Land`, because `phase('Land')`
+is called before the ladder's result is read. `planReviewed` is recorded separately from the stage,
+because a plan can be reviewed and the implementor still die.
+
+**A resumed row runs two extra stages before the pipeline.** The **restore stage** puts the work
+back — checking the recorded commits are in each repo's history, or applying the patches — runs the
+gate's unit and FIT phases on the result, and reports every file the work touches. The **plan
+reader** reads `plans/<id>.md` back into the plan the later stages need, the "Plan review: must
+address" findings included. Neither the planner nor the plan reviewers run again.
+
+**Three rules decide where the row actually enters**, because a recorded stage is a claim about
+work on disk and the loop proves it first:
+
+| The restore stage reports | The row enters at | Why |
+|---|---|---|
+| `restored: false` | `build` | the work is not here: another machine, a cleaned tree, a deleted patch |
+| `restored: true`, `green: false` | `implement` | the work is here and red, and the implementor is the stage that repairs code — on a plan that still stands |
+| `restored: true`, `green: true` | its recorded stage | the attempt stands |
+
+**What a resumed row gets in place of the stages it skipped.** The ladder is given the restore
+gate as its comparison point rather than a baseline, and told plainly that it covers the cheap
+phases only and that a phase without one is still the increment's to diagnose. The implementor's
+result is substituted from the restore stage's file list, and its notes say the earlier
+implementor's own notes are not available: they were a subagent's return value and were never
+written to disk, and a reviewer handed `(none)` would read it as "nothing to flag".
+
+**`resumeFrom`** overrides the record for the **first** row a run builds, and is a ceiling rather
+than a command: the three rules can still drop the row further back. `build` is the useful value —
+it ignores the record and rebuilds. It is refused for `pr`, `ci` and `done`, which come from a
+recorded commit or pull request; a row that records one logs that the override is ignored and
+resumes from what landed.
+
+**The agent budget needs no adjustment.** A resumed row runs strictly fewer agents than a fresh
+one — it trades the planner, the plan reviewers and the implementor for a restore and a plan read —
+so `agentsPerIncrement()` stays a safe ceiling. Do not "correct" it downward.
 
 ### The workspace stack lease
 

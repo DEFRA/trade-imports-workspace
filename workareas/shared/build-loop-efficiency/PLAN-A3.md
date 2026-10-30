@@ -984,11 +984,12 @@ In the full path, after `rowAttempt = started.attempt ?? null` (line 5047):
 Then, beside `const builderPhases` (line 5084), which is the first point both paths have joined:
 
 ```javascript
-  const rules = rulesOf(rowRigour)
   log(
     `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
   )
 ```
+
+**This task declares no `rules` const.** An earlier draft put `const rules = rulesOf(rowRigour)` here, which nothing in this task reads — and an unused binding fails lint, so the task could not have gone green. Task 9 declares it, in the Review phase where it is first read; Task 8 needs only `rulesOf(rigour)` inside `reviewedPlan`, and `rowRigour` itself at the call site.
 
 - [ ] **Step 4: Run the tests to see them pass**
 
@@ -996,7 +997,7 @@ Then, beside `const builderPhases` (line 5084), which is the first point both pa
 npm --prefix ~/git/defra/trade-imports-workspace/tim test -- workflow-contract
 ```
 
-Expected: PASS. `rules` is unused so far; Tasks 8 to 11 read it.
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -1346,7 +1347,17 @@ Expected: FAIL — every preset runs the same fan-out today.
 
 - [ ] **Step 3: Extract the code reviewer's prompt**
 
-Replace the `codeReviews` block (lines 5400-5426) with the extraction, keeping every line of the body exactly as it is now:
+**First, declare the row's rules.** This is the task that first reads them, so the binding lives here, at the top of the Review phase beside `reviewGroups`:
+
+```javascript
+  const rules = rulesOf(rowRigour)
+```
+
+Every `rules.` reference in this task and in Task 10 reads that one binding. (Task 7 resolves `rowRigour` itself and logs what it means; it declares no `rules`, because an unused binding fails lint.)
+
+**Check the scope reaches Task 10's reads before you place it.** The Review phase sits inside the row loop's `if (enterAt !== 'ladder')` block, and Task 10 reads `rules.verifyFindings` in the verify and judge sections. If those sections are inside that same block, a binding at the top of the Review phase serves them; if they are not, put it where the row's `builderPhases` is computed instead, which both reach. Read the braces, do not assume.
+
+Then replace the `codeReviews` block (lines 5400-5426) with the extraction, keeping every line of the body exactly as it is now:
 
 ```javascript
   const codeReviewerPrompt = ({ reviewing, diffCommand }) => `You are a CODE REVIEWER for increment ${id}, reviewing ${reviewing}

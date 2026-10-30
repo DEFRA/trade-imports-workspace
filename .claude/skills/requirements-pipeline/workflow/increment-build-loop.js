@@ -3877,7 +3877,9 @@ const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases, rigour }) =
     ...merge.filter((entry) => !entry.ref?.trim()).map((entry) => `merge gives "${entry.repo}" no ref`),
     ...(gatePhases ?? []).filter((name) => !GATE_PHASES.includes(name)).map((name) => `gatePhases names "${name}"; use unit, fit and e2e`),
     ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`),
-    ...(rigour === undefined || RIGOUR_PRESETS.includes(rigour) ? [] : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`])
+    ...(rigour === undefined || rigour === null || RIGOUR_PRESETS.includes(rigour)
+      ? []
+      : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`])
   ]
 }
 

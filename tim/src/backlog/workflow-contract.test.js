@@ -6342,6 +6342,25 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('treats a row whose rigour is null as a row that sets none', async () => {
+        const run = await runBranch(
+          {},
+          { ...ROW, rigour: null },
+          BASELINE,
+          PLAN,
+          ...reviewedAndLanded,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'landed'
+        })
+      })
+
       describe('with the codex executor', () => {
         const runCodexMergeRow = (row) =>
           runBranch({ executor: 'codex' }, row, BASELINE, PLAN, MERGE_STARTED, {

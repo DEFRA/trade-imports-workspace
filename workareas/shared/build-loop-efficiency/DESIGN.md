@@ -3,7 +3,9 @@
 **Design, 29 October 2026.** Agreed with Ian in conversation. A1 is planned in
 [`PLAN-A1.md`](PLAN-A1.md) and built on `chore/NO_JIRA-build-loop-efficiency`. A4 is planned in
 [`PLAN-A4.md`](PLAN-A4.md) and built on `chore/NO_JIRA-build-loop-machine-and-process`, where its
-first two items turned out to be smaller than this design assumed — see A4 below. A2 and A3 are
+first two items turned out to be smaller than this design assumed — see A4 below. A2 is planned in
+[`PLAN-A2.md`](PLAN-A2.md), to be built on `chore/NO_JIRA-build-loop-resume`, where the planning found
+that a resume mechanism already existed for the stages after the land stage — see A2 below. A3 is
 neither planned nor built.
 
 The Design Release 2.1 accompanying documents theme (EUDPA-724) landed six rows in six loop
@@ -138,14 +140,19 @@ ladder re-run would have been twenty minutes. On documents, four stops each mean
 Three parts, in his order:
 
 1. **Record the stage reached** on the row, with the reviewed plan and the preserved attempt.
-   There is no `stageReached` or `resumeFrom` anywhere in the loop today.
+   There is no `resumeFrom` argument anywhere in the loop today. There *is* a resume point:
+   `resumePointFor` (`tim/src/build/start.js:75`) derives one from the row's `commit` and `prs`,
+   and the loop acts on it at `increment-build-loop.js:4871`. It has four values, and three of
+   them are after the land stage — every stop before that collapses to `build`, which is why a
+   preserved attempt is rebuilt from the top. The record this part asks for subdivides `build`
+   rather than introducing a mechanism. See [`PLAN-A2.md`](PLAN-A2.md).
 2. **On relaunch, reuse them** — keep or re-apply the work, re-run unit and FIT, then go to the
    ladder, rather than re-planning and re-implementing.
 3. **A launch argument to re-run from a named stage**, because `Workflow`'s own resume replays a
    changed stage's cached result and so cannot serve this.
 
 His fourth part — push a parked attempt somewhere another machine can resume it — is largely
-there already: `preserveWork` (`increment-build-loop.js:1334`) commits a wip on the branch with
+there already: `preserveWork` (`increment-build-loop.js:1348`) commits a wip on the branch with
 a `wip(<scope>):` subject, records the branch and SHA in the row's note, and the next attempt
 branches from it. What is missing is the stage record that would let the next attempt start
 anywhere but the beginning.

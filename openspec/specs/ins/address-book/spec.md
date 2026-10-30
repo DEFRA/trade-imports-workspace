@@ -560,7 +560,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 **ID**: SCN-INS-ADDR-027-C
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'
-- **THEN** the add form opens, headed 'Add address and contact details' under the caption 'Add new address'
+- **THEN** the add form opens
 - **WHEN** they select Back
 - **THEN** they return to the address book list
 

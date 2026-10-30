@@ -721,11 +721,6 @@ and in STEP 3, after the `awaitCi` bullet (line 3797):
 Replace `rowFieldProblems` (line 3810) with a version that destructures `rigour` and spreads one more check:
 
 ```javascript
-const rigourProblems = (rigour) =>
-  rigour === undefined || RIGOUR_PRESETS.includes(rigour)
-    ? []
-    : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`]
-
 const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases, rigour }) => {
   const mergeRepos = merge.map((entry) => entry.repo)
   return [
@@ -735,10 +730,14 @@ const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases, rigour }) =
     ...merge.filter((entry) => !entry.ref?.trim()).map((entry) => `merge gives "${entry.repo}" no ref`),
     ...(gatePhases ?? []).filter((name) => !GATE_PHASES.includes(name)).map((name) => `gatePhases names "${name}"; use unit, fit and e2e`),
     ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`),
-    ...rigourProblems(rigour)
+    ...(rigour === undefined || rigour === null || RIGOUR_PRESETS.includes(rigour)
+      ? []
+      : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`])
   ]
 }
 ```
+
+**It is an inline spread, like every other check in that function, and it treats `null` as absent.** The BRANCH stage is an agent reading `jq` output: the schema and STEP 3 both tell it to leave the field out when the row sets none, but prose does not bind a model, and a reported `null` must not halt a run. Both fields this one imitates already guard the same way — `gatePhases ?? []`, `awaitCi !== false`. A test must cover it, and must be shown to go red against a `=== undefined`-only check.
 
 - [ ] **Step 5: Run the tests to see them pass**
 
@@ -2619,3 +2618,18 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     counts sum to 47, so the figure was right and the reviewer's narrower run caused the difference it reported.
     Recorded because a reviewer's claim is evidence, not a verdict: this one was checked, corrected, and fed back
     to the implementer rather than passed on as a criticism.
+14. **Task 5's row check treated only `undefined` as absent, and a reported `null` would have halted a run.**
+    The most useful finding of the build so far, because the codebase already knew the answer. In the branch
+    lifecycle every row field reaches the loop through an agent reading `jq` output and reporting it under a
+    schema; the schema says `type: 'string'` and the prose says "leave it out when it is null or absent", but
+    neither binds a model. The two fields this check imitates are both defensive about it — `(gatePhases ?? [])`
+    and `row.awaitCi !== false` — which is archaeology: those guards exist because this path has produced
+    non-omitted nulls before. The plan reintroduced a gap the code had already learned to close. Fixed to
+    `rigour === undefined || rigour === null || …` (the explicit form `tim/src/backlog/move-rows-back.js:13`
+    uses; there is no loose `== null` anywhere in `tim`), with a test proved red against the old check first.
+    **Carry this forward:** any later task reading a row field out of the BRANCH stage's report treats null and
+    absent alike.
+15. **Declined two Minor findings on Task 5.** The `RIGOUR_PRESETS.join(', ')` phrasing stays: both rigour
+    messages use it consistently, and `gatePhases` says "unit, fit and e2e" because it is a list you may name
+    several from, where rigour is pick-one — copying its conjunction would be wrong. The stop test's
+    `toMatchObject` + `toContain` stays too; it is idiomatic in that file and loses nothing here.

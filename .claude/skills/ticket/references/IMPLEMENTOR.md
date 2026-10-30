@@ -197,6 +197,23 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 - [ ] Docs, recipes and JSDoc the plan listed as made untrue are updated
 - [ ] Build succeeds / GitHub Actions green
 - [ ] Plan updated with deviations
+- [ ] Nothing written to Jira (no comment, transition, assignment or
+      link) unless the user asked for it in this conversation
+
+## Where finishing stops
+
+Raise the PR, report to the user, stop. Do not comment on the ticket,
+move its status, assign it or link it off your own bat — see SKILL.md,
+"Working with the ticket in Jira". The ticket is shared with the BAs,
+the PO and its watchers; a write notifies them, and "implement
+EUDPA-X" did not ask for that. A finished, green, accurate piece of
+work is still not permission to announce it.
+
+Offer instead: "Want me to comment on the ticket?" — one line, in the
+report below.
+
+Same for the PR: raise it, post the link and the evidence, and leave
+merging to the user (`CLAUDE.md` rule 3).
 
 ## Output
 
@@ -204,7 +221,7 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 Complete: EUDPA-XXXXX
 Repos: [list] | Files: [count] | Tests added: [count]
 Deviations: [list or none]
-Next: Create PR, request review
+Next: request review. Offer a Jira comment; don't post one.
 ```
 
 ## Don'ts

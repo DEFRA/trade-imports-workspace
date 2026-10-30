@@ -277,7 +277,7 @@ The system MUST ask for a document type as a mandatory answer, offering a placeh
 **ID**: SCN-DOCS-013-A
 - **GIVEN** the user is adding a document
 - **WHEN** the page loads
-- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and then: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and then: ITAHC (Intra Trade Animal Health Certificate), Other veterinary certificate / veterinary declaration, Self-declaration, Journey log, Import permit / authorisation, CITES permit/certificate, Air waybill, Sea waybill, Rail waybill, Bill of lading, Commercial invoice, Packing list / species list, Other supporting documents
 
 #### Scenario: Leaving the type on its placeholder is rejected
 **ID**: SCN-DOCS-013-B
@@ -290,13 +290,6 @@ The system MUST ask for a document type as a mandatory answer, offering a placeh
 - **GIVEN** the user has added a document, choosing a document type
 - **WHEN** the saved row is shown
 - **THEN** it reports the type chosen, regardless of the uploaded file's own name
-
-#### Scenario: A document recorded as Health certificate is listed with that type while the type question offers thirteen
-**ID**: SCN-DOCS-013-D
-- **GIVEN** a notification holds a document recorded as Health certificate
-- **WHEN** the upload documents page opens
-- **THEN** that document is listed with Health certificate as its type
-- **AND** the type question offers thirteen document types
 
 ### Requirement: The file can be chosen from a drop zone, not only the browser's own file picker
 **ID**: REQ-DOCS-014

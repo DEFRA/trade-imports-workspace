@@ -701,6 +701,27 @@ describe('resumePointFor', () => {
   test('is build for a row with nothing recorded', () => {
     expect(resumePointFor({})).toBe('build')
   })
+
+  test('is the stage the last attempt reached when nothing has landed', () => {
+    expect(
+      resumePointFor({ attempt: { stage: 'ladder', planReviewed: true } })
+    ).toBe('ladder')
+  })
+
+  test('plans again when the attempt reached further on a plan that was never reviewed', () => {
+    expect(
+      resumePointFor({ attempt: { stage: 'ladder', planReviewed: false } })
+    ).toBe('build')
+  })
+
+  test('prefers what landed over what an attempt claims', () => {
+    expect(
+      resumePointFor({
+        commit: 'abc',
+        attempt: { stage: 'ladder', planReviewed: true }
+      })
+    ).toBe('pr')
+  })
 })
 
 describe('incrementReposFor', () => {

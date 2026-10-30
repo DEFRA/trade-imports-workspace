@@ -64,20 +64,29 @@ export const branchNameFor = (row, key) => {
   return `${branchTypeFor(row.kind)}/${key}${slug ? `-${slug}` : ''}`
 }
 
+/** The stages inside a build that an attempt record may send a relaunch to. */
+export const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
+
 /**
  * Where an increment's lifecycle picks up, from what the backlog already
  * records and nothing else: never from the ticket's status, which people
- * move for reasons the loop cannot see.
+ * move for reasons the loop cannot see. An attempt whose plan was never
+ * reviewed starts again from the top, because every stage from `implement`
+ * on reads the plan as decided.
  *
- * @param {{commit?: string, prs?: object[]}} row
- * @returns {'build'|'pr'|'ci'|'done'}
+ * @param {{commit?: string, prs?: object[], attempt?: {stage?: string, planReviewed?: boolean}}} row
+ * @returns {'build'|'implement'|'review'|'ladder'|'pr'|'ci'|'done'}
  */
-export const resumePointFor = ({ commit, prs }) => {
+export const resumePointFor = ({ commit, prs, attempt }) => {
   const list = Array.isArray(prs) ? prs : []
   if (list.length > 0) {
     return list.every((pr) => pr.merged === true) ? 'done' : 'ci'
   }
-  return commit ? 'pr' : 'build'
+  if (commit) return 'pr'
+  if (attempt?.planReviewed && ATTEMPT_STAGES.includes(attempt.stage)) {
+    return attempt.stage
+  }
+  return 'build'
 }
 
 const isLegacy = (keys) =>

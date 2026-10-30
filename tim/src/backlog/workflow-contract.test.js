@@ -729,8 +729,7 @@ describe('increment-build-loop', () => {
       args: withoutKey(BASE_ARGS, 'rigour')
     })
 
-    expect(run.status).toBe('threw')
-    expect(run.error.message).toContain(
+    expect(run.error.message).toBe(
       'increment-build-loop: args is missing required key rigour. Pass every one in args: this workflow has no defaults'
     )
     expect(run.agents).toEqual([])

@@ -2664,3 +2664,31 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     wrong file. The implementer made it conditional and flagged it for a decision rather than quietly diverging.
     Accepted, with an assertion added to each of the two tests that drive it, including that the rigour message
     does NOT mention `config.repos`.
+18. **Task 7's prescribed code declared a binding nothing in Task 7 reads, which fails lint.** Caught by reading
+    the plan before dispatch rather than by a reviewer. The first correction was wrong too — it said Task 8 would
+    declare `rules`, when Task 8 needs only a function-local `rulesOf(rigour)` inside `reviewedPlan`, so removing
+    it from Task 7 left Tasks 9 and 10 reading a binding that existed nowhere. Task 9 now declares it, with an
+    instruction to check the binding's scope actually reaches Task 10's verify and judge reads rather than assume.
+19. **Queued, not done: move Task 7's log below the row's declaration block.** The brief placed it at the boundary
+    between the row's `let` and `const` blocks, so a side-effecting statement interrupts what reads as one
+    "declare this row's state" run. Task 7's reviewer traced every statement between the end of `ticketAndBranch`
+    and the `build:` label, found none of them conditional, and so proved that moving it below `builderPhases`
+    changes which rows reach it not at all. Deferred because Task 8 is editing the same file; fold it into Task 9.
+20. **Queued, not done: `rowGatePhases` does not fold null and absent together, and will throw if it ever gets a
+    null.** A pre-existing bug, found by applying entry 14's standing rule to the code beside the one A3 changed.
+    It resolves on `row.gatePhases === undefined` alone, so an agent reporting `gatePhases: null` instead of
+    omitting the key reaches `null.includes(...)` and throws — while the schema's own description for that field
+    says "null or absent: all three". Every neighbour folds both (`rowAttempt ?? null`, `rowMerges ?? []`,
+    `rowRigour ?? RIGOUR`, `gatePhases ?? []` in `rowFieldProblems`). The fix makes the code match its own
+    documented contract:
+
+    ```javascript
+          rowGatePhases =
+            row.gatePhases === undefined || row.gatePhases === null
+              ? OFFERED_GATE_PHASES
+              : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
+    ```
+
+    Outside A3's scope, but the house rules say a file you touch meets them in full, and this is a one-line fix to
+    a line adjacent to one A3 edits. Do it with entry 19, with a test that reports `gatePhases: null` and proves
+    the row still gets every offered phase.

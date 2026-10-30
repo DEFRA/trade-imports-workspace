@@ -44,14 +44,14 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 
 #### Scenario: Cancelling out of the address book's own service lands on the overview with nothing added
 **ID**: SCN-ADDR-001-F
-- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **GIVEN** the user has followed "Add a new address" from the picker of a consignment role that holds no address yet to the address book's own add-address page
 - **WHEN** they follow "Cancel and return to hub"
 - **THEN** the notification's Overview opens
 - **AND** the Consignment addresses page still offers the role only its add link, and the address book holds nothing new
 
 #### Scenario: Saving with Save and return to address page lands on the role's picker with the new address listed first and none selected
 **ID**: SCN-ADDR-001-G
-- **GIVEN** the user has followed "Add a new address" from a consignment role's picker to the address book's own add-address page
+- **GIVEN** the user has followed "Add a new address" from the picker of a consignment role that holds no address yet to the address book's own add-address page
 - **WHEN** they save a new address there with "Save and return to address page"
 - **THEN** the role's picker opens with a "Success" banner reading "<name> address added to your address book"
 - **AND** the new address is listed above the addresses that were already in the book, and no address is selected

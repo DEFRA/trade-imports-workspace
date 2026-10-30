@@ -2365,7 +2365,7 @@ rigour       <full, standard or fast>, and any row that sets its own
 
 - [ ] **Step 5: The workflow README**
 
-In `workflow/README.md`, add a row to the args table after `resumeFrom` (line 247):
+**The args table already has a `rigour` row.** Task 1 had to add a one-line stub, because `workflow-contract.test.js:471-483` asserts that table lists exactly `REQUIRED_KEYS_BY_SCRIPT` and the key's arrival turned it red. **Replace that row** — do not add a second:
 
 ```
 | `rigour` | How much of the pipeline every row of this run gets: `'full'` (the plan reviewed, revised and re-reviewed, a style and a code reviewer per (repo, language) group, a consistency reviewer, a verifier per finding group), `'standard'` (one plan review, re-reviewed only on a structural finding, and no style reviewers) or `'fast'` (a `code`-tier plan, no plan review, one code reviewer across the whole change, and the judge verifying its own findings). A row's own `rigour` wins. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and the theme's engineering review run at every preset — see [The rigour dial](#the-rigour-dial) |
@@ -2460,7 +2460,11 @@ At the end of the A3 section, after "**Recovers:** most of the ~211M planning sp
    the reason it keyed on, and the intake says in as many words that the operator is deciding, not confirming.
 5. **A1 and A2 each left their key out of BUILD.md's copy-paste args block.** Found while adding `rigour` to it,
    and fixed in the same pass: a session building its args from that block got a run that stopped before its
-   first agent naming a missing key.
+   first agent naming a missing key. The reason the same two keys *did* reach the workflow README's argument
+   table is that a test holds that table to `REQUIRED_KEYS_BY_SCRIPT`
+   (`tim/src/backlog/workflow-contract.test.js:471-483`) and no test holds BUILD.md to anything. A document
+   nothing checks drifts; one a test checks does not. Worth a test over BUILD.md's args block if it drifts
+   again — not written here, because the block is prose with a JS fence rather than a table a test can read.
 ```
 
 - [ ] **Step 2: Commit**
@@ -2535,3 +2539,26 @@ Post the link and the evidence when it is green, and stop: a pull request raised
 - **It does not tune the agent budget per preset.** `agentsPerIncrement` (`:138`) still assumes a `full` row, so a `fast` run reaches `agent-budget` later than it needs to. Harmless (it stops too early, never too late) and better measured than guessed: revisit it once a theme has run at `standard`.
 - **It does not change `models`.** `fast` names the `code` tier, so a run that set `models.code` keeps its own choice.
 - **It does not touch distil, theme planning or the backlog's own shape beyond the one optional field.**
+
+---
+
+## What the build changed in this plan
+
+Kept as the build walks the tasks, so the plan and what landed do not diverge.
+
+1. **The schema-parity test moved from Task 2 to Task 3.** Written in Task 2 it could only be red, because the
+   schema field it reads arrives in Task 3, and Task 2 would have committed a red suite. No task now ends on one.
+2. **Task 1 had to touch a third file, `workflow/README.md`.** `tim/src/backlog/workflow-contract.test.js:471-483`
+   asserts the README's argument table lists exactly `REQUIRED_KEYS_BY_SCRIPT`, so the new key turned it red and
+   a one-line stub row was the minimal fix. Task 13 therefore **replaces** that row rather than adding one.
+   This also explains the gap Task 13 closes in BUILD.md: a test holds the README's table honest and nothing
+   holds BUILD.md to anything.
+3. **Task 1's missing-key test asserts the message exactly.** The snippet in Task 1 used `toContain` and an extra
+   `expect(run.status).toBe('threw')`, where the `e2e` and `resumeFrom` missing-key tests it imitates both use an
+   exact `toBe` and no status line. Tightened to match them; the `test.each` refusal block keeps `toContain`,
+   because its message tail varies per value.
+4. **Considered and declined: glossing each preset in the refusal message.** The `e2e` and `resumeFrom` refusals
+   gloss their vocabularies inline, and `rigour`'s names the legal set and the dial's purpose without saying what
+   `full`, `standard` and `fast` each run — and Task 2's log line cannot cover it, because that line fires only on
+   the success path. Left as it is: three glosses would make a throw string unreadable, and the preset table is a
+   `grep` away in the schema, the workflow README and BUILD.md. Revisit if anyone actually mistypes it.

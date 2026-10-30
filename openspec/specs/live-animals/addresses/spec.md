@@ -77,14 +77,25 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **THEN** the return is refused as a bad request
 - **AND** nothing is saved to the notification
 
-#### Scenario: Adding an address from the consignment contact page returns to the contact page
+#### Scenario: The address book's own add-address page reached from the consignment contact page offers Back, Save and continue, and Cancel and return to address page
 **ID**: SCN-ADDR-001-K
-- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
+- **GIVEN** the user is on the consignment contact page
+- **WHEN** they follow the link to add a new address to the address book's own add-address page
 - **THEN** the page offers "Back", "Save and continue" and "Cancel and return to address page"
-- **WHEN** they save a new address there
-- **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book", and the address is chosen as the contact address
-- **WHEN** they follow "Back" or "Cancel and return to address page" instead
-- **THEN** the consignment contact page opens and nothing is saved to the notification
+
+#### Scenario: Saving an address added from the consignment contact page returns to the contact page with it chosen
+**ID**: SCN-ADDR-001-L
+- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
+- **WHEN** they save a new address there with "Save and continue"
+- **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book"
+- **AND** the address is chosen as the contact address
+
+#### Scenario: Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved
+**ID**: SCN-ADDR-001-M
+- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
+- **WHEN** they follow "Back" or "Cancel and return to address page"
+- **THEN** the consignment contact page opens
+- **AND** nothing is saved to the notification
 
 ### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-ADDR-002

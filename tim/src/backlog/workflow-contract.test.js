@@ -7,6 +7,7 @@ import {
   WORKFLOW_PARSE_OPTIONS,
   runWorkflowScript
 } from '../test-support/workflow-runtime.js'
+import { ATTEMPT_STAGES } from '../build/start.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -120,7 +121,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'ciWatchMinutes',
     'requireApproval',
     'approvalWaitMinutes',
-    'e2e'
+    'e2e',
+    'resumeFrom'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -171,7 +173,8 @@ const BASE_ARGS = {
   ciWatchMinutes: 30,
   requireApproval: true,
   approvalWaitMinutes: 20,
-  e2e: 'local'
+  e2e: 'local',
+  resumeFrom: null
 }
 
 const WORKSPACE_ANSWER = {
@@ -682,6 +685,51 @@ describe('increment-build-loop', () => {
       expect(run.agents).toEqual([])
     }
   )
+
+  test('stops before any agent when resumeFrom is missing', async () => {
+    const run = await runLoop(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'resumeFrom')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key resumeFrom. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test.each([['land'], ['Ladder'], [true], ['pr']])(
+    'refuses resumeFrom %j before any agent',
+    async (value) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, resumeFrom: value }
+      })
+
+      expect(run.error.message).toContain(
+        'config.resumeFrom must be null to take it from the row, or one of build, implement, review, ladder'
+      )
+      expect(run.agents).toEqual([])
+    }
+  )
+
+  test('says what a forced resume applies to', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, resumeFrom: 'ladder' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: resumeFrom ladder — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog'
+    )
+  })
+
+  test('names the same resume stages the backlog records', async () => {
+    const source = readFileSync(scriptPath, 'utf8')
+
+    expect(source).toContain(
+      "const ATTEMPT_STAGES = ['implement', 'review', 'ladder']"
+    )
+    expect(ATTEMPT_STAGES).toEqual(['implement', 'review', 'ladder'])
+  })
 
   test('refuses planOnly without an explicit increments list', async () => {
     const run = await runLoop(scriptPath, {

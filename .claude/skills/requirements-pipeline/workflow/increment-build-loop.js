@@ -69,7 +69,8 @@ const ALWAYS_REQUIRED = [
   'ciWatchMinutes',
   'requireApproval',
   'approvalWaitMinutes',
-  'e2e'
+  'e2e',
+  'resumeFrom'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -109,6 +110,20 @@ if (!E2E_LOCATIONS.includes(E2E)) {
   )
 }
 const E2E_IS_LOCAL = E2E === 'local'
+
+const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
+const RESUME_FROM_VALUES = ['build', ...ATTEMPT_STAGES]
+const RESUME_FROM = CFG.resumeFrom
+if (RESUME_FROM !== null && !RESUME_FROM_VALUES.includes(RESUME_FROM)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.resumeFrom must be null to take it from the row, or one of ${RESUME_FROM_VALUES.join(', ')} — the stage the FIRST row this run builds enters at. Got ${JSON.stringify(RESUME_FROM)}`
+  )
+}
+if (RESUME_FROM !== null) {
+  log(
+    `${WORKFLOW_NAME}: resumeFrom ${RESUME_FROM} — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog`
+  )
+}
 
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 

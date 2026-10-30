@@ -1204,13 +1204,23 @@ const reviewedPlan = async (id, branchedRepos = null, rigour) => {
 }
 ```
 
-- [ ] **Step 5: Pass the row's rigour at the call site**
+- [ ] **Step 5: Pass the rigour at BOTH call sites**
 
-At line 5211, give the planner the row's rigour:
+`reviewedPlan` is called twice. The row loop's call takes the row's rigour:
 
 ```javascript
   plan = enterAt === 'build' ? await reviewedPlan(id, repos, rowRigour) : await readReviewedPlan(id, repos)
 ```
+
+and the `PLAN_ONLY` branch's call takes the run's, branching nothing:
+
+```javascript
+    const plan = await reviewedPlan(id, null, RIGOUR)
+```
+
+**Miss the second and nothing works.** `rulesOf(undefined).planTier` is a `TypeError`, and `planOnly` is the path every test in this task drives — so the whole task fails at its first test run. Grep for `reviewedPlan(`, `planIncrement(` and `withMustAddress(` and check every call before you run anything.
+
+Drop the `branchedRepos = null` defaults from `planPassingLint` and `reviewedPlan` while you are in their signatures: an optional parameter before a required one is wrong, and every caller passes it.
 
 `readReviewedPlan` (`:3466`) is unchanged: a resumed row reads a plan that was already written and reviewed, on the `code` tier at every preset.
 
@@ -2692,3 +2702,25 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     Outside A3's scope, but the house rules say a file you touch meets them in full, and this is a one-line fix to
     a line adjacent to one A3 edits. Do it with entry 19, with a test that reports `gatePhases: null` and proves
     the row still gets every offered phase.
+21. **Task 8's prescribed Step 5 missed a call site, and would have failed every test in its own task.**
+    `reviewedPlan` is called twice — the row loop and the `PLAN_ONLY` branch — and the plan only changed the first.
+    The second would have reached `rulesOf(undefined).planTier`, a `TypeError`, on the one path every test in
+    Task 8 drives through `planOnly: true`. The implementer found it by grepping call sites as the brief told it
+    to, and fixed it. **This is the worst defect the plan has carried**: not a style breach or a stale string, but
+    a change that could not run at all, in the first task where the dial decides what the pipeline does.
+22. **Two more Task 8 defects, both fixed in the build.** The prescribed signatures put an optional parameter
+    before a required one (`planPassingLint(id, branchedRepos = null, rigour)`) with defaults no caller could
+    reach; dropped, so the signature says what the callers do. And the implementer deliberately did NOT write
+    `rulesOf(rigour)?.planTier`, because an undefined tier would reach `withTier` and silently fall through to the
+    session model — the exact silent mis-tiering this task exists to prevent. A `TypeError` is the right failure
+    for an impossible state. Recorded because that is a judgement worth keeping.
+23. **Task 8 promoted a duplicated test helper, and added a test the plan did not ask for.** `modelOf` existed as
+    two byte-identical local copies and a third was about to be written, so it moved to module scope and the copies
+    went ("Set-up used by two tests goes in the shared test helper"). The extra test proves the thing the brief
+    asked to be verified rather than assumed: at `standard` with detail findings only, those findings are still
+    recorded as must-address and still reported, because the saving is one review, not the findings.
+24. **Accepted, not fixed: at `fast` a plan's `followUps` can be absent where other presets report `[]`.**
+    `reviewedPlan` returns the planner's result unchanged when no review runs, so it never passes through
+    `withFollowUps`. Every consumer reads it as `plan?.followUps` or `?? []`, so nothing misbehaves — the key is
+    simply missing rather than empty in one run report. Adding a `withFollowUps(plan, [])` whose only effect is
+    normalising an optional field would be ceremony.

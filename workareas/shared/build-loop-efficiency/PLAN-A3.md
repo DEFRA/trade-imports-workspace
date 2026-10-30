@@ -222,7 +222,7 @@ git -C ~/git/defra/trade-imports-workspace commit -m "feat(build-loop): require 
 - Modify: `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js:345` (after the tier helpers)
 - Test: `tim/src/backlog/workflow-contract.test.js`
 
-The rules table must come after `think`, `code` and `light` are defined (line 345), because `tierFor` closes over them.
+The rules table goes after `think`, `code` and `light` are defined (line 345), beside the tier helpers whose names its `planTier` field holds. There is no helper to map a name to one of them: `withTier` already does that, for any tier, and Task 8 calls it directly.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -299,19 +299,15 @@ const RIGOUR_RULES = {
 
 const rulesOf = (rigour) => RIGOUR_RULES[rigour]
 
-const tierFor = (tier) => (tier === 'think' ? think : code)
-
-const PLAN_REVIEW_SUMMARY = {
-  twice: 'reviewed, revised and re-reviewed',
-  structural: 'reviewed once and re-reviewed only on a structural finding',
-  none: 'no plan review'
-}
-
 const rigourSummary = (rigour) => {
+  const planReviewPhrases = {
+    twice: 'reviewed, revised and re-reviewed',
+    structural: 'reviewed once and re-reviewed only on a structural finding',
+    none: 'no plan review'
+  }
   const rules = rulesOf(rigour)
-  const plan = `a ${rules.planTier}-tier plan`
   return [
-    rules.planReview === 'none' ? `${plan}, no plan review` : `${plan}, ${PLAN_REVIEW_SUMMARY[rules.planReview]}`,
+    `a ${rules.planTier}-tier plan, ${planReviewPhrases[rules.planReview]}`,
     rules.styleReviewers ? 'style reviewers' : 'no style reviewers',
     rules.reviewScope === 'whole' ? 'one code reviewer across the whole change' : 'a code reviewer per (repo, language) group',
     rules.consistencyReview ? 'a consistency review' : 'no consistency review',
@@ -1122,8 +1118,10 @@ const planIncrement = (id, branchedRepos = null, { label = `${id} plan`, deniedC
 ```
 
 ```javascript
-    tierFor(rulesOf(rigour).planTier)({ label, phase: 'Plan', schema: PLAN_SCHEMA })
+    withTier(rulesOf(rigour).planTier)({ label, phase: 'Plan', schema: PLAN_SCHEMA })
 ```
+
+`withTier` (`:349`) is the existing helper `think`, `code` and `light` are each made from, and it takes any tier name — so the preset's `planTier` goes straight to it, with no second mapping helper in between.
 
 Change `planPassingLint` (line 3278) to take and pass it:
 
@@ -2562,3 +2560,23 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
    `full`, `standard` and `fast` each run — and Task 2's log line cannot cover it, because that line fires only on
    the success path. Left as it is: three glosses would make a throw string unreadable, and the preset table is a
    `grep` away in the schema, the workflow README and BUILD.md. Revisit if anyone actually mistypes it.
+5. **Task 2's prescribed block carried three house-rule breaches, found by its quality review and fixed in the
+   build.** All three were the plan's, not the implementer's, and none changed what the code printed — the three
+   log-line tests passed unchanged through the fix, which is what proved it behaviour-preserving:
+   - a `planReview === 'none'` ternary hardcoded `'no plan review'` while the phrases map already held that exact
+     string under `none`, so the entry was unreachable and the string lived twice. Collapsed to one lookup.
+   - `tierFor = (tier) => tier === 'think' ? think : code` was a second mechanism beside `withTier`, which already
+     maps any tier name to that helper, and it silently resolved anything but `'think'` to the code tier. Deleted
+     — Task 8 calls `withTier(rules.planTier)`. Two rules applied: "Extend the mechanism that exists" and "Build
+     only what this change makes reachable", the latter because nothing called it in that commit.
+   - the comment above `RIGOUR_RULES` restated what the phrases map says in code and then gave design rationale,
+     against "Rationale goes in the repo's `docs/` or the behaviour spec, never in code". Deleted; the reasoning
+     is in DESIGN.md and in this plan.
+   The phrases map also moved inside `rigourSummary`, its only reader ("A literal value used by one function lives
+   in that function").
+6. **Declined: the summary sentence's mixed grammatical forms.** "style reviewers" sits as a bare noun phrase
+   beside "a consistency review" and "and findings verified before the judge". It reads acceptably, three tests now
+   pin the strings, and the clause list is a log line rather than prose a user reads often. Left alone.
+7. **Task 2 gained a third test, pinning `full`.** The plan specified `standard` and `fast` only, which left the
+   preset the whole dial rests on — `full` means today's pipeline, unchanged — unasserted, while every other test
+   in the suite runs under it through `BASE_ARGS`. Added.

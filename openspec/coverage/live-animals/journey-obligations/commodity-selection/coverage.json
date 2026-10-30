@@ -14,7 +14,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after Felis catus, adding Bos taurus makes the CPH section appear offering 'Add a CPH number'" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line has a CPH-required commodity", "strength": "full", "notes": "Horse+Cow mixed lines; Cow alone triggers" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line is not CPH-exempt", "strength": "full", "notes": "a 0101 horse line beside a 0102 line; the 0102 line alone triggers" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put cph in scope when any line is not exempt", "strength": "full", "notes": "a pig (0103) beside an exempt horse is asked" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "chooses Bos taurus on the commodity page, opens addresses and follows the CPH section's add link (return=addresses); proves the page when in scope, not the add-line transition" }
           ]
@@ -25,7 +25,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "Felis catus alone: CPH section hidden; Continue from addresses returns to Overview with CPH heading hidden" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when no line has a CPH-required commodity", "strength": "full", "notes": "Horse+Cat" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when every line is CPH-exempt", "strength": "full", "notes": "a 0101 horse line and a 01061900 line" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put cph in scope when every line is exempt", "strength": "full", "notes": "both lines carry CPH-exempt codes" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the CPH row for an exempt commodity", "strength": "partial", "notes": "CYA omit only; not the addresses hub / page skip" }
           ],
@@ -91,7 +91,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "full", "notes": "Cow and Cat (both on package-count list) show Number of packages fields" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put numberOfPackages in scope for a line with code = '0102'", "strength": "full", "notes": "iterates every package-count code" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is in scope with reason on a matching line", "strength": "full", "notes": "V4 — numberOfPackages; status optional" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should save each line's own quantities, packages only where the commodity applies", "strength": "full", "notes": "Fish smuggled numberOfPackages is not persisted — negative half of the requirement, no dedicated scenario" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should save each line's own quantities, keeping a package count only where the commodity takes one", "strength": "full", "notes": "the third line's posted numberOfPackages is not persisted — negative half of the requirement, no dedicated scenario" }
           ]
         }
       ]
@@ -167,7 +167,7 @@
           "coverage": "partial",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddress in scope for a listed species under another code", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for such a line" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should not apply permanentAddress for the species Felis catus under another code", "strength": "partial", "notes": "gate value ['0102', 'Felis catus'] only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should not apply permanentAddress for the species Felis catus under 0102", "strength": "partial", "notes": "gate value ['0102', 'Felis catus'] only" }
           ]
         }
       ]

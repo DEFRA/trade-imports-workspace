@@ -16,7 +16,7 @@
 
 ## Background an engineer needs before Task 1
 
-**What the loop is.** `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js` (6,531 lines) is a `Workflow` script. It is launched by `scriptPath` with an `args` object and spawns subagents through `agent()`. It is never run directly; it is exercised by a simulated runtime in tests. **The script itself cannot run a command** — every read and write of the tree or the backlog is an agent running Bash and reporting structured output, and the script cannot read a file either. That last constraint decides Task 2's parity test: the loop carries its preset list as a literal, and a test holds that literal to the schema's enum.
+**What the loop is.** `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js` (6,531 lines) is a `Workflow` script. It is launched by `scriptPath` with an `args` object and spawns subagents through `agent()`. It is never run directly; it is exercised by a simulated runtime in tests. **The script itself cannot run a command** — every read and write of the tree or the backlog is an agent running Bash and reporting structured output, and the script cannot read a file either. That last constraint decides Task 3's parity test: the loop carries its preset list as a literal, and a test holds that literal to the schema's enum.
 
 **How the loop is tested.** `tim/src/backlog/workflow-contract.test.js` is the loop's test suite. `runLoop(path, { args, answers })` at line 273 executes the script against a fake runtime and returns a run with `agents` (each entry carrying `prompt` and `options`), `logs`, `result` and `error`. `answers` takes two forms: a positional array, each entry answering the next agent in order, or a function of `(prompt, options)` returning an answer per `options.label`. The function form is the one to use for every test in this plan — rigour changes *which* agents run, so a positional array would have to be re-counted on every change. `answeringRunLease` wraps either form and answers the run lease, the plan lint, the plan review, the plan review recorder and the theme check itself, so those stages never consume a positional answer.
 
@@ -252,25 +252,7 @@ Add to the configuration describe, after Task 1's tests:
   })
 ```
 
-And, in the `describe('every workflow script')` block after the house-rules parity test at `:367-380`, add the parity test that keeps the loop's literal and the backlog schema's enum in step. Import what it needs at the top of the file:
-
-```javascript
-import { loadBacklogSchema, rowSchemaOf } from './backlog-schema.js'
-```
-
-```javascript
-  test('offers exactly the rigour presets a row may set', () => {
-    const loop = readFileSync(
-      join(buildLoopDir, 'increment-build-loop.js'),
-      'utf8'
-    )
-    const schema = loadBacklogSchema(workspaceRoot)
-
-    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(
-      rowSchemaOf(schema).properties.rigour.anyOf[0].enum
-    )
-  })
-```
+The test that keeps this literal and the backlog schema's enum in step belongs to Task 3, which adds the schema field: written here it could only be red, and no task commits a red suite.
 
 - [ ] **Step 2: Run them to see them fail**
 
@@ -278,7 +260,7 @@ import { loadBacklogSchema, rowSchemaOf } from './backlog-schema.js'
 npm --prefix ~/git/defra/trade-imports-workspace/tim test -- workflow-contract -t rigour
 ```
 
-Expected: FAIL — no log line yet, and `rowSchemaOf(schema).properties.rigour` is `undefined` until Task 3 adds it (`TypeError: Cannot read properties of undefined`). The parity test stays red until Task 3; that is deliberate and the two tasks are committed in order.
+Expected: FAIL — neither log line exists yet.
 
 - [ ] **Step 3: Add the rules table and the summary**
 
@@ -343,10 +325,10 @@ log(`${WORKFLOW_NAME}: rigour ${RIGOUR} — ${rigourSummary(RIGOUR)}`)
 - [ ] **Step 4: Run the tests**
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim test -- workflow-contract -t "rigour"
+npm --prefix ~/git/defra/trade-imports-workspace/tim test -- workflow-contract
 ```
 
-Expected: the two log tests PASS; the parity test still FAILS until Task 3.
+Expected: PASS, the whole file. A test that asserts an exact `run.logs` array for a successful run gains this line; update any that does.
 
 - [ ] **Step 5: Commit**
 
@@ -399,6 +381,30 @@ In `tim/src/backlog/backlog-schema.test.js`, add:
 ```
 
 matching that file's existing import and workspace-root idiom for `statusesOf`.
+
+In `tim/src/backlog/workflow-contract.test.js`, in the `describe('every workflow script')` block after the house-rules parity test at `:367-380`, add the test that keeps the loop's literal and the schema's enum in step. The loop cannot read a file, so its `RIGOUR_PRESETS` is a literal, and this is what stops the two drifting:
+
+```javascript
+  test('offers exactly the rigour presets a row may set', () => {
+    const loop = readFileSync(
+      join(buildLoopDir, 'increment-build-loop.js'),
+      'utf8'
+    )
+    const schema = loadBacklogSchema(workspaceRoot)
+
+    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(
+      rowSchemaOf(schema).properties.rigour.anyOf[0].enum
+    )
+  })
+```
+
+Import what it needs at the top of that file, beside its existing imports:
+
+```javascript
+import { loadBacklogSchema, rowSchemaOf } from './backlog-schema.js'
+```
+
+`wordsInJsArray` (`:70`), `buildLoopDir` and `workspaceRoot` are already there.
 
 In `tim/src/commands/backlog/rows.test.js`, add to the `tim backlog set` describe:
 
@@ -562,7 +568,7 @@ Then pass the presets at the call site, which already loads the schema for `stat
 npm --prefix ~/git/defra/trade-imports-workspace/tim test -- shape backlog-schema rows workflow-contract
 ```
 
-Expected: PASS, Task 2's parity test included — the loop's `RIGOUR_PRESETS` and the schema's enum now agree.
+Expected: PASS, the parity test included — the loop's `RIGOUR_PRESETS` and the schema's enum now agree.
 
 - [ ] **Step 8: Commit**
 

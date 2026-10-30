@@ -432,7 +432,7 @@ The system MUST let a user with the same notification open in two tabs upload a 
 
 ### Requirement: The added-documents table is headed and keeps each row's actions at its end
 **ID**: REQ-DOCS-018
-The system MUST head the added-documents table "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action", and MUST place each row's "View file" and "Remove" at the right-hand end of the row.
+The system MUST head the added-documents table "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action", and MUST place each row's "View file" and "Remove" at the right-hand end of the row. Where the two wrap onto separate lines, they MUST end on the same right-hand edge as each other, whether the row was drawn by the server or rebuilt in the page when a scan completed.
 
 #### Scenario: The table shows five headings with each row's actions at its end
 **ID**: SCN-DOCS-018-A
@@ -440,6 +440,13 @@ The system MUST head the added-documents table "Document reference", "Document t
 - **WHEN** the page shows the added-documents table
 - **THEN** its column headings are "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action"
 - **AND** the row's "View file" and "Remove" sit at the right-hand end of the row
+- **AND** on a screen too narrow to hold them side by side, "Remove" wraps below "View file" and the two end on the same right-hand edge
+
+#### Scenario: A row rebuilt when its scan completes keeps its two actions on the same right-hand edge
+**ID**: SCN-DOCS-018-B
+- **GIVEN** a document whose scan settles while the user is on the page, so the page rebuilds the row's actions itself
+- **WHEN** the screen is too narrow to hold "View file" and "Remove" side by side
+- **THEN** "Remove" wraps below "View file" and the two end on the same right-hand edge
 
 ### Requirement: The document reference has no hint and the date of issue hints an example date
 **ID**: REQ-DOCS-019

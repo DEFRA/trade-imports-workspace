@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:54:40Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The split of MDM and token-endpoint failures into separate 503 handlers is correct and tested, but the new private helper's name hides that it logs.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 128,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The new private helper serviceUnavailable(String logLine, Exception ex) hides a side effect. The name predicts only that it builds a 503 answer, but line 130 also writes the warn line that is the only log of the failure, so a reader of handleMdmUnavailable and handleTokenEndpointUnavailable cannot tell from the call that those handlers log at all.",
+      "fix": "Must: the helper's name says it both logs the failure and returns the 503 problem detail. One way: rename it to handleServiceUnavailable, matching the handle* methods in this class, which all log and answer."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

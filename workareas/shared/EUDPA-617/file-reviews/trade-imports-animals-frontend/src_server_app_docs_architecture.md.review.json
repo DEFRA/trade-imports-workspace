@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/docs/architecture.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:52:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The info-unless-warn fix is in, but its warn definition does not match the callers, and moving the species refusal onto logRefusal breaks this section's once-only and redirect rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 189,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The added line 'info unless level is warn (another service refusing what this one accepted)' does not match the callers. animal-identification.controller.js:110-115 logs 'animal-identifier-cap-reached' at warn, and its first caller capReachedResponse (line 161) is this frontend's own cap check, with no other service involved. documents/controller.js:310 ('scan-rejected') and :332 ('document-taken-on-but-not-listed') are the file scan and the backend refusing, yet they log at info. A reader choosing a level from this sentence gets the wrong answer in both directions.",
+      "fix": "Must: the sentence states the rule the callers really follow, and every logRefusal caller fits it. One way: if warn is meant for another service refusing, pass level warn on the two documents refusals and take it off the local cap branch, otherwise describe warn without that parenthetical."
+    },
+    {
+      "id": 2,
+      "line": 185,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "This PR moved the unlisted-species refusal onto logRefusal, which makes lines 185-188 and 206-207 untrue for it. Lines 185-188 say logRefusal is for a refusal that shows the page again, logged once, and 206-207 say a refusal answered by a redirect logs its own named line. isReviewRefused (check-answers/refusal.js:131) has one production caller, declaration/controller.js:204, which then redirects through logRefusalAndRedirect (:205). So one refusal writes two lines: warn 'Answer refused, page shown again', though no page is shown again, then info 'Declaration refused'. The line this replaced was a named message, 'Draft refused: reference data no longer lists a chosen species', which followed the redirect rule.",
+      "fix": "Must: a refusal answered by a redirect logs one line, with a message that says what happened, and the logging section describes that path truthfully, keeping the warn level and the unlisted list. One way: log the unlisted species in the declaration's own refusal line, for example by returning the reason from the check, or state the exception in this section with a message that fits a redirect."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

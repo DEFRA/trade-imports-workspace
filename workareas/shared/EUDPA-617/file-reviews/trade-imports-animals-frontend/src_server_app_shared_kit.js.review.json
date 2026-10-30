@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/shared/kit.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:53:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The logRefusal JSDoc and the new helper behave correctly and are tested, but the query-join rule now has two homes and the return parameter still has writers outside kit.js.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 197,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "withReturnMarker copies the rule for joining a parameter onto an href. Line 197 has `${href}${href.includes('?') ? '&' : '?'}` and appendChangeContext at line 188 has the same expression, so kit.js now holds the rule twice, three lines apart.",
+      "fix": "Must: one function in kit.js owns how a parameter is joined onto an href, and both appendChangeContext and withReturnMarker call it. One way: a private appendQueryParameter(href, name, value) that both use."
+    },
+    {
+      "id": 2,
+      "line": 193,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The fix for the return parameter having two owners is partial. The walk note says kit.withReturnMarker owns the return query name, and RETURN_PARAMETER at line 193 is private to kit.js, but two production writers still spell the name themselves and bypass it: partyEditHref at addresses/party-edit/edit-href.js:10 has `new URLSearchParams({ return: returnSlug })`, and addresses/controller.js:30 has `const CPH_SLUG = 'cph-number?return=addresses'`. A rename of RETURN_PARAMETER would change the reader and leave those writers sending a parameter nobody reads.",
+      "fix": "Must: every production link that carries a return marker is built through kit.withReturnMarker, so the parameter name appears in one module only. One way: call withReturnMarker in partyEditHref, and build the CPH link from pagePath and withReturnMarker in the addresses controller."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

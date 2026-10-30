@@ -1,0 +1,21 @@
+{
+  "file": "docs/repos/trade-imports-reference-data.md",
+  "repo": "trade-imports-workspace",
+  "commit": "18d2c4275d703ac26b18a8c928bf1da745765af0",
+  "pr": 188,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:56:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "One Major: the 1,234 species count for 01061900 conflicts with the saved capture (120) and traces to an itahc run; every other changed claim matches the code and the stub captures.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Line 46 says GET /mdm/trade/product/commodities/01061900/species 'holds 1,234', but the capture of that endpoint does not support it. The section opens by saying its observations come from the responses saved in trade-imports-stub, and mdmProductSpeciesResponses.json has 01061900 at totalElements 120 (lines 2860 and 3339, pages 0 and 1). The only source found for 1,234 is the 30 Sept ticket comment, which reports a run against the itahc dataset; the service now uses gbnag. The next sentence, 'The captures that show this are the keys ...', makes it worse: those keys are all in mdmProductSearchResponses.json, which holds the nested 100 names (confirmed) but no catalogue count, so a reader who follows them cannot find the number. The point still stands on the capture, since 120 is more than the 100 nested. The reference-data README adds the same 1,234 sentence in PR 39.",
+      "fix": "Must: the species count given for 01061900 is one that can be traced to the gbnag dataset, and the sentence naming the captures says what they show, which is the row shapes, and where any catalogue count comes from. One way: re-check the count against TST and use it, or say 120 from mdmProductSpeciesResponses.json if the capture is complete; if 1,234 stays, label it as the 30 Sept itahc figure. Change the README sentence to match."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:52Z"
+}

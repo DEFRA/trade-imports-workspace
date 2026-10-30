@@ -1,0 +1,29 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptor.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The token-endpoint fix works and is tested, but the unavailable-status rule now has two homes and the class name no longer says what it configures.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 64,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule that 502, 503 and 504 mean a dependency is unavailable now has two homes, both added by this PR: 'if (ex.status() == 502 || ex.status() == 503 || ex.status() == 504)' at MdmClientInterceptor.java:64 and 'case 502, 503, 504' at MdmErrorDecoder.java:15. A change to one (adding 500, say) leaves the MDM and token paths classifying the same status differently. The token path is also a second mechanism beside the error decoder, and it repeats 'throw new TokenEndpointUnavailableException(\"Token endpoint unavailable\", ex)' at lines 62 and 65.",
+      "fix": "Must: one place owns which statuses mean unavailable, the MDM and token paths both use it, and the token path has one throw of TokenEndpointUnavailableException. One way: give TradeApiClient its own ErrorDecoder built on a shared status check, leaving only the RetryableException catch in getToken."
+    },
+    {
+      "id": 2,
+      "line": 27,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "This PR adds '@Bean public ErrorDecoder mdmErrorDecoder()' to a class called MdmClientInterceptor. The class is not an interceptor: it is the Feign configuration for the MDM client ('configuration = MdmClientInterceptor.class' at MdmClient.java:15), and it now supplies error decoding too. A reader looking for how MDM errors are decoded would not open a class in the interceptor package with this name.",
+      "fix": "Must: the class that configures the MDM Feign client has a name and package that say so, and covers both beans it supplies. One way: rename it MdmClientConfiguration, move it out of the interceptor package, and update MdmClient and the test to match."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

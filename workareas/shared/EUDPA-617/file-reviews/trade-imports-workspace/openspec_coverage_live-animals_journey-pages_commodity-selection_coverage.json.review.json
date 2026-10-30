@@ -1,0 +1,21 @@
+{
+  "file": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "18d2c4275d703ac26b18a8c928bf1da745765af0",
+  "pr": 188,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:57:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Every link on the touched scenarios is real and the scenario names and rollups are consistent, but 003-D claims full coverage from an unprobed link that proves only the one-word search.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 76,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "SCN-COMMODITY-SELECT-003-D is rolled up to full on one FIT link that proves only half the scenario and records no red probe. The link 'renders a separate group per matching commodity code' searches only 'taurus' (search.fit.spec.js:154), so it proves the one-word WHEN. For the full-name WHEN, the only test is the e2e 'accepts and persists multiple commodity-species pairs found under different queries', which searches 'Bos taurus' and ticks it under 0102 alone (commodities.spec.ts:77, commodity-lines.ts:8), so nothing checks 'under each live-animal code that lists it' for a full Latin name; the FIT selectSpecies helper also searches the full name but ticks one row. openspec/config.yaml:59-61 says a test never seen failing is at most partial, and this PR records a probe on the 003-C e2e link and 'not probed' on the 003-C FIT link, while the 003-D link says neither. The same PR marked the 'finds cattle' link partial for leaving out the 01061900 group, so this link is held to a lower bar.",
+      "fix": "Must: 003-D is full only when a probed test searches a full Latin name and checks that species under every live-animal code that lists it, and the one-word search is witnessed too; otherwise the FIT link and the scenario read partial, and the note says which half is proved. One way: add 'Bos taurus' to the e2e GROUPING_QUERIES (or a FIT search for it asserting the 0102 and 01061900 groups), red-probe it and record the probe in the note. Run the same probe for the 'taurus' FIT link or mark it partial."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:52Z"
+}

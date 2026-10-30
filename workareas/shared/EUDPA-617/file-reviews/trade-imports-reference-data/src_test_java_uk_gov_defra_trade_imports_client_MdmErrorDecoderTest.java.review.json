@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/client/MdmErrorDecoderTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:54:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The 502/503/504 wrap is properly proved, but the other-statuses test covers only 400 with an assertion that cannot fail, and the Feign response set-up is copied rather than shared.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "decode_leavesOtherStatusesToTheDefaultDecoder claims every other status but only runs 400, so a decoder that wrapped every 5xx, including 500, would still pass (line 34). The isNotInstanceOf(MdmUnavailableException.class) check on line 36 cannot fail: MdmUnavailableException extends RuntimeException and is not a FeignException, so isInstanceOf(FeignException.class) already rules it out.",
+      "fix": "Must: the test proves the statuses its title claims, including 500 as the nearest status that stays unwrapped, with an exact positive assertion and no absence check that cannot fail. One way: make it a @ParameterizedTest over 400, 401 and 500 (the statuses CommoditiesControllerIT already uses) and assert the decoded exception is a FeignException with that status(), dropping isNotInstanceOf.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 39,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new private response(int status) helper (lines 39-53) copies the Feign Request.create and Response.builder set-up already in ExternalCallFeignCapabilityTest.java:79-95: same GET method, http://mdm URL host, empty headers, UTF-8 and new RequestTemplate(), differing only in the path and a reason string. This PR also adds a third version in MdmClientInterceptorTest.java:131-150.",
+      "fix": "Must: one shared test helper builds a Feign Response for a given status, and the local copies are deleted. One way: add a test support class with a response(int status) factory, taking the URL where a test needs its own, and call it from MdmErrorDecoderTest, ExternalCallFeignCapabilityTest and MdmClientInterceptorTest."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

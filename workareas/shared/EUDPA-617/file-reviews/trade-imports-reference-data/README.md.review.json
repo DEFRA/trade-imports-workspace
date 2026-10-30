@@ -1,0 +1,29 @@
+{
+  "file": "README.md",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:05Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Documentation only: the 503 and 500 routing and the search shapes match the code and stub captures at 3d9426f, leaving two Minor accuracy points, a species count the stub capture contradicts and an ambiguous status sentence.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 85,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The Commodity search section says GET /mdm/trade/product/commodities/{code}/species holds 1,234 for 01061900, but the capture this section relies on says 120. trade-imports-stub mdmProductSpeciesResponses.json has two gbnag pages for 01061900, both with totalElements 120 (lines 2860 and 3339). gbnag is the dataset MdmService queries (DATASET at MdmService.java:23). The only other source for 1,234 is the 30 Sept ticket comment on the itahc dataset, which the service does not use. The point of the sentence still holds, since 100 nested names is fewer than the full list, but the figure overstates the gap twelvefold and cannot be checked against the repo. docs/repos/trade-imports-reference-data.md:46 in the workspace clone repeats it.",
+      "fix": "Must: the species count quoted for 01061900 matches the gbnag dataset and the stub capture, or is dropped, in the README and the workspace repo page alike. One way: say the search row nested 100 names when the species endpoint holds 120, after confirming against TST."
+    },
+    {
+      "id": 2,
+      "line": 99,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The rewritten GlobalExceptionHandler note is misleading in two ways. First, 'answers application exceptions, invalid request input (...) as 400, and a 503 when ...' reads as if application exceptions answer 400, whereas handleNotFoundException answers 404, handleConflictException 409 and handleException 500. Second, 'Any other MDM error is 500' leaves out the token endpoint: MdmClientInterceptor.getToken rethrows any FeignException outside 502, 503 and 504, and handleException answers it as 500, so the sentence that lists the token endpoint for 503 does not say what its other errors do.",
+      "fix": "Must: each outcome in the note reads against its own status, and the 500 case covers both MDM and the token endpoint. One way: split it into a short list: invalid request input is 400; not found is 404; conflict is 409; MDM or token endpoint 502, 503, 504 or unreachable, and an MDM answer with no body, content or total, is 503; any other MDM or token endpoint error is 500."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

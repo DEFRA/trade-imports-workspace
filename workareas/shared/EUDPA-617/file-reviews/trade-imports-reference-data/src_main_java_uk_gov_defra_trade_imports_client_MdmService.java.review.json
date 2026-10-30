@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:54:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The fix for routing MDM failures is correct, but a dropped connection is proven on searchProducts only, not on the other four calls this PR wrapped in fromMdm.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 31,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR wraps five MDM calls in fromMdm (lines 31, 45, 55, 64, 71) so a dropped connection gives a 503, but only searchProducts is tested for it (MdmServiceTest.searchProducts_throwsMdmUnavailable_whenMdmDropsTheConnection and CommoditiesControllerIT.searchCommodities_answersServiceUnavailable_whenMdmDropsTheConnection). Those are the only tests that throw RetryableException at MdmClient or drop the connection. Take fromMdm off getPortsOfEntry, getCountries, getCommodities or getCommoditySpecies and every test stays green, while those calls go back to a 500 and the README line that MDM not being reachable gives a 503 becomes untrue. That includes the species check, which reaches MDM only through getCommoditySpecies.",
+      "fix": "Must: for each of getPortsOfEntry, getCountries, getCommodities and getCommoditySpecies, a test fails if a dropped MDM connection stops surfacing as MdmUnavailableException. One way: a parameterized MdmServiceTest case that runs each service call against a mocked client throwing one shared RetryableException, using the set-up already in the searchProducts test."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

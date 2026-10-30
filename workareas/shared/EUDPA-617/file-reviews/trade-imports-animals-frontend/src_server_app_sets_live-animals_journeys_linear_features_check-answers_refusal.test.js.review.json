@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:53:15Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The refusal logging and refused-option fixes are properly tested, but two tests pin species-check timing that Monica's 29 Oct answers on amendments and draft resume ask to change, and one set of lines is duplicated.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 261,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "'Should return no species error for an amendment holding an unlisted species' pins behaviour the ticket has since answered the other way. Monica's 29 Oct reply says that if a species was renamed or removed in MDM the notifier should be told when they amend and be given the option to update it. draftUnlistedSpecies in refusal.js returns [] for anything but a draft, so an amendment never hears about it. The workspace walk notes still treat this as waiting on Monica, but the ticket now has her answer.",
+      "fix": "Must: a notifier amending a notification that holds a species no longer listed under its code is told so and can update it, an unchanged species can still go through as submitted (her 15 Oct answer keeps the submitted value unless the notifier changes it), and this test asserts that behaviour. One way: let the species check run for amendments as a notice that does not refuse Continue, and replace this test with one asserting the notice."
+    },
+    {
+      "id": 2,
+      "line": 252,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "'Should return no species error until Continue is refused' is new in this PR and fixes Continue as the only moment a draft hears about an unlisted species. Monica's 29 Oct reply says checking at submission may be too late, because a changed species can bring different questions, and asks for the species to be validated when the user resumes or continues a draft and again at submission. speciesCardErrors is only called from the check-answers controller and returns {} unless refused is true, so nothing checks earlier.",
+      "fix": "Must: a draft holding an unlisted species is told when the user resumes or continues it, and is still refused at Continue on the review, with a test for each moment. One way: run the species check on resuming a draft, and change this test to assert the error shown on that path."
+    },
+    {
+      "id": 3,
+      "line": 229,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The same three commodity lines (LISTED_SPECIES_LINE, UNLISTED_SPECIES_LINE, SPECIES_LISTED_UNDER_ANOTHER_CODE_LINE) are written out at lines 195-199 and 231-235. The second copy sits in unlistedDraft, which is never passed as a draft: lines 241-242 and 255-256 split it into { status: unlistedDraft.status } and { commodityLines: unlistedDraft.commodityLines }, while line 274 passes { status: DRAFT } directly. The name also says unlisted, though one of its lines is listed.",
+      "fix": "Must: one named value holds these three lines and both tests use it, and the speciesCardErrors tests pass { status: DRAFT } as the neighbouring tests do. One way: a module-level MIXED_SPECIES_LINES constant beside the line constants, with unlistedDraft deleted."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

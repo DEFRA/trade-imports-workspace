@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The exception rename is applied correctly and the new test is truthful, but dropped-connection handling is tested on only one of five MDM calls and its set-up is copied between test classes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 280,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR wraps all five MDM calls in fromMdm so a dropped connection becomes MdmUnavailableException (MdmService.java:31,45,54,64,70), but only searchProducts has a test for it (MdmServiceTest.java:280). No test in the repo stubs a connection fault, so removing fromMdm from getPortsOfEntry, getCountries, getCommodities or getCommoditySpecies keeps every test green, and those four would stop answering 503 when MDM cannot be reached.",
+      "fix": "Must: each MDM call that fromMdm wraps has a test that fails if the wrapper is removed from that call. One way: a parameterised test over the four other calls, each stubbed to throw a RetryableException, asserting MdmUnavailableException with that cause."
+    },
+    {
+      "id": 2,
+      "line": 281,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The dropped-connection set-up is copied. MdmServiceTest.java:281-293 builds the same RetryableException (-1, 'connection reset', new RuntimeException('reset'), 0L, request) as MdmClientInterceptorTest.java:106-112, both added by this PR and differing only in HTTP method and request, and the Feign Request.create call it nests is also added at MdmErrorDecoderTest.java:40 and MdmClientInterceptorTest.java:143.",
+      "fix": "Must: one shared test helper builds a dropped Feign connection for a given HTTP method, and the PR's tests call it with no local copies. One way: a droppedConnection(Request.HttpMethod) method in a test-support class under src/test/java, which the extra per-call tests for the dropped-connection gap can use too."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

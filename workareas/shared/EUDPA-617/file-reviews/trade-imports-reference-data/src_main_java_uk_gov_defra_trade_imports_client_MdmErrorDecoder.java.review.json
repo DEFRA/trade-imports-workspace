@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/client/MdmErrorDecoder.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:54:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The decoder is correct, scoped to MdmClient only and tested end to end, but its 502/503/504 rule is duplicated in MdmClientInterceptor.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule for which upstream statuses mean 'unavailable' has two homes, both added by this PR: 'case 502, 503, 504 ->' at MdmErrorDecoder.java:15 and 'ex.status() == 502 || ex.status() == 503 || ex.status() == 504' at MdmClientInterceptor.java:64. Both decide the same outcome (a 503 answer rather than a 500), so adding a status to one leaves MDM and the token endpoint answering differently.",
+      "fix": "Must: one named owner holds the set of statuses that mean an upstream is unavailable, and both the MDM decoder and the token call use it. One way: a static predicate such as isUnavailableStatus(int) that MdmErrorDecoder and MdmClientInterceptor.getToken both call."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

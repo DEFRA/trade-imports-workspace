@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:53:11Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The two requested fixes are sound and tested, but species checking still does not follow Monica's 29 Oct answers on checking resumed drafts and telling notifiers on amendments.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 52,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Species are only checked when Continue on the review is pressed, which does not follow Monica's 29 Oct ticket answer. She says checking at submission 'might be a bit late' and asks to validate 'when the user resumes or continues an existing draft' and 'then validate again at submission as a final check'. speciesCardErrors now returns {} unless refused is true (lines 52-54), linesWithUnlistedSpecies has no caller outside this file, and the test at refusal.test.js:252 locks in 'no species error until Continue is refused'. A trader resuming a draft with a removed species answers every dynamic question for it and only finds out at the end. Her reply is worded as a question, so the author should confirm it with her, but nothing in this PR records a decision against it.",
+      "fix": "Must: a draft's species are checked when the trader resumes or continues the draft, and again at submission, or the ticket records Monica's agreement to checking at submission only. One way: run the check on the draft's entry point and keep the Continue check as the final one, updating refusal.test.js and REQ-CYA-014 to match."
+    },
+    {
+      "id": 2,
+      "line": 31,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "An amendment holding a species MDM has removed or renamed says nothing to the notifier, which does not follow Monica's 29 Oct ticket answer. Asked whether amendments keep the submitted value, she agrees but adds 'should we let the notifier know when they amend the notification and give them the option to update it if needed? I think so'. draftUnlistedSpecies returns [] for anything but a draft (lines 31-33), so an amendment never learns of it, and the test at refusal.test.js:261 expects no species error. The walk note on the spec still says this is waiting on Monica, though the ticket now has her answer. Keeping the submitted value and not refusing Continue is right; the missing part is telling the notifier.",
+      "fix": "Must: an amendment holding a species no longer listed under its code tells the notifier so and lets them update it, without refusing Continue or changing the submitted value unless they choose to; or the ticket records Monica's agreement to saying nothing. One way: give amendments a non-blocking notice on the review from the same species check, and update refusal.test.js and SCN-CYA-014-C to match."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

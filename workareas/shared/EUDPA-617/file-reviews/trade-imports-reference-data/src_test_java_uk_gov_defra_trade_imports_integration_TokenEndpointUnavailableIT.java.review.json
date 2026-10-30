@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/integration/TokenEndpointUnavailableIT.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The test is sound and goes red if the interceptor stops mapping a token 503, but it copies the token request matcher already held in IntegrationBase.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 24,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "TokenEndpointUnavailableIT.java:24 copies the token request matcher request().withMethod(\"POST\").withPath(\"/trade-auth/token\") that IntegrationBase.java:159 already has inside stubTradeAuthToken, so the token endpoint's method and path now live in two IT files and a change to one leaves the other stubbing a path nothing calls.",
+      "fix": "Must: IntegrationBase is the one place that defines the token endpoint request; this test and stubTradeAuthToken both use it. One way: add a protected tradeAuthTokenRequest() or stubTradeAuthTokenAnswering(int status) to IntegrationBase, mirroring searchRequest and stubSearchAnswering in CommoditiesControllerIT.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

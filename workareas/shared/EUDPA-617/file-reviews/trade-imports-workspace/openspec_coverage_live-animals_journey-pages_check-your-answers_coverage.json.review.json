@@ -1,0 +1,29 @@
+{
+  "file": "openspec/coverage/live-animals/journey-pages/check-your-answers/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "18d2c4275d703ac26b18a8c928bf1da745765af0",
+  "pr": 188,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:56:55Z",
+  "verdict": "RISKY",
+  "verdict_reason": "All four linked tests exist and match their strengths, but the REQ-CYA-014 entries record review-only, drafts-only behaviour the 29 Oct ticket reply has moved past, and SCN-CYA-014-C's moves-on outcome has no witness.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 441,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-CYA-014 here (coverage.json:418-452) records behaviour the ticket has moved on from. SCN-CYA-014-C is named 'An amendment continues to the declaration without a species check' and SCN-CYA-014-B 'The species is not named before the user continues', with B marked full. Monica's 29 Oct ticket reply asks to validate the species when the user resumes or continues an existing draft, then again at submission, and on an amendment says the notifier should be told about a renamed or removed species and given the option to update it ('I think so'). At frontend d4174c8 the only caller of linesWithUnlistedSpecies is refusal.js, which skips any non-draft journey (refusal.js:31) and runs only on Continue from the review, so neither answer is built. The 29 Oct walk notes on this requirement still say the answer is awaited on Monica, but the ticket now has it.",
+      "fix": "Must: REQ-CYA-014 and its coverage entries state the behaviour the 29 Oct ticket reply settles for resuming a draft and for amendments, or the ticket records why this PR keeps the review-only, drafts-only check, and no note says the answer is still awaited. One way: agree the outcome with Monica on the ticket, change spec.md and the frontend to match, then rewrite the 014 entries here with links that witness the new behaviour."
+    },
+    {
+      "id": 2,
+      "line": 446,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "SCN-CYA-014-C's THEN was rewritten to the positive outcome ('the user moves on to the declaration'), but its only link, 'Should return no species error for an amendment holding an unlisted species' (refusal.test.js:261), calls speciesCardErrors and checks an empty error object. No test continues an amendment holding an unlisted species, so the outcome the scenario now promises has no witness: isReviewRefused is never exercised with an amendment and an unlisted species. The link's note admits this, and the helper to do it is already there (continueAmend, check-answers.test.js:1313).",
+      "fix": "Must: a test continues an amendment holding an unlisted species and asserts the declaration is shown, and SCN-CYA-014-C links to it. One way: add it to the 'Continue on an amend review' describe using continueAmend, red-probe it, then mark the link and scenario full, which also lifts REQ-CYA-014 to full. If the amendment behaviour changes under the 29 Oct ticket reply, assert the new outcome instead."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:52Z"
+}

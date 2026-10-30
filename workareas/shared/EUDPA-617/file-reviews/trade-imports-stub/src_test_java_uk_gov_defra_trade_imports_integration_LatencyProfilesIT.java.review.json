@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/integration/LatencyProfilesIT.java",
+  "repo": "trade-imports-stub",
+  "commit": "8f1d6ebde0df9ab2bb510b729e086c6598fb5e34",
+  "pr": 29,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The shared caller-headers fix is in and behaves correctly, but the countries request stays copied across two tests and FaultsIT.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 32,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The PR rewrites one call as the same five-line restTemplate.exchange of /mdm/geo/countries with mdmCallerHeaders() in two tests here (lines 32-36 and 78-82), while FaultsIT.getFrom (FaultsIT.java:149-150, reached through getCountries) makes the same call. Moving the header into mdmCallerHeaders() left the request itself copied in two IT classes.",
+      "fix": "Must: one helper owns the MDM countries GET made by LatencyProfilesIT and FaultsIT, and the local copies are gone. One way: add getCountries() to IntegrationBase, taking the TestRestTemplate or sharing it there, call it from both classes and delete FaultsIT's own copy.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:51Z"
+}

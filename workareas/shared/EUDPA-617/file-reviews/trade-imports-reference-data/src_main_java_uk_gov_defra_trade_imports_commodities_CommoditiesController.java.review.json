@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:54:17Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The only change is the 503 description on both endpoints; it matches the unified MDM naming, with one Minor finding that it leaves out the token endpoint 503 this PR adds.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 38,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The 503 @ApiResponse on both endpoints (lines 38 and 57) now says only 'MDM unavailable', but this PR also makes these endpoints answer 503 when the token endpoint is down: MdmClientInterceptor.getToken throws TokenEndpointUnavailableException, GlobalExceptionHandler.handleTokenEndpointUnavailable answers 503, and TokenEndpointUnavailableIT proves it on GET /commodities. MDM has not failed in that case, so someone reading the API docs during an incident looks in the wrong place. The README line this PR changed already lists both causes.",
+      "fix": "Must: the documented 503 on both endpoints covers every cause the service answers 503 for, the token endpoint included, and matches the README. One way: use a description such as 'MDM or its token endpoint is unavailable' on both annotations.",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

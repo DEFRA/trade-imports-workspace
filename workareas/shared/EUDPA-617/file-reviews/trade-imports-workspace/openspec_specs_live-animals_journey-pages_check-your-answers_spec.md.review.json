@@ -1,0 +1,45 @@
+{
+  "file": "openspec/specs/live-animals/journey-pages/check-your-answers/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "18d2c4275d703ac26b18a8c928bf1da745765af0",
+  "pr": 188,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:57:07Z",
+  "verdict": "RISKY",
+  "verdict_reason": "REQ-CYA-014 matches the code but contradicts Monica's 29 Oct answers on when species are checked and on amendments, and its ID clash with PR 155 was closed on a claim that is false at this commit.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 276,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-CYA-014 (line 276) and SCN-CYA-014-C (lines 290-295) say an amendment gets no species check and the species is 'not named as one to choose again'. The ticket no longer leaves that open: ami-nav's walk notes say confirmation is 'still waiting on Monica', but Monica answered on 29 Oct that if a species has been renamed or removed in MDM, 'should we let the notifier know when they amend the notification and give them the option to update it if needed? I think so'. The spec, and the code it matches (refusal.js:31 returns [] for any journey that is not a draft), state the opposite of that answer.",
+      "fix": "Must: on an amendment holding a species MDM has renamed or removed, the notifier is told and can update it, and the spec states this with a scenario in place of SCN-CYA-014-C, matched by animals-frontend. If the team decides otherwise, that decision is recorded on the ticket and the spec follows it. One way: replace the 'or on an amendment' clause and 014-C with a scenario where the amendment's review names the species and offers its Change route, without forcing a change to a value already submitted, and agree with Monica whether Continue is blocked."
+    },
+    {
+      "id": 2,
+      "line": 276,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-CYA-014 (line 276) and SCN-CYA-014-B (lines 284-288) fix the species check at Continue from the review only: 'MUST NOT make this check on a plain view of the review', and a complete draft holding an unlisted species shows no error when viewed. Amir asked on 15 Oct 'Is checking only at submission OK?', and Monica answered on 29 Oct that it may be too late because a changed species can mean different questions, asking 'could we validate the species at any other point in the journey (when the user resumes or continues an existing draft) and then validate again at submission as a final check?'. The spec records the single late check she raised a concern about, and the PR gives no decision that overrides her answer.",
+      "fix": "Must: a draft's species are checked when the user resumes or continues the draft as well as at the final check, as Monica asked, and the spec's requirement and scenarios say so, matched by animals-frontend. If the team decides to keep a single check, that decision and the reason are recorded on the ticket and the spec cites nothing beyond it. One way: drop the 'plain view' clause, replace SCN-CYA-014-B with a scenario for resuming a draft, and keep SCN-CYA-014-A as the final check."
+    },
+    {
+      "id": 3,
+      "line": 275,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The ID clash on REQ-CYA-014 and SCN-CYA-014-A to C was closed as Won't Fix because '617 created REQ-CYA-014 and merged it on 27 Oct'. That is wrong at this commit. REQ-CYA-014 is not in this spec on main (8556fa7d), nor at the merge of EUDPA-617 PR 135 on 27 Oct (f1b5e867), and PR 135 changed no check-your-answers file. This PR's diff is what adds lines 275-295. Open PR 155 (EUDPA-696) adds its own REQ-CYA-014 and SCN-CYA-014-A to C to the same file, and its REQ-CYA-015 cites 'title (REQ-CYA-014)'. Whichever PR merges second leaves two requirements under one ID, or a citation pointing at the wrong requirement.",
+      "fix": "Must: each requirement and scenario ID in this spec names one requirement once both PRs have merged, and every citation and coverage entry points at the right one. One way: agree which PR renumbers before either merges; this PR could take the next free number after PR 155's REQ-CYA-019, or PR 155 renumbers and updates its REQ-CYA-015 citation."
+    },
+    {
+      "id": 4,
+      "line": 292,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "SCN-CYA-014-C's GIVEN at line 292 reads 'an amendment holding a species...' with no word on completeness, and its THEN promises 'the user moves on to the declaration'. Scenarios A and B both say 'a complete draft'. As written it overstates: SCN-CYA-012-B and 012-C in this file keep an incomplete or rule-breaking amendment on the review, and the declaration POST refuses it through isReviewRefused before the step is rendered (declaration/controller.js:204).",
+      "fix": "Must: this scenario's GIVEN holds only for amendments that do reach the declaration, so it cannot contradict REQ-CYA-012. One way: 'a complete amendment holding a species...', carried into whatever scenario replaces this one."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:52Z"
+}

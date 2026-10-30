@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:52:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The silent-redirect logging fix is in place and tested, but it replaced one redirect helper with two copies of the same log and redirect code.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 86,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "This PR deletes the single owner of the redirect to the commodity question (redirectEmptyLinesToCommodityQuestion in empty-lines-redirect.js) and writes its body out twice: consignment-details.controller.js:86-93 and remove/post-remove.js:15-23 each hold the same request.logger.info call with journeyId, the same message 'Redirected to the commodity question' and the same h.redirect(commodityQuestionPath(request)). They differ only in reason and the optional commodityCode. The test file already treats them as one thing (expectRedirectedToCommodityQuestionLogged), and a change to the message or the log fields now has to be made in two places. The two sites are in one feature, so the feature-folder ruling on independent controllers does not cover this.",
+      "fix": "Must: one function owns the redirect to the commodity question and its log line, and both the empty GET and the last-removal path call it with their own reason fields. One way: keep a helper in commodity-question-detour.js, such as redirectToCommodityQuestion(request, h, { reason, commodityCode }), and call it from get() and afterRemoval()."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

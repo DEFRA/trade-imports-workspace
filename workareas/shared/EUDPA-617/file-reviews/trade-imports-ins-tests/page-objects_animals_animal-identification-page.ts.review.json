@@ -1,0 +1,21 @@
+{
+  "file": "page-objects/animals/animal-identification-page.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "ada7a3ebfd3fc12b14e66b64f3bcf7e3efed8b9e",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:53:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The speciesCardTitles and latinName fixes are sound against the frontend template, but enterDetailsHeadingText ended up with no caller outside the class.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 36,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "enterDetailsHeadingText (line 36) was added so specs could share the heading format, but no spec calls it: both specs moved to the enterDetailsCounterHeading locator, and a grep of tests/, flows/ and page-objects/ finds its only caller at line 42. The PR therefore adds a public string method with one caller, inside the same class, around a template that enterDetailsCounterHeading already held inline. The house rule is that a literal used by one function lives in that function.",
+      "fix": "Must: the 'Enter details for {latinName} {current} of {total}' format has one home, with no public member that nothing outside the class uses. One way: put the template back inline in enterDetailsCounterHeading and delete enterDetailsHeadingText; if a spec later needs the raw text, extract it then."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:49Z"
+}

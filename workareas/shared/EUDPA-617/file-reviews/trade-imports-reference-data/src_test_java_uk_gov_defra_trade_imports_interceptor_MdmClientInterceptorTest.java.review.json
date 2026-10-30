@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptorTest.java",
+  "repo": "trade-imports-reference-data",
+  "commit": "3d9426f3a40f4126eb7f22648d915e2297d7963c",
+  "pr": 39,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:55:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new tests cover 502/503/504 and a dropped connection correctly, but the 'any other status' test only sends 401, leaving a token 500 unproved, and the Feign failure set-up is copied across three test classes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 123,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "apply_rethrowsTheTokenEndpointsError_whenItAnswersAnyOtherStatus claims every status other than 502, 503 and 504, but the body only sends a 401. The case that matters most, a token endpoint 500, is not checked here or in TokenEndpointUnavailableIT (which only stubs 503). Widening the production check at MdmClientInterceptor.java:64 to ex.status() >= 500 would turn a token 500 into a 503 and leave this test green.",
+      "fix": "Must: the title claims only the statuses the test sends, and a token endpoint 500 is proved to come back as the same FeignException, not as TokenEndpointUnavailableException. One way: make it a @ParameterizedTest with @ValueSource(ints = {401, 500}), matching the unavailable-status test above it.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 106,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "This PR writes the same Feign failure set-up by hand in three test classes. The six-argument RetryableException with -1, 'connection reset', new RuntimeException('reset') and 0L appears at MdmClientInterceptorTest.java:106 and MdmServiceTest.java:281, differing only in HTTP method and URL. The Request.create(...) and Response.builder() set-up at MdmClientInterceptorTest.java:131-150 repeats MdmErrorDecoderTest.java:40-52.",
+      "fix": "Must: one shared test helper builds the Feign request, status response and dropped-connection exception, and these three test classes call it with no local copies left. One way: add a FeignFailures test support class taking the method and URL, with status(...) and droppedConnection(...) methods.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:50Z"
+}

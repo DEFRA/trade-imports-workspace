@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "d4174c8906ab3e098716191d586b557db86ead7a",
+  "pr": 449,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-30T10:52:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The silent-redirect logging fix is in place and tested, but the log-and-redirect step now lives in two files after this PR deleted its one owner.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "This PR deletes empty-lines-redirect.js, the single place that logged and redirected to the commodity question, and writes the same step twice: post-remove.js:15-23 and consignment-details.controller.js:86-93 each hold request.logger.info({ journeyId: request.params.journeyId, reason, ... }, 'Redirected to the commodity question') followed by h.redirect(commodityQuestionPath(request)). Only the reason and the optional commodityCode differ, so the message and the journeyId field can now drift, and the tests already treat it as one thing through expectRedirectedToCommodityQuestionLogged.",
+      "fix": "Must: one function owns logging and redirecting to the commodity question, and both the empty load and the last-removal branch call it with their own reason and fields. One way: add redirectToCommodityQuestion(request, h, { reason, commodityCode }) beside commodityQuestionPath in commodity-question-detour.js and have both callers return it."
+    }
+  ],
+  "reconciled_at": "2026-10-30T11:03:48Z"
+}

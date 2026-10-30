@@ -52,6 +52,12 @@ The system MUST title every page with the page's own name, then the service name
 - **WHEN** the add page opens
 - **THEN** the title reads `Add address and contact details - Import notification service - GOV.UK`
 
+#### Scenario: The add page reached from the address book is titled Add address and contact details
+**ID**: SCN-INS-PAGE-TITLE-001-H
+- **GIVEN** a signed-in trader who follows 'Add a new address' from their address book
+- **WHEN** the add page opens
+- **THEN** the title reads `Add address and contact details - Import notification service - GOV.UK`
+
 ### Requirement: A page showing errors opens its whole title with an error prefix
 **ID**: REQ-INS-PAGE-TITLE-002
 The system MUST open the title of a page showing errors with an error prefix, ahead of the page's own name, so the whole title — not only the page name — is marked as being in error.

@@ -1233,14 +1233,14 @@ describe('increment-build-loop', () => {
     const CI_E2E_EVIDENCE_HEADING =
       "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
 
-    const runWithRowRepos = (rowRepos) =>
+    const runWithTodoRows = (todoRows) =>
       runLoop(scriptPath, {
         args: BASE_ARGS,
-        answers: [WORKSPACE_ANSWER, preflightAnswer({ rowRepos }), START_ANSWER]
+        answers: [WORKSPACE_ANSWER, preflightAnswer({ todoRows }), START_ANSWER]
       })
 
     test('stops at the preflight when a todo row names a repo the args do not configure', async () => {
-      const run = await runWithRowRepos([
+      const run = await runWithTodoRows([
         { id: 'inc-900', repos: ['frontend'] },
         { id: 'inc-901', repos: ['frontend', 'workspace'] }
       ])
@@ -1256,7 +1256,7 @@ describe('increment-build-loop', () => {
     })
 
     test('names every row that names an unconfigured repo, not just the first', async () => {
-      const run = await runWithRowRepos([
+      const run = await runWithTodoRows([
         { id: 'inc-900', repos: ['workspace'] },
         { id: 'inc-901', repos: ['admin'] }
       ])
@@ -1266,11 +1266,47 @@ describe('increment-build-loop', () => {
     })
 
     test('lets a row naming no repo through the preflight', async () => {
-      const run = await runWithRowRepos([{ id: 'inc-900', repos: [] }])
+      const run = await runWithTodoRows([{ id: 'inc-900', repos: [] }])
 
       expect(run.agents.map((entry) => entry.options.label)).toContain(
         'inc-900 start'
       )
+    })
+
+    test('stops at the preflight when a todo row’s rigour is not a preset', async () => {
+      const run = await runWithTodoRows([
+        { id: 'inc-900', repos: ['frontend'], rigour: null },
+        { id: 'inc-901', repos: ['frontend'], rigour: 'quick' }
+      ])
+
+      expect(run.error.message).toContain(
+        'inc-901 sets rigour "quick", which is not one of full, standard, fast'
+      )
+      expect(run.error.message).not.toContain('inc-900')
+      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+        'workspace',
+        'preflight'
+      ])
+    })
+
+    test('lets a row that sets a preset through the preflight', async () => {
+      const run = await runWithTodoRows([
+        { id: 'inc-900', repos: ['frontend'], rigour: 'fast' }
+      ])
+
+      expect(run.agents.map((entry) => entry.options.label)).toContain(
+        'inc-900 start'
+      )
+    })
+
+    test('asks the preflight for every todo row’s repos and rigour', async () => {
+      const run = await runFrom(null)
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'preflight'
+      ).prompt
+
+      expect(prompt).toContain('{id, repos: (.repos // []), rigour}')
+      expect(prompt).toContain("Copy the last command's output into todoRows")
     })
 
     test('starts the increment with one tim build start call before the baseline', async () => {

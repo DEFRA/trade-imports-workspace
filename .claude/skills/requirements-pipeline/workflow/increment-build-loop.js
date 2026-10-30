@@ -3564,18 +3564,20 @@ const PREFLIGHT_SCHEMA = {
       description:
         "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
     },
-    rowRepos: {
+    todoRows: {
       type: 'array',
       items: {
         type: 'object',
         required: ['id', 'repos'],
         properties: {
           id: { type: 'string' },
-          repos: { type: 'array', items: { type: 'string' } }
+          repos: { type: 'array', items: { type: 'string' } },
+          rigour: { type: ['string', 'null'] }
         },
         additionalProperties: false
       },
-      description: "Every todo increment's id and its repos list, [] where it names none"
+      description:
+        "Every todo increment's id, its repos list ([] where it names none) and its rigour (null where it sets none)"
     }
   },
   additionalProperties: false
@@ -3591,21 +3593,21 @@ const BRANCH_PR_STEP = IS_BRANCH
 const E2E_PHASES_STEP = `
 ${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gatePhases // ["e2e"])] | any(index("e2e") != null)' ${BACKLOG_TILDE}\``
 
-const ROW_REPOS_STEP = `
-${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // [])}]' ${BACKLOG_TILDE}\``
+const TODO_ROWS_STEP = `
+${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // []), rigour}]' ${BACKLOG_TILDE}\``
 
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, which repos its envelope names, whether any
-increment still to build owes the gate's e2e phase, and which repos those increments name. Run exactly these
-commands, one Bash call each, and read their output:
+increment still to build owes the gate's e2e phase, which repos those increments name and what each asks of the
+pipeline. Run exactly these commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${ROW_REPOS_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${TODO_ROWS_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
-gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Copy the last
-command's output into rowRepos exactly as printed, every id and repos list as it is. Do nothing
-else. No Grep/Glob tools, tilde paths only.
+gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false.
+Copy the last command's output into todoRows exactly as printed, every id, repos list and rigour as it is. Do
+nothing else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
@@ -3664,11 +3666,20 @@ const rowRepoProblems = (rows) =>
       .map((key) => `${id} names repo ${JSON.stringify(key)}, which config.repos does not configure`)
   )
 
-const unconfiguredRowRepos = rowRepoProblems(preflight.rowRepos ?? [])
-if (unconfiguredRowRepos.length > 0) {
-  throw new Error(
-    `${WORKFLOW_NAME}: ${unconfiguredRowRepos.join('; ')}. Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again`
-  )
+const rowRigourProblems = (rows) =>
+  rows
+    .filter(({ rigour }) => rigour !== null && rigour !== undefined && !RIGOUR_PRESETS.includes(rigour))
+    .map(({ id, rigour }) => `${id} sets rigour ${JSON.stringify(rigour)}, which is not one of ${RIGOUR_PRESETS.join(', ')}`)
+
+const todoRows = preflight.todoRows ?? []
+const repoProblems = rowRepoProblems(todoRows)
+const rowProblems = [...repoProblems, ...rowRigourProblems(todoRows)]
+if (rowProblems.length > 0) {
+  const fix =
+    repoProblems.length > 0
+      ? 'Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again'
+      : 'Fix the rows, then launch again'
+  throw new Error(`${WORKFLOW_NAME}: ${rowProblems.join('; ')}. ${fix}`)
 }
 
 const NEXT_SCHEMA = {

@@ -1816,7 +1816,6 @@ describe('increment-build-loop', () => {
         ],
         summary: 'green'
       }
-      const PLAN_ANSWER = { ...PLANNED, summary: 'Planned in the frontend.' }
       const NO_FINDINGS = { findings: [] }
       const FINDING = {
         file: 'frontend:src/a.js',
@@ -1841,7 +1840,7 @@ describe('increment-build-loop', () => {
         )
 
       const runToReview = (changedFiles) =>
-        runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
+        runFrom(BASELINE_ANSWER, PLANNED, implementAnswer(changedFiles))
 
       test('runs the planner on the think tier and the implementor on the code tier', async () => {
         const run = await runToReview(['frontend:src/a.js'])
@@ -1854,7 +1853,7 @@ describe('increment-build-loop', () => {
         const run = await runStartedWith(
           startedResult({ rigour: 'fast' }),
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -1867,7 +1866,7 @@ describe('increment-build-loop', () => {
         const run = await runFromWithArgs(
           { models: { heavy: 'opus' } },
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -1879,7 +1878,7 @@ describe('increment-build-loop', () => {
         const run = await runFromWithArgs(
           { models: { heavy: 'opus', code: 'sonnet' } },
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -1916,7 +1915,7 @@ describe('increment-build-loop', () => {
       const runThroughFixToLadder = () =>
         runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           ...FIX_STAGE_ANSWERS
         )
@@ -2340,7 +2339,7 @@ describe('increment-build-loop', () => {
         const runVerifying = (finding, verdict, ...after) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             { findings: [finding] },
@@ -2617,7 +2616,7 @@ describe('increment-build-loop', () => {
         const runWithImplementNotes = (notes) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             { ...implementAnswer(['frontend:src/a.js']), notes },
             ...FIX_STAGE_ANSWERS
           )
@@ -2686,7 +2685,7 @@ describe('increment-build-loop', () => {
           'Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
 
         const runWithImplementNotes = (notes) =>
-          runFrom(BASELINE_ANSWER, PLAN_ANSWER, {
+          runFrom(BASELINE_ANSWER, PLANNED, {
             ...implementAnswer(['frontend:src/a.js']),
             notes
           })
@@ -2811,7 +2810,7 @@ describe('increment-build-loop', () => {
         test('tells the ladder a fixer with no spec sync line is normal when the implementor reported one', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             {
               ...implementAnswer(['frontend:src/a.js']),
               notes: `Built it.\n${SPEC_SYNC_NOTE}`
@@ -2923,7 +2922,7 @@ describe('increment-build-loop', () => {
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js'
 
         const planWithChecks = (...commands) => ({
-          ...PLAN_ANSWER,
+          ...PLANNED,
           checks: commands.map((command) => ({ section: 6, command }))
         })
 
@@ -3163,8 +3162,8 @@ describe('increment-build-loop', () => {
               ...planAnswers
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             ...FIX_STAGE_ANSWERS
           )
@@ -3260,8 +3259,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -3306,7 +3305,7 @@ describe('increment-build-loop', () => {
             },
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               checks: [{ section: 6, command: NAMED_CHECK_COMMAND }]
             },
             implementAnswer(['frontend:src/a.js'])
@@ -3327,8 +3326,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -3351,7 +3350,7 @@ describe('increment-build-loop', () => {
               'inc-900 plan lint': lintFound(NAMES_CARRY_WHAT_COMMENTS_SAID)
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
 
@@ -3371,8 +3370,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -3402,8 +3401,8 @@ describe('increment-build-loop', () => {
               'inc-900 replan lint': lintFound(QUOTED_LOG)
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3423,7 +3422,7 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3477,8 +3476,8 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': SENT_BACK },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const revise = flat(promptOf(run, 'inc-900 revise plan'))
@@ -3510,8 +3509,8 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': SENT_BACK },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
 
@@ -3556,8 +3555,8 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3581,8 +3580,8 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped.reason).toBe('plan-refused')
@@ -3665,7 +3664,7 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': null },
             BASELINE_ANSWER,
-            PLAN_ANSWER
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3700,7 +3699,7 @@ describe('increment-build-loop', () => {
           const run = await runFrom(
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               standards: [
                 '~/ws/.claude/rules/node.md',
                 '~/ws/repos/trade-imports-animals-frontend/src/server/app/docs/architecture.md'
@@ -3718,7 +3717,7 @@ describe('increment-build-loop', () => {
           const run = await runFrom(
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               departures: [
                 'code-style.md §10: one module per folder is kept for the twin layout.'
               ],
@@ -3773,7 +3772,7 @@ describe('increment-build-loop', () => {
       test('tells the ladder no fix stage ran when the judge ruled nothing', async () => {
         const run = await runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -3812,7 +3811,7 @@ describe('increment-build-loop', () => {
         const runToLadderWith = (...answers) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -3879,7 +3878,7 @@ describe('increment-build-loop', () => {
               PREFLIGHT_ANSWER,
               START_ANSWER,
               BASELINE_ANSWER,
-              PLAN_ANSWER,
+              PLANNED,
               implementAnswer(['frontend:src/a.js']),
               NO_FINDINGS,
               NO_FINDINGS,
@@ -3992,7 +3991,7 @@ describe('increment-build-loop', () => {
         test('stops after review when the consistency reviewer finds the stack held', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -4034,7 +4033,7 @@ describe('increment-build-loop', () => {
         })
 
         test('carries on with the increment once the stage has run again', async () => {
-          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLAN_ANSWER)
+          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLANNED)
 
           expect(allLabels(run)).toContain('inc-900 plan')
         })
@@ -4051,7 +4050,7 @@ describe('increment-build-loop', () => {
         test('runs the ladder once more after the stack went down under it', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -4068,7 +4067,7 @@ describe('increment-build-loop', () => {
         })
 
         test('tells every stack stage to report a stack gone from under the run, never to start it', async () => {
-          const run = await runFrom(BASELINE_ANSWER, PLAN_ANSWER)
+          const run = await runFrom(BASELINE_ANSWER, PLANNED)
 
           expect(
             promptOf(run, 'inc-900 implement').replace(/\s+/g, ' ')
@@ -4310,7 +4309,7 @@ describe('increment-build-loop', () => {
       const runToLand = (guardAnswer, landAnswer) =>
         runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           NO_FINDINGS,
           NO_FINDINGS,
@@ -4482,7 +4481,7 @@ describe('increment-build-loop', () => {
       describe('deriving its own next increment', () => {
         const LANDED = [
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           NO_FINDINGS,
           NO_FINDINGS,
@@ -5178,7 +5177,7 @@ describe('increment-build-loop', () => {
               PREFLIGHT_ANSWER,
               START_ANSWER,
               BASELINE_ANSWER,
-              PLAN_ANSWER,
+              PLANNED,
               CODEX_RAN,
               implementAnswer(['frontend:src/a.js', 'backend:src/B.java']),
               ON_BRANCH,
@@ -5382,7 +5381,7 @@ describe('increment-build-loop', () => {
                 PREFLIGHT_ANSWER,
                 START_ANSWER,
                 BASELINE_ANSWER,
-                PLAN_ANSWER,
+                PLANNED,
                 CODEX_RAN,
                 implementAnswer(['frontend:src/a.js']),
                 ON_BRANCH,

@@ -588,7 +588,7 @@ git -C ~/git/defra/trade-imports-workspace commit -m "feat(backlog): let a row s
 In `tim/src/build/start.test.js`, after the attempt tests that end at line 395:
 
 ```javascript
-  test('hands the row’s rigour on, so the loop can lower what one row gets', async () => {
+  test('reports the rigour a row sets', async () => {
     await workspaceWith([row({ ticket: 'EUDPA-77', rigour: 'fast' })])
     jiraKnows('EUDPA-77', 'In Dev')
 
@@ -2607,3 +2607,15 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
 11. **A test now pins that landing a row keeps its rigour.** `setRowFields` clears `attempt` when a `commit` is
     recorded and the rewritten JSDoc says so; nothing stopped someone tidying the two fields into one block and
     wiping a row's preset the moment it landed. The test passed first time, which is the point of it.
+12. **A test name in Task 4 claimed a consumer that did not exist yet.** The plan titled it "hands the row's rigour
+    on, so the loop can lower what one row gets", copied from the `attempt` test beside it — but that sibling's
+    rationale clause is true today, because the loop really does read the attempt and feed a restore stage, where
+    nothing reads the row's rigour out of the start result until Task 7. Retitled "reports the rigour a row sets",
+    which pairs with "reports no rigour for a row that sets none" and claims only what it proves.
+    `docs/best-practices/node/testing/frontend.md` §4: a title that claims more than its assertions check is a
+    defect in the test.
+13. **Rejected a review finding that was itself wrong.** Task 4's reviewer called the implementer's "47/47 passed"
+    inflated, having counted 39 tests in one file. The command the implementer ran matches two test files whose
+    counts sum to 47, so the figure was right and the reviewer's narrower run caused the difference it reported.
+    Recorded because a reviewer's claim is evidence, not a verdict: this one was checked, corrected, and fed back
+    to the implementer rather than passed on as a criticism.

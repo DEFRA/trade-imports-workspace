@@ -12,7 +12,7 @@ REST microservice that serves reference data (countries, ports of entry and live
 - The public read API: `GET /countries` (optional `blocks` query parameter) and `GET /ports-of-entry`, both returned sorted by name.
 - Adaptation of MDM payloads to the service's own `Country`, `PortOfEntry`, `CommodityGroup`, `CommoditySpecies`, `CommoditySearchResponse` and `SpeciesCheckResponse` shapes.
 - Business rules applied to MDM countries: GB (`effectiveAlpha2`) is removed, and when `blocks` is given only countries whose block of that name has `includeCountry` true are kept.
-- Commodity search, `GET /commodities?q=&page=&size=` (size capped at 100): passes the term to MDM's product search over the `gbnag` dataset, leaves out every code MDM's commodities endpoint flags `isGerminal: true` (there is no CN chapter filter), and groups the species by code with at most `size` species in all. `total` is the non-germinal distinct species count from the MDM page. A term under two characters returns nothing without calling MDM. Not cached.
+- Commodity search, `GET /commodities?q=&page=&size=` (size from 1 to 100, defaulting to 100, and page from 0; any other value is refused with a 400): passes the term to MDM's product search over the `gbnag` dataset, leaves out every code MDM's commodities endpoint flags `isGerminal: true` (there is no CN chapter filter), and groups the species by code with at most `size` species in all. `total` is the non-germinal distinct species count from the MDM page. A term under two characters returns nothing without calling MDM. Not cached.
 - Species check, `POST /commodities/species-check`: given draft lines of code and Latin name, returns the lines whose species MDM no longer lists under that code. A line with a missing code or Latin name is a 400 without calling MDM. Not cached.
 - Caching of MDM responses (Caffeine caches `MDM_COUNTRIES_CACHE` and `MDM_POE_CACHE`, TTL `CACHE_MDM_TTL_MINUTES`, default 60; empty results are not cached).
 - MDM authentication: obtains and refreshes a client-credentials bearer token before MDM calls, and sends the subscription key and `system=GBNAG` on geo and port calls, and `dataset=gbnag` (no `system`) on product calls.
@@ -41,12 +41,16 @@ No use of this service by `trade-imports-animals-backend` was found in its `appl
 
 MDM's product search is an early-access API built on ITAHC data from TRACES. What follows was observed in TST in October 2026, from the responses saved in `trade-imports-stub` (`src/main/resources/responses/mdmProductSearchResponses.json`). Re-check it against TST before relying on it, as MDM may change it.
 
+**Two kinds of row**
+
+MDM `/search` answers with `resultType` `species` or `commodity`, mixed on one page. A species row is one species under one code (`commodityCnCode`). A commodity row is one code, with its species nested as `scientificNames`, and counts as one result however many names it holds. The nested list on a commodity search row is not the full species catalogue: `01061900` nested 100 names on the search row when `GET /mdm/trade/product/commodities/01061900/species` holds 1,234. The captures that show this are the keys `cattle`, `Bos taurus`, `0102`, `01061900`, `010` and `ostrich` in `trade-imports-stub`'s `mdmProductSearchResponses.json`. Reference-data flattens both kinds of row into groups of Latin names, so the trader's page looks the same.
+
 **What a search matches**
 
-- **Common name**: "cattle" finds Bos taurus, Bos, Bibos spp., Bos sp. and Novibos spp. under 0102.
-- **Commodity code**: "0102" returns one commodity row holding all 15 of its species; "010" returns 45 rows. A code search is a prefix match.
-- **Latin name**: "Bos taurus" finds Bos taurus under each code it sits under.
-- **Commodity description**: "ostrich" returns the 01063300 commodity row ("Ostriches; emus") as well as the Struthio species, so Rhea, Emu and Cassowaries come back too.
+- **Species common name** (`cattle`): species rows. The capture has eight: five cattle species under 0102, then Bos taurus again under 01061900 and two germinal codes.
+- **Latin name** (`Bos taurus`, `tau`): species rows. One row per code that lists that species.
+- **Commodity code** (`0102`): one commodity row, species nested. A code is a prefix (`010` returns 45 commodity rows).
+- **Commodity description** (`ostrich`, `horse`): mixed. Species rows plus a commodity row, so the nested species of that commodity come back too.
 
 **Partial terms**
 
@@ -61,7 +65,7 @@ MDM's product search is an early-access API built on ITAHC data from TRACES. Wha
 - MDM has proposed replacing `isGerminal` with a `germinal` object, present only on germinal codes. Reference-data checks the flag in one method, `CommoditySearchService.isGerminal`, so that change touches only its body (`germinal != null`).
 - The same species under several live-animal codes: Bos taurus is under 0102 and 01061900. Each is a separate choice.
 - Some species have no common name (Catagonus, Equus cabalus*asinus) and some carry placeholder ones ("Animals" for Poephagus spp., "Pig-deer?" for Babyrousa).
-- Results come back in MDM's order, with no sort option. Species and commodity rows are mixed on one page, and a commodity row counts as one result however many species it holds.
+- Results come back in MDM's order, with no sort option.
 
 The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-617 ticket.
 

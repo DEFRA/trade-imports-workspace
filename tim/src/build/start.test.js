@@ -404,7 +404,7 @@ describe('runBuildStart — an increment that already has a ticket', () => {
     expect(outcome.attempt).toBeNull()
   })
 
-  test('hands the row’s rigour on, so the loop can lower what one row gets', async () => {
+  test('reports the rigour a row sets', async () => {
     await workspaceWith([row({ ticket: 'EUDPA-77', rigour: 'fast' })])
     jiraKnows('EUDPA-77', 'In Dev')
 

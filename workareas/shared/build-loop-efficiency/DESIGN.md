@@ -4,7 +4,7 @@
 [`PLAN-A1.md`](PLAN-A1.md) and built on `chore/NO_JIRA-build-loop-efficiency`. A4 is planned in
 [`PLAN-A4.md`](PLAN-A4.md) and built on `chore/NO_JIRA-build-loop-machine-and-process`, where its
 first two items turned out to be smaller than this design assumed — see A4 below. A2 is planned in
-[`PLAN-A2.md`](PLAN-A2.md), to be built on `chore/NO_JIRA-build-loop-resume`, where the planning found
+[`PLAN-A2.md`](PLAN-A2.md) and built on `chore/NO_JIRA-build-loop-resume`, where the planning found
 that a resume mechanism already existed for the stages after the land stage — see A2 below. A3 is
 neither planned nor built.
 
@@ -149,7 +149,11 @@ Three parts, in his order:
 2. **On relaunch, reuse them** — keep or re-apply the work, re-run unit and FIT, then go to the
    ladder, rather than re-planning and re-implementing.
 3. **A launch argument to re-run from a named stage**, because `Workflow`'s own resume replays a
-   changed stage's cached result and so cannot serve this.
+   changed stage's cached result and so cannot serve this. The fuller reason, worth recording:
+   `resumeFromRunId` replays a run that *died*, keyed on the script and args being unchanged,
+   whereas this resumes a *row* across launches, from state on disk, entering the pipeline at a
+   different point. They are different mechanisms for different failures, and neither replaces
+   the other.
 
 His fourth part — push a parked attempt somewhere another machine can resume it — is largely
 there already: `preserveWork` (`increment-build-loop.js:1348`) commits a wip on the branch with
@@ -158,6 +162,29 @@ branches from it. What is missing is the stage record that would let the next at
 anywhere but the beginning.
 
 **Recovers:** on documents, four stops times a full rebuild.
+
+### What the build settled
+
+1. **Three fallback rules**, because a recorded stage is a claim about work on disk. The restore
+   stage reports whether the work is there and whether it is green, and the row enters at the top
+   when it is not there, at the implementor when it is there and red, and at its recorded stage
+   when it stands. So lowering the cost of a relaunch never risks building on work nobody wrote.
+2. **`resumeFrom` is a ceiling on the first row**, not a command for every row. A draining run
+   builds rows that never had an attempt, and forcing them all to a late stage would skip the
+   build. It is refused for `pr`, `ci` and `done`: those come from a recorded commit or pull
+   request, which is harder evidence than an argument.
+3. **The earlier implementor's notes cannot be recovered.** They were a subagent's return value
+   and were never written to disk. The substitute says so, because a reviewer handed "(none)"
+   would read it as "the implementor had nothing to flag". This is the feature's one real loss.
+4. **A resumed row still needs the plan as an object**, not just the file — the land stage writes
+   `behaviourChanges` into the commit, the ladder and the reviewers read the decisions and the
+   must-address findings. One `code`-tier reader recovers them from `plans/<id>.md`, which is
+   where `recordMustAddress` already appends them. That is what makes the ~211M planning spend
+   avoidable rather than merely deferred.
+5. **Sam's fourth part is done for one lifecycle only.** The full lifecycle's wip commit is
+   pushed and travels; the branch lifecycle's patches live under `workareas/logs/`, which is not
+   committed, so a second machine reports the work missing and builds from the top. `work.kind`
+   is in the record, so a later change can tell the two apart.
 
 ## A3 — The rigour dial
 

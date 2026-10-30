@@ -1420,3 +1420,16 @@ And within A2, four things are deliberately left out:
 - **No recovery of the earlier implementor's notes.** They were a subagent's return value and were never written to disk. The substitute says so plainly rather than implying the implementor had nothing to flag. Writing every stage's result to the workarea would fix it and is a bigger change than this.
 - **No resume across machines for the branch lifecycle.** Its preserved work is patch files under `<workarea>/logs/`, which `workareas/` does not commit, so a second machine reports `restored: false` and builds from the top. The full lifecycle's wip commit is pushed and does travel. Sam's fourth part is therefore done for one lifecycle and not the other; `work.kind` is in the record so a later change can tell which.
 - **No change to what stops a run.** A preserved stop still stops the whole run and still waits for a person, as `BUILD.md` says. This plan makes the relaunch cheap; it does not make a red ladder self-clearing, and rule 6 of `CLAUDE.md` still applies to it.
+
+---
+
+## What the build changed in this plan
+
+Four departures, each for a reason worth keeping:
+
+- **The `resumeFrom` log line sits with the config validation, not the run's opening narration.** The plan put it after the opening log line at `:4624-4631`, which is after the preflight — so a run that died at the preflight would never say what resume it had been given. It is now immediately after the validation block, where the resolved-configuration line already is.
+- **Tasks 6, 7, 8, 9 and 10 landed as one commit.** Tasks 6 and 7 define a restore stage and a plan reader that nothing calls until Task 8 wires them, so their tests cannot be written — let alone made to fail first — before that. Splitting the commits would have meant committing untested, unreachable code twice.
+- **`setRowFields` now computes `changed` over the union of the row's keys before and after.** It read `Object.keys(after)` only, so a cleared field was invisible in what the command reported. The plan asked for this to be confirmed against the test rather than assumed; it did not hold, and the one-line fix is in Task 1's commit.
+- **The attempt's `work.sha` carries several commits space-separated,** as the plan's shape implied one. A multi-repo attempt leaves one wip commit per repo, and `--commit` already uses exactly that convention ("<sha, or several in the order of the configured repos, space separated>"). The restore stage finds each one's repo with `merge-base --is-ancestor`, so no sha-to-repo mapping has to be recorded.
+
+One finding worth recording rather than fixing here: **`tim backlog check` describes a malformed `attempt` only as `"attempt" must be an object`**, even when the real fault is a `stage` the enum does not allow. `fieldProblem` in `shape.js` reads an enum error one level deep, and `attempt.stage` is two. Widening it would change the message for every other field, which is out of this plan's scope. The path people and the loop actually use is `tim backlog set --attempt`, whose own parse names the stage precisely before anything is written.

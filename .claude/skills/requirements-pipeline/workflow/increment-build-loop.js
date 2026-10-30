@@ -3800,6 +3800,10 @@ const BRANCH_ROW_SCHEMA = {
       description: "The row's gatePhases verbatim. Leave it out when the row's is null or absent"
     },
     awaitCi: { type: 'boolean', description: "The row's awaitCi verbatim. Leave it out when the row's is null or absent" },
+    rigour: {
+      type: 'string',
+      description: "The row's rigour verbatim. Leave it out when the row's is null or absent"
+    },
     heads: {
       type: 'array',
       items: {
@@ -3827,7 +3831,7 @@ every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. Y
 ${guardrails()}
 ${REPO_RULE}
 STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
-\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs, attempt}' ${BACKLOG_TILDE}\`
+\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, rigour, commit, prs, attempt}' ${BACKLOG_TILDE}\`
 \`jq -c '.repos | keys' ${BACKLOG_TILDE}\`
 The envelope's keys must be exactly ${[...REPO_KEYS].sort().join(', ')}: the repos this run was configured with. Any
 difference is ok:false naming it, because the gate reads the envelope and this run reads its args.
@@ -3851,6 +3855,7 @@ STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
 - merge: one {repo, ref} for each key of the row's \`merge\` object, in the order written. [] when it is null or absent.
 - gatePhases: verbatim when it is a list, [] included. Leave it out when it is null or absent.
 - awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
+- rigour: verbatim when it is full, standard or fast. Leave it out when it is null or absent.
 - attempt: the row's \`attempt\` object exactly as written, every field as it is. null when the row has none.
 - resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
   Otherwise \`attempt\` set, with \`planReviewed\` true and a \`stage\` of implement, review or ladder → that stage.
@@ -3863,7 +3868,7 @@ Return the structured output only.`,
 
 const duplicatesIn = (list) => list.filter((item, index) => list.indexOf(item) !== index)
 
-const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
+const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases, rigour }) => {
   const mergeRepos = merge.map((entry) => entry.repo)
   return [
     ...rowRepos.filter((key) => !REPO_KEYS.includes(key)).map((key) => `repos names "${key}", which is not a configured repo`),
@@ -3871,7 +3876,8 @@ const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
     ...mergeRepos.filter((key) => !rowRepos.includes(key)).map((key) => `merge names "${key}", which is not in the row's repos`),
     ...merge.filter((entry) => !entry.ref?.trim()).map((entry) => `merge gives "${entry.repo}" no ref`),
     ...(gatePhases ?? []).filter((name) => !GATE_PHASES.includes(name)).map((name) => `gatePhases names "${name}"; use unit, fit and e2e`),
-    ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`)
+    ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`),
+    ...(rigour === undefined || RIGOUR_PRESETS.includes(rigour) ? [] : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`])
   ]
 }
 

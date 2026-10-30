@@ -5648,7 +5648,15 @@ describe('increment-build-loop', () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
 
         expect(prompt).toContain(
-          '{repos, merge, gatePhases, awaitCi, commit, prs, attempt}'
+          '{repos, merge, gatePhases, awaitCi, rigour, commit, prs, attempt}'
+        )
+      })
+
+      test('tells the branch stage how to report the row’s rigour', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
+
+        expect(prompt).toContain(
+          '- rigour: verbatim when it is full, standard or fast. Leave it out when it is null or absent.'
         )
       })
 
@@ -6320,6 +6328,18 @@ describe('increment-build-loop', () => {
           detail:
             'inc-900: merge names "tests", which is not in the row\'s repos'
         })
+      })
+
+      test('stops a row whose rigour is not a preset, naming it', async () => {
+        const run = await runBranch({}, { ...ROW, rigour: 'quick' })
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'row-invalid'
+        })
+        expect(run.result.stopped.detail).toContain(
+          'rigour is "quick"; use full, standard, fast'
+        )
       })
 
       describe('with the codex executor', () => {

@@ -352,9 +352,6 @@ const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
 
-// `planReview: 'structural'` reviews the plan once and re-reads the revised plan only when the
-// first review found the plan built wrong, so a lower rigour never lets a structural finding
-// through unchecked.
 const RIGOUR_RULES = {
   full: {
     planTier: 'think',
@@ -384,19 +381,15 @@ const RIGOUR_RULES = {
 
 const rulesOf = (rigour) => RIGOUR_RULES[rigour]
 
-const tierFor = (tier) => (tier === 'think' ? think : code)
-
-const PLAN_REVIEW_SUMMARY = {
-  twice: 'reviewed, revised and re-reviewed',
-  structural: 'reviewed once and re-reviewed only on a structural finding',
-  none: 'no plan review'
-}
-
 const rigourSummary = (rigour) => {
+  const planReviewPhrases = {
+    twice: 'reviewed, revised and re-reviewed',
+    structural: 'reviewed once and re-reviewed only on a structural finding',
+    none: 'no plan review'
+  }
   const rules = rulesOf(rigour)
-  const plan = `a ${rules.planTier}-tier plan`
   return [
-    rules.planReview === 'none' ? `${plan}, no plan review` : `${plan}, ${PLAN_REVIEW_SUMMARY[rules.planReview]}`,
+    `a ${rules.planTier}-tier plan, ${planReviewPhrases[rules.planReview]}`,
     rules.styleReviewers ? 'style reviewers' : 'no style reviewers',
     rules.reviewScope === 'whole' ? 'one code reviewer across the whole change' : 'a code reviewer per (repo, language) group',
     rules.consistencyReview ? 'a consistency review' : 'no consistency review',

@@ -61,7 +61,7 @@ The system MUST persist every field entered for a new address, including its opt
 
 ### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional
 **ID**: REQ-INS-ADDR-005
-The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code, and MUST offer in the country field of the address book's add and edit forms, and of the add form reached from a notification's place of origin or consignor picker or its consignment contact page, every country the reference data service serves, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
+The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, MUST hint that an international phone number should include its country code, and MUST offer every country the reference data service serves in the country field, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
 
 #### Scenario: The add form asks for every field, marking address line 2 and county optional
 **ID**: SCN-INS-ADDR-005-A
@@ -311,7 +311,7 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. 'Select a country' applies on the address book's add and edit forms and on the add form reached from a notification's place of origin or consignor picker or its consignment contact page. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
@@ -540,7 +540,7 @@ The system MUST show the edit form's Country select with no blank option and the
 
 ### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book, the place of origin and consignor pickers and the consignment contact page, and is opened directly from the address book
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and, opened from the address book or from a notification's place of origin or consignor picker or its consignment contact page, open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -845,3 +845,39 @@ The system MUST, on the add page reached from a notification's role picker, offe
 - **THEN** the journey is handed the new address to select as the contact address
 - **WHEN** they choose 'Cancel and return to address page' instead
 - **THEN** the journey is handed back with no address
+
+### Requirement: The address book service records an address's type and uses and refuses values outside the allowed lists
+**ID**: REQ-INS-ADDR-037
+The address book service MUST record an address's type (origin or consignor; destination, consignee or importer; branch) and its uses (place of origin, consignor, place of destination, consignee, importer, branch address), and return them on read. An update MUST replace the address's type and its uses with those it gives, and clear both when it gives neither. It MUST refuse a type or use outside those lists with a validation error naming the field, and save nothing.
+
+#### Scenario: An address created with a type and uses reads back with the same type and uses
+**ID**: SCN-INS-ADDR-037-A
+- **GIVEN** an address is created with the type 'destination, consignee or importer' and the uses importer and place of destination
+- **WHEN** the address is read by its id
+- **THEN** it has the type 'destination, consignee or importer' and the uses importer and place of destination, in that order
+
+#### Scenario: An update with a different set of uses replaces them
+**ID**: SCN-INS-ADDR-037-B
+- **GIVEN** an address saved with the uses place of origin and consignor
+- **WHEN** it is updated with the uses importer, consignee and branch address
+- **THEN** the update response and a later read both show exactly the uses importer, consignee and branch address
+
+#### Scenario: A create or update carrying a use outside the six is refused naming the uses
+**ID**: SCN-INS-ADDR-037-C
+- **WHEN** an address is created with a use that is not one of the six
+- **THEN** the service responds with a 400 validation error that names the uses, and no address is saved
+- **WHEN** a saved address is updated with a use that is not one of the six
+- **THEN** the service responds with a 400 validation error that names the uses, and the address keeps its original uses
+
+#### Scenario: A create or update carrying a type outside the three is refused naming the address type
+**ID**: SCN-INS-ADDR-037-D
+- **WHEN** an address is created with a type that is not one of the three
+- **THEN** the service responds with a 400 validation error that names the address type, and no address is saved
+- **WHEN** a saved address is updated with a type that is not one of the three
+- **THEN** the service responds with a 400 validation error that names the address type, and the address keeps its original type
+
+#### Scenario: An update that omits the type and uses clears both
+**ID**: SCN-INS-ADDR-037-E
+- **GIVEN** an address saved with a type and uses
+- **WHEN** it is updated with neither
+- **THEN** the update response and a later read show no type and no uses

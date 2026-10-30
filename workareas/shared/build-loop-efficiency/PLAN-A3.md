@@ -1163,7 +1163,7 @@ Then replace `reviewedPlan` (lines 3437-3463) with:
 
 ```javascript
 const reviewsRevisedPlan = (rules, findings) =>
-  rules.planReview === 'twice' || findings.some(isStructural)
+  rules.planReview === 'twice' || findings.length === 0 || findings.some(isStructural)
 
 const reviewedPlan = async (id, branchedRepos = null, rigour) => {
   const rules = rulesOf(rigour)
@@ -2724,3 +2724,27 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     `withFollowUps`. Every consumer reads it as `plan?.followUps` or `?? []`, so nothing misbehaves — the key is
     simply missing rather than empty in one run report. Adding a `withFollowUps(plan, [])` whose only effect is
     normalising an optional field would be ceremony.
+25. **A review that sends the plan back naming nothing wrote an empty "must address" section.** The one real
+    defect in Task 8, created by the plan. `approved: false` with `findings: []` is schema-legal — the prompt
+    forbids it, the schema does not, and `sendsPlanBack` fires on `!approved` alone. At `standard` that reached
+    the new one-review branch, which logged "Its 0 finding(s) stand", ran an agent to append a
+    `## Plan review: must address` section listing nothing into the plan the implementor reads, and reported the
+    row planned. The `full` path has guarded exactly this one branch down since before A3, which is proof the
+    decision was already made. Fixed by one clause — `reviewsRevisedPlan` also escalates when `findings` is
+    empty — rather than by a new refusal, because `refusedAfterSecondReview`'s text says "sent the plan back
+    twice" and that would be a lie from the one-review path. With the clause, a second read answers "the reviewer
+    objected but named nothing", and if that review also names nothing the existing guard refuses with a message
+    that is by then true. It is a no-op at `full`, which already escalated unconditionally.
+26. **The `fast` plan-lint invariant was true but untested, and is the whole justification for dropping the
+    review.** Task 8's reviewer traced it — at `fast` a plan with a denied check really does go plan → lint →
+    replan → replan lint and refuse if still dirty — but every send-back test in the suite runs at `full`, and
+    the only `fast` test asserted the lint *stage was present*. A stage being present is not the same claim as a
+    dirty plan being sent back. Now tested.
+27. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+    walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
+    and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
+    the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the
+    branch path stops it in `rowFieldProblems`, the full path stops it in the preflight's `rowRigourProblems`,
+    and a run-level value is validated at startup. All three inputs are covered, so a fourth guard would be
+    building what nothing reaches. **If a fourth input path for rigour is ever added, add the guard with it** —
+    the failure mode on that path is silent, which is the kind worth paying for.

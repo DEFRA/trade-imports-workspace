@@ -1445,19 +1445,21 @@ Do NOT commit, do NOT push, do NOT open or edit a pull request.
 Report the patch files, the stash refs and which merges you aborted.
 Return the structured output only.`
 
-const RESUME_STAGE_OF_PHASE = {
+const RESUME_STAGE_OF_PRESERVING_PHASE = {
   Implement: 'implement',
   Review: 'review',
   'Verify findings': 'review',
   Fix: 'review',
-  // The ladder's own failure is preserved under Land: phase('Land') is called
-  // before the ladder's result is read.
   Land: 'ladder'
 }
 
 const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail, planReviewed }) => {
   log(`${id}: ${outcome.toUpperCase()} — preserving the attempt. ${detail}`)
-  const record = { stage: RESUME_STAGE_OF_PHASE[phaseName] ?? null, outcome, planReviewed: planReviewed === true }
+  const record = {
+    stage: RESUME_STAGE_OF_PRESERVING_PHASE[phaseName] ?? null,
+    outcome,
+    planReviewed: planReviewed === true
+  }
   const kept = await agent(
     (IS_BRANCH ? preserveWorkOnBranch : preserveWork)(id, workBranch, reason, evidence, record),
     light({ label: `${id} preserve`, phase: phaseName, schema: incrementSchema })
@@ -1552,7 +1554,7 @@ ${restoreWorkStep(id, branch, attempt.work ?? {})}
 2. WHAT IT TOUCHES. For EACH of the increment's repos, two Bash calls:
    \`git -C ${TILDE}/<repoPath> diff --staged --name-only\`
    \`git -C ${TILDE}/<repoPath> diff --name-only\`
-   ${attempt.work?.kind === 'wip' ? `The work is committed, so also \`git -C ${TILDE}/<repoPath> diff --name-only origin/${branch}...HEAD\`.\n   ` : ''}Report every path once in changedFiles, each written \`<repoKey>:<repo-relative path>\` with the repo keys
+   ${attempt.work?.kind === 'wip' ? `Both print nothing for this attempt: its work is committed and pushed, so the tree is clean and \`origin/${branch}\`\n   already holds it. What the attempt changed is its branch against the base:\n   \`git -C ${TILDE}/<repoPath> diff --name-only origin/${BASE_BRANCH}...HEAD\`\n   ` : ''}Report every path once in changedFiles, each written \`<repoKey>:<repo-relative path>\` with the repo keys
    ${REPO_KEYS.join(', ')}. The review stages are grouped from this list, so a path left out is a file nobody reads.
 ${baselineGateStep(phases, gateLogs(id, 'resume'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
@@ -4841,6 +4843,9 @@ const refutedFindings = []
 let built = 0
 let lastId = null
 let stopped = null
+let themeReviewsRun = 0
+const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
+let workspaceLeftOn = null
 let forcedResumeRow = null
 
 const forcedResumeFor = (id) => {
@@ -4848,9 +4853,6 @@ const forcedResumeFor = (id) => {
   if (forcedResumeRow === null) forcedResumeRow = id
   return forcedResumeRow === id ? RESUME_FROM : null
 }
-let themeReviewsRun = 0
-const themeReviewAgents = () => (IS_BRANCH ? (themeReviewsRun + 1) * THEME_REVIEW_AGENTS : 0)
-let workspaceLeftOn = null
 
 const E2E_PHASES_OWED = preflight.e2ePhasesOwed !== false
 const leaselessReason = !E2E_IS_LOCAL
@@ -5078,8 +5080,8 @@ while (stopped === null) {
   let fixResult = null
   let baselineEvidence = ''
   let mergeNote = ''
-  let builderPhases = []
   let resumedFrom = null
+  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,
     confirmed: confirmed.length,
@@ -5133,8 +5135,7 @@ while (stopped === null) {
 
     if (enterAt !== 'build') {
       phase('Resume')
-      const resumePhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
-      const restored = await recoverRunStack(id, 'restore', () => restoreAttempt(id, workBranch, rowAttempt, resumePhases))
+      const restored = await recoverRunStack(id, 'restore', () => restoreAttempt(id, workBranch, rowAttempt, builderPhases))
       const restoreHeld = restored?.stackHeld
       if (restoreHeld) {
         await stopForHeldStack('restore', 'Resume', restoreHeld)
@@ -5145,7 +5146,7 @@ while (stopped === null) {
         resumedFrom = enterAt
         files = (restored.changedFiles ?? []).filter((file) => !file.endsWith('.log'))
         impl = restoredImpl(rowAttempt, restored, files)
-        baselineEvidence = restoreEvidence(id, restored, resumePhases)
+        baselineEvidence = restoreEvidence(id, restored, builderPhases)
       }
     }
 
@@ -5263,7 +5264,6 @@ ${baselineRungList(baseline)}`
     )
   }
   mergeNote = mergeNoteOf(mergesInProgress)
-  builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
 
   impl = EXECUTOR === 'codex'
     ? await codexStage(id, 'implement', {

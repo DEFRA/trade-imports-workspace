@@ -817,8 +817,12 @@ reading of the row under the branch lifecycle:
 cleared the moment the row records a `commit`. It holds the stage the attempt reached, the stop
 reason that ended it, the time, whether `plans/<id>.md` had passed its lint and review, and where
 the work is: a pushed `wip` commit under the full lifecycle, or patch files under `logs/` on the
-branch lifecycle, whose branch is shared and may carry nothing from a failed attempt. The stage
-comes from the phase that failed, so nothing has to be decided twice; `planReviewed` is separate,
+branch lifecycle, whose branch is shared and may carry nothing from a failed attempt.
+
+The stage comes from the phase the preserve ran in, so nothing has to be decided twice:
+`Implement` records `implement`, `Review`, `Verify findings` and `Fix` all record `review`, and
+`Land` records `ladder` — the ladder's own failure is preserved under `Land`, because `phase('Land')`
+is called before the ladder's result is read. `planReviewed` is recorded separately from the stage,
 because a plan can be reviewed and the implementor still die.
 
 **A resumed row runs two extra stages before the pipeline.** The **restore stage** puts the work

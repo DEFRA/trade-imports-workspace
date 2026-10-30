@@ -1055,6 +1055,36 @@ describe('increment-build-loop', () => {
       ])
     })
 
+    test('reads a pushed attempt’s files from its branch against the base, not from a clean tree', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          startAnswer(
+            startedResult({
+              resumeAt: 'ladder',
+              attempt: {
+                stage: 'ladder',
+                reason: 'ladder-red',
+                at: '2026-10-30T11:00:00Z',
+                planReviewed: true,
+                work: { kind: 'wip', branch: WORK_BRANCH, sha: 'abc1234' }
+              }
+            })
+          ),
+          null
+        ]
+      })
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 restore'
+      ).prompt
+
+      expect(prompt).toContain(
+        'git -C ~/ws/<repoPath> diff --name-only origin/main...HEAD'
+      )
+    })
+
     test('gives every guarded stage this machine’s worker count for each FIT and E2E rung it names', async () => {
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
@@ -5484,6 +5514,25 @@ describe('increment-build-loop', () => {
         expect(prompt).toContain(
           "the implementor's own notes are not available"
         )
+      })
+
+      test('restores against the cheap phases the row itself owes, not every cheap phase', async () => {
+        const run = await runBranch(
+          {},
+          {
+            ...ROW,
+            gatePhases: ['unit'],
+            resumeAt: 'ladder',
+            attempt: ATTEMPT
+          },
+          RESTORED,
+          PLAN,
+          ...AFTER_RESTORE.ladder
+        )
+        const prompt = promptOf(run, 'inc-900 restore')
+
+        expect(prompt).toContain('--phase unit')
+        expect(prompt).not.toContain('--phase fit')
       })
 
       test('names the stage a landed row resumed from', async () => {

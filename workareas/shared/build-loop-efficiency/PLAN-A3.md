@@ -877,13 +877,20 @@ const rowRigourProblems = (rows) =>
     .map(({ id, rigour }) => `${id} sets rigour ${JSON.stringify(rigour)}, which is not one of ${RIGOUR_PRESETS.join(', ')}`)
 
 const todoRows = preflight.todoRows ?? []
-const rowProblems = [...rowRepoProblems(todoRows), ...rowRigourProblems(todoRows)]
+const repoProblems = rowRepoProblems(todoRows)
+const rowProblems = [...repoProblems, ...rowRigourProblems(todoRows)]
 if (rowProblems.length > 0) {
-  throw new Error(
-    `${WORKFLOW_NAME}: ${rowProblems.join('; ')}. Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again`
-  )
+  const fix =
+    repoProblems.length > 0
+      ? 'Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again'
+      : 'Fix the rows, then launch again'
+  throw new Error(`${WORKFLOW_NAME}: ${rowProblems.join('; ')}. ${fix}`)
 }
 ```
+
+**The remedy is conditional because the two problems have different remedies.** "Add the repo to `config.repos`" is no use to somebody who typed `quick` instead of `fast`, and an error that sends the reader to the wrong file costs more than a longer one. Each branch is pinned by the test that drives it: the rigour test also asserts the message does NOT mention `config.repos`.
+
+**One trap in this step.** The instruction sentence to replace spans a line break in the source (`Copy the last` / `command's output into rowRepos`), while the test asserts it with a space. Reflow the template literal so the sentence is contiguous, or the prescribed test fails on a hidden newline — and the tempting fix is to weaken the assertion to a fragment, which would leave the preflight's instruction unpinned while looking green.
 
 - [ ] **Step 5: Run the tests to see them pass**
 
@@ -2633,3 +2640,16 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     messages use it consistently, and `gatePhases` says "unit, fit and e2e" because it is a list you may name
     several from, where rigour is pick-one — copying its conjunction would be wrong. The stop test's
     `toMatchObject` + `toContain` stays too; it is idiomatic in that file and loses nothing here.
+16. **Task 6's prescribed edit would have failed its own prescribed test, and the obvious fix was the wrong one.**
+    The preflight instruction to replace spans a line break in the source (`Copy the last` /
+    `command's output into rowRepos`), while the test asserts that sentence with a space in it. The implementer
+    reflowed the template literal and said so. Three ways that could have gone badly instead: weaken the assertion
+    to a fragment, delete the test, or drop the assertion as not worth it — each leaving the preflight's
+    instruction unpinned while the suite stayed green. It went well only because the brief said a failing
+    prescribed test means *report it*, never *make it pass*. **Carry this forward:** an assertion against prompt
+    text must be checked against the source's actual line breaks.
+17. **The preflight's remedy is now conditional, and both branches are pinned.** One fixed tail served two checks,
+    so a rigour typo was answered with "add the repo to `config.repos`" — a remedy that sends the reader to the
+    wrong file. The implementer made it conditional and flagged it for a decision rather than quietly diverging.
+    Accepted, with an assertion added to each of the two tests that drive it, including that the rigour message
+    does NOT mention `config.repos`.

@@ -771,6 +771,17 @@ describe('increment-build-loop', () => {
     )
   })
 
+  test('says that full runs the whole pipeline', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'full' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour full — a think-tier plan, reviewed, revised and re-reviewed, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+    )
+  })
+
   test('names the same resume stages the backlog records', async () => {
     const source = readFileSync(scriptPath, 'utf8')
 

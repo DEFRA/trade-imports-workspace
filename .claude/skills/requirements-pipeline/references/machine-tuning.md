@@ -157,3 +157,134 @@ so the scripts keep it.
   socket), the VM crash, not an ins-backend race. The one at 23:01 had
   ins-backend exit with code 1; its container log was not kept. A clean stack
   start on 22 October did not reproduce it.
+
+## Measured on 29 October 2026
+
+Apple Silicon, 12 cores, 18 GiB. Docker Desktop 8 CPUs, 10 GiB and 2 GiB swap
+— the CPUs cut from 12, which was every core the machine has, and the memory
+raised from 8092 MiB, which was below the floor the 22 October run set.
+`tim build tune` with the whole stack up in dev mode, every repo on `main`.
+
+**Read these as a worker-count cap, not as what this machine can do.** Every
+figure below was measured with the whole stack up, because that is what
+`tim build tune` does — and no gate run puts a FIT suite in those conditions.
+`gates.json` sets `stackAfterLocal: true`, so `tim build gate` starts the stack
+only once unit and FIT have finished (`tim/src/build/gate.js:456`), and an
+`e2e: "ci"` build takes no lease at all, so nothing is up. The FIT numbers here
+are therefore a worst case nobody runs, and the e2e numbers are for a rung an
+`e2e: "ci"` run never asks for.
+
+What the file is for on this machine is the cap: the narrow FIT runs individual
+build-loop stages make themselves — a red probe, a plan check, a reviewer's or
+fixer's local proof — take `--workers=100%` without it, which is ten browsers
+for one spec file on a 12-core machine.
+
+For the record of what was seen: animals FIT did not finish at 2 or 3 workers
+against the 900s global timeout, and the e2e suite took 33.5 minutes at 2
+workers while swapping 8.8 million pages. Against the 22 October machine's 234s
+and 23,620 pages for animals FIT, this is a machine deep in swap — but it is
+also a 641-test suite where that one was 477, measured under a stack the gate
+would have deferred, on a host that began the run with 18 GB already swapped
+out. Do not read a capability verdict into it, and do not re-run the tune to
+settle it: under `e2e: "ci"` the question does not arise.
+
+### FIT and E2E, stack up
+
+| Rung | Workers | Wall | Result | Swapped out | Slowest shell start |
+|---|---|---|---|---|---|
+| plants/fit | 2 | 382s | 334 passed (6.2m) | 997,904 | 92 ms |
+| plants/fit | 3 | 329s | 334 passed (5.4m) | 554,700 | 130 ms |
+| plants/fit | **4** | **258s** | 334 passed (4.2m) | 553,933 | 42 ms |
+| animals/fit | 2 | 907s | **timed out at 900s** | 1,088,568 | 150 ms |
+| animals/fit | 3 | 907s | **timed out at 900s** | 642,692 | 200 ms |
+| animals/fit | **4** | **757s** | 641 passed (12.5m) | 1,444,672 | 265 ms |
+| ins-frontend/fit | 2 | 46s | 106 passed (41.3s) | 77,541 | 29 ms |
+| ins-frontend/fit | 3 | 40s | 106 passed (36.4s) | 120,292 | 32 ms |
+| ins-frontend/fit | **4** | **34s** | 106 passed (30.1s) | 96,856 | 39 ms |
+| ins-tests/e2e | **2** | **2011s** | 562 passed, 12 skipped (33.5m) | 8,834,213 | 745 ms |
+
+Runs, samples and summaries are in `workareas/machine-tuning/20261029T204923Z/`.
+The e2e rung at 3 and 4 workers was never measured — see "Both runs were
+killed" below.
+
+### Settings chosen for this machine
+
+`config/machine.json` was assembled by hand from the ten runs above, because the
+tune was killed before it could write the file. Re-run `tim build tune` to
+replace it with a measured one.
+
+```json
+{
+  "parallelRepos": 1,
+  "stackAfterLocal": true,
+  "workers": {
+    "trade-imports-plants-frontend/fit": 4,
+    "trade-imports-animals-frontend/fit": 4,
+    "trade-imports-ins-frontend/fit": 4,
+    "trade-imports-ins-tests/e2e": 2
+  }
+}
+```
+
+- **Animals FIT: 4.** The only count that finishes. The rule's back-off does not
+  apply when the lower counts fail outright.
+- **Plants FIT: 4.** Fastest by 71s over 3 workers, and the *lowest* shell start
+  time of the three counts (42 ms against 130 ms at 3).
+- **ins-frontend FIT: 4.** Fastest, and the whole suite is half a minute.
+- **E2E: 2.** One data point, and it passed. It is also a count this machine
+  will not use: an `e2e: "ci"` build drops the e2e phase, and that is how a theme
+  is built here. Kept so the key is not missing if somebody ever runs
+  `e2e: "local"`, not because 2 is the measured answer.
+- **parallelRepos 1, stackAfterLocal true.** As `gates.json` has them.
+
+**Where this departs from the rule.** "Back off one if that count swaps" cannot
+be applied here, because every count on this machine swaps — the back-off
+assumes a lower count that does not. For plants and ins-frontend the lower count
+swaps *more* than the chosen one, so backing off would have cost time and bought
+no headroom. The counts above are the fastest completing count per rung, not the
+rule's output.
+
+### Docker Desktop
+
+- **CPUs: 8 of 12.** Cut from 12. Giving the VM every core is what overloaded
+  the machine on 21 October.
+- **Memory: 10 GiB.** After the e2e run the VM reported 8,474 of 9,937 MiB in
+  use, with 499 of its 2,048 MiB of swap used — using its swap but not filling
+  it, where the 22 October machine at 10 GiB filled the 1 GiB it had.
+- **12 GiB was tried first, and 10 GiB is no worse.** At 12 GiB
+  (`workareas/machine-tuning/20261029T182839Z/`) animals FIT timed out at 2
+  workers, passed at 3 in 739s and at 4 in 712s, swapping 1,272,332 pages at 4.
+  At 10 GiB it times out at 2 *and* 3, and takes 757s at 4 swapping 1,444,672.
+  Within the noise of a machine this far into swap, the allocation is not what
+  decides it.
+- **The host is the constraint, not the VM.** With the stack down, macOS still
+  reported 16.5 GB of its 17.4 GB swap in use and 27% of memory free. The
+  gate's suites put Playwright browsers on top of that, which is where the
+  million-page swap-outs come from. Shrinking the VM hands memory to a host that
+  is already paging; it does not make the suites fit.
+
+### Both runs were killed
+
+Two `tim build tune` runs on 29 October were killed mid-run by something outside
+tim: the first after about 50 minutes, the second after about 1h46m, during the
+e2e rung's second worker count. Neither wrote `config/machine.json`, and each
+left the stack up with the lease still held by its dead process. Recover with
+`tim docker lease release --holder "<the holder the status line names>"`, which
+takes the stack down and clears the lease in one go. Expect to need it again.
+
+### Two repos had no devDependencies
+
+In the first run, plants FIT and ins-frontend FIT failed in 1 to 3 seconds at
+every worker count, exit 127, on `sh: webpack: command not found` — neither repo
+had its devDependencies installed, so `build:frontend` died before Playwright
+started. Six of that run's twelve measurements were junk for that reason alone.
+
+`tim build gate` installs a repo whose installed dependencies differ from its
+`package-lock.json` before running its rungs. **`tim build tune` does not**, so
+it measures whatever state the repos happen to be in. Installing both repos by
+hand is what made the second run's frontend figures real.
+
+`npm ci` has to run with the shell inside the repo. Under
+`npm --prefix <repo> ci` it fails with `Missing: <package>@0.0.0 from lock file`
+against a lockfile that is perfectly in step — the same trap `tim/CLAUDE.md`
+records for tim's own install, and it applies to the service repos too.

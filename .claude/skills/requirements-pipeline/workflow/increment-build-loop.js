@@ -2027,6 +2027,12 @@ that only quiets a rule, no loosened assertion. Fix the code the check points at
 REPORT YOUR COMMITS: every commit you make and push goes in commits[] as { repo: <repoKey>, sha }. A style reviewer
 reads each one before the watcher looks again.`
 
+const SONAR_GATE_RULE = `   A SONARCLOUD QUALITY GATE FAILURE HAS NO JOB LOG. The scan step inside the workflow passes; SonarCloud weighs the
+   gate afterwards and posts its verdict as a check of its own, so \`gh run view --log-failed\` shows you nothing at
+   all. Read it with \`tim sonar gate <the repo name> --pull-request <n>\`, which names every failed condition with
+   its threshold and what the code measured, then \`tim sonar issues <the repo name> --pull-request <n>\` for the
+   issues behind a condition that counts violations. A fixer has spent all three attempts blind on one of these.`
+
 const ciFixCommitCommand = ({ repo, sha }) =>
   `- \`git -C ${repoTildeOfKey(repo) ?? `${TILDE}/<the path of repo ${repo}>`} show ${sha}\``
 
@@ -3904,6 +3910,7 @@ TASK:
    gives you the log. Read that file ONCE.
    **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
    run log.** Go and read those files.
+${SONAR_GATE_RULE}
 2. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
    push that republishes it does. A \`workflow_run\` job runs the copy of its workflow on the default branch (main),
    never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
@@ -5860,6 +5867,7 @@ TASK:
    gives you the log. Read that file ONCE.
    **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
    run log.** Go and read those files.
+${SONAR_GATE_RULE}
 2. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
 3. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,

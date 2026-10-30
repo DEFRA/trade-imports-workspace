@@ -80,9 +80,10 @@ Refactor only. Do NOT:
 
 ## Workflow
 
-1. **Verify the starting point is green.** Run the repo's test suite to a
-   tmp file and read it once. All tests must pass before you refactor.
-   (Commands: cheat-sheet → "Running tests".)
+1. **Verify the starting point is green.** Run the repo's test suite
+   once, to a tmp file, and read it once. All tests must pass before you
+   refactor. (Commands: cheat-sheet → "Running tests".) This is the only
+   full-suite run until a milestone — step 5 scopes.
 2. **Comment pass, delete first.** Before any other change, walk every
    comment in the changed code: the hunks, about 10 lines either side,
    and the JSDoc or Javadoc of every changed function. Delete comments
@@ -97,11 +98,15 @@ Refactor only. Do NOT:
    logging) → readability (naming, extract methods) → structure (DRY,
    single responsibility) → performance (only if there is a measured
    need).
-5. **Refactor in small steps.** Loop: make ONE small change → run tests
-   (must pass) → keep it if it's an improvement, revert if tests fail →
-   commit at milestones → repeat. Apply the techniques and naming tables
-   in the cheat-sheet. A rename covers the concept's whole vocabulary:
-   grep for the concept word, not only the identifier.
+5. **Refactor in small steps.** Loop: make ONE small change → run **the
+   test files covering it, not the repo's suite** (must pass) → keep it
+   if it's an improvement, revert if tests fail → repeat. Run the full
+   suite and lint at each milestone, before the commit — a refactor is
+   many small steps, and a full suite per step is most of the clock for
+   none of the information. Scoping commands:
+   `references/IMPLEMENTOR.md` → "Verification". Apply the techniques
+   and naming tables in the cheat-sheet. A rename covers the concept's
+   whole vocabulary: grep for the concept word, not only the identifier.
 6. **Stop** when tests still pass, code smells are resolved, naming is
    clear, functions are small, DRY is applied, every touched file meets
    the house rules, and the code is consistent with the codebase.

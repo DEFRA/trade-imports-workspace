@@ -35,9 +35,11 @@ Then read in this order:
    If an item fails, fix the plan first and note the change under
    `## Implementation Notes`.
 7. Verify `[ASSUMPTION]` and `[NEEDS VERIFICATION]` items in the plan
-8. **Run all tests.** A failing test is yours to fix before you start, in
-   its own commit (`CLAUDE.md` rule 6). Showing the same failure on
-   `origin/main` tells you the cause, not that you may leave it.
+8. **Run all tests, once per repo.** A failing test is yours to fix
+   before you start, in its own commit (`CLAUDE.md` rule 6). Showing the
+   same failure on `origin/main` tells you the cause, not that you may
+   leave it. This is the only full-suite run until the end — from here
+   on, scope to what you touch (see Verification).
 
 Redirect output to a tmp file and read the file once — don't grep streaming output:
 
@@ -72,13 +74,16 @@ Optional `--base <branch>` if branching from anything other than `main`.
 
 ### For Each Step
 
-1. Run tests (baseline)
-2. Read existing code, find the owner the plan names
-3. Make the change through that owner
-4. Run tests again
-5. Add tests for new functionality, extending the shared helper the
+1. Read existing code, find the owner the plan names
+2. Make the change through that owner
+3. Run the test files covering what you touched — not the repo's suite
+   (see Verification for the scoping commands; the full-suite baseline
+   is taken once, under "Before You Start", not per step)
+4. Add tests for new functionality, extending the shared helper the
    plan names
-6. Comment pass (below)
+5. Comment pass (below)
+
+The repo's full suite and lint come once at the end, before the commit.
 
 ### Code Standards
 
@@ -135,7 +140,55 @@ value decides. The fix is the name, and no comment.
 
 ### Verification
 
-Unit tests and lint, every time. Never verify by hand in a browser.
+Unit tests and lint before you claim anything. Never verify by hand in a
+browser.
+
+**Match the proof to what the change can break — for every suite, not
+just E2E.** A suite you have already run, against code you have not
+touched since, tells you nothing the first run didn't. Running it again
+is time the user pays for.
+
+The cadence per repo is **baseline once, scoped while you work, full
+once at the end**:
+
+| When | Run |
+|---|---|
+| Before the first edit | The repo's full suite, once. This is the `CLAUDE.md` rule 6 baseline — you need to know what was already red |
+| After each edit | Only the test files covering what you touched |
+| Red probes | Only the test the probe targets |
+| Once, before committing | The repo's full suite and lint |
+
+Scoping, per stack:
+
+```bash
+# Node unit — name the files, not the suite
+npx vitest run <path/to/a.test.js> <path/to/b.test.js>
+```
+```bash
+# Playwright fit — a path regex, not all of it
+npm run test:fit:features -- "<path regex>"
+```
+```bash
+# Java — one class, and no `clean`
+mvn -o -f <repo>/pom.xml test -Dtest=<ClassName>
+```
+
+`clean` throws away the compiled output and makes the next run start
+over. Use it when something outside source changed — a `pom.xml`, a
+dependency, a generated source — not between test runs. `-o` keeps
+Maven off the network once the dependencies are cached.
+
+**Changes that earn no re-run at all:**
+
+- A formatter-only pass (`npm run format`, `mvn spotless:apply`). Check
+  `format:check`, not the suite.
+- A comment deletion or a doc-comment edit.
+- A markdown or `docs/` change.
+- Anything where you cannot name a test whose result could differ.
+
+If a command is refused by the sandbox or a hook, stop after the second
+attempt. Rephrasing the same call a third time is not a route through;
+say what is blocked and carry on with the rest.
 
 Run the E2E suite locally only when the change touches the tests repo,
 cross-cutting code, or a behaviour whose E2E cover you added or
@@ -197,6 +250,25 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 - [ ] Docs, recipes and JSDoc the plan listed as made untrue are updated
 - [ ] Build succeeds / GitHub Actions green
 - [ ] Plan updated with deviations
+- [ ] Nothing written to Jira (no comment, transition, assignment or
+      link) unless the user asked for it in this conversation
+- [ ] No suite run twice over code that did not change between the runs,
+      and none re-run after a formatter-only pass
+
+## Where finishing stops
+
+Raise the PR, report to the user, stop. Do not comment on the ticket,
+move its status, assign it or link it off your own bat — see SKILL.md,
+"Working with the ticket in Jira". The ticket is shared with the BAs,
+the PO and its watchers; a write notifies them, and "implement
+EUDPA-X" did not ask for that. A finished, green, accurate piece of
+work is still not permission to announce it.
+
+Offer instead: "Want me to comment on the ticket?" — one line, in the
+report below.
+
+Same for the PR: raise it, post the link and the evidence, and leave
+merging to the user (`CLAUDE.md` rule 3).
 
 ## Output
 
@@ -204,7 +276,7 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 Complete: EUDPA-XXXXX
 Repos: [list] | Files: [count] | Tests added: [count]
 Deviations: [list or none]
-Next: Create PR, request review
+Next: request review. Offer a Jira comment; don't post one.
 ```
 
 ## Don'ts

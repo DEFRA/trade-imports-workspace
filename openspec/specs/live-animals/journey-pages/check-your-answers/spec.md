@@ -249,9 +249,9 @@ While a notification is being amended, the system MUST show the review with no e
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-### Requirement: Ports and destination countries read back exactly as they were offered
+### Requirement: Ports, destination countries and document types read back exactly as they were offered
 **ID**: REQ-CYA-013
-The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", and MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does.
+The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does, and MUST name each document's type with the same wording the upload documents page offered that type under.
 
 #### Scenario: The port of exit row reads the option the user chose
 **ID**: SCN-CYA-013-A
@@ -270,6 +270,12 @@ The system MUST show the port of entry and the port of exit on the review exactl
 - **GIVEN** a transhipment notification whose destination country is Martinique
 - **WHEN** the user views the review
 - **THEN** the destination country row reads "Martinique (France)"
+
+#### Scenario: A document's type row reads the option the user chose
+**ID**: SCN-CYA-013-D
+- **GIVEN** a notification holding a document whose type was chosen as "CITES permit/certificate"
+- **WHEN** the user views the review
+- **THEN** that document's type row reads "CITES permit/certificate", the same text as the option they chose
 
 ### Requirement: Continuing a draft is refused while it holds a species the reference data no longer lists
 **ID**: REQ-CYA-014

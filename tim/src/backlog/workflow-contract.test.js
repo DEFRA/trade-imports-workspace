@@ -219,6 +219,13 @@ const themeAnswer = (themeAnswers, label) => {
 const PLAN_LINT_CLEAN = { exitCode: 1, stdout: '' }
 const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
 const PLAN_APPROVED = { approved: true, findings: [], summary: 'approved' }
+const PLANNED = {
+  ok: true,
+  summary: 'Planned.',
+  repos: ['frontend'],
+  behaviourChanges: [],
+  decisions: []
+}
 const PLAN_REVIEW_RECORDED = { written: true, summary: 'written' }
 const isPlanCheck = (label) =>
   / (plan|replan|revise plan) lint$| plan review( 2| record)?$/.test(
@@ -276,6 +283,9 @@ const stageLabels = (run) =>
 
 const modelOf = (run, label) =>
   run.agents.find((entry) => entry.options.label === label).options.model
+
+const promptOf = (run, label) =>
+  run.agents.find((entry) => entry.options.label === label).prompt
 
 const runLoop = (
   path,
@@ -771,7 +781,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
     )
   })
 
@@ -830,17 +840,7 @@ describe('increment-build-loop', () => {
     const runPlanOnlyWithModels = (models) =>
       runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, models },
-        answers: [
-          WORKSPACE_ANSWER,
-          { ok: true, summary: '1' },
-          {
-            ok: true,
-            summary: 'Planned.',
-            repos: ['frontend'],
-            behaviourChanges: [],
-            decisions: []
-          }
-        ]
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, PLANNED]
       })
 
     test('resolves the built-in default for every tier when models is empty', async () => {
@@ -899,14 +899,6 @@ describe('increment-build-loop', () => {
   })
 
   describe('the plan stage at each rigour', () => {
-    const PLANNED = {
-      ok: true,
-      summary: 'Planned.',
-      repos: ['frontend'],
-      behaviourChanges: [],
-      decisions: []
-    }
-
     const DETAIL_FINDING = {
       kind: 'detail',
       section: '9',
@@ -921,20 +913,45 @@ describe('increment-build-loop', () => {
       findings: [DETAIL_FINDING]
     }
 
+    const SENT_BACK_NAMING_NOTHING = {
+      approved: false,
+      summary: 'I am not happy with it',
+      findings: []
+    }
+
+    const SENT_BACK_ON_A_STRUCTURE = {
+      approved: false,
+      summary: 'wrong layer',
+      findings: [
+        {
+          kind: 'structural',
+          section: '3',
+          what: 'the rule lives in the model',
+          rule: 'architecture doc',
+          mustBecomeTrue: 'it lives in obligations'
+        }
+      ]
+    }
+
     const PLAN_NAMING_A_DENIED_CHECK = {
       ...PLANNED,
       checks: [{ section: 6, command: CURL_CHECK }]
     }
 
+    const isIncrementStage = (label) => label.startsWith('inc-900 ')
+
     const runPlanOnlyAt = (
       rigour,
-      plans = {},
-      planAnswers = [PLANNED, PLANNED]
+      { plans = {}, plannerAnswers = [PLANNED, PLANNED] } = {}
     ) =>
       runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, rigour },
         plans,
-        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, ...planAnswers]
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          ...plannerAnswers
+        ]
       })
 
     test('plans on the think tier at full and standard', async () => {
@@ -953,20 +970,18 @@ describe('increment-build-loop', () => {
     test('runs no plan review at fast', async () => {
       const labels = stageLabels(await runPlanOnlyAt('fast'))
 
-      expect(labels).toContain('inc-900 plan')
-      expect(labels).toContain('inc-900 plan lint')
-      expect(labels).not.toContain('inc-900 plan review')
+      expect(labels.filter(isIncrementStage)).toEqual([
+        'inc-900 plan',
+        'inc-900 plan lint'
+      ])
     })
 
     test('still sends the planner back on a denied check at fast, where no review runs', async () => {
-      const run = await runPlanOnlyAt('fast', {}, [
-        PLAN_NAMING_A_DENIED_CHECK,
-        PLANNED
-      ])
+      const run = await runPlanOnlyAt('fast', {
+        plannerAnswers: [PLAN_NAMING_A_DENIED_CHECK, PLANNED]
+      })
 
-      expect(
-        stageLabels(run).filter((label) => label.startsWith('inc-900 '))
-      ).toEqual([
+      expect(stageLabels(run).filter(isIncrementStage)).toEqual([
         'inc-900 plan',
         'inc-900 plan lint',
         'inc-900 replan',
@@ -976,10 +991,9 @@ describe('increment-build-loop', () => {
     })
 
     test('refuses a plan whose replan still names a denied check at fast', async () => {
-      const run = await runPlanOnlyAt('fast', {}, [
-        PLAN_NAMING_A_DENIED_CHECK,
-        PLAN_NAMING_A_DENIED_CHECK
-      ])
+      const run = await runPlanOnlyAt('fast', {
+        plannerAnswers: [PLAN_NAMING_A_DENIED_CHECK, PLAN_NAMING_A_DENIED_CHECK]
+      })
 
       expect(run.result.increments[0].outcome).toBe('plan-refused')
       expect(run.result.increments[0].detail).toBe(
@@ -990,7 +1004,7 @@ describe('increment-build-loop', () => {
     test('re-reviews a revised plan at full', async () => {
       const labels = stageLabels(
         await runPlanOnlyAt('full', {
-          'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+          plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
         })
       )
 
@@ -1000,19 +1014,19 @@ describe('increment-build-loop', () => {
 
     test('does not re-review a revised plan at standard when every finding is a detail', async () => {
       const run = await runPlanOnlyAt('standard', {
-        'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
       })
 
       expect(stageLabels(run)).toContain('inc-900 revise plan')
       expect(stageLabels(run)).not.toContain('inc-900 plan review 2')
       expect(run.logs).toContain(
-        "inc-900: one plan review runs at this row's rigour, so the revised plan is not re-read. Its 1 finding(s) stand. Building it, with each as required work."
+        "inc-900: one plan review runs at this row's rigour, so the revised plan is not re-read. Building it, with its 1 finding(s) as required work."
       )
     })
 
     test('records the findings it does not re-review at standard, and reports them', async () => {
       const run = await runPlanOnlyAt('standard', {
-        'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
       })
 
       expect(stageLabels(run)).toContain('inc-900 plan review record')
@@ -1021,14 +1035,37 @@ describe('increment-build-loop', () => {
       ])
     })
 
-    test('re-reads the plan when a review objects but names nothing', async () => {
+    test('tells the recorder the findings were raised on a plan nobody re-read at standard', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
+      })
+
+      expect(
+        promptOf(run, 'inc-900 plan review record').replace(/\s+/g, ' ')
+      ).toContain(
+        'The plan review left these findings open on the plan, which was revised but not re-read.'
+      )
+    })
+
+    test('tells the recorder the findings were raised on the revised plan at full', async () => {
+      const run = await runPlanOnlyAt('full', {
+        plans: {
+          'inc-900 plan review': SENT_BACK_ON_A_DETAIL,
+          'inc-900 plan review 2': SENT_BACK_ON_A_DETAIL
+        }
+      })
+
+      expect(
+        promptOf(run, 'inc-900 plan review record').replace(/\s+/g, ' ')
+      ).toContain(
+        'The plan review left these findings open on the revised plan.'
+      )
+    })
+
+    test('re-reviews at standard, and records no must-address, when a review objects but names nothing', async () => {
       const labels = stageLabels(
         await runPlanOnlyAt('standard', {
-          'inc-900 plan review': {
-            approved: false,
-            summary: 'I am not happy with it',
-            findings: []
-          }
+          plans: { 'inc-900 plan review': SENT_BACK_NAMING_NOTHING }
         })
       )
 
@@ -1036,22 +1073,10 @@ describe('increment-build-loop', () => {
       expect(labels).not.toContain('inc-900 plan review record')
     })
 
-    test('re-reviews a revised plan at standard when the first review found it built wrong', async () => {
+    test('re-reviews a revised plan at standard when the first review found a structural finding', async () => {
       const labels = stageLabels(
         await runPlanOnlyAt('standard', {
-          'inc-900 plan review': {
-            approved: false,
-            summary: 'wrong layer',
-            findings: [
-              {
-                kind: 'structural',
-                section: '3',
-                what: 'the rule lives in the model',
-                rule: 'architecture doc',
-                mustBecomeTrue: 'it lives in obligations'
-              }
-            ]
-          }
+          plans: { 'inc-900 plan review': SENT_BACK_ON_A_STRUCTURE }
         })
       )
 
@@ -1129,11 +1154,8 @@ describe('increment-build-loop', () => {
         WORKSPACE_ANSWER,
         { ok: true, summary: '1' },
         {
-          ok: true,
+          ...PLANNED,
           summary: 'Planned in the frontend.',
-          repos: ['frontend'],
-          behaviourChanges: [],
-          decisions: [],
           followUps: ['Delete the caller comments in origin/controller.js.']
         }
       ],
@@ -1286,6 +1308,51 @@ describe('increment-build-loop', () => {
         'inc-900 restore',
         'inc-900 plan read'
       ])
+    })
+
+    const resumedPlanReadPrompt = async (rigour) => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          startAnswer(
+            startedResult({
+              rigour,
+              resumeAt: 'ladder',
+              attempt: {
+                stage: 'ladder',
+                reason: 'ladder-red',
+                at: '2026-10-30T11:00:00Z',
+                planReviewed: true,
+                work: { kind: 'wip', branch: WORK_BRANCH, sha: 'abc1234' }
+              }
+            })
+          ),
+          {
+            restored: true,
+            green: true,
+            rungs: [],
+            changedFiles: ['frontend:src/server/app/index.js'],
+            summary: 'the wip commit is at HEAD, unit and FIT green'
+          },
+          null
+        ]
+      })
+      return promptOf(run, 'inc-900 plan read')
+    }
+
+    test('tells a resumed row’s plan reader the plan passed its lint and its review', async () => {
+      expect(await resumedPlanReadPrompt('standard')).toContain(
+        'that plan passed its lint and its review'
+      )
+    })
+
+    test('tells a resumed fast row’s plan reader the plan passed only its lint', async () => {
+      const prompt = await resumedPlanReadPrompt('fast')
+
+      expect(prompt).toContain('that plan passed its lint.')
+      expect(prompt).not.toContain('its review')
     })
 
     test('reads a pushed attempt’s files from its branch against the base, not from a clean tree', async () => {
@@ -1749,13 +1816,7 @@ describe('increment-build-loop', () => {
         ],
         summary: 'green'
       }
-      const PLAN_ANSWER = {
-        ok: true,
-        summary: 'Planned in the frontend.',
-        repos: ['frontend'],
-        behaviourChanges: [],
-        decisions: []
-      }
+      const PLAN_ANSWER = { ...PLANNED, summary: 'Planned in the frontend.' }
       const NO_FINDINGS = { findings: [] }
       const FINDING = {
         file: 'frontend:src/a.js',
@@ -1907,9 +1968,6 @@ describe('increment-build-loop', () => {
           'inc-900 verify:frontend-javascript'
         ])
       })
-
-      const promptOf = (run, label) =>
-        run.agents.find((entry) => entry.options.label === label).prompt
 
       test('hands the ladder every baseline rung with its log', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
@@ -3574,7 +3632,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            `THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work: ${DETAIL_LINE}`
+            `THE PLAN REVIEW LEFT THESE FINDINGS OPEN on the revised plan, and the implementor was given each as required work: ${DETAIL_LINE}`
           )
           expect(prompt).toContain(
             'Each one the change does not address is a finding: give it the code-quality category that fits it, `structure` when none fits better'
@@ -5427,9 +5485,6 @@ describe('increment-build-loop', () => {
       })
 
     const labelsOf = (run) => stageLabels(run)
-    const promptOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).prompt
-
     describe('its configuration', () => {
       test('takes null for every Jira and approval key, and whatever repo keys the envelope names', async () => {
         const run = await runLoop(scriptPath, {
@@ -5606,7 +5661,7 @@ describe('increment-build-loop', () => {
         const run = await runBranch({ rigour: 'standard' }, ROW)
 
         expect(run.logs).toContain(
-          'inc-900: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+          'inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
         )
       })
 
@@ -7582,9 +7637,6 @@ describe('increment-build-loop', () => {
       })
 
     const labelsOf = (run) => stageLabels(run)
-    const promptOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).prompt
-
     const startedWith = (fields) =>
       startAnswer(
         startedResult({
@@ -9058,8 +9110,6 @@ describe('distil', () => {
     })
 
   const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
-  const promptOf = (run, label) =>
-    run.agents.find((entry) => entry.options.label === label).prompt
   const optionsOf = (run, label) =>
     run.agents.find((entry) => entry.options.label === label).options
 

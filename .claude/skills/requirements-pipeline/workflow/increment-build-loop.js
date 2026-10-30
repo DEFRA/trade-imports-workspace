@@ -384,7 +384,7 @@ const rulesOf = (rigour) => RIGOUR_RULES[rigour]
 const rigourSummary = (rigour) => {
   const planReviewPhrases = {
     twice: 'reviewed, revised and re-reviewed',
-    structural: 'reviewed once and re-reviewed only on a structural finding',
+    structural: 'reviewed once, and re-reviewed when a finding is structural or the review names none',
     none: 'no plan review'
   }
   const rules = rulesOf(rigour)
@@ -2762,19 +2762,22 @@ const planReviewFindingLines = (findings) => findings.map(planReviewFindingLine)
 
 const mustAddressOf = (plan) => plan?.planReviewMustAddress ?? []
 
+const mustAddressRaisedOn = (plan) => plan?.planReviewRaisedOn ?? 'the plan'
+
 const mustAddressForImplementor = (plan) =>
   mustAddressOf(plan).length > 0
     ? `
-PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on the revised plan. Each is required work in
-this increment, as binding as the plan's decisions. Address every one, and say in notes how you addressed each, by its
-number:
+PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on ${mustAddressRaisedOn(plan)}. Each is required
+work in this increment, as binding as the plan's decisions. Address every one, and say in notes how you addressed each,
+by its number:
 ${planReviewFindingLines(mustAddressOf(plan))}`
     : ''
 
 const mustAddressForReview = (plan) =>
   mustAddressOf(plan).length > 0
     ? `
-THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work:
+THE PLAN REVIEW LEFT THESE FINDINGS OPEN on ${mustAddressRaisedOn(plan)}, and the implementor was given each as
+required work:
 ${planReviewFindingLines(mustAddressOf(plan))}
 Check each against the change. Each one the change does not address is a finding: give it the code-quality category
 that fits it, \`structure\` when none fits better, and name the plan review finding by its number.`
@@ -3060,7 +3063,7 @@ const PLAN_STANDARDS_STEP = `the standards for those files. Run \`tim backlog st
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
      every rules, bestPractice and repoDocs file it lists`
 
-const planIncrement = (id, branchedRepos = null, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [], rigour } = {}) =>
+const planIncrement = (id, branchedRepos, rigour, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [] } = {}) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
 ${deniedChecksNote(id, deniedChecks)}${codeTextNote(id, codeText)}${planReviewNote(id, reviewFindings)}${guardrails()}
@@ -3332,13 +3335,13 @@ const refusedUnlessClean = async (id, plan, lintLabel) => {
 }
 
 const planPassingLint = async (id, branchedRepos, rigour) => {
-  const plan = await planIncrement(id, branchedRepos, { label: `${id} plan`, rigour })
+  const plan = await planIncrement(id, branchedRepos, rigour, { label: `${id} plan` })
   if (!plan?.ok) return plan
   const problems = await planProblemsOf(id, plan, `${id} plan lint`)
   if (problems.codeText === null) return unreadablePlan(id, plan)
   if (!hasPlanProblems(problems)) return plan
   log(`${id}: ${planProblemList(problems, false)}. Sending the planner back once.`)
-  const replan = await planIncrement(id, branchedRepos, { label: `${id} replan`, rigour, ...problems })
+  const replan = await planIncrement(id, branchedRepos, rigour, { label: `${id} replan`, ...problems })
   return refusedUnlessClean(id, replan, `${id} replan lint`)
 }
 
@@ -3456,14 +3459,14 @@ const refusedAfterSecondReview = (plan, second) => {
   }
 }
 
-const mustAddressSection = (findings) => `## Plan review: must address
+const mustAddressSection = (findings, raisedOn) => `## Plan review: must address
 
-The plan review left these findings open on the revised plan. Each is required work for the implementor, and the
+The plan review left these findings open on ${raisedOn}. Each is required work for the implementor, and the
 consistency reviewer reports any the change does not address.
 
 ${findings.map(planReviewFindingText).join('\n')}`
 
-const recordMustAddress = (id, findings) =>
+const recordMustAddress = (id, findings, raisedOn) =>
   agent(
     `You are the PLAN REVIEW RECORDER for increment ${id}. You add one section to the end of the plan and change nothing
 else. That is your whole job.
@@ -3475,23 +3478,23 @@ ${BASE_GUARDRAILS}
 Report written: true only when the file now ends with the section, word for word, and everything above it is
 unchanged. Never reword, sort or shorten the section.
 
-${mustAddressSection(findings)}`,
+${mustAddressSection(findings, raisedOn)}`,
     light({ label: `${id} plan review record`, phase: 'Plan', schema: PLAN_REVIEW_RECORD_SCHEMA })
   )
 
-const withMustAddress = async (id, plan, findings, why) => {
-  log(`${id}: ${why} Building it, with each as required work.`)
-  const record = await recordMustAddress(id, findings)
+const withMustAddress = async (id, plan, findings, raisedOn) => {
+  const record = await recordMustAddress(id, findings, raisedOn)
   if (!record?.written) {
     log(
       `${id}: the "Plan review: must address" section was not written to the plan — ${record?.summary ?? 'the recorder died'}. The implementor and the consistency reviewer still get each finding.`
     )
   }
-  return { ...plan, planReviewMustAddress: findings }
+  return { ...plan, planReviewMustAddress: findings, planReviewRaisedOn: raisedOn }
 }
 
-const reviewsRevisedPlan = (rules, findings) =>
-  rules.planReview === 'twice' || findings.length === 0 || findings.some(isStructural)
+const detailFindingsOnly = (findings) => findings.length > 0 && !findings.some(isStructural)
+
+const reviewsRevisedPlan = ({ planReview }, findings) => planReview === 'twice' || !detailFindingsOnly(findings)
 
 const reviewedPlan = async (id, branchedRepos, rigour) => {
   const rules = rulesOf(rigour)
@@ -3505,30 +3508,34 @@ const reviewedPlan = async (id, branchedRepos, rigour) => {
   log(`${id}: the plan review sent the plan back with ${findings.length} finding(s). Sending the planner back once.`)
   const revised = await refusedUnlessClean(
     id,
-    await planIncrement(id, branchedRepos, { label: `${id} revise plan`, reviewFindings: findings, rigour }),
+    await planIncrement(id, branchedRepos, rigour, { label: `${id} revise plan`, reviewFindings: findings }),
     `${id} revise plan lint`
   )
   if (!revised?.ok) return revised
   if (!reviewsRevisedPlan(rules, findings)) {
-    return withMustAddress(
-      id,
-      withFollowUps(revised, [review]),
-      findings,
-      `one plan review runs at this row's rigour, so the revised plan is not re-read. Its ${findings.length} finding(s) stand.`
+    const notReRead = 'not re-read'
+    log(
+      `${id}: one plan review runs at this row's rigour, so the revised plan is ${notReRead}. Building it, with its ${findings.length} finding(s) as required work.`
     )
+    return withMustAddress(id, withFollowUps(revised, [review]), findings, `the plan, which was revised but ${notReRead}`)
   }
   const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
   if (!second) return noPlanReview(revised)
   const reviewed = withFollowUps(revised, [review, second])
   if (!sendsPlanBack(second)) return reviewed
   const stillOpen = second.findings ?? []
-  if (stillOpen.length === 0 || stillOpen.some(isStructural)) return refusedAfterSecondReview(reviewed, second)
-  return withMustAddress(id, reviewed, stillOpen, `the revised plan has ${stillOpen.length} detail finding(s) still open.`)
+  if (!detailFindingsOnly(stillOpen)) return refusedAfterSecondReview(reviewed, second)
+  const revisedPlan = 'the revised plan'
+  log(`${id}: ${revisedPlan} has ${stillOpen.length} detail finding(s) still open. Building it, with each as required work.`)
+  return withMustAddress(id, reviewed, stillOpen, revisedPlan)
 }
 
-const readReviewedPlan = (id, branchedRepos) =>
+const planChecksPassed = (rigour) =>
+  rulesOf(rigour).planReview === 'none' ? 'its lint' : 'its lint and its review'
+
+const readReviewedPlan = (id, branchedRepos, rigour) =>
   agent(
-    `Increment ${id} was planned on an earlier attempt, and that plan passed its lint and its review. READ IT BACK.
+    `Increment ${id} was planned on an earlier attempt, and that plan passed ${planChecksPassed(rigour)}. READ IT BACK.
 You are not planning: you change nothing in the plan, you judge nothing in it, and you add nothing to it.
 ${guardrails()}
 ${readPlan(id)}
@@ -5304,7 +5311,7 @@ ${baselineRungList(baseline)}`
   phase('Plan')
 
   const planner = enterAt === 'build' ? 'the planner' : 'the plan reader'
-  plan = enterAt === 'build' ? await reviewedPlan(id, repos, rowRigour) : await readReviewedPlan(id, repos)
+  plan = enterAt === 'build' ? await reviewedPlan(id, repos, rowRigour) : await readReviewedPlan(id, repos, rowRigour)
 
   if (!plan || !plan.ok) {
     log(`${id}: PLAN REFUSED — ${plan ? plan.summary : `${planner} died`}`)

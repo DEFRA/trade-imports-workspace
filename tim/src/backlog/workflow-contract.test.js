@@ -122,7 +122,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'requireApproval',
     'approvalWaitMinutes',
     'e2e',
-    'resumeFrom'
+    'resumeFrom',
+    'rigour'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -174,7 +175,8 @@ const BASE_ARGS = {
   requireApproval: true,
   approvalWaitMinutes: 20,
   e2e: 'local',
-  resumeFrom: null
+  resumeFrom: null,
+  rigour: 'full'
 }
 
 const WORKSPACE_ANSWER = {
@@ -721,6 +723,32 @@ describe('increment-build-loop', () => {
       'increment-build-loop: resumeFrom ladder — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog'
     )
   })
+
+  test('stops before any agent when rigour is missing', async () => {
+    const run = await runLoop(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'rigour')
+    })
+
+    expect(run.status).toBe('threw')
+    expect(run.error.message).toContain(
+      'increment-build-loop: args is missing required key rigour. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test.each([['quick'], [null], [''], [{}], [['full']]])(
+    'refuses rigour %j before any agent',
+    async (value) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, rigour: value }
+      })
+
+      expect(run.error.message).toContain(
+        'config.rigour must be one of full, standard, fast'
+      )
+      expect(run.agents).toEqual([])
+    }
+  )
 
   test('names the same resume stages the backlog records', async () => {
     const source = readFileSync(scriptPath, 'utf8')

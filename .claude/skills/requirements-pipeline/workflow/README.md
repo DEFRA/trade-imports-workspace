@@ -243,6 +243,7 @@ missing key. The first log line is the resolved configuration.
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
+| `rigour` | How much of the pipeline every row of this run gets: `full`, `standard` or `fast`. A row's own `rigour` may change it |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against

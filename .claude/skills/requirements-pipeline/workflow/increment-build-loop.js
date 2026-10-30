@@ -71,7 +71,8 @@ const ALWAYS_REQUIRED = [
   'requireApproval',
   'approvalWaitMinutes',
   'e2e',
-  'resumeFrom'
+  'resumeFrom',
+  'rigour'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -123,6 +124,14 @@ if (RESUME_FROM !== null && !RESUME_FROM_VALUES.includes(RESUME_FROM)) {
 if (RESUME_FROM !== null) {
   log(
     `${WORKFLOW_NAME}: resumeFrom ${RESUME_FROM} — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog`
+  )
+}
+
+const RIGOUR_PRESETS = ['full', 'standard', 'fast']
+const RIGOUR = CFG.rigour
+if (!RIGOUR_PRESETS.includes(RIGOUR)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.rigour must be one of ${RIGOUR_PRESETS.join(', ')} — how much of the pipeline every row of this run gets, which a row's own \`rigour\` may change. Got ${JSON.stringify(RIGOUR)}`
   )
 }
 

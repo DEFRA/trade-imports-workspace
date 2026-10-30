@@ -180,6 +180,8 @@ tim backlog check shared/my-programme --json     # the shape, dependencies, cycl
 tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
+tim backlog set shared/my-programme inc-004 --attempt '{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}' --json
+tim backlog set shared/my-programme inc-004 --attempt none --json   # the next run builds it from the top
 tim backlog split shared/my-programme --json     # a dry run: one backlog per theme, and the landing order
 tim backlog split shared/my-programme --write --branch-prefix feat/EUDPA-123-plants --json
 tim backlog split shared/my-programme --theme origin-pages --json          # a dry run: split one ready theme off early
@@ -191,6 +193,11 @@ tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --
 ```
 
 `move`, `add` and a `notes` edit are dry runs unless given `--write`.
+
+`set --attempt` records how far a failed attempt at an increment got, so the
+build loop's next launch restores its work and re-enters the pipeline at that
+stage instead of planning and implementing the row again. Recording a `--commit`
+clears it: a landed row has no attempt in flight.
 
 `split` takes a backlog with `themes` and writes one backlog per theme at
 `workareas/<workarea>/themes/<theme id>/backlog.json`, plus

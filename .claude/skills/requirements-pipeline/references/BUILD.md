@@ -97,7 +97,30 @@ e2e           where a row's end-to-end proof comes from: local (the gate's e2e
               request with `gh pr checks`). Settle it at the launch from what
               this machine can do, and say which evidence decided it — see
               "Choosing e2e" below
+resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
+              take it from the row's own attempt record, or build to ignore
+              that record and rebuild the row from the top. Set build when a
+              row has stopped twice at the same stage and the preserved work
+              is suspect; leave it null otherwise — see "Resuming a row" below
 ```
+
+### Resuming a row
+
+A row that stopped before it landed carries an `attempt` record, and the next
+launch restores its work, proves it with the gate's unit and FIT phases, reads
+its reviewed plan back, and enters the pipeline at the stage the attempt
+reached. A relaunch therefore costs the ladder rather than the whole pipeline.
+Nothing to set up: it happens from what the backlog already records.
+
+Where the work is not on this machine, or will not go green, the row drops back
+on its own — to the top, or to the implementor. `resumeFrom: 'build'` is for the
+case where you want the record ignored anyway.
+
+Record `resumeFrom` in `build-args.json` with the rest, but **default it back to
+null on a relaunch** rather than carrying last time's value over, which is the
+opposite of what `e2e` does. `e2e` is a property of the machine; a forced
+`resumeFrom` is an answer to one specific stop, and carrying it into the next
+launch would silently rebuild rows that had nothing wrong with them.
 
 ### Choosing e2e
 
@@ -749,7 +772,9 @@ the code is a code defect: that stop is reported and waits, as below.
    tim backlog set <workarea> <id> --status deferred --note "Parked at <reason>: needs <the fix> from <who>" --json
    ```
 
-   Its ticket, branch and PRs stay recorded, so a later run resumes it.
+   Its ticket, branch, PRs and attempt record stay in place, so a later run resumes it
+   at the stage it had reached rather than rebuilding it. Leave the attempt alone: the
+   work is preserved and the platform fix does not invalidate it.
 2. Re-chain its dependants in `backlog.json`. A row that needs the parked row's output
    keeps it in `dependsOn`, so it waits too. A row that names it only for ordering, which
    is most of them, gets the parked row's own `dependsOn` in its place, so it becomes
@@ -784,6 +809,10 @@ Relaunch with the same args, straight after archiving, when the run stopped at:
 - `agent-budget`
 - a platform or access stop you have parked (step 3d)
 - `gate`, under the full lifecycle. A branch run never stops there ([STOP CONDITIONS](#stop-conditions))
+
+**A preserved stop is not one of them.** A row that resumes at its ladder still resumes
+into the same red ladder against the same code, and rule 6 of `CLAUDE.md` makes that
+failure somebody's to fix. Resuming cheaply is not the same as relaunching now.
 
 Then report what the stopped run did while the new one builds.
 
@@ -835,9 +864,9 @@ handover prompt.
 | `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
-| `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
+| `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit, and recorded, so a relaunch re-enters at `implement` (for the first) or `review` (for the other two) rather than planning the row again |
 | `off-branch` | A repo left the run's branch and could not be moved back |
-| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
+| `ladder-red` | The verification ladder went red. Preserved, not discarded, and recorded, so a relaunch re-enters at the ladder once somebody has fixed what went red. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
 | `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
 | `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
@@ -854,6 +883,15 @@ handover prompt.
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
 | `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch. A theme's engineering review whose commit would not push stops here too |
 | `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
+
+**A stop that preserved its attempt resumes at the stage it reached.** The row records
+that stage; the next launch restores the work, proves it with the gate's unit and FIT
+phases, reads the reviewed plan back, and enters there. A relaunch therefore costs the
+ladder rather than the whole pipeline. Where the work is not on this machine, or will
+not go green, the row drops back on its own — to the top, or to the implementor. There
+is nothing to do by hand; `resumeFrom: 'build'` is there for the case where you want
+the record ignored. **This makes a relaunch cheap, not automatic**: a red ladder is
+still somebody's to fix before the row is launched again.
 
 **Every failure stops the whole run, not just that increment.** The loop never
 skips to the next id after one goes wrong: `tim backlog next` selects on status
@@ -1068,7 +1106,8 @@ and the args name different repos. The worked example in
 A landed row is `done` in the backlog with its `commit` and `prs`, and is pushed to the branch. Nothing is merged,
 so there is no `main-red` to watch for. Each landed entry in the result carries `ci`: `green`, `not awaited` (the
 row set `awaitCi: false`) or `none` (the row changes no backlog repo). Report a row whose CI was not awaited as
-exactly that, never as green.
+exactly that, never as green. An entry that carries `resumedFrom` landed from an earlier attempt's work, picked up
+at that stage: say so when you report it, because it was not planned or implemented in this run.
 
 ### The stop reasons it adds
 

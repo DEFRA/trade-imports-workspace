@@ -348,10 +348,19 @@ describe('tim backlog set', () => {
       reason: 'ladder-red',
       at: '2026-10-30T11:00:00Z',
       planReviewed: true,
-      work: { kind: 'patches', files: ['logs/inc-001-preserve-frontend.staged.patch'] }
+      work: {
+        kind: 'patches',
+        files: ['logs/inc-001-preserve-frontend.staged.patch']
+      }
     }
 
-    await runTim(['set', WORKAREA, 'inc-001', '--attempt', JSON.stringify(attempt)])
+    await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--attempt',
+      JSON.stringify(attempt)
+    ])
     const written = readRows()[0].attempt
     await runTim(['set', WORKAREA, 'inc-001', '--attempt', 'none'])
 
@@ -361,7 +370,13 @@ describe('tim backlog set', () => {
 
   test('refuses an attempt that is not valid JSON', async () => {
     writeBacklog([row()])
-    const run = await runTim(['set', WORKAREA, 'inc-001', '--attempt', 'ladder'])
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--attempt',
+      'ladder'
+    ])
 
     expect(envelopeOf(run).errors[0].message).toBe(
       '--attempt "ladder" is not valid JSON.'

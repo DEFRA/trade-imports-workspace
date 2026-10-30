@@ -293,6 +293,7 @@ const emptyResult = (workarea, id) => ({
   branch: null,
   repos: null,
   resumeAt: null,
+  attempt: null,
   branched: [],
   preexistingDirty: null,
   preexistingDirtySummary: null,
@@ -374,6 +375,7 @@ const runSteps = async (result, context) => {
   result.branch = branchFor(path, result.id, result.ticket.key)
   const row = readRow(path, result.id)
   result.resumeAt = resumePointFor(row)
+  result.attempt = row.attempt ?? null
 
   const repos = reposFor(
     row,
@@ -414,7 +416,7 @@ const runSteps = async (result, context) => {
  * @param {string} args.base - The branch a new increment branch is cut from
  * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number, repoOrder?: string[]}} args.config - repoOrder is the configured repo keys in order, the fallback for a row that names none
  * @param {() => object} args.jira - Makes the Jira client, only once a ticket is needed
- * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, branched, preexistingDirty (the workspace repo's uncommitted paths outside workareas/ before it switched, at most CARRIED_NAMED_LIMIT of them, or null when the increment does not build in it), preexistingDirtySummary ({outsideWorkareas, underWorkareas, listedIn}: how many it carried outside and under workareas/, and the workspace-relative file listing every one, or null), warnings, failedStep and reason
+ * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, attempt (the row's attempt record, or null when it has none), branched, preexistingDirty (the workspace repo's uncommitted paths outside workareas/ before it switched, at most CARRIED_NAMED_LIMIT of them, or null when the increment does not build in it), preexistingDirtySummary ({outsideWorkareas, underWorkareas, listedIn}: how many it carried outside and under workareas/, and the workspace-relative file listing every one, or null), warnings, failedStep and reason
  */
 export const runBuildStart = async ({
   workspaceRoot,

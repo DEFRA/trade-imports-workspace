@@ -1017,6 +1017,44 @@ describe('increment-build-loop', () => {
         .map(({ prompt }) => prompt)
         .filter((prompt) => prompt.includes('GUARD RAILS'))
 
+    test('resumes a full-lifecycle row at the stage tim build start reports from its attempt', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          startAnswer(
+            startedResult({
+              resumeAt: 'ladder',
+              attempt: {
+                stage: 'ladder',
+                reason: 'ladder-red',
+                at: '2026-10-30T11:00:00Z',
+                planReviewed: true,
+                work: { kind: 'wip', branch: WORK_BRANCH, sha: 'abc1234' }
+              }
+            })
+          ),
+          {
+            restored: true,
+            green: true,
+            rungs: [],
+            changedFiles: ['frontend:src/server/app/index.js'],
+            summary: 'the wip commit is at HEAD, unit and FIT green'
+          },
+          null
+        ]
+      })
+
+      expect(stageLabels(run)).toEqual([
+        'workspace',
+        'preflight',
+        'inc-900 start',
+        'inc-900 restore',
+        'inc-900 plan read'
+      ])
+    })
+
     test('gives every guarded stage this machine’s worker count for each FIT and E2E rung it names', async () => {
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
@@ -3950,6 +3988,17 @@ describe('increment-build-loop', () => {
         })
       })
 
+      test('records the attempt as the wip commit a later run resumes from', async () => {
+        const run = await runToFailedLand()
+        const prompt = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 preserve'
+        ).prompt
+
+        expect(prompt).toContain(
+          `--attempt '{"stage":"ladder","reason":"land-failed","at":"<the time now>","planReviewed":true,"work":{"kind":"wip","branch":"${WORK_BRANCH}","sha":"<the wip SHA, or several in the order of the configured repos, space separated>"}}'`
+        )
+      })
+
       test('preserves the attempt instead of landing when a repo is off the branch', async () => {
         const run = await runToLand(
           { ok: false, summary: 'backend is on another commit' },
@@ -5293,6 +5342,188 @@ describe('increment-build-loop', () => {
         })
       })
 
+      const ATTEMPT = {
+        stage: 'ladder',
+        reason: 'ladder-red',
+        at: '2026-10-30T11:00:00Z',
+        planReviewed: true,
+        work: {
+          kind: 'patches',
+          files: ['logs/inc-900-preserve-tests.staged.patch']
+        }
+      }
+      const RESTORED = {
+        restored: true,
+        green: true,
+        rungs: [{ repo: 'tests', name: 'lint', phase: 'unit', ok: true }],
+        changedFiles: ['tests:src/auth.spec.ts'],
+        summary: 'the patch applied, unit and FIT green'
+      }
+      const REVIEWED = [NO_FINDINGS, NO_FINDINGS, NO_FINDINGS]
+      const LANDED_AND_DONE = [
+        ON_BRANCH,
+        LANDED,
+        FOUND,
+        CI_GREEN,
+        MARKED_DONE,
+        NO_GATE
+      ]
+      const AFTER_RESTORE = {
+        ladder: [GREEN_LADDER, ...LANDED_AND_DONE],
+        review: [...REVIEWED, GREEN_LADDER, ...LANDED_AND_DONE],
+        implement: [IMPLEMENTED, ...REVIEWED, GREEN_LADDER, ...LANDED_AND_DONE]
+      }
+
+      const runResumed = (stage, { restored = RESTORED, dropsTo } = {}) =>
+        runBranch(
+          {},
+          { ...ROW, resumeAt: stage, attempt: { ...ATTEMPT, stage } },
+          restored,
+          ...(dropsTo === 'build'
+            ? [BASELINE, PLAN, ...AFTER_RESTORE.implement]
+            : [PLAN, ...AFTER_RESTORE[dropsTo ?? stage]])
+        )
+
+      test('resumes at the ladder, running neither the planner nor the implementor', async () => {
+        const labels = labelsOf(await runResumed('ladder'))
+
+        expect(labels).toEqual([
+          'workspace',
+          'preflight',
+          'inc-900 branch',
+          'inc-900 restore',
+          'inc-900 plan read',
+          'inc-900 ladder',
+          'inc-900 branch-guard:land',
+          'inc-900 land',
+          'inc-900 pr',
+          'inc-900 ci watch',
+          'inc-900 done',
+          'inc-900 gate check',
+          'inc-900 theme'
+        ])
+      })
+
+      test('resumes at the review, keeping the restored code', async () => {
+        const labels = labelsOf(await runResumed('review'))
+
+        expect(labels).toContain('inc-900 consistency')
+        expect(labels).not.toContain('inc-900 implement')
+        expect(labels).not.toContain('inc-900 baseline')
+      })
+
+      test('resumes at the implementor, keeping the reviewed plan', async () => {
+        const labels = labelsOf(await runResumed('implement'))
+
+        expect(labels).toContain('inc-900 implement')
+        expect(labels).toContain('inc-900 plan read')
+        expect(labels).not.toContain('inc-900 plan')
+        expect(labels).not.toContain('inc-900 plan review')
+      })
+
+      test('builds from the top when the preserved work is not on this machine', async () => {
+        const run = await runResumed('ladder', {
+          restored: { ...RESTORED, restored: false, green: false },
+          dropsTo: 'build'
+        })
+
+        expect(labelsOf(run)).toContain('inc-900 plan')
+        expect(run.logs).toContain(
+          'inc-900: the attempt that reached the ladder stage is not here — building it from the top'
+        )
+      })
+
+      test('sends restored work that will not go green to the implementor, not to the reviewers', async () => {
+        const run = await runResumed('ladder', {
+          restored: { ...RESTORED, green: false },
+          dropsTo: 'implement'
+        })
+
+        expect(labelsOf(run)).toContain('inc-900 implement')
+        expect(labelsOf(run)).not.toContain('inc-900 plan')
+        expect(run.logs).toContain(
+          'inc-900: the restored attempt is red on the cheap gate phases — resuming at implement rather than ladder'
+        )
+      })
+
+      test('asks the restore stage for the unit and FIT phases only, one call each', async () => {
+        const prompt = promptOf(await runResumed('ladder'), 'inc-900 restore')
+
+        expect(prompt).toContain('--phase unit')
+        expect(prompt).toContain('--phase fit')
+        expect(prompt).not.toContain('--phase e2e')
+        expect(prompt).not.toContain('--phase all')
+      })
+
+      test('tells the restore stage which patches to apply, and to refuse a half-applied tree', async () => {
+        const prompt = promptOf(await runResumed('ladder'), 'inc-900 restore')
+
+        expect(prompt).toContain('logs/inc-900-preserve-tests.staged.patch')
+        expect(prompt).toContain('apply --index')
+        expect(prompt).toContain('never edit a patch to make it apply')
+      })
+
+      test('gives the resumed ladder the restore gate as its comparison point', async () => {
+        const prompt = promptOf(await runResumed('ladder'), 'inc-900 ladder')
+
+        expect(prompt).toContain(
+          'THE RESTORE GATE, run on the restored work before this ladder'
+        )
+        expect(prompt).toContain('tests lint (unit): green')
+        expect(prompt).toContain(
+          'there is no pre-change baseline from this launch'
+        )
+      })
+
+      test('tells a resumed row’s reviewers that the earlier implementor’s notes are gone', async () => {
+        const prompt = promptOf(
+          await runResumed('review'),
+          'inc-900 consistency'
+        )
+
+        expect(prompt).toContain(
+          "the implementor's own notes are not available"
+        )
+      })
+
+      test('names the stage a landed row resumed from', async () => {
+        const run = await runResumed('ladder')
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'landed',
+          resumedFrom: 'ladder'
+        })
+      })
+
+      test('leaves resumedFrom out of a row built from the top', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0]).not.toHaveProperty('resumedFrom')
+      })
+
+      test('lets resumeFrom force a row with a recorded attempt back to the top', async () => {
+        const run = await runBranch(
+          { resumeFrom: 'build' },
+          { ...ROW, resumeAt: 'ladder', attempt: ATTEMPT },
+          BASELINE,
+          PLAN,
+          ...AFTER_RESTORE.implement
+        )
+
+        expect(labelsOf(run)).toContain('inc-900 plan')
+        expect(labelsOf(run)).not.toContain('inc-900 restore')
+      })
+
+      test('runs no restore stage for a row with nothing recorded', async () => {
+        const labels = labelsOf(
+          await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+        )
+
+        expect(labels).not.toContain('inc-900 restore')
+        expect(labels).not.toContain('inc-900 plan read')
+      })
+
       test('asks the branch stage for the attempt alongside the commit and the pull requests', async () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
 
@@ -6067,6 +6298,32 @@ describe('increment-build-loop', () => {
             outcome: 'ladder-red',
             preserved: 'patches saved, merge aborted'
           })
+        })
+
+        test('records the attempt as reaching the ladder, with the plan it was reviewed against', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect(prompt).toContain(
+            '--attempt \'{"stage":"ladder","reason":"ladder-red","at":"<the time now>","planReviewed":true,"work":{"kind":"patches"'
+          )
+        })
+
+        test('tells the preserve stage to take the time from the clock, not to write one itself', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect(prompt).toContain('`date -u +%Y-%m-%dT%H:%M:%SZ`')
+          expect(prompt).toContain('Do NOT change the stage or the reason')
+        })
+
+        test('names only the patches a later run can apply', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect(prompt).toContain(
+            'every .staged.patch and .unstaged.patch you wrote in step 2'
+          )
+          expect(prompt).toContain(
+            "step 0's `.commits.patch` is a mailbox that `git apply`\n   cannot take"
+          )
         })
       })
 

@@ -41,7 +41,11 @@ const attempt = {
   reason: 'ladder-red',
   at: '2026-10-30T11:00:00.000Z',
   planReviewed: true,
-  work: { kind: 'wip', branch: 'feat/EUDPA-900-notification-list', sha: 'abc1234' }
+  work: {
+    kind: 'wip',
+    branch: 'feat/EUDPA-900-notification-list',
+    sha: 'abc1234'
+  }
 }
 
 describe('checkBacklog', () => {

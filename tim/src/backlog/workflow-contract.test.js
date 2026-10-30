@@ -217,6 +217,7 @@ const themeAnswer = (themeAnswers, label) => {
 }
 
 const PLAN_LINT_CLEAN = { exitCode: 1, stdout: '' }
+const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
 const PLAN_APPROVED = { approved: true, findings: [], summary: 'approved' }
 const PLAN_REVIEW_RECORDED = { written: true, summary: 'written' }
 const isPlanCheck = (label) =>
@@ -920,16 +921,20 @@ describe('increment-build-loop', () => {
       findings: [DETAIL_FINDING]
     }
 
-    const runPlanOnlyAt = (rigour, plans = {}) =>
+    const PLAN_NAMING_A_DENIED_CHECK = {
+      ...PLANNED,
+      checks: [{ section: 6, command: CURL_CHECK }]
+    }
+
+    const runPlanOnlyAt = (
+      rigour,
+      plans = {},
+      planAnswers = [PLANNED, PLANNED]
+    ) =>
       runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, rigour },
         plans,
-        answers: [
-          WORKSPACE_ANSWER,
-          { ok: true, summary: '1' },
-          PLANNED,
-          PLANNED
-        ]
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, ...planAnswers]
       })
 
     test('plans on the think tier at full and standard', async () => {
@@ -951,6 +956,35 @@ describe('increment-build-loop', () => {
       expect(labels).toContain('inc-900 plan')
       expect(labels).toContain('inc-900 plan lint')
       expect(labels).not.toContain('inc-900 plan review')
+    })
+
+    test('still sends the planner back on a denied check at fast, where no review runs', async () => {
+      const run = await runPlanOnlyAt('fast', {}, [
+        PLAN_NAMING_A_DENIED_CHECK,
+        PLANNED
+      ])
+
+      expect(
+        stageLabels(run).filter((label) => label.startsWith('inc-900 '))
+      ).toEqual([
+        'inc-900 plan',
+        'inc-900 plan lint',
+        'inc-900 replan',
+        'inc-900 replan lint'
+      ])
+      expect(run.result.increments[0].outcome).toBe('planned')
+    })
+
+    test('refuses a plan whose replan still names a denied check at fast', async () => {
+      const run = await runPlanOnlyAt('fast', {}, [
+        PLAN_NAMING_A_DENIED_CHECK,
+        PLAN_NAMING_A_DENIED_CHECK
+      ])
+
+      expect(run.result.increments[0].outcome).toBe('plan-refused')
+      expect(run.result.increments[0].detail).toBe(
+        `the plan's checks still use command forms the workspace denies, so the ladder could not run them: ${CURL_CHECK}`
+      )
     })
 
     test('re-reviews a revised plan at full', async () => {
@@ -985,6 +1019,21 @@ describe('increment-build-loop', () => {
       expect(run.result.increments[0].planReviewMustAddress).toEqual([
         DETAIL_FINDING
       ])
+    })
+
+    test('re-reads the plan when a review objects but names nothing', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('standard', {
+          'inc-900 plan review': {
+            approved: false,
+            summary: 'I am not happy with it',
+            findings: []
+          }
+        })
+      )
+
+      expect(labels).toContain('inc-900 plan review 2')
+      expect(labels).not.toContain('inc-900 plan review record')
     })
 
     test('re-reviews a revised plan at standard when the first review found it built wrong', async () => {
@@ -2809,7 +2858,6 @@ describe('increment-build-loop', () => {
       })
 
       describe('the command forms a plan check may take', () => {
-        const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
         const PREFIX_CHECK =
           'STUB_PROFILE=fast npm --prefix ~/ws/repos/trade-imports-stub run start'
         const SCRIPT_CHECK = 'bash scripts/stack/run-stack.sh --help'

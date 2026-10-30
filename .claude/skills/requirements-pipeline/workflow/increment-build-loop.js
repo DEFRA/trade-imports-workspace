@@ -3490,7 +3490,8 @@ const withMustAddress = async (id, plan, findings, why) => {
   return { ...plan, planReviewMustAddress: findings }
 }
 
-const reviewsRevisedPlan = (rules, findings) => rules.planReview === 'twice' || findings.some(isStructural)
+const reviewsRevisedPlan = (rules, findings) =>
+  rules.planReview === 'twice' || findings.length === 0 || findings.some(isStructural)
 
 const reviewedPlan = async (id, branchedRepos, rigour) => {
   const rules = rulesOf(rigour)

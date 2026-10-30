@@ -750,6 +750,7 @@ The system MUST give the name field the autocomplete hint 'organization', the ad
 - **GIVEN** the user opens the edit form for an address
 - **WHEN** the page is shown
 - **THEN** the name, address line 1, address line 2, town or city, postcode, email and phone fields carry the hints 'organization', 'address-line1', 'address-line2', 'address-level2', 'postal-code', 'email' and 'tel'
+- **AND** County and Country carry none
 
 ### Requirement: The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination
 **ID**: REQ-INS-ADDR-035

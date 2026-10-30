@@ -388,16 +388,16 @@ In `tim/src/backlog/workflow-contract.test.js`, in the `describe('every workflow
     )
     const schema = loadBacklogSchema(workspaceRoot)
 
-    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(
-      rowSchemaOf(schema).properties.rigour.anyOf[0].enum
-    )
+    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(rigoursOf(schema))
   })
 ```
+
+It calls `rigoursOf` rather than re-deriving the enum's path: Step 4 adds that reader for this read, and a second copy of the expression is a second mechanism beside it.
 
 Import what it needs at the top of that file, beside its existing imports:
 
 ```javascript
-import { loadBacklogSchema, rowSchemaOf } from './backlog-schema.js'
+import { loadBacklogSchema, rigoursOf } from './backlog-schema.js'
 ```
 
 `wordsInJsArray` (`:70`), `buildLoopDir` and `workspaceRoot` are already there.
@@ -449,7 +449,7 @@ In `backlog.schema.json`, after the `awaitCi` property (which ends at line 414) 
 
 ```json
         "rigour": {
-          "description": "How much of the pipeline this row gets, overriding the run's `rigour`: `full` (the plan reviewed, revised and re-reviewed, a style and a code reviewer per (repo, language) group, a consistency review, findings verified before the judge), `standard` (one plan review, re-reviewed only on a structural finding, and no style reviewers) or `fast` (a code-tier plan, no plan review, one code reviewer across the whole change, and the judge verifying its own findings). The plan lint, the gate and the theme's engineering review run whatever it says. null or absent: the run's value. `tim build rigour <workarea>` proposes one per row.",
+          "description": "How much of the pipeline this row gets, overriding the run's `rigour`: `full` (every stage, the plan reviewed twice), `standard` (one plan review, no style reviewers) or `fast` (one code reviewer across the whole change, whose findings the judge verifies itself). The plan lint, the gate and the theme's engineering review run at every preset. null or absent: the run's value. `tim build rigour <workarea>` proposes one per row; BUILD.md's \"Choosing rigour\" says what each preset runs in full.",
           "anyOf": [
             { "enum": ["full", "standard", "fast"] },
             { "type": "null" }
@@ -469,8 +469,10 @@ In `tim/src/backlog/backlog-schema.js`, after `statusesOf`:
  * @returns {string[]}
  */
 export const rigoursOf = (schema) =>
-  rowSchemaOf(schema).properties.rigour.anyOf[0].enum
+  rowSchemaOf(schema).properties.rigour.anyOf.find((branch) => branch.enum).enum
 ```
+
+It finds the branch that has an enum rather than taking `anyOf[0]`: `expectationOf` in `shape.js` reads these branches order-independently too, and a reordered schema should not quietly change what the CLI validates against.
 
 - [ ] **Step 5: Apply it in `setRowFields`**
 
@@ -546,7 +548,7 @@ Update its JSDoc `@param` list to name `rigours - The rigour presets backlog.sch
 ```javascript
     .option(
       '--rigour <preset>',
-      'How much of the pipeline this row gets, overriding the run\'s: full, standard or fast. "none" clears it, and `tim build rigour <workarea>` proposes one'
+      'How much of the pipeline this row gets, overriding the run\'s rigour: full, standard or fast. "none" clears it, and `tim build rigour <workarea>` proposes one'
     )
 ```
 
@@ -2580,3 +2582,28 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
 7. **Task 2 gained a third test, pinning `full`.** The plan specified `standard` and `fast` only, which left the
    preset the whole dial rests on — `full` means today's pipeline, unchanged — unasserted, while every other test
    in the suite runs under it through `BASE_ARGS`. Added.
+8. **Task 3's shipped text points at a command Task 12 builds.** The schema's `rigour` description and
+   `tim backlog set --rigour`'s help both name `tim build rigour <workarea>`. Both are documentation, nothing
+   validates that the command exists, and every task lands on one branch before one pull request, so it exists by
+   merge. Recorded because it is a real dependency: **if this branch is ever split or abandoned before Task 12,
+   those two strings become dangling references** and must be cut in the same change.
+9. **Task 3's prescribed text carried three more plan-level defects, fixed in the build.**
+   - the parity test re-derived `rowSchemaOf(schema).properties.rigour.anyOf[0].enum` by hand when Step 4 defines
+     `rigoursOf` for exactly that read, one step earlier in the same task. It calls it now.
+   - `rigoursOf` indexed the `anyOf` branch by position. `expectationOf` in `shape.js` reads the same branches
+     order-independently, so `rigoursOf` now finds the branch that has an enum. A reordered schema would have been
+     caught — both tests would have gone red rather than silently validating against the wrong branch — but the
+     safer idiom was already in the file.
+   - the schema's `rigour` description ran to ~100 words and documented all three presets' full behaviour,
+     duplicating `RIGOUR_RULES` with nothing holding the two in step: a later change to what `standard` does would
+     leave the prose stale and no test would say so. Shortened to what the FIELD does, with a clause of gist per
+     preset, pointing at BUILD.md's "Choosing rigour" for the matrix — the shape `gatePhases` and `awaitCi` use.
+   Plus two cosmetic ones: the `--rigour` help text was missing the noun it overrides ("the run's rigour"), and the
+   `setRowFields` JSDoc welded two fields' behaviour into one ambiguous sentence.
+10. **Declined: reshaping `parseSetOpts(opts, statuses, rigours)` to a named-object parameter.** Two adjacent
+    `string[]` parameters could be transposed, but there is one call site directly beside the signature, no later
+    task in this programme touches `rows.js` again, and a transposed call fails loudly today because status values
+    and rigour presets are disjoint strings.
+11. **A test now pins that landing a row keeps its rigour.** `setRowFields` clears `attempt` when a `commit` is
+    recorded and the rewritten JSDoc says so; nothing stopped someone tidying the two fields into one block and
+    wiping a row's preset the moment it landed. The test passed first time, which is the point of it.

@@ -3664,6 +3664,160 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-ADDR-037",
+      "name": "The address book service records an address's type and uses and refuses values outside the allowed lists",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-037-A",
+          "name": "An address created with a type and uses reads back with the same type and uses",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldStoreAndReadBackTheAddressTypeAndUsesInOrder",
+              "strength": "full",
+              "notes": "red-probed: fails when the mapper drops the uses"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "an address created with a type and uses reads back by id with the same type and uses",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-B",
+          "name": "An update with a different set of uses replaces them",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldReplaceAllFieldsAndClearOmittedOptionals_whenBodyIsValid",
+              "strength": "full",
+              "notes": "red-probed: fails when the update mapping ignores the uses"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java",
+              "test": "updateEntity_replacesTheStoredAddressTypeAndUsesWithTheRequestsSet",
+              "strength": "partial",
+              "notes": "red-probed: fails under the default clear-and-refill collection mapping"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "an update with a different set of uses reads back with exactly the new set",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-C",
+          "name": "A create or update carrying a use outside the six is refused naming the uses",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400KeyedByUsesAndSaveNothing_whenAUseIsUnknown",
+              "strength": "full",
+              "notes": "red-probed: fails with a 500 when the constraint is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldReturn400KeyedByUsesAndKeepStoredValues_whenAUseIsUnknown",
+              "strength": "full",
+              "notes": "red-probed: fails with a 500 when the constraint is removed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "a create carrying a use outside the six is refused naming the uses and saves nothing",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "an update carrying a use outside the six is refused naming the uses and the address keeps its original uses",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-D",
+          "name": "A create or update carrying a type outside the three is refused naming the address type",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400KeyedByAddressTypeAndSaveNothing_whenTheTypeIsUnknown",
+              "strength": "full",
+              "notes": "red-probed: fails with a 500 when the constraint is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldReturn400KeyedByAddressTypeAndKeepStoredValues_whenTheTypeIsUnknown",
+              "strength": "full",
+              "notes": "red-probed: fails with a 500 when the constraint is removed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "a create carrying a type outside the three is refused naming the address type and saves nothing",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "an update carrying a type outside the three is refused naming the address type and the address keeps its original type",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-E",
+          "name": "An update that omits the type and uses clears both",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldClearAddressTypeAndUses_whenBodyOmitsThem",
+              "strength": "full",
+              "notes": "red-probed: fails when the update mapping ignores a null type and uses"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

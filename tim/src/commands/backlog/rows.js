@@ -323,7 +323,7 @@ export const register = (backlog, { timVersion }) => {
     )
     .option(
       '--rigour <preset>',
-      'How much of the pipeline this row gets, overriding the run\'s: full, standard or fast. "none" clears it, and `tim build rigour <workarea>` proposes one'
+      'How much of the pipeline this row gets, overriding the run\'s rigour: full, standard or fast. "none" clears it, and `tim build rigour <workarea>` proposes one'
     )
     .action(
       makeBacklogAction({

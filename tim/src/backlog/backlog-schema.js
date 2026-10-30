@@ -54,7 +54,7 @@ export const statusesOf = (schema) => rowSchemaOf(schema).properties.status.enum
  * @returns {string[]}
  */
 export const rigoursOf = (schema) =>
-  rowSchemaOf(schema).properties.rigour.anyOf[0].enum
+  rowSchemaOf(schema).properties.rigour.anyOf.find((branch) => branch.enum).enum
 
 /**
  * The fields that turn a requirement into a recipe: every field the row

@@ -407,9 +407,9 @@ const dependenciesFor = (row, ids, backlog) => {
  * `merge` sets a ref per repo key, keeping the row's other merge refs;
  * `dependsOn` replaces the row's dependencies with other rows of this backlog;
  * `attempt` replaces how far the last failed attempt got, or clears it when
- * given `'none'`, as does `rigour` with its own preset. A `commit` clears
- * `attempt`, whatever else the same call asks for: a landed row has no
- * attempt in flight.
+ * given `'none'`. `rigour` replaces the row's preset the same way, and
+ * `'none'` clears it. A `commit` clears `attempt`, whatever else the same
+ * call asks for: a landed row has no attempt in flight.
  *
  * @param {object} args
  * @param {{increments: object[]}} args.backlog

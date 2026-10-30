@@ -273,6 +273,9 @@ const stageLabels = (run) =>
     .map((entry) => entry.options.label)
     .filter((label) => !isRunLease(label))
 
+const modelOf = (run, label) =>
+  run.agents.find((entry) => entry.options.label === label).options.model
+
 const runLoop = (
   path,
   { answers = [], lease, themes, plans, ...options } = {}
@@ -839,9 +842,6 @@ describe('increment-build-loop', () => {
         ]
       })
 
-    const modelOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).options.model
-
     test('resolves the built-in default for every tier when models is empty', async () => {
       const run = await runPlanOnlyWithModels({})
 
@@ -894,6 +894,119 @@ describe('increment-build-loop', () => {
       })
 
       expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+    })
+  })
+
+  describe('the plan stage at each rigour', () => {
+    const PLANNED = {
+      ok: true,
+      summary: 'Planned.',
+      repos: ['frontend'],
+      behaviourChanges: [],
+      decisions: []
+    }
+
+    const DETAIL_FINDING = {
+      kind: 'detail',
+      section: '9',
+      what: 'a comment to delete',
+      rule: 'house rules',
+      mustBecomeTrue: 'it is gone'
+    }
+
+    const SENT_BACK_ON_A_DETAIL = {
+      approved: false,
+      summary: 'one detail',
+      findings: [DETAIL_FINDING]
+    }
+
+    const runPlanOnlyAt = (rigour, plans = {}) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, planOnly: true, rigour },
+        plans,
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          PLANNED,
+          PLANNED
+        ]
+      })
+
+    test('plans on the think tier at full and standard', async () => {
+      expect(modelOf(await runPlanOnlyAt('full'), 'inc-900 plan')).toBe('opus')
+      expect(modelOf(await runPlanOnlyAt('standard'), 'inc-900 plan')).toBe(
+        'opus'
+      )
+    })
+
+    test('plans on the code tier at fast', async () => {
+      expect(modelOf(await runPlanOnlyAt('fast'), 'inc-900 plan')).toBe(
+        'sonnet'
+      )
+    })
+
+    test('runs no plan review at fast', async () => {
+      const labels = stageLabels(await runPlanOnlyAt('fast'))
+
+      expect(labels).toContain('inc-900 plan')
+      expect(labels).toContain('inc-900 plan lint')
+      expect(labels).not.toContain('inc-900 plan review')
+    })
+
+    test('re-reviews a revised plan at full', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('full', {
+          'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+        })
+      )
+
+      expect(labels).toContain('inc-900 revise plan')
+      expect(labels).toContain('inc-900 plan review 2')
+    })
+
+    test('does not re-review a revised plan at standard when every finding is a detail', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+      })
+
+      expect(stageLabels(run)).toContain('inc-900 revise plan')
+      expect(stageLabels(run)).not.toContain('inc-900 plan review 2')
+      expect(run.logs).toContain(
+        "inc-900: one plan review runs at this row's rigour, so the revised plan is not re-read. Its 1 finding(s) stand. Building it, with each as required work."
+      )
+    })
+
+    test('records the findings it does not re-review at standard, and reports them', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        'inc-900 plan review': SENT_BACK_ON_A_DETAIL
+      })
+
+      expect(stageLabels(run)).toContain('inc-900 plan review record')
+      expect(run.result.increments[0].planReviewMustAddress).toEqual([
+        DETAIL_FINDING
+      ])
+    })
+
+    test('re-reviews a revised plan at standard when the first review found it built wrong', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('standard', {
+          'inc-900 plan review': {
+            approved: false,
+            summary: 'wrong layer',
+            findings: [
+              {
+                kind: 'structural',
+                section: '3',
+                what: 'the rule lives in the model',
+                rule: 'architecture doc',
+                mustBecomeTrue: 'it lives in obligations'
+              }
+            ]
+          }
+        })
+      )
+
+      expect(labels).toContain('inc-900 plan review 2')
     })
   })
 
@@ -1620,14 +1733,24 @@ describe('increment-build-loop', () => {
       const runToReview = (changedFiles) =>
         runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
 
-      const modelOf = (run, label) =>
-        run.agents.find((entry) => entry.options.label === label).options.model
-
       test('runs the planner on the think tier and the implementor on the code tier', async () => {
         const run = await runToReview(['frontend:src/a.js'])
 
         expect(modelOf(run, 'inc-900 plan')).toBe('opus')
         expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
+      })
+
+      test('plans a row whose own rigour is fast on the code tier, with no plan review', async () => {
+        const run = await runStartedWith(
+          startedResult({ rigour: 'fast' }),
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+        expect(stageLabels(run)).toContain('inc-900 plan lint')
+        expect(stageLabels(run)).not.toContain('inc-900 plan review')
       })
 
       test('the deprecated heavy alias sets both the think and code tiers', async () => {

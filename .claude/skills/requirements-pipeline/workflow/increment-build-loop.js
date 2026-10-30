@@ -3060,7 +3060,7 @@ const PLAN_STANDARDS_STEP = `the standards for those files. Run \`tim backlog st
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
      every rules, bestPractice and repoDocs file it lists`
 
-const planIncrement = (id, branchedRepos = null, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [] } = {}) =>
+const planIncrement = (id, branchedRepos = null, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [], rigour } = {}) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
 ${deniedChecksNote(id, deniedChecks)}${codeTextNote(id, codeText)}${planReviewNote(id, reviewFindings)}${guardrails()}
@@ -3156,7 +3156,7 @@ and 6, exactly as the plan writes it. The loop reads
 checks[] and sends back a plan that names a denied form. It also reads the plan file for code text, and sends back a
 plan that writes some.
 Return the structured output only.`,
-    think({ label, phase: 'Plan', schema: PLAN_SCHEMA })
+    withTier(rulesOf(rigour).planTier)({ label, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
 const deniedChecksOf = (plan) =>
@@ -3331,14 +3331,14 @@ const refusedUnlessClean = async (id, plan, lintLabel) => {
   return { ...plan, ok: false, summary: planProblemList(problems, true) }
 }
 
-const planPassingLint = async (id, branchedRepos = null) => {
-  const plan = await planIncrement(id, branchedRepos, { label: `${id} plan` })
+const planPassingLint = async (id, branchedRepos, rigour) => {
+  const plan = await planIncrement(id, branchedRepos, { label: `${id} plan`, rigour })
   if (!plan?.ok) return plan
   const problems = await planProblemsOf(id, plan, `${id} plan lint`)
   if (problems.codeText === null) return unreadablePlan(id, plan)
   if (!hasPlanProblems(problems)) return plan
   log(`${id}: ${planProblemList(problems, false)}. Sending the planner back once.`)
-  const replan = await planIncrement(id, branchedRepos, { label: `${id} replan`, ...problems })
+  const replan = await planIncrement(id, branchedRepos, { label: `${id} replan`, rigour, ...problems })
   return refusedUnlessClean(id, replan, `${id} replan lint`)
 }
 
@@ -3479,8 +3479,8 @@ ${mustAddressSection(findings)}`,
     light({ label: `${id} plan review record`, phase: 'Plan', schema: PLAN_REVIEW_RECORD_SCHEMA })
   )
 
-const withMustAddress = async (id, plan, findings) => {
-  log(`${id}: the revised plan has ${findings.length} detail finding(s) still open. Building it, with each as required work.`)
+const withMustAddress = async (id, plan, findings, why) => {
+  log(`${id}: ${why} Building it, with each as required work.`)
   const record = await recordMustAddress(id, findings)
   if (!record?.written) {
     log(
@@ -3490,9 +3490,13 @@ const withMustAddress = async (id, plan, findings) => {
   return { ...plan, planReviewMustAddress: findings }
 }
 
-const reviewedPlan = async (id, branchedRepos = null) => {
-  const plan = await planPassingLint(id, branchedRepos)
+const reviewsRevisedPlan = (rules, findings) => rules.planReview === 'twice' || findings.some(isStructural)
+
+const reviewedPlan = async (id, branchedRepos, rigour) => {
+  const rules = rulesOf(rigour)
+  const plan = await planPassingLint(id, branchedRepos, rigour)
   if (!plan?.ok) return plan
+  if (rules.planReview === 'none') return plan
   const review = await reviewPlan(id, { label: `${id} plan review` })
   if (!review) return noPlanReview(plan)
   if (!sendsPlanBack(review)) return withFollowUps(plan, [review])
@@ -3500,17 +3504,25 @@ const reviewedPlan = async (id, branchedRepos = null) => {
   log(`${id}: the plan review sent the plan back with ${findings.length} finding(s). Sending the planner back once.`)
   const revised = await refusedUnlessClean(
     id,
-    await planIncrement(id, branchedRepos, { label: `${id} revise plan`, reviewFindings: findings }),
+    await planIncrement(id, branchedRepos, { label: `${id} revise plan`, reviewFindings: findings, rigour }),
     `${id} revise plan lint`
   )
   if (!revised?.ok) return revised
+  if (!reviewsRevisedPlan(rules, findings)) {
+    return withMustAddress(
+      id,
+      withFollowUps(revised, [review]),
+      findings,
+      `one plan review runs at this row's rigour, so the revised plan is not re-read. Its ${findings.length} finding(s) stand.`
+    )
+  }
   const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
   if (!second) return noPlanReview(revised)
   const reviewed = withFollowUps(revised, [review, second])
   if (!sendsPlanBack(second)) return reviewed
   const stillOpen = second.findings ?? []
   if (stillOpen.length === 0 || stillOpen.some(isStructural)) return refusedAfterSecondReview(reviewed, second)
-  return withMustAddress(id, reviewed, stillOpen)
+  return withMustAddress(id, reviewed, stillOpen, `the revised plan has ${stillOpen.length} detail finding(s) still open.`)
 }
 
 const readReviewedPlan = (id, branchedRepos) =>
@@ -5024,7 +5036,7 @@ while (stopped === null) {
 
   if (PLAN_ONLY) {
     phase('Plan')
-    const plan = await reviewedPlan(id)
+    const plan = await reviewedPlan(id, null, RIGOUR)
     results.push({
       id,
       outcome: plan?.ok ? 'planned' : 'plan-refused',
@@ -5291,7 +5303,7 @@ ${baselineRungList(baseline)}`
   phase('Plan')
 
   const planner = enterAt === 'build' ? 'the planner' : 'the plan reader'
-  plan = enterAt === 'build' ? await reviewedPlan(id, repos) : await readReviewedPlan(id, repos)
+  plan = enterAt === 'build' ? await reviewedPlan(id, repos, rowRigour) : await readReviewedPlan(id, repos)
 
   if (!plan || !plan.ok) {
     log(`${id}: PLAN REFUSED — ${plan ? plan.summary : `${planner} died`}`)

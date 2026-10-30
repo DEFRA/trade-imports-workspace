@@ -19,3 +19,4 @@ in `plan.md` before any code exists.
 | 11 | **Decided** | A free, better option sits under open questions or "defer unless flagged". |
 | 12 | **Verification** | Verification has manual browser steps, or a changed behaviour has no unit or E2E cover. |
 | 13 | **No ids or history** | Ticket keys, backlog or AC ids, release names, or "removed"/"used to" wording sit where they would flow into code, comments or test titles. |
+| 14 | **Proportionate proof** | A verification step is heavier than what the change can break — an E2E run where the change touches no spec, no tests repo and no cross-cutting code — or the section argues against a step it still lists. |

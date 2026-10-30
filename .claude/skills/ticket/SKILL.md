@@ -66,10 +66,24 @@ pass, applies the same house rules, and keeps tests green throughout.
 
 ### Working with the ticket in Jira
 
-Posting comments, moving status, assigning and linking follow
+**Reading is free. Writing needs the user's go in that conversation.**
+
+Fetching the ticket and its comments is part of every phase — do it
+without asking. But a comment, a status transition, an assignment or a
+link is outward-facing: the ticket is shared with the BAs, the PO and
+whoever else watches it, and a write notifies them. "Plan EUDPA-X" or
+"implement EUDPA-X" asks for the work, not for a status report sent to
+the team. Do the work, report it to the user, and stop. If a Jira write
+would help, offer it and let them answer.
+
+This is rule 3's treatment of merging a PR, for the same reason: both
+reach other people, and neither is yours to trigger unprompted. It holds
+even when the work is finished and the comment would be accurate.
+
+When the user does ask, follow
 `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`:
 wiki markup with escaping, no "Won't Do" transition, no sprints, and
-the Blocks link direction.
+the Blocks link direction. Check the render afterwards, as that file says.
 
 ## Shared tooling
 
@@ -80,7 +94,8 @@ All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
 | `tools/ticket/prepare-plan.sh EUDPA-X [--repos r1,r2] [--json]` | PLANNER | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` |
 | `tools/ticket/prepare-implement.sh EUDPA-X [--repo R] [--json]` | IMPLEMENTOR | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
 | `tools/ticket/setup-branch.sh EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B]` | IMPLEMENTOR | One-dispatch fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` (`--type` defaults to `feat`) |
-| `tools/jira/` (`ticket.sh`, `comments.sh`, `add-comment.sh`, `transition-ticket.sh`) | PLANNER, IMPLEMENTOR | Fetch ticket + comments; post completion comments; transition status |
+| `tools/jira/` (`ticket.sh`, `comments.sh`) | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
+| `tools/jira/` (`add-comment.sh`, `transition-ticket.sh`) | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
 | `tools/github/` (`prs.sh`, `pr-details.sh`, `diff.sh`) | IMPLEMENTOR | PR creation context + inspection |
 | `tools/github-actions/` (`trigger-workflow.sh`, `wait-for-run.sh`, `get-failure.sh`, `run-status.sh`, `get-logs.sh`) | IMPLEMENTOR | CI verification |
 | `tools/review/detect-tech.sh` | called by `prepare-plan.sh` / `prepare-implement.sh` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |

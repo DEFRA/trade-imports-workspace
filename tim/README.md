@@ -810,7 +810,35 @@ tim has no GitHub commands. Use `gh` directly. Every repo is a DEFRA repo.
 | Merge a green PR                     | Run `gh pr checks <n> --repo DEFRA/<repo>` and merge only when it exits 0: `gh pr merge <n> --repo DEFRA/<repo> --squash --match-head-commit <sha>` checks nothing itself |
 | Check GitHub sign-in                 | `gh auth status`                                                                                                                                                          |
 
-### `tim sonar issues` — why a SonarCloud gate failed
+### `tim sonar gate` — why a SonarCloud gate failed
+
+A SonarCloud gate failure has no GitHub job log. The scan step inside the
+workflow passes, and SonarCloud posts its verdict afterwards as a check of its
+own, so `gh run view --log-failed` shows nothing. This is how to read one.
+
+```bash
+tim sonar gate trade-imports-animals-frontend --pull-request 435 [--json]
+tim sonar gate trade-imports-animals-frontend --branch main [--json]
+tim sonar gate trade-imports-animals-frontend            # the main branch
+```
+
+- Each failed condition names its metric, the threshold and what the code
+  measured: `[FAILED] new_coverage  90 required, 84.2 measured`.
+- When a failed condition counts violations, the last line gives the
+  `tim sonar issues` command that lists them with file and line. Coverage,
+  duplication and hotspot conditions get no such line — no issue list explains
+  them.
+- It reports and exits 0 whatever the verdict. The pre-push hook and CI own the
+  gating.
+- `--json` puts `{project, pullRequest, branch, status, conditions, url}` in
+  `result`, where `status` is `OK`, `ERROR` or `NONE` and each condition is
+  `{metric, status, comparator, threshold, actual}`.
+- A public project needs no token. `SONAR_TOKEN` is sent when set, so a
+  private project works too.
+- Giving both `--pull-request` and `--branch`, or a PR that is not a number,
+  fails with `USAGE` before any request is sent.
+
+### `tim sonar issues` — the issues a gate counted
 
 List the open SonarCloud issues on a pull request, a branch or the main
 branch. The project is the repo name, with or without the `DEFRA_` prefix.

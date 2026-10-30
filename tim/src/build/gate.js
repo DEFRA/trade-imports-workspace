@@ -629,7 +629,7 @@ export const runGate = async ({
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
   const planned = withMachineWorkers(
-    planRungs({ gates, repos, phase }),
+    planRungs({ gates, repos, phase, workspaceRoot }),
     machine
   )
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)

@@ -42,13 +42,12 @@
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-003-A",
-          "name": "Searching by common name offers the species under each live-animal code, by Latin name",
+          "name": "Searching by common name offers each matching species under each live-animal code that lists it, by Latin name alone",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "full", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by Latin name" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its scientific name", "strength": "full", "notes": "checkbox accessible names are the Latin names MDM returns" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "searches 'cattle' and '0102' and finds the same species under 0102 both ways, each by Latin name" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "partial", "notes": "code-search half: searches 0102, finds 15 species and Bison bison by its Latin name" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "partial", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by Latin name; does not check Bos taurus under 01061900" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its scientific name", "strength": "partial", "notes": "searches 'buffalo' and finds Bubalus, Bubalus bubalis and Syncerus by Latin name alone; does not check the code group" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "searches 0102, cattle, horse, domestic cat and ostrich, and checks the page shows reference-data's groups, in order, with each group's species by Latin name" }
           ]
         },
         {
@@ -57,6 +56,25 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java", "test": "search_leavesOutTheCodesMdmFlagsAsGerminal", "strength": "full", "notes": "MDM lists Bos taurus under 0102, 05119985 and 05111000 and flags the last two germinal; only 0102 is returned" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-003-C",
+          "name": "Searching by commodity code offers the species that search returns under that code, by Latin name alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java", "test": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode", "strength": "partial", "notes": "reference-data integration test (recorded as unit, the nearest type); MDM answers one 0102 commodity row; reference-data lists its 15 species by Latin name and counts 15; never looks at the page" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "partial", "notes": "counts the 15 species inside the 0102 group and finds Bison bison there; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity code, in reference-data's order", "strength": "full", "notes": "searches 0102 and checks every group and species on the page against reference-data; probed: speciesLabel inverted to PROBE-INVERT went red (0102 first checkbox expected Bos), restored went green" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-003-D",
+          "name": "Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by Latin name alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity code", "strength": "full", "notes": "searches 'taurus' and finds Bos taurus under the 0102 group and the 01061900 group" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "accepts and persists multiple commodity-species pairs found under different queries", "strength": "partial", "notes": "searches 'Bos taurus' and ticks it under 0102" }
           ]
         }
       ]

@@ -39,7 +39,7 @@ export const tuneTargets = (workspaceRoot) => {
   const gates = loadGates(workspaceRoot)
   const repos = clonedRepos(workspaceRoot, gates)
   return TUNED_PHASES.flatMap((phase) =>
-    planRungs({ gates, repos, phase })
+    planRungs({ gates, repos, phase, workspaceRoot })
   ).filter(isTunable)
 }
 

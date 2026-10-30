@@ -1344,6 +1344,14 @@ describe('increment-build-loop', () => {
       )
     })
 
+    test('takes a row’s rigour from tim build start', async () => {
+      const run = await runStartedWith(startedResult({ rigour: 'fast' }), null)
+
+      expect(run.logs).toContain(
+        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+      )
+    })
+
     test('stops with ticket-failed, naming tim’s reason, when the ticket step fails', async () => {
       const run = await runStartedWith({
         ...startedResult({ ticket: null, branch: null, repos: null }),
@@ -5411,6 +5419,25 @@ describe('increment-build-loop', () => {
       const CI_GREEN = { green: true, summary: 'every check green' }
       const MARKED_DONE = { ok: true, summary: 'done' }
       const NO_GATE = { ok: true, summary: 'no gate' }
+
+      test('takes a row’s own rigour over the run’s, and says so', async () => {
+        const run = await runBranch(
+          { rigour: 'full' },
+          { ...ROW, rigour: 'fast' }
+        )
+
+        expect(run.logs).toContain(
+          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+        )
+      })
+
+      test('gives a row that sets none the run’s rigour', async () => {
+        const run = await runBranch({ rigour: 'standard' }, ROW)
+
+        expect(run.logs).toContain(
+          'inc-900: rigour standard — a think-tier plan, reviewed once and re-reviewed only on a structural finding, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+        )
+      })
 
       const reviewedAndLanded = [
         IMPLEMENTED,

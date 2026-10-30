@@ -5051,6 +5051,7 @@ while (stopped === null) {
   let rowMerges = []
   let rowGatePhases = OFFERED_GATE_PHASES
   let rowAwaitsCi = true
+  let rowRigour = RIGOUR
 
   ticketAndBranch: {
     if (IS_BRANCH) {
@@ -5078,6 +5079,7 @@ while (stopped === null) {
           ? OFFERED_GATE_PHASES
           : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
       rowAwaitsCi = row.awaitCi !== false
+      rowRigour = row.rigour ?? RIGOUR
       log(
         `${id}: on ${workBranch} in every repo; row repos ${repos.join(', ') || 'none'}; merges ${rowMerges.map((entry) => `${entry.repo}<-${entry.ref}`).join(', ') || 'none'}; gate ${rowGatePhases.join(', ') || 'none'}; CI ${rowAwaitsCi ? 'awaited' : 'not awaited'}; resuming at ${resumeAt}`
       )
@@ -5120,6 +5122,7 @@ while (stopped === null) {
     repos = started.repos
     resumeAt = started.resumeAt ?? 'build'
     rowAttempt = started.attempt ?? null
+    rowRigour = started.rigour ?? RIGOUR
     approvalRepos = REQUIRE_APPROVAL ? REPO_KEYS : [...new Set([...APPROVAL_REPO_KEYS, ...(started.requireApproval ?? [])])]
     if (repos.includes(WORKSPACE_KEY)) {
       workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
@@ -5156,6 +5159,9 @@ while (stopped === null) {
   let baselineEvidence = ''
   let mergeNote = ''
   let resumedFrom = null
+  log(
+    `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
+  )
   const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,

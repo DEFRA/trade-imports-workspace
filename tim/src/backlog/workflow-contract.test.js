@@ -5746,6 +5746,14 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('gives a row reported with a null gatePhases every offered phase', async () => {
+        const run = await runBranch({}, { ...ROW, gatePhases: null })
+
+        expect(run.logs).toContain(
+          `inc-900: on ${WORKING_BRANCH} in every repo; row repos tests; merges none; gate unit, fit, e2e; CI awaited; resuming at build`
+        )
+      })
+
       test('gives a row that sets none the run’s rigour', async () => {
         const run = await runBranch({ rigour: 'standard' }, ROW)
 

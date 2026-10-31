@@ -5095,7 +5095,7 @@ while (stopped === null) {
       rowAttempt = row.attempt ?? null
       rowMerges = row.merge ?? []
       rowGatePhases =
-        row.gatePhases === undefined
+        row.gatePhases === undefined || row.gatePhases === null
           ? OFFERED_GATE_PHASES
           : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
       rowAwaitsCi = row.awaitCi !== false

@@ -1814,7 +1814,13 @@ git -C ~/git/defra/trade-imports-workspace commit -m "feat(build-loop): report a
 **What it may key on, and what it may not.** The derivation reads the row and nothing else — no code, no git history — so it keys on the fields a backlog actually carries. The design's example proposal gives inc-031 `fast` for "behaviour already on main" and inc-034 `full` for "extends shared/kit.js": neither is in the row, both come from reading the tree. That is why this command **proposes** and the operator decides, and why every row it reports carries the reason it keyed on. The rules, in order, with the first that matches winning:
 
 1. The row sets `rigour` → that, `source: "row"`, reason `set on the row`.
-2. `repos` is `[]`, or `gatePhases` is `[]` → `fast`, because a row that changes no backlog repo, or asks the gate for nothing, has no production behaviour to read.
+2. `repos` is `[]` → `fast`, because a row that changes no backlog repo has no production behaviour to read.
+   **Not `gatePhases: []`.** An earlier draft keyed on that too, and it was wrong six times out of nine on the one
+   real backlog this was checked against: `gatePhases: []` says *where* a row is verified, not how much scrutiny
+   it deserves. The documents theme set it on six rows because the local e2e rung timed out at 90s on that
+   machine and the proof moved to the pull requests — their own notes say "This is not a preference for less
+   testing." Reading it as a rigour signal makes a row get *less* review because a machine could not run its
+   tests locally, which is backwards.
 3. `kind` is `docs` or `test` → `fast`.
 4. The row names more than one repo once the test suites are set aside → `full`, because a slice across two services is a contract between them. A repo whose path ends `-tests` is a test suite, not a service: under the legacy `frontend`/`backend`/`tests` keys the tests repo joins every frontend change, so counting it would make almost every row `full`.
 5. Otherwise → `standard`.
@@ -2268,7 +2274,9 @@ Expected: PASS, all four files.
 tim build rigour shared/design-release-2-1/themes/documents --workspace ~/git/defra/trade-imports-workspace
 ```
 
-Expected: nine lines, `standard` for the single-service rows, `full` for the backend-and-frontend row (inc-033), `fast` for the docs row (inc-039). If it says anything else, the rules are wrong, not the backlog.
+Expected today: `Every increment is built out: there is nothing to propose a rigour for.` — that theme has since been built, so every one of its rows is `done`, `merged-into` or `dropped`, and only a `todo` row is proposed for. An earlier draft of this step expected nine lines, which was the plan going stale about live data.
+
+So prove the derivation against the rows themselves rather than their status: copy that backlog to a scratch workarea with every `status` forced to `todo`, run the command there, and expect **seven `standard`, one `full`** (inc-033, which spans backend and frontend) **and one `fast`** (inc-039, the docs row). If it says anything else, the rules are wrong, not the backlog — that check is what caught the `gatePhases` rule above, which proposed `fast` for six of the nine.
 
 - [ ] **Step 10: Commit**
 
@@ -2835,7 +2843,22 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     reddens exactly five including it. All three tests do have teeth; the evidence offered was not the evidence
     that proves it. Recorded because "I mutated it and tests failed" is only evidence when the mutation is the one
     the test is supposed to catch.
-41. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+41. **The derivation read `gatePhases: []` as a rigour signal, and was wrong six times in nine on real data.**
+    The most consequential defect the build found, and it was found only because Task 12's brief demanded a check
+    against a real backlog rather than against tests. Six of the Design Release 2.1 documents rows carry
+    `gatePhases: []`, so the rule proposed `fast` for all six. But those rows set it because the local e2e rung
+    timed out at 90s on that machine and the proof moved to the pull requests — their own notes say "This is not a
+    preference for less testing." **`gatePhases: []` says where a row is verified, not how much scrutiny it
+    deserves**, and keying a preset off it makes a row get *less* review precisely because a machine could not run
+    its tests locally. Clause deleted; the nine rows then come out exactly as the design intended. **Carry this
+    forward:** a field that records an operational constraint is not a proxy for the value of a change, and the
+    way to find out is to run the derivation over a real backlog and read every line of the answer.
+42. **A plan can go stale about live data, not just about code.** Task 12's step 9 told the implementer to expect
+    nine proposal lines from the documents theme. That theme has been built since the plan was written, so every
+    row is `done`, `merged-into` or `dropped` and the honest answer is "there is nothing to propose a rigour for".
+    The verification step now checks the derivation against the rows with their statuses forced to `todo` in a
+    scratch copy, which is what the step was actually trying to test.
+43. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

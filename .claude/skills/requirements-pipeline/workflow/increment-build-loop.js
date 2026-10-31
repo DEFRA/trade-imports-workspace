@@ -1936,6 +1936,10 @@ const OUTSIDE_THE_DIFF = `a rule the change alters that a doc, recipe, JSDoc or 
 changed repos for the behaviour's own words, not only its identifiers. Each one is in scope: report it at its file:line,
 and its fix is to update it or delete it`
 
+const CROSS_FILE_HUNT = `the same concept named two ways, a pattern the repo already has reimplemented rather than
+reused, registration in one place but not its twin, the contract between repos, and an acceptance criterion nothing
+in the change proves`
+
 const REPO_DOCS_STEP = `THE REPO'S DOCS AND RECIPES. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\` once,
 with --files repeated for every changed file, and read in full every repoDocs file it lists:
 the repo's architecture docs and its add-a-* recipes.
@@ -5200,9 +5204,6 @@ while (stopped === null) {
   let mergeNote = ''
   let resumedFrom = null
   const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
-  log(
-    `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
-  )
   const findingCounts = () => ({
     raw: rawFindings.length,
     confirmed: confirmed.length,
@@ -5245,6 +5246,10 @@ while (stopped === null) {
       planReviewed: Boolean(plan?.ok)
     })
   }
+
+  log(
+    `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
+  )
 
   build: {
     if (LANDED_RESUME_POINTS.includes(resumeAt)) {
@@ -5493,10 +5498,11 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
   const reviewGroups = groupFilesForReview(reviewTargets)
   const styleGroups = reviewGroups.filter((group) => group.language !== DOCS_LANGUAGE)
+  const groupBreakdown = reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')
   const reviewShapeLine =
     rules.reviewScope === 'whole'
-      ? `one code reviewer across ${reviewTargets.length} file(s)`
-      : `${reviewGroups.length} review group(s) — ${reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')}`
+      ? `one code reviewer across ${reviewTargets.length} file(s) in ${reviewGroups.length} group(s) — ${groupBreakdown}`
+      : `${reviewGroups.length} review group(s) — ${groupBreakdown}`
   log(`${id}: ${reviewShapeLine}`)
 
   const groupHeader = (group) => `${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language
@@ -5528,7 +5534,7 @@ Return the structured output only.`,
 
   const formattingNitsLine = rules.styleReviewers
     ? 'Formatting nits belong to a different reviewer — skip them.'
-    : "No style reviewer runs at this row's rigour, so formatting nits are out of scope — skip them."
+    : "No style reviewer reads these files at this row's rigour: formatting and layout are nobody's — skip them. The house rules on comments, names and conventions are still yours."
 
   const codeReviewerPrompt = ({ reviewing, diffCommand, crossChangeDuties = '' }) => `You are a CODE REVIEWER for increment ${id}, reviewing ${reviewing}
 ${guardrails()}
@@ -5549,7 +5555,7 @@ ${CODE_REVIEW_LENS}- the traps the plan's risks name, and the programme-specific
   route-shape vs link-builder confusion (route tables must use the PREFIX-FREE builders; rendered links, redirects
   and form actions must use the PREFIX-BEARING ones), display logic leaking into obligations or the model, and any
   platform-layer file that has learned a set's vocabulary.
-${crossChangeDuties}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
+${crossChangeDuties ? `${crossChangeDuties}\n` : ''}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
 it breaks. ${formattingNitsLine}
 Return the structured output only.`
 
@@ -5560,33 +5566,37 @@ Return the structured output only.`
     )
   )
 
-  const CROSS_CHANGE_DUTIES = `${planDecisionReviewRule(plan)}
+  const crossChangeDuties = `${planDecisionReviewRule(plan)}
 ${implementorNotesForReview(impl.notes)}
 ${specReviewRule(impl.notes)}
 ${completionReviewRule(impl.notes)}`
 
-  const WHOLE_CHANGE_GROUP = 'whole'
+  const WHOLE_CHANGE_LABEL = 'whole'
 
   const wholeChangeHeader = `the WHOLE change: ${reviewTargets.length} file(s) across every repo it touches. Review EVERY one of them —
 each file on its own merits, read in full:
 ${reviewTargets.map((file) => `- ${file}`).join('\n')}
-The \`<repoKey>:\` prefix names the repo; the rest is the path inside it (${repoPathList(FILE_REPO_KEYS)}). Report each
-finding's \`file\` exactly as it is written in that list.
-You are the only reviewer of this change, so read it ACROSS files as well as file by file: the same concept named two
-ways, a pattern the repo already has reimplemented rather than reused, registration in one place but not its twin, and
-the contract between repos are yours too. No consistency reviewer runs beside you, so where another prompt leaves a
-judgement to that reviewer — the implementor's notes, the spec sync, the probes and docs lines — it is yours.`
+The \`<repoKey>:\` prefix names the repo; the rest is the path inside it (${repoPathList(FILE_REPO_KEYS)}).
+Report each finding's \`file\` as \`<repoKey>:<repo-relative path>\`, and for a file in that list exactly as it is
+written there. A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it
+at its own path.
+You are the only reviewer of this change, so read it ACROSS files as well as file by file. These are yours too:
+${CROSS_FILE_HUNT}.
+No consistency reviewer runs beside you either, so where another prompt leaves a judgement to that reviewer — the
+implementor's notes, the spec sync, the probes and docs lines — it is yours.`
 
-  const wholeChangeDiffCommand = [...new Set(reviewGroups.map(groupDiffCommand))].join(', or ')
+  const wholeChangeDiffCommands = [...new Map(reviewGroups.map((group) => [group.repo, groupDiffCommand(group)]))]
+    .map(([repo, command]) => `- in ${repo}: ${command}`)
+    .join('\n')
 
   const wholeChangeReview = () =>
     agent(
       codeReviewerPrompt({
         reviewing: wholeChangeHeader,
-        diffCommand: wholeChangeDiffCommand,
-        crossChangeDuties: `${CROSS_CHANGE_DUTIES}\n`
+        diffCommand: `each file's own repo:\n${wholeChangeDiffCommands}`,
+        crossChangeDuties
       }),
-      code({ label: `${id} review:${WHOLE_CHANGE_GROUP}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      code({ label: `${id} review:${WHOLE_CHANGE_LABEL}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
   const consistencyReview = () =>
@@ -5596,17 +5606,18 @@ ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
 CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; plan at ${PLANS}/${id}.md;
 the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}
-${REPO_DOCS_STEP}LOOK FOR: ${OUTSIDE_THE_DIFF}; the same concept named two ways across files; a pattern the repo already has, reimplemented instead of
-reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
-in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
-without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field nothing
-writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what each consumer (a
-frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
-or performance-tests repo exercises the slice through it;
-an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
+${REPO_DOCS_STEP}LOOK FOR: ${OUTSIDE_THE_DIFF}; an obligation with no schema field behind it or a schema field nothing
+writes; a move or new file the plan listed that did not happen; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A check in a form GUARD RAILS lists as DENIED is not run: report it as a finding
 naming the plan. ${SECTION_5_STACK_LINE}
-${CROSS_CHANGE_DUTIES}
+ACROSS FILES, these are yours:
+${CROSS_FILE_HUNT}.
+Compare a reimplemented pattern with the exemplar the plan names. A registration without its twin is a page in
+dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js without the
+matching copy.cy.js key. THE CONTRACT BETWEEN REPOS is what each consumer (a frontend, say) sends and expects against
+what its provider (a backend or a stub) accepts and returns, with the tests or performance-tests repo exercising the
+slice through it.
+${crossChangeDuties}
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
@@ -5649,24 +5660,23 @@ ${CODE_REVIEW_LENS}${mergeNote}${IS_BRANCH && isWorkspaceGroup(group) ? WORKSPAC
     `${WHOLE_CHANGE} — every file staged or committed on ${workBranch} in every repo`,
     `${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Review the WHOLE staged, uncommitted change for increment ${id} ACROSS files and repos. Apply the persona bound to
 <personas>, and no other: other Codex runs review each (repo, language) group file by file.
-${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}; the same concept
-named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
-between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
-${CROSS_CHANGE_DUTIES}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}. Hunt too for
+${CROSS_FILE_HUNT}.
+Then run each check the plan's section 5 names, reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
+${crossChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const codexWholeChangeReview = codexReview(
-    `review-${WHOLE_CHANGE_GROUP}`,
+    `review-${WHOLE_CHANGE_LABEL}`,
     [CODE_PERSONA],
     reviewTargets.join(', '),
     `Review the WHOLE staged, uncommitted change for increment ${id}, every file bound to <reviewFiles>, across files and
 repos. Apply the persona bound to <personas>, and no other: you are the only review run for this increment, so the
 judgements another prompt leaves to a consistency reviewer are yours.
 ${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Beside what the persona names, hunt for:
-${CODE_REVIEW_LENS}- the same concept named two ways, a pattern the repo already has reimplemented, registration in one place but not its
-  twin, and the contract between repos.
-${CROSS_CHANGE_DUTIES}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${CODE_REVIEW_LENS}ACROSS FILES, these are yours too:
+${CROSS_FILE_HUNT}.
+${crossChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const claudeReviewStages =

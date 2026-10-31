@@ -2027,7 +2027,41 @@ describe('increment-build-loop', () => {
         for (const file of files) expect(prompt).toContain(`- ${file}`)
         expect(prompt).toContain('You are the only reviewer of this change')
         expect(prompt).toContain('review/references/FILE_REVIEWER.md')
-        expect(prompt).toContain('diff --staged -- <path>')
+        expect(prompt).toContain('workspace `~/ws`')
+        expect(prompt).toContain(
+          '- in frontend: `git -C ~/ws/repos/trade-imports-animals-frontend diff --staged -- <path>`'
+        )
+        expect(prompt).toContain(
+          '- in backend: `git -C ~/ws/repos/trade-imports-animals-backend diff --staged -- <path>`'
+        )
+      })
+
+      test('tells the whole-change reviewer to diff a workspace file against HEAD and read an untracked one', async () => {
+        const run = await runToReviewAt('fast', ['workspace:docs/x.md'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(
+          '- in workspace: `git -C ~/ws diff HEAD -- <path>`'
+        )
+        expect(prompt).toContain('a new, untracked file shows in no diff')
+      })
+
+      test('asks the whole-change reviewer for an acceptance criterion nothing proves, and for a finding’s own path', async () => {
+        const run = await runToReviewAt('fast', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(
+          'read it ACROSS files as well as file by file. These are yours too:\nthe same concept named two ways'
+        )
+        expect(prompt).toContain(
+          'an acceptance criterion nothing\nin the change proves.'
+        )
+        expect(prompt).toContain(
+          'A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it\nat its own path.'
+        )
+        expect(prompt).toContain(
+          "No style reviewer reads these files at this row's rigour: formatting and layout are nobody's — skip them. The house rules on comments, names and conventions are still yours."
+        )
       })
 
       test('verifies findings with one verifier per group', async () => {
@@ -5350,21 +5384,33 @@ describe('increment-build-loop', () => {
           expect(labels).not.toContain('inc-900 codex:review-consistency')
         })
 
-        test('binds the house rules into the codex implement run and every codex review run', async () => {
-          const run = await runCodexToReview()
-          const unbound = [
-            'implement',
-            'review-frontend-javascript',
-            'review-backend-java',
-            'review-consistency'
-          ].filter(
-            (slug) =>
-              !codexShellPrompt(run, slug).includes(
-                'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
-              )
+        const HOUSE_RULES_BINDING =
+          'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
+
+        const slugsWithoutHouseRules = (run, slugs) =>
+          slugs.filter(
+            (slug) => !codexShellPrompt(run, slug).includes(HOUSE_RULES_BINDING)
           )
 
-          expect(unbound).toEqual([])
+        test('binds the house rules into the codex implement run and every codex review run', async () => {
+          const run = await runCodexToReview()
+
+          expect(
+            slugsWithoutHouseRules(run, [
+              'implement',
+              'review-frontend-javascript',
+              'review-backend-java',
+              'review-consistency'
+            ])
+          ).toEqual([])
+        })
+
+        test('binds the house rules into the codex whole-change review at fast', async () => {
+          const run = await runCodexToReview({ rigour: 'fast' })
+
+          expect(
+            slugsWithoutHouseRules(run, ['implement', 'review-whole'])
+          ).toEqual([])
         })
 
         test('tells the codex implementor to follow the plan’s decisions and to own names and code shape', async () => {
@@ -5799,6 +5845,7 @@ describe('increment-build-loop', () => {
       test('gives a row reported with a null gatePhases every offered phase', async () => {
         const run = await runBranch({}, { ...ROW, gatePhases: null })
 
+        expect(run.status).toBe('returned')
         expect(run.logs).toContain(
           `inc-900: on ${WORKING_BRANCH} in every repo; row repos tests; merges none; gate unit, fit, e2e; CI awaited; resuming at build`
         )

@@ -1842,6 +1842,14 @@ describe('increment-build-loop', () => {
       const runToReview = (changedFiles) =>
         runFrom(BASELINE_ANSWER, PLANNED, implementAnswer(changedFiles))
 
+      const runToReviewAt = (rigour, changedFiles) =>
+        runFromWithArgs(
+          { rigour },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(changedFiles)
+        )
+
       test('runs the planner on the think tier and the implementor on the code tier', async () => {
         const run = await runToReview(['frontend:src/a.js'])
 
@@ -1924,16 +1932,6 @@ describe('increment-build-loop', () => {
         run.agents.find((entry) => entry.options.label === 'inc-900 ladder')
           .prompt
 
-      test('reviews files in one repo and language with one style and one code reviewer', async () => {
-        const run = await runToReview(frontendFiles(3, 'js'))
-
-        expect(labelsInPhase(run, 'Review')).toEqual([
-          'inc-900 style:frontend-javascript',
-          'inc-900 review:frontend-javascript',
-          'inc-900 consistency'
-        ])
-      })
-
       test('gives docs a code reviewer but no style reviewer', async () => {
         const run = await runToReview([
           'frontend:src/a.js',
@@ -1958,6 +1956,76 @@ describe('increment-build-loop', () => {
           'inc-900 review:frontend-javascript-2',
           'inc-900 consistency'
         ])
+      })
+
+      test('reviews each group with a style and a code reviewer at full, and looks across the change', async () => {
+        const run = await runToReviewAt('full', frontendFiles(3, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:frontend-javascript',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('drops the style reviewer at standard, keeping the group code reviewer and the consistency review', async () => {
+        const run = await runToReviewAt('standard', frontendFiles(3, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 review:frontend-javascript',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('reviews the whole change with one code reviewer at fast', async () => {
+        const run = await runToReviewAt('fast', [
+          'frontend:src/a.js',
+          'frontend:README.md',
+          'backend:src/main/java/uk/gov/defra/A.java'
+        ])
+
+        expect(labelsInPhase(run, 'Review')).toEqual(['inc-900 review:whole'])
+      })
+
+      test('still style-reviews the fixer’s hunks at fast, where no style reviewer ran', async () => {
+        const run = await runFromWithArgs(
+          { rigour: 'fast' },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['frontend:src/a.js']),
+          { findings: [FINDING] },
+          { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+          {
+            decisions: [
+              { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
+            ],
+            fixNow: ['Save the origin in src/a.js.'],
+            summary: 'one fix'
+          },
+          { ok: true, summary: 'Saved the origin.', notes: '' },
+          NO_FINDINGS
+        )
+
+        expect(labelsInPhase(run, 'Review')).toEqual(['inc-900 review:whole'])
+        expect(labelsInPhase(run, 'Fix')).toEqual([
+          'inc-900 fix',
+          'inc-900 fix review'
+        ])
+      })
+
+      test('names every changed file, with its repo, to the whole-change reviewer', async () => {
+        const files = [
+          'frontend:src/a.js',
+          'backend:src/main/java/uk/gov/defra/A.java'
+        ]
+        const run = await runToReviewAt('fast', files)
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain('the WHOLE change')
+        for (const file of files) expect(prompt).toContain(`- ${file}`)
+        expect(prompt).toContain('You are the only reviewer of this change')
+        expect(prompt).toContain('review/references/FILE_REVIEWER.md')
+        expect(prompt).toContain('diff --staged -- <path>')
       })
 
       test('verifies findings with one verifier per group', async () => {
@@ -5169,9 +5237,9 @@ describe('increment-build-loop', () => {
       describe('with the codex executor', () => {
         const CODEX_RAN = { ok: true, summary: 'codex ran in one slice' }
 
-        const runCodexToReview = () =>
+        const runCodexToReview = (argsOverride = {}) =>
           runLoop(scriptPath, {
-            args: { ...BASE_ARGS, executor: 'codex' },
+            args: { ...BASE_ARGS, executor: 'codex', ...argsOverride },
             answers: [
               WORKSPACE_ANSWER,
               PREFLIGHT_ANSWER,
@@ -5208,6 +5276,28 @@ describe('increment-build-loop', () => {
             'inc-900 codex:review-backend-java',
             'inc-900 codex:review-consistency'
           ])
+        })
+
+        test('gives a Codex group review only the code persona at standard', async () => {
+          const run = await runCodexToReview({ rigour: 'standard' })
+          const prompts = [
+            'review-frontend-javascript',
+            'review-backend-java'
+          ].map((slug) => codexShellPrompt(run, slug))
+
+          for (const prompt of prompts) {
+            expect(prompt).not.toContain(
+              'code-style/references/STYLE_FILE_REVIEWER.md'
+            )
+            expect(prompt).toContain('review/references/FILE_REVIEWER.md')
+          }
+        })
+
+        test('gives Codex one whole-change review at fast', async () => {
+          const labels = stageLabels(await runCodexToReview({ rigour: 'fast' }))
+
+          expect(labels).toContain('inc-900 codex:review-whole')
+          expect(labels).not.toContain('inc-900 codex:review-consistency')
         })
 
         test('binds the house rules into the codex implement run and every codex review run', async () => {
@@ -6230,6 +6320,36 @@ describe('increment-build-loop', () => {
         expect(promptOf(run, 'inc-900 ci fix 1 review')).toContain(
           '- `git -C ~/ws/repos/trade-imports-ins-tests show e1f2a3b`'
         )
+      })
+
+      test('still style-reviews the CI fixer’s commit at fast, where no style reviewer ran', async () => {
+        const run = await runBranch(
+          {},
+          { ...MERGE_ROW, rigour: 'fast' },
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          {
+            ok: true,
+            summary: 'Fixed the lint.',
+            commits: [{ repo: 'tests', sha: 'e1f2a3b' }]
+          },
+          NO_FINDINGS,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(labelsOf(run)).toContain('inc-900 review:whole')
+        expect(labelsOf(run)).not.toContain('inc-900 style:tests-javascript')
+        expect(labelsOf(run)).toContain('inc-900 ci fix 1 review')
       })
 
       describe('the engineering review of a theme once its last row lands', () => {

@@ -3797,7 +3797,7 @@ const startReport = (answer) => {
   return envelope.result
 }
 
-const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTilde(key)}\``).join(', ')
+const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTildeOfKey(key)}\``).join(', ')
 const protectedBranchNames = PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')
 const MERGE_HEAD_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\``
 const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-filter=U\``
@@ -5466,10 +5466,15 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
 
   phase('Review')
 
+  const rules = rulesOf(rowRigour)
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
   const reviewGroups = groupFilesForReview(reviewTargets)
   const styleGroups = reviewGroups.filter((group) => group.language !== DOCS_LANGUAGE)
-  log(`${id}: ${reviewGroups.length} review group(s) — ${reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')}`)
+  const reviewShapeLine =
+    rules.reviewScope === 'whole'
+      ? `one code reviewer across ${reviewTargets.length} file(s)`
+      : `${reviewGroups.length} review group(s) — ${reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')}`
+  log(`${id}: ${reviewShapeLine}`)
 
   const groupHeader = (group) => `${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language
 ${group.language}. Review EVERY one of them — each file on its own merits, read in full:
@@ -5498,9 +5503,11 @@ Return the structured output only.`,
     )
   )
 
-  const codeReviews = reviewGroups.map((group) => () =>
-    agent(
-      `You are a CODE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
+  const formattingNitsLine = rules.styleReviewers
+    ? 'Formatting nits belong to a different reviewer — skip them.'
+    : "No style reviewer runs at this row's rigour, so formatting nits are out of scope — skip them."
+
+  const codeReviewerPrompt = ({ reviewing, diffCommand, crossChangeDuties = '' }) => `You are a CODE REVIEWER for increment ${id}, reviewing ${reviewing}
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/FILE_REVIEWER.md IN FULL and follow it. Also read
 ${SKILLS}/review/SKILL.md for the review dimensions. The persona is written per file: apply it to each file in the
@@ -5508,7 +5515,7 @@ list in turn.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — its
 acceptanceCriteria are what this code is supposed to do, and the header's invariants
 (\`jq 'del(.increments)' ${BACKLOG_TILDE}\`) are what it must not break. The plan is at ${PLANS}/${id}.md. See the
-change with ${groupDiffCommand(group)} for each file.${mergeNote}
+change with ${diffCommand} for each file.${mergeNote}
 SCOPE: correctness, security, error handling, performance, naming, operability, duplication and TEST QUALITY.
 Specifically hunt for:
 - behaviour that does not match the increment's acceptanceCriteria, or a behaviour change the plan did not declare
@@ -5519,12 +5526,45 @@ ${CODE_REVIEW_LENS}- the traps the plan's risks name, and the programme-specific
   route-shape vs link-builder confusion (route tables must use the PREFIX-FREE builders; rendered links, redirects
   and form actions must use the PREFIX-BEARING ones), display logic leaking into obligations or the model, and any
   platform-layer file that has learned a set's vocabulary.
-${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
-it breaks. Formatting nits belong to a different reviewer — skip them.
-Return the structured output only.`,
+${crossChangeDuties}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
+it breaks. ${formattingNitsLine}
+Return the structured output only.`
+
+  const codeReviews = reviewGroups.map((group) => () =>
+    agent(
+      codeReviewerPrompt({ reviewing: groupHeader(group), diffCommand: groupDiffCommand(group) }),
       code({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
+
+  const CROSS_CHANGE_DUTIES = `${planDecisionReviewRule(plan)}
+${implementorNotesForReview(impl.notes)}
+${specReviewRule(impl.notes)}
+${completionReviewRule(impl.notes)}`
+
+  const WHOLE_CHANGE_GROUP = 'whole'
+
+  const wholeChangeHeader = `the WHOLE change: ${reviewTargets.length} file(s) across every repo it touches. Review EVERY one of them —
+each file on its own merits, read in full:
+${reviewTargets.map((file) => `- ${file}`).join('\n')}
+The \`<repoKey>:\` prefix names the repo; the rest is the path inside it (${repoPathList(FILE_REPO_KEYS)}). Report each
+finding's \`file\` exactly as it is written in that list.
+You are the only reviewer of this change, so read it ACROSS files as well as file by file: the same concept named two
+ways, a pattern the repo already has reimplemented rather than reused, registration in one place but not its twin, and
+the contract between repos are yours too. No consistency reviewer runs beside you, so where another prompt leaves a
+judgement to that reviewer — the implementor's notes, the spec sync, the probes and docs lines — it is yours.`
+
+  const wholeChangeDiffCommand = [...new Set(reviewGroups.map(groupDiffCommand))].join(', or ')
+
+  const wholeChangeReview = () =>
+    agent(
+      codeReviewerPrompt({
+        reviewing: wholeChangeHeader,
+        diffCommand: wholeChangeDiffCommand,
+        crossChangeDuties: `${CROSS_CHANGE_DUTIES}\n`
+      }),
+      code({ label: `${id} review:${WHOLE_CHANGE_GROUP}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+    )
 
   const consistencyReview = () =>
     recoverRunStack(id, 'consistency', () => agent(
@@ -5543,10 +5583,7 @@ or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A check in a form GUARD RAILS lists as DENIED is not run: report it as a finding
 naming the plan. ${SECTION_5_STACK_LINE}
-${planDecisionReviewRule(plan)}
-${implementorNotesForReview(impl.notes)}
-${specReviewRule(impl.notes)}
-${completionReviewRule(impl.notes)}
+${CROSS_CHANGE_DUTIES}
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
@@ -5557,7 +5594,8 @@ Return the structured output only.`,
   const STYLE_PERSONA = `${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md`
   const CODE_PERSONA = `${SKILLS}/review/references/FILE_REVIEWER.md`
   const CONSISTENCY_PERSONA = `${SKILLS}/review/references/CONSISTENCY_REVIEWER.md`
-  const personasOf = (group) => (group.language === DOCS_LANGUAGE ? [CODE_PERSONA] : [STYLE_PERSONA, CODE_PERSONA])
+  const personasOf = (group) =>
+    group.language === DOCS_LANGUAGE || !rules.styleReviewers ? [CODE_PERSONA] : [STYLE_PERSONA, CODE_PERSONA]
 
   const codexReview = (slug, personas, reviewFiles, instructions) => () =>
     codexStage(id, 'review', {
@@ -5592,21 +5630,45 @@ ${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}; the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
 reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
-${planDecisionReviewRule(plan)}
-${implementorNotesForReview(impl.notes)}
-${specReviewRule(impl.notes)}
-${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${CROSS_CHANGE_DUTIES}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
+  const codexWholeChangeReview = codexReview(
+    `review-${WHOLE_CHANGE_GROUP}`,
+    [CODE_PERSONA],
+    reviewTargets.join(', '),
+    `Review the WHOLE staged, uncommitted change for increment ${id}, every file bound to <reviewFiles>, across files and
+repos. Apply the persona bound to <personas>, and no other: you are the only review run for this increment, so the
+judgements another prompt leaves to a consistency reviewer are yours.
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Beside what the persona names, hunt for:
+${CODE_REVIEW_LENS}- the same concept named two ways, a pattern the repo already has reimplemented, registration in one place but not its
+  twin, and the contract between repos.
+${CROSS_CHANGE_DUTIES}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+  )
+
+  const claudeReviewStages =
+    rules.reviewScope === 'whole'
+      ? [wholeChangeReview]
+      : [
+          ...(rules.styleReviewers ? styleReviews : []),
+          ...codeReviews,
+          ...(rules.consistencyReview ? [consistencyReview] : [])
+        ]
+
+  const codexReviewStages =
+    rules.reviewScope === 'whole'
+      ? [codexWholeChangeReview]
+      : [...codexGroupReviews, ...(rules.consistencyReview ? [codexConsistencyReview] : [])]
+
   const codexReviewResults = async () => {
-    const runs = await parallel([...codexGroupReviews, codexConsistencyReview])
+    const runs = await parallel(codexReviewStages)
     const failed = runs.filter((run) => !run.result).map((run) => run.slug)
     return { results: runs.map((run) => run.result), failed }
   }
 
   const reviewed = EXECUTOR === 'codex'
     ? await codexReviewResults()
-    : { results: await parallel([...styleReviews, ...codeReviews, consistencyReview]), failed: [] }
+    : { results: await parallel(claudeReviewStages), failed: [] }
 
   if (reviewed.failed.length > 0) {
     results.push(

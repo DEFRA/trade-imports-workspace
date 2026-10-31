@@ -79,11 +79,13 @@ repos         the backlog envelope's `repos` map, whatever its keys, copied
               No entry carries requireApproval, the workspace's included
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
-              opus) plans and judges: plan, plan review, judge, the
-              consistency reviewer, and a theme's engineering reviewers
-              and judge.
+              opus) plans and judges: plan (a fast row's plan goes to the
+              code tier instead), plan review, judge, the consistency
+              reviewer, the one reviewer a fast row's whole change gets,
+              and a theme's engineering reviewers and judge.
               code (default sonnet) writes and repairs code: implement, the
-              per-group style and code reviewers, the finding verifiers, fix,
+              per-group style and code reviewers the row's rigour runs, the
+              finding verifiers, fix,
               the style re-review of the fix, the ladder, CI fix, the style
               review of a CI fix and its style fix, and a theme's fixer and
               ladder. light (default haiku) runs a command and
@@ -102,6 +104,14 @@ resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
               that record and rebuild the row from the top. Set build when a
               row has stopped twice at the same stage and the preserved work
               is suspect; leave it null otherwise — see "Resuming a row" below
+rigour        how much of the pipeline every row of this run gets: full (the
+              whole pipeline), standard (one plan review and no style
+              reviewers) or fast (a code-tier plan, no plan review and one
+              code reviewer across the whole change). Default standard; pass
+              that unless the user asks otherwise. One value governs the
+              whole run, and a row may carry its own, which wins for that
+              row. Nothing has to be set per row — see "Choosing rigour"
+              below
 ```
 
 ### Resuming a row
@@ -169,9 +179,18 @@ consistency reviewer across the whole change, a verifier that tries to refute
 every functional finding and keeps every code-quality finding that code does
 not prove wrong, a judge that rules every survivor fix-now, defer or reject,
 a style re-review of the fixer's own hunks, and a style review of every commit a CI fixer
-pushes, without a human in the loop. **That multi-agent
-review, verification and judgement IS the review.** A GitHub approving
-review on top of it is a second, *human* gate, and a run that has to stop
+pushes, without a human in the loop.
+
+What a given increment got depends on its `rigour` — see "Choosing rigour"
+below. `standard` drops the style reviewers. `fast` reads the whole change with
+one reviewer, and the judge does the verifier's work on each of its findings
+before it rules. The plan lint, the gate, the ladder — which at `fast` also
+judges the spec sync and the `Probes:` and `Docs updated:` lines — the style
+re-review of the fixer's hunks and the style review of every commit a CI fixer
+pushes run whatever it is.
+
+**That multi-agent review, verification and judgement IS the review.** A GitHub
+approving review on top of it is a second, *human* gate, and a run that has to stop
 and wait for one cannot run 24/7 — which is the whole point of this loop.
 
 Set `requireApproval: true` only when the user asks, in as many words, for a
@@ -194,6 +213,67 @@ any of them, so a reviewer who approves the frontend and leaves the tests
 repo waiting no longer gets half an increment on `main`. Tell a reviewer
 they owe the increment *all* of its PRs — approving one of two is the same
 as approving neither.
+
+### Choosing rigour
+
+`rigour` says how much a change is planned and read. It never says whether its
+tests pass: the plan lint, the gate at whatever phases the row owes, the ladder,
+the style re-review of the fixer's hunks, the style review of every CI fixer
+commit and, on a branch run, the theme's engineering review all run at every
+preset.
+
+| preset | what runs |
+|---|---|
+| `full` | A `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer across the change; a verifier per group of findings; then judge, fix, ladder |
+| `standard` | The same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewers |
+| `fast` | A `code`-tier plan with no review; one `think`-tier code reviewer across the whole change, which also takes the consistency reviewer's cross-file lens, the plan's own decisions and the implementor's notes; no consistency reviewer; and no verifier — the judge does the verifier's work on each finding before it rules |
+
+**One value governs the whole run, and that is the only answer a launch owes.**
+Pass `standard` unless the user asks otherwise. Every row takes it, and a theme
+can be built start to finish without a single row setting anything.
+
+**A row may carry its own, which wins for that row.** It lives in
+`backlog.json`, not in the args, so it persists across launches and machines:
+
+```
+tim backlog set <workarea> <id> --rigour full
+```
+
+So the question at a launch is "what does this theme get?", and the per-row
+override is there for the row that argues for something else.
+
+To see where a row might:
+
+```
+tim build rigour <workarea>
+```
+
+It writes nothing, and it reads no code. It keys on each todo row alone — its
+repos and its kind: no backlog repo, or a docs or test row, proposes `fast`;
+more than one service repo proposes `full`; anything else proposes `standard`. A
+row that already sets its own keeps it, reported as set on the row. Show the
+output with the other answers, say in as many words that the proposal cannot see
+the code, and treat "press on" as a complete answer to the whole table:
+
+```
+e2e: ci   (Docker 8.2/19.3GB, no machine.json — local e2e not viable)
+rigour: standard
+
+inc-031  standard  Address list page
+                   one service repo, frontend
+inc-033  full      Submit a notification
+                   backend and frontend: a contract between repos
+inc-039  fast      Record the journey in the behaviour spec
+                   a docs row changes no production behaviour
+```
+
+Raise a row to `full` when the change extends something other rows build on, or
+when it is the one a reviewer would want to read twice. Drop one to `fast` when
+the behaviour is already on `main` and the row is a test and a spec sentence.
+
+Record `rigour` in the theme's `build-args.json` with the rest, so a relaunch
+defaults to it. A relaunch is the moment to raise a row that has stopped twice:
+`tim backlog set <workarea> <id> --rigour full`.
 
 ### The workspace repo
 
@@ -492,7 +572,10 @@ Build the args object with every key below:
   },
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
-  stopAfter: '<a positive number, or "all">'
+  stopAfter: '<a positive number, or "all">',
+  e2e: '<local or ci>', // where a row's end-to-end proof comes from — see "Choosing e2e"
+  resumeFrom: null, // null takes each row's own attempt record; 'build' rebuilds the first row from the top
+  rigour: 'standard' // full, standard or fast — see "Choosing rigour". A row's own wins for that row
 }
 ```
 
@@ -1139,6 +1222,9 @@ board        <board>
 repos        <the repos table, one JSON object>
 models       {}, the recommended split (think opus, code sonnet, light haiku)
 stopAfter    <a number, or all>
+e2e          <local or ci>
+resumeFrom   null
+rigour       <full, standard or fast>, and any row that sets its own
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).
 <N> todo remain, <M> blocked, <K> dropped.

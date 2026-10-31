@@ -2062,6 +2062,9 @@ const checkedFinding = (finding, verdict) => {
   return { ...finding, refutedBecause: verdict.reasoning, refutingQuote: verdict.quote }
 }
 
+const DROPPED_BY_VERIFIER = 'verifier'
+const DROPPED_BY_JUDGE = 'judge'
+
 const refutedRecordOf = (id, { file, line, category, severity, what, refutedBecause, refutingQuote }) => ({
   id,
   file,
@@ -2070,18 +2073,29 @@ const refutedRecordOf = (id, { file, line, category, severity, what, refutedBeca
   severity,
   what,
   reason: refutedBecause,
+  droppedBy: DROPPED_BY_VERIFIER,
   ...(refutingQuote ? { quote: refutingQuote } : {})
 })
 
-const judgeRejectionRecord = (id, decision) =>
-  refutedRecordOf(id, { file: WHOLE_CHANGE, what: decision.what, refutedBecause: decision.reasoning })
+const judgeRejectionRecord = (id, decision) => ({
+  ...refutedRecordOf(id, { file: WHOLE_CHANGE, what: decision.what, refutedBecause: decision.reasoning }),
+  droppedBy: DROPPED_BY_JUDGE
+})
 
 const describeRefuted = (record) =>
   `${record.file}${record.line ? `:${record.line}` : ''} [${record.category ?? 'no category'}] ${record.what} — refuted: ${record.reason}`
 
+const whatDroppedThem = (refuted) => {
+  const byJudge = refuted.filter((record) => record.droppedBy === DROPPED_BY_JUDGE).length
+  const byVerifier = refuted.length - byJudge
+  if (byVerifier === 0) return `The judge rejected ${byJudge} finding(s)`
+  if (byJudge === 0) return `Review dropped ${byVerifier} finding(s) as refuted`
+  return `Review dropped ${byVerifier} finding(s) as refuted and the judge rejected ${byJudge}`
+}
+
 const themeRefutedCheck = (id, theme, refuted, where = 'across its rows') => ({
   id,
-  check: `Theme ${theme} is built. Review dropped ${refuted.length} finding(s) as refuted ${where}: read each one and confirm none was real.`,
+  check: `Theme ${theme} is built. ${whatDroppedThem(refuted)} ${where}: read each one and confirm none was real.`,
   refuted
 })
 
@@ -5229,6 +5243,7 @@ while (stopped === null) {
   let rawFindings = []
   let confirmed = []
   let refuted = []
+  let rejected = []
   let fixReviewFindings = []
   let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
   let land = null
@@ -5246,7 +5261,7 @@ while (stopped === null) {
     raw: rawFindings.length,
     ...(rules.verifyFindings
       ? { confirmed: confirmed.length, refuted: refuted.length }
-      : { unverified: confirmed.length }),
+      : { unverified: confirmed.length, rejected: rejected.length }),
     fixed: judgement.fixNow.length,
     foundInFix: fixReviewFindings.length
   })
@@ -5434,6 +5449,8 @@ ${baselineRungList(baseline)}`
   }
   mergeNote = mergeNoteOf(mergesInProgress)
 
+  const notesReadBy = rules.consistencyReview ? 'the consistency reviewer' : 'the whole-change reviewer'
+
   impl = EXECUTOR === 'codex'
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
@@ -5462,7 +5479,7 @@ ${COMPLETION_LINES_DUTY}
 
 RULES:
 - Build the plan's scope: its decisions, homes, rule owners and tests. Do not fix adjacent things you notice — report
-  them in notes instead, which the consistency reviewer reads. Extending a shared test helper, the one
+  them in notes instead, which ${notesReadBy} reads. Extending a shared test helper, the one
   the plan names or one a new test's set-up needs, is in scope. Never write a local copy of a shared helper's body:
   give the helper an option instead.
 - **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
@@ -5540,7 +5557,7 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
   const groupBreakdown = reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')
   const reviewShapeLine =
     rules.reviewScope === 'whole'
-      ? `one code reviewer across ${reviewTargets.length} file(s) in ${reviewGroups.length} group(s) — ${groupBreakdown}`
+      ? `one reviewer across ${reviewTargets.length} file(s) in ${reviewGroups.length} group(s) — ${groupBreakdown}`
       : `${reviewGroups.length} review group(s) — ${groupBreakdown}`
   log(`${id}: ${reviewShapeLine}`)
 
@@ -5824,7 +5841,7 @@ ${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
         think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
     if (!rules.verifyFindings) {
-      const rejected = (judgement.decisions ?? [])
+      rejected = (judgement.decisions ?? [])
         .filter((decision) => decision.call === 'reject')
         .map((decision) => judgeRejectionRecord(id, decision))
       refutedFindings.push(...rejected)

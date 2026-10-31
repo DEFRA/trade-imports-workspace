@@ -1989,7 +1989,7 @@ describe('increment-build-loop', () => {
         ])
       })
 
-      test('reviews the whole change with one code reviewer at fast', async () => {
+      test('reviews the whole change with one reviewer at fast, and says so', async () => {
         const run = await runToReviewAt('fast', [
           'frontend:src/a.js',
           'frontend:README.md',
@@ -1997,6 +1997,9 @@ describe('increment-build-loop', () => {
         ])
 
         expect(labelsInPhase(run, 'Review')).toEqual(['inc-900 review:whole'])
+        expect(run.logs).toContain(
+          'inc-900: one reviewer across 3 file(s) in 3 group(s) — frontend-javascript (1), frontend-docs (1), backend-java (1)'
+        )
       })
 
       test('still style-reviews the fixer’s hunks at fast, where no style reviewer ran', async () => {
@@ -2795,7 +2798,8 @@ describe('increment-build-loop', () => {
               category: 'correctness',
               severity: 'major',
               what: 'The origin is not saved.',
-              reason: 'Saved in src/b.js:4.'
+              reason: 'Saved in src/b.js:4.',
+              droppedBy: 'verifier'
             }
           ])
           expect(stageLabels(run)).not.toContain('inc-900 judge')
@@ -2817,6 +2821,7 @@ describe('increment-build-loop', () => {
               severity: 'minor',
               what: '`linesDroppedBy` returns the kept lines.',
               reason: 'It returns the dropped lines.',
+              droppedBy: 'verifier',
               quote: 'src/a.js:9 return removed'
             }
           ])
@@ -3095,6 +3100,30 @@ describe('increment-build-loop', () => {
 
           expect(prompt).toContain(
             'The consistency reviewer checks that reason and the ladder validates the write again.'
+          )
+        })
+
+        test('tells the implementor which reviewer reads the notes it leaves adjacent work in', async () => {
+          const full = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+          const fast = promptOf(
+            await runFromWithArgs(
+              { rigour: 'fast' },
+              BASELINE_ANSWER,
+              PLANNED,
+              implementAnswer(['frontend:src/a.js']),
+              NO_FINDINGS
+            ),
+            'inc-900 implement'
+          )
+
+          expect(full).toContain(
+            'report\n  them in notes instead, which the consistency reviewer reads.'
+          )
+          expect(fast).toContain(
+            'report\n  them in notes instead, which the whole-change reviewer reads.'
           )
         })
 
@@ -5147,19 +5176,37 @@ describe('increment-build-loop', () => {
             )
           })
 
+          const landedWithRefutedFinding = LANDED.toSpliced(
+            3,
+            3,
+            { findings: [FINDING] },
+            NO_FINDINGS,
+            NO_FINDINGS,
+            {
+              verdicts: [
+                { n: 1, real: false, reasoning: 'Saved in src/b.js:4.' }
+              ]
+            }
+          )
+
+          const landedWithRejectedFinding = LANDED.toSpliced(
+            3,
+            3,
+            { findings: [FINDING] },
+            {
+              decisions: [
+                {
+                  what: 'The origin is not saved.',
+                  call: 'reject',
+                  reasoning: 'Saved in src/b.js:4.'
+                }
+              ],
+              fixNow: [],
+              summary: 'one reject'
+            }
+          )
+
           test('lists the findings refuted across a built theme’s rows in a review check', async () => {
-            const landedWithRefutedFinding = LANDED.toSpliced(
-              3,
-              3,
-              { findings: [FINDING] },
-              NO_FINDINGS,
-              NO_FINDINGS,
-              {
-                verdicts: [
-                  { n: 1, real: false, reasoning: 'Saved in src/b.js:4.' }
-                ]
-              }
-            )
             const run = await runLoop(scriptPath, {
               args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
               answers: [
@@ -5186,7 +5233,8 @@ describe('increment-build-loop', () => {
                     category: 'correctness',
                     severity: 'major',
                     what: 'The origin is not saved.',
-                    reason: 'Saved in src/b.js:4.'
+                    reason: 'Saved in src/b.js:4.',
+                    droppedBy: 'verifier'
                   }
                 ]
               }
@@ -5194,22 +5242,6 @@ describe('increment-build-loop', () => {
           })
 
           test('lists a finding the judge rejected at fast in the same review check', async () => {
-            const landedWithRejectedFinding = LANDED.toSpliced(
-              3,
-              3,
-              { findings: [FINDING] },
-              {
-                decisions: [
-                  {
-                    what: 'The origin is not saved.',
-                    call: 'reject',
-                    reasoning: 'Saved in src/b.js:4.'
-                  }
-                ],
-                fixNow: [],
-                summary: 'one reject'
-              }
-            )
             const run = await runLoop(scriptPath, {
               args: {
                 ...BASE_ARGS,
@@ -5233,18 +5265,53 @@ describe('increment-build-loop', () => {
               {
                 id: 'inc-901',
                 check:
-                  'Theme origin-pages is built. Review dropped 1 finding(s) as refuted across its rows: read each one and confirm none was real.',
+                  'Theme origin-pages is built. The judge rejected 1 finding(s) across its rows: read each one and confirm none was real.',
                 refuted: [
                   {
                     id: 'inc-901',
                     file: '(whole change)',
                     category: null,
                     what: 'The origin is not saved.',
-                    reason: 'Saved in src/b.js:4.'
+                    reason: 'Saved in src/b.js:4.',
+                    droppedBy: 'judge'
                   }
                 ]
               }
             ])
+          })
+
+          test('names the review and the judge where a theme’s rows dropped findings each way', async () => {
+            const run = await runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 2 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithRefutedFinding,
+                derived('inc-902', { rigour: 'fast' }),
+                ...landedWithRejectedFinding
+              ],
+              themes: {
+                'inc-901 theme': ONE_LEFT,
+                'inc-902 theme': themeStatus({
+                  rows: 2,
+                  built: ['inc-901', 'inc-902'],
+                  otherRepos: ['frontend']
+                }),
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect(run.result.reviewChecks.map((check) => check.check)).toEqual(
+              [
+                'Theme origin-pages is built. Review dropped 1 finding(s) as refuted and the judge rejected 1 across its rows: read each one and confirm none was real.'
+              ]
+            )
+            expect(
+              run.result.reviewChecks[0].refuted.map(
+                (record) => record.droppedBy
+              )
+            ).toEqual(['verifier', 'judge'])
           })
 
           test('records a clean check and carries on', async () => {
@@ -6237,12 +6304,62 @@ describe('increment-build-loop', () => {
         })
       })
 
-      test('counts them as unverified, never confirmed, where no verifier ran', async () => {
+      test('counts them as unverified and rejected, never confirmed, where no verifier ran', async () => {
         const run = await runFastMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
 
         expect(run.result.increments[0].findings).toEqual({
           raw: 0,
           unverified: 0,
+          rejected: 0,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('counts a finding the judge rejected at fast', async () => {
+        const run = await runBranch(
+          { rigour: 'fast' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          {
+            findings: [
+              {
+                file: 'tests:src/auth.spec.ts',
+                severity: 'minor',
+                category: 'structure',
+                what: 'A copied helper.',
+                why: 'Two copies.',
+                fix: 'Extract it.'
+              }
+            ]
+          },
+          {
+            decisions: [
+              {
+                what: 'A copied helper.',
+                call: 'reject',
+                reasoning: 'src/auth.spec.ts:3 uses the shared helper.'
+              }
+            ],
+            fixNow: [],
+            summary: 'one reject'
+          },
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 1,
+          unverified: 1,
+          rejected: 1,
           fixed: 0,
           foundInFix: 0
         })
@@ -6983,7 +7100,8 @@ describe('increment-build-loop', () => {
               category: 'correctness',
               severity: 'major',
               what: 'The sign-in steps are copied from the journey helper.',
-              reason: 'The helper signs in another way.'
+              reason: 'The helper signs in another way.',
+              droppedBy: 'verifier'
             }
           ])
           expect(run.result.reviewChecks.map(({ check }) => check)).toContain(

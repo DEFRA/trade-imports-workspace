@@ -2064,6 +2064,34 @@ describe('increment-build-loop', () => {
         )
       })
 
+      const SPEC_SYNC_DUTY = 'THE SPEC SYNC is part of the change.'
+      const COMPLETION_DUTY = 'PROBES AND DOCS are part of the change.'
+      const PLAN_DECISIONS_DUTY = 'THE PLAN IS NOT A DEFENCE.'
+      const IMPLEMENTOR_NOTES_DUTY = "THE IMPLEMENTOR'S NOTES"
+
+      test('leaves the spec sync and the probes and docs lines with the consistency reviewer at standard', async () => {
+        const run = await runToReviewAt('standard', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 consistency')
+
+        expect(prompt).toContain(SPEC_SYNC_DUTY)
+        expect(prompt).toContain(COMPLETION_DUTY)
+        expect(prompt).toContain(PLAN_DECISIONS_DUTY)
+        expect(prompt).toContain(IMPLEMENTOR_NOTES_DUTY)
+      })
+
+      test('gives the whole-change reviewer the plan and notes duties, and not the spec or docs ones, at fast', async () => {
+        const run = await runToReviewAt('fast', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(PLAN_DECISIONS_DUTY)
+        expect(prompt).toContain(IMPLEMENTOR_NOTES_DUTY)
+        expect(prompt).not.toContain(SPEC_SYNC_DUTY)
+        expect(prompt).not.toContain(COMPLETION_DUTY)
+        expect(prompt).toContain(
+          "implementor's notes and the plan's own decisions — it is yours. The spec sync and the probes and docs lines are not:\nthe ladder judges what those lines claim at this rigour."
+        )
+      })
+
       test('verifies findings with one verifier per group', async () => {
         const run = await runThroughFixToLadder()
 
@@ -2150,6 +2178,70 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           "A rung green at baseline and red now is this\n   increment's to fix"
+        )
+      })
+
+      const SPEC_SYNC_REASON_LEFT_TO_REVIEWERS =
+        'not complete. A line that\n   reads `Spec sync: none — <reason>` runs nothing here: the reviewers have judged the reason.'
+      const COMPLETION_LINES_LEFT_TO_REVIEWER =
+        'Run nothing more here: the consistency reviewer has judged what the lines claim.'
+
+      const ladderPromptAt = async (rigour, ...reviewAnswers) =>
+        ladderPrompt(await runToJudgeAt(rigour, ...reviewAnswers))
+
+      test('leaves the spec sync and the probes and docs claims to the consistency reviewer at full', async () => {
+        const prompt = await ladderPromptAt(
+          'full',
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS
+        )
+
+        expect(prompt).toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+      })
+
+      test('leaves them to the consistency reviewer at standard too', async () => {
+        const prompt = await ladderPromptAt(
+          'standard',
+          NO_FINDINGS,
+          NO_FINDINGS
+        )
+
+        expect(prompt).toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+      })
+
+      test('has the ladder judge the spec write itself at fast, where no reviewer does', async () => {
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS)
+
+        expect(prompt).not.toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(
+          "not complete. The write is yours to judge too.\n   No reviewer does that at this row's rigour, so judge it against the plan's section 8 and /ws/openspec/config.yaml:"
+        )
+        expect(prompt).toContain(
+          '   see it with `git -C ~/ws status --short -- openspec/` and `git -C ~/ws diff HEAD -- openspec/`, Read a new\n   file under it in full'
+        )
+        expect(prompt).toContain(
+          'a behaviour change in the diff that no scenario records;\n   a scenario the diff does not implement'
+        )
+        expect(prompt).toContain(
+          "`Spec sync: none — <reason>` whose reason\n   does not hold against the plan's behaviour changes"
+        )
+      })
+
+      test('has the ladder judge the probes and docs claims itself at fast', async () => {
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS)
+
+        expect(prompt).not.toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+        expect(prompt).toContain(
+          "   No reviewer judges what the lines claim at this row's rigour, so judge them against\n   every hunk in `git -C ~/ws/<repoPath> diff --staged` for each repo with staged changes."
+        )
+        expect(prompt).toContain(
+          'a coverage link this row wrote or upgraded to "full" that the `Probes:` line does not account\n   for'
+        )
+        expect(prompt).toContain(
+          "search the changed repos' `docs/`, the recipes, the doc comments of every\n   function the change touched, the comments within ten lines of every hunk, and convention test names."
         )
       })
 

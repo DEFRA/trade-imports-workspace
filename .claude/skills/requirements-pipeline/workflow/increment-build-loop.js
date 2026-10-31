@@ -851,7 +851,17 @@ Each of these is a finding: a missing \`Probes:\` or \`Docs updated:\` line; a c
 \`Probes:\` line does not account for; a \`Docs updated: none\` whose search misses a doc, recipe, JSDoc, comment or
 test name the change makes untrue, inside the diff or outside it. A stale comment's fix is to delete it.`
 
-const ladderCompletionStep = (implementorNotes, fixerNotes) => `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
+const COMPLETION_LINES_LEFT_TO_REVIEWER = 'Run nothing more here: the consistency reviewer has judged what the lines claim.'
+
+const COMPLETION_LINES_TO_JUDGE_HERE = `No reviewer judges what the lines claim at this row's rigour, so judge them against
+   every hunk in \`git -C ${TILDE}/<repoPath> diff --staged\` for each repo with staged changes. Each of these is a
+   failure you repair: a coverage link this row wrote or upgraded to "full" that the \`Probes:\` line does not account
+   for; a \`Docs updated: none\` whose search misses a doc, recipe, JSDoc, comment or test name the change makes
+   untrue, inside the diff or outside it — search the changed repos' \`docs/\`, the recipes, the doc comments of every
+   function the change touched, the comments within ten lines of every hunk, and convention test names. A stale
+   comment's fix is to delete it.`
+
+const ladderCompletionStep = (implementorNotes, fixerNotes, rigour) => `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
    ${COMPLETION_LABELS.map((label) => reportedCompletionLine(label, implementorNotes)).join('\n   ')}
    The fixer's: ${
      fixerNotes === null
@@ -860,7 +870,7 @@ const ladderCompletionStep = (implementorNotes, fixerNotes) => `2b. PROBES AND D
    }
    When NEITHER the implementor NOR the fixer reported one of these lines, that is a failure: put "no <label> line
    reported" in failures[], naming the label. A fixer with no line is normal when the implementor reported one.
-   Run nothing more here: the consistency reviewer has judged what the lines claim.`
+   ${rulesOf(rigour).consistencyReview ? COMPLETION_LINES_LEFT_TO_REVIEWER : COMPLETION_LINES_TO_JUDGE_HERE}`
 
 const specPrefixesIn = (text) => {
   const lines = specSyncLinesIn(text).join('\n')
@@ -878,7 +888,20 @@ does not implement; a coverage link to a test the change does not hold; a write 
 behaviour under \`live-animals/\`, or the reverse); a \`Spec sync: none\` whose reason does not hold against the plan's
 behaviour changes, wording, content and layout included where the spec records them; and no \`Spec sync:\` line at all.`
 
-const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
+const SPEC_SYNC_LEFT_TO_REVIEWERS = `A line that
+   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.`
+
+const SPEC_SYNC_TO_JUDGE_HERE = `The write is yours to judge too.
+   No reviewer does that at this row's rigour, so judge it against the plan's section 8 and ${ABS}/openspec/config.yaml:
+   see it with \`git -C ${TILDE} status --short -- openspec/\` and \`git -C ${TILDE} diff HEAD -- openspec/\`, Read a new
+   file under it in full, and read the code it records with \`git -C ${TILDE}/<repoPath> diff --staged\` for each repo
+   with staged changes. Each of these is a failure you repair: a behaviour change in the diff that no scenario records;
+   a scenario the diff does not implement; a coverage link to a test the change does not hold; a write under the wrong
+   prefix (germinal behaviour under \`live-animals/\`, or the reverse); and a \`Spec sync: none — <reason>\` whose reason
+   does not hold against the plan's behaviour changes, wording, content and layout included where the spec records
+   them.`
+
+const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
    ${reportedSpecSync(implementorNotes)}
    The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
    When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
@@ -888,8 +911,9 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC.
    once. A path marked \`deleted:\` is not validated: confirm it is gone with \`ls ${TILDE}/openspec/specs/<capability path>\`,
    which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
    once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
-   any other: the spec write is this increment's, and a row whose spec does not validate is not complete. A line that
-   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.
+   any other: the spec write is this increment's, and a row whose spec does not validate is not complete. ${
+     rulesOf(rigour).consistencyReview ? SPEC_SYNC_LEFT_TO_REVIEWERS : SPEC_SYNC_TO_JUDGE_HERE
+   }
    ${SPEC_WHOLE_CAPABILITY}`
 
 const SPEC_IN_WORKSPACE = `THE BEHAVIOUR SPEC: \`${TILDE}/openspec/\` is part of the workspace repo, one of this increment's
@@ -5566,10 +5590,13 @@ Return the structured output only.`
     )
   )
 
-  const crossChangeDuties = `${planDecisionReviewRule(plan)}
+  const consistencyDuties = `${planDecisionReviewRule(plan)}
 ${implementorNotesForReview(impl.notes)}
 ${specReviewRule(impl.notes)}
 ${completionReviewRule(impl.notes)}`
+
+  const wholeChangeDuties = `${planDecisionReviewRule(plan)}
+${implementorNotesForReview(impl.notes)}`
 
   const WHOLE_CHANGE_LABEL = 'whole'
 
@@ -5583,7 +5610,8 @@ at its own path.
 You are the only reviewer of this change, so read it ACROSS files as well as file by file. These are yours too:
 ${CROSS_FILE_HUNT}.
 No consistency reviewer runs beside you either, so where another prompt leaves a judgement to that reviewer — the
-implementor's notes, the spec sync, the probes and docs lines — it is yours.`
+implementor's notes and the plan's own decisions — it is yours. The spec sync and the probes and docs lines are not:
+the ladder judges what those lines claim at this rigour.`
 
   const wholeChangeDiffCommands = [...new Map(reviewGroups.map((group) => [group.repo, groupDiffCommand(group)]))]
     .map(([repo, command]) => `- in ${repo}: ${command}`)
@@ -5594,7 +5622,7 @@ implementor's notes, the spec sync, the probes and docs lines — it is yours.`
       codeReviewerPrompt({
         reviewing: wholeChangeHeader,
         diffCommand: `each file's own repo:\n${wholeChangeDiffCommands}`,
-        crossChangeDuties
+        crossChangeDuties: wholeChangeDuties
       }),
       code({ label: `${id} review:${WHOLE_CHANGE_LABEL}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
@@ -5617,7 +5645,7 @@ dispatch but not in the contract table, a feature in features/index.js but not e
 matching copy.cy.js key. THE CONTRACT BETWEEN REPOS is what each consumer (a frontend, say) sends and expects against
 what its provider (a backend or a stub) accepts and returns, with the tests or performance-tests repo exercising the
 slice through it.
-${crossChangeDuties}
+${consistencyDuties}
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
@@ -5663,7 +5691,7 @@ ${CODE_REVIEW_LENS}${mergeNote}${IS_BRANCH && isWorkspaceGroup(group) ? WORKSPAC
 ${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}. Hunt too for
 ${CROSS_FILE_HUNT}.
 Then run each check the plan's section 5 names, reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
-${crossChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${consistencyDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const codexWholeChangeReview = codexReview(
@@ -5672,11 +5700,12 @@ ${crossChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
     reviewTargets.join(', '),
     `Review the WHOLE staged, uncommitted change for increment ${id}, every file bound to <reviewFiles>, across files and
 repos. Apply the persona bound to <personas>, and no other: you are the only review run for this increment, so the
-judgements another prompt leaves to a consistency reviewer are yours.
+judgements another prompt leaves to a consistency reviewer are yours — except the spec sync and the probes and docs
+lines, which the ladder judges at this rigour.
 ${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Beside what the persona names, hunt for:
 ${CODE_REVIEW_LENS}ACROSS FILES, these are yours too:
 ${CROSS_FILE_HUNT}.
-${crossChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const claudeReviewStages =
@@ -5920,8 +5949,8 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    from the plan for a stated reason (a review finding, a red rung) — a file the plan said stays untouched, a home
    it moved — is a note, not a failure: say so in your summary, with the departure and its reason, and leave it out
    of failures[]. A check of behaviour (the page does X, the spec says Y) stays pass or fail.
-${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
-${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
+${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null, rowRigour)}
+${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null, rowRigour)}
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.

@@ -11,7 +11,9 @@ const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
 const refuseUnknownPresets = (rows, rigours) => {
-  const unknown = rows.filter((entry) => !rigours.includes(entry.rigour))
+  const unknown = rows.filter(
+    (entry) => entry.source === 'row' && !rigours.includes(entry.rigour)
+  )
   if (unknown.length === 0) return
   throw new TimError(
     'LINT',
@@ -40,22 +42,31 @@ export const rigourProposal = (workspaceRoot, workarea) => {
 }
 
 /**
- * The plain-text report of `tim build rigour`: the id, the preset and the
- * title of each row, with the reason beneath it.
+ * The plain-text report of `tim build rigour`: the backlog it read, then the
+ * id, the preset and the clipped title of each row, with the reason beneath
+ * it. Every row line fits 80 columns, whatever the title; `--json` carries
+ * the title whole.
  *
  * @param {{path: string, rows: {id: string, title: string, rigour: string, reason: string}[]}} result
  * @returns {string}
  */
-export const renderRigourText = ({ rows }) => {
+export const renderRigourText = ({ path, rows }) => {
+  if (rows.length === 0) {
+    return `Every increment in ${path} is built out: there is nothing to propose a rigour for.`
+  }
   const presetWidth = 8
+  const titleWidth = 56
   const gap = 2
+  const clipped = (title) =>
+    title.length > titleWidth ? `${title.slice(0, titleWidth - 1)}…` : title
   const linesFor = (entry) => [
-    `${entry.id}  ${entry.rigour.padEnd(presetWidth)}  ${entry.title}`,
+    `${entry.id}  ${entry.rigour.padEnd(presetWidth)}  ${clipped(entry.title)}`,
     `${' '.repeat(entry.id.length + presetWidth + gap * 2)}${entry.reason}`
   ]
-  return rows.length === 0
-    ? 'Every increment is built out: there is nothing to propose a rigour for.'
-    : rows.flatMap(linesFor).join('\n')
+  return [
+    `${rows.length} row${rows.length === 1 ? '' : 's'} still to build in ${path}:`,
+    ...rows.flatMap(linesFor)
+  ].join('\n')
 }
 
 const reportError = (error, json, timVersion) => {

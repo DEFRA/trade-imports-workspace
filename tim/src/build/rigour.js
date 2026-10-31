@@ -1,29 +1,37 @@
-const serviceRepoKeys = (row, envelope) => {
+const servicesAndSuitesIn = (row, envelope) => {
   const testSuitePath = /-tests$/
   const keys = Array.isArray(row.repos)
     ? row.repos
     : Object.keys(envelope ?? {})
-  return keys.filter((key) => !testSuitePath.test(envelope?.[key]?.path ?? key))
+  const isTestSuite = (key) => testSuitePath.test(envelope?.[key]?.path ?? key)
+  return {
+    services: keys.filter((key) => !isTestSuite(key)),
+    suites: keys.filter(isTestSuite)
+  }
 }
 
 const joinedWithAnd = (names) =>
-  `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+  names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 
 const rigourAndReasonFor = (row, envelope) => {
   const fastKinds = new Set(['docs', 'test'])
-  if (Array.isArray(row.repos) && row.repos.length === 0) {
-    return {
-      rigour: 'fast',
-      reason: 'no backlog repo: the change is in the workspace repo'
-    }
+  const { services, suites } = servicesAndSuitesIn(row, envelope)
+  if (services.length === 0 && suites.length === 0) {
+    return fastKinds.has(row.kind)
+      ? { rigour: 'fast', reason: `a ${row.kind} row in the workspace repo` }
+      : {
+          rigour: 'standard',
+          reason: 'no backlog repo: nothing the gate builds'
+        }
   }
   if (fastKinds.has(row.kind)) {
     return {
       rigour: 'fast',
-      reason: `a ${row.kind} row changes no production behaviour`
+      reason: `a ${row.kind} row: no production behaviour to read`
     }
   }
-  const services = serviceRepoKeys(row, envelope)
   if (services.length > 1) {
     return {
       rigour: 'full',
@@ -33,10 +41,13 @@ const rigourAndReasonFor = (row, envelope) => {
   if (services.length === 0) {
     return {
       rigour: 'standard',
-      reason: 'no service repo, the test suite only'
+      reason: `${joinedWithAnd(suites)} only: no service repo changes`
     }
   }
-  return { rigour: 'standard', reason: `one service repo, ${services[0]}` }
+  return {
+    rigour: 'standard',
+    reason: `one service repo, ${services[0]}: nothing crosses a repo boundary`
+  }
 }
 
 const proposalFor = (row, envelope) => {

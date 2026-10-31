@@ -85,14 +85,14 @@ describe('tim build rigour', () => {
           title: 'Show the notification list',
           rigour: 'standard',
           source: 'derived',
-          reason: 'one service repo, frontend'
+          reason: 'one service repo, frontend: nothing crosses a repo boundary'
         },
         {
           id: 'inc-002',
           title: 'Show the notification list',
           rigour: 'fast',
           source: 'derived',
-          reason: 'a docs row changes no production behaviour'
+          reason: 'a docs row: no production behaviour to read'
         }
       ]
     })
@@ -113,12 +113,23 @@ describe('tim build rigour', () => {
   test('names a missing backlog', async () => {
     const run = await runTim(['rigour', WORKAREA, '--json'])
 
+    expect(run.exitCode).toBe(2)
     expect(envelopeOf(run).errors[0].message).toBe(
       `Can't find ${backlogPath()}.`
     )
   })
 
-  test('prints each row and its reason, lined up, without --json', async () => {
+  test('reports only the row that set a preset, never a derived one', async () => {
+    writeBacklog([row(), row({ id: 'inc-002', rigour: 'quick' })])
+
+    const run = await runTim(['rigour', WORKAREA, '--json'])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      'inc-002 sets rigour "quick". Use one of: full, standard, fast.'
+    )
+  })
+
+  test('names the backlog it read, then each row and its reason', async () => {
     writeBacklog([row(), row({ id: 'inc-002', kind: 'docs' })])
 
     const run = await runTim(['rigour', WORKAREA])
@@ -126,50 +137,76 @@ describe('tim build rigour', () => {
     expect(run.exitCode).toBe(0)
     expect(run.stdout).toBe(
       [
+        `2 rows still to build in ${backlogPath()}:`,
         'inc-001  standard  Show the notification list',
-        '                   one service repo, frontend',
+        '                   one service repo, frontend: nothing crosses a repo boundary',
         'inc-002  fast      Show the notification list',
-        '                   a docs row changes no production behaviour'
+        '                   a docs row: no production behaviour to read'
       ].join('\n')
     )
   })
 })
 
 describe('renderRigourText', () => {
-  test('keeps the title whole and indents the reason under it', () => {
+  const PATH = '/ws/workareas/shared/demo/backlog.json'
+
+  const rendered = (...rows) => renderRigourText({ path: PATH, rows })
+
+  const proposal = (overrides = {}) => ({
+    id: 'inc-001',
+    title: 'Show the notification list',
+    rigour: 'standard',
+    source: 'derived',
+    reason: 'one service repo, frontend: nothing crosses a repo boundary',
+    ...overrides
+  })
+
+  test('names the backlog, then each title with its reason beneath', () => {
     expect(
-      renderRigourText({
-        path: '/ws/workareas/shared/demo/backlog.json',
-        rows: [
-          {
-            id: 'inc-001',
-            title: 'Show the notification list',
-            rigour: 'standard',
-            source: 'derived',
-            reason: 'one service repo, frontend'
-          },
-          {
-            id: 'inc-002',
-            title: 'Say which files were scanned',
-            rigour: 'fast',
-            source: 'row',
-            reason: 'set on the row'
-          }
-        ]
-      })
+      rendered(
+        proposal(),
+        proposal({
+          id: 'inc-002',
+          title: 'Say which files were scanned',
+          rigour: 'fast',
+          source: 'row',
+          reason: 'set on the row'
+        })
+      )
     ).toBe(
       [
+        `2 rows still to build in ${PATH}:`,
         'inc-001  standard  Show the notification list',
-        '                   one service repo, frontend',
+        '                   one service repo, frontend: nothing crosses a repo boundary',
         'inc-002  fast      Say which files were scanned',
         '                   set on the row'
       ].join('\n')
     )
   })
 
-  test('says so when nothing is left to build', () => {
-    expect(renderRigourText({ path: '/ws/b.json', rows: [] })).toBe(
-      'Every increment is built out: there is nothing to propose a rigour for.'
+  test('counts a single row in the singular', () => {
+    expect(rendered(proposal()).split('\n')[0]).toBe(
+      `1 row still to build in ${PATH}:`
+    )
+  })
+
+  test('clips a long title so every row line fits 80 columns', () => {
+    const [, ...rowLines] = rendered(
+      proposal({
+        title:
+          'Document references accept punctuation, and the document type list drops Health certificate'
+      })
+    ).split('\n')
+
+    expect(rowLines[0]).toBe(
+      'inc-001  standard  Document references accept punctuation, and the documen…'
+    )
+    expect(rowLines.every((line) => line.length <= 80)).toBe(true)
+  })
+
+  test('names the backlog it found nothing left to build in', () => {
+    expect(renderRigourText({ path: PATH, rows: [] })).toBe(
+      `Every increment in ${PATH} is built out: there is nothing to propose a rigour for.`
     )
   })
 })

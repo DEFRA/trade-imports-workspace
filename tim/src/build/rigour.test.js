@@ -1,5 +1,4 @@
 import { describe, test, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadBacklogSchema, rigoursOf } from '../backlog/backlog-schema.js'
@@ -35,7 +34,7 @@ describe('proposeRigour', () => {
         title: 'Show the notification list',
         rigour: 'standard',
         source: 'derived',
-        reason: 'one service repo, frontend'
+        reason: 'one service repo, frontend: nothing crosses a repo boundary'
       }
     ])
   })
@@ -58,31 +57,38 @@ describe('proposeRigour', () => {
     })
   })
 
-  test('proposes fast for a row that changes no backlog repo', () => {
+  test('proposes standard for a feat row that changes no backlog repo', () => {
     expect(proposalsFor(row({ repos: [] }))[0]).toMatchObject({
+      rigour: 'standard',
+      reason: 'no backlog repo: nothing the gate builds'
+    })
+  })
+
+  test('proposes fast for a docs row that changes no backlog repo', () => {
+    expect(proposalsFor(row({ repos: [], kind: 'docs' }))[0]).toMatchObject({
       rigour: 'fast',
-      reason: 'no backlog repo: the change is in the workspace repo'
+      reason: 'a docs row in the workspace repo'
     })
   })
 
   test('proposes standard for a one-service row the gate runs no phase for', () => {
     expect(proposalsFor(row({ gatePhases: [] }))[0]).toMatchObject({
       rigour: 'standard',
-      reason: 'one service repo, frontend'
+      reason: 'one service repo, frontend: nothing crosses a repo boundary'
     })
   })
 
   test('proposes fast for a docs row', () => {
     expect(proposalsFor(row({ kind: 'docs' }))[0]).toMatchObject({
       rigour: 'fast',
-      reason: 'a docs row changes no production behaviour'
+      reason: 'a docs row: no production behaviour to read'
     })
   })
 
-  test('proposes standard for a row that names only the test suite', () => {
+  test('names the suites a row changes when it names no service', () => {
     expect(proposalsFor(row({ repos: ['tests'] }))[0]).toMatchObject({
       rigour: 'standard',
-      reason: 'no service repo, the test suite only'
+      reason: 'tests only: no service repo changes'
     })
   })
 
@@ -105,7 +111,7 @@ describe('proposeRigour', () => {
         title: 'Show the notification list',
         rigour: 'standard',
         source: 'derived',
-        reason: 'one service repo, frontend'
+        reason: 'one service repo, frontend: nothing crosses a repo boundary'
       }
     ])
   })
@@ -118,14 +124,19 @@ describe('proposeRigour', () => {
   })
 
   test('proposes exactly the rigour presets a row may set', () => {
-    const source = readFileSync(join(here, 'rigour.js'), 'utf8')
-    const proposed = [
-      ...new Set(
-        [...source.matchAll(/rigour: '([a-z]+)'/g)].map(([, it]) => it)
-      )
+    const everyRule = [
+      row({ repos: [] }),
+      row({ id: 'inc-002', repos: [], kind: 'docs' }),
+      row({ id: 'inc-003', kind: 'docs' }),
+      row({ id: 'inc-004', repos: ['backend', 'frontend'] }),
+      row({ id: 'inc-005', repos: ['tests'] }),
+      row({ id: 'inc-006' })
     ]
+    const proposed = new Set(
+      proposalsFor(...everyRule).map((entry) => entry.rigour)
+    )
 
-    expect(proposed.sort()).toEqual(
+    expect([...proposed].sort()).toEqual(
       rigoursOf(loadBacklogSchema(workspaceRoot)).sort()
     )
   })

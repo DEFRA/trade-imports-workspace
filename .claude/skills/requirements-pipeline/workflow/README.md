@@ -238,12 +238,12 @@ missing key. The first log line is the resolved configuration.
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
 | `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word, and an optional `requireApproval: true` for a repo whose PR a person must approve. Under the full lifecycle the key `workspace` at path `.` is the workspace repo itself; under the branch lifecycle `workspace` is refused. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path, slug or `requireApproval` differs from the envelope's |
-| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, and a theme's engineering reviewers and judge. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, a theme's fixer and ladder, and the spec diff comment's writer and checker. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, the plan review recorder, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, the spec diff reader and poster, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, the one reviewer that reads a `fast` row's whole change, and a theme's engineering reviewers and judge — and a `fast` row's plan goes to `code` instead. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers (`rigour` decides which of them run), the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, a theme's fixer and ladder, and the spec diff comment's writer and checker. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, the plan review recorder, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, the spec diff reader and poster, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
-| `rigour` | How much of the pipeline every row of this run gets: `full`, `standard` or `fast`. A row's own `rigour` may change it |
+| `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends it back naming nothing — and no style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -372,7 +372,8 @@ ever.
   increments: null,
   stopAfter: 'all',
   e2e: 'local',
-  resumeFrom: null
+  resumeFrom: null,
+  rigour: 'standard'
 }
 ```
 
@@ -857,6 +858,47 @@ resumes from what landed.
 **The agent budget needs no adjustment.** A resumed row runs strictly fewer agents than a fresh
 one — it trades the planner, the plan reviewers and the implementor for a restore and a plan read —
 so `agentsPerIncrement()` stays a safe ceiling. Do not "correct" it downward.
+
+### The rigour dial
+
+`rigour` governs six things, and nothing else: which tier plans, how many plan reviews run,
+whether style reviewers run, whether code review is split per (repo, language) group or runs once
+across the whole change, whether a consistency reviewer runs, and whether findings are verified by
+their own verifier or by the judge. `RIGOUR_RULES` is the whole of it:
+
+| | `full` | `standard` | `fast` |
+|---|---|---|---|
+| `planTier` | `think` | `think` | `code` |
+| `planReview` | a plan sent back is revised and re-reviewed | revised, and re-read only when a finding is structural or the review names none | none |
+| `styleReviewers` | one per (repo, language) group but a documentation one | none | none |
+| `reviewScope` | a `code`-tier reviewer per group | a `code`-tier reviewer per group | one `think`-tier reviewer across the whole change |
+| `consistencyReview` | yes | yes | no |
+| `verifyFindings` | a verifier per group of findings | a verifier per group of findings | the judge verifies them itself |
+
+Three things it never governs, so that a lower rigour never lowers correctness:
+
+- **the plan lint** — `fast` drops the plan review, not the check that the plan writes no code
+  text and names no denied check; a plan still dirty after its one replan refuses the increment;
+- **the gate** — at whatever phases the row owes through `gatePhases` and `e2e`, at the baseline
+  and again at the ladder, which also runs the plan's own section 5 and 6 checks;
+- **the theme engineering review** — under the branch lifecycle it runs once per theme over
+  `git diff origin/main...HEAD` in every repo, and is the backstop for whatever a `fast` row's
+  single reviewer missed. A rejection by a `fast` row's judge is recorded in `refutedFindings` as
+  a verifier's refutation would be, so that review and the run's review checks re-read it at
+  every preset.
+
+**What moves at `fast` rather than disappearing.** The single reviewer takes the consistency
+reviewer's cross-file lens, the plan's own decisions and the implementor's notes. It does not take
+the spec sync or the `Probes:` and `Docs updated:` lines: the ladder judges what those claim,
+because it reads the same notes at every preset and already runs the spec validate and lint.
+
+A row sets its own with `tim backlog set <workarea> <id> --rigour <preset>`, and it reaches the
+loop by the two paths every row field takes: `tim build start` under the full lifecycle, the
+branch stage's `jq` under the branch lifecycle, where a reported `null` counts as absent. The
+preflight refuses a preset the schema does not allow before the first increment starts. The run
+log names the preset and what it runs, once for the run and once per increment, and a landed row
+whose rigour was not the run's carries it in the result — whose `findings` then count
+`{unverified, rejected}` in place of `{confirmed, refuted}`, because no verifier read them.
 
 ### The workspace stack lease
 

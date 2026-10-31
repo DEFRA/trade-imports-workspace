@@ -989,7 +989,7 @@ Then, beside `const builderPhases` (line 5084), which is the first point both pa
   )
 ```
 
-**This task declares no `rules` const.** An earlier draft put `const rules = rulesOf(rowRigour)` here, which nothing in this task reads — and an unused binding fails lint, so the task could not have gone green. Task 9 declares it, in the Review phase where it is first read; Task 8 needs only `rulesOf(rigour)` inside `reviewedPlan`, and `rowRigour` itself at the call site.
+**This task declares no `rules` const.** An earlier draft put `const rules = rulesOf(rowRigour)` here, which nothing in this task reads — and the house rule is to build only what a change makes reachable. (No linter would have caught it: nothing lints `.claude/skills/**/*.js`.) Task 9 declares it, in the Review phase where it is first read; Task 8 needs only `rulesOf(rigour)` inside `reviewedPlan`, and `rowRigour` itself at the call site.
 
 - [ ] **Step 4: Run the tests to see them pass**
 
@@ -1363,7 +1363,7 @@ Expected: FAIL — every preset runs the same fan-out today.
   const rules = rulesOf(rowRigour)
 ```
 
-Every `rules.` reference in this task and in Task 10 reads that one binding. (Task 7 resolves `rowRigour` itself and logs what it means; it declares no `rules`, because an unused binding fails lint.)
+Every `rules.` reference in this task and in Task 10 reads that one binding. (Task 7 resolves `rowRigour` itself and logs what it means; it declares no `rules`, because nothing there reads one and the house rule is to build only what a change makes reachable.)
 
 **Check the scope reaches Task 10's reads before you place it.** The Review phase sits inside the row loop's `if (enterAt !== 'ladder')` block, and Task 10 reads `rules.verifyFindings` in the verify and judge sections. If those sections are inside that same block, a binding at the top of the Review phase serves them; if they are not, put it where the row's `builderPhases` is computed instead, which both reach. Read the braces, do not assume.
 
@@ -2674,7 +2674,8 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     wrong file. The implementer made it conditional and flagged it for a decision rather than quietly diverging.
     Accepted, with an assertion added to each of the two tests that drive it, including that the rigour message
     does NOT mention `config.repos`.
-18. **Task 7's prescribed code declared a binding nothing in Task 7 reads, which fails lint.** Caught by reading
+18. **Task 7's prescribed code declared a binding nothing in Task 7 reads** (which the plan wrongly said would
+    fail lint — see entry 36; the real reason is "build only what this change makes reachable"). Caught by reading
     the plan before dispatch rather than by a reviewer. The first correction was wrong too — it said Task 8 would
     declare `rules`, when Task 8 needs only a function-local `rulesOf(rigour)` inside `reviewedPlan`, so removing
     it from Task 7 left Tasks 9 and 10 reading a binding that existed nowhere. Task 9 now declares it, with an
@@ -2775,7 +2776,37 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     that the convention is a poor one to hand to Tasks 9 to 11. Left as it is: `'twice'` is the only special
     case, a typo in it degrades loudly rather than silently (a test catches it), and the fields Tasks 9 to 11
     read are booleans and an explicitly-compared enum, so the fall-through does not generalise.
-33. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+34. **Dropping the consistency reviewer at `fast` orphaned four judgements, and the plan did not know it.** Four
+    other prompts delegate work to "the consistency reviewer" — the plan's decisions and docs-made-untrue lists,
+    the implementor's notes, the spec-sync reason, and the Probes and Docs lines — and the ladder is explicitly
+    told to stop short of them ("Run nothing more here: the consistency reviewer has judged what the lines
+    claim"). The plan gave `fast`'s whole-change reviewer only the cross-file *lens*, so at `fast` nobody would
+    have read any of the four. Closed by extracting the four rule builders and handing them to both whole-change
+    reviewers, which also removed an existing duplicate of the same four-call sequence. The reviewer verified the
+    selection by enumerating every delegation site independently: the four map one-to-one.
+35. **But that hand-over overloads one agent, and the fix is its own task.** Task 9's reviewer enumerated what
+    `fast`'s single reviewer is then asked to do: read two persona files (~57 KB) in full; review every changed
+    file in every repo on its own merits across eight dimensions; read the change across files for four classes of
+    inconsistency; judge the plan's departures; judge every claim in the implementor's notes; **run two git
+    commands against `openspec/` and judge the spec write against the plan's section 8 and `openspec/config.yaml`
+    across seven failure modes**; and **search `docs/`, the recipes, every changed function's doc comment, comments
+    within ten lines of every hunk, and convention test names** to judge one `Docs updated:` line. The last two are
+    not judgements over material already in front of it — they are separate investigations with their own evidence.
+    And it runs on the `code` tier, where the consistency reviewer it absorbs runs on `think`: the table has a
+    `planTier` but no review tier, so that demotion was implicit and nobody chose it. **Queued as its own task:**
+    (a) give the ladder those two judgements at `fast` — it already reads the same notes at every preset and
+    already runs the spec validate and lint, so flipping one sentence by preset moves the work to the agent already
+    in those files; and (b) add `reviewTier` to `RIGOUR_RULES`, `think` at `fast`, since one `think` reviewer still
+    costs far less than three on `code` and it is the only reader. Without this, `fast` is cheap rather than safe,
+    and the design's claim that lowering rigour never lowers correctness does not hold.
+36. **A mechanism the plan cited does not exist: nothing lints the loop script.** Entries 18 and Task 7's note
+    justify where a binding lives by "an unused binding fails lint". There is no root `package.json` or eslint
+    config, and `tim`'s `npm run lint` runs `eslint .` inside `tim/`, so `.claude/skills/**/*.js` is unlinted —
+    `tim-ci.yml` triggers on changes to it and runs `tim`'s own suite, which exercises the loop through the test
+    harness, but no linter reads it. The decisions were right for a different reason, the house rule "Build only
+    what this change makes reachable", and that is the reason to give. Recorded because a false mechanism in a
+    plan is worse than no reason: the next person to rely on it will be surprised.
+37. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

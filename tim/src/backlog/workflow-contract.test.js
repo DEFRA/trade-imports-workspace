@@ -2092,6 +2092,32 @@ describe('increment-build-loop', () => {
         )
       })
 
+      const runToReviewWithDefaultModels = (rigour, changedFiles) =>
+        runFromWithArgs(
+          { rigour, models: {} },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(changedFiles)
+        )
+
+      test('reviews the whole change on the think tier at fast', async () => {
+        const run = await runToReviewWithDefaultModels('fast', [
+          'frontend:src/a.js'
+        ])
+
+        expect(modelOf(run, 'inc-900 review:whole')).toBe('opus')
+      })
+
+      test('keeps a group code reviewer on the code tier at full', async () => {
+        const run = await runToReviewWithDefaultModels('full', [
+          'frontend:src/a.js'
+        ])
+
+        expect(modelOf(run, 'inc-900 review:frontend-javascript')).toBe(
+          'sonnet'
+        )
+      })
+
       test('verifies findings with one verifier per group', async () => {
         const run = await runThroughFixToLadder()
 

@@ -5624,7 +5624,7 @@ the ladder judges what those lines claim at this rigour.`
         diffCommand: `each file's own repo:\n${wholeChangeDiffCommands}`,
         crossChangeDuties: wholeChangeDuties
       }),
-      code({ label: `${id} review:${WHOLE_CHANGE_LABEL}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      think({ label: `${id} review:${WHOLE_CHANGE_LABEL}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
   const consistencyReview = () =>

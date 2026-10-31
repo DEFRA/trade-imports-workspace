@@ -34,8 +34,11 @@ the fullest shape:
 - **`full`** — one run per (repo, language) group of changed files, applying the style and code personas
   to that group, plus one consistency run across the whole change.
 - **`standard`** — the same, with the code persona only: no style reviewer runs.
-- **`fast`** — one run across the whole change, with the code persona, and no consistency run beside it.
-  Whatever another prompt leaves to "the consistency reviewer" belongs to that one run.
+- **`fast`** — one run across the whole change, with the code persona, and no consistency run beside it. Where
+  another prompt leaves the plan's own decisions or the implementor's notes to "the consistency reviewer", they
+  belong to that one run. The spec sync and the `Probes:`/`Docs updated:` lines do not: the ladder judges what
+  those claim at this rigour. Your own instructions say which duties are yours — they are the authority, not
+  this list.
 
 - `<reviewFiles>` is your share. Where it lists files, each written `<repoKey>:<repo-relative path>`,
   review every one in full and report findings on those files only. Where it is the whole change, look

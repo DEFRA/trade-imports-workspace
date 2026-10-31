@@ -27,15 +27,22 @@ resolutions it describes, not what the merged ref brought.
 
 ## Your share of the review
 
-The review is split the same way whichever executor runs it: one run per (repo, language) group of
-changed files, applying the style and code personas to that group, plus one consistency run across the
-whole change. You are ONE of those runs.
+How the review is split depends on the row's `rigour`, the same way whichever executor runs it. You are
+ONE run of whichever shape applies — your own instructions say which, so read them rather than assuming
+the fullest shape:
 
-- `<reviewFiles>` is your share. For a group run it lists the files, each written
-  `<repoKey>:<repo-relative path>`: review every one of them in full and report findings on those files
-  only — another run has each other group. For the consistency run it is the whole change: look across
-  files and repos, not at one file on its own merits.
-- `<personas>` is the persona file or files to apply. Apply those and no other.
+- **`full`** — one run per (repo, language) group of changed files, applying the style and code personas
+  to that group, plus one consistency run across the whole change.
+- **`standard`** — the same, with the code persona only: no style reviewer runs.
+- **`fast`** — one run across the whole change, with the code persona, and no consistency run beside it.
+  Whatever another prompt leaves to "the consistency reviewer" belongs to that one run.
+
+- `<reviewFiles>` is your share. Where it lists files, each written `<repoKey>:<repo-relative path>`,
+  review every one in full and report findings on those files only. Where it is the whole change, look
+  across files and repos as well as at each file on its own merits.
+- `<personas>` is the persona file or files to apply. Apply those and no other. If the style persona is
+  not bound, this row's rigour runs no style reviewer, and formatting is out of scope rather than
+  somebody else's.
 
 ## Step 1 — load the standard
 

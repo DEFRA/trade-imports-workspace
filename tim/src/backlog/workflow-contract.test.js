@@ -6277,6 +6277,33 @@ describe('increment-build-loop', () => {
         })
       })
 
+      test('names the rigour of a row that did not take the run’s', async () => {
+        const run = await runBranch(
+          { rigour: 'standard' },
+          { ...MERGE_ROW, rigour: 'full' },
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          ...reviewedAndLanded,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'landed',
+          rigour: 'full'
+        })
+      })
+
+      test('leaves rigour out of a row that took the run’s', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0]).not.toHaveProperty('rigour')
+      })
+
       const runFastMergeRow = (...after) =>
         runBranch(
           { rigour: 'fast' },
@@ -7660,6 +7687,12 @@ describe('increment-build-loop', () => {
       'inc-014 gate check': { ok: true, summary: 'no gate' }
     }
 
+    const startedAtRigour = (rigour) =>
+      startAnswer({
+        ...JSON.parse(ANSWERS['inc-014 start'].stdout).result,
+        rigour
+      })
+
     const isReviewer = (label) =>
       /^inc-014 (style|review):|consistency$/.test(label)
 
@@ -7812,6 +7845,19 @@ describe('increment-build-loop', () => {
           branch: WORK_BRANCH,
           outcome: 'landed',
           prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('names the rigour of a landed row that did not take the run’s', async () => {
+        const run = await runPerf(
+          { rigour: 'standard' },
+          { 'inc-014 start': startedAtRigour('full') }
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'landed',
+          rigour: 'full'
         })
       })
 

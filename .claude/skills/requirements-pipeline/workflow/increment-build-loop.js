@@ -5179,10 +5179,10 @@ while (stopped === null) {
   let baselineEvidence = ''
   let mergeNote = ''
   let resumedFrom = null
+  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   log(
     `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
   )
-  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,
     confirmed: confirmed.length,

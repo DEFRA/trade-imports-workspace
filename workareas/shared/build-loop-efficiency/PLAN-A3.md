@@ -2806,7 +2806,36 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     harness, but no linter reads it. The decisions were right for a different reason, the house rule "Build only
     what this change makes reachable", and that is the reason to give. Recorded because a false mechanism in a
     plan is worse than no reason: the next person to rely on it will be surprised.
-37. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+37. **At `fast`, a rejected finding fell out of the theme review's backstop — and that backstop is the design's
+    stated reason `fast` is safe.** At `full` and `standard` a refuted finding is pushed to `refutedFindings` and
+    reaches the theme engineering review as `themeRefutedCheck`: "read each one and confirm none was real". At
+    `fast` nothing is pushed, so a finding the judge rejects survives only as `reject: <what>` in the judgement
+    calls — no reason, no quote, no theme-level re-read. Dropping the verifier removed the one class of finding
+    that backstop exists to catch. Fixed by recording the judge's rejections at `fast` into `refutedFindings`, so
+    the theme review re-reads them whatever the preset. This is implementing the design rather than changing it:
+    DESIGN.md's A3 says the theme review "is the backstop for whatever a `fast` row's single reviewer missed, so
+    making it configurable would remove the thing that makes `fast` safe to choose".
+38. **Task 10 fixed the human-readable claim and left the machine-readable twin.** `findingTally()` learned to say
+    "none verified" in the LANDED log; `findingCounts()`, which goes into the run's returned result for every
+    outcome and is what an orchestrator and the handover prompt parse, still reported `confirmed: N, refuted: 0`
+    for a row where nothing was verified. Same defect, same commit, two audiences — and the one that was missed is
+    the one read by a machine. **Carry this forward:** when a preset changes what a stage did, fix the log *and*
+    the structured result, and check which of the two a reader actually parses.
+39. **The `fast` judge was given the verifier's duty without the verifier's equipment.** `UNVERIFIED_FINDINGS_DUTY`
+    tells it to test each finding against the code, but the verifier's prompt also hands over three things the
+    judge was not given: the literal diff command for each file (including the workspace variant's warning that an
+    untracked file shows in no diff), the instruction that a finding's `<repoKey>:` prefix is dropped to get the
+    path, and — most importantly — "Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or
+    fall together, and the number of them tells you nothing about whether any one is real." That last line exists
+    to stop a batch rejection, and it matters *more* at `fast`, where one agent both produces the list and rules on
+    it. A duty moved between agents moves with its equipment, or it is not the same duty.
+40. **A mutation probe can be the wrong probe.** Task 10 reported that flipping all three `verifyFindings` to
+    `false` reddened all three new tests. It reddens 53 tests but not `runs no verifier at fast` — correctly, since
+    `fast` was already `false`. The right probe for that one is flipping `fast.verifyFindings` to `true`, which
+    reddens exactly five including it. All three tests do have teeth; the evidence offered was not the evidence
+    that proves it. Recorded because "I mutated it and tests failed" is only evidence when the mutation is the one
+    the test is supposed to catch.
+41. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

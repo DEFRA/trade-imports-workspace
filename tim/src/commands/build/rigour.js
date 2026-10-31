@@ -40,21 +40,22 @@ export const rigourProposal = (workspaceRoot, workarea) => {
 }
 
 /**
- * The plain-text report of `tim build rigour`, one row a line.
+ * The plain-text report of `tim build rigour`: the id, the preset and the
+ * title of each row, with the reason beneath it.
  *
- * @param {{path: string, rows: {id: string, rigour: string, reason: string}[]}} result
+ * @param {{path: string, rows: {id: string, title: string, rigour: string, reason: string}[]}} result
  * @returns {string}
  */
 export const renderRigourText = ({ rows }) => {
   const presetWidth = 8
+  const gap = 2
+  const linesFor = (entry) => [
+    `${entry.id}  ${entry.rigour.padEnd(presetWidth)}  ${entry.title}`,
+    `${' '.repeat(entry.id.length + presetWidth + gap * 2)}${entry.reason}`
+  ]
   return rows.length === 0
     ? 'Every increment is built out: there is nothing to propose a rigour for.'
-    : rows
-        .map(
-          (entry) =>
-            `${entry.id}  ${entry.rigour.padEnd(presetWidth)}  ${entry.reason}`
-        )
-        .join('\n')
+    : rows.flatMap(linesFor).join('\n')
 }
 
 const reportError = (error, json, timVersion) => {

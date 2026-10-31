@@ -1,5 +1,12 @@
 import { describe, test, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { loadBacklogSchema, rigoursOf } from '../backlog/backlog-schema.js'
 import { proposeRigour } from './rigour.js'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const workspaceRoot = join(here, '..', '..', '..')
 
 const ENVELOPE = {
   backend: { path: 'repos/trade-imports-animals-backend' },
@@ -58,10 +65,10 @@ describe('proposeRigour', () => {
     })
   })
 
-  test('proposes fast for a row the gate runs nothing for', () => {
+  test('proposes standard for a one-service row the gate runs no phase for', () => {
     expect(proposalsFor(row({ gatePhases: [] }))[0]).toMatchObject({
-      rigour: 'fast',
-      reason: 'the gate runs no phase for it'
+      rigour: 'standard',
+      reason: 'one service repo, frontend'
     })
   })
 
@@ -108,5 +115,18 @@ describe('proposeRigour', () => {
       rigour: 'full',
       reason: 'backend and frontend: a contract between repos'
     })
+  })
+
+  test('proposes exactly the rigour presets a row may set', () => {
+    const source = readFileSync(join(here, 'rigour.js'), 'utf8')
+    const proposed = [
+      ...new Set(
+        [...source.matchAll(/rigour: '([a-z]+)'/g)].map(([, it]) => it)
+      )
+    ]
+
+    expect(proposed.sort()).toEqual(
+      rigoursOf(loadBacklogSchema(workspaceRoot)).sort()
+    )
   })
 })

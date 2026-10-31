@@ -118,7 +118,7 @@ describe('tim build rigour', () => {
     )
   })
 
-  test('prints a line a row, lined up, without --json', async () => {
+  test('prints each row and its reason, lined up, without --json', async () => {
     writeBacklog([row(), row({ id: 'inc-002', kind: 'docs' })])
 
     const run = await runTim(['rigour', WORKAREA])
@@ -126,29 +126,31 @@ describe('tim build rigour', () => {
     expect(run.exitCode).toBe(0)
     expect(run.stdout).toBe(
       [
-        'inc-001  standard  one service repo, frontend',
-        'inc-002  fast      a docs row changes no production behaviour'
+        'inc-001  standard  Show the notification list',
+        '                   one service repo, frontend',
+        'inc-002  fast      Show the notification list',
+        '                   a docs row changes no production behaviour'
       ].join('\n')
     )
   })
 })
 
 describe('renderRigourText', () => {
-  test('lines up the id, the preset and the reason', () => {
+  test('keeps the title whole and indents the reason under it', () => {
     expect(
       renderRigourText({
         path: '/ws/workareas/shared/demo/backlog.json',
         rows: [
           {
             id: 'inc-001',
-            title: 'A',
+            title: 'Show the notification list',
             rigour: 'standard',
             source: 'derived',
             reason: 'one service repo, frontend'
           },
           {
             id: 'inc-002',
-            title: 'B',
+            title: 'Say which files were scanned',
             rigour: 'fast',
             source: 'row',
             reason: 'set on the row'
@@ -156,7 +158,12 @@ describe('renderRigourText', () => {
         ]
       })
     ).toBe(
-      'inc-001  standard  one service repo, frontend\ninc-002  fast      set on the row'
+      [
+        'inc-001  standard  Show the notification list',
+        '                   one service repo, frontend',
+        'inc-002  fast      Say which files were scanned',
+        '                   set on the row'
+      ].join('\n')
     )
   })
 

@@ -17,9 +17,6 @@ const rigourAndReasonFor = (row, envelope) => {
       reason: 'no backlog repo: the change is in the workspace repo'
     }
   }
-  if (Array.isArray(row.gatePhases) && row.gatePhases.length === 0) {
-    return { rigour: 'fast', reason: 'the gate runs no phase for it' }
-  }
   if (fastKinds.has(row.kind)) {
     return {
       rigour: 'fast',

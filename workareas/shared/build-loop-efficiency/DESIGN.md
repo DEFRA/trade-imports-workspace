@@ -294,6 +294,32 @@ are the ones that change what the design says.
 `.claude/skills/**/*.js`. There is no root eslint config, and `tim`'s own lint runs inside `tim/`.
 The loop is held by its contract test, not by a linter.
 
+### The safety argument covers one lifecycle, not both
+
+This design says the theme engineering review "is the backstop for whatever a `fast` row's single
+reviewer missed, so making it configurable would remove the thing that makes `fast` safe to choose".
+Building A3 established that **the theme engineering review runs under the branch lifecycle only** —
+`builtTheme` is `null` under the full one, because there is no theme to review when each row cuts its
+own branch, raises its own pull request and merges on its own. The design did not notice, because the
+run it was written from was a branch-lifecycle theme.
+
+So the two lifecycles do not get the same `fast`:
+
+- **Branch lifecycle** — one whole-change reviewer on `think`, the judge verifying its own findings,
+  the gate, the ladder (which also judges the spec sync and the probes and docs lines there), CI, and
+  **the theme engineering review across every repo once the last row lands**, which re-reads every
+  finding the judge rejected.
+- **Full lifecycle** — the same, minus the theme review. What stands in its place is that every row
+  reaches `main` through its own pull request with CI green on it, which is a real gate but not a
+  second reading of the change.
+
+That is not necessarily wrong — a per-row pull request is a different kind of check, not an absent one
+— but it is not what this design claimed, and the claim was load-bearing. **Before `fast` is used on
+a full-lifecycle programme, decide whether a pull request is enough on its own**, and if it is not,
+the options are to require `requireApproval` for `fast` rows, or to refuse `fast` under
+`lifecycle: 'full'`, or to give the full lifecycle an equivalent end-of-run review. None of those is
+built, and none should be chosen from this document alone.
+
 ## A4 — Machine and process
 
 - **`config/machine.json`** did not exist, so the gate ran every FIT and e2e rung at the worker

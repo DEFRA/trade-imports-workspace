@@ -2858,7 +2858,25 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     row is `done`, `merged-into` or `dropped` and the honest answer is "there is nothing to propose a rigour for".
     The verification step now checks the derivation against the rows with their statuses forced to `todo` in a
     scratch copy, which is what the step was actually trying to test.
-43. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+43. **The theme engineering review runs under the branch lifecycle only, and the design's safety argument
+    rested on it.** Found by Task 13 while checking a sentence it had been told to write: the plan and DESIGN.md
+    both say that review "runs once per theme", unqualified, and DESIGN.md names it as the reason `fast` is safe
+    to choose. `builtTheme` is `null` under the full lifecycle — there is no theme to review when each row cuts
+    its own branch and merges on its own. So a `fast` row under the full lifecycle has no second reading of the
+    change at all: one whole-change reviewer, a judge verifying its own findings, the gate, the ladder and a
+    per-row pull request with CI. That may well be enough, but it is not what the design claimed, and the claim
+    was load-bearing. Recorded in DESIGN.md with the three options — require approval for `fast` rows, refuse
+    `fast` under `lifecycle: 'full'`, or give the full lifecycle an end-of-run review — **none of them built, and
+    not a decision to take from a document.** Both documents now say which lifecycle that review belongs to.
+44. **Task 13 found six more places the plan's prose had gone stale**, every one followed to the code instead:
+    "default standard" where the key is required with no fallback; the proposal keyed on "what the gate runs for
+    it", deleted by entry 41; a sample output in the old single-line format; a `requireApproval` paragraph that
+    omitted the plan lint and the ladder's two new judgements; "the plan reviewed, revised and re-reviewed" read
+    as unconditional when `reviewedPlan` returns early on an approving review; and a README row that named
+    neither the `fast` reviewer's `think` tier nor the `{unverified, rejected}` result shape. It also corrected
+    the `models` entry's tier lists in BUILD.md — the same drift the plan had already fixed in the README, in the
+    file that has no test behind it.
+45. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

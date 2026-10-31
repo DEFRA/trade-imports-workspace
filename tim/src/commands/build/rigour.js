@@ -82,7 +82,7 @@ export const registerRigour = (build, timVersion) =>
   build
     .command('rigour <workarea>')
     .description(
-      'Propose a rigour preset for every increment still to build — full, standard or fast — from the row and nothing else: its repos, its kind and what the gate runs for it. A row that sets its own rigour keeps it. The reason beside each row says what the proposal keyed on; what a row is really worth is in the code it changes, which this cannot read, so the launch shows these and the operator decides. Change one with `tim backlog set <workarea> <id> --rigour <preset>`.'
+      'Propose a rigour preset for every increment still to build — full, standard or fast — from the row and nothing else: its repos and its kind. A row that sets its own rigour keeps it. The reason beside each row says what the proposal keyed on; what a row is really worth is in the code it changes, which this cannot read, so the launch shows these and the operator decides. Change one with `tim backlog set <workarea> <id> --rigour <preset>`.'
     )
     .addHelpText(
       'after',

@@ -2231,7 +2231,7 @@ export const registerRigour = (build, timVersion) =>
   build
     .command('rigour <workarea>')
     .description(
-      "Propose a rigour preset for every increment still to build — full, standard or fast — from the row and nothing else: its repos, its kind and what the gate runs for it. A row that sets its own rigour keeps it. The reason beside each row says what the proposal keyed on; what a row is really worth is in the code it changes, which this cannot read, so the launch shows these and the operator decides. Change one with `tim backlog set <workarea> <id> --rigour <preset>`."
+      "Propose a rigour preset for every increment still to build — full, standard or fast — from the row and nothing else: the repos it names and its kind. A row that sets its own rigour keeps it. The reason beside each row says what the proposal keyed on; what a row is really worth is in the code it changes, which this cannot read, so the launch shows these and the operator decides. Change one with `tim backlog set <workarea> <id> --rigour <preset>`."
     )
     .addHelpText(
       'after',
@@ -2489,10 +2489,11 @@ At the end of the A3 section, after "**Recovers:** most of the ~211M planning sp
 3. **"No style reviewers" means the Review phase's, and nothing else.** The style re-review of the fixer's hunks
    and the style review of each CI fixer commit run at every preset: both of those agents work after every other
    reviewer, so they are the only readers of their lines, and the CI fixer pushes straight to an open pull request.
-4. **The proposal keys on the row, because it cannot read the code.** `tim build rigour` keys on a row's repos,
-   its kind and what the gate runs for it. The design's own example gives a row `fast` for "behaviour already on
-   main" and another `full` for "extends shared/kit.js" — neither is in the row. So every proposed row carries
-   the reason it keyed on, and the intake says in as many words that the operator is deciding, not confirming.
+4. **The proposal keys on the row, because it cannot read the code.** `tim build rigour` keys on the repos a row
+   names and its kind — **not** on what the gate runs for it, and not on whether a gate runs at all; see entries
+   41 and 46. The design's own example gives a row `fast` for "behaviour already on main" and another `full` for
+   "extends shared/kit.js" — neither is in the row. So every proposed row carries the reason it keyed on, and the
+   intake says in as many words that the operator is deciding, not confirming.
 5. **A1 and A2 each left their key out of BUILD.md's copy-paste args block.** Found while adding `rigour` to it,
    and fixed in the same pass: a session building its args from that block got a run that stopped before its
    first agent naming a missing key. The reason the same two keys *did* reach the workflow README's argument
@@ -2876,7 +2877,21 @@ Kept as the build walks the tasks, so the plan and what landed do not diverge.
     neither the `fast` reviewer's `think` tier nor the `{unverified, rejected}` result shape. It also corrected
     the `models` entry's tier lists in BUILD.md — the same drift the plan had already fixed in the README, in the
     file that has no test behind it.
-45. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
+46. **The same inversion survived one rule over, and only a second review caught it.** Entry 41 deleted the
+    `gatePhases: []` clause for reading *where* a row is verified as *how much it deserves*. The surviving
+    `repos: []` rule did the same thing: a row that changes no **backlog** repo was proposed `fast` whatever its
+    kind — but the workspace repo holds `tim`, the skills and the build loop itself, under 3,615 tests, so a
+    `feat` or `refactor` row rewriting the loop got `fast` because no service gate reads it. The plan's rationale
+    for that rule, "a row that changes no backlog repo has no production behaviour to read", is the part that was
+    wrong: the workspace repo *is* production code for this pipeline. Now `repos: []` proposes `fast` only for a
+    `docs` or `test` row and `standard` otherwise. **The lesson is not the rule, it is that fixing one instance of
+    a reasoning error does not fix the reasoning** — after entry 41 I believed the inversion was dealt with, and
+    it was sitting in the next clause down.
+47. **The plan prescribed the stale "what the gate runs for it" sentence twice more**, in Task 12's command
+    description and in Task 13's docs text, and Task 13 was already running when the review found it. Task 13
+    caught it itself and wrote the truth instead. Both plan sites corrected. A deleted rule has to be deleted from
+    every place that advertises it, and a plan that prescribes prose is one of those places.
+48. **Declined: an own-property guard in `rulesOf`.** Task 8's reviewer noted that `RIGOUR_RULES['constructor']`
     walks the prototype chain and yields an object whose `planTier` is undefined, which `withTier` would accept
     and silently resolve to the session model — the exact silent mis-tiering this task exists to prevent. Checked
     the reachability myself rather than taking it: `RIGOUR_PRESETS.includes('constructor')` is false, so the

@@ -2073,6 +2073,9 @@ const refutedRecordOf = (id, { file, line, category, severity, what, refutedBeca
   ...(refutingQuote ? { quote: refutingQuote } : {})
 })
 
+const judgeRejectionRecord = (id, decision) =>
+  refutedRecordOf(id, { file: WHOLE_CHANGE, what: decision.what, refutedBecause: decision.reasoning })
+
 const describeRefuted = (record) =>
   `${record.file}${record.line ? `:${record.line}` : ''} [${record.category ?? 'no category'}] ${record.what} — refuted: ${record.reason}`
 
@@ -5820,6 +5823,13 @@ ${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
         }),
         think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
+    if (!rules.verifyFindings) {
+      const rejected = (judgement.decisions ?? [])
+        .filter((decision) => decision.call === 'reject')
+        .map((decision) => judgeRejectionRecord(id, decision))
+      refutedFindings.push(...rejected)
+      for (const record of rejected) log(`${id}: REJECTED ${describeRefuted(record)}`)
+    }
   }
 
   const codexFix = async ({ stage, ruledFixes, treeDuty }) => {

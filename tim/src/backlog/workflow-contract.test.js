@@ -5193,6 +5193,60 @@ describe('increment-build-loop', () => {
             ])
           })
 
+          test('lists a finding the judge rejected at fast in the same review check', async () => {
+            const landedWithRejectedFinding = LANDED.toSpliced(
+              3,
+              3,
+              { findings: [FINDING] },
+              {
+                decisions: [
+                  {
+                    what: 'The origin is not saved.',
+                    call: 'reject',
+                    reasoning: 'Saved in src/b.js:4.'
+                  }
+                ],
+                fixNow: [],
+                summary: 'one reject'
+              }
+            )
+            const run = await runLoop(scriptPath, {
+              args: {
+                ...BASE_ARGS,
+                increments: null,
+                stopAfter: 1,
+                rigour: 'fast'
+              },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithRejectedFinding
+              ],
+              themes: {
+                'inc-901 theme': BUILT,
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect(run.result.reviewChecks).toEqual([
+              {
+                id: 'inc-901',
+                check:
+                  'Theme origin-pages is built. Review dropped 1 finding(s) as refuted across its rows: read each one and confirm none was real.',
+                refuted: [
+                  {
+                    id: 'inc-901',
+                    file: '(whole change)',
+                    category: null,
+                    what: 'The origin is not saved.',
+                    reason: 'Saved in src/b.js:4.'
+                  }
+                ]
+              }
+            ])
+          })
+
           test('records a clean check and carries on', async () => {
             const run = await runThemed({ status: BUILT, specCheck: CLEAN })
 

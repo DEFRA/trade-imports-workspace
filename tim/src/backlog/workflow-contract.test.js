@@ -792,7 +792,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour fast — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself'
+      'increment-build-loop: rigour fast — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself'
     )
   })
 
@@ -1577,7 +1577,7 @@ describe('increment-build-loop', () => {
       const run = await runStartedWith(startedResult({ rigour: 'fast' }), null)
 
       expect(run.logs).toContain(
-        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
       )
     })
 
@@ -2164,6 +2164,59 @@ describe('increment-build-loop', () => {
         expect(stageLabels(run)).toContain('inc-900 fix review')
       })
 
+      test('gives the judge at fast the verifier’s equipment: the diff command, the path rule and the independence rule', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain(
+          "in its reasoning. See the change in\neach file's own repo:\n- in frontend: `git -C ~/ws/repos/trade-imports-animals-frontend diff --staged -- <path>`\ndropping a finding's `<repoKey>:` prefix to get <path>."
+        )
+        expect(prompt).toContain(
+          'Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of\nthem tells you nothing about whether any one is real.'
+        )
+      })
+
+      test('tells the judge at fast how the verifier’s defaults map onto a judge’s call', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain('your call is reject')
+        expect(prompt).toContain('You have no real field and no quote field')
+        expect(prompt).not.toContain('permalinks where the verifier gave them')
+        expect(prompt).toContain(
+          'permalinks where your reading of the design source gave them'
+        )
+      })
+
+      test('tells the judge at fast to diff a workspace file against HEAD and read an untracked one', async () => {
+        const run = await runFromWithArgs(
+          { rigour: 'fast' },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['workspace:docs/x.md']),
+          { findings: [{ ...FINDING, file: 'workspace:docs/x.md' }] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+
+        expect(promptOf(run, 'inc-900 judge')).toContain(
+          '- in workspace: `git -C ~/ws diff HEAD -- <path>` (a new, untracked file shows in no diff: Read it in full)'
+        )
+      })
+
       test('tells a judge at full that its findings already survived verification', async () => {
         const run = await runToJudgeAt('full', ...FIX_STAGE_ANSWERS)
         const prompt = promptOf(run, 'inc-900 judge')
@@ -2172,6 +2225,8 @@ describe('increment-build-loop', () => {
           'CONFIRMED FINDINGS (each survived verification'
         )
         expect(prompt).not.toContain('NO VERIFIER RAN')
+        expect(prompt).toContain('permalinks where the verifier gave them')
+        expect(prompt).not.toContain('Judge each finding INDEPENDENTLY')
       })
 
       test('hands the ladder every baseline rung with its log', async () => {
@@ -3030,6 +3085,33 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain('`Spec sync: none — <reason>`')
+        })
+
+        test('tells the implementor the consistency reviewer checks its reason at full', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'The consistency reviewer checks that reason and the ladder validates the write again.'
+          )
+        })
+
+        test('tells the implementor the ladder checks its reason at fast, where no consistency reviewer runs', async () => {
+          const run = await runFromWithArgs(
+            { rigour: 'fast' },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS
+          )
+          const prompt = promptOf(run, 'inc-900 implement')
+
+          expect(prompt).toContain(
+            'The ladder checks that reason and judges the write.'
+          )
+          expect(prompt).not.toContain('The consistency reviewer checks')
         })
 
         test('hands the consistency reviewer the implementor’s spec sync line to judge', async () => {
@@ -5531,6 +5613,31 @@ describe('increment-build-loop', () => {
           ).toEqual([])
         })
 
+        test('tells the codex whole-change run which judgements are the ladder’s, not its own', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview({ rigour: 'fast' }),
+            'review-whole'
+          )
+
+          expect(prompt).toContain(
+            'judgements another prompt leaves to a consistency reviewer are yours — except the spec sync and the probes and docs\nlines, which the ladder judges at this rigour.'
+          )
+          expect(prompt).toContain('THE PLAN IS NOT A DEFENCE')
+          expect(prompt).toContain("THE IMPLEMENTOR'S NOTES")
+          expect(prompt).not.toContain('THE SPEC SYNC is part of the change')
+          expect(prompt).not.toContain('PROBES AND DOCS are part of the change')
+        })
+
+        test('keeps all four cross-change duties in the codex consistency run', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview(),
+            'review-consistency'
+          )
+
+          expect(prompt).toContain('THE SPEC SYNC is part of the change')
+          expect(prompt).toContain('PROBES AND DOCS are part of the change')
+        })
+
         test('tells the codex implementor to follow the plan’s decisions and to own names and code shape', async () => {
           const prompt = codexShellPrompt(
             await runCodexToReview(),
@@ -5956,7 +6063,7 @@ describe('increment-build-loop', () => {
         )
 
         expect(run.logs).toContain(
-          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one code reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
         )
       })
 
@@ -6047,6 +6154,52 @@ describe('increment-build-loop', () => {
           prs: ['https://github.com/DEFRA/trade-imports-ins-tests/pull/227'],
           ci: 'green'
         })
+      })
+
+      const runFastMergeRow = (...after) =>
+        runBranch(
+          { rigour: 'fast' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          ...after
+        )
+
+      test('counts a row’s findings as confirmed and refuted where a verifier ran', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 0,
+          confirmed: 0,
+          refuted: 0,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('counts them as unverified, never confirmed, where no verifier ran', async () => {
+        const run = await runFastMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 0,
+          unverified: 0,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('says the findings went unverified in the landed tally at fast', async () => {
+        const run = await runFastMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.logs).toContain(
+          `inc-900: LANDED on ${WORKING_BRANCH}, CI green — 0 findings, 0 unverified, 0 fixed`
+        )
       })
 
       const ATTEMPT = {

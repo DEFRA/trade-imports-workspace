@@ -391,7 +391,7 @@ const rigourSummary = (rigour) => {
   return [
     `a ${rules.planTier}-tier plan, ${planReviewPhrases[rules.planReview]}`,
     rules.styleReviewers ? 'style reviewers' : 'no style reviewers',
-    rules.reviewScope === 'whole' ? 'one code reviewer across the whole change' : 'a code reviewer per (repo, language) group',
+    rules.reviewScope === 'whole' ? 'one reviewer across the whole change' : 'a code reviewer per (repo, language) group',
     rules.consistencyReview ? 'a consistency review' : 'no consistency review',
     rules.verifyFindings ? 'and findings verified before the judge' : 'and findings verified by the judge itself'
   ].join(', ')
@@ -776,7 +776,12 @@ const specSkillStep = () =>
    follow it, as the line about that skill above says, then run step 3's lint as well. Otherwise do`
     : 'Do'
 
-const specSyncDuty = () => `
+const SPEC_SYNC_REASON_CHECKED_BY_REVIEWER =
+  'The consistency reviewer checks that reason and the ladder validates the write again.'
+
+const SPEC_SYNC_REASON_CHECKED_BY_LADDER = 'The ladder checks that reason and judges the write.'
+
+const specSyncDuty = (rigour) => `
 THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos. It lives in the workspace repo, \`${TILDE}/openspec/\`.
 ${SPEC_RECORDS}
 ${SPEC_PREFIX_TABLE}
@@ -794,7 +799,7 @@ ${SPEC_PREFIX_TABLE}
    ${SPEC_WHOLE_CAPABILITY}
 4. Leave \`openspec/\` uncommitted: the land stage commits it.
 5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
-   The consistency reviewer checks that reason and the ladder validates the write again.`
+   ${rulesOf(rigour).consistencyReview ? SPEC_SYNC_REASON_CHECKED_BY_REVIEWER : SPEC_SYNC_REASON_CHECKED_BY_LADDER}`
 
 const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
 duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
@@ -2206,9 +2211,14 @@ const findingLine = (finding, index) =>
 const confirmedFindingLine = (finding, index) =>
   `${findingLine(finding, index)}\n   SURVIVED VERIFICATION BECAUSE: ${finding.verdict}`
 
-const UNVERIFIED_FINDINGS_DUTY = `NO VERIFIER RAN for these findings: this row's rigour sends them straight to you, so you do the verifier's work
+const unverifiedFindingsDuty = (diffCommands) => `NO VERIFIER RAN for these findings: this row's rigour sends them straight to you, so you do the verifier's work
 first and the judge's second. Before you rule on a finding, test it against the ACTUAL code — read each file it
-names in full, not the diff alone — and say what you found, with file:line, in its reasoning.
+names in full, not the diff alone — and say what you found, with file:line, in its reasoning. See the change in
+each file's own repo:
+${diffCommands}
+dropping a finding's \`<repoKey>:\` prefix to get <path>.
+Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of
+them tells you nothing about whether any one is real.
 ${VERIFY_BY_KIND}
 A finding you cannot stand up by the default its kind sets is a reject, with the code quoted. Those defaults are
 written for a verifier's own output: where they say real:false, your call is reject, and the code they ask for in
@@ -2216,22 +2226,23 @@ written for a verifier's own output: where they say real:false, your call is rej
 
 `
 
-const findingsPreamble = (verified) =>
+const findingsForJudge = ({ findings, verified, diffCommands }) =>
   verified
     ? `CONFIRMED FINDINGS (each survived verification by the default its kind sets: a functional finding was tried for
-refutation, a code-quality finding stood unless code showed it factually wrong):`
-    : `${UNVERIFIED_FINDINGS_DUTY}THE FINDINGS, NOT YET VERIFIED:`
+refutation, a code-quality finding stood unless code showed it factually wrong):
+${findings.map(confirmedFindingLine).join('\n')}`
+    : `${unverifiedFindingsDuty(diffCommands)}THE FINDINGS, NOT YET VERIFIED:
+${findings.map(findingLine).join('\n')}`
 
-const designEvidenceReader = (verified) => (verified ? 'the verifier' : 'your reading of the design source')
+const designPermalinkSource = (verified) => (verified ? 'the verifier' : 'your reading of the design source')
 
-const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys, verified = true }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
+const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys, verified = true, diffCommands }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
 read ${SKILLS}/review/references/WALKER.md to understand the triage this substitutes for, then make every call
 YOURSELF. Do not defer to a human and do not ask anything.
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}
 ${context}
-${findingsPreamble(verified)}
-${confirmed.map(verified ? confirmedFindingLine : findingLine).join('\n')}
+${findingsForJudge({ findings: confirmed, verified, diffCommands })}
 
 FOR EACH finding decide exactly one of:
 - **fix-now** — the fix is clear. Anything that breaks an acceptance criterion, a security or correctness defect, a
@@ -2244,7 +2255,7 @@ FOR EACH finding decide exactly one of:
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
   Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
   its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design
-  source and the code at file:line (permalinks where ${designEvidenceReader(verified)} gave them) and the guide rule's link.
+  source and the code at file:line (permalinks where ${designPermalinkSource(verified)} gave them) and the guide rule's link.
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.
@@ -5230,14 +5241,15 @@ while (stopped === null) {
   const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,
-    confirmed: confirmed.length,
-    refuted: refuted.length,
+    ...(rules.verifyFindings
+      ? { confirmed: confirmed.length, refuted: refuted.length }
+      : { unverified: confirmed.length }),
     fixed: judgement.fixNow.length,
     foundInFix: fixReviewFindings.length
   })
 
   const findingTally = () =>
-    `${rawFindings.length} findings, ${confirmed.length} ${rulesOf(rowRigour).verifyFindings ? 'confirmed' : 'unverified'}, ${judgement.fixNow.length} fixed`
+    `${rawFindings.length} findings, ${confirmed.length} ${rules.verifyFindings ? 'confirmed' : 'unverified'}, ${judgement.fixNow.length} fixed`
 
   const attempt = { id, ticket, workBranch }
 
@@ -5274,6 +5286,7 @@ while (stopped === null) {
   log(
     `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
   )
+  const rules = rulesOf(rowRigour)
 
   build: {
     if (LANDED_RESUME_POINTS.includes(resumeAt)) {
@@ -5424,7 +5437,7 @@ ${baselineRungList(baseline)}`
         schema: incrementSchema,
         instructions: `You are implementing increment ${id}. Build the change the plan at ${PLANS}/${id}.md decides.
 ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
-${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty()}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
+${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty(rowRigour)}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
@@ -5441,7 +5454,7 @@ plan lists none for a file you will touch, run \`tim backlog standards --files <
 (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read every
 rules, bestPractice and repoDocs file it lists. Read each one IN FULL with the Read tool: no offset or limit, and never
 \`head\`, \`tail\` or \`sed\` over it.${FRONTEND_CHANGE_IMPLEMENT_LINE}
-${specSyncDuty()}
+${specSyncDuty(rowRigour)}
 ${COMPLETION_LINES_DUTY}
 
 RULES:
@@ -5518,7 +5531,6 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
 
   phase('Review')
 
-  const rules = rulesOf(rowRigour)
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
   const reviewGroups = groupFilesForReview(reviewTargets)
   const styleGroups = reviewGroups.filter((group) => group.language !== DOCS_LANGUAGE)
@@ -5797,7 +5809,15 @@ ${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
     phase('Judge')
     judgement =
       (await agent(
-        judgePrompt({ id, subject: `increment ${id}`, context: readIncrement(id), confirmed, repoKeys: repos ?? [], verified: rules.verifyFindings }),
+        judgePrompt({
+          id,
+          subject: `increment ${id}`,
+          context: readIncrement(id),
+          confirmed,
+          repoKeys: repos ?? [],
+          verified: rules.verifyFindings,
+          diffCommands: wholeChangeDiffCommands
+        }),
         think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
   }

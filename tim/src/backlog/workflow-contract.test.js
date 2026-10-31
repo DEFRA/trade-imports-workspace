@@ -1900,21 +1900,24 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
           .filter((label) => !isRunLease(label))
 
+      const VERDICT_REAL = {
+        verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }]
+      }
+      const RULED_ONE_FIX = {
+        decisions: [{ what: 'origin', call: 'fix-now', reasoning: 'in scope' }],
+        fixNow: ['Save the origin in src/a.js.'],
+        summary: 'one fix'
+      }
+      const FIXED = { ok: true, summary: 'Saved the origin.', notes: '' }
+
       const FIX_STAGE_ANSWERS = [
         NO_FINDINGS,
         { findings: [FINDING] },
         NO_FINDINGS,
-        { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+        VERDICT_REAL,
+        RULED_ONE_FIX,
         {
-          decisions: [
-            { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-          ],
-          fixNow: ['Save the origin in src/a.js.'],
-          summary: 'one fix'
-        },
-        {
-          ok: true,
-          summary: 'Saved the origin.',
+          ...FIXED,
           notes: 'FIT went green once the port-holding test server exited.'
         },
         NO_FINDINGS
@@ -1926,6 +1929,15 @@ describe('increment-build-loop', () => {
           PLANNED,
           implementAnswer(['frontend:src/a.js']),
           ...FIX_STAGE_ANSWERS
+        )
+
+      const runToJudgeAt = (rigour, ...afterImplement) =>
+        runFromWithArgs(
+          { rigour },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['frontend:src/a.js']),
+          ...afterImplement
         )
 
       const ladderPrompt = (run) =>
@@ -1988,21 +2000,11 @@ describe('increment-build-loop', () => {
       })
 
       test('still style-reviews the fixer’s hunks at fast, where no style reviewer ran', async () => {
-        const run = await runFromWithArgs(
-          { rigour: 'fast' },
-          BASELINE_ANSWER,
-          PLANNED,
-          implementAnswer(['frontend:src/a.js']),
+        const run = await runToJudgeAt(
+          'fast',
           { findings: [FINDING] },
-          { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
-          {
-            decisions: [
-              { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-            ],
-            fixNow: ['Save the origin in src/a.js.'],
-            summary: 'one fix'
-          },
-          { ok: true, summary: 'Saved the origin.', notes: '' },
+          RULED_ONE_FIX,
+          FIXED,
           NO_FINDINGS
         )
 
@@ -2034,6 +2036,54 @@ describe('increment-build-loop', () => {
         expect(labelsInPhase(run, 'Verify findings')).toEqual([
           'inc-900 verify:frontend-javascript'
         ])
+      })
+
+      test('verifies a finding before the judge at standard', async () => {
+        const run = await runToJudgeAt(
+          'standard',
+          { findings: [FINDING] },
+          NO_FINDINGS,
+          VERDICT_REAL,
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+
+        expect(labelsInPhase(run, 'Verify findings')).toEqual([
+          'inc-900 verify:frontend-javascript'
+        ])
+        expect(stageLabels(run)).toContain('inc-900 fix review')
+      })
+
+      test('runs no verifier at fast, and tells the judge the findings are its own to verify', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(labelsInPhase(run, 'Verify findings')).toEqual([])
+        expect(prompt).toContain('NO VERIFIER RAN for these findings')
+        expect(prompt).toContain('THE FINDINGS, NOT YET VERIFIED')
+        expect(prompt).toContain('your job is to REFUTE it')
+        expect(prompt).not.toContain('each survived verification')
+        expect(run.logs).toContain(
+          "inc-900: 1 finding(s) go to the judge unverified — no verifier runs at this row's rigour"
+        )
+        expect(stageLabels(run)).toContain('inc-900 fix review')
+      })
+
+      test('tells a judge at full that its findings already survived verification', async () => {
+        const run = await runToJudgeAt('full', ...FIX_STAGE_ANSWERS)
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain(
+          'CONFIRMED FINDINGS (each survived verification'
+        )
+        expect(prompt).not.toContain('NO VERIFIER RAN')
       })
 
       test('hands the ladder every baseline rung with its log', async () => {

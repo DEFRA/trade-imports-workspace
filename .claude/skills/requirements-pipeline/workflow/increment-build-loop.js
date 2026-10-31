@@ -1,7 +1,7 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets, and whether a verifier runs before the judge or the judge verifies the findings itself → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
@@ -2172,18 +2172,38 @@ const verifyFindingGroups = async (id, groups, { phaseName, labelOf, promptOf })
   }
 }
 
-const confirmedFindingLine = (finding, index) =>
-  `${index + 1}. [${finding.severity}] ${describeFindingKind(finding)} ${finding.file}${finding.line ? ':' + finding.line : ''} — ${finding.what}\n   WHY: ${finding.why}\n   PROPOSED FIX: ${finding.fix}\n   SURVIVED VERIFICATION BECAUSE: ${finding.verdict}`
+const findingLine = (finding, index) =>
+  `${index + 1}. [${finding.severity}] ${describeFindingKind(finding)} ${finding.file}${finding.line ? ':' + finding.line : ''} — ${finding.what}\n   WHY: ${finding.why}\n   PROPOSED FIX: ${finding.fix}`
 
-const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
+const confirmedFindingLine = (finding, index) =>
+  `${findingLine(finding, index)}\n   SURVIVED VERIFICATION BECAUSE: ${finding.verdict}`
+
+const UNVERIFIED_FINDINGS_DUTY = `NO VERIFIER RAN for these findings: this row's rigour sends them straight to you, so you do the verifier's work
+first and the judge's second. Before you rule on a finding, test it against the ACTUAL code — read each file it
+names in full, not the diff alone — and say what you found, with file:line, in its reasoning.
+${VERIFY_BY_KIND}
+A finding you cannot stand up by the default its kind sets is a reject, with the code quoted. Those defaults are
+written for a verifier's own output: where they say real:false, your call is reject, and the code they ask for in
+\`quote\` goes in that decision's reasoning. You have no real field and no quote field.
+
+`
+
+const findingsPreamble = (verified) =>
+  verified
+    ? `CONFIRMED FINDINGS (each survived verification by the default its kind sets: a functional finding was tried for
+refutation, a code-quality finding stood unless code showed it factually wrong):`
+    : `${UNVERIFIED_FINDINGS_DUTY}THE FINDINGS, NOT YET VERIFIED:`
+
+const designEvidenceReader = (verified) => (verified ? 'the verifier' : 'your reading of the design source')
+
+const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys, verified = true }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
 read ${SKILLS}/review/references/WALKER.md to understand the triage this substitutes for, then make every call
 YOURSELF. Do not defer to a human and do not ask anything.
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}
 ${context}
-CONFIRMED FINDINGS (each survived verification by the default its kind sets: a functional finding was tried for
-refutation, a code-quality finding stood unless code showed it factually wrong):
-${confirmed.map(confirmedFindingLine).join('\n')}
+${findingsPreamble(verified)}
+${confirmed.map(verified ? confirmedFindingLine : findingLine).join('\n')}
 
 FOR EACH finding decide exactly one of:
 - **fix-now** — the fix is clear. Anything that breaks an acceptance criterion, a security or correctness defect, a
@@ -2196,7 +2216,7 @@ FOR EACH finding decide exactly one of:
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
   Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
   its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design
-  source and the code at file:line (permalinks where the verifier gave them) and the guide rule's link.
+  source and the code at file:line (permalinks where ${designEvidenceReader(verified)} gave them) and the guide rule's link.
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.
@@ -5191,6 +5211,9 @@ while (stopped === null) {
     foundInFix: fixReviewFindings.length
   })
 
+  const findingTally = () =>
+    `${rawFindings.length} findings, ${confirmed.length} ${rulesOf(rowRigour).verifyFindings ? 'confirmed' : 'unverified'}, ${judgement.fixNow.length} fixed`
+
   const attempt = { id, ticket, workBranch }
 
   const stopForHeldStack = async (stage, phaseName, held) => {
@@ -5702,35 +5725,40 @@ ${CROSS_CHANGE_DUTIES}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_
   }
 
   rawFindings = reviewed.results.filter(Boolean).flatMap((r) => r.findings ?? [])
-  log(`${id}: ${rawFindings.length} raw findings — verifying adversarially`)
+  log(`${id}: ${rawFindings.length} raw findings`)
 
   if (rawFindings.length > 0) {
-    phase('Verify findings')
     const numbered = rawFindings.map((finding, index) => ({ ...finding, n: index + 1 }))
-    const verified = await verifyFindingGroups(id, groupFindingsForVerification(numbered), {
-      phaseName: 'Verify findings',
-      labelOf: (group) => `${id} verify:${group.name}`,
-      promptOf: (group) =>
-        verifierPrompt({
-          subject: `increment ${id}`,
-          group,
-          diffCommand: groupDiffCommand(group),
-          criteria: `the increment's acceptanceCriteria\n(\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`)`,
-          mergeNote
-        })
-    })
-    confirmed = verified.confirmed
-    refuted = verified.refuted
-    refutedFindings.push(...refuted)
-    log(`${id}: ${confirmed.length}/${rawFindings.length} findings survived verification`)
-    for (const record of refuted) log(`${id}: REFUTED ${describeRefuted(record)}`)
+    if (rules.verifyFindings) {
+      phase('Verify findings')
+      const verified = await verifyFindingGroups(id, groupFindingsForVerification(numbered), {
+        phaseName: 'Verify findings',
+        labelOf: (group) => `${id} verify:${group.name}`,
+        promptOf: (group) =>
+          verifierPrompt({
+            subject: `increment ${id}`,
+            group,
+            diffCommand: groupDiffCommand(group),
+            criteria: `the increment's acceptanceCriteria\n(\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`)`,
+            mergeNote
+          })
+      })
+      confirmed = verified.confirmed
+      refuted = verified.refuted
+      refutedFindings.push(...refuted)
+      log(`${id}: ${confirmed.length}/${rawFindings.length} findings survived verification`)
+      for (const record of refuted) log(`${id}: REFUTED ${describeRefuted(record)}`)
+    } else {
+      confirmed = numbered
+      log(`${id}: ${confirmed.length} finding(s) go to the judge unverified — no verifier runs at this row's rigour`)
+    }
   }
 
   if (confirmed.length > 0) {
     phase('Judge')
     judgement =
       (await agent(
-        judgePrompt({ id, subject: `increment ${id}`, context: readIncrement(id), confirmed, repoKeys: repos ?? [] }),
+        judgePrompt({ id, subject: `increment ${id}`, context: readIncrement(id), confirmed, repoKeys: repos ?? [], verified: rules.verifyFindings }),
         think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
   }
@@ -6171,7 +6199,7 @@ Return the structured output only.`,
         followUps: plan?.followUps
       })
       log(
-        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
+        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${findingTally()}${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
       )
       break finish
     }
@@ -6619,7 +6647,7 @@ Return the structured output only.`,
     followUps: plan?.followUps
   })
 
-  log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${findingTally()}`)
 
   if (!workspaceBack.ok) {
     stopped = { reason: 'workspace-not-on-base', detail: workspaceBack.detail }

@@ -1,7 +1,7 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets, and whether a verifier runs before the judge or the judge verifies the findings itself → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
@@ -71,7 +71,8 @@ const ALWAYS_REQUIRED = [
   'requireApproval',
   'approvalWaitMinutes',
   'e2e',
-  'resumeFrom'
+  'resumeFrom',
+  'rigour'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -123,6 +124,14 @@ if (RESUME_FROM !== null && !RESUME_FROM_VALUES.includes(RESUME_FROM)) {
 if (RESUME_FROM !== null) {
   log(
     `${WORKFLOW_NAME}: resumeFrom ${RESUME_FROM} — the first row this run builds enters there at the earliest, and later rows take their own stage from the backlog`
+  )
+}
+
+const RIGOUR_PRESETS = ['full', 'standard', 'fast']
+const RIGOUR = CFG.rigour
+if (!RIGOUR_PRESETS.includes(RIGOUR)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.rigour must be one of ${RIGOUR_PRESETS.join(', ')} — how much of the pipeline every row of this run gets, which a row's own \`rigour\` may change. Got ${JSON.stringify(RIGOUR)}`
   )
 }
 
@@ -342,6 +351,53 @@ const withTier = (tier) => (opts) => (RESOLVED_MODELS[tier] ? { ...opts, model: 
 const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
+
+const RIGOUR_RULES = {
+  full: {
+    planTier: 'think',
+    planReview: 'twice',
+    styleReviewers: true,
+    reviewScope: 'group',
+    consistencyReview: true,
+    verifyFindings: true
+  },
+  standard: {
+    planTier: 'think',
+    planReview: 'structural',
+    styleReviewers: false,
+    reviewScope: 'group',
+    consistencyReview: true,
+    verifyFindings: true
+  },
+  fast: {
+    planTier: 'code',
+    planReview: 'none',
+    styleReviewers: false,
+    reviewScope: 'whole',
+    consistencyReview: false,
+    verifyFindings: false
+  }
+}
+
+const rulesOf = (rigour) => (IS_BRANCH ? RIGOUR_RULES[rigour] : { ...RIGOUR_RULES[rigour], styleReviewers: true })
+
+const rigourSummary = (rigour) => {
+  const planReviewPhrases = {
+    twice: 'reviewed, revised and re-reviewed',
+    structural: 'reviewed once, and re-reviewed when a finding is structural or the review names none',
+    none: 'no plan review'
+  }
+  const rules = rulesOf(rigour)
+  return [
+    `a ${rules.planTier}-tier plan, ${planReviewPhrases[rules.planReview]}`,
+    rules.styleReviewers ? 'style reviewers' : "no style reviewers on the row but one across the theme's whole change",
+    rules.reviewScope === 'whole' ? 'one reviewer across the whole change' : 'a code reviewer per (repo, language) group',
+    rules.consistencyReview ? 'a consistency review' : 'no consistency review',
+    rules.verifyFindings ? 'and findings verified before the judge' : 'and findings verified by the judge itself'
+  ].join(', ')
+}
+
+log(`${WORKFLOW_NAME}: rigour ${RIGOUR} — ${rigourSummary(RIGOUR)}`)
 
 const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
   command you have not run, and never report Bash or any tool as missing without first calling it.`
@@ -720,7 +776,12 @@ const specSkillStep = () =>
    follow it, as the line about that skill above says, then run step 3's lint as well. Otherwise do`
     : 'Do'
 
-const specSyncDuty = () => `
+const SPEC_SYNC_REASON_CHECKED_BY_REVIEWER =
+  'The consistency reviewer checks that reason and the ladder validates the write again.'
+
+const SPEC_SYNC_REASON_CHECKED_BY_LADDER = 'The ladder checks that reason and judges the write.'
+
+const specSyncDuty = (rigour) => `
 THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos. It lives in the workspace repo, \`${TILDE}/openspec/\`.
 ${SPEC_RECORDS}
 ${SPEC_PREFIX_TABLE}
@@ -738,7 +799,7 @@ ${SPEC_PREFIX_TABLE}
    ${SPEC_WHOLE_CAPABILITY}
 4. Leave \`openspec/\` uncommitted: the land stage commits it.
 5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
-   The consistency reviewer checks that reason and the ladder validates the write again.`
+   ${rulesOf(rigour).consistencyReview ? SPEC_SYNC_REASON_CHECKED_BY_REVIEWER : SPEC_SYNC_REASON_CHECKED_BY_LADDER}`
 
 const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
 duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
@@ -795,7 +856,17 @@ Each of these is a finding: a missing \`Probes:\` or \`Docs updated:\` line; a c
 \`Probes:\` line does not account for; a \`Docs updated: none\` whose search misses a doc, recipe, JSDoc, comment or
 test name the change makes untrue, inside the diff or outside it. A stale comment's fix is to delete it.`
 
-const ladderCompletionStep = (implementorNotes, fixerNotes) => `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
+const COMPLETION_LINES_LEFT_TO_REVIEWER = 'Run nothing more here: the consistency reviewer has judged what the lines claim.'
+
+const COMPLETION_LINES_TO_JUDGE_HERE = `No reviewer judges what the lines claim at this row's rigour, so judge them against
+   every hunk in \`git -C ${TILDE}/<repoPath> diff --staged\` for each repo with staged changes. Each of these is a
+   failure you repair: a coverage link this row wrote or upgraded to "full" that the \`Probes:\` line does not account
+   for; a \`Docs updated: none\` whose search misses a doc, recipe, JSDoc, comment or test name the change makes
+   untrue, inside the diff or outside it — search the changed repos' \`docs/\`, the recipes, the doc comments of every
+   function the change touched, the comments within ten lines of every hunk, and convention test names. A stale
+   comment's fix is to delete it.`
+
+const ladderCompletionStep = (implementorNotes, fixerNotes, rigour) => `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
    ${COMPLETION_LABELS.map((label) => reportedCompletionLine(label, implementorNotes)).join('\n   ')}
    The fixer's: ${
      fixerNotes === null
@@ -804,7 +875,7 @@ const ladderCompletionStep = (implementorNotes, fixerNotes) => `2b. PROBES AND D
    }
    When NEITHER the implementor NOR the fixer reported one of these lines, that is a failure: put "no <label> line
    reported" in failures[], naming the label. A fixer with no line is normal when the implementor reported one.
-   Run nothing more here: the consistency reviewer has judged what the lines claim.`
+   ${rulesOf(rigour).consistencyReview ? COMPLETION_LINES_LEFT_TO_REVIEWER : COMPLETION_LINES_TO_JUDGE_HERE}`
 
 const specPrefixesIn = (text) => {
   const lines = specSyncLinesIn(text).join('\n')
@@ -822,7 +893,20 @@ does not implement; a coverage link to a test the change does not hold; a write 
 behaviour under \`live-animals/\`, or the reverse); a \`Spec sync: none\` whose reason does not hold against the plan's
 behaviour changes, wording, content and layout included where the spec records them; and no \`Spec sync:\` line at all.`
 
-const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
+const SPEC_SYNC_LEFT_TO_REVIEWERS = `A line that
+   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.`
+
+const SPEC_SYNC_TO_JUDGE_HERE = `The write is yours to judge too.
+   No reviewer does that at this row's rigour, so judge it against the plan's section 8 and ${ABS}/openspec/config.yaml:
+   see it with \`git -C ${TILDE} status --short -- openspec/\` and \`git -C ${TILDE} diff HEAD -- openspec/\`, Read a new
+   file under it in full, and read the code it records with \`git -C ${TILDE}/<repoPath> diff --staged\` for each repo
+   with staged changes. Each of these is a failure you repair: a behaviour change in the diff that no scenario records;
+   a scenario the diff does not implement; a coverage link to a test the change does not hold; a write under the wrong
+   prefix (germinal behaviour under \`live-animals/\`, or the reverse); and a \`Spec sync: none — <reason>\` whose reason
+   does not hold against the plan's behaviour changes, wording, content and layout included where the spec records
+   them.`
+
+const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
    ${reportedSpecSync(implementorNotes)}
    The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
    When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
@@ -832,8 +916,9 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC.
    once. A path marked \`deleted:\` is not validated: confirm it is gone with \`ls ${TILDE}/openspec/specs/<capability path>\`,
    which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
    once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
-   any other: the spec write is this increment's, and a row whose spec does not validate is not complete. A line that
-   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.
+   any other: the spec write is this increment's, and a row whose spec does not validate is not complete. ${
+     rulesOf(rigour).consistencyReview ? SPEC_SYNC_LEFT_TO_REVIEWERS : SPEC_SYNC_TO_JUDGE_HERE
+   }
    ${SPEC_WHOLE_CAPABILITY}`
 
 const SPEC_IN_WORKSPACE = `THE BEHAVIOUR SPEC: \`${TILDE}/openspec/\` is part of the workspace repo, one of this increment's
@@ -1880,6 +1965,10 @@ const OUTSIDE_THE_DIFF = `a rule the change alters that a doc, recipe, JSDoc or 
 changed repos for the behaviour's own words, not only its identifiers. Each one is in scope: report it at its file:line,
 and its fix is to update it or delete it`
 
+const CROSS_FILE_HUNT = `the same concept named two ways, a pattern the repo already has reimplemented rather than
+reused, registration in one place but not its twin, the contract between repos, and an acceptance criterion nothing
+in the change proves`
+
 const REPO_DOCS_STEP = `THE REPO'S DOCS AND RECIPES. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\` once,
 with --files repeated for every changed file, and read in full every repoDocs file it lists:
 the repo's architecture docs and its add-a-* recipes.
@@ -1973,6 +2062,9 @@ const checkedFinding = (finding, verdict) => {
   return { ...finding, refutedBecause: verdict.reasoning, refutingQuote: verdict.quote }
 }
 
+const DROPPED_BY_VERIFIER = 'verifier'
+const DROPPED_BY_JUDGE = 'judge'
+
 const refutedRecordOf = (id, { file, line, category, severity, what, refutedBecause, refutingQuote }) => ({
   id,
   file,
@@ -1981,15 +2073,29 @@ const refutedRecordOf = (id, { file, line, category, severity, what, refutedBeca
   severity,
   what,
   reason: refutedBecause,
+  droppedBy: DROPPED_BY_VERIFIER,
   ...(refutingQuote ? { quote: refutingQuote } : {})
+})
+
+const judgeRejectionRecord = (id, decision) => ({
+  ...refutedRecordOf(id, { file: WHOLE_CHANGE, what: decision.what, refutedBecause: decision.reasoning }),
+  droppedBy: DROPPED_BY_JUDGE
 })
 
 const describeRefuted = (record) =>
   `${record.file}${record.line ? `:${record.line}` : ''} [${record.category ?? 'no category'}] ${record.what} — refuted: ${record.reason}`
 
+const whatDroppedThem = (refuted) => {
+  const byJudge = refuted.filter((record) => record.droppedBy === DROPPED_BY_JUDGE).length
+  const byVerifier = refuted.length - byJudge
+  if (byVerifier === 0) return `The judge rejected ${byJudge} finding(s)`
+  if (byJudge === 0) return `Review dropped ${byVerifier} finding(s) as refuted`
+  return `Review dropped ${byVerifier} finding(s) as refuted and the judge rejected ${byJudge}`
+}
+
 const themeRefutedCheck = (id, theme, refuted, where = 'across its rows') => ({
   id,
-  check: `Theme ${theme} is built. Review dropped ${refuted.length} finding(s) as refuted ${where}: read each one and confirm none was real.`,
+  check: `Theme ${theme} is built. ${whatDroppedThem(refuted)} ${where}: read each one and confirm none was real.`,
   refuted
 })
 
@@ -2116,18 +2222,44 @@ const verifyFindingGroups = async (id, groups, { phaseName, labelOf, promptOf })
   }
 }
 
-const confirmedFindingLine = (finding, index) =>
-  `${index + 1}. [${finding.severity}] ${describeFindingKind(finding)} ${finding.file}${finding.line ? ':' + finding.line : ''} — ${finding.what}\n   WHY: ${finding.why}\n   PROPOSED FIX: ${finding.fix}\n   SURVIVED VERIFICATION BECAUSE: ${finding.verdict}`
+const findingLine = (finding, index) =>
+  `${index + 1}. [${finding.severity}] ${describeFindingKind(finding)} ${finding.file}${finding.line ? ':' + finding.line : ''} — ${finding.what}\n   WHY: ${finding.why}\n   PROPOSED FIX: ${finding.fix}`
 
-const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
+const confirmedFindingLine = (finding, index) =>
+  `${findingLine(finding, index)}\n   SURVIVED VERIFICATION BECAUSE: ${finding.verdict}`
+
+const unverifiedFindingsDuty = (diffCommands) => `NO VERIFIER RAN for these findings: this row's rigour sends them straight to you, so you do the verifier's work
+first and the judge's second. Before you rule on a finding, test it against the ACTUAL code — read each file it
+names in full, not the diff alone — and say what you found, with file:line, in its reasoning. See the change in
+each file's own repo:
+${diffCommands}
+dropping a finding's \`<repoKey>:\` prefix to get <path>.
+Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of
+them tells you nothing about whether any one is real.
+${VERIFY_BY_KIND}
+A finding you cannot stand up by the default its kind sets is a reject, with the code quoted. Those defaults are
+written for a verifier's own output: where they say real:false, your call is reject, and the code they ask for in
+\`quote\` goes in that decision's reasoning. You have no real field and no quote field.
+
+`
+
+const findingsForJudge = ({ findings, verified, diffCommands }) =>
+  verified
+    ? `CONFIRMED FINDINGS (each survived verification by the default its kind sets: a functional finding was tried for
+refutation, a code-quality finding stood unless code showed it factually wrong):
+${findings.map(confirmedFindingLine).join('\n')}`
+    : `${unverifiedFindingsDuty(diffCommands)}THE FINDINGS, NOT YET VERIFIED:
+${findings.map(findingLine).join('\n')}`
+
+const designPermalinkSource = (verified) => (verified ? 'the verifier' : 'your reading of the design source')
+
+const judgePrompt = ({ id, subject, scope = 'increment', context, confirmed, repoKeys, verified = true, diffCommands }) => `You are the JUDGE for ${subject}. You replace the interactive triage step a human would normally do —
 read ${SKILLS}/review/references/WALKER.md to understand the triage this substitutes for, then make every call
 YOURSELF. Do not defer to a human and do not ask anything.
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}
 ${context}
-CONFIRMED FINDINGS (each survived verification by the default its kind sets: a functional finding was tried for
-refutation, a code-quality finding stood unless code showed it factually wrong):
-${confirmed.map(confirmedFindingLine).join('\n')}
+${findingsForJudge({ findings: confirmed, verified, diffCommands })}
 
 FOR EACH finding decide exactly one of:
 - **fix-now** — the fix is clear. Anything that breaks an acceptance criterion, a security or correctness defect, a
@@ -2140,7 +2272,7 @@ FOR EACH finding decide exactly one of:
   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
   Every design finding is defer-to-open-question, never fix-now: the code keeps what the design source sets. Start
   its question with "For the designer:", ask it with the options it leaves, and carry the evidence into it: the design
-  source and the code at file:line (permalinks where the verifier gave them) and the guide rule's link.
+  source and the code at file:line (permalinks where ${designPermalinkSource(verified)} gave them) and the guide rule's link.
 - **reject** — a functional finding you disagree with even after verification. Say why, with evidence. A
   code-quality finding is rejected only by quoting the code that shows it is factually wrong: "taste",
   "pre-existing", "out of scope", "a comparable file does it" and "feature folders are independent" never reject one.
@@ -2706,19 +2838,22 @@ const planReviewFindingLines = (findings) => findings.map(planReviewFindingLine)
 
 const mustAddressOf = (plan) => plan?.planReviewMustAddress ?? []
 
+const mustAddressRaisedOn = (plan) => plan?.planReviewRaisedOn ?? 'the plan'
+
 const mustAddressForImplementor = (plan) =>
   mustAddressOf(plan).length > 0
     ? `
-PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on the revised plan. Each is required work in
-this increment, as binding as the plan's decisions. Address every one, and say in notes how you addressed each, by its
-number:
+PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on ${mustAddressRaisedOn(plan)}. Each is required
+work in this increment, as binding as the plan's decisions. Address every one, and say in notes how you addressed each,
+by its number:
 ${planReviewFindingLines(mustAddressOf(plan))}`
     : ''
 
 const mustAddressForReview = (plan) =>
   mustAddressOf(plan).length > 0
     ? `
-THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work:
+THE PLAN REVIEW LEFT THESE FINDINGS OPEN on ${mustAddressRaisedOn(plan)}, and the implementor was given each as
+required work:
 ${planReviewFindingLines(mustAddressOf(plan))}
 Check each against the change. Each one the change does not address is a finding: give it the code-quality category
 that fits it, \`structure\` when none fits better, and name the plan review finding by its number.`
@@ -3004,7 +3139,7 @@ const PLAN_STANDARDS_STEP = `the standards for those files. Run \`tim backlog st
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
      every rules, bestPractice and repoDocs file it lists`
 
-const planIncrement = (id, branchedRepos = null, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [] } = {}) =>
+const planIncrement = (id, branchedRepos, rigour, { label = `${id} plan`, deniedChecks = [], codeText = [], reviewFindings = [] } = {}) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
 ${deniedChecksNote(id, deniedChecks)}${codeTextNote(id, codeText)}${planReviewNote(id, reviewFindings)}${guardrails()}
@@ -3100,7 +3235,7 @@ and 6, exactly as the plan writes it. The loop reads
 checks[] and sends back a plan that names a denied form. It also reads the plan file for code text, and sends back a
 plan that writes some.
 Return the structured output only.`,
-    think({ label, phase: 'Plan', schema: PLAN_SCHEMA })
+    withTier(rulesOf(rigour).planTier)({ label, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
 const deniedChecksOf = (plan) =>
@@ -3275,14 +3410,14 @@ const refusedUnlessClean = async (id, plan, lintLabel) => {
   return { ...plan, ok: false, summary: planProblemList(problems, true) }
 }
 
-const planPassingLint = async (id, branchedRepos = null) => {
-  const plan = await planIncrement(id, branchedRepos, { label: `${id} plan` })
+const planPassingLint = async (id, branchedRepos, rigour) => {
+  const plan = await planIncrement(id, branchedRepos, rigour, { label: `${id} plan` })
   if (!plan?.ok) return plan
   const problems = await planProblemsOf(id, plan, `${id} plan lint`)
   if (problems.codeText === null) return unreadablePlan(id, plan)
   if (!hasPlanProblems(problems)) return plan
   log(`${id}: ${planProblemList(problems, false)}. Sending the planner back once.`)
-  const replan = await planIncrement(id, branchedRepos, { label: `${id} replan`, ...problems })
+  const replan = await planIncrement(id, branchedRepos, rigour, { label: `${id} replan`, ...problems })
   return refusedUnlessClean(id, replan, `${id} replan lint`)
 }
 
@@ -3400,14 +3535,14 @@ const refusedAfterSecondReview = (plan, second) => {
   }
 }
 
-const mustAddressSection = (findings) => `## Plan review: must address
+const mustAddressSection = (findings, raisedOn) => `## Plan review: must address
 
-The plan review left these findings open on the revised plan. Each is required work for the implementor, and the
+The plan review left these findings open on ${raisedOn}. Each is required work for the implementor, and the
 consistency reviewer reports any the change does not address.
 
 ${findings.map(planReviewFindingText).join('\n')}`
 
-const recordMustAddress = (id, findings) =>
+const recordMustAddress = (id, findings, raisedOn) =>
   agent(
     `You are the PLAN REVIEW RECORDER for increment ${id}. You add one section to the end of the plan and change nothing
 else. That is your whole job.
@@ -3419,24 +3554,29 @@ ${BASE_GUARDRAILS}
 Report written: true only when the file now ends with the section, word for word, and everything above it is
 unchanged. Never reword, sort or shorten the section.
 
-${mustAddressSection(findings)}`,
+${mustAddressSection(findings, raisedOn)}`,
     light({ label: `${id} plan review record`, phase: 'Plan', schema: PLAN_REVIEW_RECORD_SCHEMA })
   )
 
-const withMustAddress = async (id, plan, findings) => {
-  log(`${id}: the revised plan has ${findings.length} detail finding(s) still open. Building it, with each as required work.`)
-  const record = await recordMustAddress(id, findings)
+const withMustAddress = async (id, plan, findings, raisedOn) => {
+  const record = await recordMustAddress(id, findings, raisedOn)
   if (!record?.written) {
     log(
       `${id}: the "Plan review: must address" section was not written to the plan — ${record?.summary ?? 'the recorder died'}. The implementor and the consistency reviewer still get each finding.`
     )
   }
-  return { ...plan, planReviewMustAddress: findings }
+  return { ...plan, planReviewMustAddress: findings, planReviewRaisedOn: raisedOn }
 }
 
-const reviewedPlan = async (id, branchedRepos = null) => {
-  const plan = await planPassingLint(id, branchedRepos)
+const detailFindingsOnly = (findings) => findings.length > 0 && !findings.some(isStructural)
+
+const reviewsRevisedPlan = ({ planReview }, findings) => planReview === 'twice' || !detailFindingsOnly(findings)
+
+const reviewedPlan = async (id, branchedRepos, rigour) => {
+  const rules = rulesOf(rigour)
+  const plan = await planPassingLint(id, branchedRepos, rigour)
   if (!plan?.ok) return plan
+  if (rules.planReview === 'none') return plan
   const review = await reviewPlan(id, { label: `${id} plan review` })
   if (!review) return noPlanReview(plan)
   if (!sendsPlanBack(review)) return withFollowUps(plan, [review])
@@ -3444,22 +3584,34 @@ const reviewedPlan = async (id, branchedRepos = null) => {
   log(`${id}: the plan review sent the plan back with ${findings.length} finding(s). Sending the planner back once.`)
   const revised = await refusedUnlessClean(
     id,
-    await planIncrement(id, branchedRepos, { label: `${id} revise plan`, reviewFindings: findings }),
+    await planIncrement(id, branchedRepos, rigour, { label: `${id} revise plan`, reviewFindings: findings }),
     `${id} revise plan lint`
   )
   if (!revised?.ok) return revised
+  if (!reviewsRevisedPlan(rules, findings)) {
+    const notReRead = 'not re-read'
+    log(
+      `${id}: one plan review runs at this row's rigour, so the revised plan is ${notReRead}. Building it, with its ${findings.length} finding(s) as required work.`
+    )
+    return withMustAddress(id, withFollowUps(revised, [review]), findings, `the plan, which was revised but ${notReRead}`)
+  }
   const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
   if (!second) return noPlanReview(revised)
   const reviewed = withFollowUps(revised, [review, second])
   if (!sendsPlanBack(second)) return reviewed
   const stillOpen = second.findings ?? []
-  if (stillOpen.length === 0 || stillOpen.some(isStructural)) return refusedAfterSecondReview(reviewed, second)
-  return withMustAddress(id, reviewed, stillOpen)
+  if (!detailFindingsOnly(stillOpen)) return refusedAfterSecondReview(reviewed, second)
+  const revisedPlan = 'the revised plan'
+  log(`${id}: ${revisedPlan} has ${stillOpen.length} detail finding(s) still open. Building it, with each as required work.`)
+  return withMustAddress(id, reviewed, stillOpen, revisedPlan)
 }
 
-const readReviewedPlan = (id, branchedRepos) =>
+const planChecksPassed = (rigour) =>
+  rulesOf(rigour).planReview === 'none' ? 'its lint' : 'its lint and its review'
+
+const readReviewedPlan = (id, branchedRepos, rigour) =>
   agent(
-    `Increment ${id} was planned on an earlier attempt, and that plan passed its lint and its review. READ IT BACK.
+    `Increment ${id} was planned on an earlier attempt, and that plan passed ${planChecksPassed(rigour)}. READ IT BACK.
 You are not planning: you change nothing in the plan, you judge nothing in it, and you add nothing to it.
 ${guardrails()}
 ${readPlan(id)}
@@ -3508,18 +3660,20 @@ const PREFLIGHT_SCHEMA = {
       description:
         "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
     },
-    rowRepos: {
+    todoRows: {
       type: 'array',
       items: {
         type: 'object',
         required: ['id', 'repos'],
         properties: {
           id: { type: 'string' },
-          repos: { type: 'array', items: { type: 'string' } }
+          repos: { type: 'array', items: { type: 'string' } },
+          rigour: { type: ['string', 'null'] }
         },
         additionalProperties: false
       },
-      description: "Every todo increment's id and its repos list, [] where it names none"
+      description:
+        "Every todo increment's id, its repos list ([] where it names none) and its rigour (null where it sets none)"
     }
   },
   additionalProperties: false
@@ -3535,21 +3689,21 @@ const BRANCH_PR_STEP = IS_BRANCH
 const E2E_PHASES_STEP = `
 ${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gatePhases // ["e2e"])] | any(index("e2e") != null)' ${BACKLOG_TILDE}\``
 
-const ROW_REPOS_STEP = `
-${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // [])}]' ${BACKLOG_TILDE}\``
+const TODO_ROWS_STEP = `
+${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // []), rigour}]' ${BACKLOG_TILDE}\``
 
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, which repos its envelope names, whether any
-increment still to build owes the gate's e2e phase, and which repos those increments name. Run exactly these
-commands, one Bash call each, and read their output:
+increment still to build owes the gate's e2e phase, which repos those increments name and what each asks of the
+pipeline. Run exactly these commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${ROW_REPOS_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${TODO_ROWS_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
-gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false. Copy the last
-command's output into rowRepos exactly as printed, every id and repos list as it is. Do nothing
-else. No Grep/Glob tools, tilde paths only.
+gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false.
+Copy the last command's output into todoRows exactly as printed, every id, repos list and rigour as it is. Do
+nothing else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
@@ -3608,11 +3762,20 @@ const rowRepoProblems = (rows) =>
       .map((key) => `${id} names repo ${JSON.stringify(key)}, which config.repos does not configure`)
   )
 
-const unconfiguredRowRepos = rowRepoProblems(preflight.rowRepos ?? [])
-if (unconfiguredRowRepos.length > 0) {
-  throw new Error(
-    `${WORKFLOW_NAME}: ${unconfiguredRowRepos.join('; ')}. Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again`
-  )
+const rowRigourProblems = (rows) =>
+  rows
+    .filter(({ rigour }) => rigour !== null && rigour !== undefined && !RIGOUR_PRESETS.includes(rigour))
+    .map(({ id, rigour }) => `${id} sets rigour ${JSON.stringify(rigour)}, which is not one of ${RIGOUR_PRESETS.join(', ')}`)
+
+const todoRows = preflight.todoRows ?? []
+const repoProblems = rowRepoProblems(todoRows)
+const rowProblems = [...repoProblems, ...rowRigourProblems(todoRows)]
+if (rowProblems.length > 0) {
+  const fix =
+    repoProblems.length > 0
+      ? 'Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again'
+      : 'Fix the rows, then launch again'
+  throw new Error(`${WORKFLOW_NAME}: ${rowProblems.join('; ')}. ${fix}`)
 }
 
 const NEXT_SCHEMA = {
@@ -3710,7 +3873,7 @@ const startReport = (answer) => {
   return envelope.result
 }
 
-const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTilde(key)}\``).join(', ')
+const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTildeOfKey(key)}\``).join(', ')
 const protectedBranchNames = PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')
 const MERGE_HEAD_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\``
 const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-filter=U\``
@@ -3744,6 +3907,10 @@ const BRANCH_ROW_SCHEMA = {
       description: "The row's gatePhases verbatim. Leave it out when the row's is null or absent"
     },
     awaitCi: { type: 'boolean', description: "The row's awaitCi verbatim. Leave it out when the row's is null or absent" },
+    rigour: {
+      type: 'string',
+      description: "The row's rigour verbatim. Leave it out when the row's is null or absent"
+    },
     heads: {
       type: 'array',
       items: {
@@ -3771,7 +3938,7 @@ every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. Y
 ${guardrails()}
 ${REPO_RULE}
 STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
-\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs, attempt}' ${BACKLOG_TILDE}\`
+\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, rigour, commit, prs, attempt}' ${BACKLOG_TILDE}\`
 \`jq -c '.repos | keys' ${BACKLOG_TILDE}\`
 The envelope's keys must be exactly ${[...REPO_KEYS].sort().join(', ')}: the repos this run was configured with. Any
 difference is ok:false naming it, because the gate reads the envelope and this run reads its args.
@@ -3795,6 +3962,7 @@ STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
 - merge: one {repo, ref} for each key of the row's \`merge\` object, in the order written. [] when it is null or absent.
 - gatePhases: verbatim when it is a list, [] included. Leave it out when it is null or absent.
 - awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
+- rigour: verbatim when it is full, standard or fast. Leave it out when it is null or absent.
 - attempt: the row's \`attempt\` object exactly as written, every field as it is. null when the row has none.
 - resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
   Otherwise \`attempt\` set, with \`planReviewed\` true and a \`stage\` of implement, review or ladder → that stage.
@@ -3807,7 +3975,7 @@ Return the structured output only.`,
 
 const duplicatesIn = (list) => list.filter((item, index) => list.indexOf(item) !== index)
 
-const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
+const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases, rigour }) => {
   const mergeRepos = merge.map((entry) => entry.repo)
   return [
     ...rowRepos.filter((key) => !REPO_KEYS.includes(key)).map((key) => `repos names "${key}", which is not a configured repo`),
@@ -3815,7 +3983,10 @@ const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
     ...mergeRepos.filter((key) => !rowRepos.includes(key)).map((key) => `merge names "${key}", which is not in the row's repos`),
     ...merge.filter((entry) => !entry.ref?.trim()).map((entry) => `merge gives "${entry.repo}" no ref`),
     ...(gatePhases ?? []).filter((name) => !GATE_PHASES.includes(name)).map((name) => `gatePhases names "${name}"; use unit, fit and e2e`),
-    ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`)
+    ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`),
+    ...(rigour === undefined || rigour === null || RIGOUR_PRESETS.includes(rigour)
+      ? []
+      : [`rigour is "${rigour}"; use ${RIGOUR_PRESETS.join(', ')}`])
   ]
 }
 
@@ -4554,7 +4725,7 @@ const themeSpecCheck = async (id) => {
 
 const THEME_DIFF_BASE = 'origin/main'
 const THEME_REVIEW_PHASE = 'Theme review'
-const THEME_REVIEW_AGENTS = 2 * REPO_KEYS.length + 9
+const THEME_REVIEW_AGENTS = 3 * REPO_KEYS.length + 9
 
 const themeRowsCommand = (theme) =>
   `\`jq -c '(.theme // null) as $split | [.increments[] | select((.theme // $split) == "${theme}") | {id, title, detail, acceptanceCriteria}]' ${BACKLOG_TILDE}\``
@@ -4586,6 +4757,26 @@ ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
 one a fix, and a concrete failure scenario or, for a code-quality finding, the house rule it breaks. If the theme changed nothing here, or its change is clean, return an empty
 findings array.
+Return the structured output only.`
+
+const themeStyleReviewPrompt = (id, theme, key) => `You are the STYLE REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every row
+of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. No style reviewer read these rows as they were
+built, so you are the only style review the theme's code gets: read every changed line, not a sample.
+${guardrails()}
+${themeRowsContext(theme)}
+THE CHANGE: run \`git -C ${repoTilde(key)} fetch origin\`, then \`git -C ${repoTilde(key)} diff --stat ${THEME_DIFF_BASE}...HEAD\` for
+the files the theme changed, then ${themeDiffCommand(key)} for each. Skip documentation (Markdown) files. Read each
+other changed file in full.
+YOUR PERSONA — read ${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md IN FULL and follow it. It defines what
+you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKILL.md for the language routing
+(Java → modern-java + Javadoc; GDS/Nunjucks → components/styles/patterns; Playwright → playwright; Node → the
+16-rule style guide + JSDoc). The persona is written per file: apply it to each changed file in turn, and load each
+language's bundle once.
+SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
+security belong to the theme's engineering reviewer; do not duplicate them.
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
+ONLY real findings, each with a concrete fix and the rule it breaks. If the theme changed nothing here, or its change
+is clean, return an empty findings array.
 Return the structured output only.`
 
 const groupThemeFindings = (findings) =>
@@ -4754,26 +4945,49 @@ const watchThemeFixes = async (id, repoKeys) => {
   return themeReviewStop(id, { reason: 'ci-red', why: 'CI went red on its commit', evidence: `${evidence}. PRs untouched: ${found.prs.map((pr) => pr.url).join(' ')}`, preserve: false })
 }
 
-const reviewThemeRepos = (id, theme) =>
-  parallel(
-    REPO_KEYS.map((key) => () =>
-      agent(
-        themeReviewPrompt(id, theme, key),
-        think({ label: `${id} theme review:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
-      ).then((result) => ({ key, result }))
-    )
+const themeStyleReviewOwed = () => !rulesOf(RIGOUR).styleReviewers || rowsBuiltWithoutStyleReview.length > 0
+
+const engineeringReviewsOfTheme = (id, theme) =>
+  REPO_KEYS.map((key) => () =>
+    agent(
+      themeReviewPrompt(id, theme, key),
+      think({ label: `${id} theme review:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
+    ).then((result) => ({ key, kind: 'engineering', result }))
   )
 
-const unreviewedCheck = (id, theme, keys) => ({
+const styleReviewsOfTheme = (id, theme) =>
+  REPO_KEYS.map((key) => () =>
+    agent(
+      themeStyleReviewPrompt(id, theme, key),
+      code({ label: `${id} theme style:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
+    ).then((result) => ({ key, kind: 'style', result }))
+  )
+
+const reviewThemeRepos = (id, theme) => {
+  const withStyle = themeStyleReviewOwed()
+  log(
+    withStyle
+      ? `${id}: theme ${theme} gets a style review of its whole change — a row of it was built without a style reviewer`
+      : `${id}: theme ${theme} gets no style review of its whole change — a style reviewer read every row`
+  )
+  return parallel([...engineeringReviewsOfTheme(id, theme), ...(withStyle ? styleReviewsOfTheme(id, theme) : [])])
+}
+
+const unreviewedCheck = (id, theme, kind, keys) => ({
   id,
-  check: `Theme ${theme}'s engineering review returned nothing for ${keys.join(', ')}. Review the theme's change there by hand.`
+  check: `Theme ${theme}'s ${kind} review returned nothing for ${keys.join(', ')}. Review the theme's change there by hand.`
 })
+
+const unreviewedChecks = (id, theme, reviews) =>
+  ['engineering', 'style']
+    .map((kind) => [kind, reviews.filter((review) => review.kind === kind && !review.result).map(({ key }) => key)])
+    .filter(([, keys]) => keys.length > 0)
+    .map(([kind, keys]) => unreviewedCheck(id, theme, kind, keys))
 
 const engineeringReviewOfTheme = async (id, theme, phases) => {
   phase(THEME_REVIEW_PHASE)
   const reviews = await reviewThemeRepos(id, theme)
-  const unreviewed = reviews.filter(({ result }) => !result).map(({ key }) => key)
-  const checks = unreviewed.length > 0 ? [unreviewedCheck(id, theme, unreviewed)] : []
+  const checks = unreviewedChecks(id, theme, reviews)
   const raw = reviews.flatMap(({ result }) => result?.findings ?? []).map((finding, index) => ({ ...finding, n: index + 1 }))
   log(`${id}: theme ${theme}'s engineering review found ${raw.length} finding(s)`)
   if (raw.length === 0) return { checks }
@@ -4840,6 +5054,7 @@ const results = []
 const specChecks = []
 const reviewChecks = []
 const refutedFindings = []
+const rowsBuiltWithoutStyleReview = []
 let built = 0
 let lastId = null
 let stopped = null
@@ -4949,7 +5164,7 @@ while (stopped === null) {
 
   if (PLAN_ONLY) {
     phase('Plan')
-    const plan = await reviewedPlan(id)
+    const plan = await reviewedPlan(id, null, RIGOUR)
     results.push({
       id,
       outcome: plan?.ok ? 'planned' : 'plan-refused',
@@ -4976,6 +5191,7 @@ while (stopped === null) {
   let rowMerges = []
   let rowGatePhases = OFFERED_GATE_PHASES
   let rowAwaitsCi = true
+  let rowRigour = RIGOUR
 
   ticketAndBranch: {
     if (IS_BRANCH) {
@@ -4999,10 +5215,11 @@ while (stopped === null) {
       rowAttempt = row.attempt ?? null
       rowMerges = row.merge ?? []
       rowGatePhases =
-        row.gatePhases === undefined
+        row.gatePhases === undefined || row.gatePhases === null
           ? OFFERED_GATE_PHASES
           : OFFERED_GATE_PHASES.filter((name) => row.gatePhases.includes(name))
       rowAwaitsCi = row.awaitCi !== false
+      rowRigour = row.rigour ?? RIGOUR
       log(
         `${id}: on ${workBranch} in every repo; row repos ${repos.join(', ') || 'none'}; merges ${rowMerges.map((entry) => `${entry.repo}<-${entry.ref}`).join(', ') || 'none'}; gate ${rowGatePhases.join(', ') || 'none'}; CI ${rowAwaitsCi ? 'awaited' : 'not awaited'}; resuming at ${resumeAt}`
       )
@@ -5045,6 +5262,7 @@ while (stopped === null) {
     repos = started.repos
     resumeAt = started.resumeAt ?? 'build'
     rowAttempt = started.attempt ?? null
+    rowRigour = started.rigour ?? RIGOUR
     approvalRepos = REQUIRE_APPROVAL ? REPO_KEYS : [...new Set([...APPROVAL_REPO_KEYS, ...(started.requireApproval ?? [])])]
     if (repos.includes(WORKSPACE_KEY)) {
       workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
@@ -5069,6 +5287,7 @@ while (stopped === null) {
   let rawFindings = []
   let confirmed = []
   let refuted = []
+  let rejected = []
   let fixReviewFindings = []
   let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
   let land = null
@@ -5084,11 +5303,15 @@ while (stopped === null) {
   const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
   const findingCounts = () => ({
     raw: rawFindings.length,
-    confirmed: confirmed.length,
-    refuted: refuted.length,
+    ...(rules.verifyFindings
+      ? { confirmed: confirmed.length, refuted: refuted.length }
+      : { unverified: confirmed.length, rejected: rejected.length }),
     fixed: judgement.fixNow.length,
     foundInFix: fixReviewFindings.length
   })
+
+  const findingTally = () =>
+    `${rawFindings.length} findings, ${confirmed.length} ${rules.verifyFindings ? 'confirmed' : 'unverified'}, ${judgement.fixNow.length} fixed`
 
   const attempt = { id, ticket, workBranch }
 
@@ -5121,6 +5344,12 @@ while (stopped === null) {
       planReviewed: Boolean(plan?.ok)
     })
   }
+
+  log(
+    `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
+  )
+  const rules = rulesOf(rowRigour)
+  if (!rules.styleReviewers) rowsBuiltWithoutStyleReview.push(id)
 
   build: {
     if (LANDED_RESUME_POINTS.includes(resumeAt)) {
@@ -5210,7 +5439,7 @@ ${baselineRungList(baseline)}`
   phase('Plan')
 
   const planner = enterAt === 'build' ? 'the planner' : 'the plan reader'
-  plan = enterAt === 'build' ? await reviewedPlan(id, repos) : await readReviewedPlan(id, repos)
+  plan = enterAt === 'build' ? await reviewedPlan(id, repos, rowRigour) : await readReviewedPlan(id, repos, rowRigour)
 
   if (!plan || !plan.ok) {
     log(`${id}: PLAN REFUSED — ${plan ? plan.summary : `${planner} died`}`)
@@ -5265,13 +5494,15 @@ ${baselineRungList(baseline)}`
   }
   mergeNote = mergeNoteOf(mergesInProgress)
 
+  const notesReadBy = rules.consistencyReview ? 'the consistency reviewer' : 'the whole-change reviewer'
+
   impl = EXECUTOR === 'codex'
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
         instructions: `You are implementing increment ${id}. Build the change the plan at ${PLANS}/${id}.md decides.
 ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
-${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty()}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
+${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty(rowRigour)}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
@@ -5288,12 +5519,12 @@ plan lists none for a file you will touch, run \`tim backlog standards --files <
 (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read every
 rules, bestPractice and repoDocs file it lists. Read each one IN FULL with the Read tool: no offset or limit, and never
 \`head\`, \`tail\` or \`sed\` over it.${FRONTEND_CHANGE_IMPLEMENT_LINE}
-${specSyncDuty()}
+${specSyncDuty(rowRigour)}
 ${COMPLETION_LINES_DUTY}
 
 RULES:
 - Build the plan's scope: its decisions, homes, rule owners and tests. Do not fix adjacent things you notice — report
-  them in notes instead, which the consistency reviewer reads. Extending a shared test helper, the one
+  them in notes instead, which ${notesReadBy} reads. Extending a shared test helper, the one
   the plan names or one a new test's set-up needs, is in scope. Never write a local copy of a shared helper's body:
   give the helper an option instead.
 - **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
@@ -5368,7 +5599,12 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
   const reviewGroups = groupFilesForReview(reviewTargets)
   const styleGroups = reviewGroups.filter((group) => group.language !== DOCS_LANGUAGE)
-  log(`${id}: ${reviewGroups.length} review group(s) — ${reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')}`)
+  const groupBreakdown = reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')
+  const reviewShapeLine =
+    rules.reviewScope === 'whole'
+      ? `one reviewer across ${reviewTargets.length} file(s) in ${reviewGroups.length} group(s) — ${groupBreakdown}`
+      : `${reviewGroups.length} review group(s) — ${groupBreakdown}`
+  log(`${id}: ${reviewShapeLine}`)
 
   const groupHeader = (group) => `${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language
 ${group.language}. Review EVERY one of them — each file on its own merits, read in full:
@@ -5397,9 +5633,11 @@ Return the structured output only.`,
     )
   )
 
-  const codeReviews = reviewGroups.map((group) => () =>
-    agent(
-      `You are a CODE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
+  const formattingNitsLine = rules.styleReviewers
+    ? 'Formatting nits belong to a different reviewer — skip them.'
+    : "No style reviewer reads this row: the theme's style review reads formatting and layout once its last row lands — skip them. The house rules on comments, names and conventions are still yours."
+
+  const codeReviewerPrompt = ({ reviewing, diffCommand, crossChangeDuties = '' }) => `You are a CODE REVIEWER for increment ${id}, reviewing ${reviewing}
 ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/FILE_REVIEWER.md IN FULL and follow it. Also read
 ${SKILLS}/review/SKILL.md for the review dimensions. The persona is written per file: apply it to each file in the
@@ -5407,7 +5645,7 @@ list in turn.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — its
 acceptanceCriteria are what this code is supposed to do, and the header's invariants
 (\`jq 'del(.increments)' ${BACKLOG_TILDE}\`) are what it must not break. The plan is at ${PLANS}/${id}.md. See the
-change with ${groupDiffCommand(group)} for each file.${mergeNote}
+change with ${diffCommand} for each file.${mergeNote}
 SCOPE: correctness, security, error handling, performance, naming, operability, duplication and TEST QUALITY.
 Specifically hunt for:
 - behaviour that does not match the increment's acceptanceCriteria, or a behaviour change the plan did not declare
@@ -5418,12 +5656,53 @@ ${CODE_REVIEW_LENS}- the traps the plan's risks name, and the programme-specific
   route-shape vs link-builder confusion (route tables must use the PREFIX-FREE builders; rendered links, redirects
   and form actions must use the PREFIX-BEARING ones), display logic leaking into obligations or the model, and any
   platform-layer file that has learned a set's vocabulary.
-${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
-it breaks. Formatting nits belong to a different reviewer — skip them.
-Return the structured output only.`,
+${crossChangeDuties ? `${crossChangeDuties}\n` : ''}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Report ONLY real findings, each with a concrete failure scenario or, for a code-quality finding, the house rule
+it breaks. ${formattingNitsLine}
+Return the structured output only.`
+
+  const codeReviews = reviewGroups.map((group) => () =>
+    agent(
+      codeReviewerPrompt({ reviewing: groupHeader(group), diffCommand: groupDiffCommand(group) }),
       code({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
+
+  const consistencyDuties = `${planDecisionReviewRule(plan)}
+${implementorNotesForReview(impl.notes)}
+${specReviewRule(impl.notes)}
+${completionReviewRule(impl.notes)}`
+
+  const wholeChangeDuties = `${planDecisionReviewRule(plan)}
+${implementorNotesForReview(impl.notes)}`
+
+  const WHOLE_CHANGE_LABEL = 'whole'
+
+  const wholeChangeHeader = `the WHOLE change: ${reviewTargets.length} file(s) across every repo it touches. Review EVERY one of them —
+each file on its own merits, read in full:
+${reviewTargets.map((file) => `- ${file}`).join('\n')}
+The \`<repoKey>:\` prefix names the repo; the rest is the path inside it (${repoPathList(FILE_REPO_KEYS)}).
+Report each finding's \`file\` as \`<repoKey>:<repo-relative path>\`, and for a file in that list exactly as it is
+written there. A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it
+at its own path.
+${rules.styleReviewers ? 'You are the only code reviewer of this change, beside a style reviewer per (repo, language) group' : 'You are the only reviewer of this change'}, so read it ACROSS files as well as file by file. These are yours too:
+${CROSS_FILE_HUNT}.
+No consistency reviewer runs beside you either, so where another prompt leaves a judgement to that reviewer — the
+implementor's notes and the plan's own decisions — it is yours. The spec sync and the probes and docs lines are not:
+the ladder judges what those lines claim at this rigour.`
+
+  const wholeChangeDiffCommands = [...new Map(reviewGroups.map((group) => [group.repo, groupDiffCommand(group)]))]
+    .map(([repo, command]) => `- in ${repo}: ${command}`)
+    .join('\n')
+
+  const wholeChangeReview = () =>
+    agent(
+      codeReviewerPrompt({
+        reviewing: wholeChangeHeader,
+        diffCommand: `each file's own repo:\n${wholeChangeDiffCommands}`,
+        crossChangeDuties: wholeChangeDuties
+      }),
+      think({ label: `${id} review:${WHOLE_CHANGE_LABEL}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+    )
 
   const consistencyReview = () =>
     recoverRunStack(id, 'consistency', () => agent(
@@ -5432,20 +5711,18 @@ ${guardrails()}
 ${HOUSE_RULES_TO_JUDGE}YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
 CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; plan at ${PLANS}/${id}.md;
 the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}
-${REPO_DOCS_STEP}LOOK FOR: ${OUTSIDE_THE_DIFF}; the same concept named two ways across files; a pattern the repo already has, reimplemented instead of
-reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
-in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
-without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field nothing
-writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what each consumer (a
-frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
-or performance-tests repo exercises the slice through it;
-an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
+${REPO_DOCS_STEP}LOOK FOR: ${OUTSIDE_THE_DIFF}; an obligation with no schema field behind it or a schema field nothing
+writes; a move or new file the plan listed that did not happen; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A check in a form GUARD RAILS lists as DENIED is not run: report it as a finding
 naming the plan. ${SECTION_5_STACK_LINE}
-${planDecisionReviewRule(plan)}
-${implementorNotesForReview(impl.notes)}
-${specReviewRule(impl.notes)}
-${completionReviewRule(impl.notes)}
+ACROSS FILES, these are yours:
+${CROSS_FILE_HUNT}.
+Compare a reimplemented pattern with the exemplar the plan names. A registration without its twin is a page in
+dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js without the
+matching copy.cy.js key. THE CONTRACT BETWEEN REPOS is what each consumer (a frontend, say) sends and expects against
+what its provider (a backend or a stub) accepts and returns, with the tests or performance-tests repo exercising the
+slice through it.
+${consistencyDuties}
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
@@ -5456,7 +5733,8 @@ Return the structured output only.`,
   const STYLE_PERSONA = `${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md`
   const CODE_PERSONA = `${SKILLS}/review/references/FILE_REVIEWER.md`
   const CONSISTENCY_PERSONA = `${SKILLS}/review/references/CONSISTENCY_REVIEWER.md`
-  const personasOf = (group) => (group.language === DOCS_LANGUAGE ? [CODE_PERSONA] : [STYLE_PERSONA, CODE_PERSONA])
+  const personasOf = (group) =>
+    group.language === DOCS_LANGUAGE || !rules.styleReviewers ? [CODE_PERSONA] : [STYLE_PERSONA, CODE_PERSONA]
 
   const codexReview = (slug, personas, reviewFiles, instructions) => () =>
     codexStage(id, 'review', {
@@ -5487,25 +5765,49 @@ ${CODE_REVIEW_LENS}${mergeNote}${IS_BRANCH && isWorkspaceGroup(group) ? WORKSPAC
     `${WHOLE_CHANGE} — every file staged or committed on ${workBranch} in every repo`,
     `${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Review the WHOLE staged, uncommitted change for increment ${id} ACROSS files and repos. Apply the persona bound to
 <personas>, and no other: other Codex runs review each (repo, language) group file by file.
-${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}; the same concept
-named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
-between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
-${planDecisionReviewRule(plan)}
-${implementorNotesForReview(impl.notes)}
-${specReviewRule(impl.notes)}
-${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+${REPO_DOCS_STEP}Hunt for ${OUTSIDE_THE_DIFF}. Hunt too for
+${CROSS_FILE_HUNT}.
+Then run each check the plan's section 5 names, reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
+${consistencyDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
+  const codexWholeChangeReview = codexReview(
+    `review-${WHOLE_CHANGE_LABEL}`,
+    rules.styleReviewers ? [STYLE_PERSONA, CODE_PERSONA] : [CODE_PERSONA],
+    reviewTargets.join(', '),
+    `Review the WHOLE staged, uncommitted change for increment ${id}, every file bound to <reviewFiles>, across files and
+repos. Apply ${rules.styleReviewers ? 'every persona' : 'the persona'} bound to <personas>, and no other: you are the only review run for this increment, so the
+judgements another prompt leaves to a consistency reviewer are yours — except the spec sync and the probes and docs
+lines, which the ladder judges at this rigour.
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Beside what the persona names, hunt for:
+${CODE_REVIEW_LENS}ACROSS FILES, these are yours too:
+${CROSS_FILE_HUNT}.
+${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+  )
+
+  const claudeReviewStages =
+    rules.reviewScope === 'whole'
+      ? [...(rules.styleReviewers ? styleReviews : []), wholeChangeReview]
+      : [
+          ...(rules.styleReviewers ? styleReviews : []),
+          ...codeReviews,
+          ...(rules.consistencyReview ? [consistencyReview] : [])
+        ]
+
+  const codexReviewStages =
+    rules.reviewScope === 'whole'
+      ? [codexWholeChangeReview]
+      : [...codexGroupReviews, ...(rules.consistencyReview ? [codexConsistencyReview] : [])]
+
   const codexReviewResults = async () => {
-    const runs = await parallel([...codexGroupReviews, codexConsistencyReview])
+    const runs = await parallel(codexReviewStages)
     const failed = runs.filter((run) => !run.result).map((run) => run.slug)
     return { results: runs.map((run) => run.result), failed }
   }
 
   const reviewed = EXECUTOR === 'codex'
     ? await codexReviewResults()
-    : { results: await parallel([...styleReviews, ...codeReviews, consistencyReview]), failed: [] }
+    : { results: await parallel(claudeReviewStages), failed: [] }
 
   if (reviewed.failed.length > 0) {
     results.push(
@@ -5539,37 +5841,57 @@ ${completionReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0
   }
 
   rawFindings = reviewed.results.filter(Boolean).flatMap((r) => r.findings ?? [])
-  log(`${id}: ${rawFindings.length} raw findings — verifying adversarially`)
+  log(`${id}: ${rawFindings.length} raw findings`)
 
   if (rawFindings.length > 0) {
-    phase('Verify findings')
     const numbered = rawFindings.map((finding, index) => ({ ...finding, n: index + 1 }))
-    const verified = await verifyFindingGroups(id, groupFindingsForVerification(numbered), {
-      phaseName: 'Verify findings',
-      labelOf: (group) => `${id} verify:${group.name}`,
-      promptOf: (group) =>
-        verifierPrompt({
-          subject: `increment ${id}`,
-          group,
-          diffCommand: groupDiffCommand(group),
-          criteria: `the increment's acceptanceCriteria\n(\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`)`,
-          mergeNote
-        })
-    })
-    confirmed = verified.confirmed
-    refuted = verified.refuted
-    refutedFindings.push(...refuted)
-    log(`${id}: ${confirmed.length}/${rawFindings.length} findings survived verification`)
-    for (const record of refuted) log(`${id}: REFUTED ${describeRefuted(record)}`)
+    if (rules.verifyFindings) {
+      phase('Verify findings')
+      const verified = await verifyFindingGroups(id, groupFindingsForVerification(numbered), {
+        phaseName: 'Verify findings',
+        labelOf: (group) => `${id} verify:${group.name}`,
+        promptOf: (group) =>
+          verifierPrompt({
+            subject: `increment ${id}`,
+            group,
+            diffCommand: groupDiffCommand(group),
+            criteria: `the increment's acceptanceCriteria\n(\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`)`,
+            mergeNote
+          })
+      })
+      confirmed = verified.confirmed
+      refuted = verified.refuted
+      refutedFindings.push(...refuted)
+      log(`${id}: ${confirmed.length}/${rawFindings.length} findings survived verification`)
+      for (const record of refuted) log(`${id}: REFUTED ${describeRefuted(record)}`)
+    } else {
+      confirmed = numbered
+      log(`${id}: ${confirmed.length} finding(s) go to the judge unverified — no verifier runs at this row's rigour`)
+    }
   }
 
   if (confirmed.length > 0) {
     phase('Judge')
     judgement =
       (await agent(
-        judgePrompt({ id, subject: `increment ${id}`, context: readIncrement(id), confirmed, repoKeys: repos ?? [] }),
+        judgePrompt({
+          id,
+          subject: `increment ${id}`,
+          context: readIncrement(id),
+          confirmed,
+          repoKeys: repos ?? [],
+          verified: rules.verifyFindings,
+          diffCommands: wholeChangeDiffCommands
+        }),
         think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
+    if (!rules.verifyFindings) {
+      rejected = (judgement.decisions ?? [])
+        .filter((decision) => decision.call === 'reject')
+        .map((decision) => judgeRejectionRecord(id, decision))
+      refutedFindings.push(...rejected)
+      for (const record of rejected) log(`${id}: REJECTED ${describeRefuted(record)}`)
+    }
   }
 
   const codexFix = async ({ stage, ruledFixes, treeDuty }) => {
@@ -5719,8 +6041,8 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    from the plan for a stated reason (a review finding, a red rung) — a file the plan said stays untouched, a home
    it moved — is a note, not a failure: say so in your summary, with the departure and its reason, and leave it out
    of failures[]. A check of behaviour (the page does X, the spec says Y) stays pass or fail.
-${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
-${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null)}
+${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null, rowRigour)}
+${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null, rowRigour)}
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
@@ -6003,12 +6325,13 @@ Return the structured output only.`,
         ci: ciOutcome(),
         leftUncommitted: workspaceEdits,
         ...(resumedFrom ? { resumedFrom } : {}),
+        ...(rowRigour === RIGOUR ? {} : { rigour: rowRigour }),
         findings,
         judgement: judgementCalls,
         followUps: plan?.followUps
       })
       log(
-        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
+        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${findingTally()}${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
       )
       break finish
     }
@@ -6450,13 +6773,14 @@ Return the structured output only.`,
     prs: prs.map((p) => p.url),
     ...(mainRunsGreenByJobs.length > 0 ? { mainRunsGreenByJobs } : {}),
     ...(resumedFrom ? { resumedFrom } : {}),
+    ...(rowRigour === RIGOUR ? {} : { rigour: rowRigour }),
     specDiffComment,
     findings,
     judgement: judgementCalls,
     followUps: plan?.followUps
   })
 
-  log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${findingTally()}`)
 
   if (!workspaceBack.ok) {
     stopped = { reason: 'workspace-not-on-base', detail: workspaceBack.detail }

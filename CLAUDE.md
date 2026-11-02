@@ -231,8 +231,12 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   credential setup for the agent skills.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
-  docker-compose.md). Cited by SKILL.md files via
+  docker-compose.md, github-actions.md, shell.md). Cited by SKILL.md files via
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+  Read [`shell.md`](docs/best-practices/shell.md) before any bulk rename: this
+  workspace is macOS, so `sed`'s `\b` matches nothing and still exits 0, and BSD
+  `grep` rejects the word-boundary syntax BSD `sed` accepts — a rename verified
+  by exit code can silently do nothing.
 - `docs/testing/` — how this project tests, and the general theory behind it:
   - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, profile, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
   - [`config/e2e-tests-pr-scope.json`](config/e2e-tests-pr-scope.json) — the suites and service tags each repo's PR-triggered GitHub Actions e2e run covers.

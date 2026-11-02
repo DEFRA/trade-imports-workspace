@@ -403,6 +403,24 @@ describe('runBuildStart — an increment that already has a ticket', () => {
 
     expect(outcome.attempt).toBeNull()
   })
+
+  test('reports the rigour a row sets', async () => {
+    await workspaceWith([row({ ticket: 'EUDPA-77', rigour: 'fast' })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start()
+
+    expect(outcome.rigour).toBe('fast')
+  })
+
+  test('reports no rigour for a row that sets none', async () => {
+    await workspaceWith([row({ ticket: 'EUDPA-77' })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start()
+
+    expect(outcome.rigour).toBeNull()
+  })
 })
 
 describe('runBuildStart — derive', () => {

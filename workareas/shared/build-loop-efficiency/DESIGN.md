@@ -6,7 +6,9 @@
 first two items turned out to be smaller than this design assumed — see A4 below. A2 is planned in
 [`PLAN-A2.md`](PLAN-A2.md) and built on `chore/NO_JIRA-build-loop-resume`, where the planning found
 that a resume mechanism already existed for the stages after the land stage — see A2 below. A3 is
-neither planned nor built.
+planned in [`PLAN-A3.md`](PLAN-A3.md) and built on `chore/NO_JIRA-build-loop-rigour`, where the
+building changed the design in five ways this document now records — see A3 below. Every piece of
+this design is now built.
 
 The Design Release 2.1 accompanying documents theme (EUDPA-724) landed six rows in six loop
 launches over about 29 hours, for roughly 696M tokens. Not one launch ended because the work
@@ -197,8 +199,17 @@ Three presets to start with. The run default is `standard`.
 | preset | what runs |
 |---|---|
 | `full` | Today's pipeline, unchanged. |
-| `standard` | One plan reviewer rather than two, and it keeps its single send-back. No style reviewers — the format and lint rungs and the `code-style` skill already own that ground. Consistency, verify, judge, fix and ladder all kept. |
-| `fast` | Sonnet plan, no plan review, one code reviewer across the whole change, judge, fix, ladder. |
+| `standard` | One plan reviewer rather than two, and it keeps its single send-back. Style review moves from each row to one pass over the theme's whole change when its last row lands. Consistency, verify, judge, fix and ladder all kept. |
+| `fast` | Sonnet plan, no plan review, one code reviewer across the whole change, judge, fix, ladder. Style review as at `standard`. |
+
+Style review moves; it is never dropped. An earlier draft dropped it at `standard`, on the grounds
+that "the format and lint rungs and the `code-style` skill already own that ground". Neither holds.
+Format and lint are deterministic and catch none of the style persona's conventions. The loop never
+runs the `code-style` skill except through that per-row reviewer. And the code reviewer does not
+pick up what the style reviewer does, which is why the style reviewer exists. Reading style once
+per theme rather than once per row keeps the coverage and still cuts the cost. Style was ~21M of
+the documents theme's ~696M. A run that builds no theme (the `full` and `trunk` lifecycles) has
+nowhere to move it, so the row keeps its style reviewer there at every preset.
 
 `fast` exists for rows like inc-031 and inc-039, where the behaviour was already on `main` and
 the work was a test and a spec sentence. Both took the same opus plan, opus double plan review,
@@ -244,6 +255,80 @@ gets bumped to `full`, or `local` gets switched to `ci` after a stack failure.
 
 **Recovers:** most of the ~211M planning spend and the 52.79M consistency spend.
 
+### What the build changed
+
+Five things, each because building the dial exposed something this design did not know. The full
+record, 43 entries, is in [`PLAN-A3.md`](PLAN-A3.md)'s "What the build changed in this plan"; these
+are the ones that change what the design says.
+
+1. **`standard` re-reads a revised plan on an empty review as well as a structural finding.** The
+   design asked for one reviewer and a single send-back. A reviewer may legally return
+   `approved: false` with no findings — the prompt forbids it, the schema does not — and that
+   reached the one-review branch, which logged "Its 0 finding(s) stand" and had an agent write an
+   empty "must address" section into the plan the implementor reads. A second read is the right
+   answer to "the reviewer objected but named nothing", and `full` already guarded exactly that.
+
+2. **Dropping the consistency reviewer at `fast` orphaned four judgements, and two of them moved to
+   the ladder rather than to the replacement reviewer.** Four prompts delegate work to "the
+   consistency reviewer" — the plan's departures, the implementor's notes, the spec sync, and the
+   `Probes:`/`Docs updated:` lines — and the ladder is told to stop short of them. The design did
+   not notice. Handing all four to the single whole-change reviewer closed the hole and opened a
+   worse one: two of the four are not judgements over the diff in front of it but separate
+   investigations with their own evidence and file sets. The ladder already reads the same notes at
+   every preset and already runs the spec validate, so **at `fast` the ladder judges the spec sync
+   and the probes and docs lines**, and the reviewer keeps the two that are about the diff.
+
+3. **`fast`'s whole-change reviewer runs on the `think` tier.** It absorbs the consistency reviewer,
+   which runs on `think`, and it is the only reader of the change. Running it on `code` was an
+   unintended demotion — it fell out of copying the group reviewer's call, and nobody chose it. No
+   `reviewTier` went into the preset table: reviews already run at two tiers at `full` and
+   `standard`, so one field would have been a lie. It is a property of that stage.
+
+4. **At `fast` the judge verifies, so its rejections now reach the theme review.** A refuted finding
+   at the other presets goes to `refutedFindings` and the theme review re-reads it. With no verifier
+   there was nothing to push, so a judge's rejection survived only as a bare `reject:` with no reason
+   — quietly removing the one class of finding the theme review exists to catch, and this design
+   names that review as the reason `fast` is safe to choose. The judge's rejections are recorded
+   there now, whatever the preset.
+
+5. **The proposal does not read `gatePhases: []`.** An earlier rule took it as a `fast` signal and
+   was wrong six times in nine on this theme's own backlog: those rows set it because the local e2e
+   rung timed out at 90s and the proof moved to the pull requests — their notes say "This is not a
+   preference for less testing." **`gatePhases: []` records where a row is verified, not how much
+   scrutiny it deserves**, and keying a preset off it gives a row less review precisely because a
+   machine could not run its tests locally. Found only by running the derivation over a real backlog
+   and reading every line of the answer.
+
+**One thing the design asserted that is not true, and matters elsewhere:** nothing lints
+`.claude/skills/**/*.js`. There is no root eslint config, and `tim`'s own lint runs inside `tim/`.
+The loop is held by its contract test, not by a linter.
+
+### The safety argument covers one lifecycle, not both
+
+This design says the theme engineering review "is the backstop for whatever a `fast` row's single
+reviewer missed, so making it configurable would remove the thing that makes `fast` safe to choose".
+Building A3 established that **the theme engineering review runs under the branch lifecycle only** —
+`builtTheme` is `null` under the full one, because there is no theme to review when each row cuts its
+own branch, raises its own pull request and merges on its own. The design did not notice, because the
+run it was written from was a branch-lifecycle theme.
+
+So the two lifecycles do not get the same `fast`:
+
+- **Branch lifecycle** — one whole-change reviewer on `think`, the judge verifying its own findings,
+  the gate, the ladder (which also judges the spec sync and the probes and docs lines there), CI, and
+  **the theme engineering review across every repo once the last row lands**, which re-reads every
+  finding the judge rejected.
+- **Full lifecycle** — the same, minus the theme review. What stands in its place is that every row
+  reaches `main` through its own pull request with CI green on it, which is a real gate but not a
+  second reading of the change.
+
+That is not necessarily wrong — a per-row pull request is a different kind of check, not an absent one
+— but it is not what this design claimed, and the claim was load-bearing. **Before `fast` is used on
+a full-lifecycle programme, decide whether a pull request is enough on its own**, and if it is not,
+the options are to require `requireApproval` for `fast` rows, or to refuse `fast` under
+`lifecycle: 'full'`, or to give the full lifecycle an equivalent end-of-run review. None of those is
+built, and none should be chosen from this document alone.
+
 ## A4 — Machine and process
 
 - **`config/machine.json`** did not exist, so the gate ran every FIT and e2e rung at the worker
@@ -288,3 +373,17 @@ piece that moves the quality bar, and it should run on a loop whose stops are al
 to judge it by. A4 is a day's work with no dependency on the other three.
 
 A1 and A4 together recover most of the 29 hours. A2 and A3 are the expensive pieces.
+
+**That order held, and A3 last was the right call for a reason this design did not give.** A3 is the
+only piece that moves the quality bar, and the building of it turned out to be mostly an argument
+about *what each stage may truthfully claim* once another stage stops running. Nine separate texts —
+prompts, logs, a section an agent writes into the plan file, a schema description, two briefs and the
+structured result — each said a stage ran that a lower preset does not run. None was a coding error;
+every one would have passed its tests. They surfaced because each task's review was asked the same
+question: when a preset drops a stage, what still claims it happened? That question is the one to
+carry into any later change to this loop.
+
+**The dial is not yet proven on a real run.** Everything here is held by the contract test and by
+prompt-text comparison; no theme has been built at `standard` or `fast`. Before trusting either on
+work that matters, run one row end to end at `fast` and read the diff yourself — the canary rule the
+workspace already has for a change across several targets applies to a change across several presets.

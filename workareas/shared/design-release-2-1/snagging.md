@@ -77,6 +77,22 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** the add page always shows a blue 'Draft' tag beside the reference ([kit.js#L45-L51](https://github.com/DEFRA/trade-imports-ins-frontend/blob/2f0a825/src/server/app/shared/kit.js#L45-L51)), because the handshake carries no status. The animals journey's own pages show the tag for the notification's status: Draft in blue, Submitted in green, Amend in yellow, Deleted in grey ([animals kit.js#L35-L52](https://github.com/DEFRA/trade-imports-animals-frontend/blob/e3eef6bf/src/server/app/shared/kit.js#L35-L52)). The picker offers the add link whatever the status, amending included ([party-picker.controller.js#L87-L88](https://github.com/DEFRA/trade-imports-animals-frontend/blob/e3eef6bf/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js#L87-L88)). So a trader amending a submitted notification sees a yellow 'Amend' tag on the picker, then a blue 'Draft' tag on the add page.
 - **To ask:** on the add page reached while amending, (a) keep the 'Draft' tag, as built and as the prototype shows; (b) show the journey's own tag ('Amend', yellow), which means the handshake carries the status; or (c) show the reference with no status tag?
 
+### S-06. One label per address use, or two
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 9 and 16.
+- **Page:** the INS address book list: its Type column and its Type filter.
+- **Prototype:** two labels for the same use. The Type column ([address-book.js#L8-L15](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L8-L15)) says 'Place of origin', 'Place of destination', 'Branch'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) says 'Place of Origin', 'Place of Destination', 'Branch Address'.
+- **Built:** both, as the prototype has them (`copy.en.js:17-22` for the filter, `:45-50` for the column, and the Welsh).
+- **To ask:** should the column and the filter use one label per use, and which: the column's sentence case ('Place of origin', 'Branch') or the filter's ('Place of Origin', 'Branch Address')? The answer also decides which words a search by type matches.
+
+### S-07. What Clear search clears when a Type is chosen
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 17 and 27.
+- **Page:** the INS address book list.
+- **Prototype:** no Clear search link ([address-book.html](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/address-book.html)); it came back from the designer's 26 October answer (Settled, below), which did not cover the Type filter.
+- **Built:** Clear search keeps the chosen Type and drops only the search text (`list.controller.js:150`), and shows only when there is search text. The spec records this as SCN-INS-ADDR-028-E.
+- **To ask:** (a) should Clear search keep the chosen Type, as built, or clear every filter? (b) Should a way to clear the filters show when only a Type is chosen?
+
 ## Settled
 
 | Question | Answer | Where it landed |

@@ -1431,7 +1431,7 @@
         "inc-069"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -1474,13 +1474,35 @@
         "req-1130",
         "req-1143"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the design source gives each use two labels and the code copies both. Type column (prototype app/data/address-book.js:8, :13, :15 at 04a073b, https://github.com/defra-design/GB-notification-service/blob/04a073b/app/data/address-book.js#L8-L15): 'Place of origin', 'Place of destination', 'Branch'. Type select (app/data/address-book-address-types.js:4, :24, :37, https://github.com/defra-design/GB-notification-service/blob/04a073b/app/data/address-book-address-types.js#L4-L37): 'Place of Origin', 'Place of Destination', 'Branch Address'. Code: trade-imports-ins-frontend copy.en.js:17-22 (select) and :45-50 (column), and copy.cy.js. Should the column and the select use one label per use, and which: the sentence-case column wording, or the select wording? The answer also decides which words a search by type label matches. Raised by review finding 16 (and finding 9).",
+        "For the designer: the prototype list page (app/views/address-book.html at 04a073b) has no Clear search link, so the code chose. trade-imports-ins-frontend list.controller.js:150 sets clearSearchHref to addressBookPageHref(1, { addressType, use }), keeping the chosen Type and dropping only the search, and openspec/specs/ins/address-book/spec.md:605-609 (SCN-INS-ADDR-028-E) records that as settled. Should Clear search keep the chosen Type (current build) or clear every filter, Type included? And should a way to clear the filters also show when only a Type is active (today Clear search shows only with a search term)? Until answered SCN-INS-ADDR-028-E is the build's choice; once answered, its GIVEN must choose a Type so the THEN is set up. Raised by review findings 17 and 27.",
+        "Acceptance criteria 2 and 8 say Enter pressed on the Type select submits the filter form, with JavaScript on or off. Browsers do not submit a form on Enter in a native select (implicit submission covers text inputs only), and trade-imports-ins-frontend has no client script that does it, so with JavaScript off the criterion cannot hold and no test proves it. Should the criterion drop Enter on the select (the Search button and Enter in the search field submit), or should a progressive-enhancement script submit on Enter in the select with JavaScript on only? Raised by review finding 23 (the no-reload-on-change half is fixed in this increment)."
+      ],
       "notes": [
         "Combines the Type select and its matching (req-1129, 1130) with the links that carry or drop it (req-1127, 1143): one filter, one form, one set of links. Kept apart from the tabs row so that row stays reviewable and its gate lands first. The Transporter tab's 'Commercial' and 'Private' options and matching on a transporter's type wait with that tab (req-2041), so they are not here. The type filter runs in the address book API (c-169, kept by ruling-sam-2026-10-09-p1-118), organisation-scoped and without deleted addresses. Sam's 9 October afternoon ruling makes the filter a GET form that the search button or Enter submits, with changing a select submitting nothing by itself; filtering as the user types waits on design (req-2039). The tab and type parameters' names are the INS service's (c-253), so no criterion names them. Depends on the category-tabs row (inc-067). Kept the existing row's id.",
         "Re-cut 2026-10-15: takes the type parts of inc-069 (search by type labels, the Type select's submit, the Type-filtered results line, the stub's tab and Type filtering, the E2E tab links), so it now depends on inc-069. It builds the type parts of req-1119, req-1121, req-1122, req-1185 and req-1188, which stay listed on inc-069.",
         "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "755a4072493f76a4e402bb298955aa0e9064a43c b939216a3d2dc31a4157d2ba2b4561b08bb81a89 c7d637fb20887bf79cf679198ba8235897cc0159 4d4192d7c4d5815bc4ecb3ac14d4b8f5af543aca",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-address-book/pull/20",
+          "repo": "addressbook",
+          "number": 20
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/71",
+          "repo": "insfrontend",
+          "number": 71
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/77",
+          "repo": "tests",
+          "number": 77
+        }
+      ]
     },
     {
       "id": "inc-061",

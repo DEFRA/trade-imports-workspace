@@ -566,7 +566,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 
 ### Requirement: The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'
 **ID**: REQ-INS-ADDR-028
-The system MUST hold the address book search in a 'Filter addresses' disclosure, collapsed on load, with a field labelled 'Search' hinted 'Search by name, address or country' and an icon-only button named 'Search'. The button, or Enter in the field, MUST submit the search and list the matches, with or without JavaScript, and typing alone MUST NOT change the list. While a search is active, the list MUST offer 'Clear search' under the results line, which returns to the selected tab's whole list.
+The system MUST hold the address book search in a 'Filter addresses' disclosure, collapsed on load, with a field labelled 'Search' hinted 'Search by name, address or country', an icon-only button named 'Search' and the 'Type' select (REQ-INS-ADDR-041). The button, or Enter in the field, MUST submit the search and the Type together, with or without JavaScript, and typing alone MUST NOT change the list. While a search is active, the list MUST offer 'Clear search' under the results line.
 
 #### Scenario: The filter disclosure is collapsed on load and opens and closes
 **ID**: SCN-INS-ADDR-028-A
@@ -602,11 +602,11 @@ The system MUST hold the address book search in a 'Filter addresses' disclosure,
 - **AND** the table shows the column headers Name, Type, Address, Country and Action with no rows
 - **AND** the only link below the tabs is 'Clear search'
 
-#### Scenario: Clear search returns to the whole list of the selected tab
+#### Scenario: Clear search returns to the selected tab's list with no search
 **ID**: SCN-INS-ADDR-028-E
 - **GIVEN** the user has searched a tab of the address book
 - **WHEN** they follow 'Clear search'
-- **THEN** the whole list of that tab is shown, with no search applied
+- **THEN** the list of that tab is shown, with no search applied and any Type the user had chosen still applied
 - **AND** the Search field is empty
 
 #### Scenario: Text typed and not submitted leaves the list unchanged
@@ -670,9 +670,9 @@ The address book service MUST serve the page size a list request gives when it i
 - **THEN** the first 25 addresses are returned, with a page size of 25
 
 
-### Requirement: A search matches an address by its name, address, town, county, postcode or country
+### Requirement: A search matches an address by its name, address, town, county, postcode, country or the labels of its uses
 **ID**: REQ-INS-ADDR-032
-The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
+The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and against the labels of its uses as the Type column shows them, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
 
 #### Scenario: A term inside an address line finds that address
 **ID**: SCN-INS-ADDR-032-A
@@ -703,6 +703,12 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **GIVEN** the user has just added an address in France
 - **WHEN** they search for its name, for part of its address line 1, and for 'fran'
 - **THEN** each search lists the added address
+
+#### Scenario: A use label finds an address used that way
+**ID**: SCN-INS-ADDR-032-E
+- **GIVEN** the address book holds an address with the place of origin and consignor uses whose name and address do not contain the word 'consignor'
+- **WHEN** the user searches for 'consignor'
+- **THEN** the list shows that address, with 'Place of origin, Consignor' as its Type
 
 ### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
 **ID**: REQ-INS-ADDR-033
@@ -884,7 +890,7 @@ The address book service MUST record an address's type (origin or consignor; des
 
 ### Requirement: The address book list is split into three tabs, each a link that loads the list on that tab
 **ID**: REQ-INS-ADDR-038
-The system MUST split the address book list into three tabs, 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch', in that order. Each tab MUST be a link that loads the list on that tab, with or without JavaScript, and the selected tab MUST be marked. Each tab's panel MUST be headed with its tab's name followed by 'addresses'. Opening it with no tab, or an unknown one, MUST show the Origin and Consignor tab. A search and its pages MUST stay on the selected tab.
+The system MUST split the address book list into three tabs, 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch', in that order, each a link that loads the list on that tab with or without JavaScript, the selected one marked and its panel headed with its name followed by 'addresses'. No tab, or an unknown one, MUST show Origin and Consignor. A search and its pages MUST stay on the selected tab. A tab link MUST open page 1, keeping the search and dropping the Type.
 
 #### Scenario: The three tabs are shown in order with the selected one marked
 **ID**: SCN-INS-ADDR-038-A
@@ -919,6 +925,13 @@ The system MUST split the address book list into three tabs, 'Origin and Consign
 - **WHEN** they submit the search
 - **THEN** the same tab stays selected and only that tab's matches are listed
 - **AND** the links to the pages of the list keep the tab and the search
+
+#### Scenario: Following a tab after a search and a Type keeps the search and drops the Type
+**ID**: SCN-INS-ADDR-038-F
+- **GIVEN** the user has searched the 'Destination, Consignee and Importer' tab and chosen 'Importer' as its Type
+- **WHEN** they follow the 'Origin and Consignor' tab
+- **THEN** page 1 of that tab is shown with the search kept in the Search field and 'Select one' chosen as the Type
+- **AND** the list is that tab's matches for the search
 
 ### Requirement: Each tab lists the addresses the address book service returns for its address type, with their uses in the Type column
 **ID**: REQ-INS-ADDR-039
@@ -981,3 +994,81 @@ The address book service MUST, asked for an address type, return only the caller
 - **GIVEN** an organisation holds live addresses of several address types
 - **WHEN** the list is asked for no address type
 - **THEN** every live address is returned
+
+### Requirement: The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure
+**ID**: REQ-INS-ADDR-041
+The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Type' offering 'Select one' and then only the selected tab's options. Submitting a Type MUST list only that tab's addresses holding it, across all its pages, keeping the tab selected, with or without JavaScript. Choosing a Type alone MUST NOT change the list. The results line MUST count the matches, pagination MUST show only past one page of eight, and the links to the pages MUST keep the tab, the search and the Type.
+
+#### Scenario: Each tab offers Select one and then its own Types
+**ID**: SCN-INS-ADDR-041-A
+- **GIVEN** the user is viewing the address book
+- **WHEN** they look at the Type select on each tab in turn
+- **THEN** 'Origin and Consignor' offers 'Select one', 'Place of Origin' and 'Consignor'
+- **AND** 'Destination, Consignee and Importer' offers 'Select one', 'Consignee', 'Importer' and 'Place of Destination'
+- **AND** 'Branch' offers 'Select one' and 'Branch Address'
+
+#### Scenario: A submitted Type lists only the tab's addresses holding it
+**ID**: SCN-INS-ADDR-041-B
+- **GIVEN** the 'Origin and Consignor' tab holds one address with the consignor use and one without it
+- **WHEN** the user chooses 'Consignor' and presses the Search button, or presses Enter in the Search field
+- **THEN** only the address with the consignor use is listed and the list reads 'Showing 1-1 of 1'
+- **AND** no pagination is shown
+- **AND** the 'Origin and Consignor' tab is still selected and 'Consignor' is chosen as the Type
+
+#### Scenario: Matches past one page are counted and paged, and the pages keep the tab, the search and the Type
+**ID**: SCN-INS-ADDR-041-C
+- **GIVEN** nine addresses on the 'Origin and Consignor' tab match a search and hold the consignor use
+- **WHEN** the user submits the search with 'Consignor' chosen
+- **THEN** the list reads 'Showing 1-8 of 9' and pagination is shown
+- **AND** the link to the next page keeps the tab, the search and the Type
+- **WHEN** they move to the next page
+- **THEN** the list reads 'Showing 9-9 of 9' and 'Consignor' is still chosen as the Type
+
+#### Scenario: Choosing a Type without submitting leaves the list as it was
+**ID**: SCN-INS-ADDR-041-D
+- **GIVEN** the user is viewing a tab with the 'Filter addresses' disclosure open
+- **WHEN** they choose a Type and do not submit
+- **THEN** the list and its results line stay as they were
+
+#### Scenario: A Type works with JavaScript off
+**ID**: SCN-INS-ADDR-041-E
+- **GIVEN** JavaScript is switched off
+- **WHEN** the user chooses a Type and presses the Search button
+- **THEN** the list shows the same addresses and results line as with JavaScript on
+
+#### Scenario: A Type finds the addresses holding it beyond the first page of the tab
+**ID**: SCN-INS-ADDR-041-F
+- **GIVEN** the 'Origin and Consignor' tab runs past one page, and two of its addresses with the consignor use lie beyond the first page
+- **WHEN** the user submits a search that matches them with 'Consignor' chosen
+- **THEN** both addresses are listed and the list reads 'Showing 1-2 of 2'
+- **AND** no pagination is shown
+
+### Requirement: The address book service lists the addresses holding a use, and matches a search against uses
+**ID**: REQ-INS-ADDR-042
+The address book service MUST, asked for a use, return only the caller's organisation's live addresses holding it, combined with the address type and the search and paged over its matches. Given search uses, it MUST return an address holding any of them as well as the addresses the search text and country codes match. It MUST refuse a use or search use outside the six uses with a 400 bad request.
+
+#### Scenario: A use returns exactly its holders
+**ID**: SCN-INS-ADDR-042-A
+- **GIVEN** an organisation holds an address with the consignor use, one with the importer use and one with no uses
+- **WHEN** the list is asked for the consignor use
+- **THEN** only the address with the consignor use is returned
+- **AND** the address with no uses is not returned, even when the list is also asked for 'origin or consignor'
+
+#### Scenario: A use narrows the address type and the search
+**ID**: SCN-INS-ADDR-042-B
+- **GIVEN** an organisation holds addresses of several uses that match a search term
+- **WHEN** the list is asked for a use with that term
+- **THEN** only the matching addresses holding that use are returned
+- **AND** the total and pages count only those addresses
+
+#### Scenario: A search use widens the search
+**ID**: SCN-INS-ADDR-042-C
+- **GIVEN** an organisation holds one address matching a search term by its name and another holding the consignor use
+- **WHEN** the list is asked for the term with the consignor search use
+- **THEN** both addresses are returned
+- **AND** with an address type, only those within the type are returned
+
+#### Scenario: An unknown use is refused
+**ID**: SCN-INS-ADDR-042-D
+- **WHEN** the list is asked for a use or a search use that is not one of the six
+- **THEN** the service responds with a 400 error

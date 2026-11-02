@@ -2666,7 +2666,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
-              "test": "holds the Search label, its hint, the input and one icon-only submit button inside the disclosure",
+              "test": "holds the Search controls, then the Type label and select, inside the disclosure",
               "strength": "full",
               "notes": "red-probed: fails with the hint removed"
             },
@@ -2674,7 +2674,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/copy/copy.test.js",
-              "test": "Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line",
+              "test": "Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button, Clear search link and empty results line",
               "strength": "partial",
               "notes": "pins the English copy; the probe changed the results line, not these keys"
             },
@@ -2792,7 +2792,7 @@
         },
         {
           "id": "SCN-INS-ADDR-028-E",
-          "name": "Clear search returns to the whole list of the selected tab",
+          "name": "Clear search returns to the selected tab's list with no search",
           "coverage": "full",
           "tests": [
             {
@@ -2810,6 +2810,14 @@
               "test": "Should link Clear search to the whole list of the selected tab under the results line when a search has %s",
               "strength": "partial",
               "notes": "red-probed: fails with Clear search removed; proves the link and its href, not following it"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "links Clear search to the selected tab with the use kept and no search",
+              "strength": "partial",
+              "notes": "the Type kept is read from the same resolution as the list; clearSearchHref not probed alone"
             }
           ]
         },
@@ -2982,7 +2990,7 @@
     },
     {
       "id": "REQ-INS-ADDR-032",
-      "name": "A search matches an address by its name, address, town, county, postcode or country",
+      "name": "A search matches an address by its name, address, town, county, postcode, country or the labels of its uses",
       "coverage": "partial",
       "scenarios": [
         {
@@ -3098,6 +3106,61 @@
               "test": "an address added through the form is found by a search on its name, part of its address and part of its country name",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-E",
+          "name": "A use label finds an address used that way",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "asks the address book to match the use whose label contains %j beside the search term",
+              "strength": "full",
+              "notes": "red-probed: fails when the search uses are not sent"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "asks the address book to match every use whose label contains the search term",
+              "strength": "full",
+              "notes": "red-probed: fails when the search uses are not sent"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give the uses whose Type column label contains %j, ignoring case",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.address-type.test.js",
+              "test": "Should match a search use as it matches a search term, within the address type",
+              "strength": "full",
+              "notes": "red-probed: fails when the stub ignores search uses"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds an address by the label of one of its uses",
+              "strength": "partial",
+              "notes": "red-probed together with the select rename, which fails it for another reason"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "a search for a use label with a Type chosen lists the address holding that use, found on whichever result page it falls",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
             }
           ]
         }
@@ -4002,6 +4065,37 @@
               "notes": "run by the gate; not run or red-probed here"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-038-F",
+          "name": "Following a tab after a search and a Type keeps the search and drops the Type",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "links each tab with the current search and no use or page",
+              "strength": "full",
+              "notes": "red-probed: fails when the tab links drop the search"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "keeps the search and clears the Type when another tab is followed",
+              "strength": "full",
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "the tab stays selected after a Type is submitted, and following another tab keeps the search, resets the Type and lists that tab",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed; follows Destination, Consignee and Importer from Origin and Consignor with Consignor chosen"
+            }
+          ]
         }
       ]
     },
@@ -4260,7 +4354,7 @@
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorComplianceIT.java",
-              "test": "liveApiDocsHaveTheLockedAllowedValuesForAddressTypeUsesAndTheListAddressTypeParameter",
+              "test": "liveApiDocsHaveTheLockedAllowedValuesForAddressTypeUsesAndTheListFilterParameters",
               "strength": "partial",
               "notes": "not red-probed"
             }
@@ -4286,6 +4380,338 @@
               "test": "listing with no address type returns every live address",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-041",
+      "name": "The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-041-A",
+          "name": "Each tab offers Select one and then its own Types",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "offers the Type select the options of the %s tab only, led by Select one with no value",
+              "strength": "full",
+              "notes": "red-probed: fails when the select is renamed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-book-tabs.test.js",
+              "test": "offers each tab its own uses in the Type select order",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button, Clear search link and empty results line",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "each tab, reached through its link, offers Select one with no value and then only its own Types",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-B",
+          "name": "A submitted Type lists only the tab's addresses holding it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the addresses of the tab holding the Type, and keeps the tab and the Type chosen, when submitted with the Search button",
+              "strength": "full",
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the addresses of the tab holding the Type, and keeps the tab and the Type chosen, when submitted with Enter in the Search field",
+              "strength": "full",
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the Destination, Consignee and Importer addresses holding the Consignee Type",
+              "strength": "partial",
+              "notes": "another tab and Type than the scenario's; red-probed with the select rename"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.address-type.test.js",
+              "test": "Should list exactly the addresses of the tab that hold the use",
+              "strength": "full",
+              "notes": "red-probed: fails when the stub ignores the use"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-C",
+          "name": "Matches past one page are counted and paged, and the pages keep the tab, the search and the Type",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "links every page with the selected tab, the search term, the use and the page number only",
+              "strength": "partial",
+              "notes": "red-probed through the use resolution; the href builder is not probed alone"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should carry the use after q and before the page param",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "a Type that runs past one page is counted and paged, the next page keeps the tab, the search and the Type, and a Type matching one address counts one",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-D",
+          "name": "Choosing a Type without submitting leaves the list as it was",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "leaves the URL and the whole tab listed when a Type is chosen and not submitted",
+              "strength": "partial",
+              "notes": "holds by construction, as the page has no script that listens to the select; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-E",
+          "name": "A Type works with JavaScript off",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the addresses of the tab holding the Type when submitted with the Search button",
+              "strength": "full",
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "a Type chosen and submitted with the Search button lists the same addresses",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-F",
+          "name": "A Type finds the addresses holding it beyond the first page of the tab",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.address-type.test.js",
+              "test": "Should count and page over every address of the tab holding the use",
+              "strength": "partial",
+              "notes": "the stub's paging, not the scenario's page; red-probed: fails when the stub ignores the use"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "a Type finds the addresses holding it beyond the first page of the tab, counted and without pagination",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-042",
+      "name": "The address book service lists the addresses holding a use, and matches a search against uses",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-042-A",
+          "name": "A use returns exactly its holders",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturnOnlyTheLiveAddressesHoldingTheUse_whenUseIsGiven",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldNotReturnAddressesWithNoUses_whenUseIsGivenWithOriginOrConsignor",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java",
+              "test": "listLiveAddresses_withAUseOrASearchUse_isOrgScopedAndExcludesDeletedAndOtherUses",
+              "strength": "partial",
+              "notes": "not red-probed after it was made to list a second use"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java",
+              "test": "list_passesTheUseWithTheAddressType",
+              "strength": "full",
+              "notes": "red-probed: fails when the service drops the use"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "listing by a use returns exactly the stamped addresses holding it, and none for a use nothing holds",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-042-B",
+          "name": "A use narrows the address type and the search",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldNarrowTheSearchByTheUse_whenUseAndSearchTermAreGiven",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldPageAndCountOverTheAddressesHoldingTheUse",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-042-C",
+          "name": "A search use widens the search",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "searchUseWidensTheSearchTermToAnAddressHoldingTheUse",
+              "strength": "full",
+              "notes": "red-probed: fails when the search-uses clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "searchUseTermAndCountryCodeTogetherReturnTheUnionOfTheirMatches",
+              "strength": "full",
+              "notes": "red-probed: fails when the search-uses clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "searchUseStaysWithinTheAddressType",
+              "strength": "full",
+              "notes": "red-probed: fails when the search-uses clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java",
+              "test": "list_passesTheSearchUsesBesideTheSearchPattern",
+              "strength": "full",
+              "notes": "red-probed: fails when the service drops the search uses"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java",
+              "test": "listLiveAddresses_withAUseOrASearchUse_isOrgScopedAndExcludesDeletedAndOtherUses",
+              "strength": "partial",
+              "notes": "not red-probed after it was made to list a second use"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-042-D",
+          "name": "An unknown use is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenUseIsUnknown",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "anUnknownSearchUseIsABadRequestWithNoErrorsMap",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorComplianceIT.java",
+              "test": "liveApiDocsHaveTheLockedAllowedValuesForAddressTypeUsesAndTheListFilterParameters",
+              "strength": "partial",
+              "notes": "locks the allowed values of use and searchUse; not red-probed"
             }
           ]
         }

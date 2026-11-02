@@ -1324,7 +1324,7 @@
         "inc-059"
       ],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -1385,35 +1385,29 @@
         "req-1861"
       ],
       "openQuestions": [
-        "Twin fix: repos/trade-imports-animals-frontend src/client/stylesheets/_govuk-frontend.scss needs its strings in single quotes to match the repo's Prettier singleQuote setting and its own application.scss, as inc-067 review finding 26 (quote churn in trade-imports-ins-frontend _govuk-frontend.scss)."
+        "Twin fix: repos/trade-imports-animals-frontend src/client/stylesheets/_govuk-frontend.scss needs its strings in single quotes to match the repo's Prettier singleQuote setting and its own application.scss, as inc-067 review finding 26 (quote churn in trade-imports-ins-frontend _govuk-frontend.scss).",
+        "Twin fix: repos/trade-imports-animals-frontend and repos/trade-imports-plants-frontend src/client/stylesheets/_govuk-frontend.scss need govuk-frontend configured once by `@forward 'pkg:govuk-frontend' with ($govuk-assets-path: '/public/assets/', $govuk-global-styles: true)` instead of through the MoJ vendor wrapper, whose `$moj-include-default-font-face: false` (moj/settings/_typography.scss:13, not !default) drops the GDS Transport @font-face for the whole app, as inc-067 review findings 28 and 29 (trade-imports-ins-frontend _govuk-frontend.scss).",
+        "Twin fix: repos/trade-imports-animals-frontend and repos/trade-imports-plants-frontend need every vi.mock of src/server/auth/get-oidc-config.js in their test files (start-server.test.js, plugins/auth.test.js, auth/controller.test.js, health/controller.test.js, common/helpers/errors.test.js, serve-static-files.test.js, content-security-policy.test.js, co-residency.test.js, and plants app/routes.test.js and page-maturity/page-levels.test.js) replaced by answering OIDC discovery with nock at the network boundary, and the ins-frontend test files this change did not touch (plugins/csrf.test.js, plugins/auth.test.js, page-maturity/*.test.js, features/reference-data-outage.test.js, dashboard/controller.test.js, address-book add/edit/delete/view controller tests, address-lookup-spike/controller.test.js, auth/controller.test.js, health/controller.test.js, common/helpers errors/serve-static-files/content-security-policy tests) need the same, using the shared nock helper inc-067 promotes, as inc-067 review finding 3 (never mock your own modules).",
+        "Twin fix: repos/trade-imports-animals-frontend and repos/trade-imports-plants-frontend src/server/common/helpers/start-server.test.js need their test titles in one voice ('Should start up server as expected' and 'Should propagate createServer errors' beside 'gives each address of a host one second to connect before trying the next'), as inc-067 review finding 2."
       ],
       "notes": [
         "Three tabs, not four: Sam's 9 October afternoon ruling (ruling-sam-2026-10-09-pm-p2-043) holds the Transporter tab, its heading, its Type label and its columns with transporter management (req-2040, in the blocked Transporter-tab row), and the tabs are MoJ sub navigation, each a link that loads the page, with the INS frontend adding @ministryofjustice/frontend at the animals frontend's major version (ruling-sam-2026-10-09-pm-p1-038, p1-099; c-304). Combines the tab slices (req-1123, 1124, 1125, 1126), the Type column (req-1134, 1139) and the typed fixtures (req-1187): all rest on the same new category filter and the same list template, and the fixtures must be typed in the same change or the E2E specs that find them break. Sam's 9 October ruling (c-253) leaves the tab parameter's name and values to the INS service, so the criteria assert the tab shown, never a query string; the search parameter keeps q. How the record and the API carry type and category is the address book service's design. Real ordering need on another area: the address book record must carry its types first, which is the address-book-add-and-edit area's typed-record row (inc-059). The tab links' search-keeping and Type-dropping (req-1127) are in the Type-filter row. The in-memory stub learns the category filter here as far as the fit suite needs; req-1185 is closed by the search row. The k6 suite searches and counts the whole book on one list; once a search and the results line cover only the selected tab, a search on the default tab misses an address of another type, so c-225 puts the suite's change (req-1861) in this row, on its branch name; every route and hook the suite reads is kept (req-1860, already met). Adding the MoJ package touches the INS frontend's package manifest, its Nunjucks search paths and its stylesheet entry, which other areas may also change. Gate set because the following rows copy this pattern. Kept the existing row's id.",
         "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
         "Decided 2026-11-02 (Paul): the tabs and the Type column use only the six uses the address book stores since inc-059 (place of origin, consignor, place of destination, consignee, importer, branch address). The prototype's list page (app/data/address-book.js:7-57) also maps consignor or exporter, exporter, contact and packer, but only its seed data carries them: no add screen sets them, so they are left out.",
         "ATTEMPT FAILED: background address added failed on 45 of 166 adds in k6 seeding, threshold crossed, k6 aborted with exit 99; no merge aborts needed; local commits: none; patches saved at logs/inc-067-preserve-*.staged.patch and logs/inc-067-preserve-*.unstaged.patch; stashes: addressbook stash@{0}, insfrontend stash@{0}, tests stash@{0}, perftests stash@{0}, workspace stash@{0}",
-        "ATTEMPT FAILED: e2e checks red - ins-frontend returned 500 on /address-book (template not found: moj/components/sub-navigation/macro.njk); @ministryofjustice/frontend not in leased stack built before change; no merges aborted; no unpushed commits; patches at logs/inc-067-preserve-*.staged.patch and logs/inc-067-preserve-*.unstaged.patch; stash addressbook/insfrontend/tests/perftests each \"On EUDPA-711-design-release-2-1-address-book-types-and-uses: failed-inc-067\""
+        "ATTEMPT FAILED: e2e checks red - ins-frontend returned 500 on /address-book (template not found: moj/components/sub-navigation/macro.njk); @ministryofjustice/frontend not in leased stack built before change; no merges aborted; no unpushed commits; patches at logs/inc-067-preserve-*.staged.patch and logs/inc-067-preserve-*.unstaged.patch; stash addressbook/insfrontend/tests/perftests each \"On EUDPA-711-design-release-2-1-address-book-types-and-uses: failed-inc-067\"",
+        "ATTEMPT FAILED: ladder verification failed - dashboard at 98% (79/80), some runs had frontend draft creation at 76% (76/80) and plants at 36% (36/40); no merges to abort; no local commits; patches at logs/inc-067-preserve-addressbook.{staged,unstaged}.patch, logs/inc-067-preserve-insfrontend.{staged,unstaged}.patch, logs/inc-067-preserve-tests.{staged,unstaged}.patch, logs/inc-067-preserve-perftests.{staged,unstaged}.patch; stashes: addressbook stash@{0}, insfrontend stash@{0}, tests stash@{0}, perftests stash@{0}, workspace-openspec stash@{0}",
+        "Landed by hand on 2026-11-02 from the loop's third, reviewed attempt (gate and plan section 5 green; the only red was 1 in 80 'INS dashboard opens signed in' checks in the plan's 30-user background-volume run, inside k6's own 99% threshold). CI green on all four PRs after: ins-frontend's joi and @hapi/content security patch (7d7ac76), main merged into ins-tests and performance-tests, and a hand-started publish for ins-tests 5b9b12e, whose push started no workflows while the PR conflicted with main."
       ],
       "gate": "Look at the MoJ sub navigation tabs, the category-to-type mapping and the list API's category filter before the Type filter, search and (once unblocked) Transporter-tab rows build on them.",
-      "attempt": {
-        "stage": "ladder",
-        "reason": "ladder-red",
-        "at": "2026-11-02T12:07:17Z",
-        "planReviewed": true,
-        "work": {
-          "kind": "patches",
-          "files": [
-            "logs/inc-067-preserve-addressbook.staged.patch",
-            "logs/inc-067-preserve-addressbook.unstaged.patch",
-            "logs/inc-067-preserve-insfrontend.staged.patch",
-            "logs/inc-067-preserve-insfrontend.unstaged.patch",
-            "logs/inc-067-preserve-tests.staged.patch",
-            "logs/inc-067-preserve-tests.unstaged.patch",
-            "logs/inc-067-preserve-perftests.staged.patch",
-            "logs/inc-067-preserve-perftests.unstaged.patch"
-          ]
+      "commit": "dd2dbb6 d5998e0 5b9b12e 9d0a7b7 2488a96d",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/27",
+          "repo": "perftests",
+          "number": 27
         }
-      }
+      ]
     },
     {
       "id": "inc-068",

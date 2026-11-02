@@ -243,7 +243,7 @@ missing key. The first log line is the resolved configuration.
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
-| `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends it back naming nothing — and no style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends it back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -870,7 +870,7 @@ their own verifier or by the judge. `RIGOUR_RULES` is the whole of it:
 |---|---|---|---|
 | `planTier` | `think` | `think` | `code` |
 | `planReview` | a plan sent back is revised and re-reviewed | revised, and re-read only when a finding is structural or the review names none | none |
-| `styleReviewers` | one per (repo, language) group but a documentation one | none | none |
+| `styleReviewers` | one per (repo, language) group but a documentation one | none on the row; one per repo across the theme's whole change | none on the row; one per repo across the theme's whole change |
 | `reviewScope` | a `code`-tier reviewer per group | a `code`-tier reviewer per group | one `think`-tier reviewer across the whole change |
 | `consistencyReview` | yes | yes | no |
 | `verifyFindings` | a verifier per group of findings | a verifier per group of findings | the judge verifies them itself |
@@ -886,6 +886,18 @@ Three things it never governs, so that a lower rigour never lowers correctness:
   single reviewer missed. A rejection by a `fast` row's judge is recorded in `refutedFindings` as
   a verifier's refutation would be, so that review and the run's review checks re-read it at
   every preset.
+
+**Style review moves to the theme rather than disappearing.** The code reviewer does not catch
+what the style reviewer catches, and the format and lint rungs catch neither. So at `standard`
+and `fast` the style review runs once over the whole theme, not once per row. When a theme's last
+row lands, one style reviewer per repo reads `git diff origin/main...HEAD` with
+`code-style/references/STYLE_FILE_REVIEWER.md`. It runs beside the theme engineering reviewer, and
+its findings go through the same verify, judge, fix, re-review, ladder and land. It runs whenever
+the run's rigour has no row-level style reviewer or any row of the run was built without one. It
+does not run when a style reviewer read every row. The two lifecycles that build no theme (`full`
+and `trunk`) have no theme stage, so there `rulesOf` keeps the row's style reviewer at every
+preset: the per-group one at `standard`, and one per group beside the single reviewer at `fast`.
+The table above is the branch lifecycle.
 
 **What moves at `fast` rather than disappearing.** The single reviewer takes the consistency
 reviewer's cross-file lens, the plan's own decisions and the implementor's notes. It does not take

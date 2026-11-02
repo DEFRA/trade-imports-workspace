@@ -379,7 +379,7 @@ const RIGOUR_RULES = {
   }
 }
 
-const rulesOf = (rigour) => RIGOUR_RULES[rigour]
+const rulesOf = (rigour) => (IS_BRANCH ? RIGOUR_RULES[rigour] : { ...RIGOUR_RULES[rigour], styleReviewers: true })
 
 const rigourSummary = (rigour) => {
   const planReviewPhrases = {
@@ -390,7 +390,7 @@ const rigourSummary = (rigour) => {
   const rules = rulesOf(rigour)
   return [
     `a ${rules.planTier}-tier plan, ${planReviewPhrases[rules.planReview]}`,
-    rules.styleReviewers ? 'style reviewers' : 'no style reviewers',
+    rules.styleReviewers ? 'style reviewers' : "no style reviewers on the row but one across the theme's whole change",
     rules.reviewScope === 'whole' ? 'one reviewer across the whole change' : 'a code reviewer per (repo, language) group',
     rules.consistencyReview ? 'a consistency review' : 'no consistency review',
     rules.verifyFindings ? 'and findings verified before the judge' : 'and findings verified by the judge itself'
@@ -4725,7 +4725,7 @@ const themeSpecCheck = async (id) => {
 
 const THEME_DIFF_BASE = 'origin/main'
 const THEME_REVIEW_PHASE = 'Theme review'
-const THEME_REVIEW_AGENTS = 2 * REPO_KEYS.length + 9
+const THEME_REVIEW_AGENTS = 3 * REPO_KEYS.length + 9
 
 const themeRowsCommand = (theme) =>
   `\`jq -c '(.theme // null) as $split | [.increments[] | select((.theme // $split) == "${theme}") | {id, title, detail, acceptanceCriteria}]' ${BACKLOG_TILDE}\``
@@ -4757,6 +4757,26 @@ ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
 ${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
 one a fix, and a concrete failure scenario or, for a code-quality finding, the house rule it breaks. If the theme changed nothing here, or its change is clean, return an empty
 findings array.
+Return the structured output only.`
+
+const themeStyleReviewPrompt = (id, theme, key) => `You are the STYLE REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every row
+of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. No style reviewer read these rows as they were
+built, so you are the only style review the theme's code gets: read every changed line, not a sample.
+${guardrails()}
+${themeRowsContext(theme)}
+THE CHANGE: run \`git -C ${repoTilde(key)} fetch origin\`, then \`git -C ${repoTilde(key)} diff --stat ${THEME_DIFF_BASE}...HEAD\` for
+the files the theme changed, then ${themeDiffCommand(key)} for each. Skip documentation (Markdown) files. Read each
+other changed file in full.
+YOUR PERSONA — read ${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md IN FULL and follow it. It defines what
+you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKILL.md for the language routing
+(Java → modern-java + Javadoc; GDS/Nunjucks → components/styles/patterns; Playwright → playwright; Node → the
+16-rule style guide + JSDoc). The persona is written per file: apply it to each changed file in turn, and load each
+language's bundle once.
+SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
+security belong to the theme's engineering reviewer; do not duplicate them.
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
+ONLY real findings, each with a concrete fix and the rule it breaks. If the theme changed nothing here, or its change
+is clean, return an empty findings array.
 Return the structured output only.`
 
 const groupThemeFindings = (findings) =>
@@ -4925,26 +4945,49 @@ const watchThemeFixes = async (id, repoKeys) => {
   return themeReviewStop(id, { reason: 'ci-red', why: 'CI went red on its commit', evidence: `${evidence}. PRs untouched: ${found.prs.map((pr) => pr.url).join(' ')}`, preserve: false })
 }
 
-const reviewThemeRepos = (id, theme) =>
-  parallel(
-    REPO_KEYS.map((key) => () =>
-      agent(
-        themeReviewPrompt(id, theme, key),
-        think({ label: `${id} theme review:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
-      ).then((result) => ({ key, result }))
-    )
+const themeStyleReviewOwed = () => !rulesOf(RIGOUR).styleReviewers || rowsBuiltWithoutStyleReview.length > 0
+
+const engineeringReviewsOfTheme = (id, theme) =>
+  REPO_KEYS.map((key) => () =>
+    agent(
+      themeReviewPrompt(id, theme, key),
+      think({ label: `${id} theme review:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
+    ).then((result) => ({ key, kind: 'engineering', result }))
   )
 
-const unreviewedCheck = (id, theme, keys) => ({
+const styleReviewsOfTheme = (id, theme) =>
+  REPO_KEYS.map((key) => () =>
+    agent(
+      themeStyleReviewPrompt(id, theme, key),
+      code({ label: `${id} theme style:${key}`, phase: THEME_REVIEW_PHASE, schema: FINDINGS_SCHEMA })
+    ).then((result) => ({ key, kind: 'style', result }))
+  )
+
+const reviewThemeRepos = (id, theme) => {
+  const withStyle = themeStyleReviewOwed()
+  log(
+    withStyle
+      ? `${id}: theme ${theme} gets a style review of its whole change — a row of it was built without a style reviewer`
+      : `${id}: theme ${theme} gets no style review of its whole change — a style reviewer read every row`
+  )
+  return parallel([...engineeringReviewsOfTheme(id, theme), ...(withStyle ? styleReviewsOfTheme(id, theme) : [])])
+}
+
+const unreviewedCheck = (id, theme, kind, keys) => ({
   id,
-  check: `Theme ${theme}'s engineering review returned nothing for ${keys.join(', ')}. Review the theme's change there by hand.`
+  check: `Theme ${theme}'s ${kind} review returned nothing for ${keys.join(', ')}. Review the theme's change there by hand.`
 })
+
+const unreviewedChecks = (id, theme, reviews) =>
+  ['engineering', 'style']
+    .map((kind) => [kind, reviews.filter((review) => review.kind === kind && !review.result).map(({ key }) => key)])
+    .filter(([, keys]) => keys.length > 0)
+    .map(([kind, keys]) => unreviewedCheck(id, theme, kind, keys))
 
 const engineeringReviewOfTheme = async (id, theme, phases) => {
   phase(THEME_REVIEW_PHASE)
   const reviews = await reviewThemeRepos(id, theme)
-  const unreviewed = reviews.filter(({ result }) => !result).map(({ key }) => key)
-  const checks = unreviewed.length > 0 ? [unreviewedCheck(id, theme, unreviewed)] : []
+  const checks = unreviewedChecks(id, theme, reviews)
   const raw = reviews.flatMap(({ result }) => result?.findings ?? []).map((finding, index) => ({ ...finding, n: index + 1 }))
   log(`${id}: theme ${theme}'s engineering review found ${raw.length} finding(s)`)
   if (raw.length === 0) return { checks }
@@ -5011,6 +5054,7 @@ const results = []
 const specChecks = []
 const reviewChecks = []
 const refutedFindings = []
+const rowsBuiltWithoutStyleReview = []
 let built = 0
 let lastId = null
 let stopped = null
@@ -5305,6 +5349,7 @@ while (stopped === null) {
     `${id}: rigour ${rowRigour}${rowRigour === RIGOUR ? '' : ` (the row's own, over the run's ${RIGOUR})`} — ${rigourSummary(rowRigour)}`
   )
   const rules = rulesOf(rowRigour)
+  if (!rules.styleReviewers) rowsBuiltWithoutStyleReview.push(id)
 
   build: {
     if (LANDED_RESUME_POINTS.includes(resumeAt)) {
@@ -5590,7 +5635,7 @@ Return the structured output only.`,
 
   const formattingNitsLine = rules.styleReviewers
     ? 'Formatting nits belong to a different reviewer — skip them.'
-    : "No style reviewer reads these files at this row's rigour: formatting and layout are nobody's — skip them. The house rules on comments, names and conventions are still yours."
+    : "No style reviewer reads this row: the theme's style review reads formatting and layout once its last row lands — skip them. The house rules on comments, names and conventions are still yours."
 
   const codeReviewerPrompt = ({ reviewing, diffCommand, crossChangeDuties = '' }) => `You are a CODE REVIEWER for increment ${id}, reviewing ${reviewing}
 ${guardrails()}
@@ -5639,7 +5684,7 @@ The \`<repoKey>:\` prefix names the repo; the rest is the path inside it (${repo
 Report each finding's \`file\` as \`<repoKey>:<repo-relative path>\`, and for a file in that list exactly as it is
 written there. A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it
 at its own path.
-You are the only reviewer of this change, so read it ACROSS files as well as file by file. These are yours too:
+${rules.styleReviewers ? 'You are the only code reviewer of this change, beside a style reviewer per (repo, language) group' : 'You are the only reviewer of this change'}, so read it ACROSS files as well as file by file. These are yours too:
 ${CROSS_FILE_HUNT}.
 No consistency reviewer runs beside you either, so where another prompt leaves a judgement to that reviewer — the
 implementor's notes and the plan's own decisions — it is yours. The spec sync and the probes and docs lines are not:
@@ -5728,10 +5773,10 @@ ${consistencyDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
 
   const codexWholeChangeReview = codexReview(
     `review-${WHOLE_CHANGE_LABEL}`,
-    [CODE_PERSONA],
+    rules.styleReviewers ? [STYLE_PERSONA, CODE_PERSONA] : [CODE_PERSONA],
     reviewTargets.join(', '),
     `Review the WHOLE staged, uncommitted change for increment ${id}, every file bound to <reviewFiles>, across files and
-repos. Apply the persona bound to <personas>, and no other: you are the only review run for this increment, so the
+repos. Apply ${rules.styleReviewers ? 'every persona' : 'the persona'} bound to <personas>, and no other: you are the only review run for this increment, so the
 judgements another prompt leaves to a consistency reviewer are yours — except the spec sync and the probes and docs
 lines, which the ladder judges at this rigour.
 ${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Beside what the persona names, hunt for:
@@ -5742,7 +5787,7 @@ ${wholeChangeDuties}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_RE
 
   const claudeReviewStages =
     rules.reviewScope === 'whole'
-      ? [wholeChangeReview]
+      ? [...(rules.styleReviewers ? styleReviews : []), wholeChangeReview]
       : [
           ...(rules.styleReviewers ? styleReviews : []),
           ...codeReviews,

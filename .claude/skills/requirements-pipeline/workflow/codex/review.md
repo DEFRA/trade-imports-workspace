@@ -33,8 +33,10 @@ the fullest shape:
 
 - **`full`** — one run per (repo, language) group of changed files, applying the style and code personas
   to that group, plus one consistency run across the whole change.
-- **`standard`** — the same, with the code persona only: no style reviewer runs.
-- **`fast`** — one run across the whole change, with the code persona, and no consistency run beside it. Where
+- **`standard`** — the same. On a theme branch it has the code persona only, because a style review of the theme's
+  whole change runs once its last row lands.
+- **`fast`** — one run across the whole change, with no consistency run beside it. It has the code persona, plus
+  the style persona when there is no theme branch. Where
   another prompt leaves the plan's own decisions or the implementor's notes to "the consistency reviewer", they
   belong to that one run. The spec sync and the `Probes:`/`Docs updated:` lines do not: the ladder judges what
   those claim at this rigour. Your own instructions say which duties are yours — they are the authority, not
@@ -44,8 +46,8 @@ the fullest shape:
   review every one in full and report findings on those files only. Where it is the whole change, look
   across files and repos as well as at each file on its own merits.
 - `<personas>` is the persona file or files to apply. Apply those and no other. If the style persona is
-  not bound, this row's rigour runs no style reviewer, and formatting is out of scope rather than
-  somebody else's.
+  not bound, the theme's style review reads formatting and conventions after the theme's last row lands.
+  Leave them to it.
 
 ## Step 1 — load the standard
 

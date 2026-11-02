@@ -199,8 +199,17 @@ Three presets to start with. The run default is `standard`.
 | preset | what runs |
 |---|---|
 | `full` | Today's pipeline, unchanged. |
-| `standard` | One plan reviewer rather than two, and it keeps its single send-back. No style reviewers — the format and lint rungs and the `code-style` skill already own that ground. Consistency, verify, judge, fix and ladder all kept. |
-| `fast` | Sonnet plan, no plan review, one code reviewer across the whole change, judge, fix, ladder. |
+| `standard` | One plan reviewer rather than two, and it keeps its single send-back. Style review moves from each row to one pass over the theme's whole change when its last row lands. Consistency, verify, judge, fix and ladder all kept. |
+| `fast` | Sonnet plan, no plan review, one code reviewer across the whole change, judge, fix, ladder. Style review as at `standard`. |
+
+Style review moves; it is never dropped. An earlier draft dropped it at `standard`, on the grounds
+that "the format and lint rungs and the `code-style` skill already own that ground". Neither holds.
+Format and lint are deterministic and catch none of the style persona's conventions. The loop never
+runs the `code-style` skill except through that per-row reviewer. And the code reviewer does not
+pick up what the style reviewer does, which is why the style reviewer exists. Reading style once
+per theme rather than once per row keeps the coverage and still cuts the cost. Style was ~21M of
+the documents theme's ~696M. A run that builds no theme (the `full` and `trunk` lifecycles) has
+nowhere to move it, so the row keeps its style reviewer there at every preset.
 
 `fast` exists for rows like inc-031 and inc-039, where the behaviour was already on `main` and
 the work was a test and a spec sentence. Both took the same opus plan, opus double plan review,

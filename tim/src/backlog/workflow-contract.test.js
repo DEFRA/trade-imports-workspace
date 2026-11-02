@@ -781,7 +781,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
     )
   })
 
@@ -792,7 +792,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour fast — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself'
+      'increment-build-loop: rigour fast — a code-tier plan, no plan review, style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself'
     )
   })
 
@@ -1577,7 +1577,7 @@ describe('increment-build-loop', () => {
       const run = await runStartedWith(startedResult({ rigour: 'fast' }), null)
 
       expect(run.logs).toContain(
-        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
       )
     })
 
@@ -1980,38 +1980,47 @@ describe('increment-build-loop', () => {
         ])
       })
 
-      test('drops the style reviewer at standard, keeping the group code reviewer and the consistency review', async () => {
+      test('keeps the style reviewer at standard off a theme branch, beside the group code reviewer and the consistency review', async () => {
         const run = await runToReviewAt('standard', frontendFiles(3, 'js'))
 
         expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
           'inc-900 review:frontend-javascript',
           'inc-900 consistency'
         ])
       })
 
-      test('reviews the whole change with one reviewer at fast, and says so', async () => {
+      test('reviews the whole change with one code reviewer at fast, keeps a style reviewer per group off a theme branch, and says so', async () => {
         const run = await runToReviewAt('fast', [
           'frontend:src/a.js',
           'frontend:README.md',
           'backend:src/main/java/uk/gov/defra/A.java'
         ])
 
-        expect(labelsInPhase(run, 'Review')).toEqual(['inc-900 review:whole'])
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 style:backend-java',
+          'inc-900 review:whole'
+        ])
         expect(run.logs).toContain(
           'inc-900: one reviewer across 3 file(s) in 3 group(s) — frontend-javascript (1), frontend-docs (1), backend-java (1)'
         )
       })
 
-      test('still style-reviews the fixer’s hunks at fast, where no style reviewer ran', async () => {
+      test('style-reviews the fixer’s hunks at fast', async () => {
         const run = await runToJudgeAt(
           'fast',
+          NO_FINDINGS,
           { findings: [FINDING] },
           RULED_ONE_FIX,
           FIXED,
           NO_FINDINGS
         )
 
-        expect(labelsInPhase(run, 'Review')).toEqual(['inc-900 review:whole'])
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:whole'
+        ])
         expect(labelsInPhase(run, 'Fix')).toEqual([
           'inc-900 fix',
           'inc-900 fix review'
@@ -2028,7 +2037,9 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain('the WHOLE change')
         for (const file of files) expect(prompt).toContain(`- ${file}`)
-        expect(prompt).toContain('You are the only reviewer of this change')
+        expect(prompt).toContain(
+          'You are the only code reviewer of this change, beside a style reviewer per (repo, language) group'
+        )
         expect(prompt).toContain('review/references/FILE_REVIEWER.md')
         expect(prompt).toContain('workspace `~/ws`')
         expect(prompt).toContain(
@@ -2063,7 +2074,7 @@ describe('increment-build-loop', () => {
           'A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it\nat its own path.'
         )
         expect(prompt).toContain(
-          "No style reviewer reads these files at this row's rigour: formatting and layout are nobody's — skip them. The house rules on comments, names and conventions are still yours."
+          'Formatting nits belong to a different reviewer — skip them.'
         )
       })
 
@@ -2132,6 +2143,7 @@ describe('increment-build-loop', () => {
       test('verifies a finding before the judge at standard', async () => {
         const run = await runToJudgeAt(
           'standard',
+          NO_FINDINGS,
           { findings: [FINDING] },
           NO_FINDINGS,
           VERDICT_REAL,
@@ -2149,6 +2161,7 @@ describe('increment-build-loop', () => {
       test('runs no verifier at fast, and tells the judge the findings are its own to verify', async () => {
         const run = await runToJudgeAt(
           'fast',
+          NO_FINDINGS,
           { findings: [FINDING] },
           RULED_ONE_FIX,
           FIXED,
@@ -2170,6 +2183,7 @@ describe('increment-build-loop', () => {
       test('gives the judge at fast the verifier’s equipment: the diff command, the path rule and the independence rule', async () => {
         const run = await runToJudgeAt(
           'fast',
+          NO_FINDINGS,
           { findings: [FINDING] },
           RULED_ONE_FIX,
           FIXED,
@@ -2188,6 +2202,7 @@ describe('increment-build-loop', () => {
       test('tells the judge at fast how the verifier’s defaults map onto a judge’s call', async () => {
         const run = await runToJudgeAt(
           'fast',
+          NO_FINDINGS,
           { findings: [FINDING] },
           RULED_ONE_FIX,
           FIXED,
@@ -2289,6 +2304,7 @@ describe('increment-build-loop', () => {
         const prompt = await ladderPromptAt(
           'standard',
           NO_FINDINGS,
+          NO_FINDINGS,
           NO_FINDINGS
         )
 
@@ -2297,7 +2313,7 @@ describe('increment-build-loop', () => {
       })
 
       test('has the ladder judge the spec write itself at fast, where no reviewer does', async () => {
-        const prompt = await ladderPromptAt('fast', NO_FINDINGS)
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS, NO_FINDINGS)
 
         expect(prompt).not.toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
         expect(prompt).toContain(
@@ -2315,7 +2331,7 @@ describe('increment-build-loop', () => {
       })
 
       test('has the ladder judge the probes and docs claims itself at fast', async () => {
-        const prompt = await ladderPromptAt('fast', NO_FINDINGS)
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS, NO_FINDINGS)
 
         expect(prompt).not.toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
         expect(prompt).toContain(
@@ -5192,6 +5208,7 @@ describe('increment-build-loop', () => {
           const landedWithRejectedFinding = LANDED.toSpliced(
             3,
             3,
+            NO_FINDINGS,
             { findings: [FINDING] },
             {
               decisions: [
@@ -5683,7 +5700,7 @@ describe('increment-build-loop', () => {
           ])
         })
 
-        test('gives a Codex group review only the code persona at standard', async () => {
+        test('keeps the style persona in a Codex group review at standard off a theme branch', async () => {
           const run = await runCodexToReview({ rigour: 'standard' })
           const prompts = [
             'review-frontend-javascript',
@@ -5691,11 +5708,23 @@ describe('increment-build-loop', () => {
           ].map((slug) => codexShellPrompt(run, slug))
 
           for (const prompt of prompts) {
-            expect(prompt).not.toContain(
+            expect(prompt).toContain(
               'code-style/references/STYLE_FILE_REVIEWER.md'
             )
             expect(prompt).toContain('review/references/FILE_REVIEWER.md')
           }
+        })
+
+        test('gives the Codex whole-change review the style persona too at fast off a theme branch', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview({ rigour: 'fast' }),
+            'review-whole'
+          )
+
+          expect(prompt).toContain(
+            'code-style/references/STYLE_FILE_REVIEWER.md'
+          )
+          expect(prompt).toContain('review/references/FILE_REVIEWER.md')
         })
 
         test('gives Codex one whole-change review at fast', async () => {
@@ -6184,7 +6213,7 @@ describe('increment-build-loop', () => {
         )
 
         expect(run.logs).toContain(
-          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers on the row but one across the theme's whole change, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
         )
       })
 
@@ -6201,8 +6230,30 @@ describe('increment-build-loop', () => {
         const run = await runBranch({ rigour: 'standard' }, ROW)
 
         expect(run.logs).toContain(
-          'inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+          "inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers on the row but one across the theme's whole change, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge"
         )
+      })
+
+      test('runs no style reviewer on a row at standard, leaving its style to the theme', async () => {
+        const run = await runBranch(
+          { rigour: 'standard' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED
+        )
+
+        expect(
+          run.agents
+            .filter((entry) => entry.options.phase === 'Review')
+            .map((entry) => entry.options.label)
+        ).toEqual(['inc-900 review:tests-javascript', 'inc-900 consistency'])
       })
 
       const reviewedAndLanded = [
@@ -6994,13 +7045,13 @@ describe('increment-build-loop', () => {
           'inc-900 theme ci watch': CI_GREEN
         }
         const isReviewer = (label) =>
-          /^inc-900 (style:|review:|consistency$|theme review:|theme fix review$)/.test(
+          /^inc-900 (style:|review:|consistency$|theme review:|theme style:|theme fix review$)/.test(
             label
           )
 
-        const runTheme = (overrides = {}) =>
+        const runTheme = (overrides = {}, argsOverride = {}) =>
           runLoop(scriptPath, {
-            args: BRANCH_ARGS,
+            args: { ...BRANCH_ARGS, ...argsOverride },
             answers: (prompt, { label }) => {
               const answers = { ...ROW_ANSWERS, ...overrides }
               if (Object.hasOwn(answers, label)) return answers[label]
@@ -7031,6 +7082,112 @@ describe('increment-build-loop', () => {
             'inc-900 theme pr',
             'inc-900 theme ci watch'
           ])
+          expect(run.logs).toContain(
+            'inc-900: theme origin-pages gets no style review of its whole change — a style reviewer read every row'
+          )
+        })
+
+        const THEME_STYLE_LABELS = [
+          'inc-900 theme style:ins',
+          'inc-900 theme style:animals',
+          'inc-900 theme style:plants',
+          'inc-900 theme style:tests'
+        ]
+
+        test('style-reviews each repo’s whole theme change beside its engineering review at standard', async () => {
+          const run = await runTheme({}, { rigour: 'standard' })
+
+          expect(themeLabels(run).slice(0, 8)).toEqual([
+            'inc-900 theme review:ins',
+            'inc-900 theme review:animals',
+            'inc-900 theme review:plants',
+            'inc-900 theme review:tests',
+            ...THEME_STYLE_LABELS
+          ])
+          expect(run.logs).toContain(
+            'inc-900: theme origin-pages gets a style review of its whole change — a row of it was built without a style reviewer'
+          )
+        })
+
+        test('style-reviews the whole theme at fast', async () => {
+          const run = await runTheme({}, { rigour: 'fast' })
+
+          expect(themeLabels(run)).toEqual(
+            expect.arrayContaining(THEME_STYLE_LABELS)
+          )
+        })
+
+        test('style-reviews the whole theme when one row set fast in a run at full', async () => {
+          const run = await runTheme({
+            'inc-900 branch': { ...ROW, rigour: 'fast' }
+          })
+
+          expect(themeLabels(run)).toEqual(
+            expect.arrayContaining(THEME_STYLE_LABELS)
+          )
+        })
+
+        test('gives the theme’s style reviewer the style persona, the language routing and the theme’s whole diff', async () => {
+          const prompt = promptOf(
+            await runTheme({}, { rigour: 'standard' }),
+            'inc-900 theme style:tests'
+          )
+
+          expect(prompt).toContain(
+            'You are the STYLE REVIEWER for theme `origin-pages` in the tests repo'
+          )
+          expect(prompt).toContain(
+            "No style reviewer read these rows as they were\nbuilt, so you are the only style review the theme's code gets: read every changed line, not a sample."
+          )
+          expect(prompt).toContain(
+            '/ws/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md IN FULL'
+          )
+          expect(prompt).toContain('16-rule style guide + JSDoc')
+          expect(prompt).toContain(
+            '`git -C ~/ws/repos/trade-imports-ins-tests diff origin/main...HEAD -- <path>`'
+          )
+          expect(prompt).toContain(
+            'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
+          )
+        })
+
+        test('verifies, judges and fixes a finding from the theme’s style review like any other', async () => {
+          const run = await runTheme(
+            {
+              'inc-900 theme review:tests': NO_FINDINGS,
+              'inc-900 theme style:tests': {
+                findings: [{ ...COPIED_SET_UP, category: 'naming' }]
+              }
+            },
+            { rigour: 'standard' }
+          )
+
+          expect(themeLabels(run).slice(8)).toEqual([
+            'inc-900 theme verify:tests',
+            'inc-900 theme judge',
+            'inc-900 theme fix',
+            'inc-900 theme fix review',
+            'inc-900 theme ladder',
+            'inc-900 theme land',
+            'inc-900 theme pr',
+            'inc-900 theme ci watch'
+          ])
+          expect(promptOf(run, 'inc-900 theme verify:tests')).toContain(
+            '1. [major] [naming, code quality] tests:src/auth.spec.ts line 4'
+          )
+        })
+
+        test('lists a repo whose theme style reviewer returned nothing for a review by hand', async () => {
+          const run = await runTheme(
+            { 'inc-900 theme style:animals': null },
+            { rigour: 'standard' }
+          )
+
+          expect(run.result.reviewChecks).toContainEqual({
+            id: 'inc-900',
+            check:
+              "Theme origin-pages's style review returned nothing for animals. Review the theme's change there by hand."
+          })
         })
 
         test('binds the house rules into every theme stage that judges or writes code', async () => {
@@ -7201,7 +7358,7 @@ describe('increment-build-loop', () => {
 
           expect(run.result.increments.length).toBe(16)
           expect(run.result.stopped.detail).toContain(
-            "keeping 17 for a theme's engineering review"
+            "keeping 21 for a theme's engineering review"
           )
         })
 

@@ -105,8 +105,8 @@ resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
               row has stopped twice at the same stage and the preserved work
               is suspect; leave it null otherwise — see "Resuming a row" below
 rigour        how much of the pipeline every row of this run gets: full (the
-              whole pipeline), standard (one plan review and no style
-              reviewers) or fast (a code-tier plan, no plan review and one
+              whole pipeline), standard (one plan review, and style
+              reviewed across the theme rather than per row) or fast (a code-tier plan, no plan review and one
               code reviewer across the whole change). Default standard; pass
               that unless the user asks otherwise. One value governs the
               whole run, and a row may carry its own, which wins for that
@@ -182,7 +182,8 @@ a style re-review of the fixer's own hunks, and a style review of every commit a
 pushes, without a human in the loop.
 
 What a given increment got depends on its `rigour` — see "Choosing rigour"
-below. `standard` drops the style reviewers. `fast` reads the whole change with
+below. On a branch run, `standard` moves style review from each row to one
+review of the theme's whole change once its last row lands. `fast` reads the whole change with
 one reviewer, and the judge does the verifier's work on each of its findings
 before it rules. The plan lint, the gate, the ladder — which at `fast` also
 judges the spec sync and the `Probes:` and `Docs updated:` lines — the style
@@ -220,13 +221,15 @@ as approving neither.
 tests pass: the plan lint, the gate at whatever phases the row owes, the ladder,
 the style re-review of the fixer's hunks, the style review of every CI fixer
 commit and, on a branch run, the theme's engineering review all run at every
-preset.
+preset. Style review always runs too. On a branch run at `standard` or `fast`,
+it runs once over the theme's whole change rather than on each row. A run that
+builds no theme keeps the row's style reviewers at every preset.
 
 | preset | what runs |
 |---|---|
 | `full` | A `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer across the change; a verifier per group of findings; then judge, fix, ladder |
-| `standard` | The same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewers |
-| `fast` | A `code`-tier plan with no review; one `think`-tier code reviewer across the whole change, which also takes the consistency reviewer's cross-file lens, the plan's own decisions and the implementor's notes; no consistency reviewer; and no verifier — the judge does the verifier's work on each finding before it rules |
+| `standard` | The same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends the plan back naming nothing — and the style review moved from each row to the theme's whole change on a branch run |
+| `fast` | A `code`-tier plan with no review; one `think`-tier code reviewer across the whole change, which also takes the consistency reviewer's cross-file lens, the plan's own decisions and the implementor's notes; no consistency reviewer; no verifier — the judge does the verifier's work on each finding before it rules; and style review as at `standard` |
 
 **One value governs the whole run, and that is the only answer a launch owes.**
 Pass `standard` unless the user asks otherwise. Every row takes it, and a theme

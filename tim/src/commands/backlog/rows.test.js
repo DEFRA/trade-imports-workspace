@@ -337,8 +337,67 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge or --depends-on.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on or --attempt.'
     )
+  })
+
+  test('records how far an attempt got, then clears it', async () => {
+    writeBacklog([row()])
+    const attempt = {
+      stage: 'ladder',
+      reason: 'ladder-red',
+      at: '2026-10-30T11:00:00Z',
+      planReviewed: true,
+      work: {
+        kind: 'patches',
+        files: ['logs/inc-001-preserve-frontend.staged.patch']
+      }
+    }
+
+    await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--attempt',
+      JSON.stringify(attempt)
+    ])
+    const written = readRows()[0].attempt
+    await runTim(['set', WORKAREA, 'inc-001', '--attempt', 'none'])
+
+    expect(written).toEqual(attempt)
+    expect(readRows()[0]).toEqual(row())
+  })
+
+  test('refuses an attempt that is not valid JSON', async () => {
+    writeBacklog([row()])
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--attempt',
+      'ladder'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--attempt "ladder" is not valid JSON.'
+    )
+    expect(readRows()).toEqual([row()])
+  })
+
+  test('refuses an attempt whose stage is not a stage', async () => {
+    writeBacklog([row()])
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--attempt',
+      '{"stage":"land","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip"}}'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--attempt must be "none", or a JSON object with a "stage" of implement, review or ladder, a "reason", an "at", a "planReviewed" and a "work" with a "kind".'
+    )
+    expect(readRows()).toEqual([row()])
   })
 
   test('replaces the rows an increment depends on', async () => {

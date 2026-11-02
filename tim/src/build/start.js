@@ -64,20 +64,29 @@ export const branchNameFor = (row, key) => {
   return `${branchTypeFor(row.kind)}/${key}${slug ? `-${slug}` : ''}`
 }
 
+/** The stages inside a build that an attempt record may send a relaunch to. */
+export const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
+
 /**
  * Where an increment's lifecycle picks up, from what the backlog already
  * records and nothing else: never from the ticket's status, which people
- * move for reasons the loop cannot see.
+ * move for reasons the loop cannot see. An attempt whose plan was never
+ * reviewed starts again from the top, because every stage from `implement`
+ * on reads the plan as decided.
  *
- * @param {{commit?: string, prs?: object[]}} row
- * @returns {'build'|'pr'|'ci'|'done'}
+ * @param {{commit?: string, prs?: object[], attempt?: {stage?: string, planReviewed?: boolean}}} row
+ * @returns {'build'|'implement'|'review'|'ladder'|'pr'|'ci'|'done'}
  */
-export const resumePointFor = ({ commit, prs }) => {
+export const resumePointFor = ({ commit, prs, attempt }) => {
   const list = Array.isArray(prs) ? prs : []
   if (list.length > 0) {
     return list.every((pr) => pr.merged === true) ? 'done' : 'ci'
   }
-  return commit ? 'pr' : 'build'
+  if (commit) return 'pr'
+  if (attempt?.planReviewed && ATTEMPT_STAGES.includes(attempt.stage)) {
+    return attempt.stage
+  }
+  return 'build'
 }
 
 const isLegacy = (keys) =>
@@ -284,6 +293,7 @@ const emptyResult = (workarea, id) => ({
   branch: null,
   repos: null,
   resumeAt: null,
+  attempt: null,
   branched: [],
   preexistingDirty: null,
   preexistingDirtySummary: null,
@@ -365,6 +375,7 @@ const runSteps = async (result, context) => {
   result.branch = branchFor(path, result.id, result.ticket.key)
   const row = readRow(path, result.id)
   result.resumeAt = resumePointFor(row)
+  result.attempt = row.attempt ?? null
 
   const repos = reposFor(
     row,
@@ -405,7 +416,7 @@ const runSteps = async (result, context) => {
  * @param {string} args.base - The branch a new increment branch is cut from
  * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number, repoOrder?: string[]}} args.config - repoOrder is the configured repo keys in order, the fallback for a row that names none
  * @param {() => object} args.jira - Makes the Jira client, only once a ticket is needed
- * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, branched, preexistingDirty (the workspace repo's uncommitted paths outside workareas/ before it switched, at most CARRIED_NAMED_LIMIT of them, or null when the increment does not build in it), preexistingDirtySummary ({outsideWorkareas, underWorkareas, listedIn}: how many it carried outside and under workareas/, and the workspace-relative file listing every one, or null), warnings, failedStep and reason
+ * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, attempt (the row's attempt record, or null when it has none), branched, preexistingDirty (the workspace repo's uncommitted paths outside workareas/ before it switched, at most CARRIED_NAMED_LIMIT of them, or null when the increment does not build in it), preexistingDirtySummary ({outsideWorkareas, underWorkareas, listedIn}: how many it carried outside and under workareas/, and the workspace-relative file listing every one, or null), warnings, failedStep and reason
  */
 export const runBuildStart = async ({
   workspaceRoot,

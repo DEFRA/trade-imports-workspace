@@ -48,13 +48,14 @@ const setOptsSchemaFor = (statuses) =>
       openQuestion: z.string().trim().min(1).optional(),
       pr: z.string().optional(),
       merge: z.array(z.string()).optional(),
-      dependsOn: z.string().optional()
+      dependsOn: z.string().optional(),
+      attempt: z.string().optional()
     })
     .refine(
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge or --depends-on.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on or --attempt.'
       }
     )
 
@@ -68,6 +69,34 @@ const parsePr = (raw) => {
   const result = prSchema.safeParse(value)
   if (!result.success) {
     throw new TimError('USAGE', '--pr must be a JSON object with a "url".')
+  }
+  return result.data
+}
+
+const attemptSchema = z
+  .object({
+    stage: z.enum(['implement', 'review', 'ladder']),
+    reason: z.string().trim().min(1),
+    at: z.string().trim().min(1),
+    planReviewed: z.boolean(),
+    work: z.object({ kind: z.enum(['wip', 'patches', 'none']) }).passthrough()
+  })
+  .passthrough()
+
+const parseAttempt = (raw) => {
+  if (raw === 'none') return 'none'
+  let value
+  try {
+    value = JSON.parse(raw)
+  } catch {
+    throw new TimError('USAGE', `--attempt "${raw}" is not valid JSON.`)
+  }
+  const result = attemptSchema.safeParse(value)
+  if (!result.success) {
+    throw new TimError(
+      'USAGE',
+      '--attempt must be "none", or a JSON object with a "stage" of implement, review or ladder, a "reason", an "at", a "planReviewed" and a "work" with a "kind".'
+    )
   }
   return result.data
 }
@@ -124,7 +153,8 @@ export const parseSetOpts = (opts, statuses) => {
     openQuestion: opts.openQuestion,
     pr: opts.pr,
     merge: opts.merge,
-    dependsOn: opts.dependsOn
+    dependsOn: opts.dependsOn,
+    attempt: opts.attempt
   })
   return Object.fromEntries(
     Object.entries({
@@ -134,7 +164,9 @@ export const parseSetOpts = (opts, statuses) => {
       dependsOn:
         parsed.dependsOn === undefined
           ? undefined
-          : parseDependsOn(parsed.dependsOn)
+          : parseDependsOn(parsed.dependsOn),
+      attempt:
+        parsed.attempt === undefined ? undefined : parseAttempt(parsed.attempt)
     }).filter(([, value]) => value !== undefined)
   )
 }
@@ -225,7 +257,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket, branch and dependencies are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
+      'Record build state on one increment: status, commit, ticket, branch, dependencies and the last failed attempt are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
@@ -236,7 +268,9 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --status dropped --note "Not needed any more" --json\n' +
         '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
-        '  tim backlog set shared/my-programme inc-009 --depends-on "" --json'
+        '  tim backlog set shared/my-programme inc-009 --depends-on "" --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --attempt \'{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}\' --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --attempt none --json'
     )
     .option(
       '--status <status>',
@@ -262,6 +296,10 @@ export const register = (backlog, { timVersion }) => {
     .option(
       '--depends-on <ids>',
       'Replace the rows the increment waits for in this backlog, separated by commas. Give "" for none'
+    )
+    .option(
+      '--attempt <json>',
+      'How far the last failed attempt got, as JSON with a "stage" of implement, review or ladder, a "reason", an "at", a "planReviewed" and a "work". "none" clears it, and so does recording a --commit'
     )
     .action(
       makeBacklogAction({

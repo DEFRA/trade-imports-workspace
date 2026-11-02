@@ -93,6 +93,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** Clear search keeps the chosen Type and drops only the search text (`list.controller.js:150`), and shows only when there is search text. The spec records this as SCN-INS-ADDR-028-E.
 - **To ask:** (a) should Clear search keep the chosen Type, as built, or clear every filter? (b) Should a way to clear the filters show when only a Type is chosen?
 
+### S-08. Pressing Enter on the Type filter
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, finding 23; the third open question on inc-068 in the theme backlog.
+- **Page:** the INS address book list's 'Filter addresses' disclosure.
+- **Requirement:** inc-068's criteria 2 and 8 say pressing Enter on the Type select submits the filter, with JavaScript on or off.
+- **Built:** a standard GOV.UK select. Choosing a Type changes nothing until the Search button is pressed, or Enter in the search field. Browsers do not submit a form on Enter in a native select, so with JavaScript off the criterion cannot hold, and nothing tests it.
+- **To ask:** (a) the filter submits only from the Search button or Enter in the search field, as built and as GOV.UK forms behave; or (b) a small script also submits on Enter in the Type select, with JavaScript on only?
+
 ## Settled
 
 | Question | Answer | Where it landed |

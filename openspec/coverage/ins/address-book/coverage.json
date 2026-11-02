@@ -824,7 +824,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
-              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
+              "test": "lays the page out as heading, large intro, Add button, the filter form wrapping a collapsed Filter addresses disclosure, the sub navigation, the panel heading, the results line and the table",
               "strength": "full",
               "notes": "red-probed"
             },
@@ -832,7 +832,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "renders addresses in a table with Name, Address, Country and Action columns",
+              "test": "renders addresses in a table with Name, Type, Address, Country and Action columns",
               "strength": "partial",
               "notes": ""
             },
@@ -2619,7 +2619,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
-              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
+              "test": "lays the page out as heading, large intro, Add button, the filter form wrapping a collapsed Filter addresses disclosure, the sub navigation, the panel heading, the results line and the table",
               "strength": "full",
               "notes": "red-probed"
             },
@@ -2697,7 +2697,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
-              "test": "lists the match under the filter with Clear search and its View link as the only links there",
+              "test": "lists the match under the tabs with Clear search and its View link as the only links there",
               "strength": "partial",
               "notes": "red-probed: fails with Clear search removed"
             },
@@ -2776,7 +2776,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
-              "test": "shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the filter when a search matches nothing",
+              "test": "shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the tabs when a search matches nothing",
               "strength": "full",
               "notes": "red-probed: fails with Clear search removed"
             },
@@ -2792,14 +2792,14 @@
         },
         {
           "id": "SCN-INS-ADDR-028-E",
-          "name": "Clear search returns to the whole address book",
+          "name": "Clear search returns to the whole list of the selected tab",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "Clear search after a search returns to the whole address book with an empty Search field",
+              "test": "Clear search after a search returns to the whole selected tab with an empty Search field",
               "strength": "full",
               "notes": "red-probed: fails with Clear search removed; follows the link"
             },
@@ -2807,7 +2807,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "Should link Clear search to the whole address book under the results line when a search has %s",
+              "test": "Should link Clear search to the whole list of the selected tab under the results line when a search has %s",
               "strength": "partial",
               "notes": "red-probed: fails with Clear search removed; proves the link and its href, not following it"
             }
@@ -3814,6 +3814,478 @@
               "test": "put_shouldClearAddressTypeAndUses_whenBodyOmitsThem",
               "strength": "full",
               "notes": "red-probed: fails when the update mapping ignores a null type and uses"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-038",
+      "name": "The address book list is split into three tabs, each a link that loads the list on that tab",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-038-A",
+          "name": "The three tabs are shown in order with the selected one marked",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "names the three tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current",
+              "strength": "partial",
+              "notes": "red-probed on the selected marker only: fails when the default tab changes; the order and the absent Transporter tab are not probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the three tabs in order with Origin and Consignor selected when no tab is chosen",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "the three tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is not offered",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-038-B",
+          "name": "Each tab's panel is headed for its address type",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "marks only the %s tab as current and heads its panel",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens the Origin and Consignor tab with its own panel heading and exactly its addresses",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens the Destination, Consignee and Importer tab with its own panel heading and exactly its addresses",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens the Branch tab with its own panel heading and exactly its addresses",
+              "strength": "partial",
+              "notes": "red-probed on the tab's addresses, not its heading"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-038-C",
+          "name": "No tab or an unknown tab shows Origin and Consignor",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-book-tabs.test.js",
+              "test": "resolves %s to the Origin and Consignor tab",
+              "strength": "full",
+              "notes": "red-probed: fails when the default tab is not Origin and Consignor"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "asks the address book for the tab chosen by %s",
+              "strength": "full",
+              "notes": "red-probed: fails when the default tab is not Origin and Consignor"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows Origin and Consignor selected when the tab is unknown",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "the three tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is not offered",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-038-D",
+          "name": "Following a tab with JavaScript off loads that tab",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "loads the tab that is followed",
+              "strength": "partial",
+              "notes": "red-probed: fails when the Branch tab also holds a consignee address; the Then clause of following the link with JavaScript off is still unprobed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "following the Branch tab loads it, marks it current and lists the stamped branch address",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-038-E",
+          "name": "A search on a tab lists only that tab's matches and its pages keep the tab and the search",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "links every page with the selected tab, the search term and the page number only",
+              "strength": "partial",
+              "notes": "red-probed: fails when the page links drop the tab; the Then clauses that only that tab's matches are listed and the tab input is hidden are still unprobed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "holds the selected tab in the filter form so a search stays on it",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "keeps the Branch tab, its heading and only its matches when a search is submitted",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-039",
+      "name": "Each tab lists the addresses the address book service returns for its address type, with their uses in the Type column",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-039-A",
+          "name": "Each tab lists the addresses the service returns for its address type",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens the Branch tab with its own panel heading and exactly its addresses",
+              "strength": "full",
+              "notes": "red-probed: fails when the Branch tab also holds a consignee address"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens the Destination, Consignee and Importer tab with its own panel heading and exactly its addresses",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.address-type.test.js",
+              "test": "Should list exactly the addresses holding a use of Destination, Consignee or Importer, the place of origin and consignee address included",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-039-B",
+          "name": "An address with no uses is shown with an empty Type",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists an address with no uses on the Origin and Consignor tab only",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.address-type.test.js",
+              "test": "Should list an address with no uses under Origin or Consignor only",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-039-C",
+          "name": "The Type column names the address's uses and the columns are the same on every tab",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "shows the labels of the uses of an address holding %s in its Type cell",
+              "strength": "partial",
+              "notes": "red-probed: fails when the Type cell is left empty; the Then clauses of the hidden Action header and the five columns are still unprobed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should join the labels of several uses with a comma in the order stored",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "hides the Action heading visually while keeping it for assistive technology",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows each address with the labels of its uses in the Type column",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-039-D",
+          "name": "Each use has its own label",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should label the %s use alone as %s",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should word the tab labels, panel headings, Type heading and use labels",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-040",
+      "name": "The address book service lists the addresses holding one of an address type's uses",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-040-A",
+          "name": "An address type returns exactly its addresses, an address held under two types under both",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturnAddressesHoldingAnOriginOrConsignorUseAndThoseHoldingNone_whenAddressTypeIsOriginOrConsignor",
+              "strength": "full",
+              "notes": "red-probed: fails when Origin or Consignor lists no address without uses"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturnOnlyTheLiveAddressHoldingABranchAddressUse_whenAddressTypeIsBranch",
+              "strength": "full",
+              "notes": "red-probed: fails when the Branch type also holds consignee"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturnAddressesHoldingADestinationConsigneeOrImporterUse_whenAddressTypeIsDestinationConsigneeOrImporter",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressTypeTest.java",
+              "test": "everyUseIsListedByExactlyOneType",
+              "strength": "full",
+              "notes": "red-probed: fails when a use is listed by two types"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressTypeTest.java",
+              "test": "onlyOriginOrConsignorListsAnAddressWithNoUses",
+              "strength": "full",
+              "notes": "red-probed: fails when Origin or Consignor stops listing an address with no uses"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "listing by an address type returns exactly the addresses holding one of its uses, an address with no uses under Origin and Consignor only",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-040-B",
+          "name": "An address type narrows a search",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldCombineTheSearchTermWithTheAddressType",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldCombineTheCountryCodeWithTheAddressType",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java",
+              "test": "list_passesTheAddressTypeWithTheSearchAndCountryCodes",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-040-C",
+          "name": "An unknown address type is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenAddressTypeIsUnknown",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorComplianceIT.java",
+              "test": "liveApiDocsHaveTheLockedAllowedValuesForAddressTypeUsesAndTheListAddressTypeParameter",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-040-D",
+          "name": "Every live address is listed when no address type is asked for",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturnEveryLiveAddress_whenNoAddressTypeIsGiven",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "listing with no address type returns every live address",
+              "strength": "partial",
+              "notes": "run by the gate; not run or red-probed here"
             }
           ]
         }

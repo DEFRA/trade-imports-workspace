@@ -411,6 +411,13 @@
           "description": "Branch lifecycle only: false pushes the row and records its pull requests without waiting for CI, for a row whose pull requests cannot run checks yet (GitHub runs none on a pull request that conflicts with its base). null or absent: true. The full lifecycle always waits.",
           "anyOf": [{ "type": "boolean" }, { "type": "null" }]
         },
+        "rigour": {
+          "description": "How much of the pipeline this row gets, overriding the run's `rigour`: `full` (every stage, the plan reviewed twice), `standard` (one plan review, no style reviewers) or `fast` (one code reviewer across the whole change, whose findings the judge verifies itself). The plan lint, the gate and the theme's engineering review run at every preset. null or absent: the run's value. `tim build rigour <workarea>` proposes one per row; BUILD.md's \"Choosing rigour\" says what each preset runs in full.",
+          "anyOf": [
+            { "enum": ["full", "standard", "fast"] },
+            { "type": "null" }
+          ]
+        },
         "ticket": {
           "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key raised for the increment.",
           "$ref": "#/$defs/text"

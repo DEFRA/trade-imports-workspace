@@ -343,6 +343,23 @@ describe('checkBacklog', () => {
       ])
     })
 
+    test('passes a row that sets a rigour preset, and one that leaves it null', () => {
+      const rows = [
+        row({ rigour: 'fast' }),
+        row({ id: 'inc-002', rigour: null })
+      ]
+
+      expect(checkBacklog(backlogOf(...rows)).problems).toEqual([])
+    })
+
+    test('refuses a rigour preset the loop does not have', () => {
+      expect(
+        checkBacklog(backlogOf(row({ rigour: 'quick' }))).problems
+      ).toEqual([
+        'inc-001 "rigour" must be one of: full, standard, fast or null.'
+      ])
+    })
+
     test('refuses a merge that names no repo', () => {
       expect(checkBacklog(backlogOf(row({ merge: {} }))).problems).toEqual([
         'inc-001 "merge" must be an object whose values are text or null.'
@@ -655,6 +672,17 @@ describe('setRowFields', () => {
 
     expect(backlog.increments[0]).not.toHaveProperty('attempt')
     expect(changed.attempt).toEqual({ before: attempt, after: undefined })
+  })
+
+  test('keeps a row’s rigour when it records the commit that landed it', () => {
+    const { backlog } = setRowFields({
+      backlog: backlogOf(row({ attempt, rigour: 'fast' })),
+      id: 'inc-001',
+      changes: { commit: 'def5678' }
+    })
+
+    expect(backlog.increments[0]).not.toHaveProperty('attempt')
+    expect(backlog.increments[0].rigour).toBe('fast')
   })
 
   test('clears the attempt on its own when asked for none', () => {

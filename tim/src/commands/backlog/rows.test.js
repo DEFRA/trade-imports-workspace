@@ -337,7 +337,7 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on or --attempt.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
     )
   })
 
@@ -482,6 +482,35 @@ describe('tim backlog set', () => {
 
     expect(envelopeOf(run).errors[0].message).toBe(
       '--depends-on must be row ids separated by commas, such as inc-206,inc-210. "inc 002" is not a row id.'
+    )
+  })
+
+  test('sets a row’s rigour', async () => {
+    writeBacklog([row()])
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--rigour', 'fast'])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].rigour).toBe('fast')
+  })
+
+  test('clears a row’s rigour with "none"', async () => {
+    writeBacklog([row({ rigour: 'fast' })])
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--rigour', 'none'])
+
+    expect(run.exitCode).toBe(0)
+    expect(Object.hasOwn(readRows()[0], 'rigour')).toBe(false)
+  })
+
+  test('refuses a rigour that is not a preset', async () => {
+    writeBacklog([row()])
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--rigour', 'quick'])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--rigour must be "none" to clear it, or one of full, standard, fast.'
     )
   })
 

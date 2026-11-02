@@ -8,6 +8,7 @@ import {
   runWorkflowScript
 } from '../test-support/workflow-runtime.js'
 import { ATTEMPT_STAGES } from '../build/start.js'
+import { loadBacklogSchema, rigoursOf } from './backlog-schema.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -122,7 +123,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'requireApproval',
     'approvalWaitMinutes',
     'e2e',
-    'resumeFrom'
+    'resumeFrom',
+    'rigour'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -174,7 +176,8 @@ const BASE_ARGS = {
   requireApproval: true,
   approvalWaitMinutes: 20,
   e2e: 'local',
-  resumeFrom: null
+  resumeFrom: null,
+  rigour: 'full'
 }
 
 const WORKSPACE_ANSWER = {
@@ -214,7 +217,15 @@ const themeAnswer = (themeAnswers, label) => {
 }
 
 const PLAN_LINT_CLEAN = { exitCode: 1, stdout: '' }
+const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
 const PLAN_APPROVED = { approved: true, findings: [], summary: 'approved' }
+const PLANNED = {
+  ok: true,
+  summary: 'Planned.',
+  repos: ['frontend'],
+  behaviourChanges: [],
+  decisions: []
+}
 const PLAN_REVIEW_RECORDED = { written: true, summary: 'written' }
 const isPlanCheck = (label) =>
   / (plan|replan|revise plan) lint$| plan review( 2| record)?$/.test(
@@ -269,6 +280,12 @@ const stageLabels = (run) =>
   run.agents
     .map((entry) => entry.options.label)
     .filter((label) => !isRunLease(label))
+
+const modelOf = (run, label) =>
+  run.agents.find((entry) => entry.options.label === label).options.model
+
+const promptOf = (run, label) =>
+  run.agents.find((entry) => entry.options.label === label).prompt
 
 const runLoop = (
   path,
@@ -374,6 +391,16 @@ describe('every workflow script', () => {
     )
 
     expect(houseRulesInLoop(loop)).toBe(houseRulesInRulesFile(rules))
+  })
+
+  test('offers exactly the rigour presets a row may set', () => {
+    const loop = readFileSync(
+      join(buildLoopDir, 'increment-build-loop.js'),
+      'utf8'
+    )
+    const schema = loadBacklogSchema(workspaceRoot)
+
+    expect(wordsInJsArray(loop, 'RIGOUR_PRESETS')).toEqual(rigoursOf(schema))
   })
 
   test('the review and code-style tools accept exactly the finding categories the build loop verifies by', () => {
@@ -722,6 +749,64 @@ describe('increment-build-loop', () => {
     )
   })
 
+  test('stops before any agent when rigour is missing', async () => {
+    const run = await runLoop(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'rigour')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key rigour. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test.each([['quick'], [null], [''], [{}], [['full']]])(
+    'refuses rigour %j before any agent',
+    async (value) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, rigour: value }
+      })
+
+      expect(run.error.message).toContain(
+        'config.rigour must be one of full, standard, fast'
+      )
+      expect(run.agents).toEqual([])
+    }
+  )
+
+  test('says what the run’s rigour runs', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'standard' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+    )
+  })
+
+  test('says what fast gives up', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'fast' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour fast — a code-tier plan, no plan review, style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself'
+    )
+  })
+
+  test('says that full runs the whole pipeline', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, rigour: 'full' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.logs).toContain(
+      'increment-build-loop: rigour full — a think-tier plan, reviewed, revised and re-reviewed, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+    )
+  })
+
   test('names the same resume stages the backlog records', async () => {
     const source = readFileSync(scriptPath, 'utf8')
 
@@ -755,21 +840,8 @@ describe('increment-build-loop', () => {
     const runPlanOnlyWithModels = (models) =>
       runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, models },
-        answers: [
-          WORKSPACE_ANSWER,
-          { ok: true, summary: '1' },
-          {
-            ok: true,
-            summary: 'Planned.',
-            repos: ['frontend'],
-            behaviourChanges: [],
-            decisions: []
-          }
-        ]
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, PLANNED]
       })
-
-    const modelOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).options.model
 
     test('resolves the built-in default for every tier when models is empty', async () => {
       const run = await runPlanOnlyWithModels({})
@@ -823,6 +895,192 @@ describe('increment-build-loop', () => {
       })
 
       expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+    })
+  })
+
+  describe('the plan stage at each rigour', () => {
+    const DETAIL_FINDING = {
+      kind: 'detail',
+      section: '9',
+      what: 'a comment to delete',
+      rule: 'house rules',
+      mustBecomeTrue: 'it is gone'
+    }
+
+    const SENT_BACK_ON_A_DETAIL = {
+      approved: false,
+      summary: 'one detail',
+      findings: [DETAIL_FINDING]
+    }
+
+    const SENT_BACK_NAMING_NOTHING = {
+      approved: false,
+      summary: 'I am not happy with it',
+      findings: []
+    }
+
+    const SENT_BACK_ON_A_STRUCTURE = {
+      approved: false,
+      summary: 'wrong layer',
+      findings: [
+        {
+          kind: 'structural',
+          section: '3',
+          what: 'the rule lives in the model',
+          rule: 'architecture doc',
+          mustBecomeTrue: 'it lives in obligations'
+        }
+      ]
+    }
+
+    const PLAN_NAMING_A_DENIED_CHECK = {
+      ...PLANNED,
+      checks: [{ section: 6, command: CURL_CHECK }]
+    }
+
+    const isIncrementStage = (label) => label.startsWith('inc-900 ')
+
+    const runPlanOnlyAt = (
+      rigour,
+      { plans = {}, plannerAnswers = [PLANNED, PLANNED] } = {}
+    ) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, planOnly: true, rigour },
+        plans,
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          ...plannerAnswers
+        ]
+      })
+
+    test('plans on the think tier at full and standard', async () => {
+      expect(modelOf(await runPlanOnlyAt('full'), 'inc-900 plan')).toBe('opus')
+      expect(modelOf(await runPlanOnlyAt('standard'), 'inc-900 plan')).toBe(
+        'opus'
+      )
+    })
+
+    test('plans on the code tier at fast', async () => {
+      expect(modelOf(await runPlanOnlyAt('fast'), 'inc-900 plan')).toBe(
+        'sonnet'
+      )
+    })
+
+    test('runs no plan review at fast', async () => {
+      const labels = stageLabels(await runPlanOnlyAt('fast'))
+
+      expect(labels.filter(isIncrementStage)).toEqual([
+        'inc-900 plan',
+        'inc-900 plan lint'
+      ])
+    })
+
+    test('still sends the planner back on a denied check at fast, where no review runs', async () => {
+      const run = await runPlanOnlyAt('fast', {
+        plannerAnswers: [PLAN_NAMING_A_DENIED_CHECK, PLANNED]
+      })
+
+      expect(stageLabels(run).filter(isIncrementStage)).toEqual([
+        'inc-900 plan',
+        'inc-900 plan lint',
+        'inc-900 replan',
+        'inc-900 replan lint'
+      ])
+      expect(run.result.increments[0].outcome).toBe('planned')
+    })
+
+    test('refuses a plan whose replan still names a denied check at fast', async () => {
+      const run = await runPlanOnlyAt('fast', {
+        plannerAnswers: [PLAN_NAMING_A_DENIED_CHECK, PLAN_NAMING_A_DENIED_CHECK]
+      })
+
+      expect(run.result.increments[0].outcome).toBe('plan-refused')
+      expect(run.result.increments[0].detail).toBe(
+        `the plan's checks still use command forms the workspace denies, so the ladder could not run them: ${CURL_CHECK}`
+      )
+    })
+
+    test('re-reviews a revised plan at full', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('full', {
+          plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
+        })
+      )
+
+      expect(labels).toContain('inc-900 revise plan')
+      expect(labels).toContain('inc-900 plan review 2')
+    })
+
+    test('does not re-review a revised plan at standard when every finding is a detail', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
+      })
+
+      expect(stageLabels(run)).toContain('inc-900 revise plan')
+      expect(stageLabels(run)).not.toContain('inc-900 plan review 2')
+      expect(run.logs).toContain(
+        "inc-900: one plan review runs at this row's rigour, so the revised plan is not re-read. Building it, with its 1 finding(s) as required work."
+      )
+    })
+
+    test('records the findings it does not re-review at standard, and reports them', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
+      })
+
+      expect(stageLabels(run)).toContain('inc-900 plan review record')
+      expect(run.result.increments[0].planReviewMustAddress).toEqual([
+        DETAIL_FINDING
+      ])
+    })
+
+    test('tells the recorder the findings were raised on a plan nobody re-read at standard', async () => {
+      const run = await runPlanOnlyAt('standard', {
+        plans: { 'inc-900 plan review': SENT_BACK_ON_A_DETAIL }
+      })
+
+      expect(
+        promptOf(run, 'inc-900 plan review record').replace(/\s+/g, ' ')
+      ).toContain(
+        'The plan review left these findings open on the plan, which was revised but not re-read.'
+      )
+    })
+
+    test('tells the recorder the findings were raised on the revised plan at full', async () => {
+      const run = await runPlanOnlyAt('full', {
+        plans: {
+          'inc-900 plan review': SENT_BACK_ON_A_DETAIL,
+          'inc-900 plan review 2': SENT_BACK_ON_A_DETAIL
+        }
+      })
+
+      expect(
+        promptOf(run, 'inc-900 plan review record').replace(/\s+/g, ' ')
+      ).toContain(
+        'The plan review left these findings open on the revised plan.'
+      )
+    })
+
+    test('re-reviews at standard, and records no must-address, when a review objects but names nothing', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('standard', {
+          plans: { 'inc-900 plan review': SENT_BACK_NAMING_NOTHING }
+        })
+      )
+
+      expect(labels).toContain('inc-900 plan review 2')
+      expect(labels).not.toContain('inc-900 plan review record')
+    })
+
+    test('re-reviews a revised plan at standard when the first review found a structural finding', async () => {
+      const labels = stageLabels(
+        await runPlanOnlyAt('standard', {
+          plans: { 'inc-900 plan review': SENT_BACK_ON_A_STRUCTURE }
+        })
+      )
+
+      expect(labels).toContain('inc-900 plan review 2')
     })
   })
 
@@ -896,11 +1154,8 @@ describe('increment-build-loop', () => {
         WORKSPACE_ANSWER,
         { ok: true, summary: '1' },
         {
-          ok: true,
+          ...PLANNED,
           summary: 'Planned in the frontend.',
-          repos: ['frontend'],
-          behaviourChanges: [],
-          decisions: [],
           followUps: ['Delete the caller comments in origin/controller.js.']
         }
       ],
@@ -1055,6 +1310,51 @@ describe('increment-build-loop', () => {
       ])
     })
 
+    const resumedPlanReadPrompt = async (rigour) => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          startAnswer(
+            startedResult({
+              rigour,
+              resumeAt: 'ladder',
+              attempt: {
+                stage: 'ladder',
+                reason: 'ladder-red',
+                at: '2026-10-30T11:00:00Z',
+                planReviewed: true,
+                work: { kind: 'wip', branch: WORK_BRANCH, sha: 'abc1234' }
+              }
+            })
+          ),
+          {
+            restored: true,
+            green: true,
+            rungs: [],
+            changedFiles: ['frontend:src/server/app/index.js'],
+            summary: 'the wip commit is at HEAD, unit and FIT green'
+          },
+          null
+        ]
+      })
+      return promptOf(run, 'inc-900 plan read')
+    }
+
+    test('tells a resumed row’s plan reader the plan passed its lint and its review', async () => {
+      expect(await resumedPlanReadPrompt('standard')).toContain(
+        'that plan passed its lint and its review'
+      )
+    })
+
+    test('tells a resumed fast row’s plan reader the plan passed only its lint', async () => {
+      const prompt = await resumedPlanReadPrompt('fast')
+
+      expect(prompt).toContain('that plan passed its lint.')
+      expect(prompt).not.toContain('its review')
+    })
+
     test('reads a pushed attempt’s files from its branch against the base, not from a clean tree', async () => {
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
@@ -1162,20 +1462,23 @@ describe('increment-build-loop', () => {
     const CI_E2E_EVIDENCE_HEADING =
       "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
 
-    const runWithRowRepos = (rowRepos) =>
+    const runWithTodoRows = (todoRows) =>
       runLoop(scriptPath, {
         args: BASE_ARGS,
-        answers: [WORKSPACE_ANSWER, preflightAnswer({ rowRepos }), START_ANSWER]
+        answers: [WORKSPACE_ANSWER, preflightAnswer({ todoRows }), START_ANSWER]
       })
 
     test('stops at the preflight when a todo row names a repo the args do not configure', async () => {
-      const run = await runWithRowRepos([
+      const run = await runWithTodoRows([
         { id: 'inc-900', repos: ['frontend'] },
         { id: 'inc-901', repos: ['frontend', 'workspace'] }
       ])
 
       expect(run.error.message).toContain(
         'inc-901 names repo "workspace", which config.repos does not configure'
+      )
+      expect(run.error.message).toContain(
+        'Fix the rows, or add the repo to config.repos and the backlog envelope, then launch again'
       )
       expect(run.error.message).not.toContain('inc-900')
       expect(run.agents.map((entry) => entry.options.label)).toEqual([
@@ -1185,7 +1488,7 @@ describe('increment-build-loop', () => {
     })
 
     test('names every row that names an unconfigured repo, not just the first', async () => {
-      const run = await runWithRowRepos([
+      const run = await runWithTodoRows([
         { id: 'inc-900', repos: ['workspace'] },
         { id: 'inc-901', repos: ['admin'] }
       ])
@@ -1195,11 +1498,49 @@ describe('increment-build-loop', () => {
     })
 
     test('lets a row naming no repo through the preflight', async () => {
-      const run = await runWithRowRepos([{ id: 'inc-900', repos: [] }])
+      const run = await runWithTodoRows([{ id: 'inc-900', repos: [] }])
 
       expect(run.agents.map((entry) => entry.options.label)).toContain(
         'inc-900 start'
       )
+    })
+
+    test('stops at the preflight when a todo row’s rigour is not a preset', async () => {
+      const run = await runWithTodoRows([
+        { id: 'inc-900', repos: ['frontend'], rigour: null },
+        { id: 'inc-901', repos: ['frontend'], rigour: 'quick' }
+      ])
+
+      expect(run.error.message).toContain(
+        'inc-901 sets rigour "quick", which is not one of full, standard, fast'
+      )
+      expect(run.error.message).toContain('Fix the rows, then launch again')
+      expect(run.error.message).not.toContain('config.repos')
+      expect(run.error.message).not.toContain('inc-900')
+      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+        'workspace',
+        'preflight'
+      ])
+    })
+
+    test('lets a row that sets a preset through the preflight', async () => {
+      const run = await runWithTodoRows([
+        { id: 'inc-900', repos: ['frontend'], rigour: 'fast' }
+      ])
+
+      expect(run.agents.map((entry) => entry.options.label)).toContain(
+        'inc-900 start'
+      )
+    })
+
+    test('asks the preflight for every todo row’s repos and rigour', async () => {
+      const run = await runFrom(null)
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'preflight'
+      ).prompt
+
+      expect(prompt).toContain('{id, repos: (.repos // []), rigour}')
+      expect(prompt).toContain("Copy the last command's output into todoRows")
     })
 
     test('starts the increment with one tim build start call before the baseline', async () => {
@@ -1229,6 +1570,14 @@ describe('increment-build-loop', () => {
 
       expect(run.logs).toContain(
         'inc-900: EUDPA-900 (reused, In Dev) on board 13780, branch feat/EUDPA-900-fixture in backend, tests, frontend, resuming at build'
+      )
+    })
+
+    test('takes a row’s rigour from tim build start', async () => {
+      const run = await runStartedWith(startedResult({ rigour: 'fast' }), null)
+
+      expect(run.logs).toContain(
+        "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, style reviewers, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
       )
     })
 
@@ -1467,13 +1816,6 @@ describe('increment-build-loop', () => {
         ],
         summary: 'green'
       }
-      const PLAN_ANSWER = {
-        ok: true,
-        summary: 'Planned in the frontend.',
-        repos: ['frontend'],
-        behaviourChanges: [],
-        decisions: []
-      }
       const NO_FINDINGS = { findings: [] }
       const FINDING = {
         file: 'frontend:src/a.js',
@@ -1498,10 +1840,15 @@ describe('increment-build-loop', () => {
         )
 
       const runToReview = (changedFiles) =>
-        runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
+        runFrom(BASELINE_ANSWER, PLANNED, implementAnswer(changedFiles))
 
-      const modelOf = (run, label) =>
-        run.agents.find((entry) => entry.options.label === label).options.model
+      const runToReviewAt = (rigour, changedFiles) =>
+        runFromWithArgs(
+          { rigour },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(changedFiles)
+        )
 
       test('runs the planner on the think tier and the implementor on the code tier', async () => {
         const run = await runToReview(['frontend:src/a.js'])
@@ -1510,11 +1857,24 @@ describe('increment-build-loop', () => {
         expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
       })
 
+      test('plans a row whose own rigour is fast on the code tier, with no plan review', async () => {
+        const run = await runStartedWith(
+          startedResult({ rigour: 'fast' }),
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+        expect(stageLabels(run)).toContain('inc-900 plan lint')
+        expect(stageLabels(run)).not.toContain('inc-900 plan review')
+      })
+
       test('the deprecated heavy alias sets both the think and code tiers', async () => {
         const run = await runFromWithArgs(
           { models: { heavy: 'opus' } },
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -1526,7 +1886,7 @@ describe('increment-build-loop', () => {
         const run = await runFromWithArgs(
           { models: { heavy: 'opus', code: 'sonnet' } },
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -1540,21 +1900,24 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
           .filter((label) => !isRunLease(label))
 
+      const VERDICT_REAL = {
+        verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }]
+      }
+      const RULED_ONE_FIX = {
+        decisions: [{ what: 'origin', call: 'fix-now', reasoning: 'in scope' }],
+        fixNow: ['Save the origin in src/a.js.'],
+        summary: 'one fix'
+      }
+      const FIXED = { ok: true, summary: 'Saved the origin.', notes: '' }
+
       const FIX_STAGE_ANSWERS = [
         NO_FINDINGS,
         { findings: [FINDING] },
         NO_FINDINGS,
-        { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+        VERDICT_REAL,
+        RULED_ONE_FIX,
         {
-          decisions: [
-            { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-          ],
-          fixNow: ['Save the origin in src/a.js.'],
-          summary: 'one fix'
-        },
-        {
-          ok: true,
-          summary: 'Saved the origin.',
+          ...FIXED,
           notes: 'FIT went green once the port-holding test server exited.'
         },
         NO_FINDINGS
@@ -1563,24 +1926,23 @@ describe('increment-build-loop', () => {
       const runThroughFixToLadder = () =>
         runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           ...FIX_STAGE_ANSWERS
+        )
+
+      const runToJudgeAt = (rigour, ...afterImplement) =>
+        runFromWithArgs(
+          { rigour },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['frontend:src/a.js']),
+          ...afterImplement
         )
 
       const ladderPrompt = (run) =>
         run.agents.find((entry) => entry.options.label === 'inc-900 ladder')
           .prompt
-
-      test('reviews files in one repo and language with one style and one code reviewer', async () => {
-        const run = await runToReview(frontendFiles(3, 'js'))
-
-        expect(labelsInPhase(run, 'Review')).toEqual([
-          'inc-900 style:frontend-javascript',
-          'inc-900 review:frontend-javascript',
-          'inc-900 consistency'
-        ])
-      })
 
       test('gives docs a code reviewer but no style reviewer', async () => {
         const run = await runToReview([
@@ -1608,6 +1970,168 @@ describe('increment-build-loop', () => {
         ])
       })
 
+      test('reviews each group with a style and a code reviewer at full, and looks across the change', async () => {
+        const run = await runToReviewAt('full', frontendFiles(3, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:frontend-javascript',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('keeps the style reviewer at standard off a theme branch, beside the group code reviewer and the consistency review', async () => {
+        const run = await runToReviewAt('standard', frontendFiles(3, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:frontend-javascript',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('reviews the whole change with one code reviewer at fast, keeps a style reviewer per group off a theme branch, and says so', async () => {
+        const run = await runToReviewAt('fast', [
+          'frontend:src/a.js',
+          'frontend:README.md',
+          'backend:src/main/java/uk/gov/defra/A.java'
+        ])
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 style:backend-java',
+          'inc-900 review:whole'
+        ])
+        expect(run.logs).toContain(
+          'inc-900: one reviewer across 3 file(s) in 3 group(s) — frontend-javascript (1), frontend-docs (1), backend-java (1)'
+        )
+      })
+
+      test('style-reviews the fixer’s hunks at fast', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:whole'
+        ])
+        expect(labelsInPhase(run, 'Fix')).toEqual([
+          'inc-900 fix',
+          'inc-900 fix review'
+        ])
+      })
+
+      test('names every changed file, with its repo, to the whole-change reviewer', async () => {
+        const files = [
+          'frontend:src/a.js',
+          'backend:src/main/java/uk/gov/defra/A.java'
+        ]
+        const run = await runToReviewAt('fast', files)
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain('the WHOLE change')
+        for (const file of files) expect(prompt).toContain(`- ${file}`)
+        expect(prompt).toContain(
+          'You are the only code reviewer of this change, beside a style reviewer per (repo, language) group'
+        )
+        expect(prompt).toContain('review/references/FILE_REVIEWER.md')
+        expect(prompt).toContain('workspace `~/ws`')
+        expect(prompt).toContain(
+          '- in frontend: `git -C ~/ws/repos/trade-imports-animals-frontend diff --staged -- <path>`'
+        )
+        expect(prompt).toContain(
+          '- in backend: `git -C ~/ws/repos/trade-imports-animals-backend diff --staged -- <path>`'
+        )
+      })
+
+      test('tells the whole-change reviewer to diff a workspace file against HEAD and read an untracked one', async () => {
+        const run = await runToReviewAt('fast', ['workspace:docs/x.md'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(
+          '- in workspace: `git -C ~/ws diff HEAD -- <path>`'
+        )
+        expect(prompt).toContain('a new, untracked file shows in no diff')
+      })
+
+      test('asks the whole-change reviewer for an acceptance criterion nothing proves, and for a finding’s own path', async () => {
+        const run = await runToReviewAt('fast', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(
+          'read it ACROSS files as well as file by file. These are yours too:\nthe same concept named two ways'
+        )
+        expect(prompt).toContain(
+          'an acceptance criterion nothing\nin the change proves.'
+        )
+        expect(prompt).toContain(
+          'A duty below may take you to a file the list does not name — openspec/, a doc, a recipe: report it\nat its own path.'
+        )
+        expect(prompt).toContain(
+          'Formatting nits belong to a different reviewer — skip them.'
+        )
+      })
+
+      const SPEC_SYNC_DUTY = 'THE SPEC SYNC is part of the change.'
+      const COMPLETION_DUTY = 'PROBES AND DOCS are part of the change.'
+      const PLAN_DECISIONS_DUTY = 'THE PLAN IS NOT A DEFENCE.'
+      const IMPLEMENTOR_NOTES_DUTY = "THE IMPLEMENTOR'S NOTES"
+
+      test('leaves the spec sync and the probes and docs lines with the consistency reviewer at standard', async () => {
+        const run = await runToReviewAt('standard', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 consistency')
+
+        expect(prompt).toContain(SPEC_SYNC_DUTY)
+        expect(prompt).toContain(COMPLETION_DUTY)
+        expect(prompt).toContain(PLAN_DECISIONS_DUTY)
+        expect(prompt).toContain(IMPLEMENTOR_NOTES_DUTY)
+      })
+
+      test('gives the whole-change reviewer the plan and notes duties, and not the spec or docs ones, at fast', async () => {
+        const run = await runToReviewAt('fast', ['frontend:src/a.js'])
+        const prompt = promptOf(run, 'inc-900 review:whole')
+
+        expect(prompt).toContain(PLAN_DECISIONS_DUTY)
+        expect(prompt).toContain(IMPLEMENTOR_NOTES_DUTY)
+        expect(prompt).not.toContain(SPEC_SYNC_DUTY)
+        expect(prompt).not.toContain(COMPLETION_DUTY)
+        expect(prompt).toContain(
+          "implementor's notes and the plan's own decisions — it is yours. The spec sync and the probes and docs lines are not:\nthe ladder judges what those lines claim at this rigour."
+        )
+      })
+
+      const runToReviewWithDefaultModels = (rigour, changedFiles) =>
+        runFromWithArgs(
+          { rigour, models: {} },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(changedFiles)
+        )
+
+      test('reviews the whole change on the think tier at fast', async () => {
+        const run = await runToReviewWithDefaultModels('fast', [
+          'frontend:src/a.js'
+        ])
+
+        expect(modelOf(run, 'inc-900 review:whole')).toBe('opus')
+      })
+
+      test('keeps a group code reviewer on the code tier at full', async () => {
+        const run = await runToReviewWithDefaultModels('full', [
+          'frontend:src/a.js'
+        ])
+
+        expect(modelOf(run, 'inc-900 review:frontend-javascript')).toBe(
+          'sonnet'
+        )
+      })
+
       test('verifies findings with one verifier per group', async () => {
         const run = await runThroughFixToLadder()
 
@@ -1616,8 +2140,112 @@ describe('increment-build-loop', () => {
         ])
       })
 
-      const promptOf = (run, label) =>
-        run.agents.find((entry) => entry.options.label === label).prompt
+      test('verifies a finding before the judge at standard', async () => {
+        const run = await runToJudgeAt(
+          'standard',
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          NO_FINDINGS,
+          VERDICT_REAL,
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+
+        expect(labelsInPhase(run, 'Verify findings')).toEqual([
+          'inc-900 verify:frontend-javascript'
+        ])
+        expect(stageLabels(run)).toContain('inc-900 fix review')
+      })
+
+      test('runs no verifier at fast, and tells the judge the findings are its own to verify', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(labelsInPhase(run, 'Verify findings')).toEqual([])
+        expect(prompt).toContain('NO VERIFIER RAN for these findings')
+        expect(prompt).toContain('THE FINDINGS, NOT YET VERIFIED')
+        expect(prompt).toContain('your job is to REFUTE it')
+        expect(prompt).not.toContain('each survived verification')
+        expect(run.logs).toContain(
+          "inc-900: 1 finding(s) go to the judge unverified — no verifier runs at this row's rigour"
+        )
+        expect(stageLabels(run)).toContain('inc-900 fix review')
+      })
+
+      test('gives the judge at fast the verifier’s equipment: the diff command, the path rule and the independence rule', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain(
+          "in its reasoning. See the change in\neach file's own repo:\n- in frontend: `git -C ~/ws/repos/trade-imports-animals-frontend diff --staged -- <path>`\ndropping a finding's `<repoKey>:` prefix to get <path>."
+        )
+        expect(prompt).toContain(
+          'Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of\nthem tells you nothing about whether any one is real.'
+        )
+      })
+
+      test('tells the judge at fast how the verifier’s defaults map onto a judge’s call', async () => {
+        const run = await runToJudgeAt(
+          'fast',
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain('your call is reject')
+        expect(prompt).toContain('You have no real field and no quote field')
+        expect(prompt).not.toContain('permalinks where the verifier gave them')
+        expect(prompt).toContain(
+          'permalinks where your reading of the design source gave them'
+        )
+      })
+
+      test('tells the judge at fast to diff a workspace file against HEAD and read an untracked one', async () => {
+        const run = await runFromWithArgs(
+          { rigour: 'fast' },
+          BASELINE_ANSWER,
+          PLANNED,
+          implementAnswer(['workspace:docs/x.md']),
+          { findings: [{ ...FINDING, file: 'workspace:docs/x.md' }] },
+          RULED_ONE_FIX,
+          FIXED,
+          NO_FINDINGS
+        )
+
+        expect(promptOf(run, 'inc-900 judge')).toContain(
+          '- in workspace: `git -C ~/ws diff HEAD -- <path>` (a new, untracked file shows in no diff: Read it in full)'
+        )
+      })
+
+      test('tells a judge at full that its findings already survived verification', async () => {
+        const run = await runToJudgeAt('full', ...FIX_STAGE_ANSWERS)
+        const prompt = promptOf(run, 'inc-900 judge')
+
+        expect(prompt).toContain(
+          'CONFIRMED FINDINGS (each survived verification'
+        )
+        expect(prompt).not.toContain('NO VERIFIER RAN')
+        expect(prompt).toContain('permalinks where the verifier gave them')
+        expect(prompt).not.toContain('Judge each finding INDEPENDENTLY')
+      })
 
       test('hands the ladder every baseline rung with its log', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
@@ -1649,6 +2277,71 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           "A rung green at baseline and red now is this\n   increment's to fix"
+        )
+      })
+
+      const SPEC_SYNC_REASON_LEFT_TO_REVIEWERS =
+        'not complete. A line that\n   reads `Spec sync: none — <reason>` runs nothing here: the reviewers have judged the reason.'
+      const COMPLETION_LINES_LEFT_TO_REVIEWER =
+        'Run nothing more here: the consistency reviewer has judged what the lines claim.'
+
+      const ladderPromptAt = async (rigour, ...reviewAnswers) =>
+        ladderPrompt(await runToJudgeAt(rigour, ...reviewAnswers))
+
+      test('leaves the spec sync and the probes and docs claims to the consistency reviewer at full', async () => {
+        const prompt = await ladderPromptAt(
+          'full',
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS
+        )
+
+        expect(prompt).toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+      })
+
+      test('leaves them to the consistency reviewer at standard too', async () => {
+        const prompt = await ladderPromptAt(
+          'standard',
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS
+        )
+
+        expect(prompt).toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+      })
+
+      test('has the ladder judge the spec write itself at fast, where no reviewer does', async () => {
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS, NO_FINDINGS)
+
+        expect(prompt).not.toContain(SPEC_SYNC_REASON_LEFT_TO_REVIEWERS)
+        expect(prompt).toContain(
+          "not complete. The write is yours to judge too.\n   No reviewer does that at this row's rigour, so judge it against the plan's section 8 and /ws/openspec/config.yaml:"
+        )
+        expect(prompt).toContain(
+          '   see it with `git -C ~/ws status --short -- openspec/` and `git -C ~/ws diff HEAD -- openspec/`, Read a new\n   file under it in full'
+        )
+        expect(prompt).toContain(
+          'a behaviour change in the diff that no scenario records;\n   a scenario the diff does not implement'
+        )
+        expect(prompt).toContain(
+          "`Spec sync: none — <reason>` whose reason\n   does not hold against the plan's behaviour changes"
+        )
+      })
+
+      test('has the ladder judge the probes and docs claims itself at fast', async () => {
+        const prompt = await ladderPromptAt('fast', NO_FINDINGS, NO_FINDINGS)
+
+        expect(prompt).not.toContain(COMPLETION_LINES_LEFT_TO_REVIEWER)
+        expect(prompt).toContain(
+          "   No reviewer judges what the lines claim at this row's rigour, so judge them against\n   every hunk in `git -C ~/ws/<repoPath> diff --staged` for each repo with staged changes."
+        )
+        expect(prompt).toContain(
+          'a coverage link this row wrote or upgraded to "full" that the `Probes:` line does not account\n   for'
+        )
+        expect(prompt).toContain(
+          "search the changed repos' `docs/`, the recipes, the doc comments of every\n   function the change touched, the comments within ten lines of every hunk, and convention test names."
         )
       })
 
@@ -1990,7 +2683,7 @@ describe('increment-build-loop', () => {
         const runVerifying = (finding, verdict, ...after) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             { findings: [finding] },
@@ -2121,7 +2814,8 @@ describe('increment-build-loop', () => {
               category: 'correctness',
               severity: 'major',
               what: 'The origin is not saved.',
-              reason: 'Saved in src/b.js:4.'
+              reason: 'Saved in src/b.js:4.',
+              droppedBy: 'verifier'
             }
           ])
           expect(stageLabels(run)).not.toContain('inc-900 judge')
@@ -2143,6 +2837,7 @@ describe('increment-build-loop', () => {
               severity: 'minor',
               what: '`linesDroppedBy` returns the kept lines.',
               reason: 'It returns the dropped lines.',
+              droppedBy: 'verifier',
               quote: 'src/a.js:9 return removed'
             }
           ])
@@ -2267,7 +2962,7 @@ describe('increment-build-loop', () => {
         const runWithImplementNotes = (notes) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             { ...implementAnswer(['frontend:src/a.js']), notes },
             ...FIX_STAGE_ANSWERS
           )
@@ -2336,7 +3031,7 @@ describe('increment-build-loop', () => {
           'Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
 
         const runWithImplementNotes = (notes) =>
-          runFrom(BASELINE_ANSWER, PLAN_ANSWER, {
+          runFrom(BASELINE_ANSWER, PLANNED, {
             ...implementAnswer(['frontend:src/a.js']),
             notes
           })
@@ -2413,6 +3108,57 @@ describe('increment-build-loop', () => {
           expect(prompt).toContain('`Spec sync: none — <reason>`')
         })
 
+        test('tells the implementor the consistency reviewer checks its reason at full', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'The consistency reviewer checks that reason and the ladder validates the write again.'
+          )
+        })
+
+        test('tells the implementor which reviewer reads the notes it leaves adjacent work in', async () => {
+          const full = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+          const fast = promptOf(
+            await runFromWithArgs(
+              { rigour: 'fast' },
+              BASELINE_ANSWER,
+              PLANNED,
+              implementAnswer(['frontend:src/a.js']),
+              NO_FINDINGS
+            ),
+            'inc-900 implement'
+          )
+
+          expect(full).toContain(
+            'report\n  them in notes instead, which the consistency reviewer reads.'
+          )
+          expect(fast).toContain(
+            'report\n  them in notes instead, which the whole-change reviewer reads.'
+          )
+        })
+
+        test('tells the implementor the ladder checks its reason at fast, where no consistency reviewer runs', async () => {
+          const run = await runFromWithArgs(
+            { rigour: 'fast' },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS
+          )
+          const prompt = promptOf(run, 'inc-900 implement')
+
+          expect(prompt).toContain(
+            'The ladder checks that reason and judges the write.'
+          )
+          expect(prompt).not.toContain('The consistency reviewer checks')
+        })
+
         test('hands the consistency reviewer the implementor’s spec sync line to judge', async () => {
           const run = await runWithImplementNotes(
             `Built it.\n${SPEC_SYNC_NOTE}`
@@ -2461,7 +3207,7 @@ describe('increment-build-loop', () => {
         test('tells the ladder a fixer with no spec sync line is normal when the implementor reported one', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             {
               ...implementAnswer(['frontend:src/a.js']),
               notes: `Built it.\n${SPEC_SYNC_NOTE}`
@@ -2566,7 +3312,6 @@ describe('increment-build-loop', () => {
       })
 
       describe('the command forms a plan check may take', () => {
-        const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
         const PREFIX_CHECK =
           'STUB_PROFILE=fast npm --prefix ~/ws/repos/trade-imports-stub run start'
         const SCRIPT_CHECK = 'bash scripts/stack/run-stack.sh --help'
@@ -2574,7 +3319,7 @@ describe('increment-build-loop', () => {
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js'
 
         const planWithChecks = (...commands) => ({
-          ...PLAN_ANSWER,
+          ...PLANNED,
           checks: commands.map((command) => ({ section: 6, command }))
         })
 
@@ -2814,8 +3559,8 @@ describe('increment-build-loop', () => {
               ...planAnswers
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             ...FIX_STAGE_ANSWERS
           )
@@ -2911,8 +3656,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -2957,7 +3702,7 @@ describe('increment-build-loop', () => {
             },
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               checks: [{ section: 6, command: NAMED_CHECK_COMMAND }]
             },
             implementAnswer(['frontend:src/a.js'])
@@ -2978,8 +3723,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -3002,7 +3747,7 @@ describe('increment-build-loop', () => {
               'inc-900 plan lint': lintFound(NAMES_CARRY_WHAT_COMMENTS_SAID)
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
 
@@ -3022,8 +3767,8 @@ describe('increment-build-loop', () => {
               )
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const replan = promptOf(run, 'inc-900 replan')
@@ -3053,8 +3798,8 @@ describe('increment-build-loop', () => {
               'inc-900 replan lint': lintFound(QUOTED_LOG)
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3074,7 +3819,7 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3128,8 +3873,8 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': SENT_BACK },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
           const revise = flat(promptOf(run, 'inc-900 revise plan'))
@@ -3161,8 +3906,8 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': SENT_BACK },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
+            PLANNED,
             implementAnswer(['frontend:src/a.js'])
           )
 
@@ -3207,8 +3952,8 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3232,8 +3977,8 @@ describe('increment-build-loop', () => {
               }
             },
             BASELINE_ANSWER,
-            PLAN_ANSWER,
-            PLAN_ANSWER
+            PLANNED,
+            PLANNED
           )
 
           expect(run.result.stopped.reason).toBe('plan-refused')
@@ -3283,7 +4028,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            `THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work: ${DETAIL_LINE}`
+            `THE PLAN REVIEW LEFT THESE FINDINGS OPEN on the revised plan, and the implementor was given each as required work: ${DETAIL_LINE}`
           )
           expect(prompt).toContain(
             'Each one the change does not address is a finding: give it the code-quality category that fits it, `structure` when none fits better'
@@ -3316,7 +4061,7 @@ describe('increment-build-loop', () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': null },
             BASELINE_ANSWER,
-            PLAN_ANSWER
+            PLANNED
           )
 
           expect(run.result.stopped).toEqual({
@@ -3351,7 +4096,7 @@ describe('increment-build-loop', () => {
           const run = await runFrom(
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               standards: [
                 '~/ws/.claude/rules/node.md',
                 '~/ws/repos/trade-imports-animals-frontend/src/server/app/docs/architecture.md'
@@ -3369,7 +4114,7 @@ describe('increment-build-loop', () => {
           const run = await runFrom(
             BASELINE_ANSWER,
             {
-              ...PLAN_ANSWER,
+              ...PLANNED,
               departures: [
                 'code-style.md §10: one module per folder is kept for the twin layout.'
               ],
@@ -3424,7 +4169,7 @@ describe('increment-build-loop', () => {
       test('tells the ladder no fix stage ran when the judge ruled nothing', async () => {
         const run = await runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js'])
         )
 
@@ -3463,7 +4208,7 @@ describe('increment-build-loop', () => {
         const runToLadderWith = (...answers) =>
           runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -3530,7 +4275,7 @@ describe('increment-build-loop', () => {
               PREFLIGHT_ANSWER,
               START_ANSWER,
               BASELINE_ANSWER,
-              PLAN_ANSWER,
+              PLANNED,
               implementAnswer(['frontend:src/a.js']),
               NO_FINDINGS,
               NO_FINDINGS,
@@ -3643,7 +4388,7 @@ describe('increment-build-loop', () => {
         test('stops after review when the consistency reviewer finds the stack held', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -3685,7 +4430,7 @@ describe('increment-build-loop', () => {
         })
 
         test('carries on with the increment once the stage has run again', async () => {
-          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLAN_ANSWER)
+          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLANNED)
 
           expect(allLabels(run)).toContain('inc-900 plan')
         })
@@ -3702,7 +4447,7 @@ describe('increment-build-loop', () => {
         test('runs the ladder once more after the stack went down under it', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
-            PLAN_ANSWER,
+            PLANNED,
             implementAnswer(['frontend:src/a.js']),
             NO_FINDINGS,
             NO_FINDINGS,
@@ -3719,7 +4464,7 @@ describe('increment-build-loop', () => {
         })
 
         test('tells every stack stage to report a stack gone from under the run, never to start it', async () => {
-          const run = await runFrom(BASELINE_ANSWER, PLAN_ANSWER)
+          const run = await runFrom(BASELINE_ANSWER, PLANNED)
 
           expect(
             promptOf(run, 'inc-900 implement').replace(/\s+/g, ' ')
@@ -3961,7 +4706,7 @@ describe('increment-build-loop', () => {
       const runToLand = (guardAnswer, landAnswer) =>
         runFrom(
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           NO_FINDINGS,
           NO_FINDINGS,
@@ -4133,7 +4878,7 @@ describe('increment-build-loop', () => {
       describe('deriving its own next increment', () => {
         const LANDED = [
           BASELINE_ANSWER,
-          PLAN_ANSWER,
+          PLANNED,
           implementAnswer(['frontend:src/a.js']),
           NO_FINDINGS,
           NO_FINDINGS,
@@ -4447,19 +5192,38 @@ describe('increment-build-loop', () => {
             )
           })
 
+          const landedWithRefutedFinding = LANDED.toSpliced(
+            3,
+            3,
+            { findings: [FINDING] },
+            NO_FINDINGS,
+            NO_FINDINGS,
+            {
+              verdicts: [
+                { n: 1, real: false, reasoning: 'Saved in src/b.js:4.' }
+              ]
+            }
+          )
+
+          const landedWithRejectedFinding = LANDED.toSpliced(
+            3,
+            3,
+            NO_FINDINGS,
+            { findings: [FINDING] },
+            {
+              decisions: [
+                {
+                  what: 'The origin is not saved.',
+                  call: 'reject',
+                  reasoning: 'Saved in src/b.js:4.'
+                }
+              ],
+              fixNow: [],
+              summary: 'one reject'
+            }
+          )
+
           test('lists the findings refuted across a built theme’s rows in a review check', async () => {
-            const landedWithRefutedFinding = LANDED.toSpliced(
-              3,
-              3,
-              { findings: [FINDING] },
-              NO_FINDINGS,
-              NO_FINDINGS,
-              {
-                verdicts: [
-                  { n: 1, real: false, reasoning: 'Saved in src/b.js:4.' }
-                ]
-              }
-            )
             const run = await runLoop(scriptPath, {
               args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
               answers: [
@@ -4486,11 +5250,85 @@ describe('increment-build-loop', () => {
                     category: 'correctness',
                     severity: 'major',
                     what: 'The origin is not saved.',
-                    reason: 'Saved in src/b.js:4.'
+                    reason: 'Saved in src/b.js:4.',
+                    droppedBy: 'verifier'
                   }
                 ]
               }
             ])
+          })
+
+          test('lists a finding the judge rejected at fast in the same review check', async () => {
+            const run = await runLoop(scriptPath, {
+              args: {
+                ...BASE_ARGS,
+                increments: null,
+                stopAfter: 1,
+                rigour: 'fast'
+              },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithRejectedFinding
+              ],
+              themes: {
+                'inc-901 theme': BUILT,
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect(run.result.reviewChecks).toEqual([
+              {
+                id: 'inc-901',
+                check:
+                  'Theme origin-pages is built. The judge rejected 1 finding(s) across its rows: read each one and confirm none was real.',
+                refuted: [
+                  {
+                    id: 'inc-901',
+                    file: '(whole change)',
+                    category: null,
+                    what: 'The origin is not saved.',
+                    reason: 'Saved in src/b.js:4.',
+                    droppedBy: 'judge'
+                  }
+                ]
+              }
+            ])
+          })
+
+          test('names the review and the judge where a theme’s rows dropped findings each way', async () => {
+            const run = await runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 2 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithRefutedFinding,
+                derived('inc-902', { rigour: 'fast' }),
+                ...landedWithRejectedFinding
+              ],
+              themes: {
+                'inc-901 theme': ONE_LEFT,
+                'inc-902 theme': themeStatus({
+                  rows: 2,
+                  built: ['inc-901', 'inc-902'],
+                  otherRepos: ['frontend']
+                }),
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect(run.result.reviewChecks.map((check) => check.check)).toEqual(
+              [
+                'Theme origin-pages is built. Review dropped 1 finding(s) as refuted and the judge rejected 1 across its rows: read each one and confirm none was real.'
+              ]
+            )
+            expect(
+              run.result.reviewChecks[0].refuted.map(
+                (record) => record.droppedBy
+              )
+            ).toEqual(['verifier', 'judge'])
           })
 
           test('records a clean check and carries on', async () => {
@@ -4821,15 +5659,15 @@ describe('increment-build-loop', () => {
       describe('with the codex executor', () => {
         const CODEX_RAN = { ok: true, summary: 'codex ran in one slice' }
 
-        const runCodexToReview = () =>
+        const runCodexToReview = (argsOverride = {}) =>
           runLoop(scriptPath, {
-            args: { ...BASE_ARGS, executor: 'codex' },
+            args: { ...BASE_ARGS, executor: 'codex', ...argsOverride },
             answers: [
               WORKSPACE_ANSWER,
               PREFLIGHT_ANSWER,
               START_ANSWER,
               BASELINE_ANSWER,
-              PLAN_ANSWER,
+              PLANNED,
               CODEX_RAN,
               implementAnswer(['frontend:src/a.js', 'backend:src/B.java']),
               ON_BRANCH,
@@ -4862,21 +5700,92 @@ describe('increment-build-loop', () => {
           ])
         })
 
-        test('binds the house rules into the codex implement run and every codex review run', async () => {
-          const run = await runCodexToReview()
-          const unbound = [
-            'implement',
+        test('keeps the style persona in a Codex group review at standard off a theme branch', async () => {
+          const run = await runCodexToReview({ rigour: 'standard' })
+          const prompts = [
             'review-frontend-javascript',
-            'review-backend-java',
-            'review-consistency'
-          ].filter(
-            (slug) =>
-              !codexShellPrompt(run, slug).includes(
-                'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
-              )
+            'review-backend-java'
+          ].map((slug) => codexShellPrompt(run, slug))
+
+          for (const prompt of prompts) {
+            expect(prompt).toContain(
+              'code-style/references/STYLE_FILE_REVIEWER.md'
+            )
+            expect(prompt).toContain('review/references/FILE_REVIEWER.md')
+          }
+        })
+
+        test('gives the Codex whole-change review the style persona too at fast off a theme branch', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview({ rigour: 'fast' }),
+            'review-whole'
           )
 
-          expect(unbound).toEqual([])
+          expect(prompt).toContain(
+            'code-style/references/STYLE_FILE_REVIEWER.md'
+          )
+          expect(prompt).toContain('review/references/FILE_REVIEWER.md')
+        })
+
+        test('gives Codex one whole-change review at fast', async () => {
+          const labels = stageLabels(await runCodexToReview({ rigour: 'fast' }))
+
+          expect(labels).toContain('inc-900 codex:review-whole')
+          expect(labels).not.toContain('inc-900 codex:review-consistency')
+        })
+
+        const HOUSE_RULES_BINDING =
+          'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
+
+        const slugsWithoutHouseRules = (run, slugs) =>
+          slugs.filter(
+            (slug) => !codexShellPrompt(run, slug).includes(HOUSE_RULES_BINDING)
+          )
+
+        test('binds the house rules into the codex implement run and every codex review run', async () => {
+          const run = await runCodexToReview()
+
+          expect(
+            slugsWithoutHouseRules(run, [
+              'implement',
+              'review-frontend-javascript',
+              'review-backend-java',
+              'review-consistency'
+            ])
+          ).toEqual([])
+        })
+
+        test('binds the house rules into the codex whole-change review at fast', async () => {
+          const run = await runCodexToReview({ rigour: 'fast' })
+
+          expect(
+            slugsWithoutHouseRules(run, ['implement', 'review-whole'])
+          ).toEqual([])
+        })
+
+        test('tells the codex whole-change run which judgements are the ladder’s, not its own', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview({ rigour: 'fast' }),
+            'review-whole'
+          )
+
+          expect(prompt).toContain(
+            'judgements another prompt leaves to a consistency reviewer are yours — except the spec sync and the probes and docs\nlines, which the ladder judges at this rigour.'
+          )
+          expect(prompt).toContain('THE PLAN IS NOT A DEFENCE')
+          expect(prompt).toContain("THE IMPLEMENTOR'S NOTES")
+          expect(prompt).not.toContain('THE SPEC SYNC is part of the change')
+          expect(prompt).not.toContain('PROBES AND DOCS are part of the change')
+        })
+
+        test('keeps all four cross-change duties in the codex consistency run', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview(),
+            'review-consistency'
+          )
+
+          expect(prompt).toContain('THE SPEC SYNC is part of the change')
+          expect(prompt).toContain('PROBES AND DOCS are part of the change')
         })
 
         test('tells the codex implementor to follow the plan’s decisions and to own names and code shape', async () => {
@@ -5033,7 +5942,7 @@ describe('increment-build-loop', () => {
                 PREFLIGHT_ANSWER,
                 START_ANSWER,
                 BASELINE_ANSWER,
-                PLAN_ANSWER,
+                PLANNED,
                 CODEX_RAN,
                 implementAnswer(['frontend:src/a.js']),
                 ON_BRANCH,
@@ -5136,9 +6045,6 @@ describe('increment-build-loop', () => {
       })
 
     const labelsOf = (run) => stageLabels(run)
-    const promptOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).prompt
-
     describe('its configuration', () => {
       test('takes null for every Jira and approval key, and whatever repo keys the envelope names', async () => {
         const run = await runLoop(scriptPath, {
@@ -5300,6 +6206,56 @@ describe('increment-build-loop', () => {
       const MARKED_DONE = { ok: true, summary: 'done' }
       const NO_GATE = { ok: true, summary: 'no gate' }
 
+      test('takes a row’s own rigour over the run’s, and says so', async () => {
+        const run = await runBranch(
+          { rigour: 'full' },
+          { ...ROW, rigour: 'fast' }
+        )
+
+        expect(run.logs).toContain(
+          "inc-900: rigour fast (the row's own, over the run's full) — a code-tier plan, no plan review, no style reviewers on the row but one across the theme's whole change, one reviewer across the whole change, no consistency review, and findings verified by the judge itself"
+        )
+      })
+
+      test('gives a row reported with a null gatePhases every offered phase', async () => {
+        const run = await runBranch({}, { ...ROW, gatePhases: null })
+
+        expect(run.status).toBe('returned')
+        expect(run.logs).toContain(
+          `inc-900: on ${WORKING_BRANCH} in every repo; row repos tests; merges none; gate unit, fit, e2e; CI awaited; resuming at build`
+        )
+      })
+
+      test('gives a row that sets none the run’s rigour', async () => {
+        const run = await runBranch({ rigour: 'standard' }, ROW)
+
+        expect(run.logs).toContain(
+          "inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers on the row but one across the theme's whole change, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge"
+        )
+      })
+
+      test('runs no style reviewer on a row at standard, leaving its style to the theme', async () => {
+        const run = await runBranch(
+          { rigour: 'standard' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED
+        )
+
+        expect(
+          run.agents
+            .filter((entry) => entry.options.phase === 'Review')
+            .map((entry) => entry.options.label)
+        ).toEqual(['inc-900 review:tests-javascript', 'inc-900 consistency'])
+      })
+
       const reviewedAndLanded = [
         IMPLEMENTED,
         NO_FINDINGS,
@@ -5370,6 +6326,129 @@ describe('increment-build-loop', () => {
           prs: ['https://github.com/DEFRA/trade-imports-ins-tests/pull/227'],
           ci: 'green'
         })
+      })
+
+      test('names the rigour of a row that did not take the run’s', async () => {
+        const run = await runBranch(
+          { rigour: 'standard' },
+          { ...MERGE_ROW, rigour: 'full' },
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          ...reviewedAndLanded,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'landed',
+          rigour: 'full'
+        })
+      })
+
+      test('leaves rigour out of a row that took the run’s', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0]).not.toHaveProperty('rigour')
+      })
+
+      const runFastMergeRow = (...after) =>
+        runBranch(
+          { rigour: 'fast' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          ...after
+        )
+
+      test('counts a row’s findings as confirmed and refuted where a verifier ran', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 0,
+          confirmed: 0,
+          refuted: 0,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('counts them as unverified and rejected, never confirmed, where no verifier ran', async () => {
+        const run = await runFastMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 0,
+          unverified: 0,
+          rejected: 0,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('counts a finding the judge rejected at fast', async () => {
+        const run = await runBranch(
+          { rigour: 'fast' },
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          {
+            findings: [
+              {
+                file: 'tests:src/auth.spec.ts',
+                severity: 'minor',
+                category: 'structure',
+                what: 'A copied helper.',
+                why: 'Two copies.',
+                fix: 'Extract it.'
+              }
+            ]
+          },
+          {
+            decisions: [
+              {
+                what: 'A copied helper.',
+                call: 'reject',
+                reasoning: 'src/auth.spec.ts:3 uses the shared helper.'
+              }
+            ],
+            fixNow: [],
+            summary: 'one reject'
+          },
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0].findings).toEqual({
+          raw: 1,
+          unverified: 1,
+          rejected: 1,
+          fixed: 0,
+          foundInFix: 0
+        })
+      })
+
+      test('says the findings went unverified in the landed tally at fast', async () => {
+        const run = await runFastMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.logs).toContain(
+          `inc-900: LANDED on ${WORKING_BRANCH}, CI green — 0 findings, 0 unverified, 0 fixed`
+        )
       })
 
       const ATTEMPT = {
@@ -5577,7 +6656,15 @@ describe('increment-build-loop', () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
 
         expect(prompt).toContain(
-          '{repos, merge, gatePhases, awaitCi, commit, prs, attempt}'
+          '{repos, merge, gatePhases, awaitCi, rigour, commit, prs, attempt}'
+        )
+      })
+
+      test('tells the branch stage how to report the row’s rigour', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
+
+        expect(prompt).toContain(
+          '- rigour: verbatim when it is full, standard or fast. Leave it out when it is null or absent.'
         )
       })
 
@@ -5860,6 +6947,36 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('still style-reviews the CI fixer’s commit at fast, where no style reviewer ran', async () => {
+        const run = await runBranch(
+          {},
+          { ...MERGE_ROW, rigour: 'fast' },
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          IMPLEMENTED,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          LANDED,
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          {
+            ok: true,
+            summary: 'Fixed the lint.',
+            commits: [{ repo: 'tests', sha: 'e1f2a3b' }]
+          },
+          NO_FINDINGS,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(labelsOf(run)).toContain('inc-900 review:whole')
+        expect(labelsOf(run)).not.toContain('inc-900 style:tests-javascript')
+        expect(labelsOf(run)).toContain('inc-900 ci fix 1 review')
+      })
+
       describe('the engineering review of a theme once its last row lands', () => {
         const THEME = 'origin-pages'
         const THEME_BUILT = {
@@ -5928,13 +7045,13 @@ describe('increment-build-loop', () => {
           'inc-900 theme ci watch': CI_GREEN
         }
         const isReviewer = (label) =>
-          /^inc-900 (style:|review:|consistency$|theme review:|theme fix review$)/.test(
+          /^inc-900 (style:|review:|consistency$|theme review:|theme style:|theme fix review$)/.test(
             label
           )
 
-        const runTheme = (overrides = {}) =>
+        const runTheme = (overrides = {}, argsOverride = {}) =>
           runLoop(scriptPath, {
-            args: BRANCH_ARGS,
+            args: { ...BRANCH_ARGS, ...argsOverride },
             answers: (prompt, { label }) => {
               const answers = { ...ROW_ANSWERS, ...overrides }
               if (Object.hasOwn(answers, label)) return answers[label]
@@ -5965,6 +7082,112 @@ describe('increment-build-loop', () => {
             'inc-900 theme pr',
             'inc-900 theme ci watch'
           ])
+          expect(run.logs).toContain(
+            'inc-900: theme origin-pages gets no style review of its whole change — a style reviewer read every row'
+          )
+        })
+
+        const THEME_STYLE_LABELS = [
+          'inc-900 theme style:ins',
+          'inc-900 theme style:animals',
+          'inc-900 theme style:plants',
+          'inc-900 theme style:tests'
+        ]
+
+        test('style-reviews each repo’s whole theme change beside its engineering review at standard', async () => {
+          const run = await runTheme({}, { rigour: 'standard' })
+
+          expect(themeLabels(run).slice(0, 8)).toEqual([
+            'inc-900 theme review:ins',
+            'inc-900 theme review:animals',
+            'inc-900 theme review:plants',
+            'inc-900 theme review:tests',
+            ...THEME_STYLE_LABELS
+          ])
+          expect(run.logs).toContain(
+            'inc-900: theme origin-pages gets a style review of its whole change — a row of it was built without a style reviewer'
+          )
+        })
+
+        test('style-reviews the whole theme at fast', async () => {
+          const run = await runTheme({}, { rigour: 'fast' })
+
+          expect(themeLabels(run)).toEqual(
+            expect.arrayContaining(THEME_STYLE_LABELS)
+          )
+        })
+
+        test('style-reviews the whole theme when one row set fast in a run at full', async () => {
+          const run = await runTheme({
+            'inc-900 branch': { ...ROW, rigour: 'fast' }
+          })
+
+          expect(themeLabels(run)).toEqual(
+            expect.arrayContaining(THEME_STYLE_LABELS)
+          )
+        })
+
+        test('gives the theme’s style reviewer the style persona, the language routing and the theme’s whole diff', async () => {
+          const prompt = promptOf(
+            await runTheme({}, { rigour: 'standard' }),
+            'inc-900 theme style:tests'
+          )
+
+          expect(prompt).toContain(
+            'You are the STYLE REVIEWER for theme `origin-pages` in the tests repo'
+          )
+          expect(prompt).toContain(
+            "No style reviewer read these rows as they were\nbuilt, so you are the only style review the theme's code gets: read every changed line, not a sample."
+          )
+          expect(prompt).toContain(
+            '/ws/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md IN FULL'
+          )
+          expect(prompt).toContain('16-rule style guide + JSDoc')
+          expect(prompt).toContain(
+            '`git -C ~/ws/repos/trade-imports-ins-tests diff origin/main...HEAD -- <path>`'
+          )
+          expect(prompt).toContain(
+            'The full rules and their detail: ~/ws/.claude/rules/code-quality.md — read it in full.'
+          )
+        })
+
+        test('verifies, judges and fixes a finding from the theme’s style review like any other', async () => {
+          const run = await runTheme(
+            {
+              'inc-900 theme review:tests': NO_FINDINGS,
+              'inc-900 theme style:tests': {
+                findings: [{ ...COPIED_SET_UP, category: 'naming' }]
+              }
+            },
+            { rigour: 'standard' }
+          )
+
+          expect(themeLabels(run).slice(8)).toEqual([
+            'inc-900 theme verify:tests',
+            'inc-900 theme judge',
+            'inc-900 theme fix',
+            'inc-900 theme fix review',
+            'inc-900 theme ladder',
+            'inc-900 theme land',
+            'inc-900 theme pr',
+            'inc-900 theme ci watch'
+          ])
+          expect(promptOf(run, 'inc-900 theme verify:tests')).toContain(
+            '1. [major] [naming, code quality] tests:src/auth.spec.ts line 4'
+          )
+        })
+
+        test('lists a repo whose theme style reviewer returned nothing for a review by hand', async () => {
+          const run = await runTheme(
+            { 'inc-900 theme style:animals': null },
+            { rigour: 'standard' }
+          )
+
+          expect(run.result.reviewChecks).toContainEqual({
+            id: 'inc-900',
+            check:
+              "Theme origin-pages's style review returned nothing for animals. Review the theme's change there by hand."
+          })
         })
 
         test('binds the house rules into every theme stage that judges or writes code', async () => {
@@ -6061,7 +7284,8 @@ describe('increment-build-loop', () => {
               category: 'correctness',
               severity: 'major',
               what: 'The sign-in steps are copied from the journey helper.',
-              reason: 'The helper signs in another way.'
+              reason: 'The helper signs in another way.',
+              droppedBy: 'verifier'
             }
           ])
           expect(run.result.reviewChecks.map(({ check }) => check)).toContain(
@@ -6134,7 +7358,7 @@ describe('increment-build-loop', () => {
 
           expect(run.result.increments.length).toBe(16)
           expect(run.result.stopped.detail).toContain(
-            "keeping 17 for a theme's engineering review"
+            "keeping 21 for a theme's engineering review"
           )
         })
 
@@ -6248,6 +7472,37 @@ describe('increment-build-loop', () => {
           reason: 'row-invalid',
           detail:
             'inc-900: merge names "tests", which is not in the row\'s repos'
+        })
+      })
+
+      test('stops a row whose rigour is not a preset, naming it', async () => {
+        const run = await runBranch({}, { ...ROW, rigour: 'quick' })
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'row-invalid'
+        })
+        expect(run.result.stopped.detail).toContain(
+          'rigour is "quick"; use full, standard, fast'
+        )
+      })
+
+      test('treats a row whose rigour is null as a row that sets none', async () => {
+        const run = await runBranch(
+          {},
+          { ...ROW, rigour: null },
+          BASELINE,
+          PLAN,
+          ...reviewedAndLanded,
+          FOUND,
+          CI_GREEN,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          outcome: 'landed'
         })
       })
 
@@ -6589,6 +7844,12 @@ describe('increment-build-loop', () => {
       'inc-014 gate check': { ok: true, summary: 'no gate' }
     }
 
+    const startedAtRigour = (rigour) =>
+      startAnswer({
+        ...JSON.parse(ANSWERS['inc-014 start'].stdout).result,
+        rigour
+      })
+
     const isReviewer = (label) =>
       /^inc-014 (style|review):|consistency$/.test(label)
 
@@ -6741,6 +8002,19 @@ describe('increment-build-loop', () => {
           branch: WORK_BRANCH,
           outcome: 'landed',
           prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('names the rigour of a landed row that did not take the run’s', async () => {
+        const run = await runPerf(
+          { rigour: 'standard' },
+          { 'inc-014 start': startedAtRigour('full') }
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'landed',
+          rigour: 'full'
         })
       })
 
@@ -7233,9 +8507,6 @@ describe('increment-build-loop', () => {
       })
 
     const labelsOf = (run) => stageLabels(run)
-    const promptOf = (run, label) =>
-      run.agents.find((entry) => entry.options.label === label).prompt
-
     const startedWith = (fields) =>
       startAnswer(
         startedResult({
@@ -8709,8 +9980,6 @@ describe('distil', () => {
     })
 
   const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
-  const promptOf = (run, label) =>
-    run.agents.find((entry) => entry.options.label === label).prompt
   const optionsOf = (run, label) =>
     run.agents.find((entry) => entry.options.label === label).options
 
